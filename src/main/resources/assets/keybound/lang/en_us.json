@@ -1,0 +1,17 @@
+{
+	"category.keybound.skin_toggles": "Skin outer layer toggles",
+	"key.keybound.skin_toggle_cape": "Toggle cape",
+	"key.keybound.skin_toggle_hat": "Toggle hat",
+	"key.keybound.skin_toggle_jacket": "Toggle jacket",
+	"key.keybound.skin_toggle_left_pants_leg": "Toggle left pants leg",
+	"key.keybound.skin_toggle_right_pants_leg": "Toggle right pants leg",
+	"key.keybound.skin_toggle_left_sleeve": "Toggle left sleeve",
+	"key.keybound.skin_toggle_right_sleeve": "Toggle right sleeve",
+
+	"category.keybound.bot_messages": "Send messages to the bot server",
+	"key.keybound.bot_msg_mainbase": "Main base stasis pearl",
+
+	"category.keybound.chat_messages": "Send messages in chat",
+	"key.keybound.chat_msg_meow": "Meow :3",
+	"key.keybound.chat_msg_rc": "Check RC"
+}

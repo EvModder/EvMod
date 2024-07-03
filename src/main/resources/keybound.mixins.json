@@ -1,0 +1,13 @@
+{
+	"required": true,
+	"package": "net.evmodder.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"BoundKeyAccessor",
+		"KeybindingMixin",
+		"TimesPressedAccessor"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}
