@@ -1,19 +1,20 @@
 # Config file for KeyBound
 
-
-#========== PlayerModelParts keybinds ==========#
-skin_toggle_cape: GLFW_KEY_UNKNOWN
-skin_toggle_hat: GLFW_KEY_UNKNOWN
-skin_toggle_jacket: GLFW_KEY_UNKNOWN
-skin_toggle_left_pants_leg: GLFW_KEY_UNKNOWN
-skin_toggle_right_pants_leg: GLFW_KEY_UNKNOWN
-skin_toggle_left_sleeve: GLFW_KEY_UNKNOWN
-skin_toggle_right_sleeve: GLFW_KEY_UNKNOWN
-
-
 #========== Keybinds for chat/commands ==========#
 chat_msg_meow: meow :3
 chat_msg_rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost
 
 chat_msg_keybind_meow: GLFW_KEY_UNKNOWN
 chat_msg_keybind_rc: GLFW_KEY_UNKNOWN
+
+
+#========== Bot communication keybinds ==========#
+# TODO: maybe rename as "my_id" and "my_token"?
+client_id: 1
+client_key: some_unique_key
+
+# List of bot messages
+bot_msg_mainbase: 36b128f9-c502-4879-928e-0b9637dcd65e
+
+# Keybinds for sending configured messages
+bot_msg_keybind_mainbase: KEY_J

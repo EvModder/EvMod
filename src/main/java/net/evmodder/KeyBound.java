@@ -1,66 +1,60 @@
 package net.evmodder;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.UUID;
-import org.lwjgl.glfw.GLFW;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.util.InputUtil.Type;
 import net.minecraft.entity.player.PlayerModelPart;
 
 // Export jar from Terminal:
 // gradle build --refresh-dependencies
 public class KeyBound implements ClientModInitializer{
-	//public static final Config CONFIG = Config.createAndLoad();
+	//TODO:
+	// Reference/depend on https://github.com/Siphalor/amecs-api
 
 	// Reference variables
 	public static final String MOD_ID = "keybound";
 	public static final String MOD_NAME = "KeyBound";
 	public static final String MOD_VERSION = "@MOD_VERSION@";
+	private final String SKIN_LAYER_CATEGORY = "category."+MOD_ID+".skin_toggles";
+	private final String CHAT_MSG_CATEGORY = "category."+MOD_ID+".chat_messages";
+	private final String BOT_MSG_CATEGORY = "category."+MOD_ID+".bot_messages";
+
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
 	private static HashMap<String, String> config;
 
-	private record SkinLayerKeybind(KeyBinding keybind, ArrayList<PlayerModelPart> parts){}
-	private record ChatMsgKeybind(KeyBinding keybind, String message){}
-	private record BotMsgKeybind(KeyBinding keybind, UUID message){}
-	private List<SkinLayerKeybind> skinKeybinds;
-	private List<ChatMsgKeybind> chatMsgKeybinds;
-	private List<BotMsgKeybind> botMsgKeybinds;
 	private int CLIENT_ID;
 	private String CLIENT_KEY;
 
-	private void loadSkinKeybind(final HashMap<Integer, ArrayList<PlayerModelPart>> skinKeybindLookup, final String key){
-		//ASSERT key.startsWith("skin_toggle_")
-		try{
-			final int glfwKey = GLFW.class.getField("GLFW_"+config.get(key).toUpperCase()).getInt(null);
-			final PlayerModelPart part = PlayerModelPart.valueOf(key.substring("skin_toggle_".length()).toUpperCase());
-			final String translationCategoryKey = "category."+MOD_ID+".skin_toggles";
-			final String translationKey = "key."+MOD_ID+"."+key.toLowerCase();
-
-			if(skinKeybindLookup.containsKey(glfwKey)){
-				skinKeybindLookup.get(glfwKey).add(part);
-			}
-			else{
-				final ArrayList<PlayerModelPart> parts = new ArrayList<>(List.of(part));
-				skinKeybinds.add(new SkinLayerKeybind(
-						KeyBindingHelper.registerKeyBinding(new KeyBinding(translationKey, InputUtil.Type.KEYSYM, glfwKey, translationCategoryKey)),
-						parts
-				));
-				skinKeybindLookup.put(glfwKey, parts);
-			}
+	private static class EvKeyBinding extends KeyBinding{
+		public EvKeyBinding(String translationKey, Type type, int code, String category){super(translationKey, type, code, category);}
+		@Override public void setPressed(boolean pressed){
+			super.setPressed(pressed);
+			if(pressed) onPressed();
+			else onReleased();
 		}
-		catch(IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e){
-			e.printStackTrace();
-			LOGGER.info(e.getMessage());
-		}
+		public void onPressed(){}
+		public void onReleased(){}
 	}
+
+	private void registerSkinLayerKeybinds(){
+		Arrays.stream(PlayerModelPart.values())
+		.map(part -> new EvKeyBinding("key."+MOD_ID+".skin_toggle_"+part.name().toLowerCase(), InputUtil.Type.KEYSYM, -1, SKIN_LAYER_CATEGORY){
+			@Override public void onPressed(){
+				final MinecraftClient client = MinecraftClient.getInstance();
+				client.options.togglePlayerModelPart(part, !client.options.isPlayerModelPartEnabled(part));
+			}
+		}).forEach(KeyBindingHelper::registerKeyBinding);
+	}
+
 	private void loadChatMessageKeybind(final HashMap<String, String> chatMsgs, String key){
 		//ASSERT key.startsWith("chat_msg_keybind_")
 		final String msg_name = key.substring("chat_msg_keybind_".length());
@@ -69,20 +63,25 @@ public class KeyBound implements ClientModInitializer{
 			LOGGER.error("Unknown chat message '"+msg_name+"', please specify it in the config somewhere *before* the keybind");
 			return;
 		}
-		try{
-			final int glfwKey = GLFW.class.getField("GLFW_"+config.get(key).toUpperCase()).getInt(null);
-			final String translationCategoryKey = "category."+MOD_ID+".chat_messages";
-			final String translationKey = "key."+MOD_ID+".chat_msg_"+msg_name;
-			chatMsgKeybinds.add(new ChatMsgKeybind(
-					KeyBindingHelper.registerKeyBinding(new KeyBinding(translationKey, InputUtil.Type.KEYSYM, glfwKey, translationCategoryKey)),
-					message
-			));
-			//LOGGER.info("added chat msg keybind "+config.get(key).toUpperCase()+" for: "+message);
+		final String translationKey = "key."+MOD_ID+".chat_msg_"+msg_name;
+		if(message.charAt(0) == '/'){
+			final String command = message.substring(1);
+			KeyBindingHelper.registerKeyBinding(new EvKeyBinding(translationKey, InputUtil.Type.KEYSYM, -1, CHAT_MSG_CATEGORY){
+				@Override public void onPressed(){
+					MinecraftClient instance = MinecraftClient.getInstance();
+					instance.player.networkHandler.sendChatCommand(command);
+				}
+			});
 		}
-		catch(IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e){
-			e.printStackTrace();
-			LOGGER.info(e.getMessage());
+		else{
+			KeyBindingHelper.registerKeyBinding(new EvKeyBinding(translationKey, InputUtil.Type.KEYSYM, -1, CHAT_MSG_CATEGORY){
+				@Override public void onPressed(){
+					MinecraftClient instance = MinecraftClient.getInstance();
+					instance.player.networkHandler.sendChatMessage(message);
+				}
+			});
 		}
+		//LOGGER.info("added chat msg keybind "+config.get(key).toUpperCase()+" for: "+message);
 	}
 	private void loadBotMessageKeybind(final HashMap<String, UUID> botMsgs, String key){
 		//ASSERT key.startsWith("bot_msg_keybind_")
@@ -92,20 +91,14 @@ public class KeyBound implements ClientModInitializer{
 			LOGGER.error("Unknown bot message '"+msg_name+"', please specify it in the config somewhere *before* the keybind");
 			return;
 		}
-		try{
-			final int glfwKey = GLFW.class.getField("GLFW_"+config.get(key).toUpperCase()).getInt(null);
-			final String translationCategoryKey = "category."+MOD_ID+".bot_messages";
-			final String translationKey = "key."+MOD_ID+".bot_msg_"+msg_name;
-			botMsgKeybinds.add(new BotMsgKeybind(
-					KeyBindingHelper.registerKeyBinding(new KeyBinding(translationKey, InputUtil.Type.KEYSYM, glfwKey, translationCategoryKey)),
-					message
-			));
-			//LOGGER.info("added bot msg keybind "+config.get(key).toUpperCase()+" for: "+message);
-		}
-		catch(IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e){
-			e.printStackTrace();
-			LOGGER.info(e.getMessage());
-		}
+		final String translationKey = "key."+MOD_ID+".bot_msg_"+msg_name;
+		KeyBindingHelper.registerKeyBinding(new EvKeyBinding(translationKey, InputUtil.Type.KEYSYM, -1, BOT_MSG_CATEGORY){
+			@Override public void onPressed(){
+				MinecraftClient instance = MinecraftClient.getInstance();
+				sendBotMessage(instance.player.getUuid(), message);
+			}
+		});
+		//LOGGER.info("added bot msg keybind "+config.get(key).toUpperCase()+" for: "+message);
 	}
 
 	private void loadConfig(){
@@ -120,11 +113,6 @@ public class KeyBound implements ClientModInitializer{
 			config.put(key, value);
 		}
 
-		skinKeybinds = new ArrayList<>();
-		chatMsgKeybinds = new ArrayList<>();
-		botMsgKeybinds = new ArrayList<>();
-
-		final HashMap<Integer, ArrayList<PlayerModelPart>> skinKeybindLookup = new HashMap<>();
 		final HashMap<String, String> chatMsgLookup = new HashMap<>();
 		final HashMap<String, UUID> botMsgLookup = new HashMap<>();
 		for(String key : config.keySet()){
@@ -136,10 +124,7 @@ public class KeyBound implements ClientModInitializer{
 			}
 		}
 		for(String key : config.keySet()){
-			if(key.startsWith("skin_toggle_")){
-				loadSkinKeybind(skinKeybindLookup, key);
-			}
-			else if(key.startsWith("chat_msg_keybind_")){
+			if(key.startsWith("chat_msg_keybind_")){
 				loadChatMessageKeybind(chatMsgLookup, key);
 			}
 			else if(key.startsWith("bot_msg_keybind_")){
@@ -175,54 +160,7 @@ public class KeyBound implements ClientModInitializer{
 
 	@Override
 	public void onInitializeClient(){
+		registerSkinLayerKeybinds();
 		loadConfig();
-		//============================== Listen for key presses ==============================//
-		ClientTickEvents.END_CLIENT_TICK.register(client->{
-			for(SkinLayerKeybind data : skinKeybinds){
-				if(data.keybind.wasPressed()){
-					for(PlayerModelPart part : data.parts){
-						//client.player.sendMessage(net.minecraft.text.Text.literal("Key was pressed! part:"+part.name().toLowerCase()), false);
-						client.options.togglePlayerModelPart(part, !client.options.isPlayerModelPartEnabled(part));
-					}
-				}
-			}
-			for(ChatMsgKeybind data : chatMsgKeybinds){
-				if(data.keybind.wasPressed()){
-					if(data.message.charAt(0) == '/'){
-						//client.player.sendMessage(net.minecraft.text.Text.literal("cmd"), false);
-						client.player.networkHandler.sendChatCommand(data.message.substring(1));
-					}
-					else{
-						//client.player.sendMessage(net.minecraft.text.Text.literal("msg"), false);
-						client.player.networkHandler.sendChatMessage(data.message);
-					}
-				}
-			}
-			for(BotMsgKeybind data : botMsgKeybinds){
-				if(data.keybind.wasPressed()){
-					//client.player.sendMessage(net.minecraft.text.Text.literal("Key was pressed! bot message:"+data.message), false);
-					sendBotMessage(client.player.getUuid(), data.message);
-				}
-			}
-//			while(keybindPearl != null && keybindPearl.wasPressed()){
-//				sendEpearlPacket(client.player.getUuid());
-//			}
-//			if(stickyBinding.isPressed()){
-//				client.player.sendMessage(Text.literal("Sticky Key was pressed!"), false);
-//			}
-		});
 	}
-
-//	private static KeyBinding kb_Cape = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-//	"key.keybound.toggle_cape", // The translation key of the keybinding's name.
-//	InputUtil.Type.KEYSYM, // The type of the keybinding, KEYSYM for keyboard, MOUSE for mouse.
-//	GLFW.GLFW_KEY_I, // The keycode of the key.
-//	"category.keybound.skin_toggles")); // The translation key of the keybinding's category.
-//
-//	// Behaves like Vanilla's Sneak and Sprint when set to 'Toggle'
-//	private static KeyBinding stickyBinding = KeyBindingHelper.registerKeyBinding(new StickyKeyBinding(
-//				"key.keybound.somethingsomething",
-//				GLFW.GLFW_KEY_H,
-//				"keybound.category.somethingsomething",
-//				()->true));
 }
