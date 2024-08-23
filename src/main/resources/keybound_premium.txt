@@ -1,7 +1,6 @@
 # Config file for KeyBound
 
 #========== Bot communication keybinds ==========#
-# TODO: maybe rename as "my_id" and "my_token"?
 client_id: 1
 client_key: some_unique_key
 
@@ -12,15 +11,13 @@ bot_msg_c: 690406c8-53eb-482c-8309-96789e98d07a
 bot_msg_mainbase: 36b128f9-c502-4879-928e-0b9637dcd65e
 
 # Keybinds for sending configured messages
-bot_msg_keybind_a: GLFW_KEY_UNKNOWN
-bot_msg_keybind_b: GLFW_KEY_UNKNOWN
-bot_msg_keybind_c: GLFW_KEY_UNKNOWN
-bot_msg_keybind_mainbase: GLFW_KEY_UNKNOWN
+bot_msg_keybind_a:
+bot_msg_keybind_b:
+bot_msg_keybind_c:
+bot_msg_keybind_mainbase:
 
 
 #========== Keybinds for chat/commands ==========#
+# chat_msg_*
 chat_msg_meow: meow :3
 chat_msg_rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost
-
-chat_msg_keybind_meow: GLFW_KEY_UNKNOWN
-chat_msg_keybind_rc: GLFW_KEY_UNKNOWN
