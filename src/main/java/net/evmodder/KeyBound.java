@@ -69,25 +69,20 @@ public class KeyBound implements ClientModInitializer{
 	private void registerColorScrollKeybinds(){
 		Stream.of(true, false).map(k -> new EvKeyBinding("key."+MOD_ID+".color_scroll_"+(k ? "up" : "down"), InputUtil.Type.KEYSYM, -1, COLOR_SCROLL_CATEGORY){
 			@Override public void onPressed(){
-				LOGGER.info("color scroll key pressed for: "+k);
 				final MinecraftClient client = MinecraftClient.getInstance();
 				PlayerInventory inventory = client.player.getInventory();
 				if(!PlayerInventory.isValidHotbarIndex(inventory.selectedSlot)) return;
-				LOGGER.info("valid hotbar index");
 				ItemStack item = inventory.getMainHandStack();
 				Identifier id = Registries.ITEM.getId(item.getItem());
 				if(!ItemStack.areItemsAndComponentsEqual(item, new ItemStack(Registries.ITEM.get(id)))) return;  // don't scroll if has custom NBT
-				LOGGER.info("no custom components");
 				String path = id.getPath();
 				int i = 0;
 				while(!path.contains(colors[i]+"_") && ++i < colors.length);
 				if(i == colors.length) return;  // color not found
-				LOGGER.info("color found");
-				if(!coloredItems.contains(id.getNamespace()+":"+path.replaceFirst(colors[i], "*"))) return; // not a supported item (eg: "red_sandstone")
-				LOGGER.info("item is supported");
+				if(!coloredItems.contains(id.getNamespace()+":"+path.replace(colors[i], "*"))) return; // not a supported item (eg: "red_sandstone")
 
 				int new_i = k ? (i == colors.length-1 ? 0 : i+1) : (i == 0 ? colors.length-1 : i-1);
-				id = Identifier.of(id.getNamespace(), id.getPath().replaceFirst(colors[i], colors[new_i]));
+				id = Identifier.of(id.getNamespace(), id.getPath().replace(colors[i], colors[new_i]));
 				if(client.player.isInCreativeMode()) inventory.setStack(inventory.selectedSlot, new ItemStack(Registries.ITEM.get(id)));
 				else{
 					LOGGER.info("not creative...");
@@ -149,8 +144,9 @@ public class KeyBound implements ClientModInitializer{
 		coloredItems = Registries.ITEM.getIds().stream()
 			.filter(id -> id.getPath().contains(colors[0]))
 			.filter(id -> Arrays.stream(subArr).allMatch(
-				c -> Registries.ITEM.containsId(Identifier.of(id.getNamespace(), id.getPath().replaceFirst(colors[0], c)))
-			)).map(id -> id.getNamespace()+":"+id.getPath().replaceFirst(colors[0], "*"))
+				c -> Registries.ITEM.containsId(Identifier.of(id.getNamespace(), id.getPath().replace(colors[0], c)))
+			))
+			.map(id -> id.getNamespace()+":"+id.getPath().replace(colors[0], "*"))
 			.collect(Collectors.toSet());
 	}
 
@@ -197,6 +193,8 @@ public class KeyBound implements ClientModInitializer{
 			else if(key.startsWith("bot_msg_keybind_")){
 				loadBotMessageKeybind(botMsgLookup, key);
 			}
+			else if(key.startsWith("chat_msg_"));  // These are handled above
+			else if(key.startsWith("bot_msg_"));  //
 			else switch(key){
 				case "client_id":
 					CLIENT_ID = Integer.parseInt(config.get(key));
@@ -205,10 +203,10 @@ public class KeyBound implements ClientModInitializer{
 					CLIENT_KEY = config.get(key);
 					break;
 				case "color_scroll_order":
-					colors = config.get(key).split("\\s*,\\s*");
-					LOGGER.info("loaded supported colors: "+String.join(", ", colors));
+					colors = config.get(key).substring(1, config.get(key).length()-1).split("\\s*,\\s*");
+					LOGGER.fine("loaded supported colors: "+String.join(", ", colors));
 					loadColoredItems();
-					LOGGER.info("loaded supported items: "+String.join(", ", coloredItems));
+					LOGGER.fine("loaded supported items: "+String.join(", ", coloredItems));
 					registerColorScrollKeybinds();
 					break;
 				default:

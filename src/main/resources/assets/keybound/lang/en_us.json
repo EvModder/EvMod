@@ -8,6 +8,10 @@
 	"key.keybound.skin_toggle_left_sleeve": "Toggle left sleeve",
 	"key.keybound.skin_toggle_right_sleeve": "Toggle right sleeve",
 
+	category.keybound.color_scroll": "Hotbar color scrolling",
+	"key.keybound.color_scroll.up": "Next color",
+	"key.keybound.color_scroll.down": "Last color",
+
 	"category.keybound.bot_messages": "Send messages to the bot server",
 	"key.keybound.bot_msg_mainbase": "Main base stasis pearl",
 
