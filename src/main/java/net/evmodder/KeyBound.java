@@ -3,10 +3,12 @@ package net.evmodder;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.fabricmc.api.ClientModInitializer;
@@ -45,6 +47,11 @@ public class KeyBound implements ClientModInitializer{
 	private String[] colors;
 	private Set<String> coloredItems; // replace * with color_name
 
+	private List<String[]> variantLists;
+	// {*_wool"->[white,red,...], *_coral_fan->[tube,brain,...]}
+	// replace * with color_name
+	private HashMap<String, String[]> scrollableItems;
+
 	private static class EvKeyBinding extends KeyBinding{
 		public EvKeyBinding(String translationKey, Type type, int code, String category){super(translationKey, type, code, category);}
 		@Override public void setPressed(boolean pressed){
@@ -72,22 +79,51 @@ public class KeyBound implements ClientModInitializer{
 				final MinecraftClient client = MinecraftClient.getInstance();
 				PlayerInventory inventory = client.player.getInventory();
 				if(!PlayerInventory.isValidHotbarIndex(inventory.selectedSlot)) return;
-				ItemStack item = inventory.getMainHandStack();
-				Identifier id = Registries.ITEM.getId(item.getItem());
-				if(!ItemStack.areItemsAndComponentsEqual(item, new ItemStack(Registries.ITEM.get(id)))) return;  // don't scroll if has custom NBT
+				ItemStack is = inventory.getMainHandStack();
+				Identifier id = Registries.ITEM.getId(is.getItem());
+				if(!ItemStack.areItemsAndComponentsEqual(is, new ItemStack(Registries.ITEM.get(id)))) return;  // don't scroll if has custom NBT
 				String path = id.getPath();
+				String[] colors = scrollableItems.get(id.toString());//e.g., "rail" -> [,powered,detector,activator]"
 				int i = 0;
-				while(!path.contains(colors[i]+"_") && ++i < colors.length);
-				if(i == colors.length) return;  // color not found
-				if(!coloredItems.contains(id.getNamespace()+":"+path.replace(colors[i], "*"))) return; // not a supported item (eg: "red_sandstone")
+				if(colors == null) for(String[] cs : variantLists){
+					for(i=0; !path.contains(cs[i]+"_") && ++i < cs.length;);
+					if(i != cs.length && scrollableItems.get(id.getNamespace()+":"+path.replace(cs[i], "*")) == cs){
+						colors = cs; break;
+					}
+				}
+				if(colors == null) return; // not a supported item (eg: "red_sandstone")
 
 				int new_i = k ? (i == colors.length-1 ? 0 : i+1) : (i == 0 ? colors.length-1 : i-1);
 				id = Identifier.of(id.getNamespace(), id.getPath().replace(colors[i], colors[new_i]));
-				if(client.player.isInCreativeMode()) inventory.setStack(inventory.selectedSlot, new ItemStack(Registries.ITEM.get(id)));
-				else{
-					LOGGER.info("not creative...");
-					inventory.getSwappableHotbarSlot();
-					//TODO: find next color in the cycle available from inventory
+				if(client.player.isInCreativeMode()){
+					inventory.setStack(inventory.selectedSlot, new ItemStack(Registries.ITEM.get(id), is.getCount()));
+				}
+				else{//  survival mode
+					do{
+						int j = 0;
+						for(; j<inventory.main.size(); ++j){
+							ItemStack jis = inventory.main.get(j);
+							if(jis.isEmpty()) continue;
+							Identifier jid = Registries.ITEM.getId(jis.getItem());
+							if(!jid.equals(id)) continue;
+							if(!ItemStack.areItemsAndComponentsEqual(jis, new ItemStack(Registries.ITEM.get(jid)))) continue;
+							//found an item to use
+							break;
+						}
+						if(j != inventory.main.size()){
+							//use the item (change selected hotbar slot or swap with main inv)
+							if(PlayerInventory.isValidHotbarIndex(j)) inventory.selectedSlot = j;
+							else{
+								inventory.main.set(inventory.selectedSlot, inventory.main.get(j));
+								inventory.main.set(j, is);
+							}
+							LOGGER.error("did swap");
+							break;
+						}
+						new_i = k ? (new_i == colors.length-1 ? 0 : new_i+1) : (new_i == 0 ? colors.length-1 : new_i-1);
+						id = Identifier.of(id.getNamespace(), id.getPath().replace(colors[i], colors[new_i]));
+					}while(new_i != i);
+					LOGGER.error("full wrap-around: "+i);
 				}
 			}
 		}).forEach(KeyBindingHelper::registerKeyBinding);
@@ -139,26 +175,39 @@ public class KeyBound implements ClientModInitializer{
 		//LOGGER.info("added bot msg keybind "+config.get(key).toUpperCase()+" for: "+message);
 	}
 
-	private void loadColoredItems(){
-		final String[] subArr = Arrays.copyOfRange(colors, 1, colors.length);
-		coloredItems = Registries.ITEM.getIds().stream()
-			.filter(id -> id.getPath().contains(colors[0]))
-			.filter(id -> Arrays.stream(subArr).allMatch(
-				c -> Registries.ITEM.containsId(Identifier.of(id.getNamespace(), id.getPath().replace(colors[0], c)))
-			))
-			.map(id -> id.getNamespace()+":"+id.getPath().replace(colors[0], "*"))
-			.collect(Collectors.toSet());
+	private void loadColoredItems(String[] colors){
+		if(colors.length < 2){
+			LOGGER.warn("Scroll list is too short: "+colors.toString());
+			return;
+		}
+		final boolean hasEmpty = colors[0].isEmpty();
+		final String colorA = hasEmpty ? colors[1] : colors[0];
+		final String[] colorsB = Arrays.copyOfRange(colors, hasEmpty? 2 : 1, colors.length);
+
+		Registries.ITEM.getIds().stream()
+			.filter(id -> id.getPath().contains(colorA))
+			.filter(id -> (!hasEmpty || Registries.ITEM.containsId(Identifier.of(id.getNamespace(), id.getPath().replace(colorA+"_", "")))) &&
+				Arrays.stream(colorsB).allMatch(
+					c -> Registries.ITEM.containsId(Identifier.of(id.getNamespace(), id.getPath().replace(colorA, c)))
+				)
+			)
+			.map(id -> id.getNamespace()+":"+id.getPath().replace(colorA, "*"))
+			.forEach(name -> {scrollableItems.put(name, colors);
+				if(hasEmpty) scrollableItems.put(name.replace("*_", ""), colors);//TODO: icky, pls fix
+			});
 	}
 
 	private void loadConfig(){
 		config = new HashMap<>();
 		final String configContents = FileIO.loadFile("keybound.txt", getClass().getResourceAsStream("/keybound.txt"));
 		String listKey = null, listValue = null;
+		int listDepth = 0;
 		for(String line : configContents.split("\\r?\\n")){
 			if(listKey != null){
 				line = line.trim();
 				listValue += line;
-				if(line.charAt(line.length()-1) == ']'){
+				listDepth += StringUtils.countMatches(line, '[') - StringUtils.countMatches(line, ']');
+				if(listDepth == 0 && line.charAt(line.length()-1) == ']'){
 					config.put(listKey, listValue);
 					listKey = null;
 				}
@@ -170,6 +219,7 @@ public class KeyBound implements ClientModInitializer{
 			final String value = line.substring(sep+1).trim();
 			if(key.isEmpty() || value.isEmpty()) continue;
 			if(value.charAt(0) == '[' && value.charAt(value.length()-1) != ']'){
+				listDepth = StringUtils.countMatches(value, '[') - StringUtils.countMatches(value, ']');
 				listKey = key; listValue = value;
 			}
 			config.put(key, value);
@@ -202,11 +252,11 @@ public class KeyBound implements ClientModInitializer{
 				case "client_key":
 					CLIENT_KEY = config.get(key);
 					break;
-				case "color_scroll_order":
-					colors = config.get(key).substring(1, config.get(key).length()-1).split("\\s*,\\s*");
-					LOGGER.fine("loaded supported colors: "+String.join(", ", colors));
-					loadColoredItems();
-					LOGGER.fine("loaded supported items: "+String.join(", ", coloredItems));
+				case "scroll_order":
+					String[] colors = config.get(key).substring(1, config.get(key).length()-1).split("\\s*,\\s*");
+					LOGGER.debug("loaded supported colors: "+String.join(", ", colors));
+					loadColoredItems(colors);
+					LOGGER.debug("loaded supported items: "+String.join(", ", coloredItems));
 					registerColorScrollKeybinds();
 					break;
 				default:
