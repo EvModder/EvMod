@@ -1,5 +1,8 @@
 # Config file for KeyBound
 
+#========== Added Visuals ==========#
+repaircost_tooltip: true
+enderpearl_owners: true
 
 #========== PlayerModelParts keybinds ==========#
 skin_toggle_cape: KEY_COMMA

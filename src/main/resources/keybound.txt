@@ -1,11 +1,16 @@
 # Config file for KeyBound
 
-#========== Color ordering ==========#
+#========== Added Visuals ==========#
+repaircost_tooltip: true
+enderpearl_owners: true
+
+#========== Hotbar variant scrolling ==========#
+
+# Empty variants (if they exist) must come first in the list
 scroll_order: [
-	[white, light_gray, gray, black, brown, red, orange, yellow, lime,
-		green, cyan, light_blue, blue, purple, magenta, pink],
-#	[, exposed, weathered, oxidized],
-#	[,powered,detector,activator]
+	[white, light_gray, gray, black, brown, red, orange, yellow, lime, green, cyan, light_blue, blue, purple, magenta, pink],
+	[, exposed, weathered, oxidized],
+	[,powered,detector,activator],
 	[tube, brain, bubble, fire, horn],
 	[oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry, bamboo, crimson, warped]
 ]

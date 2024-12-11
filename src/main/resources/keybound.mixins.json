@@ -4,8 +4,12 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"BoundKeyAccessor",
+		"TimesPressedAccessor",
 		"KeybindingMixin",
-		"TimesPressedAccessor"
+		"InGameHudMixin",
+		"InGameHudAccessor",
+		"EntityRendererMixin",
+		"ProjectileEntityAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1

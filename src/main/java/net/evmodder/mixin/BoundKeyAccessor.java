@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 // Author: fzzyhmstrs
 @Mixin(KeyBinding.class)
-public interface BoundKeyAccessor {
+public interface BoundKeyAccessor{
 	@Accessor(value="boundKey")
 	InputUtil.Key getBoundKey();
 }

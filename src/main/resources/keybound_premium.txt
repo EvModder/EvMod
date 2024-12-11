@@ -1,5 +1,9 @@
 # Config file for KeyBound
 
+#========== Added Visuals ==========#
+repaircost_tooltip: true
+enderpearl_owners: true
+
 #========== Bot communication keybinds ==========#
 client_id: 1
 client_key: some_unique_key

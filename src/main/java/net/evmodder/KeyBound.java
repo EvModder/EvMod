@@ -1,17 +1,17 @@
 package net.evmodder;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
@@ -25,6 +25,7 @@ import net.minecraft.registry.Registries;
 
 // Export jar from Terminal:
 // gradle build --refresh-dependencies
+// Fix broken eclipse build paths after updating loom,fabric-api,version in configs: gradle eclipse
 public class KeyBound implements ClientModInitializer{
 	//TODO:
 	// Reference/depend on https://github.com/Siphalor/amecs-api
@@ -44,12 +45,9 @@ public class KeyBound implements ClientModInitializer{
 	private int CLIENT_ID;
 	private String CLIENT_KEY;
 
-	private String[] colors;
-	private Set<String> coloredItems; // replace * with color_name
-
 	private List<String[]> variantLists;
-	// {*_wool"->[white,red,...], *_coral_fan->[tube,brain,...]}
-	// replace * with color_name
+	// {*_wool"->[white,red,...], *_coral_fan->[tube,brain,...], rail->[rail,powered_rail,...], *_rail->[rail,powered_rail,...]}
+	// replace * with variant_name
 	private HashMap<String, String[]> scrollableItems;
 
 	private static class EvKeyBinding extends KeyBinding{
@@ -175,26 +173,25 @@ public class KeyBound implements ClientModInitializer{
 		//LOGGER.info("added bot msg keybind "+config.get(key).toUpperCase()+" for: "+message);
 	}
 
-	private void loadColoredItems(String[] colors){
+	private boolean loadScrollableItems(String[] colors){
 		if(colors.length < 2){
 			LOGGER.warn("Scroll list is too short: "+colors.toString());
-			return;
+			return false;
 		}
-		final boolean hasEmpty = colors[0].isEmpty();
+		final boolean hasEmpty = colors[0].isEmpty();//TODO: icky
 		final String colorA = hasEmpty ? colors[1] : colors[0];
 		final String[] colorsB = Arrays.copyOfRange(colors, hasEmpty? 2 : 1, colors.length);
 
-		Registries.ITEM.getIds().stream()
-			.filter(id -> id.getPath().contains(colorA))
-			.filter(id -> (!hasEmpty || Registries.ITEM.containsId(Identifier.of(id.getNamespace(), id.getPath().replace(colorA+"_", "")))) &&
-				Arrays.stream(colorsB).allMatch(
-					c -> Registries.ITEM.containsId(Identifier.of(id.getNamespace(), id.getPath().replace(colorA, c)))
-				)
-			)
-			.map(id -> id.getNamespace()+":"+id.getPath().replace(colorA, "*"))
-			.forEach(name -> {scrollableItems.put(name, colors);
-				if(hasEmpty) scrollableItems.put(name.replace("*_", ""), colors);//TODO: icky, pls fix
-			});
+		Stream<Identifier> s = Registries.ITEM.getIds().stream().filter(id -> id.getPath().contains(colorA));
+		if(hasEmpty) s = s.filter(id -> Registries.ITEM.containsId(Identifier.of(id.getNamespace(), id.getPath().replace(colorA+"_", ""))));//TODO: icky
+		s = s.filter(id -> Arrays.stream(colorsB).allMatch(b -> Registries.ITEM.containsId(Identifier.of(id.getNamespace(), id.getPath().replace(colorA, b)))));
+		List<Identifier> ids = s.toList();
+		if(ids.isEmpty()) return false;
+		ids.stream().map(id -> id.getNamespace()+":"+id.getPath().replace(colorA, "*")).forEach(name -> {
+			scrollableItems.put(name, colors);
+			if(hasEmpty) scrollableItems.put(name.replace("*_", ""), colors);//TODO: icky
+		});
+		return true;
 	}
 
 	private void loadConfig(){
@@ -252,12 +249,22 @@ public class KeyBound implements ClientModInitializer{
 				case "client_key":
 					CLIENT_KEY = config.get(key);
 					break;
+				case "repaircost_tooltip":
+					if(!config.get(key).equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC);
+					break;
 				case "scroll_order":
-					String[] colors = config.get(key).substring(1, config.get(key).length()-1).split("\\s*,\\s*");
-					LOGGER.debug("loaded supported colors: "+String.join(", ", colors));
-					loadColoredItems(colors);
-					LOGGER.debug("loaded supported items: "+String.join(", ", coloredItems));
-					registerColorScrollKeybinds();
+					final String listOfListsStr = config.get(key).replaceAll("\\s","");
+					final String[] listOfListStrs = listOfListsStr.substring(2, listOfListsStr.length()-2).split("\\],\\[");
+					variantLists = new ArrayList<>();
+					scrollableItems = new HashMap<>();
+					for(String listStr : listOfListStrs){
+						final String[] variants = listStr.split(",");
+						if(loadScrollableItems(variants)) variantLists.add(variants);
+						else LOGGER.warn("Could not find items for the given scroll list: ["+listStr+"]");
+					}
+					LOGGER.debug("Defined scrollable variants: ["+String.join("], [", variantLists.stream().map(l -> String.join(",", l)).toList())+"]");
+					LOGGER.debug("Found matching items: "+String.join(", ", scrollableItems.keySet()));
+					if(!scrollableItems.isEmpty()) registerColorScrollKeybinds();
 					break;
 				default:
 					LOGGER.warn("Unrecognized config setting: "+key);
