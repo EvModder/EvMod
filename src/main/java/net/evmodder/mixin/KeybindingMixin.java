@@ -19,22 +19,12 @@ public abstract class KeybindingMixin {
 	@Shadow private static Map<InputUtil.Key, KeyBinding> KEY_TO_BINDINGS;
 	@Shadow private InputUtil.Key boundKey;
 
-//	@Inject(method="onKeyPressed", at=@At(value="HEAD"))
-//	private static void onKeyPressedFixed(InputUtil.Key key, CallbackInfo ci, @Local KeyBinding original){
-//		KeybindFixer.onKeyPressed(key, original, KEY_TO_BINDINGS.get(key));
-//		ci.cancel();
-//	}
 	@Inject(method="onKeyPressed", at=@At(value="HEAD"), cancellable=true)
 	private static void onKeyPressedFixed(InputUtil.Key key, CallbackInfo ci){
 		KeybindFixer.onKeyPressed(key);
 		ci.cancel();
 	}
 
-//	@Inject(method="setKeyPressed", at=@At(value="HEAD"))
-//	private static void setKeyPressedFixed(InputUtil.Key key, boolean pressed, CallbackInfo ci, @Local KeyBinding original){
-//		KeybindFixer.setKeyPressed(key, pressed, original, KEY_TO_BINDINGS.get(key));
-//		ci.cancel();
-//	}
 	@Inject(method="setKeyPressed", at=@At(value="HEAD"), cancellable=true)
 	private static void setKeyPressedFixed(InputUtil.Key key, boolean pressed, CallbackInfo ci){
 		KeybindFixer.setKeyPressed(key, pressed);

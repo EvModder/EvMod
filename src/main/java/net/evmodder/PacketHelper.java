@@ -57,10 +57,10 @@ interface PacketHelper{
 		}
 	}
 
-	public static boolean sendPacket(byte[] msg){
+	public static boolean sendPacket(InetAddress addr, int port, byte[] msg){
 		try{
 			DatagramSocket socket = new DatagramSocket();
-			socket.send(new DatagramPacket(msg, msg.length, InetAddress.getByName("altcraft.net"), 14441));
+			socket.send(new DatagramPacket(msg, msg.length, addr, port));
 			socket.close();
 			//KeyBound.LOGGER.info("packet was sent!:\n"+new String(msg)+"\n"+msg.toString());
 			return true;

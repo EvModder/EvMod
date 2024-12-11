@@ -9,19 +9,19 @@ client_id: 1
 client_key: some_unique_key
 
 # List of bot messages
-bot_msg_a: 27aa6a20-4a0d-4779-bcd5-dce162dd7467
-bot_msg_b: 6f7fa766-4fe6-42fe-b589-22e4ec9a077c
-bot_msg_c: 690406c8-53eb-482c-8309-96789e98d07a
-bot_msg_mainbase: 36b128f9-c502-4879-928e-0b9637dcd65e
+bot_msg.uuid.a: 27aa6a20-4a0d-4779-bcd5-dce162dd7467
+bot_msg.uuid.b: 6f7fa766-4fe6-42fe-b589-22e4ec9a077c
+bot_msg.uuid.c: 690406c8-53eb-482c-8309-96789e98d07a
+bot_msg.uuid.mainbase: 36b128f9-c502-4879-928e-0b9637dcd65e
 
 # Keybinds for sending configured messages
-bot_msg_keybind_a:
-bot_msg_keybind_b:
-bot_msg_keybind_c:
-bot_msg_keybind_mainbase:
+bot_msg.keybind.a:
+bot_msg.keybind.b:
+bot_msg.keybind.c:
+bot_msg.keybind.mainbase:
 
 
 #========== Keybinds for chat/commands ==========#
-# chat_msg_*
-chat_msg_meow: meow :3
-chat_msg_rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost
+# chat_msg.string.*
+chat_msg.string.meow: meow :3
+chat_msg.string.rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost

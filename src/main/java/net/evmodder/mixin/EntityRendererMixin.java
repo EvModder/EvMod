@@ -13,7 +13,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.mojang.authlib.GameProfile;
-import net.evmodder.KeyBound;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -25,7 +24,6 @@ import net.minecraft.entity.EntityAttachmentType;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.util.Colors;
-import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Vec3d;
 
 @Mixin(EntityRenderer.class)
@@ -62,8 +60,6 @@ public abstract class EntityRendererMixin{
 		if(entity instanceof ProjectileEntity == false) return;
 		final ProjectileEntity pe = (ProjectileEntity)entity;
 		if(pe.getType() != EntityType.ENDER_PEARL) return;
-		KeyBound.LOGGER.warn("target entity:" +(client.targetedEntity != null ? client.targetedEntity.getUuidAsString() : "null"));
-		KeyBound.LOGGER.warn("crosshair target:" +client.crosshairTarget.getType().name());
 		if(client.crosshairTarget.squaredDistanceTo(entity) > 1d) return;
 		final UUID uuid = ((ProjectileEntityAccessor)pe).getOwnerUUID();
 		final String name = usernameCache.getUnchecked(uuid);
