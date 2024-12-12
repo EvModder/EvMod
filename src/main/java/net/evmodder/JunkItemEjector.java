@@ -9,7 +9,6 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ItemEnchantmentsComponent;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantments;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.entry.RegistryEntry;
@@ -44,10 +43,10 @@ final class JunkItemEjector{
 			//========== End loot section ========================================
 			case "diamond_sword": case "diamond_pickaxe": case "diamond_shovel":
 			case "diamond_helmet": case "diamond_chestplate": case "diamond_leggings": case "diamond_boots":
-				KeyBound.LOGGER.info("eeee1:"+Enchantments.MENDING.getRegistry().toString());
-				KeyBound.LOGGER.info("eeee2:"+Enchantments.MENDING.getValue().toString());
 				if(stack.getEnchantments().getSize() == 1) return true;
-				return stack.getEnchantments().getEnchantments().stream().noneMatch(r -> isUnrenewEnch(r, stack.getEnchantments().getLevel(r)));
+				if(stack.getEnchantments().getEnchantments().stream().anyMatch(r -> isUnrenewEnch(r, stack.getEnchantments().getLevel(r)))) return false;
+				return stack.getEnchantments().getSize() < 3 || stack.getEnchantments().getEnchantments().stream()
+						.anyMatch(r -> stack.getEnchantments().getLevel(r) < r.value().getMaxLevel());
 			case "iron_sword": case "iron_pickaxe": case "iron_shovel":
 			case "iron_helmet": case "iron_chestplate": case "iron_leggings": case "iron_boots":
 				return true;
@@ -69,15 +68,6 @@ final class JunkItemEjector{
 					if(adjustedSlot >= 36) adjustedSlot -= 36;
 					ItemStack stack = client.player.getInventory().getStack(adjustedSlot);
 					if(stack.isEmpty()) continue;
-
-					Item item = stack.getItem();
-
-					KeyBound.LOGGER.info("BigFatTest1: "+item.toString());
-					KeyBound.LOGGER.info("BigFatTest2: "+item.getTranslationKey());
-					KeyBound.LOGGER.info("BigFatTest3: "+Registries.ITEM.getId(item).getPath());
-					KeyBound.LOGGER.info("BigFatTest3: "+Registries.ITEM.getId(item).toString());
-					if(!item.toString().equals("minecraft:bow")) continue;
-
 					if(shouldEject(stack)) client.interactionManager.clickSlot(0, slot, 1, SlotActionType.THROW, client.player);
 				}
 			}

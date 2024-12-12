@@ -12,7 +12,7 @@ final class SimpleKeybindFeatures{
 
 	final static void registerSkinLayerKeybinds(){
 		Arrays.stream(PlayerModelPart.values())
-		.map(part -> new AbstractKeybind("key."+KeyBound.MOD_ID+".skin_toggle_"+part.name().toLowerCase(), InputUtil.Type.KEYSYM, -1, SKIN_LAYER_CATEGORY){
+		.map(part -> new AbstractKeybind("key."+KeyBound.MOD_ID+".skin_toggle."+part.name().toLowerCase(), InputUtil.Type.KEYSYM, -1, SKIN_LAYER_CATEGORY){
 			@Override public void onPressed(){
 				final MinecraftClient client = MinecraftClient.getInstance();
 				client.options.togglePlayerModelPart(part, !client.options.isPlayerModelPartEnabled(part));
@@ -23,7 +23,7 @@ final class SimpleKeybindFeatures{
 	final static void registerChatKeybind(String keybind_name, String chat_message){
 		if(chat_message.charAt(0) == '/'){
 			final String command = chat_message.substring(1);
-			KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+KeyBound.MOD_ID+keybind_name, InputUtil.Type.KEYSYM, -1, CHAT_MSG_CATEGORY){
+			KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+KeyBound.MOD_ID+"."+keybind_name, InputUtil.Type.KEYSYM, -1, CHAT_MSG_CATEGORY){
 				@Override public void onPressed(){
 					MinecraftClient instance = MinecraftClient.getInstance();
 					instance.player.networkHandler.sendChatCommand(command);
@@ -31,7 +31,7 @@ final class SimpleKeybindFeatures{
 			});
 		}
 		else{
-			KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+KeyBound.MOD_ID+keybind_name, InputUtil.Type.KEYSYM, -1, CHAT_MSG_CATEGORY){
+			KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+KeyBound.MOD_ID+"."+keybind_name, InputUtil.Type.KEYSYM, -1, CHAT_MSG_CATEGORY){
 				@Override public void onPressed(){
 					MinecraftClient instance = MinecraftClient.getInstance();
 					instance.player.networkHandler.sendChatMessage(chat_message);

@@ -39,6 +39,7 @@ final class VariantHotbarScroller{
 			KeyBound.LOGGER.warn("Could not find items for the given scroll list: ["+String.join(",", colors)+"]");
 			return;
 		}
+		variantLists.add(colors);
 		ids.stream().map(id -> id.getNamespace()+":"+id.getPath().replace(colorA, "*")).forEach(name -> {
 			scrollableItems.put(name, colors);
 			if(hasEmpty) scrollableItems.put(name.replace("*_", ""), colors);//TODO: icky
@@ -102,11 +103,11 @@ final class VariantHotbarScroller{
 		scrollableItems = new HashMap<>();
 		for(String[] colors : colorLists) loadScrollableItems(colors);
 
-		KeyBound.LOGGER.debug("Defined scrollable variants: ["+String.join("], [", variantLists.stream().map(l -> String.join(",", l)).toList())+"]");
-		KeyBound.LOGGER.debug("Found matching items: "+String.join(", ", scrollableItems.keySet()));
+		KeyBound.LOGGER.info("Defined scrollable variants: ["+String.join("], [", variantLists.stream().map(l -> String.join(",", l)).toList())+"]");
+		KeyBound.LOGGER.info("Found matching items: "+String.join(", ", scrollableItems.keySet()));
 
 		if(!scrollableItems.isEmpty())
-		Stream.of(true, false).map(k -> new AbstractKeybind("key."+KeyBound.MOD_ID+".color_scroll_"+(k ? "up" : "down"), InputUtil.Type.KEYSYM, -1, COLOR_SCROLL_CATEGORY){
+		Stream.of(true, false).map(k -> new AbstractKeybind("key."+KeyBound.MOD_ID+".color_scroll."+(k ? "up" : "down"), InputUtil.Type.KEYSYM, -1, COLOR_SCROLL_CATEGORY){
 			@Override public void onPressed(){scrollHotbarSlot(k);}
 		}).forEach(KeyBindingHelper::registerKeyBinding);
 	}

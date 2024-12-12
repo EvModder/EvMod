@@ -50,7 +50,7 @@ final class RemoteServerSender{
 		CLIENT_KEY = clientKey;
 
 		messages.forEach((key, message) -> {
-			KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+KeyBound.MOD_ID+key, InputUtil.Type.KEYSYM, -1, REMOTE_MSG_CATEGORY){
+			KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+KeyBound.MOD_ID+"."+key, InputUtil.Type.KEYSYM, -1, REMOTE_MSG_CATEGORY){
 				@Override public void onPressed(){
 					MinecraftClient instance = MinecraftClient.getInstance();
 					sendBotMessage(instance.player.getUuid(), message);

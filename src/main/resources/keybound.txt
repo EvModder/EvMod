@@ -15,7 +15,7 @@ scroll_order: [
 	[oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry, bamboo, crimson, warped]
 ]
 
-#========== Bot communication keybinds ==========#
+#========== Remote messaging ==========#
 # TODO: maybe rename as "my_id" and "my_token"?
 client_id: 1
 client_key: some_unique_key
@@ -29,7 +29,6 @@ remote_msg.c: 690406c8-53eb-482c-8309-96789e98d07a
 remote_msg.mainbase: 36b128f9-c502-4879-928e-0b9637dcd65e
 
 
-#========== Keybinds for chat/commands ==========#
-# Create pairs [chat_msg.string.*, chat_msg.keybind.*]
+#========== Chat/commands ==========#
 chat_msg.meow: meow :3
 chat_msg.rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost

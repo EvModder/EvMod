@@ -6,7 +6,6 @@
 		"BoundKeyAccessor",
 		"TimesPressedAccessor",
 		"KeybindingMixin",
-		"InGameHudMixin",
 		"EntityRendererMixin",
 		"ProjectileEntityAccessor"
 	],
