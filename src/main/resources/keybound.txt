@@ -1,8 +1,8 @@
 # Config file for KeyBound
 
 #========== Added Visuals ==========#
-repaircost_tooltip: true
-enderpearl_owners: true
+repaircost_tooltip: true #todo: currently half-ignored (mixin)
+enderpearl_owners: true #todo: currently ignored (mixin)
 
 
 #========== Hotbar variant scrolling ==========#

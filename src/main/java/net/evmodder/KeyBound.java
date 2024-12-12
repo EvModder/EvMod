@@ -76,7 +76,7 @@ public class KeyBound implements ClientModInitializer{
 					if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC);
 					break;
 				case "enderpearl_owners":
-					if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC);
+					if(!value.equalsIgnoreCase("false"));//Enable ePearl mixin
 					break;
 				case "scroll_order": {
 					final String listOfListsStr = config.get(key).replaceAll("\\s","");
@@ -95,6 +95,7 @@ public class KeyBound implements ClientModInitializer{
 
 	@Override public void onInitializeClient(){
 		SimpleKeybindFeatures.registerSkinLayerKeybinds();
+		JunkItemEjector.registerJunkEjectKeybind();
 		loadConfig();
 	}
 }
