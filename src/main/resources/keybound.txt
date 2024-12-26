@@ -1,9 +1,10 @@
 # Config file for KeyBound
 
 #========== Added Visuals ==========#
-repaircost_tooltip: true #todo: currently half-ignored (mixin)
-enderpearl_owners: true #todo: currently ignored (mixin)
-
+repaircost_tooltip: true
+enderpearl_owners: true
+enderpearl_owners_shared_database: true
+#seen_shared_database: true
 
 #========== Hotbar variant scrolling ==========#
 # Empty variants (if they exist) must come first in the list
@@ -23,10 +24,10 @@ remote_addr: altcraft.net
 remote_port: 14441
 
 # List of remote messages
-remote_msg.a: 27aa6a20-4a0d-4779-bcd5-dce162dd7467
-remote_msg.b: 6f7fa766-4fe6-42fe-b589-22e4ec9a077c
-remote_msg.c: 690406c8-53eb-482c-8309-96789e98d07a
-remote_msg.mainbase: 36b128f9-c502-4879-928e-0b9637dcd65e
+remote_msg.a: EPEARL_TRIGGER,27aa6a20-4a0d-4779-bcd5-dce162dd7467
+remote_msg.b: EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c
+remote_msg.c: EPEARL_TRIGGER,690406c8-53eb-482c-8309-96789e98d07a
+remote_msg.mainbase: EPEARL_TRIGGER,36b128f9-c502-4879-928e-0b9637dcd65e
 
 
 #========== Chat/commands ==========#

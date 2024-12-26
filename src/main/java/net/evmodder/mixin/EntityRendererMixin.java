@@ -1,7 +1,5 @@
 package net.evmodder.mixin;
 
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -9,10 +7,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.mojang.authlib.GameProfile;
+import net.evmodder.KeyBound;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -29,44 +24,34 @@ import net.minecraft.util.math.Vec3d;
 @Mixin(EntityRenderer.class)
 public abstract class EntityRendererMixin{
 	@Final @Shadow protected EntityRenderDispatcher dispatcher;
-
 	@Shadow public abstract TextRenderer getTextRenderer();
 
-	private static final LoadingCache<UUID, String> usernameCache =
-			CacheBuilder.newBuilder()
-			.expireAfterWrite(6, TimeUnit.HOURS)
-			.build(new CacheLoader<>(){@Override public String load(UUID key){
-					new Thread(() -> {
-						GameProfile playerProfile;
-						try{
-							playerProfile = MinecraftClient.getInstance().getSessionService().fetchProfile(key, false).profile();
-							if(playerProfile == null) usernameCache.put(key, "[404]");
-							usernameCache.put(key, playerProfile.getName());
-						}
-						catch(NullPointerException e){usernameCache.put(key, "[404]");}
-					}).start();
-					return "Loading...";
-			}});
+	private static final MinecraftClient client = MinecraftClient.getInstance();
 
+	private boolean isLookngAt(Entity entity){
+		Vec3d vec3d = client.player.getRotationVec(1.0F).normalize();
+		Vec3d vec3d2 = new Vec3d(entity.getX() - client.player.getX(), entity.getEyeY() - client.player.getEyeY(), entity.getZ() - client.player.getZ());
+		double d = vec3d2.length();
+		vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d);//normalize
+		double e = vec3d.dotProduct(vec3d2);
+		return e > 1.0D - 0.03D / d ? /*client.player.canSee(entity)*/true : false;
+	}
 
 	//@Inject(method = "renderLabelIfPresent", at = @At("TAIL"))
 	//@Inject(method = "hasLabel", at = @At("TAIL"))
-
-	MinecraftClient client = MinecraftClient.getInstance();
-
 	@Inject(method = "render", at = @At("HEAD"))
 	public void render(Entity entity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci){
-		if(client.options.hudHidden) return; //If HUD is hidden
+		if(KeyBound.epearlLookup == null) return; // Feature is disabled
+		if(client.options.hudHidden) return; // HUD is hidden
 		if(entity instanceof ProjectileEntity == false) return;
-		final ProjectileEntity pe = (ProjectileEntity)entity;
-		if(pe.getType() != EntityType.ENDER_PEARL) return;
-		if(client.crosshairTarget.squaredDistanceTo(entity) > 1d) return;
-		final UUID uuid = ((ProjectileEntityAccessor)pe).getOwnerUUID();
-		final String name = usernameCache.getUnchecked(uuid);
+		if(entity.getType() != EntityType.ENDER_PEARL) return;
+		//if(!isLookngAt(entity)) return;
+		String name = KeyBound.epearlLookup.getOwnerName((ProjectileEntity)entity);
+		if(!isLookngAt(entity)) return;
 
 		//((EntityRendererInvoker)(Object)this).renderLabelIfPresent(entity, Text.literal(name).formatted(Formatting.GRAY), matrices, vertexConsumers, light);
 
-		Vec3d vec3d = pe.getAttachments().getPointNullable(EntityAttachmentType.NAME_TAG, 0, entity.getYaw(tickDelta));
+		Vec3d vec3d = entity.getAttachments().getPointNullable(EntityAttachmentType.NAME_TAG, 0, entity.getYaw(tickDelta));
 //		if(vec3d == null){
 //			vec3d = pe.getPos();
 //			KeyBound.LOGGER.warn("BigFatTest no attachement for epearl");
@@ -74,7 +59,7 @@ public abstract class EntityRendererMixin{
 //		else KeyBound.LOGGER.warn("BigFatTest all good in the hood");
 		matrices.push();
 		matrices.translate(vec3d.x, vec3d.y + 0.5, vec3d.z);
-		matrices.multiply(dispatcher.getRotation());
+		matrices.multiply(dispatcher.getRotation());//TODO: how is dispatcher not null at this poin?!! lol
 		matrices.scale(0.025F, -0.025F, 0.025F);
 		Matrix4f matrix4f = matrices.peek().getPositionMatrix();
 		TextRenderer textRenderer = this.getTextRenderer();

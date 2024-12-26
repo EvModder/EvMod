@@ -1,9 +1,22 @@
 package net.evmodder;
 
+/*recommended order:
+public / private / protected
+abstract
+static
+final
+transient
+volatile
+**default**
+synchronized
+native
+strictfp
+
+*/
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,14 +30,22 @@ public class KeyBound implements ClientModInitializer{
 	//TODO:
 	// Reference/depend on https://github.com/Siphalor/amecs-api
 
+	// Feature Ideas:
+	// Maps - smaller text for item count in slot
+	// Maps - hotkey to mass-copy (copy every map 1->64, or 1->2)
+
 	// Reference variables
 	public static final String MOD_ID = "keybound";
-	public static final String MOD_NAME = "KeyBound";
+	//public static final String MOD_NAME = "KeyBound";
 	//public static final String MOD_VERSION = "@MOD_VERSION@";
 
 
-	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_NAME);
+	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	private static HashMap<String, String> config;
+
+	public static RemoteServerSender remoteSender;
+	public static EpearlLookup epearlLookup;
+	public static boolean rcTooltip;
 
 	private void loadConfig(){
 		//=================================== Parsing config into a map
@@ -58,25 +79,35 @@ public class KeyBound implements ClientModInitializer{
 
 		//=================================== Loading config features
 
-		HashMap<String, UUID> remoteMessages = new HashMap<>();
+		HashMap<String, String> remoteMessages = new HashMap<>();
 		int clientId=0; String clientKey=null;
 		String remoteAddr=null; int remotePort=0;
+		boolean epearlOwners=false, epearlOwnersDB=false;
 
 		//config.forEach((key, value) -> {
 		for(String key : config.keySet()){
 			String value = config.get(key);
 			if(key.startsWith("chat_msg.")) SimpleKeybindFeatures.registerChatKeybind(key, value);
-			else if(key.startsWith("remote_msg.")) remoteMessages.put(key, UUID.fromString(value));
+			else if(key.startsWith("remote_msg.")) remoteMessages.put(key, value);
 			else switch(key){
 				case "client_id": clientId = Integer.parseInt(value); break;
 				case "client_key": clientKey = value; break;
 				case "remote_addr": remoteAddr = value; break;
 				case "remote_port": remotePort = Integer.parseInt(value); break;
 				case "repaircost_tooltip":
-					if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC);
+					if(!value.equalsIgnoreCase("false")){
+						rcTooltip = true;
+						ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC);
+					}
 					break;
 				case "enderpearl_owners":
-					if(!value.equalsIgnoreCase("false"));//Enable ePearl mixin
+					if(!value.equalsIgnoreCase("false")) epearlOwners = true;
+					break;
+				case "enderpearl_owners_shared_database":
+					if(!value.equalsIgnoreCase("false")) epearlOwnersDB = true;
+					break;
+				case "seen_shared_database":
+					if(!value.equalsIgnoreCase("false")) new SeenCommand();//TODO
 					break;
 				case "scroll_order": {
 					final String listOfListsStr = config.get(key).replaceAll("\\s","");
@@ -88,8 +119,10 @@ public class KeyBound implements ClientModInitializer{
 					LOGGER.warn("Unrecognized config setting: "+key);
 			}
 		}
-		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && !remoteMessages.isEmpty()){
-			new RemoteServerSender(remoteAddr, remotePort, clientId, clientKey, remoteMessages);
+		epearlOwnersDB &= epearlOwners;
+		if(epearlOwners) epearlLookup = new EpearlLookup(epearlOwnersDB);
+		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && (!remoteMessages.isEmpty() || epearlOwnersDB)){
+			remoteSender = new RemoteServerSender(remoteAddr, remotePort, clientId, clientKey, remoteMessages);
 		}
 	}
 

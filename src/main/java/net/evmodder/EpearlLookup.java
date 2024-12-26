@@ -2,64 +2,64 @@ package net.evmodder;
 
 import java.nio.ByteBuffer;
 import java.util.UUID;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.mojang.authlib.yggdrasil.ProfileResult;
-import net.evmodder.PacketHelper.MessageReceiver;
 import net.evmodder.mixin.ProjectileEntityAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 
 public final class EpearlLookup{
 	private static final MinecraftClient client = MinecraftClient.getInstance();
+
+	private static final String NAME_404 = "[404]", NAME_LOADING = "Loading...";
+	private static final UUID UUID_404 = null, UUID_LOADING = new UUID(114141414, 282828282);
 	private static final boolean USE_COORDS = false;
-	private static final String LOADING_NAME = "Loading...";
+	private static final boolean ONLY_FOR_2b2t = true;
 	private static final String LOCAL_DB_FILENAME = "keybound-epearl_cache_"+(USE_COORDS ? "sxz" : "u");
 
 	private final boolean USE_REMOTE_DB;
 	EpearlLookup(boolean useDB){USE_REMOTE_DB = useDB;}
 
-	private static final LoadingCache<UUID, String> usernameCacheMojang = CacheBuilder.newBuilder().build(new CacheLoader<>(){@Override public String load(UUID key){
-			if(key != null) new Thread(()->{
-				KeyBound.LOGGER.info("fetch name called for uuid: "+key);
-				ProfileResult pr = MinecraftClient.getInstance().getSessionService().fetchProfile(key, false);
-				if(pr == null || pr.profile() == null || pr.profile().getName() == null) usernameCacheMojang.put(key, "[404]");
-				else usernameCacheMojang.put(key, pr.profile().getName());
-			}).start();
-			return LOADING_NAME;
-	}});
+	private static final LoadingCache<UUID, String> usernameCacheMojang = new LoadingCache<>(NAME_404, NAME_LOADING){@Override public String load(UUID key){
+			KeyBound.LOGGER.info("fetch name called for uuid: "+key);
+			ProfileResult pr = MinecraftClient.getInstance().getSessionService().fetchProfile(key, false);
+			if(pr == null || pr.profile() == null || pr.profile().getName() == null) return NAME_404;
+			else return pr.profile().getName();
+	}};
+	static{
+		usernameCacheMojang.putIfAbsent(UUID_404, NAME_404);
+		usernameCacheMojang.putIfAbsent(UUID_LOADING, NAME_LOADING);
+	}
 
-	final private static UUID LOADING_UUID = UUID.randomUUID();
-	static{usernameCacheMojang.put(LOADING_UUID, LOADING_NAME);}
-
-	private static final LoadingCache<UUID, UUID> uuidCacheRemoteServer = CacheBuilder.newBuilder().build(new CacheLoader<>(){@Override public UUID load(UUID key){
+	private static final LoadingCache<UUID, UUID> uuidCacheRemoteServer = new LoadingCache<>(UUID_404, UUID_LOADING){@Override public UUID load(UUID key){
+			KeyBound.LOGGER.info("fetch ownerUUID called for pearlUUID: "+key);
 			final UUID ownerUUID = FileIO.lookupInFile(LOCAL_DB_FILENAME, key);
-			if(ownerUUID != null) uuidCacheRemoteServer.put(key, ownerUUID);
-			else if(KeyBound.remoteSender != null) new Thread(()->{
-				KeyBound.LOGGER.info("fetch ownerUUID called for pearlUUID: "+key);
-				//Request UUID of epearl for <Server>,<ePearlPosEncrypted>
-				KeyBound.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_FETCH_U, PacketHelper.toByteArray(key), new MessageReceiver(){
-					public void receiveMessage(byte[] msg){
-						if(msg.length != 16){uuidCacheRemoteServer.put(key, null); return;}
-						ByteBuffer bb = ByteBuffer.wrap(msg);
-						UUID ownerUUID = new UUID(bb.getLong(), bb.getLong());
-						FileIO.appendToFile(LOCAL_DB_FILENAME, key, ownerUUID);
-						uuidCacheRemoteServer.put(key, ownerUUID);
+			if(ownerUUID != null) return ownerUUID;
+			if(KeyBound.remoteSender == null) return UUID_404;
+			//Request UUID of epearl for <Server>,<ePearlPosEncrypted>
+			final int command = Commands.EPEARL_OWNER_FETCH + (USE_COORDS ? Commands.EPEARL_SXZ : Commands.EPEARL_U);
+			KeyBound.remoteSender.sendBotMessage(command, PacketHelper.toByteArray(key),
+				(msg)->{
+					if(msg == null || msg.length != 16){
+						KeyBound.LOGGER.error("Got invalid response from remote server for ePearlOwnerFetch: "+(msg == null ? null : new String(msg)));
+						putIfAbsent(key, UUID_404);
+						return;
 					}
-				});
-			}).start();
-			return LOADING_UUID;
-	}});
+					final ByteBuffer bb = ByteBuffer.wrap(msg);
+					final UUID fetchedUUID = new UUID(bb.getLong(), bb.getLong());
+					if(!fetchedUUID.equals(UUID_404) && !fetchedUUID.equals(UUID_LOADING)) FileIO.appendToFile(LOCAL_DB_FILENAME, key, fetchedUUID);
+					putIfAbsent(key, fetchedUUID);
+				}
+			);
+			return UUID_LOADING;
+	}};
 
 	private UUID getEpearlKey(Entity epearl){
 		if(USE_COORDS){
 			KeyBound.LOGGER.info("current server: "+client.getCurrentServerEntry().address);
 			KeyBound.LOGGER.info("epearl pos: "+epearl.getPos().toString());
-			//Double.doubleToRawLongBits(epearl.getX());
 			byte[] addr = client.getCurrentServerEntry().address.getBytes();
 			ByteBuffer bb = ByteBuffer.allocate(addr.length + 16);
-			bb.put(addr).putDouble(epearl.getX()).putDouble(epearl.getZ());
+			bb.put(addr).putDouble(epearl.getX()).putDouble(epearl.getZ());//Double.doubleToRawLongBits(epearl.getX());
 			return UUID.nameUUIDFromBytes(bb.array());
 		}
 		else return epearl.getUuid();
@@ -71,16 +71,18 @@ public final class EpearlLookup{
 		if(USE_REMOTE_DB){
 			final UUID keyUUID = getEpearlKey(epearl);
 			if(ownerUUID == null){
-				ownerUUID = uuidCacheRemoteServer.getUnchecked(keyUUID);
+				ownerUUID = uuidCacheRemoteServer.get(keyUUID);
 				KeyBound.LOGGER.info("fetched owner uuid: "+ownerUUID);
 			}
-			else if(uuidCacheRemoteServer.getIfPresent(keyUUID) == null && FileIO.lookupInFile(LOCAL_DB_FILENAME, keyUUID) == null){
+			else if(!uuidCacheRemoteServer.containsKey(keyUUID) && FileIO.lookupInFile(LOCAL_DB_FILENAME, keyUUID) == null
+					&& (!ONLY_FOR_2b2t || client.getCurrentServerEntry().address.equals("2b2t.org"))){
 				KeyBound.LOGGER.info("Storing owner uuid in file (and sending to remote server): "+ownerUUID);
 				FileIO.appendToFile(LOCAL_DB_FILENAME, keyUUID, ownerUUID);//on-disk
-				uuidCacheRemoteServer.put(keyUUID, ownerUUID);//in-mem
-				KeyBound.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE_U, PacketHelper.toByteArray(keyUUID, ownerUUID));//remote-server
+				uuidCacheRemoteServer.putIfAbsent(keyUUID, ownerUUID);//in-mem
+				final int command = Commands.EPEARL_OWNER_STORE + (USE_COORDS ? Commands.EPEARL_SXZ : Commands.EPEARL_U);
+				KeyBound.remoteSender.sendBotMessage(command, PacketHelper.toByteArray(keyUUID, ownerUUID));//remote-server
 			}
 		}
-		return usernameCacheMojang.getUnchecked(ownerUUID);
+		return usernameCacheMojang.get(ownerUUID);
 	}
 }
