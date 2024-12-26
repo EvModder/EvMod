@@ -9,6 +9,7 @@ gradlew.bat
 
 ########## Eclipse
 *.launch
+logs/
 
 ########## IDEA
 .idea/
