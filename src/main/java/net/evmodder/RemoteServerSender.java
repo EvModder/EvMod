@@ -45,17 +45,17 @@ public final class RemoteServerSender{
 		return bb2.array();
 	}
 
-	public void sendBotMessage(int command, byte[] message){
+	public void sendBotMessage(int command, byte[] message, boolean udp){
 		byte[] packet = packageAndEncryptMessage(command, message);
 		if(addrResolved == null) resolveAddress();
-		PacketHelper.sendPacket(addrResolved, PORT, packet);
+		PacketHelper.sendPacket(addrResolved, PORT, udp, packet, null, 0);
 		resolveAddress();
 	}
 
-	public void sendBotMessage(int command, byte[] message, MessageReceiver recv){
+	public void sendBotMessage(int command, byte[] message, boolean udp, MessageReceiver recv){
 		byte[] packet = packageAndEncryptMessage(command, message);
 		if(addrResolved == null) resolveAddress();
-		PacketHelper.sendPacket(addrResolved, PORT, packet, recv, /*timeout=*/1000*5);
+		PacketHelper.sendPacket(addrResolved, PORT, udp, packet, recv, /*timeout=*/1000*5);
 		resolveAddress();
 	}
 
@@ -82,29 +82,29 @@ public final class RemoteServerSender{
 			else{
 				final byte[] byteMsg = PacketHelper.toByteArray(Arrays.stream(Arrays.copyOfRange(arr, 1, arr.length)).map(UUID::fromString).toArray(UUID[]::new));
 				KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+KeyBound.MOD_ID+"."+key, InputUtil.Type.KEYSYM, -1, REMOTE_MSG_CATEGORY){
-					@Override public void onPressed(){sendBotMessage(command, byteMsg);}
+					@Override public void onPressed(){sendBotMessage(command, byteMsg, true);}
 				});
 			}
 		});
 
-		sendBotMessage(Commands.PING, new byte[0], (msg)->{
+		sendBotMessage(Commands.PING, new byte[0], true, (msg)->{
 			KeyBound.LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg)));
 		});
 	}
 
 	public static void main(String... args) throws IOException{
-		RemoteServerSender rss = new RemoteServerSender("localhost", 14441, 1, "some_unique_key", /*botMsgKeybinds=*/null);
-
-		System.out.println("p1: "+UUID.fromString("122c5b8e-be1a-44ad-98f8-222dca5b407c").getMostSignificantBits());
-		System.out.println("p2: "+UUID.fromString("122c5b8e-be1a-44ad-98f8-222dca5b407c").getLeastSignificantBits());
-//		UUID host = UUID.nameUUIDFromBytes("2b2t.org".getBytes());
-//		double x = 12.34, z = 56.78;
+		UUID epearlUUID = UUID.fromString("a8c5dd6e-5f95-4875-9494-7c1d519ba8c8");
+//		UUID clientUUID = UUID.fromString("34471e8d-d0c5-47b9-b8e1-b5b9472affa4");
+		double x = 12.34, z = 56.78;
 //		UUID loc = new UUID(Double.doubleToRawLongBits(x), Double.doubleToRawLongBits(z));
 
-//		UUID clientUUID = UUID.fromString("34471e8d-d0c5-47b9-b8e1-b5b9472affa4");
-		UUID epearlUUID = UUID.fromString("a8c5dd6e-5f95-4875-9494-7c1d519ba8c8");
+		RemoteServerSender rss = new RemoteServerSender("localhost", 14441, 1, "some_unique_key", /*botMsgKeybinds=*/null);
 
-		rss.sendBotMessage(Commands.EPEARL_OWNER_FETCH, PacketHelper.toByteArray(epearlUUID), new MessageReceiver(){
+		rss.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_SXZ, ByteBuffer.allocate(32)
+				.putLong(epearlUUID.getMostSignificantBits()).putLong(epearlUUID.getLeastSignificantBits())
+				.putDouble(x).putDouble(z).array(), true);
+
+		rss.sendBotMessage(Commands.EPEARL_OWNER_FETCH, PacketHelper.toByteArray(epearlUUID), true, new MessageReceiver(){
 			@Override public void receiveMessage(byte[] msg){
 				if(msg == null){System.err.println("Expected msg non-null !");return;}
 				if(msg.length != 16){System.err.println("Expected msg size == 16 !!!");return;}

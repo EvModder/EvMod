@@ -37,7 +37,7 @@ public final class EpearlLookup{
 			if(KeyBound.remoteSender == null) return UUID_404;
 			//Request UUID of epearl for <Server>,<ePearlPosEncrypted>
 			final int command = Commands.EPEARL_OWNER_FETCH + (USE_COORDS ? Commands.EPEARL_SXZ : Commands.EPEARL_U);
-			KeyBound.remoteSender.sendBotMessage(command, PacketHelper.toByteArray(key),
+			KeyBound.remoteSender.sendBotMessage(command, PacketHelper.toByteArray(key), false,
 				(msg)->{
 					if(msg == null || msg.length != 16){
 						KeyBound.LOGGER.error("Got invalid response from remote server for ePearlOwnerFetch: "+(msg == null ? null : new String(msg)));
@@ -80,7 +80,7 @@ public final class EpearlLookup{
 				FileIO.appendToFile(LOCAL_DB_FILENAME, keyUUID, ownerUUID);//on-disk
 				uuidCacheRemoteServer.putIfAbsent(keyUUID, ownerUUID);//in-mem
 				final int command = Commands.EPEARL_OWNER_STORE + (USE_COORDS ? Commands.EPEARL_SXZ : Commands.EPEARL_U);
-				KeyBound.remoteSender.sendBotMessage(command, PacketHelper.toByteArray(keyUUID, ownerUUID));//remote-server
+				KeyBound.remoteSender.sendBotMessage(command, PacketHelper.toByteArray(keyUUID, ownerUUID), false);//remote-server
 			}
 		}
 		return usernameCacheMojang.get(ownerUUID);
