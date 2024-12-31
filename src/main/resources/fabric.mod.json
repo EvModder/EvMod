@@ -3,7 +3,7 @@
 	"id": "keybound",
 	"version": "${version}",
 	"name": "KeyBound",
-	"description": "Adds keybinds for stuff",
+	"description": "Keybinds and stuff",
 	"authors": [ "EvModder" ],
 	"contact": {
 		"homepage": "https://legacy.curseforge.com/minecraft/mc-mods/keybound",

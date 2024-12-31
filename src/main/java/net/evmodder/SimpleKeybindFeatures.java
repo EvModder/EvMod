@@ -15,7 +15,7 @@ final class SimpleKeybindFeatures{
 		.map(part -> new AbstractKeybind("key."+KeyBound.MOD_ID+".skin_toggle."+part.name().toLowerCase(), InputUtil.Type.KEYSYM, -1, SKIN_LAYER_CATEGORY){
 			@Override public void onPressed(){
 				final MinecraftClient client = MinecraftClient.getInstance();
-				client.options.togglePlayerModelPart(part, !client.options.isPlayerModelPartEnabled(part));
+				client.options.setPlayerModelPart(part, !client.options.isPlayerModelPartEnabled(part));
 			}
 		}).forEach(KeyBindingHelper::registerKeyBinding);
 	}
