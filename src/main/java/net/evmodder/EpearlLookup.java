@@ -3,6 +3,10 @@ package net.evmodder;
 import java.nio.ByteBuffer;
 import java.util.UUID;
 import com.mojang.authlib.yggdrasil.ProfileResult;
+import net.evmodder.EvLib.Commands;
+import net.evmodder.EvLib.FileIO;
+import net.evmodder.EvLib.LoadingCache;
+import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.mixin.ProjectileEntityAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
@@ -65,6 +69,10 @@ public final class EpearlLookup{
 		else return epearl.getUuid();
 	}
 
+	private String currentServerAddrOrNull(){
+		return client != null && client.getCurrentServerEntry() != null ? client.getCurrentServerEntry().address : null;
+	}
+
 	public String getOwnerName(Entity epearl){
 		//if(epearl.getType() != EntityType.ENDER_PEARL) throw IllegalArgumentException();
 		UUID ownerUUID = ((ProjectileEntityAccessor)epearl).getOwnerUUID();
@@ -75,7 +83,7 @@ public final class EpearlLookup{
 				KeyBound.LOGGER.info("fetched owner uuid: "+ownerUUID);
 			}
 			else if(!uuidCacheRemoteServer.containsKey(keyUUID) && FileIO.lookupInFile(LOCAL_DB_FILENAME, keyUUID) == null
-					&& (!ONLY_FOR_2b2t || client.getCurrentServerEntry().address.equals("2b2t.org"))){
+					&& (!ONLY_FOR_2b2t || "2b2t.org".equals(currentServerAddrOrNull()))){
 				KeyBound.LOGGER.info("Storing owner uuid in file (and sending to remote server): "+ownerUUID);
 				FileIO.appendToFile(LOCAL_DB_FILENAME, keyUUID, ownerUUID);//on-disk
 				uuidCacheRemoteServer.putIfAbsent(keyUUID, ownerUUID);//in-mem

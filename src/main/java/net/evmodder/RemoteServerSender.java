@@ -7,7 +7,9 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
-import net.evmodder.PacketHelper.MessageReceiver;
+import net.evmodder.EvLib.Commands;
+import net.evmodder.EvLib.PacketHelper;
+import net.evmodder.EvLib.PacketHelper.MessageReceiver;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.InputUtil;
@@ -34,7 +36,8 @@ public final class RemoteServerSender{
 		ByteBuffer bb1 = ByteBuffer.allocate(16+message.length);
 		bb1.putInt(CLIENT_ID);
 		bb1.putInt(command);
-		bb1.putInt(client == null ? "2b2t.org".hashCode() : client.getCurrentServerEntry().address.hashCode());
+		int addressCode = (client == null || client.getCurrentServerEntry() == null ? "2b2t.org" : client.getCurrentServerEntry().address).hashCode();
+		bb1.putInt(addressCode);
 		bb1.putInt((int)System.currentTimeMillis());//Truncate, since we assume ping < Integer.MAX anyway
 		bb1.put(message);
 		byte[] encryptedMessage = PacketHelper.encrypt(bb1.array(), CLIENT_KEY);
@@ -55,8 +58,11 @@ public final class RemoteServerSender{
 	public void sendBotMessage(int command, byte[] message, boolean udp, MessageReceiver recv){
 		byte[] packet = packageAndEncryptMessage(command, message);
 		if(addrResolved == null) resolveAddress();
-		PacketHelper.sendPacket(addrResolved, PORT, udp, packet, recv, /*timeout=*/1000*5);
-		resolveAddress();
+		if(addrResolved == null) KeyBound.LOGGER.warn("RemoteSender address could not be resolved!: "+ADDR);
+		else{
+			PacketHelper.sendPacket(addrResolved, PORT, udp, packet, recv, /*timeout=*/1000*5);
+			resolveAddress();
+		}
 	}
 
 	private int parseCommand(String str){
@@ -87,7 +93,7 @@ public final class RemoteServerSender{
 			}
 		});
 
-		sendBotMessage(Commands.PING, new byte[0], true, (msg)->{
+		sendBotMessage(Commands.PING, new byte[0], false, (msg)->{
 			KeyBound.LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg)));
 		});
 	}
