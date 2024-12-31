@@ -104,7 +104,7 @@ final class VariantHotbarScroller{
 		for(String[] colors : colorLists) loadScrollableItems(colors);
 
 		KeyBound.LOGGER.info("Defined scrollable variants: ["+String.join("], [", variantLists.stream().map(l -> String.join(",", l)).toList())+"]");
-		KeyBound.LOGGER.info("Found matching items: "+String.join(", ", scrollableItems.keySet()));
+		KeyBound.LOGGER.debug("Found matching items: "+String.join(", ", scrollableItems.keySet()));
 
 		if(!scrollableItems.isEmpty())
 		Stream.of(true, false).map(k -> new AbstractKeybind("key."+KeyBound.MOD_ID+".color_scroll."+(k ? "up" : "down"), InputUtil.Type.KEYSYM, -1, COLOR_SCROLL_CATEGORY){
