@@ -1,9 +1,14 @@
 # Config file for KeyBound
 
+#========== Misc Keybinds ==========#
+keybind_drop_items: true
+keybind_toggle_skin_layers: true
+
 #========== Added Visuals ==========#
 repaircost_tooltip: true
 enderpearl_owners: true
-enderpearl_owners_shared_database: true
+enderpearl_owners_database_by_uuid: true
+enderpearl_owners_database_by_coords: false
 #seen_shared_database: true
 
 #========== Hotbar variant scrolling ==========#

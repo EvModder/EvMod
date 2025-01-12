@@ -42,7 +42,7 @@ public final class RemoteServerSender{
 		bb1.put(message);
 		byte[] encryptedMessage = PacketHelper.encrypt(bb1.array(), CLIENT_KEY);
 
-		ByteBuffer bb2 = ByteBuffer.allocate(20+message.length);
+		ByteBuffer bb2 = ByteBuffer.allocate(4+encryptedMessage.length);
 		bb2.putInt(CLIENT_ID);
 		bb2.put(encryptedMessage);
 		return bb2.array();
@@ -99,18 +99,17 @@ public final class RemoteServerSender{
 	}
 
 	public static void main(String... args) throws IOException{
-		UUID epearlUUID = UUID.fromString("a8c5dd6e-5f95-4875-9494-7c1d519ba8c8");
-//		UUID clientUUID = UUID.fromString("34471e8d-d0c5-47b9-b8e1-b5b9472affa4");
-		double x = 12.34, z = 56.78;
+		UUID pearlUUID = UUID.fromString("a8c5dd6e-5f95-4875-9494-7c1d519ba8c8");
+		UUID ownerUUID = UUID.fromString("34471e8d-d0c5-47b9-b8e1-b5b9472affa4");
 //		UUID loc = new UUID(Double.doubleToRawLongBits(x), Double.doubleToRawLongBits(z));
 
 		RemoteServerSender rss = new RemoteServerSender("localhost", 14441, 1, "some_unique_key", /*botMsgKeybinds=*/null);
 
-		rss.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_SXZ, ByteBuffer.allocate(32)
-				.putLong(epearlUUID.getMostSignificantBits()).putLong(epearlUUID.getLeastSignificantBits())
-				.putDouble(x).putDouble(z).array(), true);
+		rss.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_UUID, ByteBuffer.allocate(32)
+				.putLong(pearlUUID.getMostSignificantBits()).putLong(pearlUUID.getLeastSignificantBits())
+				.putLong(ownerUUID.getMostSignificantBits()).putLong(ownerUUID.getLeastSignificantBits()).array(), true);
 
-		rss.sendBotMessage(Commands.EPEARL_OWNER_FETCH, PacketHelper.toByteArray(epearlUUID), true, new MessageReceiver(){
+		rss.sendBotMessage(Commands.EPEARL_OWNER_FETCH, PacketHelper.toByteArray(pearlUUID), true, new MessageReceiver(){
 			@Override public void receiveMessage(byte[] msg){
 				if(msg == null){System.err.println("Expected msg non-null !");return;}
 				if(msg.length != 16){System.err.println("Expected msg size == 16 !!!");return;}

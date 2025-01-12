@@ -34,6 +34,8 @@ public class KeyBound implements ClientModInitializer{
 	// Feature Ideas:
 	// Maps - smaller text for item count in slot
 	// Maps - hotkey to mass-copy (copy every map 1->64, or 1->2)
+	// /msgas Anuvin target hi - send msg from alt acc
+	// timer countdown showing time left on 2b for non prio before kick
 
 	// Reference variables
 	public static final String MOD_ID = "keybound";
@@ -83,7 +85,7 @@ public class KeyBound implements ClientModInitializer{
 		HashMap<String, String> remoteMessages = new HashMap<>();
 		int clientId=0; String clientKey=null;
 		String remoteAddr=null; int remotePort=0;
-		boolean epearlOwners=false, epearlOwnersDB=false;
+		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false;
 
 		//config.forEach((key, value) -> {
 		for(String key : config.keySet()){
@@ -104,8 +106,16 @@ public class KeyBound implements ClientModInitializer{
 				case "enderpearl_owners":
 					if(!value.equalsIgnoreCase("false")) epearlOwners = true;
 					break;
-				case "enderpearl_owners_shared_database":
-					if(!value.equalsIgnoreCase("false")) epearlOwnersDB = true;
+				case "enderpearl_owners_database_by_uuid":
+					if(!value.equalsIgnoreCase("false")) epearlOwnersDbUUID = true;
+				case "enderpearl_owners_database_by_coords":
+					if(!value.equalsIgnoreCase("false")) epearlOwnersDbXZ = true;
+					break;
+				case "keybind_drop_items":
+					if(!value.equalsIgnoreCase("false")) JunkItemEjector.registerJunkEjectKeybind();
+					break;
+				case "keybind_toggle_skin_layers":
+					if(!value.equalsIgnoreCase("false")) SimpleKeybindFeatures.registerSkinLayerKeybinds();
 					break;
 				case "seen_shared_database":
 					if(!value.equalsIgnoreCase("false")) new SeenCommand();//TODO
@@ -120,16 +130,11 @@ public class KeyBound implements ClientModInitializer{
 					LOGGER.warn("Unrecognized config setting: "+key);
 			}
 		}
-		epearlOwnersDB &= epearlOwners;
-		if(epearlOwners) epearlLookup = new EpearlLookup(epearlOwnersDB);
-		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && (!remoteMessages.isEmpty() || epearlOwnersDB)){
+		if(epearlOwners) epearlLookup = new EpearlLookup(epearlOwnersDbUUID, epearlOwnersDbXZ);
+		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && (!remoteMessages.isEmpty() || epearlOwnersDbUUID || epearlOwnersDbXZ)){
 			remoteSender = new RemoteServerSender(remoteAddr, remotePort, clientId, clientKey, remoteMessages);
 		}
 	}
 
-	@Override public void onInitializeClient(){
-		SimpleKeybindFeatures.registerSkinLayerKeybinds();
-		JunkItemEjector.registerJunkEjectKeybind();
-		loadConfig();
-	}
+	@Override public void onInitializeClient(){loadConfig();}
 }
