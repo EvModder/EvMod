@@ -26,24 +26,27 @@ final class JunkItemEjector{
 		return false;
 	}
 	private final static boolean shouldEject(ItemStack stack){
+		if(stack == null || stack.isEmpty()) return false;
 		final int rc = stack.getComponents().get(DataComponentTypes.REPAIR_COST);
 		if(rc != 0) return false;
 
 		switch(Registries.ITEM.getId(stack.getItem()).getPath()){
 			//========== Fishing section ========================================
 			case "bow":
-				return stack.getEnchantments().getSize() < 3 || stack.getEnchantments().getEnchantments().stream()
-						.anyMatch(r -> stack.getEnchantments().getLevel(r) < r.value().getMaxLevel());
+				return stack.getEnchantments().getSize() < 4 || stack.getEnchantments().getEnchantments().stream()
+						.anyMatch(r -> stack.getEnchantments().getLevel(r) < Math.max(4, r.value().getMaxLevel()));
 			case "fishing_rod":
 				return stack.getEnchantments().getSize() < 4 || stack.getEnchantments().getEnchantments().stream()
 						.anyMatch(r -> stack.getEnchantments().getLevel(r) < r.value().getMaxLevel());
 			case "enchanted_book":
 				ItemEnchantmentsComponent iec = stack.getComponents().get(DataComponentTypes.STORED_ENCHANTMENTS);
+				if(stack.getEnchantments().getSize() == 1) return true;
 				return iec.getEnchantments().size() < 4 && iec.getEnchantments().stream().noneMatch(r -> isUnrenewEnch(r, iec.getLevel(r)));
 			//========== End loot section ========================================
 			case "diamond_sword": case "diamond_pickaxe": case "diamond_shovel":
 			case "diamond_helmet": case "diamond_chestplate": case "diamond_leggings": case "diamond_boots":
-				if(stack.getEnchantments().getSize() == 1) return true;
+				if(stack.getEnchantments().getSize() == 0) return false; // Raw gear
+				if(stack.getEnchantments().getSize() == 1) return true; // Single-enchant can be done with a book
 				if(stack.getEnchantments().getEnchantments().stream().anyMatch(r -> isUnrenewEnch(r, stack.getEnchantments().getLevel(r)))) return false;
 				return stack.getEnchantments().getSize() < 3 || stack.getEnchantments().getEnchantments().stream()
 						.anyMatch(r -> stack.getEnchantments().getLevel(r) < r.value().getMaxLevel());
@@ -56,18 +59,25 @@ final class JunkItemEjector{
 	}
 
 	final static void registerJunkEjectKeybind(){
-		KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+KeyBound.MOD_ID+".eject_junk_items", InputUtil.Type.KEYSYM, -1,
-				"key.categories."+KeyBound.MOD_ID+".misc")
+		KeyBindingHelper.registerKeyBinding(new AbstractKeybind(
+				"key."+KeyBound.MOD_ID+".eject_junk_items", InputUtil.Type.KEYSYM, -1, "key.categories."+KeyBound.MOD_ID+".misc")
 		{
 			@Override public void onPressed(){
 				MinecraftClient client = MinecraftClient.getInstance();
-				if(client.currentScreen instanceof HandledScreen && !(client.currentScreen instanceof InventoryScreen)) return;
+				/*if(client.currentScreen instanceof GenericContainerScreen containerScreen){
+					KeyBound.LOGGER.info("mode 1");
+					Inventory inv = containerScreen.getScreenHandler().getInventory();
+					for(int slot=0; slot<inv.size(); ++slot){
+						ItemStack stack = inv.getStack(slot);
+						if(shouldEject(stack)) client.interactionManager.clickSlot(0, slot, 1, SlotActionType.THROW, client.player);
+					}
+				}
+				else */if(client.currentScreen instanceof HandledScreen && !(client.currentScreen instanceof InventoryScreen)) return;
 
-				for(int slot=9; slot<45; ++slot){
+				else for(int slot=9; slot<45; ++slot){
 					int adjustedSlot = slot;
 					if(adjustedSlot >= 36) adjustedSlot -= 36;
 					ItemStack stack = client.player.getInventory().getStack(adjustedSlot);
-					if(stack.isEmpty()) continue;
 					if(shouldEject(stack)) client.interactionManager.clickSlot(0, slot, 1, SlotActionType.THROW, client.player);
 				}
 			}
