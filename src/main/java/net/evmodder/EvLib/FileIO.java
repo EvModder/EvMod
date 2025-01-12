@@ -1,0 +1,351 @@
+package net.evmodder.EvLib;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.UUID;
+import java.util.logging.Logger;
+
+public final class FileIO{
+	private static final Logger LOGGER;
+	public static final String DIR;//= FabricLoader.getInstance().getConfigDir().toString()+"/";
+	static{
+		String tempDir = "./";
+		try{
+			Object fabricLoader = Class.forName("net.fabricmc.loader.api.FabricLoader").getMethod("getInstance").invoke(null);
+			tempDir = fabricLoader.getClass().getMethod("getConfigDir").invoke(fabricLoader).toString()+"/";
+		}
+		catch(ClassNotFoundException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | SecurityException e){}
+		DIR = tempDir;
+
+		Logger tempLogger = Logger.getLogger("EvLibMod-FileIO");
+		try{tempLogger = (Logger)Class.forName("net.evmodder.ServerMain").getField("LOGGER").get(null);}
+		catch(IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException | ClassNotFoundException e){}
+		LOGGER = tempLogger;
+	}
+
+	public static final String loadFile(String filename, InputStream defaultValue){
+		BufferedReader reader = null;
+		try{reader = new BufferedReader(new FileReader(DIR+filename));}
+		catch(FileNotFoundException e){
+			if(defaultValue == null) return null;
+
+			//Create Directory
+			final File dir = new File(DIR);
+			if(!dir.exists())dir.mkdir();
+
+			//Create the file
+			final File conf = new File(DIR+filename);
+			try{
+				conf.createNewFile();
+				reader = new BufferedReader(new InputStreamReader(defaultValue));
+
+				String line = reader.readLine();
+				StringBuilder builder = new StringBuilder(line);
+				while((line = reader.readLine()) != null) builder.append('\n').append(line);
+				reader.close();
+
+				BufferedWriter writer = new BufferedWriter(new FileWriter(conf));
+				writer.write(builder.toString()); writer.close();
+				reader = new BufferedReader(new FileReader(DIR+filename));
+			}
+			catch(IOException e1){e1.printStackTrace();}
+		}
+		final StringBuilder file = new StringBuilder();
+		if(reader != null){
+			try{
+				String line = reader.readLine();
+				while(line != null){
+					line = line.trim().replace("//", "#");
+					int cut = line.indexOf('#');
+					if(cut == -1) file.append('\n').append(line);
+					else if(cut > 0) file.append('\n').append(line.substring(0, cut).trim());
+					line = reader.readLine();
+				}
+				reader.close();
+			}catch(IOException e){}
+		}
+		return file.length() == 0 ? "" : file.substring(1);
+	}
+
+	/*public static final UUID lookupInFile(String filename, UUID pearlUUID){
+		FileInputStream is = null;
+		try{is = new FileInputStream(FileIO.DIR+filename);}
+		catch(FileNotFoundException e){return null;}
+		final byte[] data;
+		try{data = is.readAllBytes(); is.close();}
+		catch(IOException e){e.printStackTrace(); return null;}
+		if(data.length % 32 != 0){
+			LOGGER.severe("Corrupted/invalid ePearlDB file!");
+			return null;
+		}
+		final ByteBuffer bb = ByteBuffer.wrap(data);
+		int lo = 0, hi = data.length/32;
+		final long k = pearlUUID.getMostSignificantBits();
+		while(hi-lo > 1){
+			int m = (lo + hi)/2;
+			long v = bb.getLong(m*32);
+			if(v > k) hi = m;
+			else lo = m;
+		}
+		final UUID keyUUID = new UUID(bb.getLong(lo*32), bb.getLong(lo*32+8));
+		if(!keyUUID.equals(pearlUUID)){
+			LOGGER.fine("pearlUUID not found in localDB file: "+pearlUUID);
+			return null;
+		}
+		return new UUID(bb.getLong(lo*32+16), bb.getLong(lo*32+24));
+	}*/
+
+	/*public static final boolean appendToFile(String filename, UUID pearlUUID, UUID ownerUUID){
+		File file = new File(FileIO.DIR+filename);
+		try{
+			FileOutputStream fos = null;
+			try{fos = new FileOutputStream(file, true);}
+			catch(FileNotFoundException e){
+				LOGGER.info("ePearlDB file not found, creating one");
+				file.createNewFile();
+				fos = new FileOutputStream(file, true);
+			}
+			fos.write(PacketHelper.toByteArray(pearlUUID, ownerUUID));
+			fos.close();
+			LOGGER.fine("saved ownerUUID to file: "+ownerUUID);
+		}
+		catch(IOException e){e.printStackTrace();return false;}
+		return true;
+	}*/
+
+	// element size = 16+16+4+8 = 44
+	public static final Tuple3<UUID, Integer, Long> lookupInServerFile(String filename, UUID pearlUUID){
+		FileInputStream is = null;
+		try{is = new FileInputStream(FileIO.DIR+filename);}
+		catch(FileNotFoundException e){return null;}
+		final byte[] data;
+		try{data = is.readAllBytes(); is.close();}
+		catch(IOException e){e.printStackTrace(); return null;}
+		if(data.length % 44 != 0){
+			LOGGER.severe("Corrupted/invalid ePearlDB file!");
+			return null;
+		}
+		final long mostSig = pearlUUID.getMostSignificantBits(), leastSig = pearlUUID.getLeastSignificantBits();
+		final ByteBuffer bb = ByteBuffer.wrap(data);
+		int i = 0; while(i < data.length && bb.getLong(i) != mostSig && bb.getLong(i+8) != leastSig) i += 44;
+//		int lo = 0, hi = data.length/44;
+//		while(hi-lo > 1){
+//			int m = (lo + hi)/2;
+//			long v = bb.getLong(m*44);
+//			if(v > mostSig || (v == mostSig && bb.getLong(m*44+8) > pleastSig)) hi = m;
+//			else lo = m;
+//		}
+//		final int i = lo*44;
+//		final UUID keyUUID = new UUID(bb.getLong(lo*44), bb.getLong(lo*44+8));
+//		if(!keyUUID.equals(pearlUUID)){
+		if(i >= data.length){
+			LOGGER.fine("pearlUUID not found in localDB file: "+pearlUUID);
+			return null;
+		}
+		final UUID ownerUUID = new UUID(bb.getLong(i+16), bb.getLong(i+24));
+		final int clientId = bb.getInt(i+32);
+		final long timestamp = bb.getLong(i+36);
+		return new Tuple3<>(ownerUUID, clientId, timestamp);
+	}
+
+	public static final boolean appendToServerFile(String filename, UUID pearlUUID, UUID ownerUUID, int clientId, long timestamp){
+		File file = new File(FileIO.DIR+filename);
+		try{
+			FileOutputStream fos = null;
+			try{fos = new FileOutputStream(file, true);}
+			catch(FileNotFoundException e){
+				LOGGER.info("ePearlDB file not found, creating one");
+				file.createNewFile();
+				fos = new FileOutputStream(file, true);
+			}
+			ByteBuffer bb = ByteBuffer.allocate(16+16+4+8);
+			bb.putLong(pearlUUID.getMostSignificantBits());
+			bb.putLong(pearlUUID.getLeastSignificantBits());
+			bb.putLong(ownerUUID.getMostSignificantBits());
+			bb.putLong(ownerUUID.getLeastSignificantBits());
+			bb.putInt(clientId);
+			bb.putLong(timestamp);
+			fos.write(bb.array());
+			fos.close();
+			LOGGER.fine("saved ownerUUID to file: "+ownerUUID);
+		}
+		catch(IOException e){e.printStackTrace();return false;}
+		return true;
+	}
+
+	public static final boolean removeFromServerFile(String filename, UUID pearlUUID){
+		FileInputStream is = null;
+		try{is = new FileInputStream(FileIO.DIR+filename);}
+		catch(FileNotFoundException e){return false;}
+		final byte[] data;
+		try{data = is.readAllBytes(); is.close();}
+		catch(IOException e){e.printStackTrace(); return false;}
+		if(data.length % 44 != 0){
+			LOGGER.severe("Corrupted/invalid ePearlDB file!");
+			return false;
+		}
+		final ByteBuffer bbIn = ByteBuffer.wrap(data);
+		final ByteBuffer bbOut = ByteBuffer.allocate(data.length);
+		final long mostSig = pearlUUID.getMostSignificantBits(), leastSig = pearlUUID.getLeastSignificantBits();
+		boolean deleted = false;
+		while(bbIn.hasRemaining()){
+			final long k1 = bbIn.getLong(), k2 = bbIn.getLong();
+			final long o1 = bbIn.getLong(), o2 = bbIn.getLong();
+			final int clientId = bbIn.getInt();
+			final long timestamp = bbIn.getLong();
+
+			if(k1 == mostSig && k2 == leastSig){deleted=true; continue;}
+			//else
+			bbOut.putLong(k1).putLong(k2).putLong(o1).putLong(o2).putInt(clientId).putLong(timestamp);
+		}
+		if(deleted){
+			final byte[] rowsLeft = new byte[data.length-44];
+			bbOut.get(0, rowsLeft);
+			try{
+				FileOutputStream fos = new FileOutputStream(FileIO.DIR+filename);
+				fos.write(rowsLeft);
+				fos.close();
+				return true;
+			}
+			catch(IOException e){e.printStackTrace();}
+		}
+		return false;
+	}
+
+	public static final List<Pair<UUID, Tuple3<UUID, Integer, Long>>> readAllEntries(String filename){
+		final byte[] data;
+		try{
+			FileInputStream fis = new FileInputStream(FileIO.DIR+filename);
+			data = fis.readAllBytes();
+			fis.close();
+		}
+		catch(FileNotFoundException e){return List.of();}
+		catch(IOException e){e.printStackTrace(); return List.of();}
+		if(data.length % 44 != 0){LOGGER.severe("Corrupted/invalid ePearlDB file!");return List.of();}
+		final int numRows = data.length/44;
+		final ByteBuffer bb = ByteBuffer.wrap(data);
+		ArrayList<Pair<UUID, Tuple3<UUID, Integer, Long>>> entries = new ArrayList<>(numRows);
+		for(int i=0; i<numRows; ++i){
+			UUID pearl = new UUID(bb.getLong(), bb.getLong());
+			UUID owner = new UUID(bb.getLong(), bb.getLong());
+			int clientId = bb.getInt();
+			long timestamp = bb.getLong();
+			entries.add(new Pair<>(pearl, new Tuple3<>(owner, clientId, timestamp)));
+		}
+		return entries;
+	}
+
+	// element size = 16+16+4+4 = 40
+	public static final Tuple3<UUID, Integer, Integer> lookupInClientFile(String filename, UUID pearlUUID){
+		FileInputStream is = null;
+		try{is = new FileInputStream(FileIO.DIR+filename);}
+		catch(FileNotFoundException e){return null;}
+		final byte[] data;
+		try{data = is.readAllBytes(); is.close();}
+		catch(IOException e){e.printStackTrace(); return null;}
+		if(data.length % 40 != 0){
+			LOGGER.severe("Corrupted/invalid ePearlDB file!");
+			return null;
+		}
+		final long mostSig = pearlUUID.getMostSignificantBits(), leastSig = pearlUUID.getLeastSignificantBits();
+		final ByteBuffer bb = ByteBuffer.wrap(data);
+		int i = 0; while(i < data.length && bb.getLong(i) != mostSig && bb.getLong(i+8) != leastSig) i += 40;
+//		int lo = 0, hi = data.length/40;
+//		while(hi-lo > 1){
+//			int m = (lo + hi)/2;
+//			long v = bb.getLong(m*40);
+//			if(v > mostSig || (v == mostSig && bb.getLong(m*40+8) > pearlUUID.getLeastSignificantBits())) hi = m;
+//			else lo = m;
+//		}
+//		final int i = lo*40;
+//		final UUID keyUUID = new UUID(bb.getLong(i), bb.getLong(i+8));
+//		if(!keyUUID.equals(pearlUUID)){
+		if(i >= data.length){
+			LOGGER.fine("pearlUUID not found in localDB file: "+pearlUUID);
+			return null;
+		}
+		final UUID ownerUUID = new UUID(bb.getLong(i+16), bb.getLong(i+24));
+		final int x = bb.getInt(i+32), z = bb.getInt(i+36);
+		return new Tuple3<>(ownerUUID, x, z);
+	}
+
+	public static final boolean appendToClientFile(String filename, UUID pearlUUID, UUID ownerUUID, int x, int z){
+		File file = new File(FileIO.DIR+filename);
+		try{
+			FileOutputStream fos = null;
+			try{fos = new FileOutputStream(file, true);}
+			catch(FileNotFoundException e){
+				LOGGER.info("ePearlDB file not found, creating one");
+				file.createNewFile();
+				fos = new FileOutputStream(file, true);
+			}
+			ByteBuffer bb = ByteBuffer.allocate(16+16+4+8);
+			bb.putLong(pearlUUID.getMostSignificantBits());
+			bb.putLong(pearlUUID.getLeastSignificantBits());
+			bb.putLong(ownerUUID.getMostSignificantBits());
+			bb.putLong(ownerUUID.getLeastSignificantBits());
+			bb.putInt(x).putInt(z);
+			fos.write(bb.array());
+			fos.close();
+			LOGGER.fine("saved ownerUUID to file: "+ownerUUID);
+		}
+		catch(IOException e){e.printStackTrace();return false;}
+		return true;
+	}
+
+	public static final HashSet<UUID> removeMissingFromClientFile(String filename, int playerX, int playerZ, double affectedDistSq, HashSet<UUID> keep){
+		FileInputStream is = null;
+		try{is = new FileInputStream(FileIO.DIR+filename);}
+		catch(FileNotFoundException e){return null;}
+		final byte[] data;
+		try{data = is.readAllBytes(); is.close();}
+		catch(IOException e){e.printStackTrace(); return null;}
+		if(data.length % 40 != 0){
+			LOGGER.severe("Corrupted/invalid ePearlDB file!");
+			return null;
+		}
+		final ByteBuffer bbIn = ByteBuffer.wrap(data);
+		final ByteBuffer bbOut = ByteBuffer.allocate(data.length);
+		final HashSet<UUID> deletedKeys = new HashSet<>();
+		int kept = 0;
+		while(bbIn.hasRemaining()){
+			final long k1 = bbIn.getLong(), k2 = bbIn.getLong();
+			final long o1 = bbIn.getLong(), o2 = bbIn.getLong();
+			final int x = bbIn.getInt(), z = bbIn.getInt();
+
+			final double distSq = (playerX-x)*(playerX-x) + (playerZ-z)*(playerZ-z);
+			if(distSq < affectedDistSq){
+				final UUID key = new UUID(k1, k2);
+				if(!keep.contains(key)){deletedKeys.add(key); continue;}
+			}
+			//else
+			++kept;
+			bbOut.putLong(k1).putLong(k2).putLong(o1).putLong(o2).putInt(x).putInt(z);
+		}
+		if(kept*40 == data.length) return deletedKeys; // Nothing was deleted
+
+		final byte[] rowsLeft = new byte[kept*40];
+		bbOut.get(0, rowsLeft);
+		try{
+			FileOutputStream fos = new FileOutputStream(FileIO.DIR+filename);
+			fos.write(rowsLeft);
+			fos.close();
+		}
+		catch(IOException e){e.printStackTrace(); deletedKeys.clear();}
+		return deletedKeys;
+	}
+}

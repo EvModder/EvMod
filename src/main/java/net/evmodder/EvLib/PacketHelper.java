@@ -1,0 +1,163 @@
+package net.evmodder.EvLib;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.ConnectException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.nio.ByteBuffer;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.UUID;
+import java.util.logging.Logger;
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
+import jdk.net.ExtendedSocketOptions;
+
+public final class PacketHelper{
+	private static final int MAX_PACKET_SIZE = 52; // 4 + [4+4+8+16+16]
+	private static final int MAX_PACKET_SIZE_REPLY = 16;
+
+	private static final Logger LOGGER = Logger.getLogger("EvLibMod-PacketHelper");
+//	static{
+//		try{
+//			Object logger = Class.forName("org.slf4j.LoggerFactory").getMethod("getLogger", String.class).invoke(null, "EvLibMod");
+//		}
+//		catch(ClassNotFoundException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | SecurityException e){}
+//	}
+
+	private static Cipher getCipher(String keyString, int mode)
+			throws NoSuchAlgorithmException, NoSuchPaddingException, InvalidKeyException, InvalidAlgorithmParameterException{
+		// setup AES cipher in CBC mode with PKCS #5 padding
+		// Actually, since we encode 16 bytes (or multiples or 16), use ECB/NoPadding
+		Cipher cipher = Cipher.getInstance("AES/ECB/NoPadding");
+
+//		// setup an IV (initialization vector) that should be
+//		// randomly generated for each input that's encrypted
+//		byte[] iv = new byte[cipher.getBlockSize()];
+//		new SecureRandom().nextBytes(iv);
+//		IvParameterSpec ivSpec = new IvParameterSpec(iv);
+
+		// hash keyString with SHA-256 and crop the output to 128-bit for key
+		MessageDigest digest = MessageDigest.getInstance("SHA-256");
+		digest.update(keyString.getBytes());
+		byte[] key = new byte[16];
+		System.arraycopy(digest.digest(), 0, key, 0, key.length);
+		SecretKeySpec keySpec = new SecretKeySpec(key, "AES");
+
+		cipher.init(mode, keySpec/*, ivSpec*/);
+		return cipher;
+	}
+	public static byte[] encrypt(byte[] data, String keyString){
+		if(data.length % 16 != 0){
+			LOGGER.severe("Invalid message length, must be multiple of 16, got: "+data.length);
+			return null;
+		}
+		try{
+			Cipher cipher = getCipher(keyString, Cipher.ENCRYPT_MODE);
+			return cipher.doFinal(data);
+		}
+		catch(Exception e){
+			e.printStackTrace();
+			LOGGER.warning(e.getMessage());
+			return null;
+		}
+	}
+	public static byte[] decrypt(byte[] data, String keyString){
+		if(data.length % 16 != 0){
+			LOGGER.warning("Invalid message length, must be multiple of 16, got: "+data.length);
+			return null;
+		}
+		try{
+			Cipher cipher = getCipher(keyString, Cipher.DECRYPT_MODE);
+			return cipher.doFinal(data);
+		}
+		catch(Exception e){
+			e.printStackTrace();
+			LOGGER.warning(e.getMessage());
+			return null;
+		}
+	}
+
+	public interface MessageReceiver{void receiveMessage(byte[] message);}
+
+	public static void sendPacket(InetAddress addr, int port, boolean udp, byte[] msg, MessageReceiver recv, long timeout){
+		if(udp){
+			DatagramSocket socket;
+			try{
+				socket = new DatagramSocket(port);
+				socket.setBroadcast(false);
+				socket.setTrafficClass(/*IPTOS_LOWDELAY=*/0x10);//socket.setOption(StandardSocketOptions.IP_TOS, 0x10);
+				socket.setSendBufferSize(MAX_PACKET_SIZE);
+				socket.setReceiveBufferSize(MAX_PACKET_SIZE); // Minimum it allows is 1024 bytes. Putting any value below (like 64) still gives 1024
+			}
+			catch(SocketException e){e.printStackTrace(); return;};
+			try{
+				socket.setOption(ExtendedSocketOptions.IP_DONTFRAGMENT, true);
+				socket.send(new DatagramPacket(msg, msg.length, addr, port));
+			}
+			catch(IOException e){e.printStackTrace(); return;}
+
+			if(recv != null) new Thread(()->{
+				byte[] reply = new byte[MAX_PACKET_SIZE_REPLY];
+				try{
+					socket.setSoTimeout((int)timeout);
+					socket.receive(new DatagramPacket(reply, reply.length));
+				}
+				catch(IOException e){
+					if(e instanceof SocketTimeoutException == false) LOGGER.warning("Waiting for UDP response timed out");
+					else e.printStackTrace();
+					reply = null;
+				}
+				//LOGGER.info("Roundtrip delay (UDP): "+(System.currentTimeMillis()-startTime));
+				recv.receiveMessage(reply);
+				socket.close();
+			}).start();
+		}
+		else new Thread(){@Override public void run(){
+			final long startTime = System.currentTimeMillis();
+			byte[] reply = null;
+			try{
+				Socket socket = new Socket();
+				socket.setPerformancePreferences(2, 1, 0);//TODO: Java standard library has not implemented this yet???
+				socket.setTrafficClass(/*IPTOS_LOWDELAY=*/0x10);
+				socket.setTcpNoDelay(true);
+				//socket.setOption(ExtendedSocketOptions.IP_DONTFRAGMENT, true);//java.lang.UnsupportedOperationException
+//				socket.setSendBufferSize(64);   //TODO: find a way to resize BEFORE connect, not after, without having it overridden by server socket
+//				socket.setReceiveBufferSize(64);//TODO: find a way to resize BEFORE connect, not after, without having it overridden by server socket
+				socket.connect(new InetSocketAddress(addr, port), (int)timeout);
+				socket.setSendBufferSize(MAX_PACKET_SIZE);
+				socket.setReceiveBufferSize(MAX_PACKET_SIZE);// Minimum it allows is 1024 bytes. Putting any value below (like 64) still gives 1024
+
+				socket.getOutputStream().write(msg);
+				if(recv == null){socket.close(); return;}
+
+				final InputStream is = socket.getInputStream();
+				while(!socket.isClosed() && is.available() == 0 && System.currentTimeMillis() - startTime < timeout && !isInterrupted())/*wait for reply*/;
+				if(is.available() > 0) reply = is.readAllBytes();
+				socket.close();
+			}
+			catch(ConnectException e){LOGGER.severe("Failed to connect to RemoteServer");}
+			catch(IOException e){e.printStackTrace();}
+			//LOGGER.info("Roundtrip delay (TCP): "+(System.currentTimeMillis()-startTime));
+			recv.receiveMessage(reply);
+		}}.start();
+	}
+
+	public static byte[] toByteArray(UUID... uuids){
+		ByteBuffer bb = ByteBuffer.allocate(uuids.length*16);
+		for(UUID uuid : uuids){
+			bb.putLong(uuid.getMostSignificantBits());
+			bb.putLong(uuid.getLeastSignificantBits());
+		}
+		return bb.array();
+	}
+}

@@ -1,0 +1,46 @@
+package net.evmodder.EvLib;
+
+import java.util.HashMap;
+
+public abstract class LoadingCache<K, V>{
+	private final HashMap<K, V> cache = new HashMap<>();
+	private final HashMap<K, Thread> loading = new HashMap<>();
+	private final V V_NOT_FOUND, V_LOADING;
+	public LoadingCache(final V notFound, final V loading){V_NOT_FOUND = notFound; V_LOADING = loading;}
+	public LoadingCache(){this(null, null);}
+
+	public abstract V load(final K k);
+
+	public final boolean putIfAbsent(final K k, final V v){
+		synchronized(cache){
+			if(cache.containsKey(k)) return false;
+			cache.put(k, v);
+		}
+		final Thread t;
+		synchronized(loading){t = loading.remove(k);}
+		if(t != null) t.interrupt();
+		return true;
+	}
+	public final boolean containsKey(final K k){return cache.containsKey(k);}
+	public final V get(final K k){
+		if(cache.containsKey(k)){
+			final V v = cache.get(k);
+			return v != null ? v : V_NOT_FOUND;
+		}
+		if(!loading.containsKey(k)){
+			final Thread t = new Thread(()->{
+				final V v = load(k);
+				if(v.equals(V_LOADING)){
+					synchronized(loading){if(loading.containsKey(k)) loading.put(k, null);} // null out this Thread so it can be garbage collected
+					return; // Assume the caller will do put() themselves
+				}
+				synchronized(cache){cache.put(k, v);}
+				synchronized(loading){loading.remove(k);}
+			});
+			loading.put(k, t);
+			t.start();
+		}
+		return V_LOADING;
+	}
+	//TODO: private final HashMap<K, Pair</*timestamp*/long, V>> cache
+}
