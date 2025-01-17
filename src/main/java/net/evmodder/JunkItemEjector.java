@@ -78,7 +78,8 @@ final class JunkItemEjector{
 					int adjustedSlot = slot;
 					if(adjustedSlot >= 36) adjustedSlot -= 36;
 					ItemStack stack = client.player.getInventory().getStack(adjustedSlot);
-					if(shouldEject(stack)) client.interactionManager.clickSlot(0, slot, 1, SlotActionType.THROW, client.player);
+					if(shouldEject(stack)) client.interactionManager.clickSlot(/*client.player.playerScreenHandler.syncId*/0,
+							slot, 1, SlotActionType.THROW, client.player);
 				}
 			}
 		});

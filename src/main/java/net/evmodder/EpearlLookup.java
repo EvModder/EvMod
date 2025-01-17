@@ -33,6 +33,43 @@ public final class EpearlLookup{
 	private final HashMap<UUID, Pair<Integer, Integer>> epearlLocs;
 
 	private final boolean USE_REMOTE_DB, SAVE_BY_UUID, SAVE_BY_XZ;
+	private static Timer removalChecker = null;
+
+	private void runEpearlRemovalChecker(){
+		if(removalChecker != null) return;
+		removalChecker = new Timer(/*isDaemon=*/true);
+		removalChecker.scheduleAtFixedRate(new TimerTask(){//TODO: change to onChunkLoadEvent?
+			@Override public void run(){
+				HashSet<UUID> pearlsSeen1 = new HashSet<>(), pearlsSeen2 = new HashSet<>();
+				MinecraftClient instance = MinecraftClient.getInstance();
+				double maxDistSq = 32*32; // Min render distance is 2 chunks
+				final int playerX = instance.player.getBlockX(), playerZ = instance.player.getBlockZ();
+				for(Entity e : instance.player.clientWorld.getEntities()){
+					if(e.getType() != EntityType.ENDER_PEARL) continue;
+					if(SAVE_BY_UUID) pearlsSeen1.add(e.getUuid());
+					if(SAVE_BY_XZ) pearlsSeen2.add(new UUID(Double.doubleToRawLongBits(e.getX()), Double.doubleToRawLongBits(e.getZ())));
+					final double dx = e.getBlockX()-playerX, dz = e.getBlockZ()-playerZ;
+					final double distSq = dx*dx + dz*dz;
+					if(distSq > maxDistSq) maxDistSq = distSq;
+				}
+				if(SAVE_BY_UUID){
+					for(UUID deletedKey : FileIO.removeMissingFromClientFile(DB_FILENAME_UUID, playerX, playerZ, maxDistSq, pearlsSeen1)){
+						KeyBound.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_UUID, PacketHelper.toByteArray(deletedKey), false);
+						KeyBound.LOGGER.info("Deleted ePearl owner stored for UUID: "+deletedKey);
+					}
+				}
+				if(SAVE_BY_XZ){
+					for(UUID deletedKey : FileIO.removeMissingFromClientFile(DB_FILENAME_XZ, playerX, playerZ, maxDistSq, pearlsSeen1)){
+						KeyBound.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_XZ, PacketHelper.toByteArray(deletedKey), false);
+						KeyBound.LOGGER.info("Deleted ePearl owner stored for XZ: "
+								+ Double.longBitsToDouble(deletedKey.getMostSignificantBits())+","
+								+ Double.longBitsToDouble(deletedKey.getLeastSignificantBits()));
+					}
+				}
+			}
+		}, 1000L, 5000L); // Runs every 5s
+	}
+
 	EpearlLookup(boolean uuidDb, boolean coordsDb){
 		SAVE_BY_UUID = uuidDb; SAVE_BY_XZ = coordsDb;
 		USE_REMOTE_DB = SAVE_BY_UUID || SAVE_BY_XZ;
@@ -40,36 +77,9 @@ public final class EpearlLookup{
 		if(!USE_REMOTE_DB) epearlLocs = null;
 		else{
 			epearlLocs = new HashMap<>();
-			new Timer(/*isDaemon=*/true).scheduleAtFixedRate(new TimerTask(){
-				@Override public void run(){
-					HashSet<UUID> pearlsSeen1 = new HashSet<>(), pearlsSeen2 = new HashSet<>();
-					MinecraftClient instance = MinecraftClient.getInstance();
-					double maxDistSq = 32*32; // Min render distance is 2 chunks
-					final int playerX = instance.player.getBlockX(), playerZ = instance.player.getBlockZ();
-					for(Entity e : instance.player.clientWorld.getEntities()){
-						if(e.getType() != EntityType.ENDER_PEARL) continue;
-						if(SAVE_BY_UUID) pearlsSeen1.add(e.getUuid());
-						if(SAVE_BY_XZ) pearlsSeen2.add(new UUID(Double.doubleToRawLongBits(e.getX()), Double.doubleToRawLongBits(e.getZ())));
-						final double dx = e.getBlockX()-playerX, dz = e.getBlockZ()-playerZ;
-						final double distSq = dx*dx + dz*dz;
-						if(distSq > maxDistSq) maxDistSq = distSq;
-					}
-					if(SAVE_BY_UUID){
-						for(UUID deletedKey : FileIO.removeMissingFromClientFile(DB_FILENAME_UUID, playerX, playerZ, maxDistSq, pearlsSeen1)){
-							KeyBound.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_UUID, PacketHelper.toByteArray(deletedKey), false);
-							KeyBound.LOGGER.info("Deleted ePearl owner stored for UUID: "+deletedKey);
-						}
-					}
-					if(SAVE_BY_XZ){
-						for(UUID deletedKey : FileIO.removeMissingFromClientFile(DB_FILENAME_XZ, playerX, playerZ, maxDistSq, pearlsSeen1)){
-							KeyBound.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_XZ, PacketHelper.toByteArray(deletedKey), false);
-							KeyBound.LOGGER.info("Deleted ePearl owner stored for XZ: "
-									+ Double.longBitsToDouble(deletedKey.getMostSignificantBits())+","
-									+ Double.longBitsToDouble(deletedKey.getLeastSignificantBits()));
-						}
-					}
-				}
-			}, 1000L, 1000L); // Runs every 1s
+			runEpearlRemovalChecker();
+			if(SAVE_BY_UUID) KeyBound.LOGGER.info("Epearls stored by UUID: "+FileIO.readAllClientEntries(DB_FILENAME_UUID).size());
+			if(SAVE_BY_XZ) KeyBound.LOGGER.info("Epearls stored by XZ: "+FileIO.readAllClientEntries(DB_FILENAME_XZ).size());
 		}
 	}
 

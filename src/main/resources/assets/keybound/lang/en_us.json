@@ -1,4 +1,6 @@
 {
+	"key.categories.keybound": "KeyBound",
+
 	"key.categories.keybound.skin_toggles": "Skin outer layer toggles",
 	"key.keybound.skin_toggle.cape": "Toggle cape",
 	"key.keybound.skin_toggle.hat": "Toggle hat",
@@ -8,11 +10,13 @@
 	"key.keybound.skin_toggle.left_sleeve": "Toggle left sleeve",
 	"key.keybound.skin_toggle.right_sleeve": "Toggle right sleeve",
 
+	"key.keybound.organize_inventory.a": "Organize inventory (EvDefault)",
+
 	"key.categories.keybound.color_scroll": "Hotbar color scrolling",
 	"key.keybound.color_scroll.up": "Next color",
 	"key.keybound.color_scroll.down": "Last color",
 
-	"category.keybound.remote_messages": "Send messages to the bot server",
+	"key.categories.keybound.remote_messages": "Send messages to the bot server",
 	"key.keybound.remote_msg.mainbase": "Main base stasis pearl",
 	"key.keybound.remote_msg.a": "A",
 	"key.keybound.remote_msg.b": "B",

@@ -34,6 +34,7 @@ public class KeyBound implements ClientModInitializer{
 	// Feature Ideas:
 	// Maps - smaller text for item count in slot
 	// Maps - hotkey to mass-copy (copy every map 1->64, or 1->2)
+	// steal activated spawner and similar stuff from trouser-streak?
 	// /msgas Anuvin target hi - send msg from alt acc
 	// timer countdown showing time left on 2b for non prio before kick
 
@@ -41,6 +42,7 @@ public class KeyBound implements ClientModInitializer{
 	public static final String MOD_ID = "keybound";
 	//public static final String MOD_NAME = "KeyBound";
 	//public static final String MOD_VERSION = "@MOD_VERSION@";
+	public static final String KEYBIND_CATEGORY = "key.categories."+MOD_ID;
 
 
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
@@ -79,9 +81,11 @@ public class KeyBound implements ClientModInitializer{
 			config.put(key, value);
 		}
 		if(listKey != null) LOGGER.error("Unterminated list in ./config/keybound.txt!\nkey: "+listKey);
+	}
 
+	@Override public void onInitializeClient(){
+		loadConfig();
 		//=================================== Loading config features
-
 		HashMap<String, String> remoteMessages = new HashMap<>();
 		int clientId=0; String clientKey=null;
 		String remoteAddr=null; int remotePort=0;
@@ -92,16 +96,17 @@ public class KeyBound implements ClientModInitializer{
 			String value = config.get(key);
 			if(key.startsWith("chat_msg.")) SimpleKeybindFeatures.registerChatKeybind(key, value);
 			else if(key.startsWith("remote_msg.")) remoteMessages.put(key, value);
+			else if(key.startsWith("organize_inventory.")) SimpleKeybindFeatures.registerInvOrganizeKeyBind(key, value.replaceAll("\\s",""));
 			else switch(key){
 				case "client_id": clientId = Integer.parseInt(value); break;
 				case "client_key": clientKey = value; break;
 				case "remote_addr": remoteAddr = value; break;
 				case "remote_port": remotePort = Integer.parseInt(value); break;
+//				case "spawner_highlight":
+//					if(!value.equalsIgnoreCase("false"));
+//					break;
 				case "repaircost_tooltip":
-					if(!value.equalsIgnoreCase("false")){
-						rcTooltip = true;
-						ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC);
-					}
+					if(!value.equalsIgnoreCase("false")){rcTooltip = true; ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC);}
 					break;
 				case "enderpearl_owners":
 					if(!value.equalsIgnoreCase("false")) epearlOwners = true;
@@ -121,7 +126,7 @@ public class KeyBound implements ClientModInitializer{
 					if(!value.equalsIgnoreCase("false")) new SeenCommand();//TODO
 					break;
 				case "scroll_order": {
-					final String listOfListsStr = config.get(key).replaceAll("\\s","");
+					final String listOfListsStr = value.replaceAll("\\s","");
 					List<String[]> colorLists = Arrays.stream(listOfListsStr.substring(2, listOfListsStr.length()-2).split("\\],\\[")).map(s->s.split(",")).toList();
 					new VariantHotbarScroller(colorLists);
 					break;
@@ -135,6 +140,4 @@ public class KeyBound implements ClientModInitializer{
 			remoteSender = new RemoteServerSender(remoteAddr, remotePort, clientId, clientKey, remoteMessages);
 		}
 	}
-
-	@Override public void onInitializeClient(){loadConfig();}
 }

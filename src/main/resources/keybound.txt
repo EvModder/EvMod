@@ -3,6 +3,24 @@
 #========== Misc Keybinds ==========#
 keybind_drop_items: true
 keybind_toggle_skin_layers: true
+organize_inventory.a: [
+  # Hotbar LHS
+  0:netherite_sword, 1:netherite_pickaxe, 2:netherite_axe, 3:firework_rocket,
+
+  # Offhand
+  -106:totem_of_undying,# -106:enchanted_golden_apple, -106:golden_carrot, -106:cooked_beef
+
+  # Hotbar RHS
+  8:enchanted_golden_apple, 8:golden_carrot, 8:cooked_beef,
+
+  #Armor
+  103:netherite_helmet, 102:elytra, 102:netherite_chestplate, 101:netherite_leggings, 100:netherite_boots,
+  103:diamond_helmet, 102:elytra, 102:diamond_chestplate, 101:diamond_leggings, 100:diamond_boots,
+
+  # Inventory top LHS
+  9:netherite_chestplate, 9:diamond_chestplate, 10:ender_chest,
+  11:totem_of_undying, 12:totem_of_undying, 13:totem_of_undying
+]
 
 #========== Added Visuals ==========#
 repaircost_tooltip: true

@@ -11,6 +11,7 @@ import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Identifier;
 
 final class VariantHotbarScroller{
@@ -64,12 +65,15 @@ final class VariantHotbarScroller{
 		}
 		if(colors == null) return; // not a supported item (eg: "red_sandstone")
 
-		int new_i = upOrDown ? (i == colors.length-1 ? 0 : i+1) : (i == 0 ? colors.length-1 : i-1);
-		id = Identifier.of(id.getNamespace(), id.getPath().replace(colors[i], colors[new_i]));
+		final int original_i = i;
+		i = upOrDown ? (i == colors.length-1 ? 0 : i+1) : (i == 0 ? colors.length-1 : i-1);
+		id = Identifier.of(id.getNamespace(), id.getPath().replace(colors[original_i], colors[i]));
 		if(client.player.isInCreativeMode()){
-			inventory.setStack(inventory.selectedSlot, new ItemStack(Registries.ITEM.get(id), is.getCount()));
+			inventory.setStack(inventory.selectedSlot, new ItemStack(Registries.ITEM.get(id), is.getCount()));//TODO: doesn't seem to work on servers (visually yes, but not when u place the block)
+			//client.interactionManager.clickCreativeStack(new ItemStack(Registries.ITEM.get(id)), inventory.selectedSlot);//TODO: this doesn't work either :sob:
+			//inventory.markDirty();
 		}
-		else{//  survival mode
+		else{// survival mode
 			do{
 				int j = 0;
 				for(; j<inventory.main.size(); ++j){
@@ -87,14 +91,17 @@ final class VariantHotbarScroller{
 					else{
 						inventory.main.set(inventory.selectedSlot, inventory.main.get(j));
 						inventory.main.set(j, is);
+						client.interactionManager.clickSlot(/*client.player.playerScreenHandler.syncId*/0, j, inventory.selectedSlot, SlotActionType.SWAP, client.player);
 					}
-					KeyBound.LOGGER.error("did swap");
+					//KeyBound.LOGGER.error("did swap");
 					break;
 				}
-				new_i = upOrDown ? (new_i == colors.length-1 ? 0 : new_i+1) : (new_i == 0 ? colors.length-1 : new_i-1);
+				//else KeyBound.LOGGER.error("no "+id.getPath()+", continuing for next item");
+				final int new_i = upOrDown ? (i == colors.length-1 ? 0 : i+1) : (i == 0 ? colors.length-1 : i-1);
 				id = Identifier.of(id.getNamespace(), id.getPath().replace(colors[i], colors[new_i]));
-			}while(new_i != i);
-			KeyBound.LOGGER.error("full wrap-around: "+i);
+				i = new_i;
+			}while(i != original_i);
+			//KeyBound.LOGGER.error("full wrap-around: "+i);
 		}
 	}
 

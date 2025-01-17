@@ -226,7 +226,7 @@ public final class FileIO{
 		return false;
 	}
 
-	public static final List<Pair<UUID, Tuple3<UUID, Integer, Long>>> readAllEntries(String filename){
+	public static final List<Pair<UUID, Tuple3<UUID, Integer, Long>>> readAllServerEntries(String filename){
 		final byte[] data;
 		try{
 			FileInputStream fis = new FileInputStream(FileIO.DIR+filename);
@@ -305,6 +305,28 @@ public final class FileIO{
 		}
 		catch(IOException e){e.printStackTrace();return false;}
 		return true;
+	}
+
+	public static final List<Pair<UUID, Tuple3<UUID, Integer, Integer>>> readAllClientEntries(String filename){
+		final byte[] data;
+		try{
+			FileInputStream fis = new FileInputStream(FileIO.DIR+filename);
+			data = fis.readAllBytes();
+			fis.close();
+		}
+		catch(FileNotFoundException e){return List.of();}
+		catch(IOException e){e.printStackTrace(); return List.of();}
+		if(data.length % 40 != 0){LOGGER.severe("Corrupted/invalid ePearlDB file!");return List.of();}
+		final int numRows = data.length/40;
+		final ByteBuffer bb = ByteBuffer.wrap(data);
+		ArrayList<Pair<UUID, Tuple3<UUID, Integer, Integer>>> entries = new ArrayList<>(numRows);
+		for(int i=0; i<numRows; ++i){
+			UUID pearl = new UUID(bb.getLong(), bb.getLong());
+			UUID owner = new UUID(bb.getLong(), bb.getLong());
+			int x = bb.getInt(),  z = bb.getInt();
+			entries.add(new Pair<>(pearl, new Tuple3<>(owner, x, z)));
+		}
+		return entries;
 	}
 
 	public static final HashSet<UUID> removeMissingFromClientFile(String filename, int playerX, int playerZ, double affectedDistSq, HashSet<UUID> keep){
