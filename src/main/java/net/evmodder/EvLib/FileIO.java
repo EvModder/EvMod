@@ -227,7 +227,7 @@ public final class FileIO{
 		return false;
 	}*/
 
-	public static final boolean saveToServerFile(String filename, HashMap<UUID/*pearl*/, Tuple3<UUID/*owner*/, Integer/*clientId*/, Long/*timestamp*/>> data){
+	public static final boolean saveToServerFile(String filename, HashMap<UUID/*pearl*/, PearlData> data){
 		File file = new File(FileIO.DIR+filename);
 		try{
 			FileOutputStream fos = null;
@@ -237,15 +237,16 @@ public final class FileIO{
 				file.createNewFile();
 				fos = new FileOutputStream(file, true);
 			}
-			ByteBuffer bb = ByteBuffer.allocate(16+16+4+8);
+			ByteBuffer bb = ByteBuffer.allocate(16+16+4+8+8);
 			for(var e : data.entrySet()){
 				bb.clear();
 				bb.putLong(e.getKey().getMostSignificantBits());
 				bb.putLong(e.getKey().getLeastSignificantBits());
-				bb.putLong(e.getValue().a.getMostSignificantBits());
-				bb.putLong(e.getValue().a.getLeastSignificantBits());
-				bb.putInt(e.getValue().b);
-				bb.putLong(e.getValue().c);
+				bb.putLong(e.getValue().owner().getMostSignificantBits());
+				bb.putLong(e.getValue().owner().getLeastSignificantBits());
+				bb.putInt(e.getValue().submittedBy());
+				bb.putLong(e.getValue().created());
+				bb.putLong(e.getValue().lastAccessed());
 				fos.write(bb.array());
 			}
 			fos.close();
@@ -254,7 +255,7 @@ public final class FileIO{
 		return true;
 	}
 
-	public static final HashMap<UUID, Tuple3<UUID, Integer, Long>> loadFromServerFile(String filename){
+	public static final HashMap<UUID, PearlData> loadFromServerFile(String filename){
 		final byte[] data;
 		try{
 			FileInputStream fis = new FileInputStream(FileIO.DIR+filename);
@@ -267,19 +268,33 @@ public final class FileIO{
 			e.printStackTrace();
 			return new HashMap<>();
 		}
-		if(data.length % 44 != 0){
+		if(data.length % 44 == 0){
+			final int numRows = data.length/44;
+			final ByteBuffer bb = ByteBuffer.wrap(data);
+			HashMap<UUID, PearlData> entries = new HashMap<>(numRows);
+			for(int i=0; i<numRows; ++i){
+				UUID pearl = new UUID(bb.getLong(), bb.getLong());
+				UUID owner = new UUID(bb.getLong(), bb.getLong());
+				int clientId = bb.getInt();
+				long timestamp = bb.getLong();
+				entries.put(pearl, new PearlData(owner, clientId, timestamp, timestamp));
+			}
+			return entries;
+		}
+		if(data.length % 52 != 0){
 			LOGGER.severe("Corrupted/invalid ePearlDB file!");
 			return new HashMap<>();
 		}
-		final int numRows = data.length/44;
+		final int numRows = data.length/52;
 		final ByteBuffer bb = ByteBuffer.wrap(data);
-		HashMap<UUID, Tuple3<UUID, Integer, Long>> entries = new HashMap<>(numRows);
+		HashMap<UUID, PearlData> entries = new HashMap<>(numRows);
 		for(int i=0; i<numRows; ++i){
-			UUID pearl = new UUID(bb.getLong(), bb.getLong());
-			UUID owner = new UUID(bb.getLong(), bb.getLong());
-			int clientId = bb.getInt();
-			long timestamp = bb.getLong();
-			entries.put(pearl, new Tuple3<>(owner, clientId, timestamp));
+			UUID pearlKey = new UUID(bb.getLong(), bb.getLong());
+			UUID owningPlayer = new UUID(bb.getLong(), bb.getLong());
+			int submittedByClientId = bb.getInt();
+			long createdTs = bb.getLong();
+			long accessedTs = bb.getLong();
+			entries.put(pearlKey, new PearlData(owningPlayer, submittedByClientId, createdTs, accessedTs));
 		}
 		return entries;
 	}
