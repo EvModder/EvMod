@@ -14,6 +14,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -128,7 +129,7 @@ public final class FileIO{
 	}*/
 
 	// element size = 16+16+4+8 = 44
-	public static final Tuple3<UUID, Integer, Long> lookupInServerFile(String filename, UUID pearlUUID){
+	/*public static final Tuple3<UUID, Integer, Long> lookupInServerFile(String filename, UUID pearlUUID){
 		FileInputStream is = null;
 		try{is = new FileInputStream(FileIO.DIR+filename);}
 		catch(FileNotFoundException e){return null;}
@@ -224,27 +225,61 @@ public final class FileIO{
 			catch(IOException e){e.printStackTrace();}
 		}
 		return false;
+	}*/
+
+	public static final boolean saveToServerFile(String filename, HashMap<UUID/*pearl*/, Tuple3<UUID/*owner*/, Integer/*clientId*/, Long/*timestamp*/>> data){
+		File file = new File(FileIO.DIR+filename);
+		try{
+			FileOutputStream fos = null;
+			try{fos = new FileOutputStream(file);}
+			catch(FileNotFoundException e){
+				LOGGER.info("ePearlDB file not found, creating it");
+				file.createNewFile();
+				fos = new FileOutputStream(file, true);
+			}
+			ByteBuffer bb = ByteBuffer.allocate(16+16+4+8);
+			for(var e : data.entrySet()){
+				bb.clear();
+				bb.putLong(e.getKey().getMostSignificantBits());
+				bb.putLong(e.getKey().getLeastSignificantBits());
+				bb.putLong(e.getValue().a.getMostSignificantBits());
+				bb.putLong(e.getValue().a.getLeastSignificantBits());
+				bb.putInt(e.getValue().b);
+				bb.putLong(e.getValue().c);
+				fos.write(bb.array());
+			}
+			fos.close();
+		}
+		catch(IOException e){e.printStackTrace();return false;}
+		return true;
 	}
 
-	public static final List<Pair<UUID, Tuple3<UUID, Integer, Long>>> readAllServerEntries(String filename){
+	public static final HashMap<UUID, Tuple3<UUID, Integer, Long>> loadFromServerFile(String filename){
 		final byte[] data;
 		try{
 			FileInputStream fis = new FileInputStream(FileIO.DIR+filename);
 			data = fis.readAllBytes();
 			fis.close();
 		}
-		catch(FileNotFoundException e){return List.of();}
-		catch(IOException e){e.printStackTrace(); return List.of();}
-		if(data.length % 44 != 0){LOGGER.severe("Corrupted/invalid ePearlDB file!");return List.of();}
+		//catch(FileNotFoundException e){return new HashMap<>();}
+		catch(IOException e){
+			LOGGER.warning("DB file not found");
+			e.printStackTrace();
+			return new HashMap<>();
+		}
+		if(data.length % 44 != 0){
+			LOGGER.severe("Corrupted/invalid ePearlDB file!");
+			return new HashMap<>();
+		}
 		final int numRows = data.length/44;
 		final ByteBuffer bb = ByteBuffer.wrap(data);
-		ArrayList<Pair<UUID, Tuple3<UUID, Integer, Long>>> entries = new ArrayList<>(numRows);
+		HashMap<UUID, Tuple3<UUID, Integer, Long>> entries = new HashMap<>(numRows);
 		for(int i=0; i<numRows; ++i){
 			UUID pearl = new UUID(bb.getLong(), bb.getLong());
 			UUID owner = new UUID(bb.getLong(), bb.getLong());
 			int clientId = bb.getInt();
 			long timestamp = bb.getLong();
-			entries.add(new Pair<>(pearl, new Tuple3<>(owner, clientId, timestamp)));
+			entries.put(pearl, new Tuple3<>(owner, clientId, timestamp));
 		}
 		return entries;
 	}
