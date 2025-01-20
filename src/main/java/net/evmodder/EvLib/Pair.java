@@ -1,5 +1,6 @@
 package net.evmodder.EvLib;
 
+//public record Pair<T,R>(T a, R b){
 public class Pair<T,R>{
 	public final T a; public R b;
 	public Pair(T t, R r){a=t; b=r;}

@@ -2,6 +2,7 @@ package net.evmodder.EvLib;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.net.ConnectException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -23,8 +24,12 @@ import javax.crypto.spec.SecretKeySpec;
 import jdk.net.ExtendedSocketOptions;
 
 public final class PacketHelper{
-	private static final int MAX_PACKET_SIZE = 52; // 4 + [4+4+8+16+16]
-	private static final int MAX_PACKET_SIZE_REPLY = 16;
+	private static final int MAX_PACKET_SIZE_SEND = 52; // 4 + [4+4+8+16+16]
+	private static final int MAX_PACKET_SIZE_RECV = 16;
+//	private static final int BIND_ATTEMPTS = 5;
+//	private static final int BIND_REATTEMPT_DELAY = 100;
+	private static Socket socketTCP;
+	private static DatagramSocket socketUDP;
 
 	private static final Logger LOGGER = Logger.getLogger("EvLibMod-PacketHelper");
 //	static{
@@ -90,27 +95,46 @@ public final class PacketHelper{
 	public interface MessageReceiver{void receiveMessage(byte[] message);}
 
 	public static void sendPacket(InetAddress addr, int port, boolean udp, byte[] msg, MessageReceiver recv, long timeout){
-		if(udp){
-			DatagramSocket socket;
-			try{
-				socket = new DatagramSocket(port);
-				socket.setBroadcast(false);
-				socket.setTrafficClass(/*IPTOS_LOWDELAY=*/0x10);//socket.setOption(StandardSocketOptions.IP_TOS, 0x10);
-				socket.setSendBufferSize(MAX_PACKET_SIZE);
-				socket.setReceiveBufferSize(MAX_PACKET_SIZE); // Minimum it allows is 1024 bytes. Putting any value below (like 64) still gives 1024
+		if(udp){synchronized(socketUDP){
+			if(socketUDP == null){
+//				new Thread(()->{
+//					for(int i=0; i<BIND_ATTEMPTS && socketUDP == null; ++i){
+//						try{socketUDP = new DatagramSocket(port);}
+//						catch(/*BindException | */SocketException e){
+//							try{Thread.sleep(BIND_REATTEMPT_DELAY);}
+//							catch(InterruptedException ex){ex.printStackTrace();}
+//						}
+//						//catch(SocketException e){e.printStackTrace(); break;}
+//					}
+//					if(socketUDP == null){
+//						LOGGER.severe("Failed to bind to socket (UDP) !!");
+//						return;
+//					}
+					try{
+						socketUDP = new DatagramSocket(port);
+						socketUDP.setBroadcast(false);
+						socketUDP.setTrafficClass(/*IPTOS_LOWDELAY=*/0x10);//socket.setOption(StandardSocketOptions.IP_TOS, 0x10);
+						socketUDP.setSendBufferSize(MAX_PACKET_SIZE_SEND);
+						socketUDP.setReceiveBufferSize(MAX_PACKET_SIZE_RECV); // Minimum it allows is 1024 bytes. Putting any value below (like 64) still gives 1024
+					}
+					catch(SocketException e){e.printStackTrace(); return;}
+					try{
+						socketUDP.setOption(ExtendedSocketOptions.IP_DONTFRAGMENT, true);
+//						socketUDP.send(new DatagramPacket(msg, msg.length, addr, port));
+					}
+					catch(/*SocketException*/IOException e){e.printStackTrace(); return;}
+//					sendPacket(addr, port, udp, msg, recv, timeout);
+//				}).start();
+//				return;
 			}
-			catch(SocketException e){e.printStackTrace(); return;};
-			try{
-				socket.setOption(ExtendedSocketOptions.IP_DONTFRAGMENT, true);
-				socket.send(new DatagramPacket(msg, msg.length, addr, port));
-			}
+			try{socketUDP.send(new DatagramPacket(msg, msg.length, addr, port));}
 			catch(IOException e){e.printStackTrace(); return;}
 
 			if(recv != null) new Thread(()->{
-				byte[] reply = new byte[MAX_PACKET_SIZE_REPLY];
+				byte[] reply = new byte[MAX_PACKET_SIZE_RECV];
 				try{
-					socket.setSoTimeout((int)timeout);
-					socket.receive(new DatagramPacket(reply, reply.length));
+					socketUDP.setSoTimeout((int)timeout);
+					socketUDP.receive(new DatagramPacket(reply, reply.length));
 				}
 				catch(IOException e){
 					if(e instanceof SocketTimeoutException == false) LOGGER.warning("Waiting for UDP response timed out");
@@ -119,37 +143,45 @@ public final class PacketHelper{
 				}
 				//LOGGER.info("Roundtrip delay (UDP): "+(System.currentTimeMillis()-startTime));
 				recv.receiveMessage(reply);
-				socket.close();
+				try{socketUDP.disconnect();}catch(UncheckedIOException e){e.printStackTrace(); socketUDP=null;}
+			}).start();
+		}}
+		else{
+			if(socketTCP == null){
+				try{
+					socketTCP = new Socket();
+					socketTCP.setPerformancePreferences(2, 1, 0);//TODO: Java standard library has not implemented this yet???
+					socketTCP.setTrafficClass(/*IPTOS_LOWDELAY=*/0x10);
+					socketTCP.setTcpNoDelay(true);
+					//socketTCP.setOption(ExtendedSocketOptions.IP_DONTFRAGMENT, true);//java.lang.UnsupportedOperationException
+//					socketTCP.setSendBufferSize(64);   //TODO: find a way to resize BEFORE connect, not after, without having it overridden by server socket
+//					socketTCP.setReceiveBufferSize(64);//TODO: find a way to resize BEFORE connect, not after, without having it overridden by server socket
+				}
+				catch(SocketException e){e.printStackTrace(); return;}
+			}
+			new Thread(()->{
+				final long startTime = System.currentTimeMillis();
+				byte[] reply = null;
+				try{
+					socketTCP.connect(new InetSocketAddress(addr, port), (int)timeout);
+					socketTCP.setSendBufferSize(MAX_PACKET_SIZE_SEND);
+					socketTCP.setReceiveBufferSize(MAX_PACKET_SIZE_RECV);// Minimum it allows is 1024 bytes. Putting any value below (like 64) still gives 1024
+	
+					socketTCP.getOutputStream().write(msg);
+					if(recv == null){socketTCP.close(); return;}
+	
+					final InputStream is = socketTCP.getInputStream();
+					while(!socketTCP.isClosed() && is.available() == 0 && System.currentTimeMillis() - startTime < timeout
+							&& !Thread.currentThread().isInterrupted()){/*wait for reply*/};
+					if(is.available() > 0) reply = is.readAllBytes();
+					socketTCP.close();
+				}
+				catch(ConnectException e){LOGGER.severe("Failed to connect to RemoteServer");}
+				catch(IOException e){e.printStackTrace();}
+				//LOGGER.info("Roundtrip delay (TCP): "+(System.currentTimeMillis()-startTime));
+				recv.receiveMessage(reply);
 			}).start();
 		}
-		else new Thread(){@Override public void run(){
-			final long startTime = System.currentTimeMillis();
-			byte[] reply = null;
-			try{
-				Socket socket = new Socket();
-				socket.setPerformancePreferences(2, 1, 0);//TODO: Java standard library has not implemented this yet???
-				socket.setTrafficClass(/*IPTOS_LOWDELAY=*/0x10);
-				socket.setTcpNoDelay(true);
-				//socket.setOption(ExtendedSocketOptions.IP_DONTFRAGMENT, true);//java.lang.UnsupportedOperationException
-//				socket.setSendBufferSize(64);   //TODO: find a way to resize BEFORE connect, not after, without having it overridden by server socket
-//				socket.setReceiveBufferSize(64);//TODO: find a way to resize BEFORE connect, not after, without having it overridden by server socket
-				socket.connect(new InetSocketAddress(addr, port), (int)timeout);
-				socket.setSendBufferSize(MAX_PACKET_SIZE);
-				socket.setReceiveBufferSize(MAX_PACKET_SIZE);// Minimum it allows is 1024 bytes. Putting any value below (like 64) still gives 1024
-
-				socket.getOutputStream().write(msg);
-				if(recv == null){socket.close(); return;}
-
-				final InputStream is = socket.getInputStream();
-				while(!socket.isClosed() && is.available() == 0 && System.currentTimeMillis() - startTime < timeout && !isInterrupted())/*wait for reply*/;
-				if(is.available() > 0) reply = is.readAllBytes();
-				socket.close();
-			}
-			catch(ConnectException e){LOGGER.severe("Failed to connect to RemoteServer");}
-			catch(IOException e){e.printStackTrace();}
-			//LOGGER.info("Roundtrip delay (TCP): "+(System.currentTimeMillis()-startTime));
-			recv.receiveMessage(reply);
-		}}.start();
 	}
 
 	public static byte[] toByteArray(UUID... uuids){

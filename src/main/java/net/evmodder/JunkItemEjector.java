@@ -34,7 +34,7 @@ final class JunkItemEjector{
 			//========== Fishing section ========================================
 			case "bow":
 				return stack.getEnchantments().getSize() < 4 || stack.getEnchantments().getEnchantments().stream()
-						.anyMatch(r -> stack.getEnchantments().getLevel(r) < Math.max(4, r.value().getMaxLevel()));
+						.anyMatch(r -> stack.getEnchantments().getLevel(r) < Math.min(4, r.value().getMaxLevel()));
 			case "fishing_rod":
 				return stack.getEnchantments().getSize() < 4 || stack.getEnchantments().getEnchantments().stream()
 						.anyMatch(r -> stack.getEnchantments().getLevel(r) < r.value().getMaxLevel());

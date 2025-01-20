@@ -3,11 +3,12 @@ package net.evmodder.EvLib;
 import java.util.HashMap;
 
 public abstract class LoadingCache<K, V>{
-	private final HashMap<K, V> cache = new HashMap<>();
+	private final HashMap<K, V> cache;
 	private final HashMap<K, Thread> loading = new HashMap<>();
 	private final V V_NOT_FOUND, V_LOADING;
-	public LoadingCache(final V notFound, final V loading){V_NOT_FOUND = notFound; V_LOADING = loading;}
-	public LoadingCache(){this(null, null);}
+	public LoadingCache(final HashMap<K, V> initMap, final V notFound, final V loading){cache = initMap; V_NOT_FOUND = notFound; V_LOADING = loading;}
+	public LoadingCache(final V notFound, final V loading){this(new HashMap<>(), notFound, loading);}
+	public LoadingCache(){this(new HashMap<>(), null, null);}
 
 	public abstract V load(final K k);
 

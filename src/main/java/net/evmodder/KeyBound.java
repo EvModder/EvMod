@@ -37,6 +37,7 @@ public class KeyBound implements ClientModInitializer{
 	// steal activated spawner and similar stuff from trouser-streak?
 	// /msgas Anuvin target hi - send msg from alt acc
 	// timer countdown showing time left on 2b for non prio before kick
+	// auto enchant dia sword, auto grindstone, auto rename, auto anvil combine
 
 	// Reference variables
 	public static final String MOD_ID = "keybound";

@@ -1,5 +1,7 @@
 package net.evmodder.mixin;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -7,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.evmodder.KeyBound;
+import net.evmodder.XYZ;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
@@ -23,6 +26,7 @@ public abstract class EntityRendererMixin{
 	@Shadow public abstract TextRenderer getTextRenderer();
 
 	private static final MinecraftClient client = MinecraftClient.getInstance();
+	private static final HashMap<XYZ, HashMap<String, HashSet<Integer>>> pearlsAtXYZ = new HashMap<>();
 
 	private boolean isLookngAt(Entity entity){
 		Vec3d vec3d = client.player.getRotationVec(1.0F).normalize();
@@ -42,6 +46,30 @@ public abstract class EntityRendererMixin{
 		//if(!isLookngAt(entity)) return;
 		String name = KeyBound.epearlLookup.getOwnerName((ProjectileEntity)e);
 		if(name == null) return;
+		//----------
+		XYZ xyz = new XYZ(e.getBlockX(), e.getBlockY()/4, e.getBlockZ());
+		HashMap<String, HashSet<Integer>> pearls = pearlsAtXYZ.get(xyz);
+		if(pearls == null){
+			xyz = new XYZ(xyz.x(), xyz.y()+1, xyz.z());
+			pearls = pearlsAtXYZ.get(xyz);
+			if(pearls == null){
+				xyz = new XYZ(xyz.x(), xyz.y()-2, xyz.z());
+				pearls = pearlsAtXYZ.get(xyz);
+				if(pearls == null){
+					xyz = new XYZ(xyz.x(), xyz.y()+1, xyz.z());
+					pearls = new HashMap<>(1);
+					pearlsAtXYZ.put(xyz, pearls);
+					//KeyBound.LOGGER.info("Couldn't find pearl set at XZ: "+xyz.x()+","+xyz.z());
+				}
+				//else KeyBound.LOGGER.info("Found pearl set at XZ: "+xyz.x()+","+xyz.z());
+			}
+		}
+		HashSet<Integer> pearlsForName = pearls.get(name);
+		if(pearlsForName == null){pearlsForName = new HashSet<>(1); pearls.put(name, pearlsForName);}
+		pearlsForName.add(e.getId());
+		if(pearlsForName.iterator().next() != e.getId()) return; // Only render the name for 1 pearl in a stack
+		if(pearlsForName.size() > 1) name += " x"+pearlsForName.size();
+		//----------
 		e.setCustomName(Text.literal(name));
 		if(!isLookngAt(e)) return;
 		cir.setReturnValue(true);
