@@ -95,7 +95,7 @@ public final class PacketHelper{
 	public interface MessageReceiver{void receiveMessage(byte[] message);}
 
 	public static void sendPacket(InetAddress addr, int port, boolean udp, byte[] msg, MessageReceiver recv, long timeout){
-		if(udp){synchronized(socketUDP){
+		if(udp){//synchronized(socketUDP){
 			if(socketUDP == null){
 //				new Thread(()->{
 //					for(int i=0; i<BIND_ATTEMPTS && socketUDP == null; ++i){
@@ -145,9 +145,9 @@ public final class PacketHelper{
 				recv.receiveMessage(reply);
 				try{socketUDP.disconnect();}catch(UncheckedIOException e){e.printStackTrace(); socketUDP=null;}
 			}).start();
-		}}
+		}//}
 		else{
-			if(socketTCP == null){
+//			if(socketTCP == null || socketTCP.isClosed() || !socketTCP.isConnected()){
 				try{
 					socketTCP = new Socket();
 					socketTCP.setPerformancePreferences(2, 1, 0);//TODO: Java standard library has not implemented this yet???
@@ -158,7 +158,7 @@ public final class PacketHelper{
 //					socketTCP.setReceiveBufferSize(64);//TODO: find a way to resize BEFORE connect, not after, without having it overridden by server socket
 				}
 				catch(SocketException e){e.printStackTrace(); return;}
-			}
+//			}
 			new Thread(()->{
 				final long startTime = System.currentTimeMillis();
 				byte[] reply = null;

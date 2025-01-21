@@ -40,7 +40,8 @@ final class JunkItemEjector{
 						.anyMatch(r -> stack.getEnchantments().getLevel(r) < r.value().getMaxLevel());
 			case "enchanted_book":
 				ItemEnchantmentsComponent iec = stack.getComponents().get(DataComponentTypes.STORED_ENCHANTMENTS);
-				if(stack.getEnchantments().getSize() == 1) return true;
+				if(iec.getEnchantments().size() == 1) return true;
+				//hasBinding() && noneMatch(isArmorEnch)
 				return iec.getEnchantments().size() < 4 && iec.getEnchantments().stream().noneMatch(r -> isUnrenewEnch(r, iec.getLevel(r)));
 			//========== End loot section ========================================
 			case "diamond_sword": case "diamond_pickaxe": case "diamond_shovel":

@@ -2,6 +2,8 @@ package net.evmodder.mixin;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Timer;
+import java.util.TimerTask;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -27,6 +29,7 @@ public abstract class EntityRendererMixin{
 
 	private static final MinecraftClient client = MinecraftClient.getInstance();
 	private static final HashMap<XYZ, HashMap<String, HashSet<Integer>>> pearlsAtXYZ = new HashMap<>();
+	private static long renderedOnTick = 0;
 
 	private boolean isLookngAt(Entity entity){
 		Vec3d vec3d = client.player.getRotationVec(1.0F).normalize();
@@ -58,6 +61,14 @@ public abstract class EntityRendererMixin{
 				if(pearls == null){
 					xyz = new XYZ(xyz.x(), xyz.y()+1, xyz.z());
 					pearls = new HashMap<>(1);
+					if(pearlsAtXYZ.isEmpty()){
+						new Timer().scheduleAtFixedRate(new TimerTask(){@Override public void run(){
+							if(client.world.getTime() - renderedOnTick > 100){
+								pearlsAtXYZ.clear();
+								cancel();
+							}
+						}}, 20_000L, 20_000L);
+					}
 					pearlsAtXYZ.put(xyz, pearls);
 					//KeyBound.LOGGER.info("Couldn't find pearl set at XZ: "+xyz.x()+","+xyz.z());
 				}
@@ -67,8 +78,12 @@ public abstract class EntityRendererMixin{
 		HashSet<Integer> pearlsForName = pearls.get(name);
 		if(pearlsForName == null){pearlsForName = new HashSet<>(1); pearls.put(name, pearlsForName);}
 		pearlsForName.add(e.getId());
+		if(renderedOnTick == client.world.getTime()) return;
+		if(!isLookngAt(e)) return;
+		renderedOnTick = client.world.getTime();
 		if(pearlsForName.iterator().next() != e.getId()) return; // Only render the name for 1 pearl in a stack
 		if(pearlsForName.size() > 1) name += " x"+pearlsForName.size();
+		pearlsAtXYZ.clear();// Assumes we will process the pearl entities in the same order next tick (might be a bad assumption)
 		//----------
 		e.setCustomName(Text.literal(name));
 		if(!isLookngAt(e)) return;
