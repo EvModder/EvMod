@@ -1,6 +1,6 @@
-package net.evmodder.mixin;
+package net.evmodder.KeyBound.mixin;
 
-import net.evmodder.KeybindFixer;
+import net.evmodder.KeyBound.KeybindFixer;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import org.spongepowered.asm.mixin.Final;

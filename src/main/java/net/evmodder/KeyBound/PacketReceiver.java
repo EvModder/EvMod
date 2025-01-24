@@ -1,4 +1,4 @@
-package net.evmodder;
+package net.evmodder.KeyBound;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;

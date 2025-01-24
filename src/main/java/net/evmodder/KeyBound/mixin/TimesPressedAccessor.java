@@ -1,4 +1,4 @@
-package net.evmodder.mixin;
+package net.evmodder.KeyBound.mixin;
 
 import net.minecraft.client.option.KeyBinding;
 import org.spongepowered.asm.mixin.Mixin;

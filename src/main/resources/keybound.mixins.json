@@ -1,13 +1,17 @@
 {
 	"required": true,
-	"package": "net.evmodder.mixin",
+	"package": "net.evmodder.KeyBound.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"BoundKeyAccessor",
 		"TimesPressedAccessor",
 		"KeybindingMixin",
 		"EntityRendererMixin",
-		"ProjectileEntityAccessor"
+		"ProjectileEntityAccessor",
+		"HandledScreenMixin"
+	],
+	"client": [
+		"HandledScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

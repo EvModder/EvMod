@@ -1,6 +1,6 @@
-package net.evmodder.mixin;
+package net.evmodder.KeyBound.mixin;
 
-import net.evmodder.KeyBound;
+import net.evmodder.KeyBound.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.component.DataComponentTypes;
@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public abstract class InGameHudMixin{
 	@ModifyVariable(method = "renderHeldItemTooltip", at = @At("STORE"), ordinal = 0)
 	private MutableText showRepairCostNextToItemName(MutableText originalText){
-		if(KeyBound.rcTooltip == false) return originalText;
+		if(Main.rcTooltip == false) return originalText;
 		MinecraftClient client = MinecraftClient.getInstance();
 		ItemStack currentStack = client.player.getInventory().getMainHandStack();
 		if(!currentStack.getComponents().contains(DataComponentTypes.REPAIR_COST)) return originalText;

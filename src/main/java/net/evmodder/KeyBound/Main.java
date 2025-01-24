@@ -1,4 +1,4 @@
-package net.evmodder;
+package net.evmodder.KeyBound;
 
 /*recommended order:
 public / private / protected
@@ -27,7 +27,7 @@ import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 //MC source will be in ~/.gradle/caches/fabric-loom or ./.gradle/loom-cache
 // gradle build --refresh-dependencies
 // Fix broken eclipse build paths after updating loom,fabric-api,version in configs: gradle eclipse
-public class KeyBound implements ClientModInitializer{
+public class Main implements ClientModInitializer{
 	//TODO:
 	// Reference/depend on https://github.com/Siphalor/amecs-api
 

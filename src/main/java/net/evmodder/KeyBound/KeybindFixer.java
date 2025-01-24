@@ -1,7 +1,7 @@
-package net.evmodder;
+package net.evmodder.KeyBound;
 
 import com.google.common.collect.ArrayListMultimap;
-import net.evmodder.mixin.TimesPressedAccessor;
+import net.evmodder.KeyBound.mixin.TimesPressedAccessor;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 

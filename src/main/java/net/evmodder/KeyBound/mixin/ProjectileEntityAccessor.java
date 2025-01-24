@@ -1,4 +1,4 @@
-package net.evmodder.mixin;
+package net.evmodder.KeyBound.mixin;
 
 import net.minecraft.entity.projectile.ProjectileEntity;
 import java.util.UUID;

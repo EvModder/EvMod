@@ -1,7 +1,8 @@
-package net.evmodder;
+package net.evmodder.KeyBound;
 
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.util.InputUtil;
@@ -9,12 +10,13 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ItemEnchantmentsComponent;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantments;
+import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.screen.slot.SlotActionType;
 
-final class JunkItemEjector{
+final public class JunkItemEjector{
 	private final static boolean isUnrenewEnch(RegistryEntry<Enchantment> re, int lvl){
 		if(re.matchesKey(Enchantments.MENDING)) return true;
 		if(re.matchesKey(Enchantments.VANISHING_CURSE)) return true;
@@ -59,21 +61,22 @@ final class JunkItemEjector{
 		return false;
 	}
 
+	public static AbstractKeybind kb;
 	final static void registerJunkEjectKeybind(){
-		KeyBindingHelper.registerKeyBinding(new AbstractKeybind(
-				"key."+KeyBound.MOD_ID+".eject_junk_items", InputUtil.Type.KEYSYM, -1, "key.categories."+KeyBound.MOD_ID+".misc")
+		KeyBindingHelper.registerKeyBinding(kb = new AbstractKeybind(
+				"key."+Main.MOD_ID+".eject_junk_items", InputUtil.Type.KEYSYM, -1, /*"key.categories."+KeyBound.MOD_ID+".misc"*/Main.KEYBIND_CATEGORY)
 		{
 			@Override public void onPressed(){
 				MinecraftClient client = MinecraftClient.getInstance();
-				/*if(client.currentScreen instanceof GenericContainerScreen containerScreen){
-					KeyBound.LOGGER.info("mode 1");
+				if(client.currentScreen instanceof GenericContainerScreen containerScreen){
+					Main.LOGGER.info("mode 1");
 					Inventory inv = containerScreen.getScreenHandler().getInventory();
 					for(int slot=0; slot<inv.size(); ++slot){
 						ItemStack stack = inv.getStack(slot);
 						if(shouldEject(stack)) client.interactionManager.clickSlot(0, slot, 1, SlotActionType.THROW, client.player);
 					}
 				}
-				else */if(client.currentScreen instanceof HandledScreen && !(client.currentScreen instanceof InventoryScreen)) return;
+				else if(client.currentScreen instanceof HandledScreen && !(client.currentScreen instanceof InventoryScreen)) return;
 
 				else for(int slot=9; slot<45; ++slot){
 					int adjustedSlot = slot;

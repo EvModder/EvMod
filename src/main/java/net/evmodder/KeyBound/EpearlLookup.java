@@ -1,4 +1,4 @@
-package net.evmodder;
+package net.evmodder.KeyBound;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -12,7 +12,7 @@ import net.evmodder.EvLib.FileIO;
 import net.evmodder.EvLib.LoadingCache;
 import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.EvLib.PearlDataClient;
-import net.evmodder.mixin.ProjectileEntityAccessor;
+import net.evmodder.KeyBound.mixin.ProjectileEntityAccessor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.PlayerListEntry;
@@ -55,14 +55,14 @@ public final class EpearlLookup{
 				synchronized(epearlLocs){ // Really this is just here to synchonize access to clientFileDB
 				if(SAVE_BY_UUID){
 					for(UUID deletedKey : FileIO.removeMissingFromClientFile(DB_FILENAME_UUID, playerX, playerY, playerZ, maxDistSq, pearlsSeen1)){
-						KeyBound.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_UUID, PacketHelper.toByteArray(deletedKey), false);
-						KeyBound.LOGGER.info("Deleted ePearl owner stored for UUID: "+deletedKey);
+						Main.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_UUID, PacketHelper.toByteArray(deletedKey), false);
+						Main.LOGGER.info("Deleted ePearl owner stored for UUID: "+deletedKey);
 					}
 				}
 				if(SAVE_BY_XZ){
 					for(UUID deletedKey : FileIO.removeMissingFromClientFile(DB_FILENAME_XZ, playerX, playerY, playerZ, maxDistSq, pearlsSeen1)){
-						KeyBound.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_XZ, PacketHelper.toByteArray(deletedKey), false);
-						KeyBound.LOGGER.info("Deleted ePearl owner stored for XZ: "
+						Main.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_XZ, PacketHelper.toByteArray(deletedKey), false);
+						Main.LOGGER.info("Deleted ePearl owner stored for XZ: "
 								+ Double.longBitsToDouble(deletedKey.getMostSignificantBits())+","
 								+ Double.longBitsToDouble(deletedKey.getLeastSignificantBits()));
 					}
@@ -81,13 +81,13 @@ public final class EpearlLookup{
 			DB_FETCH_COMMAND = Commands.EPEARL_OWNER_FETCH + cmdVariant;
 		}
 		@Override public PearlDataClient load(UUID key){
-			KeyBound.LOGGER.info("fetch ownerUUID called for pearlUUID: "+key);
-			if(KeyBound.remoteSender == null) return PD_404;
+			Main.LOGGER.info("fetch ownerUUID called for pearlUUID: "+key);
+			if(Main.remoteSender == null) return PD_404;
 			//Request UUID of epearl for <Server>,<ePearlPosEncrypted>
-			KeyBound.remoteSender.sendBotMessage(DB_FETCH_COMMAND, PacketHelper.toByteArray(key), false,
+			Main.remoteSender.sendBotMessage(DB_FETCH_COMMAND, PacketHelper.toByteArray(key), false,
 				(msg)->{
 					if(msg == null || msg.length != 16){
-						KeyBound.LOGGER.error("Got invalid response from remote server for ePearlOwnerFetch: "+(msg == null ? null : new String(msg)));
+						Main.LOGGER.error("Got invalid response from remote server for ePearlOwnerFetch: "+(msg == null ? null : new String(msg)));
 						putIfAbsent(key, PD_404);
 						return;
 					}
@@ -96,7 +96,7 @@ public final class EpearlLookup{
 					int x=0,y=0,z=0;
 					if(!fetchedUUID.equals(UUID_404) && !fetchedUUID.equals(UUID_LOADING)){
 						XYZ xyz = epearlLocs.get(key);
-						if(xyz == null) KeyBound.LOGGER.error("Unable to find XZ of epearl for given key!: "+key);
+						if(xyz == null) Main.LOGGER.error("Unable to find XZ of epearl for given key!: "+key);
 						else{x=xyz.x(); y=xyz.y(); z=xyz.z();}
 						FileIO.appendToClientFile(DB_FILENAME, key, fetchedUUID, x, y, z);
 					}
@@ -119,13 +119,13 @@ public final class EpearlLookup{
 			if(SAVE_BY_UUID){
 				HashMap<UUID, PearlDataClient> localData = FileIO.loadFromClientFile(DB_FILENAME_UUID);
 				cacheByUUID = new RSLoadingCache(localData, DB_FILENAME_UUID, Commands.EPEARL_UUID);
-				KeyBound.LOGGER.info("Epearls stored by UUID: "+localData.size());
+				Main.LOGGER.info("Epearls stored by UUID: "+localData.size());
 			}
 			else cacheByUUID = null;
 			if(SAVE_BY_XZ){
 				HashMap<UUID, PearlDataClient> localData = FileIO.loadFromClientFile(DB_FILENAME_XZ);
 				cacheByXZ = new RSLoadingCache(localData, DB_FILENAME_XZ, Commands.EPEARL_XZ);
-				KeyBound.LOGGER.info("Epearls stored by XZ: "+localData.size());
+				Main.LOGGER.info("Epearls stored by XZ: "+localData.size());
 			}
 			else cacheByXZ = null;
 		}
@@ -157,13 +157,13 @@ public final class EpearlLookup{
 	private void sendToRemoteDatabaseIfNew(RSLoadingCache cache, String filename, int cmdVariant, UUID keyUUID, UUID ownerUUID){
 		if(!cache.containsKey(keyUUID)){
 			//new Thread(()->{
-				KeyBound.LOGGER.info("Storing ownerUUID in file (and sending to remote server): "+ownerUUID);
+				Main.LOGGER.info("Storing ownerUUID in file (and sending to remote server): "+ownerUUID);
 				int x=0, y=0, z=0;
 				XYZ xyz = epearlLocs.get(keyUUID);
-				if(xyz == null) KeyBound.LOGGER.error("Unable to find XYZ of epearl for given key!: "+keyUUID);
+				if(xyz == null) Main.LOGGER.error("Unable to find XYZ of epearl for given key!: "+keyUUID);
 				else{x=xyz.x(); y=xyz.y(); z=xyz.z();}
 				cache.putIfAbsent(keyUUID, new PearlDataClient(ownerUUID, x, y, z));
-				KeyBound.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + cmdVariant, PacketHelper.toByteArray(keyUUID, ownerUUID), true);//remote-server
+				Main.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + cmdVariant, PacketHelper.toByteArray(keyUUID, ownerUUID), true);//remote-server
 			//}).start();
 		}
 	}
@@ -200,7 +200,7 @@ public final class EpearlLookup{
 					final UUID oldKey = updateXZ.get(epearl.getUuid());
 					if(oldKey == null) sendToRemoteDatabaseIfNew(cacheByXZ, DB_FILENAME_XZ, Commands.EPEARL_XZ, key, ownerUUID);
 					else if(!oldKey.equals(key)){
-						KeyBound.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_XZ_KEY_UPDATE,
+						Main.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_XZ_KEY_UPDATE,
 								PacketHelper.toByteArray(oldKey, key), false);
 					}
 					updateXZ.put(epearl.getUuid(), key);

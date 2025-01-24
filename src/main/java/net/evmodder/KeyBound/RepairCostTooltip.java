@@ -1,4 +1,4 @@
-package net.evmodder;
+package net.evmodder.KeyBound;
 
 import java.util.List;
 import net.minecraft.item.Item.TooltipContext;

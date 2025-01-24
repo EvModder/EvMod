@@ -15,7 +15,7 @@
 	"environment": "*",
 	"entrypoints": {
 		"client": [
-			"net.evmodder.KeyBound"
+			"net.evmodder.KeyBound.Main"
 		]
 	},
 	"mixins": [

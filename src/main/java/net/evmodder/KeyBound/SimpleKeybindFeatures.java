@@ -1,4 +1,4 @@
-package net.evmodder;
+package net.evmodder.KeyBound;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -20,7 +20,7 @@ final class SimpleKeybindFeatures{
 
 	final static void registerSkinLayerKeybinds(){
 		Arrays.stream(PlayerModelPart.values())
-		.map(part -> new AbstractKeybind("key."+KeyBound.MOD_ID+".skin_toggle."+part.name().toLowerCase(), InputUtil.Type.KEYSYM, -1, KeyBound.KEYBIND_CATEGORY){
+		.map(part -> new AbstractKeybind("key."+Main.MOD_ID+".skin_toggle."+part.name().toLowerCase(), InputUtil.Type.KEYSYM, -1, Main.KEYBIND_CATEGORY){
 			@Override public void onPressed(){
 				final MinecraftClient client = MinecraftClient.getInstance();
 				client.options.setPlayerModelPart(part, !client.options.isPlayerModelPartEnabled(part));
@@ -31,7 +31,7 @@ final class SimpleKeybindFeatures{
 	final static void registerChatKeybind(String keybind_name, String chat_message){
 		if(chat_message.charAt(0) == '/'){
 			final String command = chat_message.substring(1);
-			KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+KeyBound.MOD_ID+"."+keybind_name, InputUtil.Type.KEYSYM, -1, KeyBound.KEYBIND_CATEGORY){
+			KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+Main.MOD_ID+"."+keybind_name, InputUtil.Type.KEYSYM, -1, Main.KEYBIND_CATEGORY){
 				@Override public void onPressed(){
 					MinecraftClient instance = MinecraftClient.getInstance();
 					instance.player.networkHandler.sendChatCommand(command);
@@ -39,7 +39,7 @@ final class SimpleKeybindFeatures{
 			});
 		}
 		else{
-			KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+KeyBound.MOD_ID+"."+keybind_name, InputUtil.Type.KEYSYM, -1, KeyBound.KEYBIND_CATEGORY){
+			KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+Main.MOD_ID+"."+keybind_name, InputUtil.Type.KEYSYM, -1, Main.KEYBIND_CATEGORY){
 				@Override public void onPressed(){
 					MinecraftClient instance = MinecraftClient.getInstance();
 					instance.player.networkHandler.sendChatMessage(chat_message);
@@ -56,7 +56,7 @@ final class SimpleKeybindFeatures{
 				String iname = s.substring(s.indexOf(':')+1);
 				Identifier id = Identifier.of(iname);
 				if(!Registries.ITEM.containsId(id)){
-					KeyBound.LOGGER.error("Unknown item in '"+keybind_name+"': "+iname);
+					Main.LOGGER.error("Unknown item in '"+keybind_name+"': "+iname);
 					return null;
 				}
 				return new Pair<>(idx, id);
@@ -64,7 +64,7 @@ final class SimpleKeybindFeatures{
 		)
 		.filter(p -> p != null)
 		.toList();
-		KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+KeyBound.MOD_ID+"."+keybind_name, InputUtil.Type.KEYSYM, -1, KeyBound.KEYBIND_CATEGORY){
+		KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+Main.MOD_ID+"."+keybind_name, InputUtil.Type.KEYSYM, -1, Main.KEYBIND_CATEGORY){
 			private String getName(ItemStack stack){
 				return stack == null || stack.isEmpty() ? null : Registries.ITEM.getId(stack.getItem()).getPath();
 			}
@@ -90,18 +90,18 @@ final class SimpleKeybindFeatures{
 				Inventory inv = instance.player.getInventory();
 
 
-				KeyBound.LOGGER.info("inv org keybind pressed");
+				Main.LOGGER.info("inv org keybind pressed");
 				//TODO: ALL BROKEN NOTHING WORKING RIPPP
 				for(Pair<Integer, Identifier> p : layoutMap){
 					final int destSlot = p.a;
 					if(doneSlots.contains(destSlot)) continue;
 					final Identifier id = p.b;
 					int srcSlot = findSlotWithItem(inv, id.getPath(), doneSlots);
-					KeyBound.LOGGER.info("src slot: "+ srcSlot);
+					Main.LOGGER.info("src slot: "+ srcSlot);
 					//if(srcSlot == -1 && id.getPath().equals(getName(instance.player.getOffHandStack())) && !doneSlots.contains(-106)) srcSlot = -106;
 					if(srcSlot != -1){
 						if(srcSlot != destSlot){
-							KeyBound.LOGGER.info("swapping slots "+srcSlot+" and "+destSlot);
+							Main.LOGGER.info("swapping slots "+srcSlot+" and "+destSlot);
 							ItemStack temp = inv.getStack(srcSlot);
 							inv.setStack(srcSlot, inv.getStack(destSlot));
 							inv.setStack(destSlot, temp);

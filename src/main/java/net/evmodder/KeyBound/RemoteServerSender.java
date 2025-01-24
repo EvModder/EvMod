@@ -1,4 +1,4 @@
-package net.evmodder;
+package net.evmodder.KeyBound;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -28,7 +28,7 @@ public final class RemoteServerSender{
 
 	private void resolveAddress(){
 		try{addrResolved = InetAddress.getByName(ADDR);}
-		catch(UnknownHostException e){KeyBound.LOGGER.warn("Server not found: "+ADDR);}
+		catch(UnknownHostException e){Main.LOGGER.warn("Server not found: "+ADDR);}
 	}
 
 	// Returns a 52 byte packet
@@ -58,7 +58,7 @@ public final class RemoteServerSender{
 	public void sendBotMessage(int command, byte[] message, boolean udp, MessageReceiver recv){
 		byte[] packet = packageAndEncryptMessage(command, message);
 		if(addrResolved == null) resolveAddress();
-		if(addrResolved == null) KeyBound.LOGGER.warn("RemoteSender address could not be resolved!: "+ADDR);
+		if(addrResolved == null) Main.LOGGER.warn("RemoteSender address could not be resolved!: "+ADDR);
 		else{
 			PacketHelper.sendPacket(addrResolved, PORT, udp, packet, recv, /*timeout=*/1000*5);
 			resolveAddress();
@@ -83,18 +83,18 @@ public final class RemoteServerSender{
 			String[] arr = message.split(",");
 			int command = parseCommand(arr[0]);//= Integer.parseInt(arr[0]);
 			if(command == -1){
-				KeyBound.LOGGER.error("Undefined command in config keybound.txt: "+arr[0]);
+				Main.LOGGER.error("Undefined command in config keybound.txt: "+arr[0]);
 			}
 			else{
 				final byte[] byteMsg = PacketHelper.toByteArray(Arrays.stream(Arrays.copyOfRange(arr, 1, arr.length)).map(UUID::fromString).toArray(UUID[]::new));
-				KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+KeyBound.MOD_ID+"."+key, InputUtil.Type.KEYSYM, -1, KeyBound.KEYBIND_CATEGORY){
+				KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+Main.MOD_ID+"."+key, InputUtil.Type.KEYSYM, -1, Main.KEYBIND_CATEGORY){
 					@Override public void onPressed(){sendBotMessage(command, byteMsg, true);}
 				});
 			}
 		});
 
 		sendBotMessage(Commands.PING, new byte[0], false, (msg)->{
-			KeyBound.LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg)));
+			Main.LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg)));
 		});
 	}
 

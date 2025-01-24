@@ -1,4 +1,4 @@
-package net.evmodder;
+package net.evmodder.KeyBound;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,7 +15,7 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Identifier;
 
 final class VariantHotbarScroller{
-	private final static String COLOR_SCROLL_CATEGORY = "key.categories."+KeyBound.MOD_ID+".color_scroll";
+	//private final static String COLOR_SCROLL_CATEGORY = "key.categories."+KeyBound.MOD_ID+".color_scroll";
 
 	// e.g. [[tube, brain, bubble, fire, horn],...]
 	private List<String[]> variantLists;
@@ -25,7 +25,7 @@ final class VariantHotbarScroller{
 
 	private void loadScrollableItems(String[] colors){
 		if(colors.length < 2){
-			KeyBound.LOGGER.warn("Scroll list is too short: "+colors.toString());
+			Main.LOGGER.warn("Scroll list is too short: "+colors.toString());
 			return; 
 		}
 		final boolean hasEmpty = colors[0].isEmpty();//TODO: icky
@@ -37,7 +37,7 @@ final class VariantHotbarScroller{
 		s = s.filter(id -> Arrays.stream(colorsB).allMatch(b -> Registries.ITEM.containsId(Identifier.of(id.getNamespace(), id.getPath().replace(colorA, b)))));
 		List<Identifier> ids = s.toList();
 		if(ids.isEmpty()){
-			KeyBound.LOGGER.warn("Could not find items for the given scroll list: ["+String.join(",", colors)+"]");
+			Main.LOGGER.warn("Could not find items for the given scroll list: ["+String.join(",", colors)+"]");
 			return;
 		}
 		variantLists.add(colors);
@@ -110,11 +110,11 @@ final class VariantHotbarScroller{
 		scrollableItems = new HashMap<>();
 		for(String[] colors : colorLists) loadScrollableItems(colors);
 
-		KeyBound.LOGGER.info("Defined scrollable variants: ["+String.join("], [", variantLists.stream().map(l -> String.join(",", l)).toList())+"]");
-		KeyBound.LOGGER.debug("Found matching items: "+String.join(", ", scrollableItems.keySet()));
+		Main.LOGGER.info("Defined scrollable variants: ["+String.join("], [", variantLists.stream().map(l -> String.join(",", l)).toList())+"]");
+		Main.LOGGER.debug("Found matching items: "+String.join(", ", scrollableItems.keySet()));
 
 		if(!scrollableItems.isEmpty())
-		Stream.of(true, false).map(k -> new AbstractKeybind("key."+KeyBound.MOD_ID+".color_scroll."+(k ? "up" : "down"), InputUtil.Type.KEYSYM, -1, COLOR_SCROLL_CATEGORY){
+		Stream.of(true, false).map(k -> new AbstractKeybind("key."+Main.MOD_ID+".color_scroll."+(k ? "up" : "down"), InputUtil.Type.KEYSYM, -1, Main.KEYBIND_CATEGORY){
 			@Override public void onPressed(){scrollHotbarSlot(k);}
 		}).forEach(KeyBindingHelper::registerKeyBinding);
 	}

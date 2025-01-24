@@ -1,4 +1,4 @@
-package net.evmodder.mixin;
+package net.evmodder.KeyBound.mixin;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,8 +10,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import net.evmodder.KeyBound;
-import net.evmodder.XYZ;
+import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.XYZ;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
@@ -44,12 +44,12 @@ public abstract class EntityRendererMixin{
 
 	@Inject(method = "hasLabel", at = @At("HEAD"), cancellable = true)
 	public void test(Entity e, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
-		if(KeyBound.epearlLookup == null) return; // Feature is disabled
+		if(Main.epearlLookup == null) return; // Feature is disabled
 		if(client.options.hudHidden) return; // HUD is hidden
 		if(e instanceof ProjectileEntity == false) return;
 		if(e.getType() != EntityType.ENDER_PEARL) return;
 		//if(!isLookngAt(entity)) return;
-		String name = KeyBound.epearlLookup.getOwnerName((ProjectileEntity)e);
+		String name = Main.epearlLookup.getOwnerName((ProjectileEntity)e);
 		if(name == null) return;
 		//----------
 		XYZ xyz = new XYZ(e.getBlockX(), e.getBlockY()/4, e.getBlockZ());

@@ -1,4 +1,4 @@
-package net.evmodder;
+package net.evmodder.KeyBound;
 
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil.Type;
