@@ -69,7 +69,7 @@ public final class EpearlLookup{
 				}
 				}
 			}
-		}, 1000L, 5000L); // Runs every 5s
+		}, 1L, 15_000L); // Runs every 15s
 	}
 
 	private class RSLoadingCache extends LoadingCache<UUID, PearlDataClient>{
