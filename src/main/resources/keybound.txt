@@ -27,7 +27,7 @@ repaircost_tooltip: true
 enderpearl_owners: true
 enderpearl_owners_database_by_uuid: true
 enderpearl_owners_database_by_coords: false
-#seen_shared_database: true
+seen_shared_database: true
 
 #========== Hotbar variant scrolling ==========#
 # Empty variants (if they exist) must come first in the list

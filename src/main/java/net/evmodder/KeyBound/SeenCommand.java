@@ -15,7 +15,7 @@ public class SeenCommand{
 	//TODO: 
 	SeenCommand(){
 		ClientCommandRegistrationCallback.EVENT.register(
-			(dispatcher, registryAccess) -> dispatcher.register(
+			(dispatcher, _) -> dispatcher.register(
 				ClientCommandManager.literal("seen").then(
 					//ClientCommandManager.argument("name", EntityArgumentType.player())
 					ClientCommandManager.argument("name", StringArgumentType.word())

@@ -4,17 +4,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Timer;
 import java.util.TimerTask;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.XYZ;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.render.entity.EntityRenderDispatcher;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -24,8 +20,8 @@ import net.minecraft.util.math.Vec3d;
 
 @Mixin(EntityRenderer.class)
 public abstract class EntityRendererMixin{
-	@Final @Shadow protected EntityRenderDispatcher dispatcher;
-	@Shadow public abstract TextRenderer getTextRenderer();
+//	@Final @Shadow protected EntityRenderDispatcher dispatcher;
+//	@Shadow public abstract TextRenderer getTextRenderer();
 
 	private static final MinecraftClient client = MinecraftClient.getInstance();
 	private static final HashMap<XYZ, HashMap<String, HashSet<Integer>>> pearlsAtXYZ = new HashMap<>();
@@ -87,11 +83,13 @@ public abstract class EntityRendererMixin{
 		renderedOnTick = client.world.getTime();
 		lastRenderedId = e.getId();
 		//if(pearlsForName.iterator().next() != e.getId()) return; // Only render the name for 1 pearl in a stack
-		if(pearlsForName.size() > 1) name += " x"+pearlsForName.size();
-		// Only clear the list in sub-tick, since we can safely assume entities will be rendered (and hence readded) in the same order for the same world tick.
-		if(alreadyRenderedThisTick && lastClear != client.world.getTime()){
-			pearlsAtXYZ.clear();
-			lastClear = client.world.getTime();
+		if(pearlsForName.size() > 1){
+			name += " x"+pearlsForName.size();
+			// Only clear the list in sub-tick, since we can safely assume entities will be rendered (and hence readded) in the same order for the same world tick.
+			if(alreadyRenderedThisTick && lastClear != client.world.getTime()){
+				pearlsAtXYZ.clear();
+				lastClear = client.world.getTime();
+			}
 		}
 		//----------
 		e.setCustomName(Text.literal(name));

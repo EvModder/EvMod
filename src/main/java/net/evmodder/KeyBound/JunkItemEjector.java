@@ -67,23 +67,29 @@ final public class JunkItemEjector{
 				"key."+Main.MOD_ID+".eject_junk_items", InputUtil.Type.KEYSYM, -1, /*"key.categories."+KeyBound.MOD_ID+".misc"*/Main.KEYBIND_CATEGORY)
 		{
 			@Override public void onPressed(){
+				//Main.LOGGER.info("onPressed() "+kb.getDefaultKey().toInt());
+
 				MinecraftClient client = MinecraftClient.getInstance();
 				if(client.currentScreen instanceof GenericContainerScreen containerScreen){
-					Main.LOGGER.info("mode 1");
+					//Main.LOGGER.info("mode 1");
 					Inventory inv = containerScreen.getScreenHandler().getInventory();
+					int syncId = containerScreen.getScreenHandler().syncId;
 					for(int slot=0; slot<inv.size(); ++slot){
 						ItemStack stack = inv.getStack(slot);
-						if(shouldEject(stack)) client.interactionManager.clickSlot(0, slot, 1, SlotActionType.THROW, client.player);
+						if(shouldEject(stack)) client.interactionManager.clickSlot(syncId, slot, 1, SlotActionType.THROW, client.player);
 					}
 				}
 				else if(client.currentScreen instanceof HandledScreen && !(client.currentScreen instanceof InventoryScreen)) return;
 
-				else for(int slot=9; slot<45; ++slot){
-					int adjustedSlot = slot;
-					if(adjustedSlot >= 36) adjustedSlot -= 36;
-					ItemStack stack = client.player.getInventory().getStack(adjustedSlot);
-					if(shouldEject(stack)) client.interactionManager.clickSlot(/*client.player.playerScreenHandler.syncId*/0,
-							slot, 1, SlotActionType.THROW, client.player);
+				else{
+					//Main.LOGGER.info("mode 2");
+					for(int slot=9; slot<45; ++slot){
+						int adjustedSlot = slot;
+						if(adjustedSlot >= 36) adjustedSlot -= 36;
+						ItemStack stack = client.player.getInventory().getStack(adjustedSlot);
+						if(shouldEject(stack)) client.interactionManager.clickSlot(/*client.player.playerScreenHandler.syncId*/0,
+								slot, 1, SlotActionType.THROW, client.player);
+					}
 				}
 			}
 		});

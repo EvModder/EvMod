@@ -10,9 +10,6 @@
 		"ProjectileEntityAccessor",
 		"HandledScreenMixin"
 	],
-	"client": [
-		"HandledScreenMixin"
-	],
 	"injectors": {
 		"defaultRequire": 1
 	}
