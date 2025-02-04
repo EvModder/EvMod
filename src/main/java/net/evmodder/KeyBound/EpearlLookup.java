@@ -42,6 +42,7 @@ public final class EpearlLookup{
 			@Override public void run(){
 				HashSet<UUID> pearlsSeen1 = new HashSet<>(), pearlsSeen2 = new HashSet<>();
 				MinecraftClient instance = MinecraftClient.getInstance();
+				if(instance.player == null) return;
 				double maxDistSq = 32*32; // Min render distance is 2 chunks
 				final int playerX = instance.player.getBlockX(), playerY = instance.player.getBlockY(), playerZ = instance.player.getBlockZ();
 				for(Entity e : instance.player.clientWorld.getEntities()){
@@ -52,21 +53,25 @@ public final class EpearlLookup{
 					final double distSq = dx*dx + dz*dz; // ommission of Y intentional
 					if(distSq > maxDistSq) maxDistSq = distSq;
 				}
-				synchronized(epearlLocs){ // Really this is just here to synchonize access to clientFileDB
-				if(SAVE_BY_UUID){
-					for(UUID deletedKey : FileIO.removeMissingFromClientFile(DB_FILENAME_UUID, playerX, playerY, playerZ, maxDistSq, pearlsSeen1)){
-						Main.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_UUID, PacketHelper.toByteArray(deletedKey), false);
-						Main.LOGGER.info("Deleted ePearl owner stored for UUID: "+deletedKey);
+				synchronized(epearlLocs){ // Really this is just here to synchonize access to FileDBs
+					if(SAVE_BY_UUID){
+						HashSet<UUID> deletedKeys = FileIO.removeMissingFromClientFile(DB_FILENAME_UUID, playerX, playerY, playerZ, maxDistSq, pearlsSeen1);
+						if(deletedKeys == null) Main.LOGGER.error("!! Delete failed because FileDB is null: "+DB_FILENAME_UUID);
+						else for(UUID deletedKey : deletedKeys){
+							Main.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_UUID, PacketHelper.toByteArray(deletedKey), false);
+							Main.LOGGER.info("Deleted ePearl owner stored for UUID: "+deletedKey);
+						}
 					}
-				}
-				if(SAVE_BY_XZ){
-					for(UUID deletedKey : FileIO.removeMissingFromClientFile(DB_FILENAME_XZ, playerX, playerY, playerZ, maxDistSq, pearlsSeen1)){
-						Main.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_XZ, PacketHelper.toByteArray(deletedKey), false);
-						Main.LOGGER.info("Deleted ePearl owner stored for XZ: "
-								+ Double.longBitsToDouble(deletedKey.getMostSignificantBits())+","
-								+ Double.longBitsToDouble(deletedKey.getLeastSignificantBits()));
+					if(SAVE_BY_XZ){
+						HashSet<UUID> deletedKeys = FileIO.removeMissingFromClientFile(DB_FILENAME_XZ, playerX, playerY, playerZ, maxDistSq, pearlsSeen1);
+						if(deletedKeys == null) Main.LOGGER.error("!! Delete failed because FileDB is null: "+DB_FILENAME_XZ);
+						else for(UUID deletedKey : deletedKeys){
+							Main.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_XZ, PacketHelper.toByteArray(deletedKey), false);
+							Main.LOGGER.info("Deleted ePearl owner stored for XZ: "
+									+ Double.longBitsToDouble(deletedKey.getMostSignificantBits())+","
+									+ Double.longBitsToDouble(deletedKey.getLeastSignificantBits()));
+						}
 					}
-				}
 				}
 			}
 		}, 1L, 15_000L); // Runs every 15s
@@ -115,7 +120,7 @@ public final class EpearlLookup{
 		if(!USE_REMOTE_DB){epearlLocs = null; cacheByUUID = cacheByXZ = null;}
 		else{
 			epearlLocs = new HashMap<>();
-			runEpearlRemovalChecker();
+			//runEpearlRemovalChecker();
 			if(SAVE_BY_UUID){
 				HashMap<UUID, PearlDataClient> localData = FileIO.loadFromClientFile(DB_FILENAME_UUID);
 				cacheByUUID = new RSLoadingCache(localData, DB_FILENAME_UUID, Commands.EPEARL_UUID);
