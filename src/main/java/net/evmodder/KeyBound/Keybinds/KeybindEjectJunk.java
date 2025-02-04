@@ -1,5 +1,6 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.Keybinds;
 
+import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
@@ -17,7 +18,7 @@ import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 
-final public class JunkItemEjector{
+final public class KeybindEjectJunk{
 	private final static boolean isUnrenewEnch(RegistryEntry<Enchantment> re, int lvl){
 		if(re.matchesKey(Enchantments.MENDING)) return true;
 		if(re.matchesKey(Enchantments.VANISHING_CURSE)) return true;
@@ -63,7 +64,7 @@ final public class JunkItemEjector{
 	}
 
 	public static AbstractKeybind kb;
-	final static void registerJunkEjectKeybind(){
+	public static final void registerJunkEjectKeybind(){
 		KeyBindingHelper.registerKeyBinding(kb = new AbstractKeybind(
 				"key."+Main.MOD_ID+".eject_junk_items", InputUtil.Type.KEYSYM, -1, /*"key.categories."+KeyBound.MOD_ID+".misc"*/Main.KEYBIND_CATEGORY)
 		{

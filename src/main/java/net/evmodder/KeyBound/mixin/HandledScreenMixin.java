@@ -1,7 +1,7 @@
 package net.evmodder.KeyBound.mixin;
 
-import net.evmodder.KeyBound.JunkItemEjector;
-import net.evmodder.KeyBound.MapArtKeybinds;
+import net.evmodder.KeyBound.Keybinds.KeybindEjectJunk;
+import net.evmodder.KeyBound.Keybinds.KeybindsMapArt;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.text.Text;
@@ -22,22 +22,22 @@ public abstract class HandledScreenMixin<T> extends Screen{
 		//MinecraftClient client = MinecraftClient.getInstance();
 		//GameOptions keys = client.options;
 		boolean keyHandled = false;
-		if(JunkItemEjector.kb != null && JunkItemEjector.kb.matchesKey(keyCode, scanCode)){
+		if(KeybindEjectJunk.kb != null && KeybindEjectJunk.kb.matchesKey(keyCode, scanCode)){
 			//Main.LOGGER.info("JunkItemEjector key while in a container! isPressed:"+isPressed);
 			//JunkItemEjector.kb.setPressed(isPressed);
-			JunkItemEjector.kb.onPressed();
+			KeybindEjectJunk.kb.onPressed();
 			keyHandled = true;
 		}
-		if(MapArtKeybinds.kbLoad != null && MapArtKeybinds.kbLoad.matchesKey(keyCode, scanCode)){
-			MapArtKeybinds.kbLoad.onPressed();
+		if(KeybindsMapArt.kbLoad != null && KeybindsMapArt.kbLoad.matchesKey(keyCode, scanCode)){
+			KeybindsMapArt.kbLoad.onPressed();
 			keyHandled = true;
 		}
-		if(MapArtKeybinds.kbCopy != null && MapArtKeybinds.kbCopy.matchesKey(keyCode, scanCode)){
-			MapArtKeybinds.kbCopy.onPressed();
+		if(KeybindsMapArt.kbCopy != null && KeybindsMapArt.kbCopy.matchesKey(keyCode, scanCode)){
+			KeybindsMapArt.kbCopy.onPressed();
 			keyHandled = true;
 		}
-		if(MapArtKeybinds.kbCopyBulk != null && MapArtKeybinds.kbCopyBulk.matchesKey(keyCode, scanCode)){
-			MapArtKeybinds.kbCopyBulk.onPressed();
+		if(KeybindsMapArt.kbCopyBulk != null && KeybindsMapArt.kbCopyBulk.matchesKey(keyCode, scanCode)){
+			KeybindsMapArt.kbCopyBulk.onPressed();
 			keyHandled = true;
 		}
 		return keyHandled;

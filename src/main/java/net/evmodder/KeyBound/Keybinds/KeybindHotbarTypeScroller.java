@@ -1,10 +1,11 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.Keybinds;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Stream;
+import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.InputUtil;
@@ -14,7 +15,7 @@ import net.minecraft.registry.Registries;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Identifier;
 
-final class VariantHotbarScroller{
+final class KeybindHotbarTypeScroller{
 	//private final static String COLOR_SCROLL_CATEGORY = "key.categories."+KeyBound.MOD_ID+".color_scroll";
 
 	// e.g. [[tube, brain, bubble, fire, horn],...]
@@ -105,7 +106,7 @@ final class VariantHotbarScroller{
 		}
 	}
 
-	VariantHotbarScroller(List<String[]> colorLists){
+	public KeybindHotbarTypeScroller(List<String[]> colorLists){
 		variantLists = new ArrayList<>();
 		scrollableItems = new HashMap<>();
 		for(String[] colors : colorLists) loadScrollableItems(colors);

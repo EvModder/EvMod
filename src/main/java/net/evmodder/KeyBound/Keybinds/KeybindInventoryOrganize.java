@@ -1,54 +1,21 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.Keybinds;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import net.evmodder.EvLib.Pair;
+import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.entity.player.PlayerModelPart;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Identifier;
 
-final class SimpleKeybindFeatures{
-	//private static final String SKIN_LAYER_CATEGORY = "key.categories."+KeyBound.MOD_ID+".skin_toggles";
-	//private static final String CHAT_MSG_CATEGORY = "key.categories."+KeyBound.MOD_ID+".chat_messages";
-
-	final static void registerSkinLayerKeybinds(){
-		Arrays.stream(PlayerModelPart.values())
-		.map(part -> new AbstractKeybind("key."+Main.MOD_ID+".skin_toggle."+part.name().toLowerCase(), InputUtil.Type.KEYSYM, -1, Main.KEYBIND_CATEGORY){
-			@Override public void onPressed(){
-				final MinecraftClient client = MinecraftClient.getInstance();
-				client.options.setPlayerModelPart(part, !client.options.isPlayerModelPartEnabled(part));
-			}
-		}).forEach(KeyBindingHelper::registerKeyBinding);
-	}
-
-	final static void registerChatKeybind(String keybind_name, String chat_message){
-		if(chat_message.charAt(0) == '/'){
-			final String command = chat_message.substring(1);
-			KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+Main.MOD_ID+"."+keybind_name, InputUtil.Type.KEYSYM, -1, Main.KEYBIND_CATEGORY){
-				@Override public void onPressed(){
-					MinecraftClient instance = MinecraftClient.getInstance();
-					instance.player.networkHandler.sendChatCommand(command);
-				}
-			});
-		}
-		else{
-			KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+Main.MOD_ID+"."+keybind_name, InputUtil.Type.KEYSYM, -1, Main.KEYBIND_CATEGORY){
-				@Override public void onPressed(){
-					MinecraftClient instance = MinecraftClient.getInstance();
-					instance.player.networkHandler.sendChatMessage(chat_message);
-				}
-			});
-		}
-	}
-
-	final static void registerInvOrganizeKeyBind(String keybind_name, String layout){
+public final class KeybindInventoryOrganize{
+	public static final void registerInvOrganizeKeyBind(String keybind_name, String layout){
 		List<Pair<Integer, Identifier>> layoutMap = 
 		Arrays.stream(layout.substring(1, layout.length()-1).split(","))
 		.map(s -> {

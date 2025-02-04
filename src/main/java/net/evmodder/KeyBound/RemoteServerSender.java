@@ -10,6 +10,7 @@ import java.util.UUID;
 import net.evmodder.EvLib.Commands;
 import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.EvLib.PacketHelper.MessageReceiver;
+import net.evmodder.KeyBound.Keybinds.AbstractKeybind;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.InputUtil;

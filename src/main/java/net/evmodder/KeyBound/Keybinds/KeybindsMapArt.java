@@ -1,7 +1,8 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.Keybinds;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
@@ -17,7 +18,7 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.world.World;
 import java.util.ArrayList;
 
-final public class MapArtKeybinds{
+final public class KeybindsMapArt{
 	//private static final boolean DYNAMIC_HOTBAR_SWAP_SLOT = true;
 	private static final boolean BARF_CLOGS_FOR_MAP_COPY = false, PREFER_HOTBAR_SWAPS = true, FORCE_HOTBAR_SWAPS = false, COPY_PRECISE_64 = true;
 	//private static final int HOTBAR_SWAP_SLOT = 1; // button >= 0 && button < 9 || button == 40
@@ -374,7 +375,7 @@ final public class MapArtKeybinds{
 	}
 
 	public static AbstractKeybind kbLoad;
-	final static void registerLoadArtKeybind(final int clicks_per_gt){
+	public static final void registerLoadArtKeybind(final int clicks_per_gt){
 		if(clicks_per_gt < 2){Main.LOGGER.error("clicks_per_gt value is set too low, disabling MapArtLoad keybind"); return;}
 		KeyBindingHelper.registerKeyBinding(kbLoad = new AbstractKeybind(
 				"key."+Main.MOD_ID+".mapart_load_container", InputUtil.Type.KEYSYM, -1, Main.KEYBIND_CATEGORY)
@@ -387,7 +388,7 @@ final public class MapArtKeybinds{
 	}
 
 	public static AbstractKeybind kbCopy;
-	final static void registerCopyArtKeybind(final int miliseconds_per_click){
+	public static final void registerCopyArtKeybind(final int miliseconds_per_click){
 		if(miliseconds_per_click < 1){Main.LOGGER.error("milis_between_clicks value is set too low, disabling MapArtCopy keybind"); return;}
 		KeyBindingHelper.registerKeyBinding(kbCopy = new AbstractKeybind(
 				"key."+Main.MOD_ID+".mapart_copy", InputUtil.Type.KEYSYM, -1, Main.KEYBIND_CATEGORY)
@@ -400,7 +401,7 @@ final public class MapArtKeybinds{
 	}
 
 	public static AbstractKeybind kbCopyBulk;
-	final static void registerCopyBulkArtKeybind(final int miliseconds_per_click){
+	public static final void registerCopyBulkArtKeybind(final int miliseconds_per_click){
 		if(miliseconds_per_click < 1){Main.LOGGER.error("milis_between_clicks value is set too low, disabling MapArtCopyBulk keybind"); return;}
 		KeyBindingHelper.registerKeyBinding(kbCopyBulk = new AbstractKeybind(
 				"key."+Main.MOD_ID+".mapart_copy_bulk", InputUtil.Type.KEYSYM, -1, Main.KEYBIND_CATEGORY)
