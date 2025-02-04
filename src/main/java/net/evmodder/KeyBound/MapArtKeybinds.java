@@ -19,7 +19,7 @@ import java.util.ArrayList;
 
 final public class MapArtKeybinds{
 	//private static final boolean DYNAMIC_HOTBAR_SWAP_SLOT = true;
-	private static final boolean BARF_CLOGS_FOR_MAP_COPY = false, COPY_USE_HOTBAR = true, COPY_PRECISE_64 = true;
+	private static final boolean BARF_CLOGS_FOR_MAP_COPY = false, PREFER_HOTBAR_SWAPS = true, FORCE_HOTBAR_SWAPS = false, COPY_PRECISE_64 = true;
 	//private static final int HOTBAR_SWAP_SLOT = 1; // button >= 0 && button < 9 || button == 40
 
 	private final static boolean isMapArt(ItemStack stack){
@@ -235,24 +235,26 @@ final public class MapArtKeybinds{
 			if(!BARF_CLOGS_FOR_MAP_COPY) return;
 			clicks.add(new ClickEvent(ScreenHandler.EMPTY_SPACE_SLOT_INDEX, 0, SlotActionType.PICKUP));
 		}
-		boolean mapsInHotbar = false;
 		// Figure out how many maps we need to copy
 		int numMapArtsToCopy = 0;
-		for(int i=9; i<=45; ++i) if(isMapArt(psh.getSlot(i).getStack())){
-			++numMapArtsToCopy;
-			if(i >= 36) mapsInHotbar = true;
+		for(int i=9; i<=45; ++i){
+			ItemStack stack = psh.getSlot(i).getStack();
+			if(isMapArt(stack) && stack.getCount() < stack.getMaxCount()) ++numMapArtsToCopy;
 		}
 		if(numMapArtsToCopy == 0){Main.LOGGER.warn("MapCopy: Nothing to copy"); return;}
 		//
 		int hotbarButton = -1;
-		if(COPY_USE_HOTBAR && !mapsInHotbar){//TODO: Offhand is slot:45, button:40
+		if(PREFER_HOTBAR_SWAPS){//TODO: Offhand is slot:45, button:40
 			for(int i=8; i>=0; --i){
 				ItemStack stack = psh.getSlot(PlayerScreenHandler.HOTBAR_START+i).getStack();
 				if(stack == null || stack.isEmpty()){hotbarButton = i; break;}
 			}
 		}
-		if(hotbarButton != -1) Main.LOGGER.info("MapCopy: Using exclusively hotbar swaps and shift-click swaps");
-		else Main.LOGGER.info("MapCopy: Unable to use hotbar swaps exclusively");
+		if(hotbarButton != -1) Main.LOGGER.info("MapCopy: Attempting to use hotbar swaps to reduce clicks");
+		else{
+			Main.LOGGER.info("MapCopy: Unable to use hotbar swaps exclusively");
+			if(FORCE_HOTBAR_SWAPS) return;
+		}
 		//
 		// Check if there are items already in the crafting 2x2
 		int blankMapCraftingSlot = -1;
@@ -296,28 +298,30 @@ final public class MapArtKeybinds{
 			if(!isMapArt(stack)) continue;
 			if(stack.getCount() == stack.getMaxCount()) continue;
 			//Main.LOGGER.info("MapCopy: copying slot:"+i);
-			if(hotbarButton != -1){
-				int amountToCraft = bulk && stack.getCount()*2 <= stack.getMaxCount() ? stack.getCount() : 1;
+			final int iHotbarButton = PREFER_HOTBAR_SWAPS && i >= 36 ? i-36 : hotbarButton;
+			final boolean canBulkCopy = stack.getCount()*2 <= stack.getMaxCount();
+			if(iHotbarButton != -1 && (!bulk || canBulkCopy || FORCE_HOTBAR_SWAPS)){
+				int amountToCraft = bulk && canBulkCopy ? stack.getCount() : 1;
 				if(bulk && currentBlankMapsInCrafter < amountToCraft){
 					currentBlankMapsInCrafter = getBlankMapsInto2x2(psh, -1, blankMapCraftingSlot, amountToCraft, currentBlankMapsInCrafter, clicks);
 					if(currentBlankMapsInCrafter < 1){Main.LOGGER.info("MapCopyBulk(swaps): Ran out of blank maps"); break;}
 					amountToCraft = Math.min(amountToCraft, currentBlankMapsInCrafter);
 				}
-				clicks.add(new ClickEvent(i, hotbarButton, SlotActionType.SWAP)); // Move map to hotbar
-				clicks.add(new ClickEvent(filledMapCraftingSlot, hotbarButton, SlotActionType.SWAP)); // Move map to crafting 2x2
-				clicks.add(new ClickEvent(PlayerScreenHandler.CRAFTING_RESULT_ID, hotbarButton, SlotActionType.SWAP)); // Craft one
+				if(iHotbarButton == hotbarButton) clicks.add(new ClickEvent(i, iHotbarButton, SlotActionType.SWAP)); // Move to hotbar from original slot
+				clicks.add(new ClickEvent(filledMapCraftingSlot, iHotbarButton, SlotActionType.SWAP)); // Move map to crafting 2x2
+				clicks.add(new ClickEvent(PlayerScreenHandler.CRAFTING_RESULT_ID, iHotbarButton, SlotActionType.SWAP)); // Craft one
 				if(bulk && amountToCraft > 1){
 						Main.LOGGER.info("MapCopyBulk(swaps): bulk-copying slot:"+i);
 					clicks.add(new ClickEvent(PlayerScreenHandler.CRAFTING_RESULT_ID, 0, SlotActionType.QUICK_MOVE)); // Craft all
 				}
 				if(stack.getCount() > amountToCraft) clicks.add(new ClickEvent(filledMapCraftingSlot, 0, SlotActionType.QUICK_MOVE)); // Take leftovers
-				clicks.add(new ClickEvent(i, hotbarButton, SlotActionType.SWAP)); // Put back in original slot
+				if(iHotbarButton == hotbarButton) clicks.add(new ClickEvent(i, iHotbarButton, SlotActionType.SWAP)); // Put back in original slot
 				currentBlankMapsInCrafter -= amountToCraft;
 			}
 			else{
-				boolean fullBulk = bulk && stack.getCount()*2 <= stack.getMaxCount();
+				boolean fullBulk = bulk && canBulkCopy;
 				boolean halfBulk = bulk && !fullBulk && stack.getCount() + stack.getCount()/2 <= stack.getMaxCount();
-				boolean clickBulk = COPY_PRECISE_64 && bulk && !fullBulk && !halfBulk && stack.getCount() > stack.getMaxCount() - stack.getCount()/2;
+				boolean clickBulk = COPY_PRECISE_64 && bulk && !fullBulk && !halfBulk/* && stack.getCount() > stack.getMaxCount() - stack.getCount()/2*/;//math already implied
 				int amountToCraft = fullBulk ? stack.getCount() : halfBulk ? stack.getCount()/2 : clickBulk ? stack.getMaxCount()-stack.getCount() : 1;
 				if(currentBlankMapsInCrafter < amountToCraft){ // should only occur in bulk mode
 					currentBlankMapsInCrafter = getBlankMapsInto2x2(psh, -1, blankMapCraftingSlot, amountToCraft, currentBlankMapsInCrafter, clicks);
