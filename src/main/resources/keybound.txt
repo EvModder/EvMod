@@ -22,6 +22,17 @@ organize_inventory.a: [
   11:totem_of_undying, 12:totem_of_undying, 13:totem_of_undying
 ]
 
+#========== Chat Broadcast ==========#
+temp_event_account: Anuvin
+temp_event_broadcast: []
+temp_event_timestamp: 1738990800 # Fri, Feb7, 11pm CST
+
+#========== Mapart Tools ==========#
+max_clicks_per_tick: 18
+milis_between_clicks: 7
+keybind_mapart_load_from_shulker: true
+keybind_mapart_copy_in_inventory: true
+
 #========== Added Visuals ==========#
 repaircost_tooltip: true
 enderpearl_owners: true
@@ -47,12 +58,12 @@ remote_addr: altcraft.net
 remote_port: 14441
 
 # List of remote messages
-remote_msg.a: EPEARL_TRIGGER,27aa6a20-4a0d-4779-bcd5-dce162dd7467
-remote_msg.b: EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c
-remote_msg.c: EPEARL_TRIGGER,690406c8-53eb-482c-8309-96789e98d07a
-remote_msg.mainbase: EPEARL_TRIGGER,36b128f9-c502-4879-928e-0b9637dcd65e
+#remote_msg.a: EPEARL_TRIGGER,27aa6a20-4a0d-4779-bcd5-dce162dd7467
+#remote_msg.b: EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c
+#remote_msg.c: EPEARL_TRIGGER,690406c8-53eb-482c-8309-96789e98d07a
+#remote_msg.mainbase: EPEARL_TRIGGER,36b128f9-c502-4879-928e-0b9637dcd65e
 
 
 #========== Chat/commands ==========#
-chat_msg.meow: meow :3
+#chat_msg.meow: meow :3
 chat_msg.rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost

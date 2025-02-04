@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import net.evmodder.EvLib.FileIO;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
+import net.minecraft.client.MinecraftClient;
 // gradle genSources/eclipse/cleanloom/--stop
 //MC source will be in ~/.gradle/caches/fabric-loom or ./.gradle/loom-cache
 // gradle build --refresh-dependencies
@@ -90,7 +91,10 @@ public class Main implements ClientModInitializer{
 		HashMap<String, String> remoteMessages = new HashMap<>();
 		int clientId=0; String clientKey=null;
 		String remoteAddr=null; int remotePort=0;
-		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false;
+		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false, keybindMapArtLoad=false, keybindMapArtCopy=false;
+		int clicks_per_gt=36, milis_between_clicks=50;
+
+		String[] temp_evt_msgs=null; long temp_evt_ts=0; String evt_account="";
 
 		//config.forEach((key, value) -> {
 		for(String key : config.keySet()){
@@ -103,29 +107,22 @@ public class Main implements ClientModInitializer{
 				case "client_key": clientKey = value; break;
 				case "remote_addr": remoteAddr = value; break;
 				case "remote_port": remotePort = Integer.parseInt(value); break;
-//				case "spawner_highlight":
-//					if(!value.equalsIgnoreCase("false"));
-//					break;
-				case "repaircost_tooltip":
-					if(!value.equalsIgnoreCase("false")){rcTooltip = true; ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC);}
-					break;
-				case "enderpearl_owners":
-					if(!value.equalsIgnoreCase("false")) epearlOwners = true;
-					break;
-				case "enderpearl_owners_database_by_uuid":
-					if(!value.equalsIgnoreCase("false")) epearlOwnersDbUUID = true;
-				case "enderpearl_owners_database_by_coords":
-					if(!value.equalsIgnoreCase("false")) epearlOwnersDbXZ = true;
-					break;
-				case "keybind_drop_items":
-					if(!value.equalsIgnoreCase("false")) JunkItemEjector.registerJunkEjectKeybind();
-					break;
-				case "keybind_toggle_skin_layers":
-					if(!value.equalsIgnoreCase("false")) SimpleKeybindFeatures.registerSkinLayerKeybinds();
-					break;
-				case "seen_shared_database":
-					if(!value.equalsIgnoreCase("false")) new SeenCommand();//TODO
-					break;
+				case "enderpearl_owners": epearlOwners = !value.equalsIgnoreCase("false"); break;
+				case "enderpearl_owners_database_by_uuid": epearlOwnersDbUUID = !value.equalsIgnoreCase("false"); break;
+				case "enderpearl_owners_database_by_coords": epearlOwnersDbXZ = !value.equalsIgnoreCase("false"); break;
+				case "seen_shared_database": if(!value.equalsIgnoreCase("false")) new SeenCommand(); break;//TODO
+
+				case "temp_event_broadcast": if(value.contains(",")) temp_evt_msgs = value.substring(1, value.length()-1).split(","); break;
+				case "temp_event_timestamp": temp_evt_ts = Long.parseLong(value); break;
+				case "temp_event_account": evt_account = value; break;
+//				case "spawner_highlight": if(!value.equalsIgnoreCase("false")) new SpawnerHighlighter(); break;
+				case "repaircost_tooltip": if(rcTooltip=!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC); break;
+				case "keybind_drop_items": if(!value.equalsIgnoreCase("false")) JunkItemEjector.registerJunkEjectKeybind(); break;
+				case "keybind_toggle_skin_layers": if(!value.equalsIgnoreCase("false")) SimpleKeybindFeatures.registerSkinLayerKeybinds(); break;
+				case "keybind_mapart_load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
+				case "keybind_mapart_copy_in_inventory": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
+				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
+				case "milis_between_clicks": milis_between_clicks = Integer.parseInt(value); break;
 				case "scroll_order": {
 					final String listOfListsStr = value.replaceAll("\\s","");
 					List<String[]> colorLists = Arrays.stream(listOfListsStr.substring(2, listOfListsStr.length()-2).split("\\],\\[")).map(s->s.split(",")).toList();
@@ -140,5 +137,14 @@ public class Main implements ClientModInitializer{
 		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && (!remoteMessages.isEmpty() || epearlOwnersDbUUID || epearlOwnersDbXZ)){
 			remoteSender = new RemoteServerSender(remoteAddr, remotePort, clientId, clientKey, remoteMessages);
 		}
+		if(keybindMapArtLoad) MapArtKeybinds.registerLoadArtKeybind(clicks_per_gt);
+		if(keybindMapArtCopy){
+			MapArtKeybinds.registerCopyArtKeybind(milis_between_clicks);
+			MapArtKeybinds.registerCopyBulkArtKeybind(milis_between_clicks);
+		}
+
+		MinecraftClient client = MinecraftClient.getInstance();
+		String username = client.getSession().getUsername();
+		if(temp_evt_ts*1000L > System.currentTimeMillis() && temp_evt_msgs != null && username.equals(evt_account)) new ChatBroadcaster(temp_evt_ts, temp_evt_msgs);
 	}
 }

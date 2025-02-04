@@ -176,8 +176,8 @@ public final class PacketHelper{
 					if(is.available() > 0) reply = is.readAllBytes();
 					socketTCP.close();
 				}
-				catch(ConnectException e){LOGGER.severe("Failed to connect to RemoteServer");}
-				catch(IOException e){e.printStackTrace();}
+				catch(ConnectException e){LOGGER.severe("Failed to connect to RemoteServer"); return;}
+				catch(IOException e){e.printStackTrace(); return;}
 				//LOGGER.info("Roundtrip delay (TCP): "+(System.currentTimeMillis()-startTime));
 				recv.receiveMessage(reply);
 			}).start();
