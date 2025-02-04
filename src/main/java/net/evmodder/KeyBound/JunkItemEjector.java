@@ -5,15 +5,16 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ItemEnchantmentsComponent;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantments;
-import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 
 final public class JunkItemEjector{
@@ -70,25 +71,25 @@ final public class JunkItemEjector{
 				//Main.LOGGER.info("onPressed() "+kb.getDefaultKey().toInt());
 
 				MinecraftClient client = MinecraftClient.getInstance();
-				if(client.currentScreen instanceof GenericContainerScreen containerScreen){
-					//Main.LOGGER.info("mode 1");
-					Inventory inv = containerScreen.getScreenHandler().getInventory();
-					int syncId = containerScreen.getScreenHandler().syncId;
-					for(int slot=0; slot<inv.size(); ++slot){
-						ItemStack stack = inv.getStack(slot);
-						if(shouldEject(stack)) client.interactionManager.clickSlot(syncId, slot, 1, SlotActionType.THROW, client.player);
+				if(client.currentScreen instanceof HandledScreen handledScreen){
+					// Support GenericContainer and ShulkerBox
+					if(handledScreen instanceof GenericContainerScreen || handledScreen instanceof ShulkerBoxScreen){
+						int syncId = handledScreen.getScreenHandler().syncId;
+						for(Slot s : handledScreen.getScreenHandler().slots){
+							if(shouldEject(s.getStack())) client.interactionManager.clickSlot(syncId, s.getIndex(), 1, SlotActionType.THROW, client.player);
+						}
 					}
+					else if(!(client.currentScreen instanceof InventoryScreen)) return;
 				}
-				else if(client.currentScreen instanceof HandledScreen && !(client.currentScreen instanceof InventoryScreen)) return;
 
 				else{
 					//Main.LOGGER.info("mode 2");
+					//boolean plus9 = client.currentScreen instanceof InventoryScreen;
+					//int slotStart = plus9 ? 9 : 0, slotEnd = plus9 ? 45 : 36;
 					for(int slot=9; slot<45; ++slot){
-						int adjustedSlot = slot;
-						if(adjustedSlot >= 36) adjustedSlot -= 36;
-						ItemStack stack = client.player.getInventory().getStack(adjustedSlot);
-						if(shouldEject(stack)) client.interactionManager.clickSlot(/*client.player.playerScreenHandler.syncId*/0,
-								slot, 1, SlotActionType.THROW, client.player);
+						if(slot >= 36) slot -= 36;
+						ItemStack stack = client.player.getInventory().getStack(slot);
+						if(shouldEject(stack)) client.interactionManager.clickSlot(0, slot, 1, SlotActionType.THROW, client.player);
 					}
 				}
 			}
