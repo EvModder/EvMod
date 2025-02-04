@@ -36,6 +36,42 @@ public final class FileIO{
 		LOGGER = tempLogger;
 	}
 
+	public static final String loadFile(String filename, String defaultValue){
+		BufferedReader reader = null;
+		try{reader = new BufferedReader(new FileReader(DIR+filename));}
+		catch(FileNotFoundException e){
+			if(defaultValue == null) return null;
+
+			//Create Directory
+			final File dir = new File(DIR);
+			if(!dir.exists())dir.mkdir();
+
+			//Create the file
+			final File conf = new File(DIR+filename);
+			try{
+				conf.createNewFile();
+				BufferedWriter writer = new BufferedWriter(new FileWriter(conf));
+				writer.write(defaultValue); writer.close();
+				reader = new BufferedReader(new FileReader(DIR+filename));
+			}
+			catch(IOException e1){e1.printStackTrace();}
+		}
+		final StringBuilder file = new StringBuilder();
+		if(reader != null){
+			try{
+				String line = reader.readLine();
+				while(line != null){
+					line = line.trim().replace("//", "#");
+					int cut = line.indexOf('#');
+					if(cut == -1) file.append('\n').append(line);
+					else if(cut > 0) file.append('\n').append(line.substring(0, cut).trim());
+					line = reader.readLine();
+				}
+				reader.close();
+			}catch(IOException e){}
+		}
+		return file.length() == 0 ? "" : file.substring(1);
+	}
 	public static final String loadFile(String filename, InputStream defaultValue){
 		BufferedReader reader = null;
 		try{reader = new BufferedReader(new FileReader(DIR+filename));}
@@ -232,9 +268,12 @@ public final class FileIO{
 			data = fis.readAllBytes();
 			fis.close();
 		}
-		//catch(FileNotFoundException e){return new HashMap<>();}
+		catch(FileNotFoundException e){
+			LOGGER.warning("DB file not found, attempting to create it");
+			try{new File(filename).createNewFile();} catch(IOException e1){e1.printStackTrace();}
+			return new HashMap<>();
+		}
 		catch(IOException e){
-			LOGGER.warning("DB file not found");
 			e.printStackTrace();
 			return new HashMap<>();
 		}
@@ -269,11 +308,11 @@ public final class FileIO{
 	public static final synchronized HashSet<UUID> removeMissingFromClientFile(String filename, int playerX, int playerY, int playerZ, double affectedDistSq, HashSet<UUID> keep){
 		FileInputStream is = null;
 		try{is = new FileInputStream(FileIO.DIR+filename);}
-		catch(FileNotFoundException e){return null;}
+		catch(FileNotFoundException e){e.printStackTrace(); return null;}
 		final byte[] data;
 		try{data = is.readAllBytes(); is.close();}
 		catch(IOException e){e.printStackTrace(); return null;}
-		if(data.length % 40 != 0){
+		if(data.length % 44 != 0){
 			LOGGER.severe("Corrupted/invalid ePearlDB file!");
 			return null;
 		}
@@ -282,9 +321,9 @@ public final class FileIO{
 		final HashSet<UUID> deletedKeys = new HashSet<>();
 		int kept = 0;
 		while(bbIn.hasRemaining()){
-			final long k1 = bbIn.getLong(), k2 = bbIn.getLong();
-			final long o1 = bbIn.getLong(), o2 = bbIn.getLong();
-			final int x = bbIn.getInt(), y = bbIn.getInt(), z = bbIn.getInt();
+			final long k1 = bbIn.getLong(), k2 = bbIn.getLong();//16
+			final long o1 = bbIn.getLong(), o2 = bbIn.getLong();//16
+			final int x = bbIn.getInt(), y = bbIn.getInt(), z = bbIn.getInt();//4+4+4
 
 			final double distSq = (playerX-x)*(playerX-x) + (playerY-y)*(playerY-y) + (playerZ-z)*(playerZ-z);
 			if(distSq < affectedDistSq){
@@ -295,9 +334,9 @@ public final class FileIO{
 			++kept;
 			bbOut.putLong(k1).putLong(k2).putLong(o1).putLong(o2).putInt(x).putInt(z);
 		}
-		if(kept*40 == data.length) return deletedKeys; // Nothing was deleted
+		if(kept*44 == data.length) return deletedKeys; // Nothing was deleted
 
-		final byte[] rowsLeft = new byte[kept*40];
+		final byte[] rowsLeft = new byte[kept*44];
 		bbOut.get(0, rowsLeft);
 		try{
 			FileOutputStream fos = new FileOutputStream(FileIO.DIR+filename);
