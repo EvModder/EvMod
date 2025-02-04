@@ -48,7 +48,7 @@ final class KeybindHotbarTypeScroller{
 		});
 	}
 
-	public final void scrollHotbarSlot(boolean upOrDown){
+	private void scrollHotbarSlot(boolean upOrDown){
 		final MinecraftClient client = MinecraftClient.getInstance();
 		PlayerInventory inventory = client.player.getInventory();
 		if(!PlayerInventory.isValidHotbarIndex(inventory.selectedSlot)) return;

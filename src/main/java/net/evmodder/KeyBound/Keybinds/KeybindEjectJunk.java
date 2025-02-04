@@ -18,8 +18,8 @@ import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 
-final public class KeybindEjectJunk{
-	private final static boolean isUnrenewEnch(RegistryEntry<Enchantment> re, int lvl){
+public final class KeybindEjectJunk{
+	private boolean isUnrenewEnch(RegistryEntry<Enchantment> re, int lvl){
 		if(re.matchesKey(Enchantments.MENDING)) return true;
 		if(re.matchesKey(Enchantments.VANISHING_CURSE)) return true;
 		if(re.matchesKey(Enchantments.SWIFT_SNEAK)) return true;
@@ -29,7 +29,7 @@ final public class KeybindEjectJunk{
 		if(re.matchesKey(Enchantments.FEATHER_FALLING) && lvl == re.value().getMaxLevel()) return true;//Not really true
 		return false;
 	}
-	private final static boolean shouldEject(ItemStack stack){
+	private boolean shouldEject(ItemStack stack){
 		if(stack == null || stack.isEmpty()) return false;
 		final int rc = stack.getComponents().get(DataComponentTypes.REPAIR_COST);
 		if(rc != 0) return false;
@@ -63,8 +63,8 @@ final public class KeybindEjectJunk{
 		return false;
 	}
 
-	public static AbstractKeybind kb;
-	public static final void registerJunkEjectKeybind(){
+	public final AbstractKeybind kb;
+	public KeybindEjectJunk(){
 		KeyBindingHelper.registerKeyBinding(kb = new AbstractKeybind(
 				"key."+Main.MOD_ID+".eject_junk_items", InputUtil.Type.KEYSYM, -1, /*"key.categories."+KeyBound.MOD_ID+".misc"*/Main.KEYBIND_CATEGORY)
 		{

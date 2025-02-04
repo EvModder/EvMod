@@ -1,7 +1,7 @@
 package net.evmodder.KeyBound.mixin;
 
 import net.evmodder.KeyBound.Keybinds.KeybindEjectJunk;
-import net.evmodder.KeyBound.Keybinds.KeybindsMapArt;
+import net.evmodder.KeyBound.Keybinds.KeybindMapLoad;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.text.Text;
@@ -28,16 +28,16 @@ public abstract class HandledScreenMixin<T> extends Screen{
 			KeybindEjectJunk.kb.onPressed();
 			keyHandled = true;
 		}
-		if(KeybindsMapArt.kbLoad != null && KeybindsMapArt.kbLoad.matchesKey(keyCode, scanCode)){
-			KeybindsMapArt.kbLoad.onPressed();
+		if(KeybindMapLoad.kbLoad != null && KeybindMapLoad.kbLoad.matchesKey(keyCode, scanCode)){
+			KeybindMapLoad.kbLoad.onPressed();
 			keyHandled = true;
 		}
-		if(KeybindsMapArt.kbCopy != null && KeybindsMapArt.kbCopy.matchesKey(keyCode, scanCode)){
-			KeybindsMapArt.kbCopy.onPressed();
+		if(KeybindMapLoad.kbCopy != null && KeybindMapLoad.kbCopy.matchesKey(keyCode, scanCode)){
+			KeybindMapLoad.kbCopy.onPressed();
 			keyHandled = true;
 		}
-		if(KeybindsMapArt.kbCopyBulk != null && KeybindsMapArt.kbCopyBulk.matchesKey(keyCode, scanCode)){
-			KeybindsMapArt.kbCopyBulk.onPressed();
+		if(KeybindMapLoad.kbCopyBulk != null && KeybindMapLoad.kbCopyBulk.matchesKey(keyCode, scanCode)){
+			KeybindMapLoad.kbCopyBulk.onPressed();
 			keyHandled = true;
 		}
 		return keyHandled;

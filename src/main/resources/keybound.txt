@@ -27,7 +27,7 @@ temp_event_account: Anuvin
 temp_event_broadcast: []
 temp_event_timestamp: 1738990800 # Fri, Feb7, 11pm CST
 
-#========== Mapart Tools ==========#
+#========== MapArt Tools ==========#
 max_clicks_per_tick: 18
 milis_between_clicks: 7
 keybind_mapart_load_from_shulker: true

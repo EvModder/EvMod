@@ -23,8 +23,9 @@ import org.slf4j.LoggerFactory;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.Keybinds.KeybindEjectJunk;
 import net.evmodder.KeyBound.Keybinds.KeybindHotbarTypeScroller;
-import net.evmodder.KeyBound.Keybinds.KeybindsMapArt;
-import net.evmodder.KeyBound.Keybinds.KeybindSimpleKeybinds;
+import net.evmodder.KeyBound.Keybinds.KeybindInventoryOrganize;
+import net.evmodder.KeyBound.Keybinds.KeybindMapLoad;
+import net.evmodder.KeyBound.Keybinds.KeybindsSimple;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.minecraft.client.MinecraftClient;
@@ -103,9 +104,9 @@ public class Main implements ClientModInitializer{
 		//config.forEach((key, value) -> {
 		for(String key : config.keySet()){
 			String value = config.get(key);
-			if(key.startsWith("chat_msg.")) KeybindSimpleKeybinds.registerChatKeybind(key, value);
+			if(key.startsWith("chat_msg.")) KeybindsSimple.registerChatKeybind(key, value);
 			else if(key.startsWith("remote_msg.")) remoteMessages.put(key, value);
-			else if(key.startsWith("organize_inventory.")) KeybindSimpleKeybinds.registerInvOrganizeKeyBind(key, value.replaceAll("\\s",""));
+			else if(key.startsWith("organize_inventory.")) new KeybindInventoryOrganize(key, value.replaceAll("\\s",""));
 			else switch(key){
 				case "client_id": clientId = Integer.parseInt(value); break;
 				case "client_key": clientKey = value; break;
@@ -121,8 +122,8 @@ public class Main implements ClientModInitializer{
 				case "temp_event_account": evt_account = value; break;
 //				case "spawner_highlight": if(!value.equalsIgnoreCase("false")) new SpawnerHighlighter(); break;
 				case "repaircost_tooltip": if(rcTooltip=!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC); break;
-				case "keybind_drop_items": if(!value.equalsIgnoreCase("false")) KeybindEjectJunk.registerJunkEjectKeybind(); break;
-				case "keybind_toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindSimpleKeybinds.registerSkinLayerKeybinds(); break;
+				case "keybind_drop_items": if(!value.equalsIgnoreCase("false")) new KeybindEjectJunk(); break;
+				case "keybind_toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
 				case "keybind_mapart_load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
 				case "keybind_mapart_copy_in_inventory": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
 				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
@@ -141,10 +142,10 @@ public class Main implements ClientModInitializer{
 		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && (!remoteMessages.isEmpty() || epearlOwnersDbUUID || epearlOwnersDbXZ)){
 			remoteSender = new RemoteServerSender(remoteAddr, remotePort, clientId, clientKey, remoteMessages);
 		}
-		if(keybindMapArtLoad) KeybindsMapArt.registerLoadArtKeybind(clicks_per_gt);
+		if(keybindMapArtLoad) KeybindMapLoad.registerLoadArtKeybind(clicks_per_gt);
 		if(keybindMapArtCopy){
-			KeybindsMapArt.registerCopyArtKeybind(milis_between_clicks);
-			KeybindsMapArt.registerCopyBulkArtKeybind(milis_between_clicks);
+			KeybindMapLoad.registerCopyArtKeybind(milis_between_clicks);
+			KeybindMapLoad.registerCopyBulkArtKeybind(milis_between_clicks);
 		}
 
 		MinecraftClient client = MinecraftClient.getInstance();

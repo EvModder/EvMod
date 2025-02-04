@@ -15,7 +15,7 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Identifier;
 
 public final class KeybindInventoryOrganize{
-	public static final void registerInvOrganizeKeyBind(String keybind_name, String layout){
+	public KeybindInventoryOrganize(String keybind_name, String layout){
 		List<Pair<Integer, Identifier>> layoutMap = 
 		Arrays.stream(layout.substring(1, layout.length()-1).split(","))
 		.map(s -> {
