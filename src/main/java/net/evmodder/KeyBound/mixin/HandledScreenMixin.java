@@ -1,7 +1,6 @@
 package net.evmodder.KeyBound.mixin;
 
-import net.evmodder.KeyBound.Keybinds.KeybindEjectJunk;
-import net.evmodder.KeyBound.Keybinds.KeybindMapLoad;
+import net.evmodder.KeyBound.Keybinds.EvKeybind;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.text.Text;
@@ -21,26 +20,10 @@ public abstract class HandledScreenMixin<T> extends Screen{
 		//Main.LOGGER.info("handleAllowedInContainerKey: "+keyCode);
 		//MinecraftClient client = MinecraftClient.getInstance();
 		//GameOptions keys = client.options;
-		boolean keyHandled = false;
-		if(KeybindEjectJunk.kb != null && KeybindEjectJunk.kb.matchesKey(keyCode, scanCode)){
-			//Main.LOGGER.info("JunkItemEjector key while in a container! isPressed:"+isPressed);
-			//JunkItemEjector.kb.setPressed(isPressed);
-			KeybindEjectJunk.kb.onPressed();
-			keyHandled = true;
-		}
-		if(KeybindMapLoad.kbLoad != null && KeybindMapLoad.kbLoad.matchesKey(keyCode, scanCode)){
-			KeybindMapLoad.kbLoad.onPressed();
-			keyHandled = true;
-		}
-		if(KeybindMapLoad.kbCopy != null && KeybindMapLoad.kbCopy.matchesKey(keyCode, scanCode)){
-			KeybindMapLoad.kbCopy.onPressed();
-			keyHandled = true;
-		}
-		if(KeybindMapLoad.kbCopyBulk != null && KeybindMapLoad.kbCopyBulk.matchesKey(keyCode, scanCode)){
-			KeybindMapLoad.kbCopyBulk.onPressed();
-			keyHandled = true;
-		}
-		return keyHandled;
+		return EvKeybind.allowedInInventory.stream().anyMatch(kb ->{
+			if(kb.matchesKey(keyCode, scanCode)){kb.onPressedSupplier.run(); return true;}
+			return false;
+		});
 	}
 
 	@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)

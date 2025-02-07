@@ -8,14 +8,13 @@ import java.util.stream.Stream;
 import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.InputUtil;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Identifier;
 
-final class KeybindHotbarTypeScroller{
+public final class KeybindHotbarTypeScroller{
 	//private final static String COLOR_SCROLL_CATEGORY = "key.categories."+KeyBound.MOD_ID+".color_scroll";
 
 	// e.g. [[tube, brain, bubble, fire, horn],...]
@@ -114,9 +113,9 @@ final class KeybindHotbarTypeScroller{
 		Main.LOGGER.info("Defined scrollable variants: ["+String.join("], [", variantLists.stream().map(l -> String.join(",", l)).toList())+"]");
 		Main.LOGGER.debug("Found matching items: "+String.join(", ", scrollableItems.keySet()));
 
-		if(!scrollableItems.isEmpty())
-		Stream.of(true, false).map(k -> new AbstractKeybind("key."+Main.MOD_ID+".color_scroll."+(k ? "up" : "down"), InputUtil.Type.KEYSYM, -1, Main.KEYBIND_CATEGORY){
-			@Override public void onPressed(){scrollHotbarSlot(k);}
-		}).forEach(KeyBindingHelper::registerKeyBinding);
+		if(!scrollableItems.isEmpty()){
+			KeyBindingHelper.registerKeyBinding(new EvKeybind("color_scroll.up", ()->scrollHotbarSlot(true)));
+			KeyBindingHelper.registerKeyBinding(new EvKeybind("color_scroll.down", ()->scrollHotbarSlot(false)));
+		}
 	}
 }

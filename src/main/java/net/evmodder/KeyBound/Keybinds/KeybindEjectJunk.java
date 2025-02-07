@@ -1,13 +1,11 @@
 package net.evmodder.KeyBound.Keybinds;
 
-import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
-import net.minecraft.client.util.InputUtil;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ItemEnchantmentsComponent;
 import net.minecraft.enchantment.Enchantment;
@@ -63,37 +61,32 @@ public final class KeybindEjectJunk{
 		return false;
 	}
 
-	public final AbstractKeybind kb;
-	public KeybindEjectJunk(){
-		KeyBindingHelper.registerKeyBinding(kb = new AbstractKeybind(
-				"key."+Main.MOD_ID+".eject_junk_items", InputUtil.Type.KEYSYM, -1, /*"key.categories."+KeyBound.MOD_ID+".misc"*/Main.KEYBIND_CATEGORY)
-		{
-			@Override public void onPressed(){
-				//Main.LOGGER.info("onPressed() "+kb.getDefaultKey().toInt());
-
-				MinecraftClient client = MinecraftClient.getInstance();
-				if(client.currentScreen instanceof HandledScreen handledScreen){
-					// Support GenericContainer and ShulkerBox
-					if(handledScreen instanceof GenericContainerScreen || handledScreen instanceof ShulkerBoxScreen){
-						int syncId = handledScreen.getScreenHandler().syncId;
-						for(Slot s : handledScreen.getScreenHandler().slots){
-							if(shouldEject(s.getStack())) client.interactionManager.clickSlot(syncId, s.getIndex(), 1, SlotActionType.THROW, client.player);
-						}
-					}
-					else if(!(client.currentScreen instanceof InventoryScreen)) return;
-				}
-
-				else{
-					//Main.LOGGER.info("mode 2");
-					//boolean plus9 = client.currentScreen instanceof InventoryScreen;
-					//int slotStart = plus9 ? 9 : 0, slotEnd = plus9 ? 45 : 36;
-					for(int slot=9; slot<45; ++slot){
-						if(slot >= 36) slot -= 36;
-						ItemStack stack = client.player.getInventory().getStack(slot);
-						if(shouldEject(stack)) client.interactionManager.clickSlot(0, slot, 1, SlotActionType.THROW, client.player);
-					}
+	private void ejectJunkItems(){
+		MinecraftClient client = MinecraftClient.getInstance();
+		if(client.currentScreen instanceof HandledScreen handledScreen){
+			// Support GenericContainer and ShulkerBox
+			if(handledScreen instanceof GenericContainerScreen || handledScreen instanceof ShulkerBoxScreen){
+				int syncId = handledScreen.getScreenHandler().syncId;
+				for(Slot s : handledScreen.getScreenHandler().slots){
+					if(shouldEject(s.getStack())) client.interactionManager.clickSlot(syncId, s.getIndex(), 1, SlotActionType.THROW, client.player);
 				}
 			}
-		});
+			else if(!(client.currentScreen instanceof InventoryScreen)) return;
+		}
+
+		else{
+			//Main.LOGGER.info("mode 2");
+			//boolean plus9 = client.currentScreen instanceof InventoryScreen;
+			//int slotStart = plus9 ? 9 : 0, slotEnd = plus9 ? 45 : 36;
+			for(int slot=9; slot<45; ++slot){
+				if(slot >= 36) slot -= 36;
+				ItemStack stack = client.player.getInventory().getStack(slot);
+				if(shouldEject(stack)) client.interactionManager.clickSlot(0, slot, 1, SlotActionType.THROW, client.player);
+			}
+		}
+	}
+
+	public KeybindEjectJunk(){
+		KeyBindingHelper.registerKeyBinding(new EvKeybind("eject_junk_items", this::ejectJunkItems));
 	}
 }

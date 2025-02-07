@@ -6,7 +6,6 @@ import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
-import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
@@ -15,8 +14,9 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.world.World;
 
 public final class KeybindMapLoad{
+	final int CLICKS_PER_GT;
 
-	private static boolean isUnloadedMapArt(World world, ItemStack stack){
+	private boolean isUnloadedMapArt(World world, ItemStack stack){
 		if(stack == null || stack.isEmpty()) return false;
 		if(!Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")) return false;
 		return FilledMapItem.getMapState(stack, world) == null;
@@ -25,7 +25,7 @@ public final class KeybindMapLoad{
 	private boolean ongoingLoad;
 	private long lastLoad;
 	private final long loadCooldown = 500L;
-	private final void loadMapArtFromShulker(int fromSlot, final int clicks_left, final int clicks_per_gt){
+	private final void loadMapArtFromShulker(int fromSlot, final int clicks_left){
 		if(ongoingLoad){Main.LOGGER.warn("MapLoad cancelled: Already ongoing"); return;}
 		//
 		final long ts = System.currentTimeMillis();
@@ -78,10 +78,10 @@ public final class KeybindMapLoad{
 				//Main.LOGGER.info("MapLoad: recursive call");
 				if(clicks_left - 9 >= 9){
 					ongoingLoad=false;lastLoad=0;
-					loadMapArtFromShulker(fromSlotFinal, clicks_left-9, clicks_per_gt);
+					loadMapArtFromShulker(fromSlotFinal, clicks_left-9);
 				}
 				else new Timer().schedule(new TimerTask(){@Override public void run(){
-					ongoingLoad=false;lastLoad=0; loadMapArtFromShulker(fromSlotFinal, clicks_per_gt, clicks_per_gt);
+					ongoingLoad=false;lastLoad=0; loadMapArtFromShulker(fromSlotFinal, CLICKS_PER_GT);
 				}}, 51L);
 			}
 		}}, 50L);
@@ -157,20 +157,12 @@ public final class KeybindMapLoad{
 //		
 //	}
 
-	public final AbstractKeybind kbLoad;
 	public KeybindMapLoad(int clicks_per_gt){
-		if(clicks_per_gt < 2){
+		CLICKS_PER_GT = clicks_per_gt;
+		if(CLICKS_PER_GT < 2){
 			Main.LOGGER.error("clicks_per_gt value is set too low, disabling MapArtLoad keybind");
-			kbLoad = null;
 			return;
 		}
-		KeyBindingHelper.registerKeyBinding(kbLoad = new AbstractKeybind(
-				"key."+Main.MOD_ID+".mapart_load_container", InputUtil.Type.KEYSYM, -1, Main.KEYBIND_CATEGORY)
-		{
-			@Override public void onPressed(){
-				Main.LOGGER.info("LoadArtKeybind pressed");
-				loadMapArtFromShulker(0, clicks_per_gt, clicks_per_gt);
-			}
-		});
+		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_load_container", ()->loadMapArtFromShulker(0, CLICKS_PER_GT)));
 	}
 }

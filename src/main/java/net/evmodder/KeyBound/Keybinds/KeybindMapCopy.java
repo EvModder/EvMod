@@ -14,9 +14,11 @@ import net.minecraft.screen.slot.SlotActionType;
 import java.util.ArrayList;
 
 public final class KeybindMapCopy{
-	//private static final boolean DYNAMIC_HOTBAR_SWAP_SLOT = true;
-	private static final boolean BARF_CLOGS_FOR_MAP_COPY = false, PREFER_HOTBAR_SWAPS = true, FORCE_HOTBAR_SWAPS = false, COPY_PRECISE_64 = true;
-	//private static final int HOTBAR_SWAP_SLOT = 1; // button >= 0 && button < 9 || button == 40
+	private final int MILIS_PER_CLICK;
+	private final boolean BARF_CLOGS_FOR_MAP_COPY = false, PREFER_HOTBAR_SWAPS = true, FORCE_HOTBAR_SWAPS = false, COPY_PRECISE_64 = true;
+	private static boolean ongoingCopy;
+	private static long lastCopy;
+	private static final long copyCooldown = 250L;
 
 	private final static boolean isMapArt(ItemStack stack){
 		if(stack == null || stack.isEmpty()) return false;
@@ -28,13 +30,8 @@ public final class KeybindMapCopy{
 		return Registries.ITEM.getId(stack.getItem()).getPath().equals("map");
 	}
 
-
-	private static boolean ongoingCopy;
-	private static long lastCopy;
-	private static final long copyCooldown = 250L;
-
 	record ClickEvent(int slotId, int button, SlotActionType actionType){}
-	private static int getBlankMapsInto2x2(PlayerScreenHandler psh,
+	private int getBlankMapsInto2x2(PlayerScreenHandler psh,
 			final int hotbarButton, final int craftingSlot, final int blankMapsNeeded, int blankMapsCurrent, ArrayList<ClickEvent> clicks){
 		if(blankMapsNeeded <= blankMapsCurrent) return blankMapsCurrent;
 		if(blankMapsNeeded > 64){
@@ -76,7 +73,7 @@ public final class KeybindMapCopy{
 		}
 		return blankMapsCurrent;
 	}
-	private static void copyMapArtInInventory(long miliseconds_per_click, boolean bulk){
+	private void copyMapArtInInventory(boolean bulk){
 		if(ongoingCopy){Main.LOGGER.warn("MapCopy: Already ongoing"); return;}
 		//
 		final long ts = System.currentTimeMillis();
@@ -101,9 +98,11 @@ public final class KeybindMapCopy{
 		if(numMapArtsToCopy == 0){Main.LOGGER.warn("MapCopy: Nothing to copy"); return;}
 		//
 		int hotbarButton = -1;
-		if(PREFER_HOTBAR_SWAPS){//TODO: Offhand is slot:45, button:40
-			for(int i=8; i>=0; --i){
-				ItemStack stack = psh.getSlot(PlayerScreenHandler.HOTBAR_START+i).getStack();
+		if(PREFER_HOTBAR_SWAPS){
+			ItemStack stack = psh.getSlot(45).getStack();
+			if(stack == null || stack.isEmpty()) hotbarButton = 40;
+			else for(int i=8; i>=0; --i){
+				stack = psh.getSlot(PlayerScreenHandler.HOTBAR_START+i).getStack();
 				if(stack == null || stack.isEmpty()){hotbarButton = i; break;}
 			}
 		}
@@ -155,7 +154,7 @@ public final class KeybindMapCopy{
 			if(!isMapArt(stack)) continue;
 			if(stack.getCount() == stack.getMaxCount()) continue;
 			//Main.LOGGER.info("MapCopy: copying slot:"+i);
-			final int iHotbarButton = PREFER_HOTBAR_SWAPS && i >= 36 ? i-36 : hotbarButton;
+			final int iHotbarButton = PREFER_HOTBAR_SWAPS && i >= 36 ? (i==45 ? 40 : i-36) : hotbarButton;
 			final boolean canBulkCopy = stack.getCount()*2 <= stack.getMaxCount();
 			if(iHotbarButton != -1 && (!bulk || canBulkCopy || FORCE_HOTBAR_SWAPS)){
 				int amountToCraft = bulk && canBulkCopy ? stack.getCount() : 1;
@@ -227,14 +226,14 @@ public final class KeybindMapCopy{
 			}
 			ClickEvent click = clicks.removeFirst();
 			client.interactionManager.clickSlot(0, click.slotId, click.button, click.actionType, client.player);
-		}}, miliseconds_per_click, miliseconds_per_click);
+		}}, MILIS_PER_CLICK, MILIS_PER_CLICK);
 	}
 
-	public static AbstractKeybind kbCopy, kbCopyBulk;
 	public KeybindMapCopy(final int miliseconds_per_click){
-		if(miliseconds_per_click < 1){Main.LOGGER.error("milis_between_clicks value is set too low, disabling MapArtCopy/Bulk keybind"); return;}//TODO: remove
+		MILIS_PER_CLICK = miliseconds_per_click;
+		if(MILIS_PER_CLICK < 1){Main.LOGGER.error("milis_between_clicks value is set too low, disabling MapArtCopy/Bulk keybind"); return;}//TODO: remove
 
-		KeyBindingHelper.registerKeyBinding(kbCopy = new AbstractKeybind("mapart_copy", ()->copyMapArtInInventory(miliseconds_per_click, false)){});
-		KeyBindingHelper.registerKeyBinding(kbCopyBulk = new AbstractKeybind("mapart_copy_bulk", ()->copyMapArtInInventory(miliseconds_per_click, true)){});
+		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_copy", ()->copyMapArtInInventory(false)));
+		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_copy_bulk", ()->copyMapArtInInventory(true)));
 	}
 }

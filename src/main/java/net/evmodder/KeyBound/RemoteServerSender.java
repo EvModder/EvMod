@@ -10,10 +10,9 @@ import java.util.UUID;
 import net.evmodder.EvLib.Commands;
 import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.EvLib.PacketHelper.MessageReceiver;
-import net.evmodder.KeyBound.Keybinds.AbstractKeybind;
+import net.evmodder.KeyBound.Keybinds.EvKeybind;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.InputUtil;
 
 public final class RemoteServerSender{
 	//private static final String REMOTE_MSG_CATEGORY = "key.categories."+KeyBound.MOD_ID+".remote_messages";
@@ -88,9 +87,7 @@ public final class RemoteServerSender{
 			}
 			else{
 				final byte[] byteMsg = PacketHelper.toByteArray(Arrays.stream(Arrays.copyOfRange(arr, 1, arr.length)).map(UUID::fromString).toArray(UUID[]::new));
-				KeyBindingHelper.registerKeyBinding(new AbstractKeybind("key."+Main.MOD_ID+"."+key, InputUtil.Type.KEYSYM, -1, Main.KEYBIND_CATEGORY){
-					@Override public void onPressed(){sendBotMessage(command, byteMsg, true);}
-				});
+				KeyBindingHelper.registerKeyBinding(new EvKeybind(key, ()->sendBotMessage(command, byteMsg, true)));
 			}
 		});
 

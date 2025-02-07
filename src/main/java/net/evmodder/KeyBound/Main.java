@@ -24,6 +24,7 @@ import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.Keybinds.KeybindEjectJunk;
 import net.evmodder.KeyBound.Keybinds.KeybindHotbarTypeScroller;
 import net.evmodder.KeyBound.Keybinds.KeybindInventoryOrganize;
+import net.evmodder.KeyBound.Keybinds.KeybindMapCopy;
 import net.evmodder.KeyBound.Keybinds.KeybindMapLoad;
 import net.evmodder.KeyBound.Keybinds.KeybindsSimple;
 import net.fabricmc.api.ClientModInitializer;
@@ -142,11 +143,8 @@ public class Main implements ClientModInitializer{
 		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && (!remoteMessages.isEmpty() || epearlOwnersDbUUID || epearlOwnersDbXZ)){
 			remoteSender = new RemoteServerSender(remoteAddr, remotePort, clientId, clientKey, remoteMessages);
 		}
-		if(keybindMapArtLoad) KeybindMapLoad.registerLoadArtKeybind(clicks_per_gt);
-		if(keybindMapArtCopy){
-			KeybindMapLoad.registerCopyArtKeybind(milis_between_clicks);
-			KeybindMapLoad.registerCopyBulkArtKeybind(milis_between_clicks);
-		}
+		if(keybindMapArtLoad) new KeybindMapLoad(clicks_per_gt);
+		if(keybindMapArtCopy) new KeybindMapCopy(milis_between_clicks);
 
 		MinecraftClient client = MinecraftClient.getInstance();
 		String username = client.getSession().getUsername();
