@@ -163,6 +163,6 @@ public final class KeybindMapLoad{
 			Main.LOGGER.error("clicks_per_gt value is set too low, disabling MapArtLoad keybind");
 			return;
 		}
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_load_container", ()->loadMapArtFromShulker(0, CLICKS_PER_GT)));
+		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_load_container", ()->loadMapArtFromShulker(0, CLICKS_PER_GT), true));
 	}
 }

@@ -71,28 +71,31 @@ public final class KeybindInventoryOrganize{
 		PlayerScreenHandler psh = is.getScreenHandler();
 		HashSet<Integer> doneSlots = new HashSet<>();
 		for(Pair<Integer, Identifier> p : layoutMap){
-			int destSlot = p.a == -106 ? 45 : p.a;
-			if(doneSlots.contains(destSlot)) continue;
+			int dstSlot = p.a == -106 ? 45 : p.a;
+			if(doneSlots.contains(dstSlot)) continue;
 			final Identifier id = p.b;
 			int srcSlot = findSlotWithItem(psh, id.getPath(), doneSlots);
 			Main.LOGGER.info("src slot: "+ srcSlot);
 			if(srcSlot == -1) continue;
 			//if(srcSlot == -1 && id.getPath().equals(getName(instance.player.getOffHandStack())) && !doneSlots.contains(-106)) srcSlot = -106;
-			if(srcSlot != destSlot){
-				Main.LOGGER.info("swapping slots "+srcSlot+" and "+destSlot);
+			if(srcSlot != dstSlot){
+				Main.LOGGER.info("swapping slots "+srcSlot+" and "+dstSlot);
 				ItemStack temp = psh.getSlot(srcSlot).getStack();
-				psh.getSlot(srcSlot).setStack(psh.getSlot(destSlot).getStack());
-				psh.getSlot(destSlot).setStack(temp);
-				if(srcSlot >= 36 && srcSlot < 45) client.interactionManager.clickSlot(0, destSlot, srcSlot-36, SlotActionType.SWAP, client.player);
-				else if(destSlot >= 36 && destSlot < 45) client.interactionManager.clickSlot(0, srcSlot, destSlot-36, SlotActionType.SWAP, client.player);
+				psh.getSlot(srcSlot).setStack(psh.getSlot(dstSlot).getStack());
+				psh.getSlot(dstSlot).setStack(temp);
+				if(srcSlot == 45)	   client.interactionManager.clickSlot(0, dstSlot, 40, SlotActionType.SWAP, client.player);
+				else if(srcSlot >= 36) client.interactionManager.clickSlot(0, dstSlot, srcSlot-36, SlotActionType.SWAP, client.player);
+				else if(dstSlot == 45) client.interactionManager.clickSlot(0, srcSlot, 40, SlotActionType.SWAP, client.player);
+				else if(dstSlot >= 36) client.interactionManager.clickSlot(0, srcSlot, dstSlot-36, SlotActionType.SWAP, client.player);
 				else{
 					client.interactionManager.clickSlot(0, srcSlot, 1, SlotActionType.SWAP, client.player);
 					client.interactionManager.clickSlot(0, destSlot, 1, SlotActionType.SWAP, client.player);
 					client.interactionManager.clickSlot(0, srcSlot, 1, SlotActionType.SWAP, client.player);//TODO: not necessary if dest.isEmpty() && hotbar[1].isEmpty()
 				}
 			}
-			doneSlots.add(destSlot);
+			doneSlots.add(dstSlot);
 		}
+		Main.LOGGER.info("inv organize complete, slots updated: "+doneSlots.size());
 		if(!doneSlots.isEmpty()) client.player.getInventory().markDirty();
 	}
 

@@ -10,8 +10,6 @@
 	"key.keybound.skin_toggle.left_sleeve": "Toggle left sleeve",
 	"key.keybound.skin_toggle.right_sleeve": "Toggle right sleeve",
 
-	"key.keybound.organize_inventory.a": "Organize inventory (EvDefault)",
-
 	"key.categories.keybound.color_scroll": "Hotbar color scrolling",
 	"key.keybound.color_scroll.up": "Next color",
 	"key.keybound.color_scroll.down": "Last color",
@@ -27,5 +25,9 @@
 	"key.keybound.chat_msg.rc": "Check RC",
 
 	"key.categories.keybound.misc": "Misc",
-	"key.keybound.eject_junk_items": "AutoEject"
+	"key.keybound.eject_junk_items": "AutoEject",
+	"key.keybound.mapart_copy": "MapArtCopy",
+	"key.keybound.mapart_copy_bulk": "MapArtCopyBulk",
+	"key.keybound.mapart_load_container": "MapArtLoad",
+	"key.keybound.organize_inventory.a": "Organize inventory (EvDefault)"
 }

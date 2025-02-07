@@ -5,17 +5,17 @@ keybind_drop_items: true
 keybind_toggle_skin_layers: true
 organize_inventory.a: [
   # Hotbar LHS
-  0:netherite_sword, 1:netherite_pickaxe, 2:netherite_axe, 3:firework_rocket,
+  36:netherite_sword, 37:netherite_pickaxe, 38:netherite_axe, 39:firework_rocket,
 
   # Offhand
-  -106:totem_of_undying,# -106:enchanted_golden_apple, -106:golden_carrot, -106:cooked_beef
+  45:totem_of_undying,# 45:enchanted_golden_apple, 45:golden_carrot, 45:cooked_beef
 
   # Hotbar RHS
-  8:enchanted_golden_apple, 8:golden_carrot, 8:cooked_beef,
+  44:enchanted_golden_apple, 44:golden_carrot, 44:cooked_beef,
 
   #Armor
-  103:netherite_helmet, 102:elytra, 102:netherite_chestplate, 101:netherite_leggings, 100:netherite_boots,
-  103:diamond_helmet, 102:elytra, 102:diamond_chestplate, 101:diamond_leggings, 100:diamond_boots,
+  8:netherite_helmet, 7:elytra, 7:netherite_chestplate, 6:netherite_leggings, 5:netherite_boots,
+  8:diamond_helmet, 7:elytra, 7:diamond_chestplate, 6:diamond_leggings, 5:diamond_boots,
 
   # Inventory top LHS
   9:netherite_chestplate, 9:diamond_chestplate, 10:ender_chest,
@@ -29,7 +29,7 @@ temp_event_timestamp: 1738990800 # Fri, Feb7, 11pm CST
 
 #========== MapArt Tools ==========#
 max_clicks_per_tick: 18
-milis_between_clicks: 7
+milis_between_clicks: 8
 keybind_mapart_load_from_shulker: true
 keybind_mapart_copy_in_inventory: true
 
