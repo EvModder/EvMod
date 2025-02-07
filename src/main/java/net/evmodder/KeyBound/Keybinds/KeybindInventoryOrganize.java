@@ -6,48 +6,94 @@ import java.util.List;
 import net.evmodder.EvLib.Pair;
 import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.minecraft.inventory.Inventory;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
+import net.minecraft.screen.PlayerScreenHandler;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Identifier;
 
 public final class KeybindInventoryOrganize{
 	final List<Pair<Integer, Identifier>> layoutMap;
 	private String getName(ItemStack stack){
-		return stack == null || stack.isEmpty() ? null : Registries.ITEM.getId(stack.getItem()).getPath();
+		return stack == null || stack.isEmpty() || stack.getCount() == 0 ? null : Registries.ITEM.getId(stack.getItem()).getPath();
 	}
-	private int findSlotWithItem(Inventory inv, String itemName, HashSet<Integer> skipSlots){
-		for(int slot=0; slot<36; ++slot){ // Hotbar[0-8] + Inventory[9-35]
-			if(itemName.equals(getName(inv.getStack(slot))) && !skipSlots.contains(slot)) return slot;
+	/*private ItemStack getStack(ClientPlayerEntity p, int slot){
+		switch(slot){
+			case 40: case -106: return p.getOffHandStack();
+			case 100: return p.getEquippedStack(EquipmentSlot.FEET);
+			case 101: return p.getEquippedStack(EquipmentSlot.LEGS);
+			case 102: return p.getEquippedStack(EquipmentSlot.CHEST);
+			case 103: return p.getEquippedStack(EquipmentSlot.HEAD);
+			default:
+				if(slot < 0 || slot >= 36){
+					Main.LOGGER.error("Invalid slot in inv-organize: "+slot);
+					return null;
+				}
+				return p.getInventory().getStack(slot);
 		}
-		for(int slot=100; slot<104; ++slot){ // Armor
-			if(itemName.equals(getName(inv.getStack(slot))) && !skipSlots.contains(slot)) return slot;
+	}
+	private void setStack(ClientPlayerEntity p, int slot, ItemStack stack){
+		switch(slot){
+			case 40: case -106: p.setStackInHand(Hand.OFF_HAND, stack); return;
+			case 100: p.equipStack(EquipmentSlot.FEET, stack); return;
+			case 101: p.equipStack(EquipmentSlot.LEGS, stack); return;
+			case 102: p.equipStack(EquipmentSlot.CHEST, stack); return;
+			case 103: p.equipStack(EquipmentSlot.HEAD, stack); return;
+			default:
+				if(slot < 0 || slot >= 36) Main.LOGGER.error("Invalid slot in inv-organize: "+slot);
+				else if(stack == null) p.getInventory().getStack(slot).setCount(0);
+				else p.getInventory().setStack(slot, stack);
 		}
-		//if(itemName.equals(getName(inv.getStack((byte)-106))) && !skipSlots.contains((byte)-106)) return -106; // Offhand
+	}*/
+	private int findSlotWithItem(PlayerScreenHandler psh, String itemName, HashSet<Integer> skipSlots){
+//		for(int slot=PlayerScreenHandler.EQUIPMENT_START; slot<PlayerScreenHandler.EQUIPMENT_END; ++slot){ // Armor[5-8]
+//			if(itemName.equals(getName(psh.getSlot(slot).getStack())) && !skipSlots.contains(slot)) return slot;
+//		}
+//		for(int slot=PlayerScreenHandler.INVENTORY_START; slot<PlayerScreenHandler.INVENTORY_END; ++slot){ // Inventory[9-35], Hotbar[36-44]
+//			if(itemName.equals(getName(psh.getSlot(slot).getStack())) && !skipSlots.contains(slot)) return slot;
+//		}
+//		final int slot = PlayerScreenHandler.OFFHAND_ID;
+//		if(itemName.equals(getName(psh.getSlot(slot).getStack())) && !skipSlots.contains(slot)) return slot; // Offhand[45]
+
+		// Crafting 2x2[1-4]
+		for(int slot=1; slot<=45; ++slot){
+			if(itemName.equals(getName(psh.getSlot(slot).getStack())) && !skipSlots.contains(slot)) return slot;
+		}
 		return -1;
 	}
 	private void organizeInventory(){
 		Main.LOGGER.info("inv org keybind pressed");
-//		//TODO: ALL BROKEN NOTHING WORKING RIPPP
-//		for(Pair<Integer, Identifier> p : layoutMap){
-//			final int destSlot = p.a;
-//			if(doneSlots.contains(destSlot)) continue;
-//			final Identifier id = p.b;
-//			int srcSlot = findSlotWithItem(inv, id.getPath(), doneSlots);
-//			Main.LOGGER.info("src slot: "+ srcSlot);
-//			//if(srcSlot == -1 && id.getPath().equals(getName(instance.player.getOffHandStack())) && !doneSlots.contains(-106)) srcSlot = -106;
-//			if(srcSlot != -1){
-//				if(srcSlot != destSlot){
-//					Main.LOGGER.info("swapping slots "+srcSlot+" and "+destSlot);
-//					ItemStack temp = inv.getStack(srcSlot);
-//					inv.setStack(srcSlot, inv.getStack(destSlot));
-//					inv.setStack(destSlot, temp);
-//					instance.interactionManager.clickSlot(0, destSlot, srcSlot, SlotActionType.SWAP, instance.player);
-//				}
-//				doneSlots.add(destSlot);
-//			}
-//		}
-//		if(!doneSlots.isEmpty()) inv.markDirty();
+		MinecraftClient client = MinecraftClient.getInstance();
+		if(!(client.currentScreen instanceof InventoryScreen is)){Main.LOGGER.warn("MapCopy: not in InventoryScreen"); return;}
+
+		PlayerScreenHandler psh = is.getScreenHandler();
+		HashSet<Integer> doneSlots = new HashSet<>();
+		for(Pair<Integer, Identifier> p : layoutMap){
+			int destSlot = p.a == -106 ? 45 : p.a;
+			if(doneSlots.contains(destSlot)) continue;
+			final Identifier id = p.b;
+			int srcSlot = findSlotWithItem(psh, id.getPath(), doneSlots);
+			Main.LOGGER.info("src slot: "+ srcSlot);
+			if(srcSlot == -1) continue;
+			//if(srcSlot == -1 && id.getPath().equals(getName(instance.player.getOffHandStack())) && !doneSlots.contains(-106)) srcSlot = -106;
+			if(srcSlot != destSlot){
+				Main.LOGGER.info("swapping slots "+srcSlot+" and "+destSlot);
+				ItemStack temp = psh.getSlot(srcSlot).getStack();
+				psh.getSlot(srcSlot).setStack(psh.getSlot(destSlot).getStack());
+				psh.getSlot(destSlot).setStack(temp);
+				if(srcSlot >= 36 && srcSlot < 45) client.interactionManager.clickSlot(0, destSlot, srcSlot-36, SlotActionType.SWAP, client.player);
+				else if(destSlot >= 36 && destSlot < 45) client.interactionManager.clickSlot(0, srcSlot, destSlot-36, SlotActionType.SWAP, client.player);
+				else{
+					client.interactionManager.clickSlot(0, srcSlot, 1, SlotActionType.SWAP, client.player);
+					client.interactionManager.clickSlot(0, destSlot, 1, SlotActionType.SWAP, client.player);
+					client.interactionManager.clickSlot(0, srcSlot, 1, SlotActionType.SWAP, client.player);//TODO: not necessary if dest.isEmpty() && hotbar[1].isEmpty()
+				}
+			}
+			doneSlots.add(destSlot);
+		}
+		if(!doneSlots.isEmpty()) client.player.getInventory().markDirty();
 	}
 
 	public KeybindInventoryOrganize(String keybind_name, String layout){
@@ -66,6 +112,6 @@ public final class KeybindInventoryOrganize{
 		)
 		.filter(p -> p != null)
 		.toList();
-		KeyBindingHelper.registerKeyBinding(new EvKeybind(keybind_name, this::organizeInventory));
+		KeyBindingHelper.registerKeyBinding(new EvKeybind(keybind_name, this::organizeInventory, true));
 	}
 }
