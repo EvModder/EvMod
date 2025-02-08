@@ -70,32 +70,48 @@ public final class KeybindInventoryOrganize{
 
 		PlayerScreenHandler psh = is.getScreenHandler();
 		HashSet<Integer> doneSlots = new HashSet<>();
+		boolean[] emptySlots = new boolean[46];
+		for(int i=0; i<46; ++i) emptySlots[i] = psh.getSlot(i).getStack() == null || psh.getSlot(i).getStack().isEmpty();
+
+		int clicks = 0;
 		for(Pair<Integer, Identifier> p : layoutMap){
 			int dstSlot = p.a == -106 ? 45 : p.a;
 			if(doneSlots.contains(dstSlot)) continue;
 			final Identifier id = p.b;
+			if(id.getPath().equals(getName(psh.getSlot(dstSlot).getStack()))){doneSlots.add(dstSlot); continue;}
 			int srcSlot = findSlotWithItem(psh, id.getPath(), doneSlots);
-			Main.LOGGER.info("src slot: "+ srcSlot);
 			if(srcSlot == -1) continue;
-			//if(srcSlot == -1 && id.getPath().equals(getName(instance.player.getOffHandStack())) && !doneSlots.contains(-106)) srcSlot = -106;
-			if(srcSlot != dstSlot){
-				Main.LOGGER.info("swapping slots "+srcSlot+" and "+dstSlot);
-				ItemStack temp = psh.getSlot(srcSlot).getStack();
-				psh.getSlot(srcSlot).setStack(psh.getSlot(dstSlot).getStack());
-				psh.getSlot(dstSlot).setStack(temp);
-				if(srcSlot == 45)	   client.interactionManager.clickSlot(0, dstSlot, 40, SlotActionType.SWAP, client.player);
-				else if(srcSlot >= 36) client.interactionManager.clickSlot(0, dstSlot, srcSlot-36, SlotActionType.SWAP, client.player);
-				else if(dstSlot == 45) client.interactionManager.clickSlot(0, srcSlot, 40, SlotActionType.SWAP, client.player);
-				else if(dstSlot >= 36) client.interactionManager.clickSlot(0, srcSlot, dstSlot-36, SlotActionType.SWAP, client.player);
-				else{
-					client.interactionManager.clickSlot(0, srcSlot, 1, SlotActionType.SWAP, client.player);
-					client.interactionManager.clickSlot(0, destSlot, 1, SlotActionType.SWAP, client.player);
-					client.interactionManager.clickSlot(0, srcSlot, 1, SlotActionType.SWAP, client.player);//TODO: not necessary if dest.isEmpty() && hotbar[1].isEmpty()
+			Main.LOGGER.info("Moving desired item "+id.getPath()+", from->to slot: "+srcSlot+" -> "+dstSlot);
+			ItemStack tempStack = psh.getSlot(srcSlot).getStack();
+			psh.getSlot(srcSlot).setStack(psh.getSlot(dstSlot).getStack());
+			psh.getSlot(dstSlot).setStack(tempStack);
+			++clicks;
+			// Shift-click armor from anywhere in the inventory (TODO: unequip existing armor)
+			//if(dstSlot >= 5 && dstSlot < 9) client.interactionManager.clickSlot(0, srcSlot, 0, SlotActionType.QUICK_MOVE, client.player);
+			//else
+				 if(srcSlot == 45) client.interactionManager.clickSlot(0, dstSlot, 40, SlotActionType.SWAP, client.player);
+			else if(srcSlot >= 36) client.interactionManager.clickSlot(0, dstSlot, srcSlot-36, SlotActionType.SWAP, client.player);
+			else if(dstSlot == 45) client.interactionManager.clickSlot(0, srcSlot, 40, SlotActionType.SWAP, client.player);
+			else if(dstSlot >= 36) client.interactionManager.clickSlot(0, srcSlot, dstSlot-36, SlotActionType.SWAP, client.player);
+			else{
+				++clicks;
+				int hb = 40;
+				// if dstSlot is currently empty, attempt to pick an empty hotbar/offhand slot to swap with
+				if(emptySlots[dstSlot] && !emptySlots[45]) for(int i=0; i<9; ++i) if(emptySlots[i+36]){hb = i; break;}
+				client.interactionManager.clickSlot(0, srcSlot, hb, SlotActionType.SWAP, client.player);
+				client.interactionManager.clickSlot(0, dstSlot, hb, SlotActionType.SWAP, client.player);
+				if(!emptySlots[dstSlot] || !emptySlots[hb == 40 ? 45 : hb+36]){
+					++clicks;
+					// Put back the displaced hotbar/offhand item
+					client.interactionManager.clickSlot(0, srcSlot, hb, SlotActionType.SWAP, client.player);
 				}
 			}
+			boolean tempEmpty = emptySlots[srcSlot];
+			emptySlots[srcSlot] = emptySlots[dstSlot];
+			emptySlots[dstSlot] = tempEmpty;
 			doneSlots.add(dstSlot);
 		}
-		Main.LOGGER.info("inv organize complete, slots updated: "+doneSlots.size());
+		Main.LOGGER.info("inv organize complete, slots done: "+doneSlots.size()+", clicks required: "+clicks);
 		if(!doneSlots.isEmpty()) client.player.getInventory().markDirty();
 	}
 
