@@ -5,10 +5,14 @@ keybind_drop_items: true
 keybind_toggle_skin_layers: true
 organize_inventory.a: [
   # Hotbar LHS
-  36:netherite_sword, 37:netherite_pickaxe, 38:netherite_axe, 39:firework_rocket,
+  36:netherite_sword, 36: diamond_sword, 36:netherite_axe, 36:diamond_axe,
+  37:netherite_pickaxe, 37:diamond_pickaxe
+  38:netherite_axe, 38:diamond_axe, 38:netherite_shovel, 38:diamond_shovel, 38:firework_rocket,
+  39:netherite_shovel, 39:diamond_shovel, 39:firework_rocket, 39:fishing_rod,
+  40:fishing_rod,
 
   # Offhand
-  45:totem_of_undying,# 45:enchanted_golden_apple, 45:golden_carrot, 45:cooked_beef
+  45:totem_of_undying,# 45:enchanted_golden_apple, 45:golden_carrot, 45:cooked_beef,
 
   # Hotbar RHS
   44:enchanted_golden_apple, 44:golden_carrot, 44:cooked_beef,
@@ -22,7 +26,7 @@ organize_inventory.a: [
   11:totem_of_undying, 12:totem_of_undying, 13:totem_of_undying,
 
   # Extra rockets, food
-  30:firework_rocket,
+  30:firework_rocket, 21:firework_rocket,
   35:enchanted_golden_apple, 35:golden_carrot, 35:cooked_beef
 ]
 
@@ -37,6 +41,7 @@ temp_event_timestamp: 1738990800 # Fri, Feb7, 11pm CST
 keybind_mapart_load_from_shulker: true
 keybind_mapart_take_from_shulker: true
 keybind_mapart_copy_in_inventory: true
+mapart_placement_helper: true
 
 #========== Added Visuals ==========#
 repaircost_tooltip: true

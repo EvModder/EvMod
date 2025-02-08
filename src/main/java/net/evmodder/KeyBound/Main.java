@@ -129,6 +129,7 @@ public class Main implements ClientModInitializer{
 				case "keybind_mapart_load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
 				case "keybind_mapart_take_from_shulker": keybindMapArtTake = !value.equalsIgnoreCase("false"); break;
 				case "keybind_mapart_copy_in_inventory": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
+				case "mapart_placement_helper": new MapHandRestock();
 //				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
 //				case "millis_between_clicks": millis_between_clicks = Integer.parseInt(value); break;
 				case "scroll_order": {
