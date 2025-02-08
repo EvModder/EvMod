@@ -32,9 +32,10 @@ temp_event_broadcast: []
 temp_event_timestamp: 1738990800 # Fri, Feb7, 11pm CST
 
 #========== MapArt Tools ==========#
-max_clicks_per_tick: 18
-milis_between_clicks: 8
+#max_clicks_per_second: 18
+#millis_between_clicks: 8
 keybind_mapart_load_from_shulker: true
+keybind_mapart_take_from_shulker: true
 keybind_mapart_copy_in_inventory: true
 
 #========== Added Visuals ==========#

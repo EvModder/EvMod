@@ -26,6 +26,7 @@ import net.evmodder.KeyBound.Keybinds.KeybindHotbarTypeScroller;
 import net.evmodder.KeyBound.Keybinds.KeybindInventoryOrganize;
 import net.evmodder.KeyBound.Keybinds.KeybindMapCopy;
 import net.evmodder.KeyBound.Keybinds.KeybindMapLoad;
+import net.evmodder.KeyBound.Keybinds.KeybindMapStealStore;
 import net.evmodder.KeyBound.Keybinds.KeybindsSimple;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
@@ -97,8 +98,8 @@ public class Main implements ClientModInitializer{
 		HashMap<String, String> remoteMessages = new HashMap<>();
 		int clientId=0; String clientKey=null;
 		String remoteAddr=null; int remotePort=0;
-		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false, keybindMapArtLoad=false, keybindMapArtCopy=false;
-		int clicks_per_gt=36, milis_between_clicks=50;
+		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false, keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtTake=false;
+//		int clicks_per_gt=36, millis_between_clicks=50;
 
 		String[] temp_evt_msgs=null; long temp_evt_ts=0; String evt_account="";
 
@@ -126,9 +127,10 @@ public class Main implements ClientModInitializer{
 				case "keybind_drop_items": if(!value.equalsIgnoreCase("false")) new KeybindEjectJunk(); break;
 				case "keybind_toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
 				case "keybind_mapart_load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
+				case "keybind_mapart_take_from_shulker": keybindMapArtTake = !value.equalsIgnoreCase("false"); break;
 				case "keybind_mapart_copy_in_inventory": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
-				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
-				case "milis_between_clicks": milis_between_clicks = Integer.parseInt(value); break;
+//				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
+//				case "millis_between_clicks": millis_between_clicks = Integer.parseInt(value); break;
 				case "scroll_order": {
 					final String listOfListsStr = value.replaceAll("\\s","");
 					List<String[]> colorLists = Arrays.stream(listOfListsStr.substring(2, listOfListsStr.length()-2).split("\\],\\[")).map(s->s.split(",")).toList();
@@ -143,8 +145,9 @@ public class Main implements ClientModInitializer{
 		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && (!remoteMessages.isEmpty() || epearlOwnersDbUUID || epearlOwnersDbXZ)){
 			remoteSender = new RemoteServerSender(remoteAddr, remotePort, clientId, clientKey, remoteMessages);
 		}
-		if(keybindMapArtLoad) new KeybindMapLoad(clicks_per_gt);
-		if(keybindMapArtCopy) new KeybindMapCopy(milis_between_clicks);
+		if(keybindMapArtLoad) new KeybindMapLoad(/*MAX_CLICKS_PER_SECOND=*/999);
+		if(keybindMapArtCopy) new KeybindMapCopy(/*MILLIS_BETWEEN_CLICKS=*/10);
+		if(keybindMapArtTake) new KeybindMapStealStore(/*MILLIS_BETWEEN_CLICKS=*/10);
 
 		MinecraftClient client = MinecraftClient.getInstance();
 		String username = client.getSession().getUsername();

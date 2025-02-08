@@ -1,8 +1,7 @@
 package net.evmodder.KeyBound.Keybinds;
 
-import java.util.Timer;
-import java.util.TimerTask;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.Keybinds.InventoryUtils.ClickEvent;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
@@ -11,29 +10,27 @@ import net.minecraft.registry.Registries;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 
 public final class KeybindMapCopy{
-	private final int MILIS_PER_CLICK;
 	private final boolean BARF_CLOGS_FOR_MAP_COPY = false, PREFER_HOTBAR_SWAPS = true, FORCE_HOTBAR_SWAPS = false, COPY_PRECISE_64 = true;
 	private static boolean ongoingCopy;
 	private static long lastCopy;
 	private static final long copyCooldown = 250L;
 
-	private final static boolean isMapArt(ItemStack stack){
+	private boolean isMapArt(ItemStack stack){
 		if(stack == null || stack.isEmpty()) return false;
 		return Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map");
 	}
-	private final static boolean isBlankMap(ItemStack stack){
+	private boolean isBlankMap(ItemStack stack){
 		//stack.getItem().getClass() == EmptyMapItem.class
 		if(stack == null || stack.isEmpty()) return false;
 		return Registries.ITEM.getId(stack.getItem()).getPath().equals("map");
 	}
 
-	record ClickEvent(int slotId, int button, SlotActionType actionType){}
 	private int getBlankMapsInto2x2(PlayerScreenHandler psh,
 			final int hotbarButton, final int craftingSlot, final int blankMapsNeeded, int blankMapsCurrent,
-			ArrayList<ClickEvent> clicks, Integer blankMapStackableCapacity // mutable
+			ArrayDeque<ClickEvent> clicks, Integer blankMapStackableCapacity // mutable
 	){
 		if(blankMapsNeeded <= blankMapsCurrent) return blankMapsCurrent;
 		if(blankMapsNeeded > 64){
@@ -82,7 +79,7 @@ public final class KeybindMapCopy{
 		}
 		return blankMapsCurrent;
 	}
-	private void copyMapArtInInventory(Boolean bulk){
+	private void copyMapArtInInventory(final int MILLIS_BETWEEN_CLICKS, Boolean bulk){
 		if(ongoingCopy){Main.LOGGER.warn("MapCopy: Already ongoing"); return;}
 		//
 		final long ts = System.currentTimeMillis();
@@ -91,7 +88,7 @@ public final class KeybindMapCopy{
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof InventoryScreen is)){Main.LOGGER.warn("MapCopy: not in InventoryScreen"); return;}
 		//
-		ArrayList<ClickEvent> clicks = new ArrayList<>();
+		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		PlayerScreenHandler psh = is.getScreenHandler();
 		if(!psh.getCursorStack().isEmpty()){
 			Main.LOGGER.warn("MapCopy: Cursor needs to be empty");
@@ -254,23 +251,14 @@ public final class KeybindMapCopy{
 			clicks.add(new ClickEvent(blankMapCraftingSlot, 0, SlotActionType.THROW)); // throw leftovers if quick_move fails
 		}
 		ongoingCopy = true;
-		new Timer().scheduleAtFixedRate(new TimerTask(){@Override public void run(){
-			if(clicks.isEmpty()){
-				Main.LOGGER.info("MapCopy: DONE");
-				cancel();
-				ongoingCopy = false;
-				return;
-			}
-			ClickEvent click = clicks.removeFirst();
-			client.interactionManager.clickSlot(0, click.slotId, click.button, click.actionType, client.player);
-		}}, MILIS_PER_CLICK, MILIS_PER_CLICK);
+		InventoryUtils.executeClicks(client, clicks, MILLIS_BETWEEN_CLICKS, /*MAX_CLICKS_PER_SECOND=*/80, _->true, ()->{
+			Main.LOGGER.info("MapCopy: DONE");
+			ongoingCopy = false;
+		});
 	}
 
-	public KeybindMapCopy(final int miliseconds_per_click){
-		MILIS_PER_CLICK = miliseconds_per_click;
-		if(MILIS_PER_CLICK < 1){Main.LOGGER.error("milis_between_clicks value is set too low, disabling MapArtCopy/Bulk keybind"); return;}//TODO: remove
-
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_copy", ()->copyMapArtInInventory(null), true));
+	public KeybindMapCopy(final int MILLIS_BETWEEN_CLICKS){
+		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_copy", ()->copyMapArtInInventory(MILLIS_BETWEEN_CLICKS, null), s->s instanceof InventoryScreen));
 
 //		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_copy", ()->copyMapArtInInventory(false), true));
 //		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_copy_bulk", ()->copyMapArtInInventory(true), true));

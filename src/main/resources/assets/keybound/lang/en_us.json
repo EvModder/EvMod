@@ -26,8 +26,9 @@
 
 	"key.categories.keybound.misc": "Misc",
 	"key.keybound.eject_junk_items": "AutoEject",
-	"key.keybound.mapart_copy": "MapArtCopy",
-	"key.keybound.mapart_copy_bulk": "MapArtCopyBulk",
-	"key.keybound.mapart_load_container": "MapArtLoad",
-	"key.keybound.organize_inventory.a": "Organize inventory (EvDefault)"
+	"key.keybound.mapart_copy": "MapArt Copy",
+	"key.keybound.mapart_copy_bulk": "MapArt Copy-Bulk",
+	"key.keybound.mapart_load_data": "MapArt Load",
+	"key.keybound.mapart_take_place": "MapArt Take/Place",
+	"key.keybound.organize_inventory.a": "Organize Inv (EvDefault)"
 }
