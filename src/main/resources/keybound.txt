@@ -14,12 +14,16 @@ organize_inventory.a: [
   44:enchanted_golden_apple, 44:golden_carrot, 44:cooked_beef,
 
   #Armor
-  8:netherite_helmet, 7:elytra, 7:netherite_chestplate, 6:netherite_leggings, 5:netherite_boots,
-  8:diamond_helmet, 7:elytra, 7:diamond_chestplate, 6:diamond_leggings, 5:diamond_boots,
+  5:netherite_helmet, 6:elytra, 6:netherite_chestplate, 7:netherite_leggings, 8:netherite_boots,
+  5:diamond_helmet, 6:elytra, 6:diamond_chestplate, 7:diamond_leggings, 8:diamond_boots,
 
   # Inventory top LHS
   9:netherite_chestplate, 9:diamond_chestplate, 10:ender_chest,
-  11:totem_of_undying, 12:totem_of_undying, 13:totem_of_undying
+  11:totem_of_undying, 12:totem_of_undying, 13:totem_of_undying,
+
+  # Extra rockets, food
+  30:firework_rocket,
+  35:enchanted_golden_apple, 35:golden_carrot, 35:cooked_beef
 ]
 
 #========== Chat Broadcast ==========#
