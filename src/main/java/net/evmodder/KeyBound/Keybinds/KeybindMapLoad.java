@@ -21,6 +21,11 @@ public final class KeybindMapLoad{
 		if(!Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")) return false;
 		return FilledMapItem.getMapState(stack, world) == null;
 	}
+	private boolean isLoadedMapArt(World world, ItemStack stack){
+		if(stack == null || stack.isEmpty()) return false;
+		if(!Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")) return false;
+		return FilledMapItem.getMapState(stack, world) != null;
+	}
 
 	private boolean ongoingLoad;
 	private long lastLoad;
@@ -62,7 +67,13 @@ public final class KeybindMapLoad{
 		final int lastHotbarSlot = nextHotbarSlot;
 		final int fromSlotFinal = fromSlot;
 		//Main.LOGGER.info("lastHotbarSlot: "+lastHotbarSlot+", fromSlotFinal: "+fromSlotFinal);
-		new Timer().schedule(new TimerTask(){@Override public void run(){
+		new Timer().scheduleAtFixedRate(new TimerTask(){@Override public void run(){
+			//Main.LOGGER.info("Checking if maps on hotbar have loaded...");
+			for(int i=0; i<lastHotbarSlot; ++i){
+				if(!isLoadedMapArt(client.player.clientWorld, client.player.getInventory().getStack(i))) return;
+			}
+			Main.LOGGER.info("All maps on hotbar have loaded ("+lastHotbarSlot+")!");
+			cancel();
 			for(int i=0; i<lastHotbarSlot; ++i){
 				client.interactionManager.clickSlot(sh.syncId, slots[i], i, SlotActionType.SWAP, client.player);
 			}
@@ -82,9 +93,9 @@ public final class KeybindMapLoad{
 				}
 				else new Timer().schedule(new TimerTask(){@Override public void run(){
 					ongoingLoad=false;lastLoad=0; loadMapArtFromShulker(fromSlotFinal, CLICKS_PER_GT);
-				}}, 51L);
+				}}, 50l);
 			}
-		}}, 50L);
+		}}, 51, 5l);
 	}
 
 //	private static long takeMapArtFromShulker(int fromSlot, final int clicks_left, final int clicks_per_gt){
