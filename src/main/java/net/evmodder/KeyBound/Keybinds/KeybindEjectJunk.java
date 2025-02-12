@@ -1,5 +1,6 @@
 package net.evmodder.KeyBound.Keybinds;
 
+import java.util.Set;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
@@ -10,6 +11,7 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ItemEnchantmentsComponent;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.Enchantments;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.entry.RegistryEntry;
@@ -17,45 +19,98 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 
 public final class KeybindEjectJunk{
-	private boolean isUnrenewEnch(RegistryEntry<Enchantment> re, int lvl){
+	private boolean canGoOnArmor(RegistryEntry<Enchantment> re, EquipmentSlot slot){
+		if(re.matchesKey(Enchantments.PROTECTION)) return true;
+		if(re.matchesKey(Enchantments.PROJECTILE_PROTECTION)) return true;
+		if(re.matchesKey(Enchantments.BLAST_PROTECTION)) return true;
+		if(re.matchesKey(Enchantments.FIRE_PROTECTION)) return true;
+		if(re.matchesKey(Enchantments.THORNS)) return true;
+		if(re.matchesKey(Enchantments.UNBREAKING)) return true;
 		if(re.matchesKey(Enchantments.MENDING)) return true;
-		if(re.matchesKey(Enchantments.VANISHING_CURSE)) return true;
-		if(re.matchesKey(Enchantments.SWIFT_SNEAK)) return true;
-		if(re.matchesKey(Enchantments.BINDING_CURSE)) return true;
-		if(re.matchesKey(Enchantments.SHARPNESS) && lvl == re.value().getMaxLevel()) return true;
-		if(re.matchesKey(Enchantments.EFFICIENCY) && lvl == re.value().getMaxLevel()) return true;
-		if(re.matchesKey(Enchantments.FEATHER_FALLING) && lvl == re.value().getMaxLevel()) return true;//Not really true
+		
+		if(re.matchesKey(Enchantments.RESPIRATION) && (slot==null || slot == EquipmentSlot.HEAD)) return true;
+		if(re.matchesKey(Enchantments.AQUA_AFFINITY) && (slot==null || slot == EquipmentSlot.HEAD)) return true;
+		if(re.matchesKey(Enchantments.SWIFT_SNEAK) && (slot==null || slot == EquipmentSlot.LEGS)) return true;
+		if(re.matchesKey(Enchantments.SOUL_SPEED) && (slot==null || slot == EquipmentSlot.FEET)) return true;
+		if(re.matchesKey(Enchantments.FROST_WALKER) && (slot==null || slot == EquipmentSlot.FEET)) return true;
+		if(re.matchesKey(Enchantments.DEPTH_STRIDER) && (slot==null || slot == EquipmentSlot.FEET)) return true;
+		if(re.matchesKey(Enchantments.FEATHER_FALLING) && (slot==null || slot == EquipmentSlot.FEET)) return true;
 		return false;
 	}
+	private boolean isUnrenewOutsideFishing(RegistryEntry<Enchantment> re, int lvl, Set<RegistryEntry<Enchantment>> allEnchs){
+		if(re.matchesKey(Enchantments.MENDING) && allEnchs.size() > 1) return true;
+		if(re.matchesKey(Enchantments.VANISHING_CURSE) && allEnchs.size() > 1) return true;
+		if(re.matchesKey(Enchantments.SWIFT_SNEAK)) return true;
+		if(re.matchesKey(Enchantments.BINDING_CURSE) && allEnchs.stream().anyMatch(r -> !r.matchesKey(Enchantments.BINDING_CURSE) && canGoOnArmor(r, null))) return true;
+		if(re.matchesKey(Enchantments.SHARPNESS) && lvl == re.value().getMaxLevel() && allEnchs.size() > 1) return true;
+		if(re.matchesKey(Enchantments.EFFICIENCY) && lvl == re.value().getMaxLevel() && allEnchs.size() > 1) return true;
+
+		// Not technically unrenewable, but rare enough to want it:
+		if(re.matchesKey(Enchantments.FEATHER_FALLING) && lvl == re.value().getMaxLevel() &&
+				allEnchs.stream().anyMatch(r -> !r.matchesKey(Enchantments.FEATHER_FALLING) && canGoOnArmor(r, EquipmentSlot.FEET))) return true;
+		return false;
+	}
+	enum JunkCategory{END_CITY, FISHING}
+	private JunkCategory junkType = null;
 	private boolean shouldEject(ItemStack stack){
 		if(stack == null || stack.isEmpty()) return false;
 		final int rc = stack.getComponents().get(DataComponentTypes.REPAIR_COST);
 		if(rc != 0) return false;
 
+		final ItemEnchantmentsComponent iec = stack.getEnchantments();
+		final Set<RegistryEntry<Enchantment>> enchs = iec.getEnchantments();
+		boolean isJunk = false;
 		switch(Registries.ITEM.getId(stack.getItem()).getPath()){
 			//========== Fishing section ========================================
 			case "bow":
-				return stack.getEnchantments().getSize() < 4 || stack.getEnchantments().getEnchantments().stream()
-						.anyMatch(r -> stack.getEnchantments().getLevel(r) < Math.min(4, r.value().getMaxLevel()));
+				isJunk = enchs.size() < 4 || enchs.stream() .anyMatch(r -> iec.getLevel(r) < Math.min(4, r.value().getMaxLevel()));
+				if(isJunk) junkType = JunkCategory.FISHING;
+				return isJunk;
 			case "fishing_rod":
-				return stack.getEnchantments().getSize() < 4 || stack.getEnchantments().getEnchantments().stream()
-						.anyMatch(r -> stack.getEnchantments().getLevel(r) < r.value().getMaxLevel());
-			case "enchanted_book":
-				ItemEnchantmentsComponent iec = stack.getComponents().get(DataComponentTypes.STORED_ENCHANTMENTS);
-				if(iec.getEnchantments().size() == 1) return true;
-				//hasBinding() && noneMatch(isArmorEnch)
-				return iec.getEnchantments().size() < 4 && iec.getEnchantments().stream().noneMatch(r -> isUnrenewEnch(r, iec.getLevel(r)));
+				isJunk = enchs.size() < 4 || enchs.stream().anyMatch(r -> iec.getLevel(r) < r.value().getMaxLevel());
+				if(isJunk) junkType = JunkCategory.FISHING;
+				return isJunk;
+			case "enchanted_book": {
+				final ItemEnchantmentsComponent siec = stack.getComponents().get(DataComponentTypes.STORED_ENCHANTMENTS);
+				final Set<RegistryEntry<Enchantment>> sEnchs = siec.getEnchantments();
+				isJunk = sEnchs.size() == 1 || (sEnchs.size() < 4 && sEnchs.stream().noneMatch(r -> isUnrenewOutsideFishing(r, siec.getLevel(r), sEnchs)));
+				if(isJunk) junkType = JunkCategory.FISHING;
+				return isJunk;
+//				if(storedEnchs.size() == 1) return true;
+//				if(storedEnchs.size() >= 4) return false;
+//				// FF4 with at least 1 OTHER max level armor enchant
+//				if(enchs.stream().anyMatch(r -> r.matchesKey(Enchantments.FEATHER_FALLING) && iec.getLevel(r) == 4)
+//					&& enchs.stream().anyMatch(r -> !r.matchesKey(Enchantments.FEATHER_FALLING)
+//							&& iec.getLevel(r) == r.value().getMaxLevel() && canGoOnArmor(r, EquipmentSlot.FEET)))
+//					return true;
+//				// Binding with at least 1 OTHER max level armor enchant
+//				if(enchs.stream().anyMatch(r -> r.matchesKey(Enchantments.BINDING_CURSE))
+//						&& enchs.stream().anyMatch(r -> !r.matchesKey(Enchantments.BINDING_CURSE) && iec.getLevel(r) == r.value().getMaxLevel() && canGoOnArmor(r, null)))
+//					return true;
+				// Has at least 1 unrenewable enchant
+//				return storedEnchs.stream().noneMatch(r -> isUnrenewOutsideFishing(r, iec.getLevel(r), storedEnchs));
+			}
+			case "raw_cod":
+			case "saddle":
+			case "leather_boots":
+				return junkType == JunkCategory.FISHING;
 			//========== End loot section ========================================
 			case "diamond_sword": case "diamond_pickaxe": case "diamond_shovel":
 			case "diamond_helmet": case "diamond_chestplate": case "diamond_leggings": case "diamond_boots":
-				if(stack.getEnchantments().getSize() == 0) return false; // Raw gear
-				if(stack.getEnchantments().getSize() == 1) return true; // Single-enchant can be done with a book
-				if(stack.getEnchantments().getEnchantments().stream().anyMatch(r -> isUnrenewEnch(r, stack.getEnchantments().getLevel(r)))) return false;
-				return stack.getEnchantments().getSize() < 3 || stack.getEnchantments().getEnchantments().stream()
-						.anyMatch(r -> stack.getEnchantments().getLevel(r) < r.value().getMaxLevel());
+				// Don't throw out raw gear, gear with >=4 ench, or gear with unrenewable enchants
+				isJunk = !enchs.isEmpty() && enchs.size() < 4 && enchs.stream().noneMatch(r -> isUnrenewOutsideFishing(r, iec.getLevel(r), enchs));
+				if(isJunk) junkType = JunkCategory.END_CITY;
+				return isJunk;
 			case "iron_sword": case "iron_pickaxe": case "iron_shovel":
 			case "iron_helmet": case "iron_chestplate": case "iron_leggings": case "iron_boots":
+				junkType = JunkCategory.END_CITY;
 				return true;
+			case "purpur_pillar":
+			case "purpur_stairs":
+			case "purpur_slab":
+			case "end_stone_bricks":
+			case "item_frame":
+				return junkType == JunkCategory.END_CITY;
 			//====================================================================
 		}
 		return false;
@@ -66,9 +121,10 @@ public final class KeybindEjectJunk{
 		if(client.currentScreen instanceof HandledScreen handledScreen){
 			// Support GenericContainer and ShulkerBox
 			if(handledScreen instanceof GenericContainerScreen || handledScreen instanceof ShulkerBoxScreen){
-				int syncId = handledScreen.getScreenHandler().syncId;
-				for(Slot s : handledScreen.getScreenHandler().slots){
-					if(shouldEject(s.getStack())) client.interactionManager.clickSlot(syncId, s.getIndex(), 1, SlotActionType.THROW, client.player);
+				final int syncId = handledScreen.getScreenHandler().syncId;
+				for(Slot s : handledScreen.getScreenHandler().slots) shouldEject(s.getStack()); // Detect junk category
+				for(Slot s : handledScreen.getScreenHandler().slots) if(shouldEject(s.getStack())){
+					client.interactionManager.clickSlot(syncId, s.getIndex(), 1, SlotActionType.THROW, client.player);
 				}
 			}
 			else if(!(client.currentScreen instanceof InventoryScreen)) return;
@@ -76,14 +132,14 @@ public final class KeybindEjectJunk{
 
 		else{
 			//Main.LOGGER.info("mode 2");
-			//boolean plus9 = client.currentScreen instanceof InventoryScreen;
-			//int slotStart = plus9 ? 9 : 0, slotEnd = plus9 ? 45 : 36;
-			for(int slot=9; slot<45; ++slot){
-				if(slot >= 36) slot -= 36;
-				ItemStack stack = client.player.getInventory().getStack(slot);
-				if(shouldEject(stack)) client.interactionManager.clickSlot(0, slot, 1, SlotActionType.THROW, client.player);
+			final int realSlotDiff = client.currentScreen instanceof InventoryScreen ? 9 : 0;
+
+			for(int i=0; i<36; ++i) shouldEject(client.player.getInventory().getStack(i)); // Detect junk category
+			for(int i=0; i<36; ++i) if(shouldEject(client.player.getInventory().getStack(i))){
+				client.interactionManager.clickSlot(0, i+realSlotDiff , 1, SlotActionType.THROW, client.player);
 			}
 		}
+		junkType = null;
 	}
 
 	public KeybindEjectJunk(){
