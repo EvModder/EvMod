@@ -1,6 +1,7 @@
 package net.evmodder.KeyBound.Keybinds;
 
 import java.util.Arrays;
+import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerModelPart;
@@ -12,8 +13,11 @@ public final class KeybindsSimple{
 	public static final void registerSkinLayerKeybinds(){
 		Arrays.stream(PlayerModelPart.values())
 		.map(part -> new EvKeybind("skin_toggle."+part.name().toLowerCase(), ()->{
+			Main.LOGGER.info("skin toggle pressed for part: "+part.name());
 			final MinecraftClient client = MinecraftClient.getInstance();
 			client.options.setPlayerModelPart(part, !client.options.isPlayerModelPartEnabled(part));
+			client.options.sendClientSettings();
+			Main.LOGGER.info("new value for part "+part.name()+": "+client.options.isPlayerModelPartEnabled(part));
 		})).forEach(KeyBindingHelper::registerKeyBinding);
 	}
 
