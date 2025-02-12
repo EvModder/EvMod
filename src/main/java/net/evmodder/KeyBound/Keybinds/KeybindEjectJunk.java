@@ -76,19 +76,6 @@ public final class KeybindEjectJunk{
 				isJunk = sEnchs.size() == 1 || (sEnchs.size() < 4 && sEnchs.stream().noneMatch(r -> isUnrenewOutsideFishing(r, siec.getLevel(r), sEnchs)));
 				if(isJunk) junkType = JunkCategory.FISHING;
 				return isJunk;
-//				if(storedEnchs.size() == 1) return true;
-//				if(storedEnchs.size() >= 4) return false;
-//				// FF4 with at least 1 OTHER max level armor enchant
-//				if(enchs.stream().anyMatch(r -> r.matchesKey(Enchantments.FEATHER_FALLING) && iec.getLevel(r) == 4)
-//					&& enchs.stream().anyMatch(r -> !r.matchesKey(Enchantments.FEATHER_FALLING)
-//							&& iec.getLevel(r) == r.value().getMaxLevel() && canGoOnArmor(r, EquipmentSlot.FEET)))
-//					return true;
-//				// Binding with at least 1 OTHER max level armor enchant
-//				if(enchs.stream().anyMatch(r -> r.matchesKey(Enchantments.BINDING_CURSE))
-//						&& enchs.stream().anyMatch(r -> !r.matchesKey(Enchantments.BINDING_CURSE) && iec.getLevel(r) == r.value().getMaxLevel() && canGoOnArmor(r, null)))
-//					return true;
-				// Has at least 1 unrenewable enchant
-//				return storedEnchs.stream().noneMatch(r -> isUnrenewOutsideFishing(r, iec.getLevel(r), storedEnchs));
 			}
 			case "raw_cod":
 			case "saddle":

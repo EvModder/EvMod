@@ -61,7 +61,7 @@ public abstract class EntityRendererMixin{
 					pearls = new HashMap<>(1);
 					if(pearlsAtXYZ.isEmpty()){
 						new Timer().scheduleAtFixedRate(new TimerTask(){@Override public void run(){
-							if(client.world.getTime() - renderedOnTick > 100){
+							if(client.world == null || client.world.getTime() - renderedOnTick > 100){
 								pearlsAtXYZ.clear();
 								//lastClear = client.world.getTime();
 								cancel();
