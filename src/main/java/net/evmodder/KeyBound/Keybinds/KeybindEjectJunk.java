@@ -1,6 +1,7 @@
 package net.evmodder.KeyBound.Keybinds;
 
 import java.util.Set;
+import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
@@ -15,7 +16,6 @@ import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 
 public final class KeybindEjectJunk{
@@ -27,7 +27,7 @@ public final class KeybindEjectJunk{
 		if(re.matchesKey(Enchantments.THORNS)) return true;
 		if(re.matchesKey(Enchantments.UNBREAKING)) return true;
 		if(re.matchesKey(Enchantments.MENDING)) return true;
-		
+
 		if(re.matchesKey(Enchantments.RESPIRATION) && (slot==null || slot == EquipmentSlot.HEAD)) return true;
 		if(re.matchesKey(Enchantments.AQUA_AFFINITY) && (slot==null || slot == EquipmentSlot.HEAD)) return true;
 		if(re.matchesKey(Enchantments.SWIFT_SNEAK) && (slot==null || slot == EquipmentSlot.LEGS)) return true;
@@ -105,31 +105,31 @@ public final class KeybindEjectJunk{
 
 	private void ejectJunkItems(){
 		MinecraftClient client = MinecraftClient.getInstance();
-		if(client.currentScreen instanceof HandledScreen handledScreen){
-			// Support GenericContainer and ShulkerBox
-			if(handledScreen instanceof GenericContainerScreen || handledScreen instanceof ShulkerBoxScreen){
-				final int syncId = handledScreen.getScreenHandler().syncId;
-				for(Slot s : handledScreen.getScreenHandler().slots) shouldEject(s.getStack()); // Detect junk category
-				for(Slot s : handledScreen.getScreenHandler().slots) if(shouldEject(s.getStack())){
-					client.interactionManager.clickSlot(syncId, s.getIndex(), 1, SlotActionType.THROW, client.player);
-				}
+		final int syncId = client.currentScreen instanceof HandledScreen hs ? hs.getScreenHandler().syncId : 0;
+
+		if(client.currentScreen instanceof HandledScreen hs){
+			final int invStart, invEnd;
+			if(hs instanceof ShulkerBoxScreen){Main.LOGGER.info("EjectJunk: ShulkerBox"); invStart = 0; invEnd = 27;}
+			else if(hs instanceof InventoryScreen){Main.LOGGER.info("EjectJunk: Inventory"); invStart = 9; invEnd = 45;}
+			else if(hs instanceof GenericContainerScreen gcs){Main.LOGGER.info("EjectJunk: GenericContainer"); invStart = 0; invEnd = 9*gcs.getScreenHandler().getRows();}
+			else{Main.LOGGER.info("EjectJunk: Unsupported screen type. syncId: "+syncId); return;}
+
+			for(int i=invStart; i<invEnd; ++i) shouldEject(hs.getScreenHandler().getSlot(i).getStack()); // Detect junk category
+			for(int i=invStart; i<invEnd; ++i) if(shouldEject(hs.getScreenHandler().getSlot(i).getStack())){
+				client.interactionManager.clickSlot(syncId, i, 0, SlotActionType.THROW, client.player);
 			}
-			else if(!(client.currentScreen instanceof InventoryScreen)) return;
 		}
-
 		else{
-			//Main.LOGGER.info("mode 2");
-			final int realSlotDiff = client.currentScreen instanceof InventoryScreen ? 9 : 0;
-
-			for(int i=0; i<36; ++i) shouldEject(client.player.getInventory().getStack(i)); // Detect junk category
-			for(int i=0; i<36; ++i) if(shouldEject(client.player.getInventory().getStack(i))){
-				client.interactionManager.clickSlot(0, i+realSlotDiff , 1, SlotActionType.THROW, client.player);
+			Main.LOGGER.info("EjectJunk: Default (no Screen)");
+			for(int i=9; i<45; ++i) shouldEject(client.player.getInventory().getStack(i%36)); // Detect junk category
+			for(int i=9; i<45; ++i) if(shouldEject(client.player.getInventory().getStack(i%36))){
+				client.interactionManager.clickSlot(syncId, i, 1, SlotActionType.THROW, client.player);
 			}
 		}
 		junkType = null;
 	}
 
 	public KeybindEjectJunk(){
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("eject_junk_items", this::ejectJunkItems));
+		KeyBindingHelper.registerKeyBinding(new EvKeybind("eject_junk_items", this::ejectJunkItems, HandledScreen.class::isInstance));
 	}
 }

@@ -44,43 +44,42 @@ public final class MapHandRestock{
 	// 0 = no. 1 = maybe (L->R), 2 = probably (L->M), 3 = definitely (4->5)
 	//TODO: passing metadata, particularly NxM if known
 	private int checkComesAfter(String posA, String posB){
-		posA = posA.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", " ").trim();
-		posB = posB.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", " ").trim();
 		if(posA.isBlank() || posB.isBlank()) return 1; // "Map"->"Map p2", "Map start"->"Map"
 
-		if(posA.length() == 1 && posB.length() == 1 && posA.charAt(0)+1 == posB.charAt(0)) return 3; // E->F, 4->5
-
-		if(posA.matches("\\d+")){
-			return (""+(Integer.parseInt(posA)+1)).equals(posB) ? 3 : 0; // 4->5, 9->10
+		final int cutA = posA.indexOf(' '), cutB = posB.indexOf(' ');
+		assert (cutA==-1) == (cutB==-1);
+		final String posA1, posA2, posB1, posB2;
+		if(cutA == -1){posA1 = posB1 = null; posA2 = posA; posB2 = posB;}
+		else{
+			posA1 = posA.substring(0, cutA); posA2 = posA.substring(cutA+1);
+			posB1 = posB.substring(0, cutB); posB2 = posB.substring(cutB+1);
 		}
-		if(posA.length() == 1 && posB.length() == 1 && posA.charAt(0)+1 == posB.charAt(0)) return 3; // E->F
+		if(posA1 != posB1){
+			Main.LOGGER.info("MapRestock: 2d pos not yet supported. A:"+posA+", B:"+posB);
+			return 1;
+		}
 
-		// Case-insensitive
-		posA = Normalizer.normalize(posA, Normalizer.Form.NFD).toUpperCase();
-		posB = Normalizer.normalize(posB, Normalizer.Form.NFD).toUpperCase();
+		final boolean sameLen = posA2.length() == posB2.length();
+		if((sameLen || posA2.length()+1 == posB2.length()) && posA2.matches("\\d{1,3}")){
+			return (""+(Integer.parseInt(posA2)+1)).equals(posB2) ? 3 : 0; // 4->5, 9->10
+		}
+		if(sameLen && posA2.regionMatches(0, posB2, 0, posA2.length()-1) &&
+				posA2.charAt(posA2.length()-1)+1 == posB2.charAt(posA2.length()-1)) return 3; // 4->5, E->F
+
 		if(posA.equals("TR") && posB.equals("ML")) return 3;
 		if(posA.equals("TR") && posB.equals("BL")) return 2;
 		if(posA.equals("L") && posB.equals("M")) return 3;
 		if(posA.equals("M") && posB.equals("R")) return 3;
 		if(posA.equals("L") && posB.equals("R")) return 2;
 
-		Main.LOGGER.info("Map name is not adjacent, unable to find next. A:"+posA+", B:"+posB);
+		Main.LOGGER.info("MapRestock: pos are not adjacent. A:"+posA+", B:"+posB);
 		return 1;
 	}
 
-//	private int isAdjacentName(@NotNull String a, @NotNull String b){
-//		if(a.equals(b)) return 0;
-//		SubstrIndices ij = longestCommonSubstr(a, b);
-//		String substr = a.substring(ij.a, ij.b);
-//		if(ij.a == 0 ? !b.startsWith(substr) : (ij.b != a.length() || !b.endsWith(substr))) return 0;
-//		String posA, posB;
-//		if(ij.a == 0){posA = a.substring(ij.b); posB = b.substring(ij.b);}
-//		else {posA = a.substring(0, ij.a); posB = b.substring(0, b.length()-substr.length());}
-//		return adjacentPos(posA, posB);
-//	}
-
 	private String simplifyPosStr(String rawPos){
-		return rawPos.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", " ").replaceAll("\\p{IsAlphabetic}\\p{IsAlphabetic}", "$1 $2").trim();
+		return Normalizer.normalize(
+				rawPos.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", " ").trim().replaceAll("\\p{IsAlphabetic}\\p{IsAlphabetic}", "$1 $2"),
+				Normalizer.Form.NFD).toUpperCase();
 	}
 //	private int posAsInt(String pos){
 //		if(pos.matches("\\d+")) return Integer.parseInt(pos);
@@ -162,6 +161,7 @@ public final class MapHandRestock{
 //			dim1 = dim1Max - dim1Min;
 //			dim2 = dim2Max - dim2Min;
 //		}
+		//if(split2d != -1){Main.LOGGER.info("MapRestock: TODO currently does not support 2d map args"); return;}
 
 		int bestSlot = -1, bestConfidence = -1;
 		for(int slot : slotsWithMatchingMaps){
