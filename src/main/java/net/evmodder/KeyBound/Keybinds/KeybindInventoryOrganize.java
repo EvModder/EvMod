@@ -21,45 +21,7 @@ public final class KeybindInventoryOrganize{
 	private String getName(ItemStack stack){
 		return stack == null || stack.isEmpty() || stack.getCount() == 0 ? null : Registries.ITEM.getId(stack.getItem()).getPath();
 	}
-	/*private ItemStack getStack(ClientPlayerEntity p, int slot){
-		switch(slot){
-			case 40: case -106: return p.getOffHandStack();
-			case 100: return p.getEquippedStack(EquipmentSlot.FEET);
-			case 101: return p.getEquippedStack(EquipmentSlot.LEGS);
-			case 102: return p.getEquippedStack(EquipmentSlot.CHEST);
-			case 103: return p.getEquippedStack(EquipmentSlot.HEAD);
-			default:
-				if(slot < 0 || slot >= 36){
-					Main.LOGGER.error("Invalid slot in inv-organize: "+slot);
-					return null;
-				}
-				return p.getInventory().getStack(slot);
-		}
-	}
-	private void setStack(ClientPlayerEntity p, int slot, ItemStack stack){
-		switch(slot){
-			case 40: case -106: p.setStackInHand(Hand.OFF_HAND, stack); return;
-			case 100: p.equipStack(EquipmentSlot.FEET, stack); return;
-			case 101: p.equipStack(EquipmentSlot.LEGS, stack); return;
-			case 102: p.equipStack(EquipmentSlot.CHEST, stack); return;
-			case 103: p.equipStack(EquipmentSlot.HEAD, stack); return;
-			default:
-				if(slot < 0 || slot >= 36) Main.LOGGER.error("Invalid slot in inv-organize: "+slot);
-				else if(stack == null) p.getInventory().getStack(slot).setCount(0);
-				else p.getInventory().setStack(slot, stack);
-		}
-	}*/
 	private int findSlotWithItem(PlayerScreenHandler psh, String itemName, boolean[] skipSlots){
-//		for(int slot=PlayerScreenHandler.EQUIPMENT_START; slot<PlayerScreenHandler.EQUIPMENT_END; ++slot){ // Armor[5-8]
-//			if(itemName.equals(getName(psh.getSlot(slot).getStack())) && !skipSlots.contains(slot)) return slot;
-//		}
-//		for(int slot=PlayerScreenHandler.INVENTORY_START; slot<PlayerScreenHandler.INVENTORY_END; ++slot){ // Inventory[9-35], Hotbar[36-44]
-//			if(itemName.equals(getName(psh.getSlot(slot).getStack())) && !skipSlots.contains(slot)) return slot;
-//		}
-//		final int slot = PlayerScreenHandler.OFFHAND_ID;
-//		if(itemName.equals(getName(psh.getSlot(slot).getStack())) && !skipSlots.contains(slot)) return slot; // Offhand[45]
-
-		// Crafting 2x2[1-4]
 		for(int slot=1; slot<=45; ++slot){
 			if(itemName.equals(getName(psh.getSlot(slot).getStack())) && !skipSlots[slot]) return slot;
 		}
