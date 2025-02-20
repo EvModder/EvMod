@@ -41,7 +41,8 @@ public final class KeybindEjectJunk{
 		if(re.matchesKey(Enchantments.MENDING) && allEnchs.size() > 1) return true;
 		if(re.matchesKey(Enchantments.VANISHING_CURSE) && allEnchs.size() > 1) return true;
 		if(re.matchesKey(Enchantments.SWIFT_SNEAK)) return true;
-		if(re.matchesKey(Enchantments.BINDING_CURSE) && allEnchs.stream().anyMatch(r -> !r.matchesKey(Enchantments.BINDING_CURSE) && canGoOnArmor(r, null))) return true;
+		if(re.matchesKey(Enchantments.BINDING_CURSE) && allEnchs.stream().anyMatch(r -> !r.matchesKey(Enchantments.BINDING_CURSE)
+				&& canGoOnArmor(r, null))) return true;
 		if(re.matchesKey(Enchantments.SHARPNESS) && lvl == re.value().getMaxLevel() && allEnchs.size() > 1) return true;
 		if(re.matchesKey(Enchantments.EFFICIENCY) && lvl == re.value().getMaxLevel() && allEnchs.size() > 1) return true;
 
@@ -50,7 +51,7 @@ public final class KeybindEjectJunk{
 				allEnchs.stream().anyMatch(r -> !r.matchesKey(Enchantments.FEATHER_FALLING) && canGoOnArmor(r, EquipmentSlot.FEET))) return true;
 		return false;
 	}
-	enum JunkCategory{END_CITY, FISHING}
+	enum JunkCategory{END_CITY, FISHING, RAID_FARM, GOLD_FARM}
 	private JunkCategory junkType = null;
 	private boolean shouldEject(ItemStack stack){
 		if(stack == null || stack.isEmpty()) return false;
@@ -61,6 +62,25 @@ public final class KeybindEjectJunk{
 		final Set<RegistryEntry<Enchantment>> enchs = iec.getEnchantments();
 		boolean isJunk = false;
 		switch(Registries.ITEM.getId(stack.getItem()).getPath()){
+			//========== GoldFarm section ========================================
+			case "golden_sword":
+				if(enchs.size() < 4 && enchs.stream().anyMatch(r -> iec.getLevel(r) < r.value().getMaxLevel())){
+					junkType = JunkCategory.GOLD_FARM;
+				}
+			case "feather":
+			case "raw_chicken":
+			case "rotten_flesh":
+				return junkType == JunkCategory.GOLD_FARM;
+			//========== RaidFarm section ========================================
+//			case "crossbow":
+//			case "white_banner":
+//			case "iron_axe":
+//			case "glass_bottle":
+//			case "spider_eye":
+//			case "stick":
+//			case "potion":
+////		case "saddle":
+//				return junkType == JunkCategory.RAID_FARM;
 			//========== Fishing section ========================================
 			case "bow":
 				isJunk = enchs.size() < 4 || enchs.stream() .anyMatch(r -> iec.getLevel(r) < Math.min(4, r.value().getMaxLevel()));
@@ -78,6 +98,8 @@ public final class KeybindEjectJunk{
 				return isJunk;
 			}
 			case "raw_cod":
+			case "salmon":
+			case "pufferfish":
 			case "saddle":
 			case "leather_boots":
 				return junkType == JunkCategory.FISHING;
@@ -111,7 +133,8 @@ public final class KeybindEjectJunk{
 			final int invStart, invEnd;
 			if(hs instanceof ShulkerBoxScreen){Main.LOGGER.info("EjectJunk: ShulkerBox"); invStart = 0; invEnd = 27;}
 			else if(hs instanceof InventoryScreen){Main.LOGGER.info("EjectJunk: Inventory"); invStart = 9; invEnd = 45;}
-			else if(hs instanceof GenericContainerScreen gcs){Main.LOGGER.info("EjectJunk: GenericContainer"); invStart = 0; invEnd = 9*gcs.getScreenHandler().getRows();}
+			else if(hs instanceof GenericContainerScreen gcs){
+				Main.LOGGER.info("EjectJunk: GenericContainer"); invStart = 0; invEnd = 9*gcs.getScreenHandler().getRows();}
 			else{Main.LOGGER.info("EjectJunk: Unsupported screen type. syncId: "+syncId); return;}
 
 			for(int i=invStart; i<invEnd; ++i) shouldEject(hs.getScreenHandler().getSlot(i).getStack()); // Detect junk category
