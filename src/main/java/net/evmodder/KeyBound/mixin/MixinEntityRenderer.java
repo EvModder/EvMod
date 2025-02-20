@@ -19,7 +19,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 
 @Mixin(EntityRenderer.class)
-public abstract class EntityRendererMixin{
+public abstract class MixinEntityRenderer{
 //	@Final @Shadow protected EntityRenderDispatcher dispatcher;
 //	@Shadow public abstract TextRenderer getTextRenderer();
 

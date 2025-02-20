@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(ProjectileEntity.class)
-public interface ProjectileEntityAccessor{
+public interface AccessorProjectileEntity{
 	@Accessor(value="ownerUuid")
 	UUID getOwnerUUID();
 }

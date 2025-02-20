@@ -10,8 +10,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(HandledScreen.class)
-public abstract class HandledScreenMixin<T> extends Screen{
-	protected HandledScreenMixin(Text title){
+public abstract class MixinHandledScreen<T> extends Screen{
+	protected MixinHandledScreen(Text title){
 		super(title);
 		throw new RuntimeException(); // Java requires we provide a constructor because of the <T>, but it should never be called
 	}

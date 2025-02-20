@@ -13,7 +13,7 @@ import java.util.Map;
 
 //Authors: fzzyhmstrs, EvModder
 @Mixin(value = KeyBinding.class, priority = 10000)
-public abstract class KeybindingMixin {
+public abstract class MixinKeybinding {
 	@Final
 	@Shadow private static Map<String, KeyBinding> KEYS_BY_ID;
 	@Shadow private static Map<InputUtil.Key, KeyBinding> KEY_TO_BINDINGS;
@@ -35,7 +35,7 @@ public abstract class KeybindingMixin {
 	private static void updateByCodeToMultiMap(CallbackInfo ci){
 		KeybindFixer.clearMap();
 		for(KeyBinding keyBinding : KEYS_BY_ID.values()) {
-			KeybindFixer.putKey(((BoundKeyAccessor)keyBinding).getBoundKey(), keyBinding);
+			KeybindFixer.putKey(((AccessorBoundKey)keyBinding).getBoundKey(), keyBinding);
 		}
 	}
 
