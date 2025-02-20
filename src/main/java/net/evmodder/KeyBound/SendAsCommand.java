@@ -1,8 +1,6 @@
 package net.evmodder.KeyBound;
 
-import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import net.evmodder.EvLib.Commands;
 //import net.minecraft.client.multiplayer.PlayerInfo;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -31,8 +29,8 @@ public class SendAsCommand{
 						}
 						while((name.length() + message.length()) % 16 != 0) name += ' ';
 						message = name + message;//if name.length==16, there will be no space between name and msg, otherwise there will be.
-						Main.remoteSender.sendBotMessage(Commands.SEND_CHAT_AS, message.getBytes(), true);
-						return Command.SINGLE_SUCCESS;
+						Main.remoteSender.sendBotMessage(net.evmodder.EvLib.Command.P2P_CHAT_AS, message.getBytes(), true);
+						return com.mojang.brigadier.Command.SINGLE_SUCCESS;
 					})
 				)
 			)

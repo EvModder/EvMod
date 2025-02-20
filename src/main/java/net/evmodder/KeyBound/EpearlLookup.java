@@ -7,12 +7,12 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 import com.mojang.authlib.yggdrasil.ProfileResult;
-import net.evmodder.EvLib.Commands;
+import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.EvLib.LoadingCache;
 import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.EvLib.PearlDataClient;
-import net.evmodder.KeyBound.mixin.ProjectileEntityAccessor;
+import net.evmodder.KeyBound.mixin.AccessorProjectileEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.PlayerListEntry;
@@ -58,7 +58,7 @@ public final class EpearlLookup{
 						HashSet<UUID> deletedKeys = FileIO.removeMissingFromClientFile(DB_FILENAME_UUID, playerX, playerY, playerZ, maxDistSq, pearlsSeen1);
 						if(deletedKeys == null) Main.LOGGER.error("!! Delete failed because FileDB is null: "+DB_FILENAME_UUID);
 						else for(UUID deletedKey : deletedKeys){
-							Main.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_UUID, PacketHelper.toByteArray(deletedKey), false);
+							Main.remoteSender.sendBotMessage(Command.EPEARL_OWNER_STORE + Command.EPEARL_UUID, PacketHelper.toByteArray(deletedKey), false);
 							Main.LOGGER.info("Deleted ePearl owner stored for UUID: "+deletedKey);
 						}
 					}
@@ -66,7 +66,7 @@ public final class EpearlLookup{
 						HashSet<UUID> deletedKeys = FileIO.removeMissingFromClientFile(DB_FILENAME_XZ, playerX, playerY, playerZ, maxDistSq, pearlsSeen1);
 						if(deletedKeys == null) Main.LOGGER.error("!! Delete failed because FileDB is null: "+DB_FILENAME_XZ);
 						else for(UUID deletedKey : deletedKeys){
-							Main.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_XZ, PacketHelper.toByteArray(deletedKey), false);
+							Main.remoteSender.sendBotMessage(Command.EPEARL_OWNER_STORE + Command.EPEARL_XZ, PacketHelper.toByteArray(deletedKey), false);
 							Main.LOGGER.info("Deleted ePearl owner stored for XZ: "
 									+ Double.longBitsToDouble(deletedKey.getMostSignificantBits())+","
 									+ Double.longBitsToDouble(deletedKey.getLeastSignificantBits()));
@@ -83,7 +83,7 @@ public final class EpearlLookup{
 		RSLoadingCache(HashMap<UUID, PearlDataClient> initMap, String dbFilename, int cmdVariant){
 			super(initMap, PD_404, PD_LOADING);
 			DB_FILENAME = dbFilename;
-			DB_FETCH_COMMAND = Commands.EPEARL_OWNER_FETCH + cmdVariant;
+			DB_FETCH_COMMAND = Command.EPEARL_OWNER_FETCH + cmdVariant;
 		}
 		@Override public PearlDataClient load(UUID key){
 			Main.LOGGER.info("fetch ownerUUID called for pearlUUID: "+key);
@@ -123,13 +123,13 @@ public final class EpearlLookup{
 			//runEpearlRemovalChecker();
 			if(SAVE_BY_UUID){
 				HashMap<UUID, PearlDataClient> localData = FileIO.loadFromClientFile(DB_FILENAME_UUID);
-				cacheByUUID = new RSLoadingCache(localData, DB_FILENAME_UUID, Commands.EPEARL_UUID);
+				cacheByUUID = new RSLoadingCache(localData, DB_FILENAME_UUID, Command.EPEARL_UUID);
 				Main.LOGGER.info("Epearls stored by UUID: "+localData.size());
 			}
 			else cacheByUUID = null;
 			if(SAVE_BY_XZ){
 				HashMap<UUID, PearlDataClient> localData = FileIO.loadFromClientFile(DB_FILENAME_XZ);
-				cacheByXZ = new RSLoadingCache(localData, DB_FILENAME_XZ, Commands.EPEARL_XZ);
+				cacheByXZ = new RSLoadingCache(localData, DB_FILENAME_XZ, Command.EPEARL_XZ);
 				Main.LOGGER.info("Epearls stored by XZ: "+localData.size());
 			}
 			else cacheByXZ = null;
@@ -168,7 +168,7 @@ public final class EpearlLookup{
 				if(xyz == null) Main.LOGGER.error("Unable to find XYZ of epearl for given key!: "+keyUUID);
 				else{x=xyz.x(); y=xyz.y(); z=xyz.z();}
 				cache.putIfAbsent(keyUUID, new PearlDataClient(ownerUUID, x, y, z));
-				Main.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + cmdVariant, PacketHelper.toByteArray(keyUUID, ownerUUID), true);//remote-server
+				Main.remoteSender.sendBotMessage(Command.EPEARL_OWNER_STORE + cmdVariant, PacketHelper.toByteArray(keyUUID, ownerUUID), true);//remote-server
 			//}).start();
 		}
 	}
@@ -180,7 +180,7 @@ public final class EpearlLookup{
 
 	public String getOwnerName(Entity epearl){
 		//if(epearl.getType() != EntityType.ENDER_PEARL) throw IllegalArgumentException();
-		UUID ownerUUID = ((ProjectileEntityAccessor)epearl).getOwnerUUID();
+		UUID ownerUUID = ((AccessorProjectileEntity)epearl).getOwnerUUID();
 		final String address;
 		if(USE_REMOTE_DB && epearl.getVelocity().x == 0d && epearl.getVelocity().z == 0d && (address=currentServerAddrOrNull()) != null){
 			if(SAVE_BY_UUID){
@@ -188,7 +188,7 @@ public final class EpearlLookup{
 				updatePearlLocMap(key, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
 				if(ownerUUID == null){PearlDataClient pd = cacheByUUID.get(key); if(pd != null)ownerUUID = pd.owner();}
 				else if(!ONLY_FOR_2b2t || "2b2t.org".equals(address)){
-					sendToRemoteDatabaseIfNew(cacheByUUID, DB_FILENAME_UUID, Commands.EPEARL_UUID, key, ownerUUID);
+					sendToRemoteDatabaseIfNew(cacheByUUID, DB_FILENAME_UUID, Command.EPEARL_UUID, key, ownerUUID);
 				}
 			}
 			if(SAVE_BY_XZ){
@@ -203,9 +203,9 @@ public final class EpearlLookup{
 				}
 				else if(!ONLY_FOR_2b2t || "2b2t.org".equals(address)){
 					final UUID oldKey = updateXZ.get(epearl.getUuid());
-					if(oldKey == null) sendToRemoteDatabaseIfNew(cacheByXZ, DB_FILENAME_XZ, Commands.EPEARL_XZ, key, ownerUUID);
+					if(oldKey == null) sendToRemoteDatabaseIfNew(cacheByXZ, DB_FILENAME_XZ, Command.EPEARL_XZ, key, ownerUUID);
 					else if(!oldKey.equals(key)){
-						Main.remoteSender.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_XZ_KEY_UPDATE,
+						Main.remoteSender.sendBotMessage(Command.EPEARL_OWNER_STORE + Command.EPEARL_XZ_KEY_UPDATE,
 								PacketHelper.toByteArray(oldKey, key), false);
 					}
 					updateXZ.put(epearl.getUuid(), key);

@@ -7,7 +7,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
-import net.evmodder.EvLib.Commands;
+import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.EvLib.PacketHelper.MessageReceiver;
 import net.evmodder.KeyBound.Keybinds.EvKeybind;
@@ -32,11 +32,11 @@ public final class RemoteServerSender{
 	}
 
 	// Returns a 52 byte packet
-	private byte[] packageAndEncryptMessage(int command, byte[/*16*n*/] message){
+	private byte[] packageAndEncryptMessage(Command command, byte[/*16*n*/] message){
 		ByteBuffer bb1 = ByteBuffer.allocate(16+message.length);
 		bb1.putInt(CLIENT_ID);
-		bb1.putInt(command);
-		int addressCode = (client == null || client.getCurrentServerEntry() == null ? "2b2t.org" : client.getCurrentServerEntry().address).hashCode();
+		bb1.putInt(command.ordinal());
+		int addressCode = (client == null || client.getCurrentServerEntry() == null) ? 0 : client.getCurrentServerEntry().address.hashCode();
 		bb1.putInt(addressCode);
 		bb1.putInt((int)System.currentTimeMillis());//Truncate, since we assume ping < Integer.MAX anyway
 		bb1.put(message);
@@ -48,14 +48,14 @@ public final class RemoteServerSender{
 		return bb2.array();
 	}
 
-	public void sendBotMessage(int command, byte[] message, boolean udp){
+	public void sendBotMessage(Command command, byte[] message, boolean udp){
 		byte[] packet = packageAndEncryptMessage(command, message);
 		if(addrResolved == null) resolveAddress();
 		PacketHelper.sendPacket(addrResolved, PORT, udp, packet, null, 0);
 		resolveAddress();
 	}
 
-	public void sendBotMessage(int command, byte[] message, boolean udp, MessageReceiver recv){
+	public void sendBotMessage(Command command, byte[] message, boolean udp, MessageReceiver recv){
 		byte[] packet = packageAndEncryptMessage(command, message);
 		if(addrResolved == null) resolveAddress();
 		if(addrResolved == null) Main.LOGGER.warn("RemoteSender address could not be resolved!: "+ADDR);
@@ -65,10 +65,10 @@ public final class RemoteServerSender{
 		}
 	}
 
-	private int parseCommand(String str){
-		try{return (int)Commands.class.getField(str).get(null);}
-		catch(IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e){}
-		return -1;
+	private Command parseCommand(String str){
+		try{return Command.valueOf(str);}
+		catch(IllegalArgumentException e){}
+		return null;
 	}
 
 	RemoteServerSender(String addr, int port, int clientId, String clientKey, HashMap<String, String> messages){
@@ -81,8 +81,8 @@ public final class RemoteServerSender{
 
 		if(messages != null) messages.forEach((key, message) -> {
 			String[] arr = message.split(",");
-			int command = parseCommand(arr[0]);//= Integer.parseInt(arr[0]);
-			if(command == -1){
+			Command command = parseCommand(arr[0].toUpperCase());
+			if(command == null){
 				Main.LOGGER.error("Undefined command in config keybound.txt: "+arr[0]);
 			}
 			else{
@@ -91,7 +91,7 @@ public final class RemoteServerSender{
 			}
 		});
 
-		sendBotMessage(Commands.PING, new byte[0], false, (msg)->{
+		sendBotMessage(Command.PING, new byte[0], false, (msg)->{
 			Main.LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg)));
 		});
 	}
@@ -103,11 +103,11 @@ public final class RemoteServerSender{
 
 		RemoteServerSender rss = new RemoteServerSender("localhost", 14441, 1, "some_unique_key", /*botMsgKeybinds=*/null);
 
-		rss.sendBotMessage(Commands.EPEARL_OWNER_STORE + Commands.EPEARL_UUID, ByteBuffer.allocate(32)
+		rss.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, ByteBuffer.allocate(32)
 				.putLong(pearlUUID.getMostSignificantBits()).putLong(pearlUUID.getLeastSignificantBits())
 				.putLong(ownerUUID.getMostSignificantBits()).putLong(ownerUUID.getLeastSignificantBits()).array(), true);
 
-		rss.sendBotMessage(Commands.EPEARL_OWNER_FETCH, PacketHelper.toByteArray(pearlUUID), true, new MessageReceiver(){
+		rss.sendBotMessage(Command.DB_PEARL_FETCH_BY_UUID, PacketHelper.toByteArray(pearlUUID), true, new MessageReceiver(){
 			@Override public void receiveMessage(byte[] msg){
 				if(msg == null){System.err.println("Expected msg non-null !");return;}
 				if(msg.length != 16){System.err.println("Expected msg size == 16 !!!");return;}

@@ -1,7 +1,7 @@
 package net.evmodder.KeyBound;
 
 import com.google.common.collect.ArrayListMultimap;
-import net.evmodder.KeyBound.mixin.TimesPressedAccessor;
+import net.evmodder.KeyBound.mixin.AccessorTimesPressed;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 
@@ -33,7 +33,7 @@ public class KeybindFixer{
 	public static final void onKeyPressed(InputUtil.Key key){
 		for(KeyBinding keybind : keyFixMap.get(key)){
 			if(keybind == null) return;
-			TimesPressedAccessor t = (TimesPressedAccessor)keybind;
+			AccessorTimesPressed t = (AccessorTimesPressed)keybind;
 			t.setTimesPressed(t.getTimesPressed() + 1);
 		}
 	}
