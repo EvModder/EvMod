@@ -185,7 +185,7 @@ public final class MapHandRestock{
 		}
 	}
 
-	MapHandRestock(){
+	MapHandRestock(boolean useName, boolean useImg){
 		UseEntityCallback.EVENT.register((player, _, hand, entity, _) -> {
 			if(!(entity instanceof ItemFrameEntity itemFrame)) return ActionResult.PASS;
 			Main.LOGGER.info("clicked item frame (start)");

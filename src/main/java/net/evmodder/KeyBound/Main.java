@@ -100,6 +100,7 @@ public class Main implements ClientModInitializer{
 		String remoteAddr=null; int remotePort=0;
 		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false, keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtTake=false;
 //		int clicks_per_gt=36, millis_between_clicks=50;
+		boolean mapPlaceHelper=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false;
 
 		String[] temp_evt_msgs=null; long temp_evt_ts=0; String evt_account="";
 
@@ -129,7 +130,9 @@ public class Main implements ClientModInitializer{
 				case "keybind_mapart_load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
 				case "keybind_mapart_take_from_shulker": keybindMapArtTake = !value.equalsIgnoreCase("false"); break;
 				case "keybind_mapart_copy_in_inventory": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
-				case "mapart_placement_helper": new MapHandRestock();
+				case "mapart_placement_helper": mapPlaceHelper=true; break;
+				case "mapart_placement_helper_use_name": mapPlaceHelperByName=true; break;
+				case "mapart_placement_helper_use_image": mapPlaceHelperByImg=true; break;
 //				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
 //				case "millis_between_clicks": millis_between_clicks = Integer.parseInt(value); break;
 				case "scroll_order": {
@@ -143,12 +146,14 @@ public class Main implements ClientModInitializer{
 			}
 		}
 		if(epearlOwners) epearlLookup = new EpearlLookup(epearlOwnersDbUUID, epearlOwnersDbXZ);
-		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && (!remoteMessages.isEmpty() || epearlOwnersDbUUID || epearlOwnersDbXZ)){
+		final boolean anyDbFeaturesEnabled = !remoteMessages.isEmpty() || epearlOwnersDbUUID || epearlOwnersDbXZ;
+		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && anyDbFeaturesEnabled){
 			remoteSender = new RemoteServerSender(remoteAddr, remotePort, clientId, clientKey, remoteMessages);
 		}
 		if(keybindMapArtLoad) new KeybindMapLoad(/*MAX_CLICKS_PER_SECOND=*/999);
 		if(keybindMapArtCopy) new KeybindMapCopy(/*MILLIS_BETWEEN_CLICKS=*/10);
 		if(keybindMapArtTake) new KeybindMapStealStore(/*MILLIS_BETWEEN_CLICKS=*/10);
+		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg);
 
 		MinecraftClient client = MinecraftClient.getInstance();
 		String username = client.getSession().getUsername();

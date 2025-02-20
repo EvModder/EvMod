@@ -1,5 +1,56 @@
 # Config file for KeyBound
 
+#========== Chat Broadcast ==========#
+temp_event_account: Anuvin
+temp_event_broadcast: []
+temp_event_timestamp: 1738990800 # Fri, Feb7, 11pm CST
+
+#========== MapArt Tools ==========#
+#max_clicks_per_second: 18
+#millis_between_clicks: 8
+keybind_mapart_load_from_shulker: true
+keybind_mapart_take_from_shulker: true
+keybind_mapart_copy_in_inventory: true
+mapart_placement_helper: true
+mapart_placement_helper_use_name: true
+mapart_placement_helper_use_image: true
+
+#========== Added Visuals ==========#
+repaircost_tooltip: true
+enderpearl_owners: true
+enderpearl_owners_database_by_uuid: true
+enderpearl_owners_database_by_coords: false
+seen_shared_database: true
+
+#========== Hotbar variant scrolling ==========#
+# Empty variants (if they exist) must come first in the list
+scroll_order: [
+	[white, light_gray, gray, black, brown, red, orange, yellow, lime, green, cyan, light_blue, blue, purple, magenta, pink],
+	[, exposed, weathered, oxidized],
+	[,powered,detector,activator],
+	[tube, brain, bubble, fire, horn],
+	[oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry, bamboo, crimson, warped]
+]
+
+#========== Remote messaging ==========#
+# TODO: maybe rename as "my_id" and "my_token"?
+client_id: 1
+client_key: some_unique_key
+remote_addr: altcraft.net
+remote_port: 14441
+
+# List of remote messages
+#remote_msg.a: P2P_MSG,27aa6a20-4a0d-4779-bcd5-dce162dd7467
+#remote_msg.b: EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c
+#remote_msg.c: EPEARL_TRIGGER,690406c8-53eb-482c-8309-96789e98d07a
+#remote_msg.mainbase: EPEARL_TRIGGER,36b128f9-c502-4879-928e-0b9637dcd65e
+
+
+#========== Chat/commands ==========#
+#chat_msg.meow: meow :3
+chat_msg.rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost
+
+
 #========== Misc Keybinds ==========#
 keybind_drop_items: true
 keybind_toggle_skin_layers: true
@@ -29,51 +80,3 @@ organize_inventory.a: [
   30:firework_rocket, 21:firework_rocket,
   35:enchanted_golden_apple, 35:golden_carrot, 35:cooked_beef
 ]
-
-#========== Chat Broadcast ==========#
-temp_event_account: Anuvin
-temp_event_broadcast: []
-temp_event_timestamp: 1738990800 # Fri, Feb7, 11pm CST
-
-#========== MapArt Tools ==========#
-#max_clicks_per_second: 18
-#millis_between_clicks: 8
-keybind_mapart_load_from_shulker: true
-keybind_mapart_take_from_shulker: true
-keybind_mapart_copy_in_inventory: true
-mapart_placement_helper: true
-
-#========== Added Visuals ==========#
-repaircost_tooltip: true
-enderpearl_owners: true
-enderpearl_owners_database_by_uuid: true
-enderpearl_owners_database_by_coords: false
-seen_shared_database: true
-
-#========== Hotbar variant scrolling ==========#
-# Empty variants (if they exist) must come first in the list
-scroll_order: [
-	[white, light_gray, gray, black, brown, red, orange, yellow, lime, green, cyan, light_blue, blue, purple, magenta, pink],
-	[, exposed, weathered, oxidized],
-	[,powered,detector,activator],
-	[tube, brain, bubble, fire, horn],
-	[oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry, bamboo, crimson, warped]
-]
-
-#========== Remote messaging ==========#
-# TODO: maybe rename as "my_id" and "my_token"?
-client_id: 1
-client_key: some_unique_key
-remote_addr: altcraft.net
-remote_port: 14441
-
-# List of remote messages
-#remote_msg.a: EPEARL_TRIGGER,27aa6a20-4a0d-4779-bcd5-dce162dd7467
-#remote_msg.b: EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c
-#remote_msg.c: EPEARL_TRIGGER,690406c8-53eb-482c-8309-96789e98d07a
-#remote_msg.mainbase: EPEARL_TRIGGER,36b128f9-c502-4879-928e-0b9637dcd65e
-
-
-#========== Chat/commands ==========#
-#chat_msg.meow: meow :3
-chat_msg.rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost
