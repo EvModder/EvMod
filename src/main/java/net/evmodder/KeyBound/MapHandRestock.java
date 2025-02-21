@@ -43,38 +43,42 @@ public final class MapHandRestock{
 //		return new SubstrIndices(si-slen, si);
 //	}
 
-	// 0 = no. 1 = maybe (L->R), 2 = probably (L->M), 3 = definitely (4->5)
+	// 0 = no. 1 = maybe (L->R), 3 = probably (L->M), 4 = definitely (4->5)
 	//TODO: passing metadata, particularly NxM if known
 	private int checkComesAfter(String posA, String posB){
-		if(posA.isBlank() || posB.isBlank()) return 1; // "Map"->"Map p2", "Map start"->"Map"
+		if(posA.isBlank() || posB.isBlank() || posA.equals(posB)) return 1; // "Map"->"Map p2", "Map start"->"Map"
 
-		if(posA.equals("T R") && posB.equals("M L")) return 3;
-		if(posA.equals("T R") && posB.equals("B L")) return 2;
-		if(posA.endsWith("L") && posB.endsWith("M")) return 3;
-		if(posA.endsWith("M") && posB.endsWith("R")) return 3;
-		if(posA.endsWith("L") && posB.endsWith("R")) return 2;
+		if(posA.equals("T R") && posB.equals("M L")) return 4;
+		if(posA.equals("T R") && posB.equals("B L")) return 3;
+		if(posA.endsWith("L") && posB.endsWith("M")) return 4;
+		if(posA.endsWith("M") && posB.endsWith("R")) return 4;
+		if(posA.endsWith("L") && posB.endsWith("R")) return 3;
 
 		final int cutA = posA.indexOf(' '), cutB = posB.indexOf(' ');
 		assert (cutA==-1) == (cutB==-1);
-		final String posA1, posA2, posB1, posB2;
-		if(cutA == -1){posA1 = posB1 = null; posA2 = posA; posB2 = posB;}
-		else{
-			posA1 = posA.substring(0, cutA); posA2 = posA.substring(cutA+1);
-			posB1 = posB.substring(0, cutB); posB2 = posB.substring(cutB+1);
-		}
-		if(posA1 != posB1){
-			Main.LOGGER.info("MapRestock: 2d pos not yet supported. A:"+posA+", B:"+posB);
-			return 1;
+		if(cutA != -1){
+			//Main.LOGGER.info("MapRestock: 2d pos not yet fully supported. A:"+posA+", B:"+posB);
+			String posA1 = posA.substring(0, cutA), posA2 = posA.substring(cutA+1);
+			String posB1 = posB.substring(0, cutB), posB2 = posB.substring(cutB+1);
+			if(posA1.equals(posB1)) return checkComesAfter(posA2, posB2);
+			// TODO: Column before row? maybe better solution than just nerfing with -1
+			if(posA2.equals(posB2)) return checkComesAfter(posA1, posB1) - 1;
+			int dim1Step = checkComesAfter(posA1, posB1);
+			if(dim1Step >= 3 && posB2.matches("[A01]")) return dim1Step - (posB2.equals("1") ? 2 : 1);
+			int dim2Step = checkComesAfter(posA2, posB2);
+			if(dim2Step >= 3 && posB1.matches("[A01]")) return dim2Step - (posB1.equals("1") ? 2 : 1);
+			//Main.LOGGER.info("MapRestock: Unable to resolve 2d pos");
+			return 0;
 		}
 
-		final boolean sameLen = posA2.length() == posB2.length();
-		if((sameLen || posA2.length()+1 == posB2.length()) && posA2.matches("\\d{1,3}")){
-			return (""+(Integer.parseInt(posA2)+1)).equals(posB2) ? 3 : 0; // 4->5, 9->10
+		final boolean sameLen = posA.length() == posB.length();
+		if((sameLen || posA.length()+1 == posB.length()) && posA.matches("\\d{1,3}")){
+			return (""+(Integer.parseInt(posA)+1)).equals(posB) ? 4 : 0; // 4->5, 9->10
 		}
-		if(sameLen && posA2.regionMatches(0, posB2, 0, posA2.length()-1) &&
-				posA2.charAt(posA2.length()-1)+1 == posB2.charAt(posA2.length()-1)) return 3; // 4->5, E->F
+		if(sameLen && posA.regionMatches(0, posB, 0, posA.length()-1) &&
+				posA.charAt(posA.length()-1)+1 == posB.charAt(posA.length()-1)) return 4; // 4->5, E->F
 
-		Main.LOGGER.info("MapRestock: pos are not adjacent. A:"+posA+", B:"+posB);
+		//Main.LOGGER.info("MapRestock: pos are not adjacent. A:"+posA+", B:"+posB);
 		return 1;
 	}
 
@@ -91,25 +95,31 @@ public final class MapHandRestock{
 //					.replaceAll("\\p{IsAlphabetic}\\p{IsAlphabetic}", "$1 $2")
 					,
 				Normalizer.Form.NFD).toUpperCase();
-		while(pos.matches("[A-Z][A-Z]")) pos = pos.replaceAll("([A-Z])([A-Z])", "$1 $2");
+		while(pos.matches(".*[A-Z][A-Z].*")) pos = pos.replaceAll("([A-Z])([A-Z])", "$1 $2");
 		return pos;
 	}
 	private boolean isValidPosStr(String posStr){
 		return !posStr.isBlank() && posStr.split(" ").length <= 2;
 	}
 
-	private int getNextSlotByName(PlayerScreenHandler psh, String prevName){
+	private int getNextSlotByName(PlayerEntity player, String prevName){
+		PlayerScreenHandler psh = player.playerScreenHandler;
+		ArrayList<Integer> slotsWithMatchingMaps = new ArrayList<>();
 		int prefixLen = 0, suffixLen = 0;
 		for(int i=9; i<=45; ++i){
 			ItemStack item = psh.getSlot(i).getStack();
 			if(!isSingleMapArt(item)) continue;
 			final String name = getCustomName(item);
-			if(name == null || name.equals(prevName)) continue;
+			if(name == null) continue;
+			if(name.equals(prevName)){
+				if(i-36 != player.getInventory().selectedSlot) slotsWithMatchingMaps.add(i);
+				continue;
+			}
 			//if(item.equals(prevMap)) continue;
 			int a = commonPrefixLen(prevName, name), b = commonSuffixLen(prevName, name);
 			//Main.LOGGER.info("MapRestock: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
 			if(prefixLen == a && suffixLen == b) continue;
-			Main.LOGGER.info("MapRestock: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
+			//Main.LOGGER.info("MapRestock: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
 			if(prefixLen == 0 && suffixLen == 0){prefixLen = a; suffixLen = b; continue;}
 			final boolean oldContainsNew = prefixLen >= a && suffixLen >= b;
 			//final boolean newContainsOld = a >= prefixLen && b >= suffixLen;
@@ -117,18 +127,27 @@ public final class MapHandRestock{
 				Main.LOGGER.info("MapRestock: reducing prefix/suffix len");
 				prefixLen = a; suffixLen = b;
 			}
+			if(a+b > prefixLen+suffixLen && !isValidPosStr(name.substring(Math.min(a, prefixLen), name.length()-Math.min(b, suffixLen)))){
+				Main.LOGGER.info("MapRestock: expanding prefix/suffix len");
+				prefixLen = a; suffixLen = b;
+			}
+		}
+		if(prefixLen == 0 && suffixLen == 0){
+			Main.LOGGER.info("MapRestock: no shared prefix/suffix named maps found");
+			if(slotsWithMatchingMaps.isEmpty()) return -1;
 		}
 		Main.LOGGER.info("MapRestock: prefixLen="+prefixLen+", suffixLen="+suffixLen);
 		final String posStrPrev = simplifyPosStr(prevName.substring(prefixLen, prevName.length()-suffixLen));
-		if(!isValidPosStr(posStrPrev)){Main.LOGGER.info("MapRestock: unrecognized prevPos data: "+posStrPrev); return -1;}
+		//if(!isValidPosStr(posStrPrev)){Main.LOGGER.info("MapRestock: unrecognized prevPos data: "+posStrPrev); return -1;}
 		final boolean pos2dPrev = posStrPrev.indexOf(' ') != -1;
 
-		ArrayList<Integer> slotsWithMatchingMaps = new ArrayList<>();
-		for(int i=9; i<=45; ++i){
+		//for(int i=9; i<=45; ++i){
+		for(int f=0; f<=36; ++f){
+			int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
 			ItemStack item = psh.getSlot(i).getStack();
 			if(!isSingleMapArt(item)) continue;
 			final String name = getCustomName(item);
-			if(name == null || name.length() < prefixLen+suffixLen+1) continue;
+			if(name == null || name.length() < prefixLen+suffixLen+1 || name.equals(prevName)) continue;
 			if(!prevName.regionMatches(0, name, 0, prefixLen) ||
 					!prevName.regionMatches(prevName.length()-suffixLen, name, name.length()-suffixLen, suffixLen)) continue;
 			slotsWithMatchingMaps.add(i);
@@ -149,6 +168,7 @@ public final class MapHandRestock{
 		return bestSlot;
 	}
 	private int getNextSlotAny(PlayerEntity player, Hand hand){
+		//TODO: prioritize "start maps", i.e. posStr "1/4", "Name #0", etc.
 		for(int i=PlayerScreenHandler.HOTBAR_START; i<PlayerScreenHandler.HOTBAR_END; ++i){
 			if(hand == Hand.MAIN_HAND && i-PlayerScreenHandler.HOTBAR_START == player.getInventory().selectedSlot) continue;
 			if(isSingleMapArt(player.playerScreenHandler.getSlot(i).getStack())) return i;
@@ -165,13 +185,14 @@ public final class MapHandRestock{
 //			Main.LOGGER.info("MapRestock: hand still not empty after right-clicking item frame"); return;
 //		}
 		Main.LOGGER.info("Single mapart placed, hand:"+hand.ordinal()+", looking for restock map...");
-		final int restockFromSlot;
+		int restockFromSlot;
 		final String prevName = getCustomName(prevMap);
 		//if(USE_IMG) restockFromSlot = getNextSlotByImage(player.playerScreenHandler, prevMap);
 		//else if
 		if(USE_NAME && prevName != null){
-			Main.LOGGER.info("MapRestock: finding next map by-name");
-			restockFromSlot = getNextSlotByName(player.playerScreenHandler, prevName);
+			Main.LOGGER.info("MapRestock: finding next map by-name: "+prevName);
+			restockFromSlot = getNextSlotByName(player, prevName);
+			if(restockFromSlot == -1) restockFromSlot = getNextSlotAny(player, hand);
 		}
 		else if(JUST_PICK_A_MAP){
 			Main.LOGGER.info("MapRestock: finding any single map");
@@ -277,6 +298,11 @@ public final class MapHandRestock{
 		UseEntityCallback.EVENT.register((player, _, hand, entity, _) -> {
 			if(!(entity instanceof ItemFrameEntity itemFrame)) return ActionResult.PASS;
 			//Main.LOGGER.info("clicked item frame");
+			if(hand != Hand.MAIN_HAND){
+				Main.LOGGER.info("not main hand");
+				return ActionResult.FAIL;
+			}
+			//Main.LOGGER.info("placed item from offhand");
 			if(!itemFrame.getHeldItemStack().isEmpty()) return ActionResult.PASS;
 			//Main.LOGGER.info("item frame is empty");
 			if(!isSingleMapArt(player.getStackInHand(hand))) return ActionResult.PASS;
