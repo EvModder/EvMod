@@ -27,7 +27,7 @@ public class InventoryUtils{
 			return;
 		}
 		if(MILLIS_BETWEEN_CLICKS == 0){
-			new Timer().scheduleAtFixedRate(new TimerTask(){
+			new Timer().schedule(new TimerTask(){
 				int clicksInLastSecond = 0;
 				int[] clicksInLastSecondArr = new int[20];
 				int clicksInLastSecondArrIndex = 0;
@@ -47,14 +47,14 @@ public class InventoryUtils{
 			}, 0l, 50l);
 		}
 		else if(MILLIS_BETWEEN_CLICKS > 1000){
-			new Timer().scheduleAtFixedRate(new TimerTask(){@Override public void run(){
+			new Timer().schedule(new TimerTask(){@Override public void run(){
 				if(clicks.isEmpty()){cancel(); onComplete.run(); return;}
 				if(!canProceed.apply(clicks.peek())) return;
 				ClickEvent click = clicks.remove();
 				client.interactionManager.clickSlot(click.syncId, click.slotId, click.button, click.actionType, client.player);
 			}}, 0l, MILLIS_BETWEEN_CLICKS);
 		}
-		else new Timer().scheduleAtFixedRate(new TimerTask(){
+		else new Timer().schedule(new TimerTask(){
 			int clicksInLastSecond = 0;
 			boolean[] clicksInLastSecondArr = new boolean[Math.ceilDiv(1000, MILLIS_BETWEEN_CLICKS)];
 			int clicksInLastSecondArrIndex = 0;
