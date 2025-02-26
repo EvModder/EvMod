@@ -1,6 +1,5 @@
 package net.evmodder.KeyBound.mixin;
 
-import net.evmodder.KeyBound.KeybindFixer;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import org.spongepowered.asm.mixin.Final;
@@ -9,11 +8,30 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import com.google.common.collect.ArrayListMultimap;
 import java.util.Map;
 
 //Authors: fzzyhmstrs, EvModder
 @Mixin(value = KeyBinding.class, priority = 10000)
-public abstract class MixinKeybinding {
+public abstract class MixinKeybinding{
+	class KeybindFixer{
+		private static ArrayListMultimap<InputUtil.Key, KeyBinding> keyFixMap = ArrayListMultimap.create();
+
+		public static final void putKey(InputUtil.Key key, KeyBinding keyBinding){keyFixMap.put(key, keyBinding);}
+		public static void clearMap(){keyFixMap.clear();}
+
+		public static final void onKeyPressed(InputUtil.Key key){
+			keyFixMap.get(key).forEach(kb -> {
+				AccessorTimesPressed t = (AccessorTimesPressed)kb;
+				t.setTimesPressed(t.getTimesPressed() + 1);
+			});
+		}
+
+		public static final void setKeyPressed(InputUtil.Key key, boolean pressed){
+			keyFixMap.get(key).forEach(kb -> kb.setPressed(pressed));
+		}
+	}
+
 	@Final
 	@Shadow private static Map<String, KeyBinding> KEYS_BY_ID;
 	@Shadow private static Map<InputUtil.Key, KeyBinding> KEY_TO_BINDINGS;
