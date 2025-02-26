@@ -11,6 +11,8 @@ public abstract class LoadingCache<K, V>{
 	public LoadingCache(){this(new HashMap<>(), null, null);}
 
 	public abstract V load(final K k);
+	public V loadSyncOrNull(final K k){return null;}
+	public final V remove(final K k){return cache.remove(k);}
 
 	public final boolean putIfAbsent(final K k, final V v){
 		synchronized(cache){
@@ -27,6 +29,10 @@ public abstract class LoadingCache<K, V>{
 		if(cache.containsKey(k)){
 			final V v = cache.get(k);
 			return v != null ? v : V_NOT_FOUND;
+		}
+		{
+			final V v = loadSyncOrNull(k);
+			if(v != null){cache.put(k, v); return v;}
 		}
 		if(!loading.containsKey(k)){
 			final Thread t = new Thread(()->{
