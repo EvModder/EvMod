@@ -59,7 +59,7 @@ public class Main implements ClientModInitializer{
 
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
-	public static boolean rcTooltip;
+	public static boolean rcTooltip, mapartDb=true, mapartDbContact;
 
 	private void loadConfig(){
 		//=================================== Parsing config into a map
@@ -116,13 +116,16 @@ public class Main implements ClientModInitializer{
 				case "remote_addr": remoteAddr = value; break;
 				case "remote_port": remotePort = Integer.parseInt(value); break;
 				case "enderpearl_owners": epearlOwners = !value.equalsIgnoreCase("false"); break;
-				case "enderpearl_owners_database_by_uuid": epearlOwnersDbUUID = !value.equalsIgnoreCase("false"); break;
-				case "enderpearl_owners_database_by_coords": epearlOwnersDbXZ = !value.equalsIgnoreCase("false"); break;
-				case "seen_shared_database": if(!value.equalsIgnoreCase("false")) new SeenCommand(); break;//TODO
+				case "enderpearl_database_by_uuid": epearlOwnersDbUUID = !value.equalsIgnoreCase("false"); break;
+				case "enderpearl_database_by_coords": epearlOwnersDbXZ = !value.equalsIgnoreCase("false"); break;
+				case "seen_database": if(!value.equalsIgnoreCase("false")) new SeenCommand(); break;//TODO
+				case "mapart_database": mapartDb = !value.equalsIgnoreCase("false"); break;
+				case "mapart_database_share_contact": mapartDbContact = !value.equalsIgnoreCase("false"); break;
 
 				case "temp_event_broadcast": if(value.contains(",")) temp_evt_msgs = value.substring(1, value.length()-1).split(","); break;
 				case "temp_event_timestamp": temp_evt_ts = Long.parseLong(value); break;
 				case "temp_event_account": evt_account = value; break;
+
 //				case "spawner_highlight": if(!value.equalsIgnoreCase("false")) new SpawnerHighlighter(); break;
 				case "repaircost_tooltip": if(rcTooltip=!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC); break;
 				case "keybind_drop_items": if(!value.equalsIgnoreCase("false")) new KeybindEjectJunk(); break;
@@ -137,7 +140,8 @@ public class Main implements ClientModInitializer{
 //				case "millis_between_clicks": millis_between_clicks = Integer.parseInt(value); break;
 				case "scroll_order": {
 					final String listOfListsStr = value.replaceAll("\\s","");
-					List<String[]> colorLists = Arrays.stream(listOfListsStr.substring(2, listOfListsStr.length()-2).split("\\],\\[")).map(s->s.split(",")).toList();
+					List<String[]> colorLists = Arrays.stream(
+							listOfListsStr.substring(2, listOfListsStr.length()-2).split("\\],\\[")).map(s->s.split(",")).toList();
 					new KeybindHotbarTypeScroller(colorLists);
 					break;
 				}
@@ -146,7 +150,7 @@ public class Main implements ClientModInitializer{
 			}
 		}
 		if(epearlOwners) epearlLookup = new EpearlLookup(epearlOwnersDbUUID, epearlOwnersDbXZ);
-		final boolean anyDbFeaturesEnabled = !remoteMessages.isEmpty() || epearlOwnersDbUUID || epearlOwnersDbXZ;
+		final boolean anyDbFeaturesEnabled = !remoteMessages.isEmpty() || epearlOwnersDbUUID || epearlOwnersDbXZ || mapartDb;
 		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && anyDbFeaturesEnabled){
 			remoteSender = new RemoteServerSender(remoteAddr, remotePort, clientId, clientKey, remoteMessages);
 		}
@@ -157,6 +161,7 @@ public class Main implements ClientModInitializer{
 
 		MinecraftClient client = MinecraftClient.getInstance();
 		String username = client.getSession().getUsername();
-		if(temp_evt_ts*1000L > System.currentTimeMillis() && temp_evt_msgs != null && username.equals(evt_account)) new ChatBroadcaster(temp_evt_ts, temp_evt_msgs);
+		if(temp_evt_ts*1000L > System.currentTimeMillis() && temp_evt_msgs != null && username.equals(evt_account))
+			new ChatBroadcaster(temp_evt_ts, temp_evt_msgs);
 	}
 }
