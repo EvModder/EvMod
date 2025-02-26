@@ -116,6 +116,19 @@ public final class FileIO{
 		return file.length() == 0 ? "" : file.substring(1);
 	}
 
+	public static boolean saveFile(String filename, String content, boolean append){
+		if(content == null || content.isEmpty()) return new File(DIR+filename).delete();
+		try{
+			final BufferedWriter writer = new BufferedWriter(new FileWriter(DIR+filename, append));
+			writer.write(content); writer.close();
+			return true;
+		}
+		catch(IOException e){return false;}
+	}
+	public static boolean saveFile(String filename, String content){
+		return saveFile(filename, content, /*append=*/false);
+	}
+
 	/*public static final UUID lookupInFile(String filename, UUID pearlUUID){
 		FileInputStream is = null;
 		try{is = new FileInputStream(FileIO.DIR+filename);}
