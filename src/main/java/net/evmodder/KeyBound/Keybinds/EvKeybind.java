@@ -19,11 +19,11 @@ public final class EvKeybind extends KeyBinding{
 		onReleasedSupplier = onReleased;
 		this.allowInScreen = allowInScreen;
 		if(allowInScreen != null) allowedInInventory.add(this);
-		Main.LOGGER.info("Registered keybind: "+translationKey);
+		Main.LOGGER.debug("Registered keybind: "+translationKey);
 	}
 
-	public EvKeybind(String translationKey, Runnable onPressed){this(translationKey, onPressed, ()->{}, _->false);}
-	public EvKeybind(String translationKey){this(translationKey, ()->{}, ()->{}, _->false);}
+	public EvKeybind(String translationKey, Runnable onPressed){this(translationKey, onPressed, ()->{}, null);}
+	public EvKeybind(String translationKey){this(translationKey, ()->{}, ()->{}, null);}
 
 	public EvKeybind(String translationKey, Runnable onPressed, Function<Screen, Boolean> allowInScreen){this(translationKey, onPressed, ()->{}, allowInScreen);}
 	public EvKeybind(String translationKey, Function<Screen, Boolean> allowInScreen){this(translationKey, ()->{}, ()->{}, allowInScreen);}

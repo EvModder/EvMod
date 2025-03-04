@@ -56,6 +56,8 @@ chat_msg.rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components
 #========== Misc Keybinds ==========#
 keybind_drop_items: true
 keybind_toggle_skin_layers: true
+keybind_smart_inventory_craft: true
+keybind_2b2t_highway_travel_helper: true
 organize_inventory.a: [
   # Hotbar LHS
   36:netherite_sword, 36: diamond_sword, 36:netherite_axe, 36:diamond_axe,

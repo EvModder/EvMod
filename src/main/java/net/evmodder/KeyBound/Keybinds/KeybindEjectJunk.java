@@ -51,9 +51,9 @@ public final class KeybindEjectJunk{
 				allEnchs.stream().anyMatch(r -> !r.matchesKey(Enchantments.FEATHER_FALLING) && canGoOnArmor(r, EquipmentSlot.FEET))) return true;
 		return false;
 	}
-	enum JunkCategory{END_CITY, FISHING, RAID_FARM, GOLD_FARM}
+	enum JunkCategory{END_CITY, FISHING, RAID_FARM, NETHER}
 	private JunkCategory junkType = null;
-	private boolean shouldEject(ItemStack stack){
+	public boolean shouldEject(ItemStack stack){
 		if(stack == null || stack.isEmpty()) return false;
 		final int rc = stack.getComponents().get(DataComponentTypes.REPAIR_COST);
 		if(rc != 0) return false;
@@ -62,15 +62,26 @@ public final class KeybindEjectJunk{
 		final Set<RegistryEntry<Enchantment>> enchs = iec.getEnchantments();
 		boolean isJunk = false;
 		switch(Registries.ITEM.getId(stack.getItem()).getPath()){
-			//========== GoldFarm section ========================================
+			//========== GoldFarm/NetherHighway section ========================================
+			case "netherrack":
+			case "crimson_roots": case "warped_roots":
+				junkType = JunkCategory.NETHER;
+				return true;
 			case "golden_sword":
 				if(enchs.size() < 4 && enchs.stream().anyMatch(r -> iec.getLevel(r) < r.value().getMaxLevel())){
-					junkType = JunkCategory.GOLD_FARM;
+					junkType = JunkCategory.NETHER;
 				}
+			//case "gold_nugget":
+			//case "golden_helmet":
+			case "golden_chestplate": case "golden_leggings": case "golden_boots":
+			case "gravel": case "basalt": case "blackstone": case "soul_soil":
+			case "gunpowder":
 			case "feather":
 			case "raw_chicken":
 			case "rotten_flesh":
-				return junkType == JunkCategory.GOLD_FARM;
+			case "red_mushroom": case "brown_mushroom":
+			case "magma_cream": case "glowstone_dust":
+				return junkType == JunkCategory.NETHER;
 			//========== RaidFarm section ========================================
 //			case "crossbow":
 //			case "white_banner":
@@ -127,7 +138,7 @@ public final class KeybindEjectJunk{
 
 	private void ejectJunkItems(){
 		MinecraftClient client = MinecraftClient.getInstance();
-		final int syncId = client.currentScreen instanceof HandledScreen hs ? hs.getScreenHandler().syncId : 0;
+		final int syncId = client.player.currentScreenHandler.syncId;
 
 		if(client.currentScreen instanceof HandledScreen hs){
 			final int invStart, invEnd;

@@ -30,5 +30,7 @@
 	"key.keybound.mapart_copy_bulk": "MapArt Copy-Bulk",
 	"key.keybound.mapart_load_data": "MapArt Load",
 	"key.keybound.mapart_take_place": "MapArt Take/Place",
+	"key.keybound.travel_helper": "2b2t Highway Travel Helper",
+	"key.keybound.smart_inventory_craft": "Auto-craft in the 2x2",
 	"key.keybound.organize_inventory.a": "Organize Inv (EvDefault)"
 }

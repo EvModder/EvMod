@@ -21,12 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.evmodder.EvLib.FileIO;
-import net.evmodder.KeyBound.Keybinds.KeybindEjectJunk;
-import net.evmodder.KeyBound.Keybinds.KeybindHotbarTypeScroller;
-import net.evmodder.KeyBound.Keybinds.KeybindInventoryOrganize;
-import net.evmodder.KeyBound.Keybinds.KeybindMapCopy;
-import net.evmodder.KeyBound.Keybinds.KeybindMapLoad;
-import net.evmodder.KeyBound.Keybinds.KeybindMapStealStore;
+import net.evmodder.KeyBound.Keybinds.*;
 import net.evmodder.KeyBound.Keybinds.KeybindsSimple;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
@@ -46,9 +41,11 @@ public class Main implements ClientModInitializer{
 	// /msgas Anuvin target hi - send msg from alt acc
 	// timer countdown showing time left on 2b for non prio before kick
 	// auto enchant dia sword, auto grindstone, auto rename, auto anvil combine
+	// inv-keybind-craft-latest-item
 
 	// Reference variables
 	public static final String MOD_ID = "keybound";
+	public static final String configFilename = MOD_ID+".txt";
 	//public static final String MOD_NAME = "KeyBound";
 	//public static final String MOD_VERSION = "@MOD_VERSION@";
 	public static final String KEYBIND_CATEGORY = "key.categories."+MOD_ID;
@@ -64,7 +61,7 @@ public class Main implements ClientModInitializer{
 	private void loadConfig(){
 		//=================================== Parsing config into a map
 		config = new HashMap<>();
-		final String configContents = FileIO.loadFile("keybound.txt", getClass().getResourceAsStream("/keybound.txt"));
+		final String configContents = FileIO.loadFile(configFilename, getClass().getResourceAsStream("/"+configFilename));
 		String listKey = null, listValue = null;
 		int listDepth = 0;
 		for(String line : configContents.split("\\r?\\n")){
@@ -89,7 +86,7 @@ public class Main implements ClientModInitializer{
 			}
 			config.put(key, value);
 		}
-		if(listKey != null) LOGGER.error("Unterminated list in ./config/keybound.txt!\nkey: "+listKey);
+		if(listKey != null) LOGGER.error("Unterminated list in ./config/"+configFilename+"!\nkey: "+listKey);
 	}
 
 	@Override public void onInitializeClient(){
@@ -98,11 +95,14 @@ public class Main implements ClientModInitializer{
 		HashMap<String, String> remoteMessages = new HashMap<>();
 		int clientId=0; String clientKey=null;
 		String remoteAddr=null; int remotePort=0;
-		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false, keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtTake=false;
+		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false,
+				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtTake=false;
 //		int clicks_per_gt=36, millis_between_clicks=50;
 		boolean mapPlaceHelper=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false;
+		boolean keybindHighwayTravelHelper=false;
 
 		String[] temp_evt_msgs=null; long temp_evt_ts=0; String evt_account="";
+		KeybindEjectJunk ejectJunk = null;
 
 		//config.forEach((key, value) -> {
 		for(String key : config.keySet()){
@@ -127,9 +127,13 @@ public class Main implements ClientModInitializer{
 				case "temp_event_account": evt_account = value; break;
 
 //				case "spawner_highlight": if(!value.equalsIgnoreCase("false")) new SpawnerHighlighter(); break;
-				case "repaircost_tooltip": if(rcTooltip=!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC); break;
-				case "keybind_drop_items": if(!value.equalsIgnoreCase("false")) new KeybindEjectJunk(); break;
+				case "repaircost_tooltip": if(rcTooltip=!value.equalsIgnoreCase("false")) 
+					ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC); break;
+				case "keybind_drop_items": if(!value.equalsIgnoreCase("false")) ejectJunk = new KeybindEjectJunk(); break;
 				case "keybind_toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
+//				case "keybind_smart_inventory_craft": keybindSmartInvCraft = !value.equalsIgnoreCase("false"); break;
+				case "keybind_smart_inventory_craft": if(!value.equalsIgnoreCase("false")) new KeybindSmartInvCraft(); break;
+				case "keybind_2b2t_highway_travel_helper": keybindHighwayTravelHelper = !value.equalsIgnoreCase("false"); break;
 				case "keybind_mapart_load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
 				case "keybind_mapart_take_from_shulker": keybindMapArtTake = !value.equalsIgnoreCase("false"); break;
 				case "keybind_mapart_copy_in_inventory": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
@@ -158,6 +162,7 @@ public class Main implements ClientModInitializer{
 		if(keybindMapArtCopy) new KeybindMapCopy(/*MILLIS_BETWEEN_CLICKS=*/10);
 		if(keybindMapArtTake) new KeybindMapStealStore(/*MILLIS_BETWEEN_CLICKS=*/10);
 		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg);
+		if(keybindHighwayTravelHelper) new Keybind2b2tHighwayTravelHelper(ejectJunk);
 
 		MinecraftClient client = MinecraftClient.getInstance();
 		String username = client.getSession().getUsername();

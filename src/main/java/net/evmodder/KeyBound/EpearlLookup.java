@@ -22,7 +22,7 @@ import net.minecraft.entity.EntityType;
 public final class EpearlLookup{
 	private static final MinecraftClient client = MinecraftClient.getInstance();
 
-	private static final String NAME_404 = "n[404]", NAME_LOADING = "Loading...";
+	private static final String NAME_404 = "n[404]", NAME_LOADING = "Loading name...";
 	private static final UUID UUID_404 = null, UUID_LOADING = new UUID(114141414, 282828282);
 	private static final PearlDataClient PD_404 = new PearlDataClient(UUID_404, 0, 0, 0), PD_LOADING = new PearlDataClient(UUID_LOADING, 0, 0, 0);
 	//private static final boolean ONLY_FOR_2b2t = true;
@@ -157,22 +157,26 @@ public final class EpearlLookup{
 		}
 		@Override public String load(UUID key){
 			//KeyBound.LOGGER.info("oof, web request D:");
-			ProfileResult pr = client.getSessionService().fetchProfile(key, false);
-			if(pr == null || pr.profile() == null || pr.profile().getName() == null) return NAME_404;
+			ProfileResult pr = client.getSessionService().fetchProfile(key, /*requireSecure=*/false);
+			if(pr == null || pr.profile() == null || pr.profile().getName() == null){
+				Main.LOGGER.error("Unable to find name for player UUID: "+key.toString());
+				return NAME_404;
+			}
 			else return pr.profile().getName();
 		}
 	};
 	static{
 		usernameCacheMojang.putIfAbsent(UUID_404, "u[404]");
-		usernameCacheMojang.putIfAbsent(UUID_LOADING, NAME_LOADING);
+		usernameCacheMojang.putIfAbsent(UUID_LOADING, "Loading UUID...");
 	}
 
 	public String getOwnerName(Entity epearl){
 		//if(epearl.getType() != EntityType.ENDER_PEARL) throw IllegalArgumentException();
 		UUID ownerUUID = ((AccessorProjectileEntity)epearl).getOwnerUUID();
+		String ownerName = ownerUUID == null ? NAME_404 : usernameCacheMojang.get(ownerUUID);
 		if((!USE_DB_UUID && !USE_DB_XZ) || epearl.getVelocity().x != 0d || epearl.getVelocity().z != 0d) return usernameCacheMojang.get(ownerUUID);
 		final String address = client != null && client.getCurrentServerEntry() != null ? client.getCurrentServerEntry().address : null;
-		if(address == null) return usernameCacheMojang.get(ownerUUID);
+		if(address == null) return ownerName;
 
 		idToPos.put(epearl.getUuid(), new XYZ(epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ()));
 
@@ -180,10 +184,14 @@ public final class EpearlLookup{
 			final UUID key = epearl.getUuid();
 			if(ownerUUID == null){
 				PearlDataClient pd = cacheByUUID.get(key);
-				if(pd != null) ownerUUID = pd.owner();
+				if(pd != null){
+					ownerUUID = pd.owner();
+					ownerName = usernameCacheMojang.get(ownerUUID);
+				}
 			}
-			else/* if(!ONLY_FOR_2b2t || "2b2t.org".equals(address))*/{
-				cacheByUUID.putIfAbsent(key, new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ()));
+			else if(!ownerName.equals(NAME_404) && !ownerName.equals(NAME_LOADING) && 
+					cacheByUUID.putIfAbsent(key, new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ())))
+			{
 				Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, PacketHelper.toByteArray(key, ownerUUID), /*udp=*/true, (msg)->{
 					if(msg != null && msg.length > 0 && msg[0] != 0) Main.LOGGER.info("Added pearl UUID to remote DB!");
 					else Main.LOGGER.info("Failed to add pearl UUID to remote DB!");
@@ -195,18 +203,22 @@ public final class EpearlLookup{
 //			ByteBuffer bb = ByteBuffer.allocate(bytes.length + 16).put(bytes).putDouble(epearl.getX()).putDouble(epearl.getZ());
 //			final UUID key = UUID.nameUUIDFromBytes(bb.array());
 			final UUID key = new UUID(Double.doubleToRawLongBits(epearl.getX()), Double.doubleToRawLongBits(epearl.getZ()));
-			if(ownerUUID == null/* || ownerUUID.equals(UUID_404) || ownerUUID.equals(UUID_LOADING)*/){
+			if(ownerUUID == null || ownerUUID.equals(UUID_404) || ownerUUID.equals(UUID_LOADING)){
 				PearlDataClient pd = cacheByXZ.get(key);
-				if(pd != null) ownerUUID = pd.owner();
+				if(pd != null){
+					ownerUUID = pd.owner();
+					ownerName = usernameCacheMojang.get(ownerUUID);
+				}
 			}
-			else/* if(!ONLY_FOR_2b2t || "2b2t.org".equals(address))*/{
+			else if(!ownerName.equals(NAME_404) && !ownerName.equals(NAME_LOADING)){
 				final UUID oldKey = updateKeyXZ.get(epearl.getId());
 				if(oldKey == null){
-					cacheByXZ.putIfAbsent(key, new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ()));
-					Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_XZ, PacketHelper.toByteArray(key, ownerUUID), /*udp=*/true, (msg)->{
-						if(msg != null && msg.length > 0 && msg[0] != 0) Main.LOGGER.info("Added pearl XZ to remote DB!");
-						else Main.LOGGER.info("Failed to add pearl XZ to remote DB!");
-					});
+					if(cacheByXZ.putIfAbsent(key, new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ()))){
+						Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_XZ, PacketHelper.toByteArray(key, ownerUUID), /*udp=*/true, (msg)->{
+							if(msg != null && msg.length > 0 && msg[0] != 0) Main.LOGGER.info("Added pearl XZ to remote DB!");
+							else Main.LOGGER.info("Failed to add pearl XZ to remote DB!");
+						});
+					}
 				}
 				else if(!oldKey.equals(key)){
 					// Don't spam the server with XZ updates, especially because of risk they arrive in wrong order with UDP
@@ -221,6 +233,6 @@ public final class EpearlLookup{
 				updateKeyXZ.put(epearl.getId(), key);
 			}
 		}//USE_DB_XZ
-		return usernameCacheMojang.get(ownerUUID);
+		return ownerName;
 	}
 }

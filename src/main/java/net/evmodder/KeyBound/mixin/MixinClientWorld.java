@@ -21,20 +21,21 @@ import net.minecraft.item.map.MapState;
 
 @Mixin(ClientWorld.class)
 public abstract class MixinClientWorld{
-	private final MinecraftClient client = MinecraftClient.getInstance();
-	private final HashMap<String, HashSet<UUID>> mapsSaved;
-	private final HashSet<UUID> mapsInTransit, mapsToSave;
-	private final String DB_FILENAME = "keybound-seen_maps";
-	//private final boolean preloadMapStates = true; // requires saving full byte[] 128x128 and not just the hash (UUID)
+	private static final MinecraftClient client = MinecraftClient.getInstance();
+	private static final HashMap<String, HashSet<UUID>> mapsSaved;
+	private static final HashSet<UUID> mapsInTransit, mapsToSave;
+	private static final String DB_FILENAME = "keybound-seen_maps";
+	//private static final boolean preloadMapStates = true; // requires saving full byte[] 128x128 and not just the hash (UUID)
 
-	private String saveAddr;
+	private static String saveAddr;
 
-	MixinClientWorld(){
+	static{
 		mapsSaved = new HashMap<>();
 		mapsInTransit = new HashSet<>();
 		mapsToSave = new HashSet<>();
 		Arrays.stream(FileIO.loadFile(DB_FILENAME, "").split("\\r?\\n")).forEach(s -> {
 			String[] parts = s.split(":");
+			if(parts.length != 2) return;
 			String[] uuidStrs = parts[1].split(",");
 			HashSet<UUID> uuids = new HashSet<>();
 			Arrays.stream(uuidStrs).map(UUID::fromString).forEach(uuids::add);
@@ -52,7 +53,8 @@ public abstract class MixinClientWorld{
 		//if(world == null) Main.LOGGER.info("MapDB: wtf, world instance is null???");
 		final UUID uuid = UUID.nameUUIDFromBytes(state.colors);
 		synchronized(mapsSaved){
-			if(mapsSaved.get(addr).contains(uuid)) return; // Map has already been sent to the remoteDB
+			HashSet<UUID> savedPerServer = mapsSaved.get(addr);
+			if(savedPerServer != null && savedPerServer.contains(uuid)) return; // Map has already been sent to the remoteDB
 			if(mapsToSave.contains(uuid)) return; // Map was sent, got reply, but not yet added to `mapsSaved`
 			if(!mapsInTransit.add(uuid)) return; // Map is currently being sent to the remoteDB (awaiting reply)
 		}
