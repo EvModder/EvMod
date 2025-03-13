@@ -35,6 +35,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.PickaxeItem;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
@@ -278,20 +279,32 @@ public final class Keybind2b2tHighwayTravelHelper{
 		Vec3d dir = Vec3d.fromPolar(0, client.player.getYaw());
 		int dx = (int)Math.round(dir.x);
 		int dz = (int)Math.round(dir.z);
-		for(int i=0; i<3; ++i){
-			bp = bp.add(dx, 0, dz);
-			if(!client.world.getBlockState(bp).getCollisionShape(client.world, client.player.getBlockPos()).isEmpty()){
-				if(selectPickaxeInHotbar()) return true;
-				isMining = true;
-				//if(client.player.getMainHandStack().getItem() instanceof PickaxeItem) return false;
-				client.interactionManager.updateBlockBreakingProgress(bp, getBlockBreakingSide(bp));
-				client.player.sendMessage(Text.of("Mining block: ").copy().append(client.world.getBlockState(bp).getBlock().getName())
-//						.append(" yaw:"+client.player.getYaw()+", dirX:"+dir.x+",dirZ:"+dir.z+", xyz: ")
-//						.append(bp.getX()+","+bp.getY()+","+bp.getZ())
-						, true);
-//				Main.LOGGER.info("Mining block: "+client.world.getBlockState(bp).getBlock().getName().getLiteralString());
-				return true;
-			}
+		ArrayList<BlockPos> mineSpots = new ArrayList<>();
+		Vec3d pos = client.player.getPos();
+		if(dx != 0){
+			mineSpots.add(bp.add(dx, 0, 0));
+			int ddz = bp.getZ() + (Math.round(pos.getZ()) > pos.getZ() ? 1 : -1);
+			mineSpots.add(bp.add(dx, 0, ddz));
+		}
+		if(dz != 0){
+			mineSpots.add(bp.add(0, 0, dz));
+			int ddx = bp.getX() + (Math.round(pos.getX()) > pos.getX() ? 1 : -1);
+			mineSpots.add(bp.add(ddx, 0, dz));
+		}
+		if(dx != 0 && dz != 0) mineSpots.add(bp.add(dx, 0, dz));
+
+		for(BlockPos bpDig : mineSpots){
+			if(client.world.getBlockState(bpDig).getCollisionShape(client.world, client.player.getBlockPos()).isEmpty()) continue;
+			if(selectPickaxeInHotbar()) return true;
+			isMining = true;
+			//if(client.player.getMainHandStack().getItem() instanceof PickaxeItem) return false;
+			client.interactionManager.updateBlockBreakingProgress(bpDig, getBlockBreakingSide(bpDig));
+			client.player.sendMessage(Text.of("Mining block: ").copy().append(client.world.getBlockState(bpDig).getBlock().getName())
+//					.append(" yaw:"+client.player.getYaw()+", dirX:"+dir.x+",dirZ:"+dir.z+", xyz: ")
+//					.append(bp.getX()+","+bp.getY()+","+bp.getZ())
+					, true);
+//			Main.LOGGER.info("Mining block: "+client.world.getBlockState(bp).getBlock().getName().getLiteralString());
+			return true;
 		}
 		if(isMining){
 			isMining = false;
@@ -325,8 +338,9 @@ public final class Keybind2b2tHighwayTravelHelper{
 		ClientTickEvents.START_CLIENT_TICK.register(_ -> {
 			if(!isEnabled) return;
 			if(client.player == null || client.world == null) return;
-			Item chestItem = client.player.getInventory().getArmorStack(1).getItem();
-			if(!Registries.ITEM.getId(chestItem).getPath().equals("elytra")){
+			Item chestItem = client.player.getInventory().getArmorStack(2).getItem();
+			Identifier chestItemId = Registries.ITEM.getId(chestItem);
+			if(chestItemId == null || !chestItemId.getPath().equals("elytra")){
 				client.player.sendMessage(Text.of("Not wearing elytra"), true);
 				return;
 			}
