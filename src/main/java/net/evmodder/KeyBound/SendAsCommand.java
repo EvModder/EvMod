@@ -29,7 +29,7 @@ public class SendAsCommand{
 						}
 						while((name.length() + message.length()) % 16 != 0) name += ' ';
 						message = name + message;//if name.length==16, there will be no space between name and msg, otherwise there will be.
-						Main.remoteSender.sendBotMessage(net.evmodder.EvLib.Command.P2P_CHAT_AS, message.getBytes(), true);
+						Main.remoteSender.sendBotMessage(net.evmodder.EvLib.Command.P2P_CHAT_AS, message.getBytes(), true, null);
 						return com.mojang.brigadier.Command.SINGLE_SUCCESS;
 					})
 				)

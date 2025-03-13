@@ -60,7 +60,7 @@ public abstract class MixinClientWorld{
 		}
 		saveAddr = addr;
 
-		Main.remoteSender.sendBotMessage(Command.DB_MAPART_STORE, state.colors, /*udp=*/true, (msg)->{
+		Main.remoteSender.sendBotMessage(Command.DB_MAPART_STORE, state.colors, /*udp=*/false, msg->{
 			synchronized(mapsSaved){
 				mapsInTransit.remove(uuid);
 				if(msg == null){
@@ -69,6 +69,7 @@ public abstract class MixinClientWorld{
 					return;
 				}
 				if(msg.length == 0 || msg[0] == 0) Main.LOGGER.info("MapDB: Server already contained map"+id.id());
+				else Main.LOGGER.info("MapDB: Server indicated map"+id.id()+" is a new addition");
 
 				if(!mapsToSave.add(uuid) || mapsToSave.size() > 1) return;
 			}
@@ -77,7 +78,8 @@ public abstract class MixinClientWorld{
 				synchronized(mapsSaved){
 					mapsSaved.get(saveAddr).addAll(mapsToSave);
 					final String str = mapsSaved.entrySet().stream()
-							.map(e -> e.getKey()+":"+e.getValue().stream().map(UUID::toString).collect(Collectors.joining(",")))
+							.map(e -> e.getKey()+":"+e.getValue().stream()
+							.map(UUID::toString).collect(Collectors.joining(",")))
 							.collect(Collectors.joining("\n"));
 					if(!FileIO.saveFile(DB_FILENAME, str)){
 						mapsSaved.get(saveAddr).removeAll(mapsToSave);

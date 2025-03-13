@@ -41,7 +41,7 @@ public class Main implements ClientModInitializer{
 	// /msgas Anuvin target hi - send msg from alt acc
 	// timer countdown showing time left on 2b for non prio before kick
 	// auto enchant dia sword, auto grindstone, auto rename, auto anvil combine
-	// inv-keybind-craft-latest-item
+	// inv-keybind-craft-latest-item,also for enchant table and grindstone (eg. spam enchanting axes)
 
 	// Reference variables
 	public static final String MOD_ID = "keybound";

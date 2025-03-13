@@ -75,23 +75,26 @@ public final class KeybindEjectJunk{
 			//case "golden_helmet":
 			case "golden_chestplate": case "golden_leggings": case "golden_boots":
 			case "gravel": case "basalt": case "blackstone": case "soul_soil":
-			case "gunpowder":
 			case "feather":
 			case "raw_chicken":
 			case "rotten_flesh":
 			case "red_mushroom": case "brown_mushroom":
-			case "magma_cream": case "glowstone_dust":
+			case "magma_cream":
 				return junkType == JunkCategory.NETHER;
+			case "glowstone_dust": case "gunpowder":
+				return junkType == JunkCategory.NETHER || junkType == JunkCategory.RAID_FARM;
 			//========== RaidFarm section ========================================
-//			case "crossbow":
-//			case "white_banner":
-//			case "iron_axe":
-//			case "glass_bottle":
-//			case "spider_eye":
-//			case "stick":
-//			case "potion":
-////		case "saddle":
-//				return junkType == JunkCategory.RAID_FARM;
+			case "crossbow":
+			case "white_banner":
+			case "iron_axe":
+			case "glass_bottle":
+			case "spider_eye":
+			case "stick":
+			case "redstone":
+				return junkType == JunkCategory.RAID_FARM;
+			case "potion":
+			case "saddle":
+				return junkType == JunkCategory.RAID_FARM || junkType == JunkCategory.FISHING;
 			//========== Fishing section ========================================
 			case "bow":
 				isJunk = enchs.size() < 4 || enchs.stream() .anyMatch(r -> iec.getLevel(r) < Math.min(4, r.value().getMaxLevel()));
@@ -111,7 +114,6 @@ public final class KeybindEjectJunk{
 			case "raw_cod":
 			case "salmon":
 			case "pufferfish":
-			case "saddle":
 			case "leather_boots":
 				return junkType == JunkCategory.FISHING;
 			//========== End loot section ========================================

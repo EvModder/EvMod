@@ -5,6 +5,7 @@ temp_event_account: Anuvin
 temp_event_broadcast: []
 temp_event_timestamp: 1738990800 # Fri, Feb7, 11pm CST
 
+
 #========== MapArt Tools ==========#
 #max_clicks_per_second: 18
 #millis_between_clicks: 8
@@ -17,12 +18,14 @@ mapart_placement_helper_use_image: true
 mapart_database: true
 mapart_database_share_contact: true
 
+
 #========== Added Visuals ==========#
 repaircost_tooltip: true
 enderpearl_owners: true
 enderpearl_database_by_uuid: true
 enderpearl_database_by_coords: false
 seen_database: true
+
 
 #========== Hotbar variant scrolling ==========#
 # Empty variants (if they exist) must come first in the list
@@ -34,12 +37,14 @@ scroll_order: [
 	[oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry, bamboo, crimson, warped]
 ]
 
+
 #========== Remote messaging ==========#
 # TODO: maybe rename as "my_id" and "my_token"?
 client_id: 1
 client_key: some_unique_key
 remote_addr: altcraft.net
 remote_port: 14441
+
 
 # List of remote messages
 #remote_msg.a: P2P_MSG,27aa6a20-4a0d-4779-bcd5-dce162dd7467

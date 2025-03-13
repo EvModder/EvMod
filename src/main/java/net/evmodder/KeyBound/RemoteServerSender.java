@@ -31,7 +31,7 @@ public final class RemoteServerSender{
 		catch(UnknownHostException e){Main.LOGGER.warn("Server not found: "+ADDR);}
 	}
 
-	// Returns a 52 byte packet
+	// Returns a `4+message.length+16`-byte packet
 	private byte[] packageAndEncryptMessage(Command command, byte[/*16*n*/] message){
 		ByteBuffer bb1 = ByteBuffer.allocate(16+message.length);
 		bb1.putInt(CLIENT_ID);
@@ -48,18 +48,12 @@ public final class RemoteServerSender{
 		return bb2.array();
 	}
 
-	public void sendBotMessage(Command command, byte[] message, boolean udp){
-		byte[] packet = packageAndEncryptMessage(command, message);
-		if(addrResolved == null) resolveAddress();
-		PacketHelper.sendPacket(addrResolved, PORT, udp, packet, null, 0);
-		resolveAddress();
-	}
-
 	public void sendBotMessage(Command command, byte[] message, boolean udp, MessageReceiver recv){
-		byte[] packet = packageAndEncryptMessage(command, message);
+		final byte[] packet = packageAndEncryptMessage(command, message);
 		if(addrResolved == null) resolveAddress();
 		if(addrResolved == null) Main.LOGGER.warn("RemoteSender address could not be resolved!: "+ADDR);
 		else{
+			Main.LOGGER.info("msg len: "+packet.length);
 			PacketHelper.sendPacket(addrResolved, PORT, udp, packet, recv, /*timeout=*/1000*5);
 			resolveAddress();
 		}
@@ -87,7 +81,7 @@ public final class RemoteServerSender{
 			}
 			else{
 				final byte[] byteMsg = PacketHelper.toByteArray(Arrays.stream(Arrays.copyOfRange(arr, 1, arr.length)).map(UUID::fromString).toArray(UUID[]::new));
-				KeyBindingHelper.registerKeyBinding(new EvKeybind(key, ()->sendBotMessage(command, byteMsg, true)));
+				KeyBindingHelper.registerKeyBinding(new EvKeybind(key, ()->sendBotMessage(command, byteMsg, true, null)));
 			}
 		});
 
@@ -105,7 +99,7 @@ public final class RemoteServerSender{
 
 		rss.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, ByteBuffer.allocate(32)
 				.putLong(pearlUUID.getMostSignificantBits()).putLong(pearlUUID.getLeastSignificantBits())
-				.putLong(ownerUUID.getMostSignificantBits()).putLong(ownerUUID.getLeastSignificantBits()).array(), true);
+				.putLong(ownerUUID.getMostSignificantBits()).putLong(ownerUUID.getLeastSignificantBits()).array(), true, null);
 
 		rss.sendBotMessage(Command.DB_PEARL_FETCH_BY_UUID, PacketHelper.toByteArray(pearlUUID), true, new MessageReceiver(){
 			@Override public void receiveMessage(byte[] msg){

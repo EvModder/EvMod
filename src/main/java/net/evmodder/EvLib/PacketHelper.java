@@ -2,7 +2,6 @@ package net.evmodder.EvLib;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UncheckedIOException;
 import java.net.ConnectException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -24,7 +23,7 @@ import javax.crypto.spec.SecretKeySpec;
 import jdk.net.ExtendedSocketOptions;
 
 public final class PacketHelper{
-	private static final int MAX_PACKET_SIZE_SEND = 52; // 4 + [4+4+8+16+16]
+	private static final int MAX_PACKET_SIZE_SEND = 4+16+128*128; // 2nd biggest: 4 + [4+4+8+16+16]
 	private static final int MAX_PACKET_SIZE_RECV = 16;
 //	private static final int BIND_ATTEMPTS = 5;
 //	private static final int BIND_REATTEMPT_DELAY = 100;
@@ -137,13 +136,13 @@ public final class PacketHelper{
 					socketUDP.receive(new DatagramPacket(reply, reply.length));
 				}
 				catch(IOException e){
-					if(e instanceof SocketTimeoutException == false) LOGGER.warning("Waiting for UDP response timed out");
+					if(e instanceof SocketTimeoutException) LOGGER.warning("Waiting for UDP response timed out");
 					else e.printStackTrace();
 					reply = null;
 				}
 				//LOGGER.info("Roundtrip delay (UDP): "+(System.currentTimeMillis()-startTime));
 				recv.receiveMessage(reply);
-				try{socketUDP.disconnect();}catch(UncheckedIOException e){e.printStackTrace(); socketUDP=null;}
+				//try{socketUDP.disconnect();}catch(UncheckedIOException e){e.printStackTrace(); socketUDP=null;}
 			}).start();
 		}//}
 		else{

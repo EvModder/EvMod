@@ -26,6 +26,7 @@ public final class KeybindMapLoad{
 //		return FilledMapItem.getMapState(stack, world) != null;
 //	}
 
+	//TODO: use shift-clicks instead of hotbar swaps
 	private boolean ongoingLoad;
 	private long lastLoad;
 	private final long loadCooldown = 500L;

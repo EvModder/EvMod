@@ -132,7 +132,7 @@ public final class KeybindInventoryOrganize{
 
 			int hb = 40;
 			// if dstSlot is currently empty, attempt to pick an empty hotbar/offhand slot to swap with
-			if(emptySlots[dstSlot] && !emptySlots[45]) for(int i=0; i<9; ++i) if(emptySlots[i+36]){hb = i; break;}
+			if(emptySlots[dstSlot]/* && !emptySlots[45]*/) for(int i=0; i<9; ++i) if(emptySlots[i+36]){hb = i; break;}
 			clicks.add(new ClickEvent(srcSlot, hb, SlotActionType.SWAP));
 			clicks.add(new ClickEvent(dstSlot, hb, SlotActionType.SWAP));
 			if(!emptySlots[dstSlot] || !emptySlots[hb == 40 ? 45 : hb+36]){

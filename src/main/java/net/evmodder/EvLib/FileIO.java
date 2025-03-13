@@ -250,7 +250,7 @@ public final class FileIO{
 		return new Tuple3<>(ownerUUID, x, z);
 	}*/
 
-	public static final synchronized boolean appendToClientFile(String filename, UUID pearlUUID, UUID ownerUUID, int x, int y, int z){
+	public static final synchronized boolean appendToClientFile(String filename, UUID pearlUUID, PearlDataClient pdc){
 		File file = new File(FileIO.DIR+filename);
 		try{
 			FileOutputStream fos = null;
@@ -263,12 +263,12 @@ public final class FileIO{
 			ByteBuffer bb = ByteBuffer.allocate(16+16+4+4+4);
 			bb.putLong(pearlUUID.getMostSignificantBits());
 			bb.putLong(pearlUUID.getLeastSignificantBits());
-			bb.putLong(ownerUUID.getMostSignificantBits());
-			bb.putLong(ownerUUID.getLeastSignificantBits());
-			bb.putInt(x).putInt(y).putInt(z);
+			bb.putLong(pdc.owner().getMostSignificantBits());
+			bb.putLong(pdc.owner().getLeastSignificantBits());
+			bb.putInt(pdc.x()).putInt(pdc.y()).putInt(pdc.z());
 			fos.write(bb.array());
 			fos.close();
-			LOGGER.fine("saved ownerUUID to file: "+ownerUUID);
+			LOGGER.fine("saved pearlUUID->ownerUUID to file: "+pearlUUID+"->"+pdc.owner());
 		}
 		catch(IOException e){e.printStackTrace();return false;}
 		return true;
@@ -321,7 +321,7 @@ public final class FileIO{
 	public static final synchronized HashSet<UUID> removeMissingFromClientFile(String filename, int playerX, int playerY, int playerZ, double affectedDistSq, HashSet<UUID> keep){
 		FileInputStream is = null;
 		try{is = new FileInputStream(FileIO.DIR+filename);}
-		catch(FileNotFoundException e){e.printStackTrace(); return null;}
+		catch(FileNotFoundException e){/*e.printStackTrace(); */return null;}
 		final byte[] data;
 		try{data = is.readAllBytes(); is.close();}
 		catch(IOException e){e.printStackTrace(); return null;}
