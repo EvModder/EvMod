@@ -53,7 +53,6 @@ public final class RemoteServerSender{
 		if(addrResolved == null) resolveAddress();
 		if(addrResolved == null) Main.LOGGER.warn("RemoteSender address could not be resolved!: "+ADDR);
 		else{
-			Main.LOGGER.info("msg len: "+packet.length);
 			PacketHelper.sendPacket(addrResolved, PORT, udp, packet, recv, /*timeout=*/1000*5);
 			resolveAddress();
 		}
