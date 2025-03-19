@@ -32,5 +32,5 @@
 	"key.keybound.mapart_take_place": "MapArt Take/Place",
 	"key.keybound.travel_helper": "2b2t Highway Travel Helper",
 	"key.keybound.smart_inventory_craft": "Auto-craft in the 2x2",
-	"key.keybound.organize_inventory.a": "Organize Inv (EvDefault)"
+	"key.keybound.organize_inventory.EvInv": "Ev's Inv Organize"
 }

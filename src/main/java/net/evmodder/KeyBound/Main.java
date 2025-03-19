@@ -37,11 +37,13 @@ public class Main implements ClientModInitializer{
 	// Feature Ideas:
 	// Maps - smaller text for item count in slot
 	// Maps - hotkey to mass-copy (copy every map 1->64, or 1->2)
+	// Maps - highlight unlocked, ESP for unlocked in loaded item frames
 	// steal activated spawner and similar stuff from trouser-streak?
 	// /msgas Anuvin target hi - send msg from alt acc
 	// timer countdown showing time left on 2b for non prio before kick
 	// auto enchant dia sword, auto grindstone, auto rename, auto anvil combine
 	// inv-keybind-craft-latest-item,also for enchant table and grindstone (eg. spam enchanting axes)
+	// Look at Yaw+Pitch (for triggering remote redstone)
 
 	// Reference variables
 	public static final String MOD_ID = "keybound";
@@ -56,7 +58,7 @@ public class Main implements ClientModInitializer{
 
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
-	public static boolean rcTooltip, mapartDb=true, mapartDbContact;
+	public static boolean rcTooltip, mapartDb=true, mapartDbContact, colorUnlockedMaps;
 
 	private void loadConfig(){
 		//=================================== Parsing config into a map
@@ -127,8 +129,11 @@ public class Main implements ClientModInitializer{
 				case "temp_event_account": evt_account = value; break;
 
 //				case "spawner_highlight": if(!value.equalsIgnoreCase("false")) new SpawnerHighlighter(); break;
-				case "repaircost_tooltip": if(rcTooltip=!value.equalsIgnoreCase("false")) 
+				case "repaircost_tooltip": if(rcTooltip=!value.equalsIgnoreCase("false"))
 					ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC); break;
+				case "unlocked_map_red_itemstack": if(!value.equalsIgnoreCase("false"))
+					ItemTooltipCallback.EVENT.register(LockedMapTooltip::redName); break;
+				case "unlocked_map_red_itemframe": if(!value.equalsIgnoreCase("false")) colorUnlockedMaps = true;
 				case "keybind_drop_items": if(!value.equalsIgnoreCase("false")) ejectJunk = new KeybindEjectJunk(); break;
 				case "keybind_toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
 //				case "keybind_smart_inventory_craft": keybindSmartInvCraft = !value.equalsIgnoreCase("false"); break;
