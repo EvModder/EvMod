@@ -283,12 +283,12 @@ public final class Keybind2b2tHighwayTravelHelper{
 		Vec3d pos = client.player.getPos();
 		if(dx != 0){
 			mineSpots.add(bp.add(dx, 0, 0));
-			int ddz = bp.getZ() + (Math.round(pos.getZ()) > pos.getZ() ? 1 : -1);
+			int ddz = Math.round(pos.getZ()) > pos.getZ() ? 1 : -1;
 			mineSpots.add(bp.add(dx, 0, ddz));
 		}
 		if(dz != 0){
 			mineSpots.add(bp.add(0, 0, dz));
-			int ddx = bp.getX() + (Math.round(pos.getX()) > pos.getX() ? 1 : -1);
+			int ddx = Math.round(pos.getX()) > pos.getX() ? 1 : -1;
 			mineSpots.add(bp.add(ddx, 0, dz));
 		}
 		if(dx != 0 && dz != 0) mineSpots.add(bp.add(dx, 0, dz));
