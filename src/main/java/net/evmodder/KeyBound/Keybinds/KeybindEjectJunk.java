@@ -84,12 +84,15 @@ public final class KeybindEjectJunk{
 			case "glowstone_dust": case "gunpowder":
 				return junkType == JunkCategory.NETHER || junkType == JunkCategory.RAID_FARM;
 			//========== RaidFarm section ========================================
+			case "spider_eye":
+			case "stick":
+			case "sugar":
+				junkType = JunkCategory.RAID_FARM;
+				return true;
 			case "crossbow":
 			case "white_banner":
 			case "iron_axe":
 			case "glass_bottle":
-			case "spider_eye":
-			case "stick":
 			case "redstone":
 				return junkType == JunkCategory.RAID_FARM;
 			case "potion":
@@ -111,7 +114,7 @@ public final class KeybindEjectJunk{
 				if(isJunk) junkType = JunkCategory.FISHING;
 				return isJunk;
 			}
-			case "raw_cod":
+			case "cod":
 			case "salmon":
 			case "pufferfish":
 			case "leather_boots":
@@ -162,7 +165,7 @@ public final class KeybindEjectJunk{
 				client.interactionManager.clickSlot(syncId, i, 1, SlotActionType.THROW, client.player);
 			}
 		}
-		junkType = null;
+		//junkType = null;
 	}
 
 	public KeybindEjectJunk(){
