@@ -10,6 +10,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
@@ -28,6 +29,15 @@ public final class KeybindInventoryOrganize{
 		return -1;
 	}
 
+	private void swapSlots(PlayerScreenHandler psh, boolean[] emptySlots, int i, int j){
+		final boolean tmpEmpty = emptySlots[i];
+		emptySlots[i] = emptySlots[j];
+		emptySlots[j] = tmpEmpty;
+		final ItemStack tempStack = psh.getSlot(i).getStack().copy();
+		psh.getSlot(i).setStack(psh.getSlot(j).getStack());
+		psh.getSlot(j).setStack(tempStack);
+	}
+
 	// NOTE: BREAKS for various unsupported shift-click cases (current support: armorslot->inv, inv-hotbar->inv-upper)
 	private int simulateShiftClick(PlayerScreenHandler psh, boolean[] emptySlots, boolean fromArmor, int i){
 		final ItemStack stackToMove = psh.getSlot(i).getStack();
@@ -35,7 +45,7 @@ public final class KeybindInventoryOrganize{
 			if(j == i) continue;
 			if(emptySlots[j]){
 				psh.getSlot(j).setStack(stackToMove.copy());
-				stackToMove.setCount(0);
+				psh.getSlot(i).setStack(new ItemStack(Items.AIR));
 				emptySlots[j] = false;
 				emptySlots[i] = true;
 				return 0;
@@ -55,84 +65,141 @@ public final class KeybindInventoryOrganize{
 		return stackToMove.getCount();
 	}
 
+	public void checkDoneSlots(PlayerScreenHandler psh, boolean[] doneSlots){
+		//HashSet<Integer> plannedSlots = new HashSet<>();
+		boolean[] plannedSlots = Arrays.copyOf(doneSlots, doneSlots.length);
+		for(Pair<Integer, Identifier> p : layoutMap){
+			final int dstSlot = p.a == -106 ? 45 : p.a;
+			if(plannedSlots[dstSlot]) continue;
+			final String name = getName(psh.getSlot(dstSlot).getStack());
+			if(p.b.getPath().equals(name)){
+				plannedSlots[dstSlot] = true;
+				doneSlots[dstSlot] = true;
+			}
+			else{
+				final int srcSlot = findSlotWithItem(psh, p.b.getPath(), plannedSlots);
+				if(srcSlot == -1) continue;
+				plannedSlots[dstSlot] = true;
+				plannedSlots[srcSlot] = true;
+				//fakeSwapSlots(srcSlot, dstSlot);
+			}
+		}
+	}
+
+	private boolean isSorting = false;
 	private void organizeInventory(){
 		Main.LOGGER.info("InvOrganize: keybind pressed");
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof InventoryScreen is)){Main.LOGGER.warn("InvOrganize: not in InventoryScreen"); return;}
+
+		if(isSorting) return;
+		isSorting = true;
 
 		PlayerScreenHandler psh = is.getScreenHandler();
 		boolean[] emptySlots = new boolean[46];
 		boolean[] doneSlots = new boolean[46];
 		for(int i=0; i<46; ++i) emptySlots[i] = psh.getSlot(i).getStack() == null || psh.getSlot(i).getStack().isEmpty();
 
-		for(Pair<Integer, Identifier> p : layoutMap){
-			final int dstSlot = p.a == -106 ? 45 : p.a;
-			if(doneSlots[dstSlot]) continue;
-			if(p.b.getPath().equals(getName(psh.getSlot(dstSlot).getStack()))) doneSlots[dstSlot]=true;
-		}
+		checkDoneSlots(psh, doneSlots);
 
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
-
+		boolean[] plannedSlots = Arrays.copyOf(doneSlots, doneSlots.length);
 		// Equip armor
 		for(Pair<Integer, Identifier> p : layoutMap){
-			if(p.a < 5 || p.a > 8) continue; // Skip non-armor slots
-			if(doneSlots[p.a]) continue;
-			if(p.b.getPath().equals(getName(psh.getSlot(p.a).getStack()))){doneSlots[p.a]=true; continue;}
+			final int dstSlot = p.a == -106 ? 45 : p.a;
+			if(plannedSlots[dstSlot]) continue;
+			if(p.b.getPath().equals(getName(psh.getSlot(dstSlot).getStack()))){
+				plannedSlots[dstSlot] = doneSlots[dstSlot] = true;
+				continue;
+			}
+			else{
+				final int srcSlot = findSlotWithItem(psh, p.b.getPath(), plannedSlots);
+				if(srcSlot == -1) continue;
+				plannedSlots[dstSlot] = plannedSlots[srcSlot] = true;
+			}
+
+			if(dstSlot < 5 || dstSlot > 8) continue; // Skip non-armor slots
 			final int srcSlot = findSlotWithItem(psh, p.b.getPath(), doneSlots);
 			if(srcSlot == -1) continue;
-			if(!psh.getSlot(p.a).getStack().isEmpty()){
+			if(!psh.getSlot(dstSlot).getStack().isEmpty()){
 				if(simulateShiftClick(psh, emptySlots, /*fromArmor=*/true, p.a) != 0){
-					Main.LOGGER.warn("InvOrganize: Unable to equip incorrect armor - no room in inventory!");
-					return;
+					Main.LOGGER.warn("InvOrganize: Unable to unequip incorrect armor - no room in inventory!");
+					isSorting = false; return;
 				}
+				//client.player.sendMessage(Text.of("Click: Unequipping armor"), false);
 				clicks.add(new ClickEvent(p.a, 0, SlotActionType.QUICK_MOVE));
 			}
+			//client.player.sendMessage(Text.of("Click: "+dstSlot+" Equipping armor"), false);
 			clicks.add(new ClickEvent(srcSlot, 0, SlotActionType.QUICK_MOVE));
-			emptySlots[p.a] = false;
-			emptySlots[srcSlot] = true;
-			doneSlots[p.a] = true;
+			swapSlots(psh, emptySlots, srcSlot, dstSlot);
+			doneSlots[dstSlot] = true;
+			plannedSlots[srcSlot] = false;
 		}
-		// Free up hotbar slots
+		checkDoneSlots(psh, doneSlots);
+
+		// Sort items which are starting FROM the hotbar
+		plannedSlots = Arrays.copyOf(doneSlots, doneSlots.length);
 		for(Pair<Integer, Identifier> p : layoutMap){
 			final int dstSlot = p.a == -106 ? 45 : p.a;
-			if(doneSlots[dstSlot]) continue;
-			if(p.b.getPath().equals(getName(psh.getSlot(p.a).getStack()))){doneSlots[p.a]=true; continue;}
-			if(dstSlot >= 36) continue; // Sort items going INTO hotbar/offhand last
+//			if(dstSlot >= 36) usedHotbarAndOffhandSlots[dstSlot-36] = true;
+			if(plannedSlots[dstSlot]) continue;
+			if(p.b.getPath().equals(getName(psh.getSlot(dstSlot).getStack()))){
+				plannedSlots[dstSlot] = doneSlots[dstSlot] = true;
+				continue;
+			}
+			else{
+				final int srcSlot = findSlotWithItem(psh, p.b.getPath(), plannedSlots);
+				if(srcSlot == -1) continue;
+				plannedSlots[dstSlot] = plannedSlots[srcSlot] = true;
+			}
+
 			final int srcSlot = findSlotWithItem(psh, p.b.getPath(), doneSlots);
 			//if(srcSlot == -1) continue;
 			if(srcSlot < 36) continue; // We want items coming FROM hotbar/offhand
+			//client.player.sendMessage(Text.of("Click: "+dstSlot+" Hotbar->Anywhere (sorting"), false);
 			if(srcSlot == 45) clicks.add(new ClickEvent(dstSlot, 40, SlotActionType.SWAP));
 			else clicks.add(new ClickEvent(dstSlot, srcSlot-36, SlotActionType.SWAP));
 
-			final ItemStack tempStack = psh.getSlot(srcSlot).getStack().copy();
-			psh.getSlot(srcSlot).setStack(psh.getSlot(dstSlot).getStack());
-			psh.getSlot(dstSlot).setStack(tempStack);
-			final boolean tempEmpty = emptySlots[srcSlot];
-			emptySlots[srcSlot] = emptySlots[dstSlot];
-			emptySlots[dstSlot] = tempEmpty;
+			swapSlots(psh, emptySlots, srcSlot, dstSlot);
 			doneSlots[dstSlot] = true;
+			plannedSlots[srcSlot] = false;
 		}
+		checkDoneSlots(psh, doneSlots);
+
 		// Remove junk from hotbar slots
 		if(CLEAN_UNUSED_HOTBAR_SLOTS){
-			for(int i=36; i<45; ++i) if(!doneSlots[i] && !emptySlots[i]){
+			for(int i=36; i<45; ++i) if(!doneSlots[i] && !emptySlots[i]/* && !usedHotbarAndOffhandSlots[i-36]*/){
 				final int originalCount = psh.getSlot(i).getStack().getCount();
 				if(simulateShiftClick(psh, emptySlots, /*fromArmor=*/false, i) < originalCount){
+					//client.player.sendMessage(Text.of("Click: "+i+" Hotbar->UpperInv (cleaning)"), false);
 					clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
 				}
 			}
 		}
+		checkDoneSlots(psh, doneSlots);
+
 		// Sort upper-inventory items
+		plannedSlots = Arrays.copyOf(doneSlots, doneSlots.length);
 		for(Pair<Integer, Identifier> p : layoutMap){
 			final int dstSlot = p.a == -106 ? 45 : p.a;
-			if(doneSlots[dstSlot]) continue;
-			if(p.b.getPath().equals(getName(psh.getSlot(p.a).getStack()))){doneSlots[p.a]=true; continue;}
+			if(plannedSlots[dstSlot]) continue;
+			if(p.b.getPath().equals(getName(psh.getSlot(dstSlot).getStack()))){
+				plannedSlots[dstSlot] = doneSlots[dstSlot] = true;
+				continue;
+			}
+			else{
+				final int srcSlot = findSlotWithItem(psh, p.b.getPath(), plannedSlots);
+				if(srcSlot == -1) continue;
+				plannedSlots[dstSlot] = plannedSlots[srcSlot] = true;
+			}
+
 			if(dstSlot >= 36) continue; // Sort items going INTO hotbar/offhand last
 			final int srcSlot = findSlotWithItem(psh, p.b.getPath(), doneSlots);
 			if(srcSlot == -1) continue;
 
-			int hb = 40;
-			// if dstSlot is currently empty, attempt to pick an empty hotbar/offhand slot to swap with
-			if(emptySlots[dstSlot]/* && !emptySlots[45]*/) for(int i=0; i<9; ++i) if(emptySlots[i+36]){hb = i; break;}
+			// Attempt to pick an empty hotbar/offhand slot to swap with
+			int hb = 40; for(int i=0; i<9; ++i) if(emptySlots[i+36]){hb = i; break;}
+			//client.player.sendMessage(Text.of("Click: "+dstSlot+" UpperInv->Hotbar->UpperInv"), false);
 			clicks.add(new ClickEvent(srcSlot, hb, SlotActionType.SWAP));
 			clicks.add(new ClickEvent(dstSlot, hb, SlotActionType.SWAP));
 			if(!emptySlots[dstSlot] || !emptySlots[hb == 40 ? 45 : hb+36]){
@@ -140,38 +207,42 @@ public final class KeybindInventoryOrganize{
 				// Put back the displaced hotbar/offhand item
 				clicks.add(new ClickEvent(srcSlot, hb, SlotActionType.SWAP));
 			}
-			final ItemStack tempStack = psh.getSlot(srcSlot).getStack().copy();
-			psh.getSlot(srcSlot).setStack(psh.getSlot(dstSlot).getStack());
-			psh.getSlot(dstSlot).setStack(tempStack);
-			final boolean tempEmpty = emptySlots[srcSlot];
-			emptySlots[srcSlot] = emptySlots[dstSlot];
-			emptySlots[dstSlot] = tempEmpty;
+			swapSlots(psh, emptySlots, srcSlot, dstSlot);
 			doneSlots[dstSlot] = true;
+			plannedSlots[srcSlot] = false;
 		}
+		checkDoneSlots(psh, doneSlots);
+
 		// Fill hotbar slots
 		for(Pair<Integer, Identifier> p : layoutMap){
 			final int dstSlot = p.a == -106 ? 45 : p.a;
 			if(doneSlots[dstSlot]) continue;
-			if(p.b.getPath().equals(getName(psh.getSlot(p.a).getStack()))){doneSlots[p.a]=true; continue;}
+			//if(needEarlier.contains(p.b.getPath())) continue;
+			if(p.b.getPath().equals(getName(psh.getSlot(dstSlot).getStack()))){doneSlots[dstSlot]=true; continue;}
+			//needEarlier.add(p.b.getPath());
+
 			if(dstSlot < 36) continue; // items going INTO hotbar/offhand
 			final int srcSlot = findSlotWithItem(psh, p.b.getPath(), doneSlots);
 			if(srcSlot == -1) continue;
+			//client.player.sendMessage(Text.of("Click: "+dstSlot+" UpperInv->Hotbar"), false);
 			if(dstSlot == 45) clicks.add(new ClickEvent(srcSlot, 40, SlotActionType.SWAP));
 			else clicks.add(new ClickEvent(srcSlot, dstSlot-36, SlotActionType.SWAP));
 
-			final ItemStack tempStack = psh.getSlot(srcSlot).getStack().copy();
-			psh.getSlot(srcSlot).setStack(psh.getSlot(dstSlot).getStack());
-			psh.getSlot(dstSlot).setStack(tempStack);
-			final boolean tempEmpty = emptySlots[srcSlot];
-			emptySlots[srcSlot] = emptySlots[dstSlot];
-			emptySlots[dstSlot] = tempEmpty;
+			swapSlots(psh, emptySlots, srcSlot, dstSlot);
 			doneSlots[dstSlot] = true;
+			//needEarlier.remove(p.b.getPath());
 		}
 		final int numClicks = clicks.size();
-		InventoryUtils.executeClicks(client, clicks, /*MILLIS_BETWEEN_CLICKS=*/100, /*MAX_CLICKS_PER_SECOND=*/5,
-				_->true,
+		InventoryUtils.executeClicks(client, clicks, /*MILLIS_BETWEEN_CLICKS=*/55, /*MAX_CLICKS_PER_SECOND=*/19,
+				//_->true,
+				_->{
+					//client.player.sendMessage(Text.of("click "+c.slotId()+" "+c.button()+" "+c.actionType()), false);
+					return true;
+				},
 				()->{
+					//client.player.sendMessage(Text.of("InvOrganize: done! clicks required: "+numClicks), false);
 					Main.LOGGER.info("InvOrganize: done! clicks required: "+numClicks);
+					isSorting = false;
 				});
 	}
 

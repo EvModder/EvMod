@@ -20,6 +20,7 @@ public class InventoryUtils{
 	{
 		if(clicks.isEmpty()){
 			Main.LOGGER.warn("executeClicks() called with an empty ClickEvent list");
+			onComplete.run();
 			return;
 		}
 		if(MAX_CLICKS_PER_SECOND < 1 || MILLIS_BETWEEN_CLICKS < 0){
