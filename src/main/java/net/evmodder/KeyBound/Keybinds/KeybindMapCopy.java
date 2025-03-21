@@ -169,7 +169,8 @@ public final class KeybindMapCopy{
 		if(!bulk && blankMaps < numMapArtsToCopy){Main.LOGGER.warn("MapCopy: not enough blank maps, need:"+numMapArtsToCopy+", have:"+blankMaps); return;}
 		//
 		// Move blank maps to the crafting 2x2
-		currentBlankMapsInCrafter = getBlankMapsInto2x2(psh, hotbarButton, blankMapCraftingSlot, /*needed=*/1, currentBlankMapsInCrafter, clicks, blankMapStackableCapacity);
+		currentBlankMapsInCrafter =
+				getBlankMapsInto2x2(psh, hotbarButton, blankMapCraftingSlot, /*needed=*/1, currentBlankMapsInCrafter, clicks, blankMapStackableCapacity);
 		if(currentBlankMapsInCrafter < 1){Main.LOGGER.warn("No blank maps found in inventory"); return;}
 		Main.LOGGER.info("Initial blank maps in crafter: "+currentBlankMapsInCrafter);
 		//
@@ -190,7 +191,8 @@ public final class KeybindMapCopy{
 			if(iHotbarButton != -1 && (!bulk || canBulkCopy || FORCE_HOTBAR_SWAPS) && (iHotbarButton != 40 || stack.getCount() == 1)){
 				int amountToCraft = bulk && canBulkCopy ? stack.getCount() : 1;
 				if(bulk && currentBlankMapsInCrafter < amountToCraft){
-					currentBlankMapsInCrafter = getBlankMapsInto2x2(psh, -1, blankMapCraftingSlot, amountToCraft, currentBlankMapsInCrafter, clicks, blankMapStackableCapacity);
+					currentBlankMapsInCrafter =
+							getBlankMapsInto2x2(psh, -1, blankMapCraftingSlot, amountToCraft, currentBlankMapsInCrafter, clicks, blankMapStackableCapacity);
 					if(currentBlankMapsInCrafter < 1){Main.LOGGER.info("MapCopyBulk(swaps): Ran out of blank maps"); break;}
 					amountToCraft = Math.min(amountToCraft, currentBlankMapsInCrafter);
 				}
@@ -211,7 +213,8 @@ public final class KeybindMapCopy{
 				boolean clickBulk = COPY_PRECISE_64 && bulk && !fullBulk && !halfBulk/* && stack.getCount() > stack.getMaxCount() - stack.getCount()/2*/;//math already implied
 				int amountToCraft = fullBulk ? stack.getCount() : halfBulk ? stack.getCount()/2 : clickBulk ? stack.getMaxCount()-stack.getCount() : 1;
 				if(currentBlankMapsInCrafter < amountToCraft){ // should only occur in bulk mode
-					currentBlankMapsInCrafter = getBlankMapsInto2x2(psh, -1, blankMapCraftingSlot, amountToCraft, currentBlankMapsInCrafter, clicks, blankMapStackableCapacity);
+					currentBlankMapsInCrafter =
+							getBlankMapsInto2x2(psh, -1, blankMapCraftingSlot, amountToCraft, currentBlankMapsInCrafter, clicks, blankMapStackableCapacity);
 					if(currentBlankMapsInCrafter < 1){Main.LOGGER.info("MapCopyBulk: Ran out of blank maps"); break;}
 					if(currentBlankMapsInCrafter < amountToCraft){ // Implies amountToCraft > currentBlankMapsInCrafter
 						if(fullBulk){amountToCraft = stack.getCount()/2; fullBulk=false; halfBulk=true;}
