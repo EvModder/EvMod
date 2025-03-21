@@ -21,7 +21,7 @@ public final class KeybindMapLoad{
 		return FilledMapItem.getMapState(stack, world) == null;
 	}
 
-	//TODO: use shift-clicks instead of hotbar swaps (basically, MapStealStore but only for unloaded maps, and keep track of which)
+	//TODO: Consider shift-clicks instead of hotbar swaps (basically, MapMove but only for unloaded maps, and keep track of which)
 	private boolean ongoingLoad;
 	private long lastLoad;
 	private final long loadCooldown = 500L;
