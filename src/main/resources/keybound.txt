@@ -56,6 +56,7 @@ remote_port: 14441
 
 
 #========== Chat/commands ==========#
+join_messages: [/toggledeathmsgs]
 #chat_msg.meow: meow :3
 chat_msg.rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost
 

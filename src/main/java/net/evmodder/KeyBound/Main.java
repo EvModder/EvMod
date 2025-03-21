@@ -42,6 +42,7 @@ public class Main implements ClientModInitializer{
 	// /msgas Anuvin target hi - send msg from alt acc
 	// timer countdown showing time left on 2b for non prio before kick
 	// auto enchant dia sword, auto grindstone, auto rename, auto anvil combine
+	// auto enchant bulk misc items
 	// inv-keybind-craft-latest-item,also for enchant table and grindstone (eg. spam enchanting axes)
 	// Look at Yaw+Pitch (for triggering remote redstone)
 
@@ -113,6 +114,7 @@ public class Main implements ClientModInitializer{
 			else if(key.startsWith("remote_msg.")) remoteMessages.put(key, value);
 			else if(key.startsWith("organize_inventory.")) new KeybindInventoryOrganize(key, value.replaceAll("\\s",""));
 			else switch(key){
+				// Database
 				case "client_id": clientId = Integer.parseInt(value); break;
 				case "client_key": clientKey = value; break;
 				case "remote_addr": remoteAddr = value; break;
@@ -124,21 +126,15 @@ public class Main implements ClientModInitializer{
 				case "mapart_database": mapartDb = !value.equalsIgnoreCase("false"); break;
 				case "mapart_database_share_contact": mapartDbContact = !value.equalsIgnoreCase("false"); break;
 
-				case "temp_event_broadcast": if(value.contains(",")) temp_evt_msgs = value.substring(1, value.length()-1).split(","); break;
+				case "join_messages": if(value.startsWith("[")) new SendOnServerJoin(value.substring(1, value.length()-1).split(",")); break;
+				case "temp_event_broadcast": if(value.startsWith("[")) temp_evt_msgs = value.substring(1, value.length()-1).split(","); break;
 				case "temp_event_timestamp": temp_evt_ts = Long.parseLong(value); break;
 				case "temp_event_account": evt_account = value; break;
 
 //				case "spawner_highlight": if(!value.equalsIgnoreCase("false")) new SpawnerHighlighter(); break;
-				case "repaircost_tooltip": if(rcTooltip=!value.equalsIgnoreCase("false"))
-					ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC); break;
-				case "unlocked_map_red_itemstack": if(!value.equalsIgnoreCase("false"))
-					ItemTooltipCallback.EVENT.register(LockedMapTooltip::redName); break;
-				case "unlocked_map_red_itemframe": if(!value.equalsIgnoreCase("false")) colorUnlockedMaps = true;
-				case "keybind_drop_items": if(!value.equalsIgnoreCase("false")) ejectJunk = new KeybindEjectJunk(); break;
-				case "keybind_toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
-//				case "keybind_smart_inventory_craft": keybindSmartInvCraft = !value.equalsIgnoreCase("false"); break;
-				case "keybind_smart_inventory_craft": if(!value.equalsIgnoreCase("false")) new KeybindSmartInvCraft(); break;
-				case "keybind_2b2t_highway_travel_helper": keybindHighwayTravelHelper = !value.equalsIgnoreCase("false"); break;
+				case "repaircost_tooltip": if(rcTooltip=!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC); break;
+				case "unlocked_map_red_itemstack": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(LockedMapTooltip::redName); break;
+				case "unlocked_map_red_itemframe": if(!value.equalsIgnoreCase("false")) colorUnlockedMaps = true; break;
 				case "keybind_mapart_load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
 				case "keybind_mapart_take_from_shulker": keybindMapArtTake = !value.equalsIgnoreCase("false"); break;
 				case "keybind_mapart_copy_in_inventory": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
@@ -147,6 +143,12 @@ public class Main implements ClientModInitializer{
 				case "mapart_placement_helper_use_image": mapPlaceHelperByImg=true; break;
 //				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
 //				case "millis_between_clicks": millis_between_clicks = Integer.parseInt(value); break;
+
+				case "keybind_drop_items": if(!value.equalsIgnoreCase("false")) ejectJunk = new KeybindEjectJunk(); break;
+				case "keybind_toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
+//				case "keybind_smart_inventory_craft": keybindSmartInvCraft = !value.equalsIgnoreCase("false"); break;
+				case "keybind_smart_inventory_craft": if(!value.equalsIgnoreCase("false")) new KeybindSmartInvCraft(); break;
+				case "keybind_2b2t_highway_travel_helper": keybindHighwayTravelHelper = !value.equalsIgnoreCase("false"); break;
 				case "scroll_order": {
 					final String listOfListsStr = value.replaceAll("\\s","");
 					List<String[]> colorLists = Arrays.stream(
@@ -164,8 +166,8 @@ public class Main implements ClientModInitializer{
 			remoteSender = new RemoteServerSender(remoteAddr, remotePort, clientId, clientKey, remoteMessages);
 		}
 		if(keybindMapArtLoad) new KeybindMapLoad(/*MAX_CLICKS_PER_SECOND=*/999);
-		if(keybindMapArtCopy) new KeybindMapCopy(/*MILLIS_BETWEEN_CLICKS=*/10);
-		if(keybindMapArtTake) new KeybindMapStealStore(/*MILLIS_BETWEEN_CLICKS=*/10);
+		if(keybindMapArtCopy) new KeybindMapCopy(/*MILLIS_BETWEEN_CLICKS=*/20);
+		if(keybindMapArtTake) new KeybindMapMove(/*MILLIS_BETWEEN_CLICKS=*/20);
 		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg);
 		if(keybindHighwayTravelHelper) new Keybind2b2tHighwayTravelHelper(ejectJunk);
 
