@@ -99,7 +99,7 @@ public class Main implements ClientModInitializer{
 		int clientId=0; String clientKey=null;
 		String remoteAddr=null; int remotePort=0;
 		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false,
-				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtTake=false;
+				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false;
 //		int clicks_per_gt=36, millis_between_clicks=50;
 		boolean mapPlaceHelper=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false;
 		boolean keybindHighwayTravelHelper=false;
@@ -136,7 +136,7 @@ public class Main implements ClientModInitializer{
 				case "unlocked_map_red_itemstack": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(LockedMapTooltip::redName); break;
 				case "unlocked_map_red_itemframe": if(!value.equalsIgnoreCase("false")) colorUnlockedMaps = true; break;
 				case "keybind_mapart_load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
-				case "keybind_mapart_take_from_shulker": keybindMapArtTake = !value.equalsIgnoreCase("false"); break;
+				case "keybind_mapart_take_from_shulker": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
 				case "keybind_mapart_copy_in_inventory": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
 				case "mapart_placement_helper": mapPlaceHelper=true; break;
 				case "mapart_placement_helper_use_name": mapPlaceHelperByName=true; break;
@@ -167,7 +167,7 @@ public class Main implements ClientModInitializer{
 		}
 		if(keybindMapArtLoad) new KeybindMapLoad(/*MAX_CLICKS_PER_SECOND=*/999);
 		if(keybindMapArtCopy) new KeybindMapCopy(/*MILLIS_BETWEEN_CLICKS=*/20);
-		if(keybindMapArtTake) new KeybindMapMove(/*MILLIS_BETWEEN_CLICKS=*/20);
+		if(keybindMapArtMove) new KeybindMapMove(/*MILLIS_BETWEEN_CLICKS=*/20);
 		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg);
 		if(keybindHighwayTravelHelper) new Keybind2b2tHighwayTravelHelper(ejectJunk);
 

@@ -14,12 +14,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
-import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.item.FilledMapItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.map.MapState;
-import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 
@@ -45,15 +40,6 @@ public abstract class MixinEntityRenderer{
 
 	@Inject(method = "hasLabel", at = @At("HEAD"), cancellable = true)
 	public void test(Entity e, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
-		if(Main.colorUnlockedMaps && e instanceof ItemFrameEntity ife){
-			ItemStack stack = ife.getHeldItemStack();
-			if(stack == null || stack.isEmpty() || !Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")) return;
-			MapState state = FilledMapItem.getMapState(stack, e.getWorld());
-			if(state == null || state.locked) return;
-			e.setCustomName(stack.getName().copy().withColor(14692709));
-			cir.setReturnValue(true);
-		}
-
 		if(Main.epearlLookup == null) return; // Feature is disabled
 		if(client.options.hudHidden) return; // HUD is hidden
 		if(e instanceof ProjectileEntity == false) return;
@@ -109,6 +95,6 @@ public abstract class MixinEntityRenderer{
 		e.setCustomName(Text.literal(name));
 		if(!isLookngAt(e)) return;
 		cir.setReturnValue(true);
-		cir.cancel();
+//		cir.cancel();
 	}
 }

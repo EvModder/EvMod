@@ -30,7 +30,7 @@ public final class KeybindMapMove{
 
 	private boolean ongoingStealStore;
 	private long lastStealStore;
-	private final long stealStoreCooldown = 500L;
+	private final long stealStoreCooldown = 500;
 	private final void loadMapArtFromShulker(final int MILLIS_BETWEEN_CLICKS){
 		if(ongoingStealStore){Main.LOGGER.warn("MapMove cancelled: Already ongoing"); return;}
 		//
