@@ -4,12 +4,15 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"AccessorBoundKey",
-		"AccessorTimesPressed",
-		"MixinKeybinding",
-		"MixinEntityRenderer",
 		"AccessorProjectileEntity",
+		"AccessorTimesPressed",
+		//"MixinClientPlayerInteractionManager",
+		"MixinClientWorld",
+		"MixinEntityRenderer",
 		"MixinHandledScreen",
-		"MixinClientWorld"
+		//"MixinInGameHud",
+		"MixinItemFrameRenderer",
+		"MixinKeybinding"
 	],
 	"injectors": {
 		"defaultRequire": 1
