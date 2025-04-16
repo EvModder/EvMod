@@ -51,13 +51,13 @@ public abstract class MixinEntityRenderer{
 		XYZ xyz = new XYZ(e.getBlockX(), e.getBlockY()/4, e.getBlockZ());
 		HashMap<String, HashSet<Integer>> pearls = pearlsAtXYZ.get(xyz);
 		if(pearls == null){
-			xyz = new XYZ(xyz.x(), xyz.y()+1, xyz.z());
+			xyz = new XYZ(xyz.x(), xyz.y()+1, xyz.z());//try one block above
 			pearls = pearlsAtXYZ.get(xyz);
 			if(pearls == null){
-				xyz = new XYZ(xyz.x(), xyz.y()-2, xyz.z());
+				xyz = new XYZ(xyz.x(), xyz.y()-2, xyz.z());//try one block below
 				pearls = pearlsAtXYZ.get(xyz);
 				if(pearls == null){
-					xyz = new XYZ(xyz.x(), xyz.y()+1, xyz.z());
+					xyz = new XYZ(xyz.x(), xyz.y()+1, xyz.z());//restore to original Y and add pearl
 					pearls = new HashMap<>(1);
 					if(pearlsAtXYZ.isEmpty()){
 						new Timer().scheduleAtFixedRate(new TimerTask(){@Override public void run(){

@@ -23,7 +23,7 @@ import javax.crypto.spec.SecretKeySpec;
 import jdk.net.ExtendedSocketOptions;
 
 public final class PacketHelper{
-	private static final int MAX_PACKET_SIZE_SEND = 4+16+128*128; // 2nd biggest: 4 + [4+4+8+16+16]
+	private static final int MAX_PACKET_SIZE_SEND = 4+16+128*128; //=16384. 2nd biggest: 4 + [4+4+8+16+16]
 	private static final int MAX_PACKET_SIZE_RECV = 16;
 //	private static final int BIND_ATTEMPTS = 5;
 //	private static final int BIND_REATTEMPT_DELAY = 100;
