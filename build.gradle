@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version "${fabric_loom_version}"
+    id 'fabric-loom' version '1.10-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -8,7 +8,6 @@ group = project.maven_group
 compileJava.options.encoding = 'UTF-8'
 
 base {
-	//archivesName = project.archives_base_name
 	archivesName = project.archives_base_name + '-' + project.minecraft_version
 }
 
@@ -34,7 +33,7 @@ processResources {
 	inputs.property "version", project.version
 
 	filesMatching("fabric.mod.json") {
-		expand "version": project.version
+		expand "version": inputs.properties.version
 	}
 }
 
@@ -52,8 +51,10 @@ java {
 }
 
 jar {
+	inputs.property "archivesName", project.base.archivesName
+
 	from("LICENSE") {
-		rename { "${it}_${project.base.archivesName.get()}"}
+		rename { "${it}_${inputs.properties.archivesName}"}
 	}
 }
 
