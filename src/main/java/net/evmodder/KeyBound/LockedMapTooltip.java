@@ -9,6 +9,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.map.MapState;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 
 final class LockedMapTooltip{
 	private static final boolean isUnlockedMap(ItemStack item, TooltipContext context){
@@ -28,10 +29,10 @@ final class LockedMapTooltip{
 		ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
 		if(container != null){
 			if(container.stream().anyMatch(i -> isUnlockedMap(i, context))){
-				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(14692709)));
+				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(14692709).formatted(Formatting.BOLD)));
 			}
 			else if(container.stream().anyMatch(i -> isUnnamedMap(i))){
-				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(15652823)));
+				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(15652823).formatted(Formatting.BOLD)));
 			}
 			return;
 		}
