@@ -76,6 +76,7 @@ public abstract class MixinClientWorld{
 			// Only reached if mapsToSave.size()==1
 			new Timer().schedule(new TimerTask(){@Override public void run(){
 				synchronized(mapsSaved){
+					if(!mapsSaved.containsKey(saveAddr)) mapsSaved.put(saveAddr, new HashSet<UUID>());
 					mapsSaved.get(saveAddr).addAll(mapsToSave);
 					final String str = mapsSaved.entrySet().stream()
 							.map(e -> e.getKey()+":"+e.getValue().stream()
