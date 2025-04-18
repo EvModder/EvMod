@@ -16,7 +16,7 @@ public final class KeybindMapCopy{
 	private final boolean BARF_CLOGS_FOR_MAP_COPY = false, PREFER_HOTBAR_SWAPS = true, FORCE_HOTBAR_SWAPS = false, COPY_PRECISE_64 = true;
 	private static boolean ongoingCopy;
 	private static long lastCopy;
-	private static final long copyCooldown = 250L;
+	private static final long copyCooldown = 250l;
 
 	private boolean isMapArt(ItemStack stack){
 		if(stack == null || stack.isEmpty()) return false;
@@ -82,11 +82,11 @@ public final class KeybindMapCopy{
 	private void copyMapArtInInventory(final int MILLIS_BETWEEN_CLICKS, Boolean bulk){
 		if(ongoingCopy){Main.LOGGER.warn("MapCopy: Already ongoing"); return;}
 		//
+		MinecraftClient client = MinecraftClient.getInstance();
+		if(!(client.currentScreen instanceof InventoryScreen is)){Main.LOGGER.warn("MapCopy: not in InventoryScreen"); return;}
 		final long ts = System.currentTimeMillis();
 		if(ts - lastCopy < copyCooldown){Main.LOGGER.warn("MapCopy: In cooldown"); return;}
 		lastCopy = ts;
-		MinecraftClient client = MinecraftClient.getInstance();
-		if(!(client.currentScreen instanceof InventoryScreen is)){Main.LOGGER.warn("MapCopy: not in InventoryScreen"); return;}
 		//
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		PlayerScreenHandler psh = is.getScreenHandler();

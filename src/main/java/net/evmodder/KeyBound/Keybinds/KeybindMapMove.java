@@ -29,17 +29,17 @@ public final class KeybindMapMove{
 //	}
 
 	private boolean ongoingStealStore;
-	private long lastStealStore;
-	private final long stealStoreCooldown = 500;
+	private long lastStealStore = 0;
+	private final long stealStoreCooldown = 250l;
 	private final void loadMapArtFromShulker(final int MILLIS_BETWEEN_CLICKS){
 		if(ongoingStealStore){Main.LOGGER.warn("MapMove cancelled: Already ongoing"); return;}
 		//
-		final long ts = System.currentTimeMillis();
-		if(ts - lastStealStore < stealStoreCooldown){Main.LOGGER.warn("MapMove cancelled: Cooldown"); return;}
-		lastStealStore = ts;
-		//
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof ShulkerBoxScreen sbs)){Main.LOGGER.warn("MapMove cancelled: Not in ShulkerBoxScreen"); return;}
+		//
+		final long ts = System.currentTimeMillis();
+		if(ts - lastStealStore < stealStoreCooldown){Main.LOGGER.warn("MapMove cancelled: Cooldown, "+ts+","+lastStealStore+","+stealStoreCooldown); return;}
+		lastStealStore = ts;
 		//
 		ShulkerBoxScreenHandler sh = sbs.getScreenHandler();
 		int numInInv = 0, emptySlotsInv = 0, sameCountInv = 0;
@@ -78,7 +78,7 @@ public final class KeybindMapMove{
 		}
 		if(numInInv == 0){
 			moveToShulk = false;
-			if(numInShulk > emptySlotsInv) Main.LOGGER.warn("MapMove cancelled: Not enough empty slots in inventory"); return;
+			if(numInShulk > emptySlotsInv){Main.LOGGER.warn("MapMove cancelled: Not enough empty slots in inventory"); return;}
 		}
 		else if(numInInv > emptySlotsShulk){Main.LOGGER.warn("MapMove cancelled: Not enough empty slots in shulker"); return;}
 		//
@@ -87,19 +87,20 @@ public final class KeybindMapMove{
 		if(moveToShulk) for(int i=27; i<63; ++i){
 			if(!isMapArt(sh.getSlot(i).getStack())) continue;
 			if(sameCountInv > 1){
-				clicks.add(new ClickEvent(sh.syncId, 0, SlotActionType.PICKUP)); // left-click: pickup all
-				clicks.add(new ClickEvent(sh.syncId, 1, SlotActionType.PICKUP)); // right-click: put back one
+				Main.LOGGER.warn("MapMove: pickup 1");
+				//clicks.add(new ClickEvent(sh.syncId, 0, SlotActionType.PICKUP)); // left-click: pickup all
+				clicks.add(new ClickEvent(sh.syncId, i, 1, SlotActionType.PICKUP)); // right-click: put back one
 			}
 			clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.QUICK_MOVE)); // shift-click: all in slot to shulker
 			if(sameCountInv > 1){
-				clicks.add(new ClickEvent(sh.syncId, 0, SlotActionType.PICKUP)); // left-click: put back one on cursor
+				clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.PICKUP)); // left-click: put back one on cursor
 			}
 		}
 		else for(int i=27; i>=0; --i){
 			if(isMapArt(sh.getSlot(i).getStack())) clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.QUICK_MOVE));
 		}
 
-		InventoryUtils.executeClicks(client, clicks, MILLIS_BETWEEN_CLICKS, /*MAX_CLICKS_PER_SECOND=*/20,
+		InventoryUtils.executeClicks(client, clicks, MILLIS_BETWEEN_CLICKS, /*MAX_CLICKS_PER_SECOND=*/27*3,
 				_->true,
 				()->{
 					Main.LOGGER.info("MapMove: DONE!");
