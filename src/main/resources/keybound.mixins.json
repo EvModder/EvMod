@@ -12,7 +12,8 @@
 		"MixinHandledScreen",
 		//"MixinInGameHud",
 		"MixinItemFrameRenderer",
-		"MixinKeybinding"
+		"MixinKeybinding",
+		"MixinScreenHandler"
 	],
 	"injectors": {
 		"defaultRequire": 1

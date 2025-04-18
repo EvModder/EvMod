@@ -36,11 +36,10 @@ public class Main implements ClientModInitializer{
 
 	// Feature Ideas:
 	// Maps - smaller text for item count in slot
-	// Maps - hotkey to mass-copy (copy every map 1->64, or 1->2)
-	// Maps - highlight unlocked, ESP for unlocked in loaded item frames
 	// steal activated spawner and similar stuff from trouser-streak?
 	// /msgas Anuvin target hi - send msg from alt acc
 	// timer countdown showing time left on 2b for non prio before kick
+	// drag-shift-place filled map (brings rest of same NxM, in same relative positions, if possible)
 	// auto enchant dia sword, auto grindstone, auto rename, auto anvil combine
 	// auto enchant bulk misc items
 	// inv-keybind-craft-latest-item,also for enchant table and grindstone (eg. spam enchanting axes)
@@ -166,8 +165,8 @@ public class Main implements ClientModInitializer{
 			remoteSender = new RemoteServerSender(remoteAddr, remotePort, clientId, clientKey, remoteMessages);
 		}
 		if(keybindMapArtLoad) new KeybindMapLoad(/*MAX_CLICKS_PER_SECOND=*/999);
-		if(keybindMapArtCopy) new KeybindMapCopy(/*MILLIS_BETWEEN_CLICKS=*/20);
-		if(keybindMapArtMove) new KeybindMapMove(/*MILLIS_BETWEEN_CLICKS=*/20);
+		if(keybindMapArtCopy) new KeybindMapCopy(/*MILLIS_BETWEEN_CLICKS=*/26);
+		if(keybindMapArtMove) new KeybindMapMove(/*MILLIS_BETWEEN_CLICKS=*/10);
 		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg);
 		if(keybindHighwayTravelHelper) new Keybind2b2tHighwayTravelHelper(ejectJunk);
 
