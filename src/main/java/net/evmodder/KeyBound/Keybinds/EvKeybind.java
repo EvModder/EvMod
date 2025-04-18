@@ -19,7 +19,7 @@ public final class EvKeybind extends KeyBinding{
 		onReleasedSupplier = onReleased;
 		this.allowInScreen = allowInScreen;
 		if(allowInScreen != null) allowedInInventory.add(this);
-		Main.LOGGER.debug("Registered keybind: "+translationKey);
+		//Main.LOGGER.debug("Registered keybind: "+translationKey);
 	}
 
 	public EvKeybind(String translationKey, Runnable onPressed){this(translationKey, onPressed, ()->{}, null);}
@@ -40,11 +40,11 @@ public final class EvKeybind extends KeyBinding{
 	@Override public final void setPressed(boolean pressed){
 		if(pressed != isPressed()){
 			if(pressed){
-				Main.LOGGER.info("Keybind pressed: "+getTranslationKey());
+				//Main.LOGGER.info("Keybind pressed: "+getTranslationKey());
 				onPressedSupplier.run();
 			}
 			else{
-				Main.LOGGER.info("Keybind released: "+getTranslationKey());
+				//Main.LOGGER.info("Keybind released: "+getTranslationKey());
 				onReleasedSupplier.run();
 			}
 		}
