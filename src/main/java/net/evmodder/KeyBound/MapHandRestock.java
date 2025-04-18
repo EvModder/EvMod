@@ -18,9 +18,12 @@ import net.minecraft.util.Hand;
 
 public final class MapHandRestock{
 	final boolean USE_NAME, USE_IMG, JUST_PICK_A_MAP = true;
-	private boolean isSingleMapArt(ItemStack stack){
-		if(stack == null || stack.isEmpty() || stack.getCount() != 1) return false;
+	private boolean isMapArtWithCount(ItemStack stack, int count){
+		if(stack == null || stack.isEmpty() || stack.getCount() != count) return false;
 		return Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map");
+	}
+	private boolean isMapArt(ItemStack stack){
+		return stack != null && !stack.isEmpty() && Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map");
 	}
 
 	private String getCustomName(ItemStack stack){
@@ -44,8 +47,7 @@ public final class MapHandRestock{
 			String posA1 = posA.substring(0, cutA), posA2 = posA.substring(cutA+1);
 			String posB1 = posB.substring(0, cutB), posB2 = posB.substring(cutB+1);
 			if(posA1.equals(posB1)) return checkComesAfter(posA2, posB2);
-			// TODO: Column before row? maybe better solution than just nerfing with -1
-			if(posA2.equals(posB2)) return checkComesAfter(posA1, posB1) - 1;
+			if(posA2.equals(posB2)) return checkComesAfter(posA1, posB1);// TODO: Perhaps nerf with -1 after impl edge matching (col should not be before row..)
 			int dim1Step = checkComesAfter(posA1, posB1);
 			if(dim1Step >= 3 && posB2.matches("[A01]")) return dim1Step - (posB2.equals("1") ? 2 : 1);
 			int dim2Step = checkComesAfter(posA2, posB2);
@@ -83,13 +85,15 @@ public final class MapHandRestock{
 		return !posStr.isBlank() && posStr.split(" ").length <= 2;
 	}
 
-	private int getNextSlotByName(PlayerEntity player, String prevName){
+	private int getNextSlotByName(PlayerEntity player, String prevName, final int count){
 		PlayerScreenHandler psh = player.playerScreenHandler;
 		ArrayList<Integer> slotsWithMatchingMaps = new ArrayList<>();
 		int prefixLen = 0, suffixLen = 0;
-		for(int i=9; i<=45; ++i){
+		//for(int i=9; i<=45; ++i){
+		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
+			int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
 			ItemStack item = psh.getSlot(i).getStack();
-			if(!isSingleMapArt(item)) continue;
+			if(!isMapArtWithCount(item, count)) continue;
 			final String name = getCustomName(item);
 			if(name == null) continue;
 			if(name.equals(prevName)){
@@ -122,16 +126,16 @@ public final class MapHandRestock{
 		//if(!isValidPosStr(posStrPrev)){Main.LOGGER.info("MapRestock: unrecognized prevPos data: "+posStrPrev); return -1;}
 		final boolean pos2dPrev = posStrPrev.indexOf(' ') != -1;
 
-		//for(int i=9; i<=45; ++i){
-		for(int f=0; f<=36; ++f){
+		//slotsWithMatchingMaps.clear();
+		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
 			int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
 			ItemStack item = psh.getSlot(i).getStack();
-			if(!isSingleMapArt(item)) continue;
+			if(!isMapArtWithCount(item, count)) continue;
 			final String name = getCustomName(item);
 			if(name == null || name.length() < prefixLen+suffixLen+1 || name.equals(prevName)) continue;
 			if(!prevName.regionMatches(0, name, 0, prefixLen) ||
 					!prevName.regionMatches(prevName.length()-suffixLen, name, name.length()-suffixLen, suffixLen)) continue;
-			slotsWithMatchingMaps.add(i);
+			//slotsWithMatchingMaps.add(i);
 			final String posStr = simplifyPosStr(name.substring(prefixLen, name.length()-suffixLen));
 			if(!isValidPosStr(posStr)){Main.LOGGER.info("MapRestock: unrecognized pos data: "+posStr); return -1;}
 			final boolean pos2d = posStrPrev.indexOf(' ') != -1;
@@ -146,18 +150,21 @@ public final class MapHandRestock{
 			if(confidence > bestConfidence){bestConfidence = confidence; bestSlot = slot;}
 		}
 		if(bestSlot != -1) Main.LOGGER.info("MapRestock: find-by-name suceeded");
+		if(bestConfidence == 0) Main.LOGGER.warn("MapRestock: Likely skipping a map");
 		return bestSlot;
 	}
-	private int getNextSlotAny(PlayerEntity player, Hand hand){
+	private int getNextSlotAny(PlayerEntity player, Hand hand, final int count){
 		//TODO: prioritize "start maps", i.e. posStr "1/4", "Name #0", etc.
 		for(int i=PlayerScreenHandler.HOTBAR_START; i<PlayerScreenHandler.HOTBAR_END; ++i){
 			if(hand == Hand.MAIN_HAND && i-PlayerScreenHandler.HOTBAR_START == player.getInventory().selectedSlot) continue;
-			if(isSingleMapArt(player.playerScreenHandler.getSlot(i).getStack())) return i;
+			if(isMapArtWithCount(player.playerScreenHandler.getSlot(i).getStack(), count)) return i;
 		}
-		for(int i=PlayerScreenHandler.INVENTORY_START; i<PlayerScreenHandler.INVENTORY_END; ++i){
-			if(isSingleMapArt(player.playerScreenHandler.getSlot(i).getStack())) return i;
+		if(count == 1){
+			for(int i=PlayerScreenHandler.INVENTORY_START; i<PlayerScreenHandler.INVENTORY_END; ++i){
+				if(isMapArtWithCount(player.playerScreenHandler.getSlot(i).getStack(), count)) return i;
+			}
+			if(hand != Hand.OFF_HAND && isMapArtWithCount(player.getStackInHand(Hand.OFF_HAND), count)) return PlayerScreenHandler.OFFHAND_ID;
 		}
-		if(hand != Hand.OFF_HAND && isSingleMapArt(player.getStackInHand(Hand.OFF_HAND))) return PlayerScreenHandler.OFFHAND_ID;
 		return -1;
 	}
 
@@ -168,16 +175,17 @@ public final class MapHandRestock{
 		Main.LOGGER.info("Single mapart placed, hand:"+hand.ordinal()+", looking for restock map...");
 		int restockFromSlot;
 		final String prevName = getCustomName(prevMap);
+		final int prevCount = prevMap.getCount();
 		//if(USE_IMG) restockFromSlot = getNextSlotByImage(player.playerScreenHandler, prevMap);
 		//else if
 		if(USE_NAME && prevName != null){
 			Main.LOGGER.info("MapRestock: finding next map by-name: "+prevName);
-			restockFromSlot = getNextSlotByName(player, prevName);
-			if(restockFromSlot == -1) restockFromSlot = getNextSlotAny(player, hand);
+			restockFromSlot = getNextSlotByName(player, prevName, prevCount);
+			if(restockFromSlot == -1) restockFromSlot = getNextSlotAny(player, hand, prevCount);
 		}
 		else if(JUST_PICK_A_MAP){
 			Main.LOGGER.info("MapRestock: finding any single map");
-			restockFromSlot = getNextSlotAny(player, hand);
+			restockFromSlot = getNextSlotAny(player, hand, prevCount);
 		}
 		else restockFromSlot = -1;
 		if(restockFromSlot == -1){Main.LOGGER.info("MapRestock: unable to find next map"); return;}
@@ -187,6 +195,9 @@ public final class MapHandRestock{
 			player.getInventory().selectedSlot = restockFromSlot - 36;
 			client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
 			Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap");
+		}
+		else if(prevCount != 1){
+			Main.LOGGER.warn("MapRestock: Won't swap with inventory since prevMap count != 1");
 		}
 		else{
 			client.interactionManager.clickSlot(0, restockFromSlot, player.getInventory().selectedSlot, SlotActionType.SWAP, player);
@@ -207,8 +218,9 @@ public final class MapHandRestock{
 			//Main.LOGGER.info("placed item from offhand");
 			if(!itemFrame.getHeldItemStack().isEmpty()) return ActionResult.PASS;
 			//Main.LOGGER.info("item frame is empty");
-			if(!isSingleMapArt(player.getStackInHand(hand))) return ActionResult.PASS;
-			//Main.LOGGER.info("item in hand is single map");
+			if(!isMapArt(player.getStackInHand(hand))) return ActionResult.PASS;
+			if(player.getStackInHand(hand).getCount() > 2) return ActionResult.PASS;
+			//Main.LOGGER.info("item in hand is filled_map [1or2]");
 			final ItemStack stack = player.getStackInHand(hand).copy();
 			new Timer().schedule(new TimerTask(){@Override public void run(){tryToStockNextMap(player, hand, stack);}}, 50l);
 			return ActionResult.PASS;
