@@ -62,6 +62,7 @@ public class InventoryUtils{
 			@Override public void run(){
 				if(clicksInLastSecond < MAX_CLICKS_PER_SECOND && canProceed.apply(clicks.peek())){
 					ClickEvent click = clicks.remove();
+					//Main.LOGGER.info("click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
 					client.interactionManager.clickSlot(click.syncId, click.slotId, click.button, click.actionType, client.player);
 					if(clicks.isEmpty()){cancel(); onComplete.run(); return;}
 					++clicksInLastSecond;
