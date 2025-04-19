@@ -101,14 +101,19 @@ public final class MapHandRestock{
 				continue;
 			}
 			//if(item.equals(prevMap)) continue;
-			int a = commonPrefixLen(prevName, name), b = commonSuffixLen(prevName, name);
+			final int a = commonPrefixLen(prevName, name), b = commonSuffixLen(prevName, name);
+			if(a == 0 && b == 0) continue; // No shared prefix/suffix
 			//Main.LOGGER.info("MapRestock: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
-			if(prefixLen == a && suffixLen == b) continue;
+			if(prefixLen == a && suffixLen == b) continue;// No change to prefix/suffix
 			//Main.LOGGER.info("MapRestock: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
-			if(prefixLen == 0 && suffixLen == 0){prefixLen = a; suffixLen = b; continue;}
+			final boolean validPosStr = isValidPosStr(simplifyPosStr(name.substring(a, name.length()-b)));
+			if(prefixLen == 0 && suffixLen == 0){ // Prefix/suffix not yet determined
+				if(validPosStr){prefixLen = a; suffixLen = b;}
+				continue;
+			}
 			final boolean oldContainsNew = prefixLen >= a && suffixLen >= b;
 			//final boolean newContainsOld = a >= prefixLen && b >= suffixLen;
-			if(oldContainsNew && isValidPosStr(simplifyPosStr(name.substring(a, name.length()-b)))){
+			if(oldContainsNew && validPosStr){
 				Main.LOGGER.info("MapRestock: reducing prefix/suffix len");
 				prefixLen = a; suffixLen = b;
 			}
@@ -126,7 +131,6 @@ public final class MapHandRestock{
 		//if(!isValidPosStr(posStrPrev)){Main.LOGGER.info("MapRestock: unrecognized prevPos data: "+posStrPrev); return -1;}
 		final boolean pos2dPrev = posStrPrev.indexOf(' ') != -1;
 
-		//slotsWithMatchingMaps.clear();
 		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
 			int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
 			ItemStack item = psh.getSlot(i).getStack();
@@ -135,7 +139,7 @@ public final class MapHandRestock{
 			if(name == null || name.length() < prefixLen+suffixLen+1 || name.equals(prevName)) continue;
 			if(!prevName.regionMatches(0, name, 0, prefixLen) ||
 					!prevName.regionMatches(prevName.length()-suffixLen, name, name.length()-suffixLen, suffixLen)) continue;
-			//slotsWithMatchingMaps.add(i);
+			slotsWithMatchingMaps.add(i);
 			final String posStr = simplifyPosStr(name.substring(prefixLen, name.length()-suffixLen));
 			if(!isValidPosStr(posStr)){Main.LOGGER.info("MapRestock: unrecognized pos data: "+posStr); return -1;}
 			final boolean pos2d = posStrPrev.indexOf(' ') != -1;
