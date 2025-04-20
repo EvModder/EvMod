@@ -113,43 +113,51 @@ public abstract class MapClickMoveNeighbors{
 				return;
 			}
 		}
+		final int brDest = destSlot+(br-fromSlot);
 
+		final int lHotbar = tl%9, rHotbar = br%9, lHotbarDest = tlDest%9, rHotbarDest = brDest%9;
 		//if(PREFER_HOTBAR_SWAPS){
 		int hotbarButton = 40;
-		for(int i=8; i>=0; --i){
-			if(tlDest > tl) i = 8-i;
-			ItemStack item = player.getInventory().getStack(i);
-			if(item.isEmpty()){hotbarButton = i; break;}
+		for(int i=0; i<8; ++i){
+			if(lHotbar <= i && i <= rHotbar) continue; 		   // Avoid hotbar slots the map might be moving from
+			if(lHotbarDest <= i && i <= rHotbarDest) continue; // Avoid hotbar slots the map might be moving into
+			if(player.getInventory().getStack(i).isEmpty()){hotbarButton = i; break;}
 		}
-		final boolean fullHotbar = !player.getInventory().getStack(hotbarButton).isEmpty();
-		if(fullHotbar) Main.LOGGER.warn("MapMoveClick: No available hotbar slot");
+		int tempSlot = -1;
+		if(!player.getInventory().getStack(hotbarButton).isEmpty()){
+			Main.LOGGER.warn("MapMoveClick: No available hotbar slot");
+			if(tl > tlDest){
+				for(int i=tlDest-1; i>=0; --i) if(slots.get(i).getStack().isEmpty()){tempSlot=i; break;}
+				if(tempSlot==-1) for(int i=br; i<slots.size(); ++i) if(slots.get(i).getStack().isEmpty()){tempSlot=i; break;}
+			}
+			else{
+				for(int i=tl; i>=0; --i) if(slots.get(i).getStack().isEmpty()){tempSlot=i; break;}
+				if(tempSlot==-1) for(int i=brDest; i<slots.size(); ++i) if(slots.get(i).getStack().isEmpty()){tempSlot=i; break;}
+			}
+			if(tempSlot == -1) Main.LOGGER.warn("MapMoveClick: No available slot with which to free up offhand");
+		}
 
 		final MinecraftClient client = MinecraftClient.getInstance();
 		final int syncId = player.currentScreenHandler.syncId;
+		if(tempSlot != -1) client.interactionManager.clickSlot(syncId, tempSlot, hotbarButton, SlotActionType.SWAP, player);
 		if(tl > tlDest){
-			//Main.LOGGER.info("MapMoveClick: Moving all, from TL to BR");
+			//Main.LOGGER.info("MapMoveClick: Moving all, starting from TL");
 			for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 				int s = tl + i*9 + j, d = tlDest + i*9 + j;
 				if(d == destSlot) continue;
-				//final boolean fullHotbar = !player.getInventory().getStack(hotbarButton).isEmpty();
 				client.interactionManager.clickSlot(syncId, s, hotbarButton, SlotActionType.SWAP, player);
 				client.interactionManager.clickSlot(syncId, d, hotbarButton, SlotActionType.SWAP, player);
-				//if(fullHotbar) client.interactionManager.clickSlot(syncId, s, hotbarButton, SlotActionType.SWAP, player);
 			}
-			if(fullHotbar) client.interactionManager.clickSlot(syncId, tl, hotbarButton, SlotActionType.SWAP, player);
 		}
 		else{
-			//Main.LOGGER.info("MapMoveClick: Moving all, from BR to TL");
-			final int brDest = destSlot+(br-fromSlot);
+			//Main.LOGGER.info("MapMoveClick: Moving all, starting from BR");
 			for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 				int s = br - i*9 - j, d = brDest - i*9 - j;
 				if(d == destSlot) continue;
-				//final boolean fullHotbar = !player.getInventory().getStack(hotbarButton).isEmpty();
 				client.interactionManager.clickSlot(syncId, s, hotbarButton, SlotActionType.SWAP, player);
 				client.interactionManager.clickSlot(syncId, d, hotbarButton, SlotActionType.SWAP, player);
-				//if(fullHotbar) client.interactionManager.clickSlot(syncId, s, hotbarButton, SlotActionType.SWAP, player);
 			}
-			if(fullHotbar) client.interactionManager.clickSlot(syncId, br, hotbarButton, SlotActionType.SWAP, player);
 		}
+		if(tempSlot != -1) client.interactionManager.clickSlot(syncId, tempSlot, hotbarButton, SlotActionType.SWAP, player);
 	}
 }

@@ -39,7 +39,6 @@ public class Main implements ClientModInitializer{
 	// steal activated spawner and similar stuff from trouser-streak?
 	// /msgas Anuvin target hi - send msg from alt acc
 	// timer countdown showing time left on 2b for non prio before kick
-	// drag-shift-place filled map (brings rest of same NxM, in same relative positions, if possible)
 	// auto enchant dia sword, auto grindstone, auto rename, auto anvil combine
 	// auto enchant bulk misc items
 	// inv-keybind-craft-latest-item,also for enchant table and grindstone (eg. spam enchanting axes)
