@@ -30,7 +30,12 @@ public final class MapHandRestock{
 		return stack == null || stack.getCustomName() == null ? null : stack.getCustomName().getLiteralString();
 	}
 
-	//TODO: passing metadata, particularly NxM if known
+	//TODO: passing metadata, particularly NxM if known.
+	// Higher number = closer match
+	// 4 = definitely next (no doubt)
+	// 3 = likely next (but not 100%)
+	// 2 = maybe next (line wrapping?)
+	// 1 = not impossibly next
 	private int checkComesAfter(String posA, String posB){
 		if(posA.isBlank() || posB.isBlank() || posA.equals(posB)) return 1; // "Map"->"Map p2", "Map start"->"Map"
 
@@ -43,25 +48,28 @@ public final class MapHandRestock{
 		final int cutA = posA.indexOf(' '), cutB = posB.indexOf(' ');
 		assert (cutA==-1) == (cutB==-1);
 		if(cutA != -1){
-			//Main.LOGGER.info("MapRestock: 2d pos not yet fully supported. A:"+posA+", B:"+posB);
+			Main.LOGGER.info("MapRestock: 2d pos not yet fully supported. A:"+posA+", B:"+posB);
 			String posA1 = posA.substring(0, cutA), posA2 = posA.substring(cutA+1);
 			String posB1 = posB.substring(0, cutB), posB2 = posB.substring(cutB+1);
 			if(posA1.equals(posB1)) return checkComesAfter(posA2, posB2);
-			if(posA2.equals(posB2)) return checkComesAfter(posA1, posB1);// TODO: Perhaps nerf with -1 after impl edge matching (col should not be before row..)
+			if(posA2.equals(posB2)) return checkComesAfter(posA1, posB1)-3;// TODO: nerf with -3 (until impl edge matching), col should not be before row..
 			int dim1Step = checkComesAfter(posA1, posB1);
 			if(dim1Step >= 3 && posB2.matches("[A01]")) return dim1Step - (posB2.equals("1") ? 2 : 1);
 			int dim2Step = checkComesAfter(posA2, posB2);
-			if(dim2Step >= 3 && posB1.matches("[A01]")) return dim2Step - (posB1.equals("1") ? 2 : 1);
+			if(dim2Step >= 3 && posB1.matches("[A01]")) return dim2Step - (posB1.equals("1") ? 2 : 1) - 1;//TODO: nerfed with -1
 			//Main.LOGGER.info("MapRestock: Unable to resolve 2d pos");
 			return 0;
 		}
 
 		final boolean sameLen = posA.length() == posB.length();
-		if((sameLen || posA.length()+1 == posB.length()) && posA.matches("\\d{1,3}")){
-			return (""+(Integer.parseInt(posA)+1)).equals(posB) ? 4 : 0; // 4->5, 9->10
+		if(sameLen && posA.regionMatches(0, posB, 0, posA.length()-1) && posA.charAt(posA.length()-1)+1 == posB.charAt(posA.length()-1)){
+			Main.LOGGER.info("MapRestock: c->c+1");
+			return 4; // 4->5, E->F
 		}
-		if(sameLen && posA.regionMatches(0, posB, 0, posA.length()-1) &&
-				posA.charAt(posA.length()-1)+1 == posB.charAt(posA.length()-1)) return 4; // 4->5, E->F
+		if((sameLen || posA.length()+1 == posB.length()) && posA.matches("\\d{1,3}") && (""+(Integer.parseInt(posA)+1)).equals(posB)){
+			Main.LOGGER.info("MapRestock: i->i+1");
+			return 4; // 4->5, 9->10
+		}
 
 		//Main.LOGGER.info("MapRestock: pos are not adjacent. A:"+posA+", B:"+posB);
 		return 1;
@@ -88,7 +96,7 @@ public final class MapHandRestock{
 	private int getNextSlotByName(PlayerEntity player, String prevName, final int count){
 		PlayerScreenHandler psh = player.playerScreenHandler;
 		ArrayList<Integer> slotsWithMatchingMaps = new ArrayList<>();
-		int prefixLen = 0, suffixLen = 0;
+		int prefixLen = -1, suffixLen = -1;
 		//for(int i=9; i<=45; ++i){
 		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
 			int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
@@ -102,12 +110,12 @@ public final class MapHandRestock{
 			}
 			//if(item.equals(prevMap)) continue;
 			final int a = commonPrefixLen(prevName, name), b = commonSuffixLen(prevName, name);
-			if(a == 0 && b == 0) continue; // No shared prefix/suffix
+			//if(a == 0 && b == 0) continue; // No shared prefix/suffix
 			//Main.LOGGER.info("MapRestock: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
 			if(prefixLen == a && suffixLen == b) continue;// No change to prefix/suffix
 			//Main.LOGGER.info("MapRestock: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
 			final boolean validPosStr = isValidPosStr(simplifyPosStr(name.substring(a, name.length()-b)));
-			if(prefixLen == 0 && suffixLen == 0){ // Prefix/suffix not yet determined
+			if(prefixLen == -1 && suffixLen == -1){ // Prefix/suffix not yet determined
 				if(validPosStr){prefixLen = a; suffixLen = b;}
 				continue;
 			}
@@ -122,7 +130,7 @@ public final class MapHandRestock{
 				prefixLen = a; suffixLen = b;
 			}
 		}
-		if(prefixLen == 0 && suffixLen == 0){
+		if(prefixLen == -1 && suffixLen == -1){
 			Main.LOGGER.info("MapRestock: no shared prefix/suffix named maps found");
 			if(slotsWithMatchingMaps.isEmpty()) return -1;
 		}
@@ -151,7 +159,10 @@ public final class MapHandRestock{
 			final String name = getCustomName(psh.getSlot(slot).getStack());
 			final String posStr = simplifyPosStr(name.substring(prefixLen, name.length()-suffixLen));
 			final int confidence = checkComesAfter(posStrPrev, posStr);
-			if(confidence > bestConfidence){bestConfidence = confidence; bestSlot = slot;}
+			if(confidence > bestConfidence){
+				Main.LOGGER.info("MapRestock: new best confidence for "+posStr+": "+confidence);
+				bestConfidence = confidence; bestSlot = slot;
+			}
 		}
 		if(bestSlot != -1) Main.LOGGER.info("MapRestock: find-by-name suceeded");
 		if(bestConfidence == 0) Main.LOGGER.warn("MapRestock: Likely skipping a map");
