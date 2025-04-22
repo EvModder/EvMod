@@ -10,6 +10,7 @@ import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.world.World;
@@ -37,12 +38,12 @@ public final class KeybindMapLoad{
 	private final void loadMapArtFromContainer(final int MAX_CLICKS_PER_SECOND){
 		if(ongoingLoad){Main.LOGGER.warn("MapLoad cancelled: Already ongoing"); return;}
 		//
+		MinecraftClient client = MinecraftClient.getInstance();
+		if(!(client.currentScreen instanceof HandledScreen hs)){Main.LOGGER.warn("MapLoad cancelled: not in HandledScreen"); return;}
+		//
 		final long ts = System.currentTimeMillis();
 		if(ts - lastLoad < loadCooldown){Main.LOGGER.warn("MapLoad cancelled: Cooldown"); return;}
 		lastLoad = ts;
-		//
-		MinecraftClient client = MinecraftClient.getInstance();
-		if(!(client.currentScreen instanceof HandledScreen hs)){Main.LOGGER.warn("MapLoad cancelled: not in ShulkerBoxScreen"); return;}
 		//
 		ScreenHandler sh = hs.getScreenHandler();
 		int numToLoad = 0;
@@ -83,6 +84,6 @@ public final class KeybindMapLoad{
 			return;
 		}
 		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_load_data", ()->loadMapArtFromContainer(MAX_CLICKS_PER_SECOND),
-				_->true/*s->s instanceof ShulkerBoxScreen*/));
+				s->s instanceof InventoryScreen == false));
 	}
 }

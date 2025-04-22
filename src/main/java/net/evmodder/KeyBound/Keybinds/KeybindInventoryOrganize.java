@@ -87,9 +87,9 @@ public final class KeybindInventoryOrganize{
 
 	private boolean isSorting = false;
 	private void organizeInventory(){
-		Main.LOGGER.info("InvOrganize: keybind pressed");
+		//Main.LOGGER.info("InvOrganize: keybind pressed");
 		MinecraftClient client = MinecraftClient.getInstance();
-		if(!(client.currentScreen instanceof InventoryScreen is)){Main.LOGGER.warn("InvOrganize: not in InventoryScreen"); return;}
+		if(!(client.currentScreen instanceof InventoryScreen is)){/*Main.LOGGER.warn("InvOrganize: not in InventoryScreen"); */return;}
 
 		if(isSorting) return;
 		isSorting = true;
