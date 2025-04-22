@@ -36,6 +36,8 @@ public class Main implements ClientModInitializer{
 
 	// Feature Ideas:
 	// Maps - smaller text for item count in slot
+	// Map - next hand autorestock, consider all maps in inv (later: look at all edges) and stick to RowByCol or ColByRow for whole map
+	// cont.: save LastMapCommonSubstr and LastMapRowByCol
 	// steal activated spawner and similar stuff from trouser-streak?
 	// /msgas Anuvin target hi - send msg from alt acc
 	// timer countdown showing time left on 2b for non prio before kick
