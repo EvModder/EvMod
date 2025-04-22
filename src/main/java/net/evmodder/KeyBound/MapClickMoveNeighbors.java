@@ -82,16 +82,16 @@ public abstract class MapClickMoveNeighbors{
 			slotsInvolved.add(i);
 		}
 		int tl = slotsInvolved.stream().mapToInt(i->i.intValue()).min().getAsInt();
-		if(slotsInvolved.contains(tl+8)) --tl;
+		if(tl%9 != 0 && slotsInvolved.contains(tl+8)) --tl;
 		int br = slotsInvolved.stream().mapToInt(i->i.intValue()).max().getAsInt();
-		if(slotsInvolved.contains(br-8)) ++br;
+		if(br%9 != 8 && slotsInvolved.contains(br-8)) ++br;
 		int h = (br/9)-(tl/9)+1;
 		int w = (br%9)-(tl%9)+1;
 
 		if(h == 1){if(w != slotsInvolved.size()+1){++w; --tl;}} // Assume missing map is leftmost (TODO: edge detect, it could be on the right)
 		else if(w == 1){if(h != slotsInvolved.size()+1){++h; tl-=9;}} // Assume missing map is topmost (TODO: edge detect, it could be on the bottom)
 
-		//Main.LOGGER.info("MapMoveClick: tl="+tl+",br="+br+" : h="+h+",w="+w);
+		Main.LOGGER.info("MapMoveClick: tl="+tl+",br="+br+" : h="+h+",w="+w);
 
 		if(h*w != slotsInvolved.size()+1){Main.LOGGER.info("MapMoveClick: H*W not found (expected:"+slotsInvolved.size()+")");return;}
 
