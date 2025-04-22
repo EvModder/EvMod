@@ -180,7 +180,8 @@ public final class KeybindMapCopy{
 		if(filledMapCraftingSlot == PlayerScreenHandler.CRAFTING_INPUT_END) filledMapCraftingSlot = PlayerScreenHandler.CRAFTING_INPUT_START;
 
 		Main.LOGGER.info("MapCopy"+(bulk?"Bulk":"")+": Starting copy");
-		for(int i=45; i>=9; --i){
+		//for(int i=45; i>=9; --i){
+		for(int i=9; i<46; ++i){
 			ItemStack stack = psh.getSlot(i).getStack();
 			if(!isMapArt(stack)) continue;
 			if(stack.getCount() == stack.getMaxCount()) continue;
