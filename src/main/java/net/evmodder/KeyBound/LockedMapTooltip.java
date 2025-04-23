@@ -11,7 +11,10 @@ import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
-final class LockedMapTooltip{
+public final class LockedMapTooltip{
+	public static final int UNLOCKED_COLOR = 14692709;
+	public static final int UNNAMED_COLOR = 15652823;
+
 	private static final boolean isUnlockedMap(ItemStack item, TooltipContext context){
 		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
 		if(id == null) return false;
@@ -29,10 +32,10 @@ final class LockedMapTooltip{
 		ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
 		if(container != null){
 			if(container.stream().anyMatch(i -> isUnlockedMap(i, context))){
-				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(14692709).formatted(Formatting.BOLD)));
+				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(UNLOCKED_COLOR).formatted(Formatting.BOLD)));
 			}
 			else if(container.stream().anyMatch(i -> isUnnamedMap(i))){
-				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(15652823).formatted(Formatting.BOLD)));
+				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(UNNAMED_COLOR).formatted(Formatting.BOLD)));
 			}
 			return;
 		}
@@ -43,7 +46,7 @@ final class LockedMapTooltip{
 		MapState state = context.getMapState(id);
 		if(state == null) return;
 
-		if(!state.locked) lines.addFirst(lines.removeFirst().copy().withColor(14692709));
-		else if(item.getCustomName() == null) lines.addFirst(lines.removeFirst().copy().withColor(15652823));
+		if(!state.locked) lines.addFirst(lines.removeFirst().copy().withColor(UNLOCKED_COLOR));
+		else if(item.getCustomName() == null) lines.addFirst(lines.removeFirst().copy().withColor(UNNAMED_COLOR));
 	}
 }

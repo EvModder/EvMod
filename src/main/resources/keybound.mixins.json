@@ -10,7 +10,7 @@
 		"MixinClientWorld",
 		"MixinEntityRenderer",
 		"MixinHandledScreen",
-		//"MixinInGameHud",
+		"MixinInGameHud",
 		"MixinItemFrameRenderer",
 		"MixinKeybinding",
 		"MixinScreenHandler"

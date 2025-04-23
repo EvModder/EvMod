@@ -1,10 +1,13 @@
 package net.evmodder.KeyBound.mixin;
 
+import net.evmodder.KeyBound.LockedMapTooltip;
 import net.evmodder.KeyBound.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.map.MapState;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -16,13 +19,24 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public abstract class MixinInGameHud{
 	@ModifyVariable(method = "renderHeldItemTooltip", at = @At("STORE"), ordinal = 0)
 	private MutableText showRepairCostNextToItemName(MutableText originalText){
-		if(Main.rcTooltip == false) return originalText;
+		if(Main.rcHotbarHUD == false && Main.mapColorHUD == false) return originalText;
 		MinecraftClient client = MinecraftClient.getInstance();
 		ItemStack currentStack = client.player.getInventory().getMainHandStack();
-		if(!currentStack.getComponents().contains(DataComponentTypes.REPAIR_COST)) return originalText;
-
-		int rc = currentStack.getComponents().get(DataComponentTypes.REPAIR_COST);
-		if(rc == 0 && !currentStack.hasEnchantments() && !currentStack.getComponents().contains(DataComponentTypes.STORED_ENCHANTMENTS)) return originalText;
-		return originalText.append(Text.literal(" ʳᶜ").formatted(Formatting.GRAY)).append(Text.literal(""+rc).formatted(Formatting.GOLD));
+		MutableText text = originalText;
+		if(Main.mapColorHUD){
+			MapIdComponent id = currentStack.get(DataComponentTypes.MAP_ID);
+			if(id != null){
+				MapState state = client.world.getMapState(id);
+				if(state != null && !state.locked) text = text.withColor(LockedMapTooltip.UNLOCKED_COLOR);
+				else if(currentStack.getCustomName() == null) text = text.withColor(LockedMapTooltip.UNNAMED_COLOR);
+			}
+		}
+		if(Main.rcHotbarHUD && currentStack.contains(DataComponentTypes.REPAIR_COST)){
+			int rc = currentStack.get(DataComponentTypes.REPAIR_COST);
+			if(rc != 0 || currentStack.hasEnchantments() || currentStack.contains(DataComponentTypes.STORED_ENCHANTMENTS)){
+				text = text.append(Text.literal(" ʳᶜ").formatted(Formatting.GRAY)).append(Text.literal(""+rc).formatted(Formatting.GOLD));
+			}
+		}
+		return text;
 	}
 }

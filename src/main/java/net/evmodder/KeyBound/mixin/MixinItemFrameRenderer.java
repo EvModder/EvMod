@@ -4,6 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import net.evmodder.KeyBound.LockedMapTooltip;
 import net.evmodder.KeyBound.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.ItemFrameEntityRenderer;
@@ -33,26 +34,26 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 
 	@Inject(method = "hasLabel", at = @At("HEAD"), cancellable = true)
 	public void yupyupyup(T itemFrameEntity, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
-		if(!Main.colorUnlockedMaps) return; // Feature is disabled
+		if(!Main.mapColorIFrame) return; // Feature is disabled
 		if(squaredDistanceToCamera > 20*20) return;
 		ItemStack stack = itemFrameEntity.getHeldItemStack();
 		if(stack == null || stack.isEmpty()) return;
 		MapIdComponent mapId = itemFrameEntity.getHeldItemStack().get(DataComponentTypes.MAP_ID);
 		if(mapId == null) return;
 		MapState state = itemFrameEntity.getWorld().getMapState(mapId);
-		if(state == null || state.locked) return;
+		if((state == null || state.locked) && stack.getCustomName() != null) return;
 		if(!isLookngInGeneralDirection(itemFrameEntity)) return;
 		cir.setReturnValue(true);
 	}
 
 	@Inject(method = "getDisplayName", at = @At("INVOKE"), cancellable = true)
 	public void yupyupyup(T itemFrameEntity, CallbackInfoReturnable<Text> cir){
-		if(!Main.colorUnlockedMaps) return; // Feature is disabled
+		if(!Main.mapColorIFrame) return; // Feature is disabled
 		ItemStack stack = itemFrameEntity.getHeldItemStack();
 		if(stack == null || stack.isEmpty() || !Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")) return;
 		MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
 		if(state == null) return;
-		if(!state.locked) cir.setReturnValue(stack.getName().copy().withColor(14692709));
-		else if(stack.getCustomName() == null) cir.setReturnValue(stack.getName().copy().withColor(15652823));
+		if(!state.locked) cir.setReturnValue(stack.getName().copy().withColor(LockedMapTooltip.UNLOCKED_COLOR));
+		else if(stack.getCustomName() == null) cir.setReturnValue(stack.getName().copy().withColor(LockedMapTooltip.UNNAMED_COLOR));
 	}
 }
