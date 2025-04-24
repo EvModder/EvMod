@@ -1,11 +1,12 @@
 package net.evmodder.KeyBound.Keybinds;
 
 import java.util.ArrayDeque;
-import java.util.HashSet;
+import java.util.HashMap;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.InventoryUtils.ClickEvent;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
@@ -31,76 +32,96 @@ public final class KeybindMapMove{
 	private boolean ongoingStealStore;
 	private long lastStealStore = 0;
 	private final long stealStoreCooldown = 250l;
-	private final void loadMapArtFromShulker(final int MILLIS_BETWEEN_CLICKS){
+	private final void moveMapArtToFromShulker(final int MILLIS_BETWEEN_CLICKS){
 		if(ongoingStealStore){Main.LOGGER.warn("MapMove cancelled: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof ShulkerBoxScreen sbs)){Main.LOGGER.warn("MapMove cancelled: Not in ShulkerBoxScreen"); return;}
 		//
 		final long ts = System.currentTimeMillis();
-		if(ts - lastStealStore < stealStoreCooldown){Main.LOGGER.warn("MapMove cancelled: Cooldown, "+ts+","+lastStealStore+","+stealStoreCooldown); return;}
+		if(ts - lastStealStore < stealStoreCooldown){/*Main.LOGGER.warn("MapMove cancelled: Cooldown, "+ts+","+lastStealStore+","+stealStoreCooldown); */return;}
 		lastStealStore = ts;
 		//
 		ShulkerBoxScreenHandler sh = sbs.getScreenHandler();
 		int numInInv = 0, emptySlotsInv = 0, sameCountInv = 0;
-		HashSet<Integer> mapsInPlayerInv = new HashSet<>();
+		HashMap<Integer, Integer> mapsInPlayerInv = new HashMap<>();// id -> available stackable space
 		for(int i=0; i<36; ++i){
 			ItemStack stack = client.player.getInventory().getStack(i);
 			if(stack == null || stack.isEmpty()) ++emptySlotsInv;
 			else if(isMapArt(stack)){
 				MapIdComponent id = stack.get(DataComponentTypes.MAP_ID);
 				if(id == null){Main.LOGGER.error("MapMove cancelled: Unloaded map in player inventory (!!!)"); return;}
-				mapsInPlayerInv.add(id.id());
+				int space = mapsInPlayerInv.getOrDefault(id.id(), 0);
+				mapsInPlayerInv.put(id.id(), space+(stack.getMaxCount()-stack.getCount()));
 				++numInInv;
 				if(sameCountInv == 0) sameCountInv = stack.getCount();
 				else if(sameCountInv != stack.getCount()) sameCountInv = -1; // Different map slots with different counts => -1
 			}
 		}
-		boolean shulkerHasExtraMaps = false;
+		boolean cantMergeMapsIntoShulker = false;
 		int numInShulk = 0, emptySlotsShulk = 0, sameCountShulk = 0;
 		for(int i=0; i<27; ++i){
 			ItemStack stack = sh.getSlot(i).getStack();
 			if(stack == null || stack.isEmpty()) ++emptySlotsShulk;
 			else if(isMapArt(stack)){
-				MapIdComponent id = stack.get(DataComponentTypes.MAP_ID);
-				if(id == null || !mapsInPlayerInv.contains(id.id())) shulkerHasExtraMaps = true;
 				++numInShulk;
 				if(sameCountShulk == 0) sameCountShulk = stack.getCount();
 				else if(sameCountShulk != stack.getCount()) sameCountShulk = -1; // Different map slots with different counts => -1
+
+				if(cantMergeMapsIntoShulker) continue;
+				MapIdComponent id = stack.get(DataComponentTypes.MAP_ID);
+				if(id == null){cantMergeMapsIntoShulker = true; continue;}
+				Integer space = mapsInPlayerInv.get(id.id());
+				if(space == null || space - stack.getCount() < 0) cantMergeMapsIntoShulker = true;
+				else mapsInPlayerInv.put(space, space - stack.getCount());
 			}
 		}
 		boolean moveToShulk = true;
 		if(numInShulk == 0 && numInInv == 0){Main.LOGGER.warn("MapMove cancelled: No mapart found"); return;}
-		if(numInShulk != 0 && numInInv != 0 && (numInInv != numInShulk || shulkerHasExtraMaps
+		if(numInShulk != 0 && numInInv != 0 && (numInInv != numInShulk || cantMergeMapsIntoShulker
 				|| sameCountShulk == -1 || sameCountInv == -1 || sameCountShulk+sameCountInv > 64)){
-			Main.LOGGER.warn("MapMove cancelled: Mapart found in both inventory AND shulker");
+			Main.LOGGER.warn("MapMove cancelled: Unique mapart found in both inventory AND shulker");
 			return;
 		}
 		if(numInInv == 0){
 			moveToShulk = false;
 			if(numInShulk > emptySlotsInv){Main.LOGGER.warn("MapMove cancelled: Not enough empty slots in inventory"); return;}
 		}
-		else if(numInInv > emptySlotsShulk){Main.LOGGER.warn("MapMove cancelled: Not enough empty slots in shulker"); return;}
+		else if(numInInv > emptySlotsShulk && cantMergeMapsIntoShulker){Main.LOGGER.warn("MapMove cancelled: Not enough empty slots in shulker"); return;}
 		//
+		final boolean isShiftClick = Screen.hasShiftDown();
 		ongoingStealStore = true;
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		if(moveToShulk) for(int i=27; i<63; ++i){
 			if(!isMapArt(sh.getSlot(i).getStack())) continue;
-			if(sameCountInv > 1){
-				Main.LOGGER.warn("MapMove: pickup 1");
-				//clicks.add(new ClickEvent(sh.syncId, 0, SlotActionType.PICKUP)); // left-click: pickup all
-				clicks.add(new ClickEvent(sh.syncId, i, 1, SlotActionType.PICKUP)); // right-click: put back one
-			}
+//			if(sameCountInv > 1){
+//				//clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.PICKUP)); // left-click: pickup all
+//				clicks.add(new ClickEvent(sh.syncId, i, 1, SlotActionType.PICKUP)); // right-click: pickup half
+//			}
 			clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.QUICK_MOVE)); // shift-click: all in slot to shulker
-			if(sameCountInv > 1){
-				clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.PICKUP)); // left-click: put back one on cursor
-			}
+//			if(sameCountInv > 1){
+//				clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.PICKUP)); // left-click: put back all on cursor
+//			}
 		}
-		else for(int i=27; i>=0; --i){
-			if(isMapArt(sh.getSlot(i).getStack())) clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.QUICK_MOVE));
+		else for(int i=26; i>=0; --i){
+//			if(isMapArt(sh.getSlot(i).getStack())) clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.QUICK_MOVE));
+			if(!isMapArt(sh.getSlot(i).getStack())) continue;
+			if(sameCountShulk > 1 && !isShiftClick){
+				if(sameCountShulk <= 3){
+					clicks.add(new ClickEvent(sh.syncId, i, 1, SlotActionType.PICKUP)); // right-click: pickup half
+				}
+				else{
+					clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.PICKUP)); // left-click: pickup all
+					clicks.add(new ClickEvent(sh.syncId, i, 1, SlotActionType.PICKUP)); // right-click: place one
+				}
+			}
+			clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.QUICK_MOVE));
+			if(sameCountShulk > 1 && !isShiftClick){
+				clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.PICKUP)); // left-click: place all
+			}
 		}
 
-		InventoryUtils.executeClicks(client, clicks, MILLIS_BETWEEN_CLICKS, /*MAX_CLICKS_PER_SECOND=*/27*3,
+		InventoryUtils.executeClicks(client, clicks, MILLIS_BETWEEN_CLICKS, /*MAX_CLICKS_PER_SECOND=*/27*4,
 				_->true,
 				()->{
 					Main.LOGGER.info("MapMove: DONE!");
@@ -109,6 +130,6 @@ public final class KeybindMapMove{
 	}
 
 	public KeybindMapMove(int MILLIS_BETWEEN_CLICKS){
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_take_place", ()->loadMapArtFromShulker(MILLIS_BETWEEN_CLICKS), s->s instanceof ShulkerBoxScreen));
+		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_take_place", ()->moveMapArtToFromShulker(MILLIS_BETWEEN_CLICKS), s->s instanceof ShulkerBoxScreen));
 	}
 }

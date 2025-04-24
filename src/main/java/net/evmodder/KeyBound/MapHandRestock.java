@@ -109,7 +109,9 @@ public final class MapHandRestock{
 				continue;
 			}
 			//if(item.equals(prevMap)) continue;
-			final int a = commonPrefixLen(prevName, name), b = commonSuffixLen(prevName, name);
+			int a = commonPrefixLen(prevName, name), b = commonSuffixLen(prevName, name);
+			int o = a-(name.length()-b);
+			if(o>0){a-=o; b-=o;}//Handle special case: "a 11/x"+"a 111/x", a=len(a 11)=4,b=len(11/x)=4,o=2 => a=len(a ),b=len(/x)
 			//if(a == 0 && b == 0) continue; // No shared prefix/suffix
 			//Main.LOGGER.info("MapRestock: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
 			if(prefixLen == a && suffixLen == b) continue;// No change to prefix/suffix
@@ -147,11 +149,11 @@ public final class MapHandRestock{
 			if(name == null || name.length() < prefixLen+suffixLen+1 || name.equals(prevName)) continue;
 			if(!prevName.regionMatches(0, name, 0, prefixLen) ||
 					!prevName.regionMatches(prevName.length()-suffixLen, name, name.length()-suffixLen, suffixLen)) continue;
-			slotsWithMatchingMaps.add(i);
 			final String posStr = simplifyPosStr(name.substring(prefixLen, name.length()-suffixLen));
-			if(!isValidPosStr(posStr)){Main.LOGGER.info("MapRestock: unrecognized pos data: "+posStr); return -1;}
+			if(!isValidPosStr(posStr)){Main.LOGGER.info("MapRestock: unrecognized pos data: "+posStr);/* return -1;*/continue;}
 			final boolean pos2d = posStrPrev.indexOf(' ') != -1;
-			if(pos2d != pos2dPrev){Main.LOGGER.info("MapRestock: mismatched pos data: "+name); return -1;}
+			if(pos2d != pos2dPrev){Main.LOGGER.warn("MapRestock: mismatched pos data: "+name); return -1;}
+			slotsWithMatchingMaps.add(i);
 		}
 
 		int bestSlot = -1, bestConfidence = -1;

@@ -36,10 +36,10 @@ public abstract class MapClickMoveNeighbors{
 
 
 	public static void moveNeighbors(PlayerEntity player, int destSlot, ItemStack mapMoved){
-		//Main.LOGGER.info("MapMoveClick: moveNeighbors() called");
+		Main.LOGGER.info("MapMoveClick: moveNeighbors() called");
 		final String movedName = mapMoved.getCustomName().getLiteralString();
 		HashSet<Integer> slotsInvolved = new HashSet<>();
-		int prefixLen = 0, suffixLen = 0;
+		int prefixLen = -1, suffixLen = -1;
 		List<Slot> slots = player.currentScreenHandler.slots;
 //		int destSlot = -1;
 		for(int i=0; i<slots.size(); ++i){
@@ -55,22 +55,30 @@ public abstract class MapClickMoveNeighbors{
 				slotsInvolved.add(i);
 				continue;
 			}
-			final int a = commonPrefixLen(movedName, name), b = commonSuffixLen(movedName, name);
-			final boolean validPosStr = isValidWhenSimplifiedPosStr(name.substring(a, name.length()-b));
-			if(a == 0 && b == 0) continue;
+			int a = commonPrefixLen(movedName, name), b = commonSuffixLen(movedName, name);
+			int o = a-(name.length()-b);
+			if(o>0){a-=o; b-=o;}//Handle special case: "a 11/x"+"a 111/x", a=len(a 11)=4,b=len(11/x)=4,o=2 => a=len(a ),b=len(/x)
+			//Main.LOGGER.info("a:"+a+", b:"+b+", name:"+name);
+			//if(a == 0 && b == 0) continue;
 			if(prefixLen == a && suffixLen == b) continue;
-			if(prefixLen == 0 && suffixLen == 0){
+			final boolean validPosStr = isValidWhenSimplifiedPosStr(name.substring(a, name.length()-b));
+			if(prefixLen == -1){
 				if(validPosStr){prefixLen = a; suffixLen = b;}
 				continue;
 			}
 			final boolean oldContainsNew = prefixLen >= a && suffixLen >= b;
-			if(oldContainsNew && validPosStr){prefixLen = a; suffixLen = b;} // Reduce prefix/suffix len
+			if(oldContainsNew && validPosStr){
+				Main.LOGGER.info("MapMoveClick: reducing prefix/suffix len for name: "+name);
+				prefixLen = a; suffixLen = b;
+			} // Reduce prefix/suffix len
 			if(a+b > prefixLen+suffixLen && !isValidWhenSimplifiedPosStr(name.substring(Math.min(a, prefixLen), name.length()-Math.min(b, suffixLen)))){
+				Main.LOGGER.info("MapMoveClick: expanding prefix/suffix len for name: "+name);
 				prefixLen = a; suffixLen = b; // Expand prefix/suffix len
 			}
+			Main.LOGGER.info("a:"+a+", b:"+b+", name:"+name);
 		}
 //		if(destSlot == -1){Main.LOGGER.error("MapMoveClick: cannot find original moved map!");return;}
-		if(prefixLen == 0 && suffixLen == 0 && slotsInvolved.isEmpty()){Main.LOGGER.info("MapMoveClick: no matching maps found");return;}
+		if(prefixLen == -1 && suffixLen == -1 && slotsInvolved.isEmpty()){Main.LOGGER.info("MapMoveClick: no matching maps found");return;}
 
 		for(int i=0; i<slots.size(); ++i){
 			ItemStack item = slots.get(i).getStack();
@@ -79,6 +87,7 @@ public abstract class MapClickMoveNeighbors{
 			if(name.length() < prefixLen+suffixLen+1 || name.equals(movedName)) continue;
 			if(!movedName.regionMatches(0, name, 0, prefixLen) || !movedName.regionMatches(
 					movedName.length()-suffixLen, name, name.length()-suffixLen, suffixLen)) continue;
+			if(!isValidWhenSimplifiedPosStr(name.substring(prefixLen, name.length()-suffixLen))) continue;
 			slotsInvolved.add(i);
 		}
 		int tl = slotsInvolved.stream().mapToInt(i->i.intValue()).min().getAsInt();

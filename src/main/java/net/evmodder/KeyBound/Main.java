@@ -37,6 +37,7 @@ public class Main implements ClientModInitializer{
 	// Feature Ideas:
 	// Maps - smaller text for item count in slot
 	// Map - next hand autorestock, consider all maps in inv (later: look at all edges) and stick to RowByCol or ColByRow for whole map
+	// map copy using crafting table (since it can be all swaps/shift click i assume?)
 	// cont.: save LastMapCommonSubstr and LastMapRowByCol
 	// steal activated spawner and similar stuff from trouser-streak?
 	// /msgas Anuvin target hi - send msg from alt acc
@@ -169,7 +170,7 @@ public class Main implements ClientModInitializer{
 		}
 		if(keybindMapArtLoad) new KeybindMapLoad(/*MAX_CLICKS_PER_SECOND=*/999);
 		if(keybindMapArtCopy) new KeybindMapCopy(/*MILLIS_BETWEEN_CLICKS=*/26);
-		if(keybindMapArtMove) new KeybindMapMove(/*MILLIS_BETWEEN_CLICKS=*/10);
+		if(keybindMapArtMove) new KeybindMapMove(/*MILLIS_BETWEEN_CLICKS=*/7);
 		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg);
 		if(keybindHighwayTravelHelper) new Keybind2b2tHighwayTravelHelper(ejectJunk);
 
