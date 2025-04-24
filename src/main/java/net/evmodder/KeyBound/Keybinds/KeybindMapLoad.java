@@ -54,7 +54,7 @@ public final class KeybindMapLoad{
 		if(hotbarButton == 9){Main.LOGGER.warn("MapLoad cancelled: in shulker, and hotbar is full of shulkers"); return;}
 		//
 		ongoingLoad = true;
-		int[] putBackSlots = new int[Math.min(9, numToLoad)];
+		int[] putBackSlots = new int[9];
 		for(int i=0; i<putBackSlots.length; ++i) putBackSlots[i] = -1;
 
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
