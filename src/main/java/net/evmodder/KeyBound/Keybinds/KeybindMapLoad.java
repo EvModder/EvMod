@@ -53,7 +53,6 @@ public final class KeybindMapLoad{
 		int hotbarButton = getNextUsableHotbarButton(client, -1);
 		if(hotbarButton == 9){Main.LOGGER.warn("MapLoad cancelled: in shulker, and hotbar is full of shulkers"); return;}
 		//
-		ongoingLoad = true;
 		int[] putBackSlots = new int[9];
 		for(int i=0; i<putBackSlots.length; ++i) putBackSlots[i] = -1;
 
@@ -70,6 +69,7 @@ public final class KeybindMapLoad{
 				hotbarButton = getNextUsableHotbarButton(client, -1);
 			}
 		}
+		ongoingLoad = true;
 		InventoryUtils.executeClicks(client, clicks, /*MILLIS_BETWEEN_CLICKS=*/0, MAX_CLICKS_PER_SECOND,
 				c->!isUnloadedMapArt(client.player.clientWorld, client.player.getInventory().getStack(c.button())),
 				()->{

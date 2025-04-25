@@ -36,7 +36,7 @@ public final class KeybindMapMove{
 		if(ongoingStealStore){Main.LOGGER.warn("MapMove cancelled: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
-		if(!(client.currentScreen instanceof ShulkerBoxScreen sbs)){Main.LOGGER.warn("MapMove cancelled: Not in ShulkerBoxScreen"); return;}
+		if(!(client.currentScreen instanceof ShulkerBoxScreen sbs)){/*Main.LOGGER.warn("MapMove cancelled: Not in ShulkerBoxScreen"); */return;}
 		//
 		final long ts = System.currentTimeMillis();
 		if(ts - lastStealStore < stealStoreCooldown){/*Main.LOGGER.warn("MapMove cancelled: Cooldown, "+ts+","+lastStealStore+","+stealStoreCooldown); */return;}
@@ -90,7 +90,6 @@ public final class KeybindMapMove{
 		else if(numInInv > emptySlotsShulk && cantMergeMapsIntoShulker){Main.LOGGER.warn("MapMove cancelled: Not enough empty slots in shulker"); return;}
 		//
 		final boolean isShiftClick = Screen.hasShiftDown();
-		ongoingStealStore = true;
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		if(moveToShulk) for(int i=27; i<63; ++i){
 			if(!isMapArt(sh.getSlot(i).getStack())) continue;
@@ -121,6 +120,7 @@ public final class KeybindMapMove{
 			}
 		}
 
+		ongoingStealStore = true;
 		InventoryUtils.executeClicks(client, clicks, MILLIS_BETWEEN_CLICKS, /*MAX_CLICKS_PER_SECOND=*/27*4,
 				_->true,
 				()->{

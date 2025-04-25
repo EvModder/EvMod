@@ -18,6 +18,7 @@ import net.minecraft.util.Identifier;
 public final class KeybindInventoryOrganize{
 	final boolean CLEAN_UNUSED_HOTBAR_SLOTS = true;
 	final List<Pair<Integer, Identifier>> layoutMap;
+
 	private String getName(ItemStack stack){
 		return stack == null || stack.isEmpty() || stack.getCount() == 0 ? null : Registries.ITEM.getId(stack.getItem()).getPath();
 	}
@@ -85,14 +86,13 @@ public final class KeybindInventoryOrganize{
 		}
 	}
 
-	private boolean isSorting = false;
+	private boolean ongoingOrganize = false;
 	private void organizeInventory(){
 		//Main.LOGGER.info("InvOrganize: keybind pressed");
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof InventoryScreen is)){/*Main.LOGGER.warn("InvOrganize: not in InventoryScreen"); */return;}
 
-		if(isSorting) return;
-		isSorting = true;
+		if(ongoingOrganize) return;
 
 		ItemStack[] simSlots = new ItemStack[46];
 		boolean[] emptySlots = new boolean[46];
@@ -126,7 +126,7 @@ public final class KeybindInventoryOrganize{
 			if(!simSlots[dstSlot].isEmpty()){
 				if(simulateShiftClick(simSlots, emptySlots, /*fromArmor=*/true, p.a) != 0){
 					Main.LOGGER.warn("InvOrganize: Unable to unequip incorrect armor - no room in inventory!");
-					isSorting = false; return;
+					return;
 				}
 				//client.player.sendMessage(Text.of("Click: Unequipping armor"), false);
 				clicks.add(new ClickEvent(p.a, 0, SlotActionType.QUICK_MOVE));
@@ -235,6 +235,7 @@ public final class KeybindInventoryOrganize{
 			//needEarlier.remove(p.b.getPath());
 		}
 		final int numClicks = clicks.size();
+		ongoingOrganize = true;
 		InventoryUtils.executeClicks(client, clicks, /*MILLIS_BETWEEN_CLICKS=*/25, /*MAX_CLICKS_PER_SECOND=*/40,
 				//_->true,
 				_->{
@@ -244,7 +245,7 @@ public final class KeybindInventoryOrganize{
 				()->{
 					//client.player.sendMessage(Text.of("InvOrganize: done! clicks required: "+numClicks), false);
 					Main.LOGGER.info("InvOrganize: done! clicks required: "+numClicks);
-					isSorting = false;
+					ongoingOrganize = false;
 				});
 	}
 
