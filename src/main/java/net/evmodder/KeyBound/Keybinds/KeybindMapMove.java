@@ -93,14 +93,14 @@ public final class KeybindMapMove{
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		if(moveToShulk) for(int i=27; i<63; ++i){
 			if(!isMapArt(sh.getSlot(i).getStack())) continue;
-//			if(sameCountInv > 1){
-//				//clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.PICKUP)); // left-click: pickup all
-//				clicks.add(new ClickEvent(sh.syncId, i, 1, SlotActionType.PICKUP)); // right-click: pickup half
-//			}
+			if((sameCountInv == 2 || sameCountInv == 3) && !isShiftClick){
+				//clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.PICKUP)); // left-click: pickup all
+				clicks.add(new ClickEvent(sh.syncId, i, 1, SlotActionType.PICKUP)); // right-click: pickup half
+			}
 			clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.QUICK_MOVE)); // shift-click: all in slot to shulker
-//			if(sameCountInv > 1){
-//				clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.PICKUP)); // left-click: put back all on cursor
-//			}
+			if((sameCountInv == 2 || sameCountInv == 3) && !isShiftClick){
+				clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.PICKUP)); // left-click: put back all on cursor
+			}
 		}
 		else for(int i=26; i>=0; --i){
 //			if(isMapArt(sh.getSlot(i).getStack())) clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.QUICK_MOVE));
