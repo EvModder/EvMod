@@ -236,7 +236,7 @@ public final class KeybindInventoryOrganize{
 		}
 		final int numClicks = clicks.size();
 		ongoingOrganize = true;
-		InventoryUtils.executeClicks(client, clicks, /*MILLIS_BETWEEN_CLICKS=*/25, /*MAX_CLICKS_PER_SECOND=*/40,
+		Main.inventoryUtils.executeClicks(client, clicks,
 				//_->true,
 				_->{
 					//client.player.sendMessage(Text.of("click "+c.slotId()+" "+c.button()+" "+c.actionType()), false);

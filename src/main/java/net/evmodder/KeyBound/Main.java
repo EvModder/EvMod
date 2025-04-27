@@ -174,9 +174,9 @@ public class Main implements ClientModInitializer{
 		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && anyDbFeaturesEnabled){
 			remoteSender = new RemoteServerSender(remoteAddr, remotePort, clientId, clientKey, remoteMessages);
 		}
-		if(keybindMapArtLoad) new KeybindMapLoad(/*MAX_CLICKS_PER_SECOND=*/999);
-		if(keybindMapArtCopy) new KeybindMapCopy(/*MILLIS_BETWEEN_CLICKS=*/26);
-		if(keybindMapArtMove) new KeybindMapMove(/*MILLIS_BETWEEN_CLICKS=*/7);
+		if(keybindMapArtLoad) new KeybindMapLoad();
+		if(keybindMapArtCopy) new KeybindMapCopy();
+		if(keybindMapArtMove) new KeybindMapMove();
 		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg);
 		if(keybindHighwayTravelHelper) new Keybind2b2tHighwayTravelHelper(ejectJunk);
 		new KeybindSpamclick();

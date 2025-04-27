@@ -54,7 +54,7 @@ public final class KeybindSpamclick{
 			if(numTicks*50l % numClicks != 0){
 				client.player.sendMessage(Text.of("SpamClick: ms per click is not exact: "+((numTicks*50d)/numClicks)).copy().withColor(16763080), /*overlay=*/false);
 			}
-			InventoryUtils.executeClicks(client, clicks, msPerClick, /*MAX_CLICKS_PER_SECOND=*/Integer.MAX_VALUE, _->true, ()->{
+			InventoryUtils.executeClicksLEGACY(client, clicks, msPerClick, /*MAX_CLICKS_PER_SECOND=*/Integer.MAX_VALUE, _->true, ()->{
 				ongoingSpamClick = false;
 				//Main.LOGGER.info("SpamClick: DONE");
 				if(client.player != null) client.player.sendMessage(Text.of("SpamClick: DONE"), /*overlay=*/false);

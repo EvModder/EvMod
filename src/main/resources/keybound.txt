@@ -7,8 +7,9 @@ temp_event_timestamp: 1738990800 # Fri, Feb7, 11pm CST
 
 
 #========== MapArt Tools ==========#
+# 2b2t will kick you for sending 200+ clicks in 70 ticks (last checked: 2025-04-27)
 limiter_clicks_in_duration: 190
-limiter_duration_ticks: 70
+limiter_duration_ticks: 75
 
 keybind_mapart_load_from_shulker: true
 keybind_mapart_take_from_shulker: true

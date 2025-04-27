@@ -32,7 +32,7 @@ public final class KeybindMapMove{
 	private boolean ongoingStealStore;
 	private long lastStealStore = 0;
 	private final long stealStoreCooldown = 250l;
-	private final void moveMapArtToFromShulker(final int MILLIS_BETWEEN_CLICKS){
+	private final void moveMapArtToFromShulker(){
 		if(ongoingStealStore){Main.LOGGER.warn("MapMove cancelled: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -121,15 +121,14 @@ public final class KeybindMapMove{
 		}
 
 		ongoingStealStore = true;
-		InventoryUtils.executeClicks(client, clicks, MILLIS_BETWEEN_CLICKS, /*MAX_CLICKS_PER_SECOND=*/27*4,
-				_->true,
+		Main.inventoryUtils.executeClicks(client, clicks, /*canProceed=*/_->true,
 				()->{
 					Main.LOGGER.info("MapMove: DONE!");
 					ongoingStealStore = false;
 				});
 	}
 
-	public KeybindMapMove(int MILLIS_BETWEEN_CLICKS){
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_take_place", ()->moveMapArtToFromShulker(MILLIS_BETWEEN_CLICKS), s->s instanceof ShulkerBoxScreen));
+	public KeybindMapMove(){
+		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_take_place", ()->moveMapArtToFromShulker(), s->s instanceof ShulkerBoxScreen));
 	}
 }

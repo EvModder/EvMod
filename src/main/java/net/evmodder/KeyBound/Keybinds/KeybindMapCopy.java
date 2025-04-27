@@ -120,7 +120,7 @@ public final class KeybindMapCopy{
 		}
 		return blankMapsCurrent;
 	}
-	private void copyMapArtInInventory(int MILLIS_BETWEEN_CLICKS, Boolean bulk){
+	private void copyMapArtInInventory(Boolean bulk){
 		if(ongoingCopy){Main.LOGGER.warn("MapCopy: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -183,7 +183,7 @@ public final class KeybindMapCopy{
 			if(FORCE_HOTBAR_SWAPS) return;
 		}
 		PRESERVE_EXACT_POS = !isCrafter; // TODO: smarter/configurable decision
-		if(isCrafter) MILLIS_BETWEEN_CLICKS /= 2; // TODO: smarter decision / configurable
+		//if(isCrafter) MILLIS_BETWEEN_CLICKS /= 2; // TODO: smarter decision / configurable
 		if(PRESERVE_EXACT_POS) hotbarButton = -1; // TODO: any case where we can still use the hotbar? (where it wont be filled with relocated maps)
 		//
 		// Check if there are items already in the crafting 2x2
@@ -363,14 +363,14 @@ public final class KeybindMapCopy{
 			clicks.add(new ClickEvent(syncId, blankMapCraftingSlot, 0, SlotActionType.THROW)); // throw leftovers if quick_move fails
 		}
 		ongoingCopy = true;
-		InventoryUtils.executeClicks(client, clicks, MILLIS_BETWEEN_CLICKS, /*MAX_CLICKS_PER_SECOND=*/80, _->true, ()->{
+		Main.inventoryUtils.executeClicks(client, clicks, /*canProceed=*/_->true, ()->{
 			Main.LOGGER.info("MapCopy: DONE");
 			ongoingCopy = false;
 		});
 	}
 
-	public KeybindMapCopy(final int MILLIS_BETWEEN_CLICKS){
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_copy", ()->copyMapArtInInventory(MILLIS_BETWEEN_CLICKS, null),
+	public KeybindMapCopy(){
+		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_copy", ()->copyMapArtInInventory(null),
 				s->s instanceof InventoryScreen || s instanceof CraftingScreen));
 
 //		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_copy", ()->copyMapArtInInventory(false), true));

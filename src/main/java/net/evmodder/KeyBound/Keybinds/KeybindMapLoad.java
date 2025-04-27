@@ -35,7 +35,7 @@ public final class KeybindMapLoad{
 	private boolean ongoingLoad;
 	private long lastLoad;
 	private final long loadCooldown = 500L;
-	private final void loadMapArtFromContainer(final int MAX_CLICKS_PER_SECOND){
+	private final void loadMapArtFromContainer(){
 		if(ongoingLoad){Main.LOGGER.warn("MapLoad cancelled: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -70,7 +70,7 @@ public final class KeybindMapLoad{
 			}
 		}
 		ongoingLoad = true;
-		InventoryUtils.executeClicks(client, clicks, /*MILLIS_BETWEEN_CLICKS=*/0, MAX_CLICKS_PER_SECOND,
+		Main.inventoryUtils.executeClicks(client, clicks,
 				c->!isUnloadedMapArt(client.player.clientWorld, client.player.getInventory().getStack(c.button())),
 				()->{
 					Main.LOGGER.info("MapLoad: DONE!");
@@ -78,12 +78,8 @@ public final class KeybindMapLoad{
 				});
 	}
 
-	public KeybindMapLoad(int MAX_CLICKS_PER_SECOND){
-		if(MAX_CLICKS_PER_SECOND < 9){
-			Main.LOGGER.error("max_clicks_per_second value is set too low, disabling MapArtLoad keybind");
-			return;
-		}
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_load_data", ()->loadMapArtFromContainer(MAX_CLICKS_PER_SECOND),
+	public KeybindMapLoad(){
+		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_load_data", ()->loadMapArtFromContainer(),
 				s->s instanceof InventoryScreen == false));
 	}
 }

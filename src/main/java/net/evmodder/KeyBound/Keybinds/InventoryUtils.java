@@ -20,9 +20,9 @@ public class InventoryUtils{
 	private long lastTick;
 
 	public InventoryUtils(final int MAX_CLICKS, int FOR_TICKS){
-		this.MAX_CLICKS = MAX_CLICKS;
 		if(MAX_CLICKS > 100_000){
 			Main.LOGGER.error("InventoryUtils() initialized with insanely-large click-limit: "+MAX_CLICKS+", treating it as limitless");
+			this.MAX_CLICKS = Integer.MAX_VALUE;
 			tickDurationArr = null;
 			return;
 		}
@@ -30,11 +30,13 @@ public class InventoryUtils{
 			Main.LOGGER.error("InventoryUtils() initialized with insanely-large tick-limiter duration: "+FOR_TICKS+", ignoring and using 72k instead");
 			FOR_TICKS = 72_000;
 		}
+		this.MAX_CLICKS = MAX_CLICKS;
 		tickDurationArr = new int[FOR_TICKS];
 		lastTick = System.currentTimeMillis()/50l;
 	}
 
-	public void addClick(SlotActionType type){
+	public int addClick(SlotActionType type){
+		if(tickDurationArr == null) return 0;
 		final long curTick = System.currentTimeMillis()/50l;
 		if(curTick - lastTick >= tickDurationArr.length){
 			lastTick = curTick;
@@ -51,6 +53,7 @@ public class InventoryUtils{
 			++tickDurationArr[tickDurIndex];
 			++sumClicksInDuration;
 		}
+		return sumClicksInDuration;
 	}
 
 	public void executeClicks(MinecraftClient client, Queue<ClickEvent> clicks, Function<ClickEvent, Boolean> canProceed, Runnable onComplete){
@@ -61,8 +64,7 @@ public class InventoryUtils{
 		}
 		new Timer().schedule(new TimerTask(){
 			@Override public void run(){
-				addClick(null);
-				final int availableClicks = MAX_CLICKS - sumClicksInDuration;
+				final int availableClicks = MAX_CLICKS - addClick(null);
 				for(int i=0; i<availableClicks; ++i){
 					ClickEvent click = clicks.remove();
 					try{
@@ -79,7 +81,7 @@ public class InventoryUtils{
 	}
 
 
-	public static void executeClicks(
+	public static void executeClicksLEGACY(
 			MinecraftClient client,
 			Queue<ClickEvent> clicks, final int MILLIS_BETWEEN_CLICKS, final int MAX_CLICKS_PER_SECOND,
 			Function<ClickEvent, Boolean> canProceed, Runnable onComplete)
