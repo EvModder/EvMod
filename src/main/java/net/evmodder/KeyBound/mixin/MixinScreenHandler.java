@@ -1,5 +1,6 @@
 package net.evmodder.KeyBound.mixin;
 
+import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapClickMoveNeighbors;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.player.PlayerEntity;
@@ -17,6 +18,7 @@ public abstract class MixinScreenHandler{
 
 	@Inject(method = "internalOnSlotClick", at = @At("TAIL"))
 	private void add_logic_for_bulk_move_maparts(int slotIndex, int button, SlotActionType actionType, PlayerEntity player, CallbackInfo ci){
+		Main.inventoryUtils.addClick(actionType);
 		//Main.LOGGER.info("MapMoveClick: click slot "+slotIndex);
 		if(button != 0 || actionType != SlotActionType.PICKUP) return;
 		//Main.LOGGER.info("MapMoveClick: PICKUP");

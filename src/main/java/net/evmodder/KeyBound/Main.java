@@ -58,6 +58,7 @@ public class Main implements ClientModInitializer{
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	private static HashMap<String, String> config;
 
+	public static InventoryUtils inventoryUtils;
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
 	public static boolean rcHotbarHUD, mapartDb=true, mapartDbContact, mapColorHUD, mapColorIFrame;
@@ -99,6 +100,7 @@ public class Main implements ClientModInitializer{
 		HashMap<String, String> remoteMessages = new HashMap<>();
 		int clientId=0; String clientKey=null;
 		String remoteAddr=null; int remotePort=0;
+		int clicksInDuration = 190, durationTicks = 75;
 		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false,
 				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false;
 //		int clicks_per_gt=36, millis_between_clicks=50;
@@ -126,6 +128,9 @@ public class Main implements ClientModInitializer{
 				case "seen_database": if(!value.equalsIgnoreCase("false")) new SeenCommand(); break;//TODO
 				case "mapart_database": mapartDb = !value.equalsIgnoreCase("false"); break;
 				case "mapart_database_share_contact": mapartDbContact = !value.equalsIgnoreCase("false"); break;
+
+				case "limiter_clicks_in_duration": clicksInDuration = Integer.parseInt(value); break;
+				case "limiter_duration_ticks": durationTicks = Integer.parseInt(value); break;
 
 				case "join_messages": if(value.startsWith("[")) new SendOnServerJoin(value.substring(1, value.length()-1).split(",")); break;
 				case "temp_event_broadcast": if(value.startsWith("[")) temp_evt_msgs = value.substring(1, value.length()-1).split(","); break;
@@ -163,6 +168,7 @@ public class Main implements ClientModInitializer{
 					LOGGER.warn("Unrecognized config setting: "+key);
 			}
 		}
+		inventoryUtils = new InventoryUtils(clicksInDuration, durationTicks);
 		if(epearlOwners) epearlLookup = new EpearlLookup(epearlOwnersDbUUID, epearlOwnersDbXZ);
 		final boolean anyDbFeaturesEnabled = !remoteMessages.isEmpty() || epearlOwnersDbUUID || epearlOwnersDbXZ || mapartDb;
 		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && anyDbFeaturesEnabled){
@@ -173,6 +179,7 @@ public class Main implements ClientModInitializer{
 		if(keybindMapArtMove) new KeybindMapMove(/*MILLIS_BETWEEN_CLICKS=*/7);
 		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg);
 		if(keybindHighwayTravelHelper) new Keybind2b2tHighwayTravelHelper(ejectJunk);
+		new KeybindSpamclick();
 
 		MinecraftClient client = MinecraftClient.getInstance();
 		String username = client.getSession().getUsername();
