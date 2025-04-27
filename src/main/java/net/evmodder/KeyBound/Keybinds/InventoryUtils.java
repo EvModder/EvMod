@@ -66,6 +66,7 @@ public class InventoryUtils{
 			@Override public void run(){
 				final int availableClicks = MAX_CLICKS - addClick(null);
 				for(int i=0; i<availableClicks; ++i){
+					if(!canProceed.apply(clicks.peek())) return;
 					ClickEvent click = clicks.remove();
 					try{
 						client.interactionManager.clickSlot(click.syncId, click.slotId, click.button, click.actionType, client.player);
