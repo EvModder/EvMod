@@ -25,8 +25,8 @@ public abstract class MapClickMoveNeighbors{
 	private static String simplifyPosStr(String rawPos){
 		String pos = Normalizer.normalize(
 				rawPos.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", " ").trim(),
-				Normalizer.Form.NFD).toUpperCase();
-		while(pos.matches(".*[A-Z][A-Z].*")) pos = pos.replaceAll("([A-Z])([A-Z])", "$1 $2");
+				Normalizer.Form.NFD).toUpperCase().replaceAll("\\s+", " ");
+		while(pos.matches(".*[^0-9 ][^0-9 ].*")) pos = pos.replaceAll("([^0-9 ])([^0-9 ])", "$1 $2");
 		return pos;
 	}
 	private static boolean isValidWhenSimplifiedPosStr(String posStr){
@@ -78,9 +78,10 @@ public abstract class MapClickMoveNeighbors{
 			Main.LOGGER.info("a:"+a+", b:"+b+", name:"+name);
 		}
 //		if(destSlot == -1){Main.LOGGER.error("MapMoveClick: cannot find original moved map!");return;}
-		if(prefixLen == -1 && suffixLen == -1 && slotsInvolved.isEmpty()){Main.LOGGER.info("MapMoveClick: no matching maps found");return;}
-
-		for(int i=0; i<slots.size(); ++i){
+		if(prefixLen == -1){
+			if(slotsInvolved.isEmpty()){Main.LOGGER.info("MapMoveClick: no matching maps found");return;}
+		}
+		else for(int i=0; i<slots.size(); ++i){
 			ItemStack item = slots.get(i).getStack();
 			if(!isMapArt(item) || item.getCustomName() == null/* || item.getCount() != mapMoved.getCount()*/) continue;
 			final String name = item.getCustomName().getLiteralString();

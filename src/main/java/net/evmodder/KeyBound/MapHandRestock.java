@@ -46,8 +46,8 @@ public final class MapHandRestock{
 		if(posA.endsWith("L") && posB.endsWith("R")) return 3;
 
 		final int cutA = posA.indexOf(' '), cutB = posB.indexOf(' ');
-		assert (cutA==-1) == (cutB==-1);
-		if(cutA != -1){
+		//assert (cutA==-1) == (cutB==-1);
+		if(cutA != -1 && cutB != -1){
 			Main.LOGGER.info("MapRestock: 2d pos not yet fully supported. A:"+posA+", B:"+posB);
 			String posA1 = posA.substring(0, cutA), posA2 = posA.substring(cutA+1);
 			String posB1 = posB.substring(0, cutB), posB2 = posB.substring(cutB+1);
@@ -85,8 +85,9 @@ public final class MapHandRestock{
 	private String simplifyPosStr(String rawPos){
 		String pos = Normalizer.normalize(
 				rawPos.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", " ").trim(),
-				Normalizer.Form.NFD).toUpperCase();
-		while(pos.matches(".*[A-Z][A-Z].*")) pos = pos.replaceAll("([A-Z])([A-Z])", "$1 $2");
+				Normalizer.Form.NFD).toUpperCase()
+				.replaceAll("\\s+", " ");
+		while(pos.matches(".*[^0-9 ][^0-9 ].*")) pos = pos.replaceAll("([^0-9 ])([^0-9 ])", "$1 $2");
 		return pos;
 	}
 	private boolean isValidPosStr(String posStr){
@@ -124,49 +125,64 @@ public final class MapHandRestock{
 			final boolean oldContainsNew = prefixLen >= a && suffixLen >= b;
 			//final boolean newContainsOld = a >= prefixLen && b >= suffixLen;
 			if(oldContainsNew && validPosStr){
-				Main.LOGGER.info("MapRestock: reducing prefix/suffix len");
+				Main.LOGGER.info("MapRestock: decreasing prefix/suffix len (expanding posStr) to "+a+"/"+b+" for name: "+name);
 				prefixLen = a; suffixLen = b;
 			}
 			if(a+b > prefixLen+suffixLen && !isValidPosStr(name.substring(Math.min(a, prefixLen), name.length()-Math.min(b, suffixLen)))){
-				Main.LOGGER.info("MapRestock: expanding prefix/suffix len");
+				Main.LOGGER.info("MapRestock: increasing prefix/suffix len (shrinking posStr) to "+a+"/"+b+" for name: "+name);
 				prefixLen = a; suffixLen = b;
 			}
 		}
-		if(prefixLen == -1 && suffixLen == -1){
+		Main.LOGGER.info("MapRestock: hmm");
+		final String posStrPrev;
+		if(prefixLen == -1){
 			Main.LOGGER.info("MapRestock: no shared prefix/suffix named maps found");
 			if(slotsWithMatchingMaps.isEmpty()) return -1;
+			posStrPrev = prevName;
 		}
-		Main.LOGGER.info("MapRestock: prefixLen="+prefixLen+", suffixLen="+suffixLen);
-		final String posStrPrev = simplifyPosStr(prevName.substring(prefixLen, prevName.length()-suffixLen));
-		//if(!isValidPosStr(posStrPrev)){Main.LOGGER.info("MapRestock: unrecognized prevPos data: "+posStrPrev); return -1;}
-		final boolean pos2dPrev = posStrPrev.indexOf(' ') != -1;
+		else{
+			Main.LOGGER.info("MapRestock: prefixLen="+prefixLen+", suffixLen="+suffixLen);
+			posStrPrev = simplifyPosStr(prevName.substring(prefixLen, prevName.length()-suffixLen));
+			//if(!isValidPosStr(posStrPrev)){Main.LOGGER.info("MapRestock: unrecognized prevPos data: "+posStrPrev); return -1;}
+			final boolean pos2dPrev = posStrPrev.indexOf(' ') != -1;
 
-		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
-			int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
-			ItemStack item = psh.getSlot(i).getStack();
-			if(!isMapArtWithCount(item, count)) continue;
-			final String name = getCustomName(item);
-			if(name == null || name.length() < prefixLen+suffixLen+1 || name.equals(prevName)) continue;
-			if(!prevName.regionMatches(0, name, 0, prefixLen) ||
-					!prevName.regionMatches(prevName.length()-suffixLen, name, name.length()-suffixLen, suffixLen)) continue;
-			final String posStr = simplifyPosStr(name.substring(prefixLen, name.length()-suffixLen));
-			if(!isValidPosStr(posStr)){Main.LOGGER.info("MapRestock: unrecognized pos data: "+posStr);/* return -1;*/continue;}
-			final boolean pos2d = posStrPrev.indexOf(' ') != -1;
-			if(pos2d != pos2dPrev){Main.LOGGER.warn("MapRestock: mismatched pos data: "+name); return -1;}
-			slotsWithMatchingMaps.add(i);
+			for(int f=0; f<=(count==1 ? 36 : 9); ++f){
+				int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
+				ItemStack item = psh.getSlot(i).getStack();
+				if(!isMapArtWithCount(item, count)) continue;
+				final String name = getCustomName(item);
+				if(name == null || name.length() < prefixLen+suffixLen+1 || name.equals(prevName)) continue;
+				if(!prevName.regionMatches(0, name, 0, prefixLen) ||
+						!prevName.regionMatches(prevName.length()-suffixLen, name, name.length()-suffixLen, suffixLen)){
+					Main.LOGGER.info("MapRestock: name does not match: "+name);
+					continue;
+				}
+				final String posStr = simplifyPosStr(name.substring(prefixLen, name.length()-suffixLen));
+				if(!isValidPosStr(posStr)){
+					if(prefixLen != 0 || suffixLen != 0)
+						Main.LOGGER.info("MapRestock: unrecognized pos data: '"+posStr+"' for name:'"+name+"'");/* return -1;*/
+					continue;
+				}
+				else Main.LOGGER.info("valid pos str: "+posStr);
+				final boolean pos2d = posStrPrev.indexOf(' ') != -1;
+				if(pos2d != pos2dPrev){Main.LOGGER.warn("MapRestock: mismatched pos data: "+name); return -1;}
+				slotsWithMatchingMaps.add(i);
+			}
 		}
 
 		int bestSlot = -1, bestConfidence = -1;
 		for(int slot : slotsWithMatchingMaps){
 			final String name = getCustomName(psh.getSlot(slot).getStack());
-			final String posStr = simplifyPosStr(name.substring(prefixLen, name.length()-suffixLen));
+			final String posStr = prefixLen == -1 ? name : simplifyPosStr(name.substring(prefixLen, name.length()-suffixLen));
+			Main.LOGGER.info("checkComesAfter for name: "+name);
 			final int confidence = checkComesAfter(posStrPrev, posStr);
 			if(confidence > bestConfidence){
-				Main.LOGGER.info("MapRestock: new best confidence for "+posStr+": "+confidence);
+				Main.LOGGER.info("MapRestock: new best confidence for "+name+": "+confidence);
 				bestConfidence = confidence; bestSlot = slot;
 			}
 		}
 		if(bestSlot != -1) Main.LOGGER.info("MapRestock: find-by-name suceeded");
+		else Main.LOGGER.info("MapRestock: find-by-name failed");
 		if(bestConfidence == 0) Main.LOGGER.warn("MapRestock: Likely skipping a map");
 		return bestSlot;
 	}
@@ -198,7 +214,7 @@ public final class MapHandRestock{
 		if(USE_NAME && prevName != null){
 			Main.LOGGER.info("MapRestock: finding next map by-name: "+prevName);
 			restockFromSlot = getNextSlotByName(player, prevName, prevCount);
-			if(restockFromSlot == -1) restockFromSlot = getNextSlotAny(player, hand, prevCount);
+			if(JUST_PICK_A_MAP && restockFromSlot == -1) restockFromSlot = getNextSlotAny(player, hand, prevCount);
 		}
 		else if(JUST_PICK_A_MAP){
 			Main.LOGGER.info("MapRestock: finding any single map");
