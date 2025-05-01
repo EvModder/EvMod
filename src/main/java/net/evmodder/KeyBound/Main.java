@@ -16,11 +16,15 @@ strictfp
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.evmodder.EvLib.FileIO;
+import net.evmodder.KeyBound.Commands.CommandSeen;
+import net.evmodder.KeyBound.Commands.CommandSetMapArtGroup;
 import net.evmodder.KeyBound.Keybinds.*;
 import net.evmodder.KeyBound.Keybinds.KeybindsSimple;
 import net.fabricmc.api.ClientModInitializer;
@@ -58,6 +62,7 @@ public class Main implements ClientModInitializer{
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	private static HashMap<String, String> config;
 
+	public static HashSet<UUID> mapsInGroup;
 	public static InventoryUtils inventoryUtils;
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
@@ -125,7 +130,7 @@ public class Main implements ClientModInitializer{
 				case "enderpearl_owners": epearlOwners = !value.equalsIgnoreCase("false"); break;
 				case "enderpearl_database_by_uuid": epearlOwnersDbUUID = !value.equalsIgnoreCase("false"); break;
 				case "enderpearl_database_by_coords": epearlOwnersDbXZ = !value.equalsIgnoreCase("false"); break;
-				case "seen_database": if(!value.equalsIgnoreCase("false")) new SeenCommand(); break;//TODO
+				case "seen_database": if(!value.equalsIgnoreCase("false")) new CommandSeen(); break;//TODO
 				case "mapart_database": mapartDb = !value.equalsIgnoreCase("false"); break;
 				case "mapart_database_share_contact": mapartDbContact = !value.equalsIgnoreCase("false"); break;
 
@@ -149,6 +154,7 @@ public class Main implements ClientModInitializer{
 				case "mapart_placement_helper": mapPlaceHelper=true; break;
 				case "mapart_placement_helper_use_name": mapPlaceHelperByName=true; break;
 				case "mapart_placement_helper_use_image": mapPlaceHelperByImg=true; break;
+				case "mapart_set_group_command": if(!value.equalsIgnoreCase("false")) new CommandSetMapArtGroup(); break;
 //				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
 //				case "millis_between_clicks": millis_between_clicks = Integer.parseInt(value); break;
 

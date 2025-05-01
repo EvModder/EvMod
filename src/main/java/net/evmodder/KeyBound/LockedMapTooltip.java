@@ -1,6 +1,7 @@
 package net.evmodder.KeyBound;
 
 import java.util.List;
+import java.util.UUID;
 import net.minecraft.item.Item.TooltipContext;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
@@ -14,7 +15,16 @@ import net.minecraft.util.Formatting;
 public final class LockedMapTooltip{
 	public static final int UNLOCKED_COLOR = 14692709;
 	public static final int UNNAMED_COLOR = 15652823;
+	public static final int UNCOLLECTED_COLOR = 706660;
 
+	private static final boolean isNotInCurrentGroup(ItemStack item, TooltipContext context){
+		if(Main.mapsInGroup == null) return false;
+		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
+		if(id == null) return false;
+		MapState state = context.getMapState(id);
+		if(state == null) return false;
+		return !Main.mapsInGroup.contains(UUID.nameUUIDFromBytes(state.colors));
+	}
 	private static final boolean isUnlockedMap(ItemStack item, TooltipContext context){
 		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
 		if(id == null) return false;
@@ -25,13 +35,16 @@ public final class LockedMapTooltip{
 	}
 	private static final boolean isUnnamedMap(ItemStack item){
 		if(item.getCustomName() != null) return false;
-		return item.get(DataComponentTypes.MAP_ID) != null;
+		return item.getComponents().contains(DataComponentTypes.MAP_ID);
 	}
 
 	public static final void redName(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
 		ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
 		if(container != null){
-			if(container.stream().anyMatch(i -> isUnlockedMap(i, context))){
+			if(container.stream().anyMatch(i -> isNotInCurrentGroup(i, context))){
+				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(UNCOLLECTED_COLOR).formatted(Formatting.BOLD)));
+			}
+			else if(container.stream().anyMatch(i -> isUnlockedMap(i, context))){
 				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(UNLOCKED_COLOR).formatted(Formatting.BOLD)));
 			}
 			else if(container.stream().anyMatch(i -> isUnnamedMap(i))){
@@ -39,14 +52,8 @@ public final class LockedMapTooltip{
 			}
 			return;
 		}
-//		if(type == TooltipType.BASIC) return;
-		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
-		if(id == null) return;
-
-		MapState state = context.getMapState(id);
-		if(state == null) return;
-
-		if(!state.locked) lines.addFirst(lines.removeFirst().copy().withColor(UNLOCKED_COLOR));
-		else if(item.getCustomName() == null) lines.addFirst(lines.removeFirst().copy().withColor(UNNAMED_COLOR));
+		if(isNotInCurrentGroup(item, context)) lines.addFirst(lines.removeFirst().copy().withColor(UNCOLLECTED_COLOR));
+		else if(isUnlockedMap(item, context)) lines.addFirst(lines.removeFirst().copy().withColor(UNLOCKED_COLOR));
+		else if(isUnnamedMap(item)) lines.addFirst(lines.removeFirst().copy().withColor(UNNAMED_COLOR));
 	}
 }

@@ -72,7 +72,7 @@ public class InventoryUtils{
 						client.interactionManager.clickSlot(click.syncId, click.slotId, click.button, click.actionType, client.player);
 					}
 					catch(NullPointerException e){
-						Main.LOGGER.error("executeClicks() failed due to null client. Clicks left: "+clicks.size());
+						Main.LOGGER.error("executeClicks() failed due to null client. Clicks left: "+clicks.size()+", sumClicksInDuration: "+(sumClicksInDuration+i));
 						clicks.clear();
 					}
 					if(clicks.isEmpty()){cancel(); onComplete.run(); return;}

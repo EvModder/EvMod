@@ -115,6 +115,31 @@ public final class FileIO{
 		}
 		return file.length() == 0 ? "" : file.substring(1);
 	}
+	public static final byte[] loadFileBytes(String filename){
+		try{
+			final FileInputStream fis = new FileInputStream(FileIO.DIR+filename);
+			final byte[] data = fis.readAllBytes();
+			fis.close();
+			return data;
+		}
+		catch(FileNotFoundException e){return null;}
+		catch(IOException e){e.printStackTrace(); return null;}
+	}
+	public static final boolean saveFileBytes(String filename, byte[] data){
+		File file = new File(FileIO.DIR+filename);
+		FileOutputStream fos;
+		try{
+			try{fos = new FileOutputStream(file);}
+			catch(FileNotFoundException e){
+				file.createNewFile();
+				fos = new FileOutputStream(file);
+			}
+			fos.write(data);
+			fos.close();
+		}
+		catch(IOException e){e.printStackTrace(); return false;}
+		return true;
+	}
 
 	public static boolean saveFile(String filename, String content, boolean append){
 		if(content == null || content.isEmpty()) return new File(DIR+filename).delete();
@@ -318,7 +343,8 @@ public final class FileIO{
 		return entries;
 	}
 
-	public static final synchronized HashSet<UUID> removeMissingFromClientFile(String filename, int playerX, int playerY, int playerZ, double affectedDistSq, HashSet<UUID> keep){
+	public static final synchronized HashSet<UUID> removeMissingFromClientFile(String filename, int playerX, int playerY, int playerZ,
+			double affectedDistSq, HashSet<UUID> keep){
 		FileInputStream is = null;
 		try{is = new FileInputStream(FileIO.DIR+filename);}
 		catch(FileNotFoundException e){/*e.printStackTrace(); */return null;}

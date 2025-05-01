@@ -1,13 +1,14 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.Commands;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
+import net.evmodder.KeyBound.Main;
 //import net.minecraft.client.multiplayer.PlayerInfo;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.minecraft.text.Text;
 
-public class SendAsCommand{
-	SendAsCommand(){
+public class CommandSendAs{
+	CommandSendAs(){
 		ClientCommandRegistrationCallback.EVENT.register(
 			(dispatcher, _) -> dispatcher.register(
 				ClientCommandManager.literal("sendas")

@@ -1,5 +1,6 @@
 package net.evmodder.KeyBound.mixin;
 
+import java.util.UUID;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -41,9 +42,13 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		MapIdComponent mapId = itemFrameEntity.getHeldItemStack().get(DataComponentTypes.MAP_ID);
 		if(mapId == null) return;
 		MapState state = itemFrameEntity.getWorld().getMapState(mapId);
-		if((state == null || state.locked) && stack.getCustomName() != null) return;
-		if(!isLookngInGeneralDirection(itemFrameEntity)) return;
-		cir.setReturnValue(true);
+		if(state == null) return;
+		if(stack.getCustomName() == null || !state.locked ||
+			(Main.mapsInGroup != null && !Main.mapsInGroup.contains(UUID.nameUUIDFromBytes(state.colors)))
+		){
+			if(!isLookngInGeneralDirection(itemFrameEntity)) return;
+			cir.setReturnValue(true);
+		}
 	}
 
 	@Inject(method = "getDisplayName", at = @At("INVOKE"), cancellable = true)
@@ -53,7 +58,10 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(stack == null || stack.isEmpty() || !Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")) return;
 		MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
 		if(state == null) return;
-		if(!state.locked) cir.setReturnValue(stack.getName().copy().withColor(LockedMapTooltip.UNLOCKED_COLOR));
+		if(Main.mapsInGroup != null && !Main.mapsInGroup.contains(UUID.nameUUIDFromBytes(state.colors))){
+			cir.setReturnValue(stack.getName().copy().withColor(LockedMapTooltip.UNCOLLECTED_COLOR));
+		}
+		else if(!state.locked) cir.setReturnValue(stack.getName().copy().withColor(LockedMapTooltip.UNLOCKED_COLOR));
 		else if(stack.getCustomName() == null) cir.setReturnValue(stack.getName().copy().withColor(LockedMapTooltip.UNNAMED_COLOR));
 	}
 }

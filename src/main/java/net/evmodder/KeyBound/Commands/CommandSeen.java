@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.Commands;
 
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -8,12 +8,12 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
-public class SeenCommand{
+public class CommandSeen{
 	//TODO: update map entry every time a player leaves the server
 	//TODO: clear map every time i leave the server
 	//TODO: NO-OP if not connected to the server
 	//TODO: 
-	SeenCommand(){
+	public CommandSeen(){
 		ClientCommandRegistrationCallback.EVENT.register(
 			(dispatcher, _) -> dispatcher.register(
 				ClientCommandManager.literal("seen").then(
