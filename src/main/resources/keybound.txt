@@ -32,6 +32,7 @@ enderpearl_owners: true
 enderpearl_database_by_uuid: true
 enderpearl_database_by_coords: false
 seen_database: true
+track_time_online: true
 
 
 #========== Hotbar variant scrolling ==========#
@@ -67,10 +68,13 @@ chat_msg.rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components
 
 
 #========== Misc Keybinds ==========#
+keybind_snap_angle.a: 156.14,-45.89
+
 keybind_drop_items: true
 keybind_toggle_skin_layers: true
 keybind_smart_inventory_craft: true
 keybind_2b2t_highway_travel_helper: true
+# Yaw[-180,180,Pitch[-90,90]
 organize_inventory.EvInv: [
   # Armor
   5:netherite_helmet, 6:elytra, 6:netherite_chestplate, 7:netherite_leggings, 8:netherite_boots,

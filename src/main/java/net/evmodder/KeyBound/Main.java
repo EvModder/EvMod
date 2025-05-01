@@ -23,12 +23,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.evmodder.EvLib.FileIO;
-import net.evmodder.KeyBound.Commands.CommandSeen;
-import net.evmodder.KeyBound.Commands.CommandSetMapArtGroup;
+import net.evmodder.KeyBound.Commands.*;
 import net.evmodder.KeyBound.Keybinds.*;
 import net.evmodder.KeyBound.Keybinds.KeybindsSimple;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
 // gradle genSources/eclipse/cleanloom/--stop
 //MC source will be in ~/.gradle/caches/fabric-loom or ./.gradle/loom-cache
@@ -41,11 +41,10 @@ public class Main implements ClientModInitializer{
 	// Feature Ideas:
 	// Maps - smaller text for item count in slot
 	// Map - next hand autorestock, consider all maps in inv (later: look at all edges) and stick to RowByCol or ColByRow for whole map
-	// map copy using crafting table (since it can be all swaps/shift click i assume?)
 	// cont.: save LastMapCommonSubstr and LastMapRowByCol
 	// steal activated spawner and similar stuff from trouser-streak?
 	// /msgas Anuvin target hi - send msg from alt acc
-	// timer countdown showing time left on 2b for non prio before kick
+	// time left on 2b show in miniHUD infoline
 	// auto enchant dia sword, auto grindstone, auto rename, auto anvil combine
 	// auto enchant bulk misc items
 	// inv-keybind-craft-latest-item,also for enchant table and grindstone (eg. spam enchanting axes)
@@ -67,6 +66,7 @@ public class Main implements ClientModInitializer{
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
 	public static boolean rcHotbarHUD, mapartDb=true, mapartDbContact, mapColorHUD, mapColorIFrame;
+	public static long joinedServerTimestamp;
 
 	private void loadConfig(){
 		//=================================== Parsing config into a map
@@ -133,6 +133,11 @@ public class Main implements ClientModInitializer{
 				case "seen_database": if(!value.equalsIgnoreCase("false")) new CommandSeen(); break;//TODO
 				case "mapart_database": mapartDb = !value.equalsIgnoreCase("false"); break;
 				case "mapart_database_share_contact": mapartDbContact = !value.equalsIgnoreCase("false"); break;
+				case "track_time_online": if(!value.equalsIgnoreCase("false")){
+					ServerPlayConnectionEvents.JOIN.register((_, _, _)->joinedServerTimestamp=System.currentTimeMillis());
+					new CommandTimeOnline();
+					break;
+				}
 
 				case "limiter_clicks_in_duration": clicksInDuration = Integer.parseInt(value); break;
 				case "limiter_duration_ticks": durationTicks = Integer.parseInt(value); break;
