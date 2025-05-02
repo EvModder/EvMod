@@ -36,7 +36,7 @@ public abstract class MixinScreenHandler{
 		if(!player.currentScreenHandler.getCursorStack().isEmpty()) return;
 		ItemStack itemPlaced = player.currentScreenHandler.getSlot(slotIndex).getStack();
 		if(!Registries.ITEM.getId(itemPlaced.getItem()).getPath().equals("filled_map")) return;
-		if(itemPlaced.getCustomName() == null) return; // TODO: support unnamed maps (edge detection)
+		if(itemPlaced.getCustomName() == null || itemPlaced.getCustomName().getLiteralString() == null) return; // TODO: support unnamed maps (edge detection)
 
 		//Main.LOGGER.info("MapMoveClick: placed a filled map");
 		//new Timer().schedule(new TimerTask(){@Override public void run(){
