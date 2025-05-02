@@ -55,20 +55,21 @@ remote_port: 14441
 
 
 # List of remote messages
-#remote_msg.a: P2P_MSG,27aa6a20-4a0d-4779-bcd5-dce162dd7467
-#remote_msg.b: EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c
-#remote_msg.c: EPEARL_TRIGGER,690406c8-53eb-482c-8309-96789e98d07a
-#remote_msg.mainbase: EPEARL_TRIGGER,36b128f9-c502-4879-928e-0b9637dcd65e
+#keybind_remote_msg.a: P2P_MSG,27aa6a20-4a0d-4779-bcd5-dce162dd7467
+#keybind_remote_msg.b: EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c
+#keybind_remote_msg.c: EPEARL_TRIGGER,690406c8-53eb-482c-8309-96789e98d07a
+#keybind_remote_msg.mainbase: EPEARL_TRIGGER,36b128f9-c502-4879-928e-0b9637dcd65e
 
 
 #========== Chat/commands ==========#
 join_messages: [/toggledeathmsgs]
-#chat_msg.meow: meow :3
-chat_msg.rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost
+#keybind_chat_msg.meow: meow :3
+keybind_chat_msg.rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost
 
 
 #========== Misc Keybinds ==========#
 keybind_snap_angle.a: 156.14,-45.89
+#keybind_snap_angle.b: -245.14,-54.23
 
 keybind_drop_items: true
 keybind_toggle_skin_layers: true

@@ -118,8 +118,9 @@ public class Main implements ClientModInitializer{
 		//config.forEach((key, value) -> {
 		for(String key : config.keySet()){
 			String value = config.get(key);
-			if(key.startsWith("chat_msg.")) KeybindsSimple.registerChatKeybind(key, value);
-			else if(key.startsWith("remote_msg.")) remoteMessages.put(key, value);
+			if(key.startsWith("keybind_chat_msg.")) KeybindsSimple.registerChatKeybind(key, value);
+			else if(key.startsWith("keybind_remote_msg.")) remoteMessages.put(key, value);
+			else if(key.startsWith("keybind_snap_angle")) KeybindsSimple.registerChatKeybind(key, value);
 			else if(key.startsWith("organize_inventory.")) new KeybindInventoryOrganize(key, value.replaceAll("\\s",""));
 			else switch(key){
 				// Database

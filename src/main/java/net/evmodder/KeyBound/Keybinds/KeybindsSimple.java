@@ -13,11 +13,11 @@ public final class KeybindsSimple{
 	public static final void registerSkinLayerKeybinds(){
 		Arrays.stream(PlayerModelPart.values())
 		.map(part -> new EvKeybind("skin_toggle."+part.name().toLowerCase(), ()->{
-			Main.LOGGER.info("skin toggle pressed for part: "+part.name());
+			//Main.LOGGER.info("skin toggle pressed for part: "+part.name());
 			final MinecraftClient client = MinecraftClient.getInstance();
 			client.options.setPlayerModelPart(part, !client.options.isPlayerModelPartEnabled(part));
 			client.options.sendClientSettings();
-			Main.LOGGER.info("new value for part "+part.name()+": "+client.options.isPlayerModelPartEnabled(part));
+			//Main.LOGGER.info("new value for part "+part.name()+": "+client.options.isPlayerModelPartEnabled(part));
 		})).forEach(KeyBindingHelper::registerKeyBinding);
 	}
 
@@ -35,5 +35,23 @@ public final class KeybindsSimple{
 				instance.player.networkHandler.sendChatMessage(chat_message);
 			}));
 		}
+	}
+
+	public static final void registerSnapAngleKeybind(String keybind_name, String yaw_pitch){
+		final int i = yaw_pitch.indexOf(',');
+		if(i == -1) Main.LOGGER.error("Invalid yaw,pitch for "+keybind_name+": "+yaw_pitch);
+		final float yaw, pitch;
+		try{
+			yaw = Float.parseFloat(yaw_pitch.substring(0, i).trim());
+			pitch = Float.parseFloat(yaw_pitch.substring(i+1).trim());
+		}
+		catch(NumberFormatException e){
+			Main.LOGGER.error("Invalid number value in yaw,pitch for "+keybind_name+": "+yaw_pitch);
+			return;
+		}
+		KeyBindingHelper.registerKeyBinding(new EvKeybind(keybind_name, ()->{
+			MinecraftClient instance = MinecraftClient.getInstance();
+			instance.player.setAngles(yaw, pitch);
+		}));
 	}
 }
