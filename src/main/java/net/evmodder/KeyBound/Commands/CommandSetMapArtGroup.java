@@ -4,11 +4,13 @@ import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.UUID;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.context.CommandContext;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.Main;
 //import net.minecraft.client.multiplayer.PlayerInfo;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.map.MapState;
@@ -24,64 +26,77 @@ public class CommandSetMapArtGroup{
 //		return stack.getComponents().contains(DataComponentTypes.MAP_ID) ? 1 : 0;
 //	}
 
+	private int setActiveGroupFromLoadedMaps(CommandContext<FabricClientCommandSource> ctx){
+		if(Main.mapsInGroup != null) Main.mapsInGroup.clear();
+		else Main.mapsInGroup = new HashSet<>();
+		MinecraftClient client = ctx.getSource().getClient();
+//		int minIdsToCheck = 0;
+//		for(ItemStack stack : client.player.getEnderChestInventory().getHeldStacks()){
+//			minIdsToCheck += countMapIds(stack, client.world);
+//		}
+//		for(int i=0; i<client.player.getInventory().size(); ++i){
+//			minIdsToCheck += countMapIds(client.player.getInventory().getStack(i), client.world);
+//		}
+//		ctx.getSource().sendFeedback(Text.literal("Min Ids to check: "+minIdsToCheck));
+		int i=0;
+		MapState mapState;
+		while((mapState=client.world.getMapState(new MapIdComponent(i))) != null || i < MAX_MAPS_IN_INV_AND_ECHEST){
+			if(mapState != null) Main.mapsInGroup.add(UUID.nameUUIDFromBytes(mapState.colors));
+			++i;
+		}
+		if(Main.mapsInGroup.isEmpty()){
+			Main.mapsInGroup = null;
+			return 0;
+		}
+		return Main.mapsInGroup.size();
+	}
+	private int runCommandNoArg(CommandContext<FabricClientCommandSource> ctx){
+		final int numLoaded = setActiveGroupFromLoadedMaps(ctx);
+		if(numLoaded == 0) ctx.getSource().sendFeedback(Text.literal("No maps found").copy().withColor(/*&c=*/16733525));
+		else ctx.getSource().sendFeedback(Text.literal("Set the current active group (ids: "+Main.mapsInGroup.size()+").").copy().withColor(/*&a=*/5635925));
+		return 1;
+	}
+	private int runCommandWithGroupName(CommandContext<FabricClientCommandSource> ctx){
+		final String groupName = ctx.getArgument("group_name", String.class);
+		final byte[] data = FileIO.loadFileBytes(Main.MOD_ID+"-mapart_group_"+groupName);
+		if(data != null){
+			final int numInGroup = data.length / 16;
+			if(numInGroup*16 != data.length){
+				ctx.getSource().sendFeedback(Text.literal("Corrupted/unrecognized map group file").copy().withColor(/*&c=*/16733525));
+				return 1;
+			}
+			if(Main.mapsInGroup != null) Main.mapsInGroup.clear();
+			else Main.mapsInGroup = new HashSet<>();
+			final ByteBuffer bb = ByteBuffer.wrap(data);
+			for(int i=0; i<numInGroup; ++i) Main.mapsInGroup.add(new UUID(bb.getLong(), bb.getLong()));
+			ctx.getSource().sendFeedback(Text.literal("Loaded group '"+groupName+"' (ids: "+ Main.mapsInGroup.size()+").").copy().withColor(/*&a=*/5635925));
+			return 1;
+		}
+		final int numLoaded = setActiveGroupFromLoadedMaps(ctx);
+		if(numLoaded == 0){
+			ctx.getSource().sendFeedback(Text.literal("No maps found").copy().withColor(/*&c=*/16733525));
+			return 1;
+		}
+
+		final ByteBuffer bb = ByteBuffer.allocate(Main.mapsInGroup.size()*16);
+		for(UUID uuid : Main.mapsInGroup){
+			bb.putLong(uuid.getMostSignificantBits());
+			bb.putLong(uuid.getLeastSignificantBits());
+		}
+		FileIO.saveFileBytes(Main.MOD_ID+"-mapart_group_"+groupName, bb.array());
+
+		ctx.getSource().sendFeedback(Text.literal("Created new group '"+groupName+"' and set as active (ids: "
+					+ Main.mapsInGroup.size()+").").copy().withColor(/*&a=*/5635925));
+		return 1;
+	}
+
 	public CommandSetMapArtGroup(){
-		ClientCommandRegistrationCallback.EVENT.register(
-			(dispatcher, _) -> dispatcher.register(
-				ClientCommandManager.literal("setmapartgroup")
-					.then(ClientCommandManager.argument("group", StringArgumentType.word()))
-				.executes(ctx->{
-					final String groupName = ctx.getArgument("name", String.class);
-					if(groupName != null){
-						final byte[] data = FileIO.loadFileBytes(Main.MOD_ID+"-mapart_group_"+groupName);
-						if(data != null){
-							final int numInGroup = data.length / 16;
-							if(numInGroup*16 != data.length){
-								ctx.getSource().sendFeedback(Text.literal("Corrupted/unrecognized map group file").copy().withColor(/*&c=*/16733525));
-								return 1;
-							}
-							if(Main.mapsInGroup != null) Main.mapsInGroup.clear();
-							else Main.mapsInGroup = new HashSet<>();
-							final ByteBuffer bb = ByteBuffer.wrap(data);
-							for(int i=0; i<numInGroup; ++i) Main.mapsInGroup.add(new UUID(bb.getLong(), bb.getLong()));
-							return 1;
-						}
-					}
-//					int minIdsToCheck = 0;
-//					for(ItemStack stack : client.player.getEnderChestInventory().getHeldStacks()){
-//						minIdsToCheck += countMapIds(stack, client.world);
-//					}
-//					for(int i=0; i<client.player.getInventory().size(); ++i){
-//						minIdsToCheck += countMapIds(client.player.getInventory().getStack(i), client.world);
-//					}
-//					ctx.getSource().sendFeedback(Text.literal("Min Ids to check: "+minIdsToCheck));
-					if(Main.mapsInGroup != null) Main.mapsInGroup.clear();
-					else Main.mapsInGroup = new HashSet<>();
-					MinecraftClient client = ctx.getSource().getClient();
-					int i=0;
-					MapState mapState;
-					while((mapState=client.world.getMapState(new MapIdComponent(i))) != null || i < MAX_MAPS_IN_INV_AND_ECHEST){
-						if(mapState != null) Main.mapsInGroup.add(UUID.nameUUIDFromBytes(mapState.colors));
-						++i;
-					}
-					if(Main.mapsInGroup.isEmpty()){
-						ctx.getSource().sendFeedback(Text.literal("No maps found").copy().withColor(/*&c=*/16733525));
-						Main.mapsInGroup = null;
-						return 1;
-					}
-					if(groupName != null){
-						final ByteBuffer bb = ByteBuffer.allocate(Main.mapsInGroup.size()*16);
-						for(UUID uuid : Main.mapsInGroup){
-							bb.putLong(uuid.getMostSignificantBits());
-							bb.putLong(uuid.getLeastSignificantBits());
-						}
-						FileIO.saveFileBytes(Main.MOD_ID+"-mapart_group_"+groupName, bb.array());
-					}
-					ctx.getSource().sendFeedback(Text.literal(
-							groupName == null ? "Set the current active group" : "Created new group '"+groupName+"' and set as active"
-							+" (ids: "+Main.mapsInGroup.size()+").").copy().withColor(/*&a=*/5635925));
-					return 1;
-				})
-			)
-		);
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> {
+			dispatcher.register(ClientCommandManager.literal("setmapartgroup")
+					.executes(this::runCommandNoArg)
+					.then(ClientCommandManager.argument("group_name", StringArgumentType.word()).executes(this::runCommandWithGroupName)
+//					.then(ClientCommandManager.argument("value_two", StringArgumentType.word()).executes(this::runCommandWithTwoArgs)
+			));
+		});
 	}
 }
