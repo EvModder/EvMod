@@ -77,7 +77,8 @@ public final class MapHandRestock{
 		// Offhand, hotbar ascending, inv ascending
 		data.slots().sort((i, j) -> i==45 ? -999 : (i - j) - (i>=36 ? 99 : 0));
 
-		final String prevPosStr = AdjacentMapUtils.simplifyPosStr(prevName.substring(data.prefixLen(), prevName.length()-data.suffixLen()));
+		final String prevPosStr = data.prefixLen() == -1 ? prevName
+				: AdjacentMapUtils.simplifyPosStr(prevName.substring(data.prefixLen(), prevName.length()-data.suffixLen()));
 		int bestSlot = -1, bestConfidence = -1;
 		for(int slot : data.slots()){
 			final ItemStack stack = psh.slots.get(slot).getStack();
