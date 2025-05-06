@@ -276,6 +276,9 @@ public final class Keybind2b2tHighwayTravelHelper{
 //			Main.LOGGER.info("Put out a fire");
 			return true;
 		}
+		// Don't try to mine blocks if the player isn't stuck
+		if(client.player.prevX != client.player.getX() || client.player.prevZ != client.player.getZ()) return false;
+
 		Vec3d dir = Vec3d.fromPolar(0, client.player.getYaw());
 		int dx = (int)Math.round(dir.x);
 		int dz = (int)Math.round(dir.z);
