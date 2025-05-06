@@ -17,7 +17,7 @@ import net.minecraft.item.map.MapState;
 import net.minecraft.text.Text;
 
 public class CommandSetMapArtGroup{
-	private final int MAX_MAPS_IN_INV_AND_ECHEST = /*64**/27*(36+27); // 108864
+	private final int MAX_MAPS_IN_INV_AND_ECHEST = 64*27*(36+27); // 108864
 
 //	private int countMapIds(ItemStack stack, ClientWorld world){
 //		if(stack.isEmpty()) return 0;
@@ -41,7 +41,7 @@ public class CommandSetMapArtGroup{
 		int i=0;
 		MapState mapState;
 		while((mapState=client.world.getMapState(new MapIdComponent(i))) != null || i < MAX_MAPS_IN_INV_AND_ECHEST){
-			if(mapState != null) Main.mapsInGroup.add(UUID.nameUUIDFromBytes(mapState.colors));
+			if(mapState != null) Main.mapsInGroup.add(UUID.nameUUIDFromBytes(mapState.colors));//TODO: include mapState.locked in nameUUIDFromBytes()
 			++i;
 		}
 		if(Main.mapsInGroup.isEmpty()){
@@ -69,7 +69,7 @@ public class CommandSetMapArtGroup{
 			else Main.mapsInGroup = new HashSet<>();
 			final ByteBuffer bb = ByteBuffer.wrap(data);
 			for(int i=0; i<numInGroup; ++i) Main.mapsInGroup.add(new UUID(bb.getLong(), bb.getLong()));
-			ctx.getSource().sendFeedback(Text.literal("Loaded group '"+groupName+"' (ids: "+ Main.mapsInGroup.size()+").").copy().withColor(/*&a=*/5635925));
+			ctx.getSource().sendFeedback(Text.literal("Loaded group '"+groupName+"' (ids: "+ Main.mapsInGroup.size()+").").copy().withColor(/*&6=*/16755200));
 			return 1;
 		}
 		final int numLoaded = setActiveGroupFromLoadedMaps(ctx);
