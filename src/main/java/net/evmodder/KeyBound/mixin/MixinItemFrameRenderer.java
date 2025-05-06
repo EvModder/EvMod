@@ -30,7 +30,8 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		double d = vec3d2.length();
 		vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d);//normalize
 		double e = vec3d.dotProduct(vec3d2);
-		return e > 1.0d - 0.3d / d ? /*client.player.canSee(entity)*/true : false;
+		final double asdf = client.player.squaredDistanceTo(entity) > 5*5 ? 0.3d : 0.1d;
+		return e > 1.0d - asdf / d;
 	}
 
 	@Inject(method = "hasLabel", at = @At("HEAD"), cancellable = true)
@@ -46,6 +47,7 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(stack.getCustomName() == null || !state.locked ||
 			(Main.mapsInGroup != null && !Main.mapsInGroup.contains(UUID.nameUUIDFromBytes(state.colors)))
 		){
+			if(!client.player.canSee(itemFrameEntity)) return;
 			if(!isLookngInGeneralDirection(itemFrameEntity)) return;
 			cir.setReturnValue(true);
 		}
