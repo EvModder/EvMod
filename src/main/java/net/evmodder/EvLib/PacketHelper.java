@@ -93,8 +93,9 @@ public final class PacketHelper{
 
 	public interface MessageReceiver{void receiveMessage(byte[] message);}
 
+	private static Object UDP_LOCK = 1, TCP_LOCK = 2;
 	public static void sendPacket(InetAddress addr, int port, boolean udp, byte[] msg, MessageReceiver recv, long timeout){
-		if(udp){//synchronized(socketUDP){
+		if(udp){synchronized(UDP_LOCK){ // In case sendPacket gets called from various, unsynchronized threads (*cough* EpearlLookup caches *cough*)
 			if(socketUDP == null){
 //				new Thread(()->{
 //					for(int i=0; i<BIND_ATTEMPTS && socketUDP == null; ++i){
@@ -128,13 +129,14 @@ public final class PacketHelper{
 			}
 			try{socketUDP.send(new DatagramPacket(msg, msg.length, addr, port));}
 			catch(IOException e){e.printStackTrace(); return;}
+			}//synchonized(UDP_LOCK)
 
 			if(recv != null) new Thread(()->{
 				byte[] reply = new byte[MAX_PACKET_SIZE_RECV];
-				try{
+				try{synchronized(UDP_LOCK){
 					socketUDP.setSoTimeout((int)timeout);
 					socketUDP.receive(new DatagramPacket(reply, reply.length));
-				}
+				}}
 				catch(IOException e){
 					if(e instanceof SocketTimeoutException) LOGGER.warning("Waiting for UDP response timed out");
 					else e.printStackTrace();
@@ -144,8 +146,8 @@ public final class PacketHelper{
 				recv.receiveMessage(reply);
 				//try{socketUDP.disconnect();}catch(UncheckedIOException e){e.printStackTrace(); socketUDP=null;}
 			}).start();
-		}//}
-		else{
+		}
+		else{synchronized(TCP_LOCK){
 //			if(socketTCP == null || socketTCP.isClosed() || !socketTCP.isConnected()){
 				try{
 					socketTCP = new Socket();
@@ -158,10 +160,12 @@ public final class PacketHelper{
 				}
 				catch(SocketException e){e.printStackTrace(); return;}
 //			}
+			}//synchonized(TCP_LOCK)
+
 			new Thread(()->{
 				final long startTime = System.currentTimeMillis();
 				byte[] reply = null;
-				try{
+				try{synchronized(TCP_LOCK){
 					socketTCP.connect(new InetSocketAddress(addr, port), (int)timeout);
 					socketTCP.setSendBufferSize(MAX_PACKET_SIZE_SEND);
 					socketTCP.setReceiveBufferSize(MAX_PACKET_SIZE_RECV);// Minimum it allows is 1024 bytes. Putting any value below (like 64) still gives 1024
@@ -174,7 +178,7 @@ public final class PacketHelper{
 							&& !Thread.currentThread().isInterrupted()){/*wait for reply*/};
 					if(is.available() > 0) reply = is.readAllBytes();
 					socketTCP.close();
-				}
+				}}
 				catch(ConnectException e){LOGGER.severe("Failed to connect to RemoteServer"); return;}
 				catch(IOException e){e.printStackTrace(); return;}
 				//LOGGER.info("Roundtrip delay (TCP): "+(System.currentTimeMillis()-startTime));

@@ -32,7 +32,7 @@ public final class EpearlLookup{
 
 	private final HashMap<Integer, UUID> updateKeyXZ; // Map of epearl.id -> epearl.pos (x.Double, z.Double, concatenated as UUID)
 	private final HashMap<UUID, XYZ> idToPos; // Map of epearl.uuid -> epearl.pos
-	private final HashMap<UUID, Long> loadReqStartTs;
+	private static long udpRequestStartTs;
 
 	private final boolean USE_DB_UUID, USE_DB_XZ;
 	private long lastUpdateXZ;
@@ -52,10 +52,10 @@ public final class EpearlLookup{
 				Main.LOGGER.info("Remote server offline. Returning "+NAME_U_404);
 				return PD_404;
 			}
-			synchronized(loadReqStartTs){
-				if(loadReqStartTs.put(key, System.currentTimeMillis()) != null){
-					Main.LOGGER.error("duplicate fetch ownerUUID request for pearlUUID: "+key);
-					return PD_LOADING;
+			while(true){
+				while(udpRequestStartTs != 0) Thread.yield();
+				synchronized(PacketHelper.UDP_LOCK){
+					if(udpRequestStartTs == 0){udpRequestStartTs = System.currentTimeMillis(); break;}
 				}
 			}
 			//Request UUID of epearl for <Server>,<ePearlPosEncrypted>
@@ -91,7 +91,7 @@ public final class EpearlLookup{
 						}
 					}
 					putIfAbsent(key, pdc);
-					synchronized(loadReqStartTs){loadReqStartTs.remove(key);}
+					synchronized(lock){udpRequestStartTs = 0;}
 				}
 			);
 			return PD_LOADING;
