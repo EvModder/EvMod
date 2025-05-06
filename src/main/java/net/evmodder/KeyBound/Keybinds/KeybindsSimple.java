@@ -5,16 +5,24 @@ import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerModelPart;
+import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
 
 public final class KeybindsSimple{
 	//private static final String SKIN_LAYER_CATEGORY = "key.categories."+KeyBound.MOD_ID+".skin_toggles";
 	//private static final String CHAT_MSG_CATEGORY = "key.categories."+KeyBound.MOD_ID+".chat_messages";
+	private static final boolean SYNC_CAPE_WITH_ELYTRA = true;
 
 	public static final void registerSkinLayerKeybinds(){
 		Arrays.stream(PlayerModelPart.values())
 		.map(part -> new EvKeybind("skin_toggle."+part.name().toLowerCase(), ()->{
 			//Main.LOGGER.info("skin toggle pressed for part: "+part.name());
 			final MinecraftClient client = MinecraftClient.getInstance();
+			if(SYNC_CAPE_WITH_ELYTRA && client.player != null && client.options.isPlayerModelPartEnabled(part)){
+				ItemStack chestItem = client.player.getInventory().getArmorStack(2);
+				// Don't disable cape if we just switched to an elytra
+				if(Registries.ITEM.getId(chestItem.getItem()).getPath().equals("elytra")) return;
+			}
 			client.options.setPlayerModelPart(part, !client.options.isPlayerModelPartEnabled(part));
 			client.options.sendClientSettings();
 			//Main.LOGGER.info("new value for part "+part.name()+": "+client.options.isPlayerModelPartEnabled(part));
