@@ -6,6 +6,7 @@ import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.UUID;
 import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.PacketHelper;
@@ -48,7 +49,28 @@ public final class RemoteServerSender{
 		return bb2.array();
 	}
 
+	private final LinkedList<byte[]> tcpPackets, udpPackets;
+	private final LinkedList<MessageReceiver> tcpReceivers, udpReceivers;
+	private void sendPacketSequence(boolean udp){
+		final LinkedList<byte[]> packetList = (udp ? udpPackets : tcpPackets);
+		final LinkedList<MessageReceiver> recvList = (udp ? udpReceivers : tcpReceivers);
+		final byte[] packet;
+		synchronized(packetList){packet = packetList.peek();}
+		final MessageReceiver recv;
+		synchronized(recvList){recv = recvList.peek();}
+		final int port = PORT+(udp?0:1);
+
+		PacketHelper.sendPacket(addrResolved, port, udp, packet, (reply)->{
+			synchronized(packetList){packetList.remove();}
+			synchronized(recvList){recvList.remove();}
+			recv.receiveMessage(reply);
+			final boolean moreToSend;
+			synchronized(packetList){moreToSend = !packetList.isEmpty();}
+			if(moreToSend) sendPacketSequence(udp);
+		}, /*timeout=*/1000*5, /*ignoreReply=*/recv == null);
+	}
 	public void sendBotMessage(Command command, byte[] message, boolean udp, MessageReceiver recv){
+
 		final byte[] packet = packageAndEncryptMessage(command, message);
 
 //		// 4=id, 16=data=encrypted{4=id,4=cmd,4=server,4=ts}
@@ -65,7 +87,12 @@ public final class RemoteServerSender{
 		if(addrResolved == null) resolveAddress();
 		if(addrResolved == null) Main.LOGGER.warn("RemoteSender address could not be resolved!: "+ADDR);
 		else{
-			PacketHelper.sendPacket(addrResolved, PORT+(udp?0:1), udp, packet, recv, /*timeout=*/1000*5);
+			final LinkedList<byte[]> packetList = (udp ? udpPackets : tcpPackets);
+			final LinkedList<MessageReceiver> recvList = (udp ? udpReceivers : tcpReceivers);
+			final boolean startSending;
+			synchronized(packetList){packetList.add(packet); startSending = packetList.size() == 1;}
+			synchronized(recvList){recvList.add(recv);}
+			if(startSending) sendPacketSequence(udp);
 			resolveAddress();
 		}
 	}
@@ -80,6 +107,11 @@ public final class RemoteServerSender{
 		ADDR = addr;
 		PORT = port;
 		resolveAddress();
+
+		tcpPackets = new LinkedList<>();
+		udpPackets = new LinkedList<>();
+		tcpReceivers = new LinkedList<>();
+		udpReceivers = new LinkedList<>();
 
 		CLIENT_ID = clientId;
 		CLIENT_KEY = clientKey;

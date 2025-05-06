@@ -32,10 +32,9 @@ public final class EpearlLookup{
 
 	private final HashMap<Integer, UUID> updateKeyXZ; // Map of epearl.id -> epearl.pos (x.Double, z.Double, concatenated as UUID)
 	private final HashMap<UUID, XYZ> idToPos; // Map of epearl.uuid -> epearl.pos
-	private static long udpRequestStartTs;
 
 	private final boolean USE_DB_UUID, USE_DB_XZ;
-	private long lastUpdateXZ;
+	private long lastUpdateXZ, requestStartTime;
 	private static Timer removalChecker = null;
 
 	private class RSLoadingCache extends LoadingCache<UUID, PearlDataClient>{
@@ -52,12 +51,7 @@ public final class EpearlLookup{
 				Main.LOGGER.info("Remote server offline. Returning "+NAME_U_404);
 				return PD_404;
 			}
-			while(true){
-				while(udpRequestStartTs != 0) Thread.yield();
-				synchronized(PacketHelper.UDP_LOCK){
-					if(udpRequestStartTs == 0){udpRequestStartTs = System.currentTimeMillis(); break;}
-				}
-			}
+
 			//Request UUID of epearl for <Server>,<ePearlPosEncrypted>
 			Main.remoteSender.sendBotMessage(DB_FETCH_COMMAND, PacketHelper.toByteArray(key), /*udp=*/true,
 				(msg)->{
@@ -91,9 +85,10 @@ public final class EpearlLookup{
 						}
 					}
 					putIfAbsent(key, pdc);
-					synchronized(lock){udpRequestStartTs = 0;}
+					requestStartTime = 0;
 				}
 			);
+			requestStartTime = System.currentTimeMillis();
 			return PD_LOADING;
 		}
 	}
@@ -151,10 +146,9 @@ public final class EpearlLookup{
 	EpearlLookup(boolean uuidDb, boolean coordsDb){
 		USE_DB_UUID = uuidDb; USE_DB_XZ = coordsDb;
 		updateKeyXZ = USE_DB_XZ ? new HashMap<>() : null;
-		if(!USE_DB_UUID && !USE_DB_XZ){idToPos = null; loadReqStartTs = null; cacheByUUID = cacheByXZ = null;}
+		if(!USE_DB_UUID && !USE_DB_XZ){idToPos = null; cacheByUUID = cacheByXZ = null;}
 		else{
 			idToPos = new HashMap<>();
-			loadReqStartTs = new HashMap<>();
 			runEpearlRemovalChecker();
 			if(USE_DB_UUID){
 				HashMap<UUID, PearlDataClient> localData = FileIO.loadFromClientFile(DB_FILENAME_UUID);
@@ -201,9 +195,8 @@ public final class EpearlLookup{
 	private final String getDynamicUsername(UUID owner){
 		if(owner == null ? UUID_404 == null : owner.equals(UUID_404)) return NAME_U_404;
 		if(owner == null ? UUID_LOADING == null : owner.equals(UUID_LOADING)){
-			Long ts = loadReqStartTs.get(owner);
-			if(ts == null) return NAME_U_LOADING+" ERROR";
-			return NAME_U_LOADING+" "+TextUtils.formatTime(System.currentTimeMillis()-ts);
+			if(requestStartTime == 0) return NAME_U_LOADING+" ERROR";
+			return NAME_U_LOADING+" "+TextUtils.formatTime(System.currentTimeMillis()-requestStartTime);
 		}
 		return usernameCacheMojang.get(owner);
 	}
