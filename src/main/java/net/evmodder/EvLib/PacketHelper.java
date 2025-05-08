@@ -2,6 +2,7 @@ package net.evmodder.EvLib;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -32,6 +33,7 @@ public final class PacketHelper{
 	private static DatagramSocket socketUDP;
 	private static int lastPortTCP, lastPortUDP;
 	private static long lastTimeoutTCP, lastTimeoutUDP;
+	private static byte[] replyUDP/*, replyTCP*/;
 
 	private static final Logger LOGGER = Logger.getLogger("EvLibMod-PacketHelper");
 //	static{
@@ -94,14 +96,30 @@ public final class PacketHelper{
 		}
 	}
 
+	public static final void writeShort(OutputStream out, short s) throws IOException{
+		out.write((byte)((s >> 8) & 0xff));
+		out.write((byte)(s & 0xff));
+		//out.write(ByteBuffer.allocate(2).putShort((short)msg.length).array());
+	}
+	public static final short readShort(InputStream is) throws IOException{
+		return (short)(((is.read() & 0xFF) << 8) | (is.read() & 0xFF));
+		//return ByteBuffer.wrap(is.readNBytes(2)).getShort();
+	}
+
 	public interface MessageReceiver{void receiveMessage(byte[] message);}
 
-	public static final void sendPacket(final InetAddress addr, final int port, final boolean udp, final byte[] msg,
-			final MessageReceiver recv, final long timeout, final boolean ignoreReply){
-		if(recv == null && !ignoreReply) LOGGER.severe("PacketHelper: ignoreReply=false but recv is null!");
+	public static final void sendPacket(final InetAddress addr, final int port, final boolean udp, final long timeout,
+			final boolean waitForReply, final byte[] msg, final MessageReceiver callback){
+		if(callback == null && waitForReply){
+			LOGGER.severe("PacketHelper: waitForReply=true but recv is null!");
+		}
 
 		if(udp){
-			if(socketUDP == null || lastPortUDP != port){
+			if(addr.isLoopbackAddress()){
+				LOGGER.severe("UDP does not work on a local address due to feedback loops");
+				return;
+			}
+			if(socketUDP == null || socketUDP.isClosed() || lastPortUDP != port){
 				lastPortUDP = port;
 				try{
 					socketUDP = new DatagramSocket(port);
@@ -122,21 +140,24 @@ public final class PacketHelper{
 			try{socketUDP.send(new DatagramPacket(msg, msg.length, addr, port));}
 			catch(IOException e){e.printStackTrace(); return;}
 
-			if(ignoreReply) return;
+			if(!waitForReply || callback == null){if(callback != null) callback.receiveMessage(null); return;}
+			//LOGGER.info("sendPacket() is waiting for UDP reply");
 			new Thread(()->{
-				final byte[] reply = new byte[MAX_PACKET_SIZE_RECV];
-				final DatagramPacket packet = new DatagramPacket(reply, reply.length);
+				if(replyUDP == null) replyUDP = new byte[MAX_PACKET_SIZE_RECV];
+				final DatagramPacket packet = new DatagramPacket(replyUDP, MAX_PACKET_SIZE_RECV);
 				try{socketUDP.receive(packet);}
 				catch(IOException e){
 					if(e instanceof SocketTimeoutException) LOGGER.warning("Waiting for UDP response timed out");
-					else e.printStackTrace();
-					recv.receiveMessage(null);
+					else {e.printStackTrace(); LOGGER.info(e.getMessage());}
+					callback.receiveMessage(null);
 					return;
 				}
-				recv.receiveMessage(Arrays.copyOf(reply, packet.getLength()));
+				//LOGGER.info("got UDP reply: "+new String(replyUDP)+", len="+packet.getLength());
+				callback.receiveMessage(Arrays.copyOf(replyUDP, packet.getLength()));
 			}).start();
 		}
 		else{
+			if(msg.length > Short.MAX_VALUE){LOGGER.severe("sendPacket() called with invalid message (length > Short.MAX_VALUE)!"); return;}
 			if(socketTCP == null || socketTCP.isClosed() || !socketTCP.isConnected()){
 				try{
 					socketTCP = new Socket();
@@ -152,8 +173,8 @@ public final class PacketHelper{
 
 			if(lastTimeoutTCP != timeout){
 				lastTimeoutTCP = timeout;
-				try{socketTCP.setSoTimeout((int)timeout);}
-				catch(SocketException e){e.printStackTrace(); return;}
+//				try{socketTCP.setSoTimeout((int)timeout);}
+//				catch(SocketException e){e.printStackTrace(); return;}
 			}
 
 			new Thread(()->{
@@ -171,20 +192,45 @@ public final class PacketHelper{
 					}
 					catch(SocketException e){e.printStackTrace(); return;}
 				}
-				try{socketTCP.getOutputStream().write(msg);}
+				try{
+					OutputStream out = socketTCP.getOutputStream();
+					writeShort(out, (short)msg.length);
+					out.write(msg);
+					out.flush();
+				}
 				catch(IOException e){e.printStackTrace(); return;}
-	
-				if(ignoreReply) return;
+
+				if(!waitForReply || callback == null){if(callback != null) callback.receiveMessage(null); return;}
+				//LOGGER.info("sendPacket() is waiting for TCP reply");
+				//if(replyTCP == null) replyTCP = new byte[MAX_PACKET_SIZE_RECV];
 				byte[] reply = null;
 				try{
 					final InputStream is = socketTCP.getInputStream();
-					while(!socketTCP.isClosed() && is.available() == 0 && !Thread.currentThread().isInterrupted() &&
+					while(!socketTCP.isClosed() && is.available() < 2 && !Thread.currentThread().isInterrupted() &&
 							(timeout == 0 || System.currentTimeMillis() - startTime < timeout))/*...wait...*/;//Thread.yield();
-					if(is.available() > 0) reply = is.readAllBytes();
+					if(is.available() < 2){
+						LOGGER.warning("Waiting for TCP response timed out (or socket closed) BEFORE receiving response len");
+						callback.receiveMessage(null);
+						return;
+					}
+					final short len = readShort(is);
+					if(len == 0){
+						LOGGER.warning("Got TCP empty reply (this shouldn't be reachable!)");
+						callback.receiveMessage(null);
+						return;
+					}
+					while(!socketTCP.isClosed() && is.available() < len && !Thread.currentThread().isInterrupted() &&
+							(timeout == 0 || System.currentTimeMillis() - startTime < timeout))/*...wait...*/;//Thread.yield();
+					if(is.available() >= len){
+						if(is.available() > len){LOGGER.severe("TCP response is too long! Expected:"+len+", Got:"+is.available());}
+						//is.read(replyTCP, /*off=*/0, len);
+						reply = is.readNBytes(len);
+					}
 				}
 				catch(IOException e){e.printStackTrace(); return;}
-				//LOGGER.info("Roundtrip delay (TCP): "+(System.currentTimeMillis()-startTime));
-				recv.receiveMessage(reply);
+				if(reply == null) LOGGER.warning("Waiting for TCP response timed out (or socket closed) AFTER receiving response len");
+				//else LOGGER.info("Got TCP reply: "+new String(reply)+", len="+reply.length+", in "+TextUtils.formatTime(System.currentTimeMillis()-startTime));
+				callback.receiveMessage(reply);
 			}).start();
 		}
 	}

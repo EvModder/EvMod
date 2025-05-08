@@ -217,15 +217,17 @@ public final class FileIO{
 			data = fis.readAllBytes();
 			fis.close();
 		}
-		//catch(FileNotFoundException e){return new HashMap<>();}
-		catch(IOException e){
-			LOGGER.warning("DB file not found");
-			e.printStackTrace();
+		catch(FileNotFoundException e){
+			LOGGER.warning("DB file not found: "+filename);
 			return new HashMap<>();
+		}
+		catch(IOException e){
+			e.printStackTrace();
+			return null;
 		}
 		if(data.length % 52 != 0){
 			LOGGER.severe("Corrupted/invalid ePearlDB file!");
-			return new HashMap<>();
+			return null;
 		}
 		final int numRows = data.length/52;
 		final ByteBuffer bb = ByteBuffer.wrap(data);

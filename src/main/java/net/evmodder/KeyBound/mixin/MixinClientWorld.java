@@ -25,6 +25,7 @@ public abstract class MixinClientWorld{
 	private static final HashMap<String, HashSet<UUID>> mapsSaved;
 	private static final HashSet<UUID> mapsInTransit, mapsToSave;
 	private static final String DB_FILENAME = "keybound-seen_maps";
+	private static final long MAPART_STORE_TIMEOUT = 15*1000;
 	//private static final boolean preloadMapStates = true; // requires saving full byte[] 128x128 and not just the hash (UUID)
 
 	private static String saveAddr;
@@ -60,7 +61,7 @@ public abstract class MixinClientWorld{
 		}
 		saveAddr = addr;
 
-		Main.remoteSender.sendBotMessage(Command.DB_MAPART_STORE, state.colors, /*udp=*/false, msg->{
+		Main.remoteSender.sendBotMessage(Command.DB_MAPART_STORE, /*udp=*/false, MAPART_STORE_TIMEOUT, state.colors, msg->{
 			synchronized(mapsSaved){
 				mapsInTransit.remove(uuid);
 				if(msg == null){

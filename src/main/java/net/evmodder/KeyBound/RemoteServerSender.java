@@ -11,6 +11,7 @@ import java.util.UUID;
 import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.EvLib.PacketHelper.MessageReceiver;
+import net.evmodder.EvLib.TextUtils;
 import net.evmodder.KeyBound.Keybinds.EvKeybind;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
@@ -33,7 +34,7 @@ public final class RemoteServerSender{
 	}
 
 	// Returns a `4+message.length+16`-byte packet
-	private byte[] packageAndEncryptMessage(Command command, byte[/*16*n*/] message){
+	private byte[] packageAndEncryptMessage(final Command command, final byte[/*16*n*/] message){
 		ByteBuffer bb1 = ByteBuffer.allocate(16+message.length);
 		bb1.putInt(CLIENT_ID);
 		bb1.putInt(command.ordinal());
@@ -51,25 +52,29 @@ public final class RemoteServerSender{
 
 	private final LinkedList<byte[]> tcpPackets, udpPackets;
 	private final LinkedList<MessageReceiver> tcpReceivers, udpReceivers;
-	private void sendPacketSequence(boolean udp){
+	private void sendPacketSequence(final boolean udp, final long timeout){
 		final LinkedList<byte[]> packetList = (udp ? udpPackets : tcpPackets);
 		final LinkedList<MessageReceiver> recvList = (udp ? udpReceivers : tcpReceivers);
-		final byte[] packet;
-		synchronized(packetList){packet = packetList.peek();}
-		final MessageReceiver recv;
-		synchronized(recvList){recv = recvList.peek();}
-		final int port = PORT+(udp?0:1);
-
-		PacketHelper.sendPacket(addrResolved, port, udp, packet, (reply)->{
-			synchronized(packetList){packetList.remove();}
-			synchronized(recvList){recvList.remove();}
-			recv.receiveMessage(reply);
-			final boolean moreToSend;
-			synchronized(packetList){moreToSend = !packetList.isEmpty();}
-			if(moreToSend) sendPacketSequence(udp);
-		}, /*timeout=*/1000*5, /*ignoreReply=*/recv == null);
+		final long startTs = System.currentTimeMillis();
+		synchronized(packetList){
+			final byte[] packet = packetList.peek();
+			final MessageReceiver recv = recvList.peek();
+			//Main.LOGGER.info("calling sendPacket with waitForReply="+(recv!=null));
+			PacketHelper.sendPacket(addrResolved, PORT, udp, timeout, /*waitForReply=*/recv != null, packet, reply->{
+				final long latency = System.currentTimeMillis()-startTs;
+				if(latency >= timeout && reply == null) Main.LOGGER.info("RemoteServerSender "+(udp?"UDP":"TCP")+" request timed out");
+				else Main.LOGGER.info("RemoteServerSender got "+(udp?"UDP":"TCP")+" reply (in "+TextUtils.formatTime(latency)+
+						") from RS: "+(reply == null ? "null" : new String(reply)+" ["+reply.length+"]"));
+				recv.receiveMessage(reply);
+				synchronized(packetList){
+					packetList.remove();
+					recvList.remove();
+					if(!packetList.isEmpty()) sendPacketSequence(udp, timeout);
+				}
+			});
+		}
 	}
-	public void sendBotMessage(Command command, byte[] message, boolean udp, MessageReceiver recv){
+	public void sendBotMessage(final Command command, final boolean udp, final long timeout, final byte[] message, final MessageReceiver recv){
 
 		final byte[] packet = packageAndEncryptMessage(command, message);
 
@@ -89,10 +94,11 @@ public final class RemoteServerSender{
 		else{
 			final LinkedList<byte[]> packetList = (udp ? udpPackets : tcpPackets);
 			final LinkedList<MessageReceiver> recvList = (udp ? udpReceivers : tcpReceivers);
-			final boolean startSending;
-			synchronized(packetList){packetList.add(packet); startSending = packetList.size() == 1;}
-			synchronized(recvList){recvList.add(recv);}
-			if(startSending) sendPacketSequence(udp);
+			synchronized(packetList){
+				packetList.add(packet);
+				recvList.add(recv);
+				if(packetList.size() == 1) sendPacketSequence(udp, timeout);
+			}
 			resolveAddress();
 		}
 	}
@@ -124,11 +130,11 @@ public final class RemoteServerSender{
 			}
 			else{
 				final byte[] byteMsg = PacketHelper.toByteArray(Arrays.stream(Arrays.copyOfRange(arr, 1, arr.length)).map(UUID::fromString).toArray(UUID[]::new));
-				KeyBindingHelper.registerKeyBinding(new EvKeybind(key, ()->sendBotMessage(command, byteMsg, true, null)));
+				KeyBindingHelper.registerKeyBinding(new EvKeybind(key, ()->sendBotMessage(command, /*udp=*/true, /*timeout=*/5000, byteMsg, /*recv=*/null)));
 			}
 		});
 
-		sendBotMessage(Command.PING, new byte[0], false, (msg)->{
+		sendBotMessage(Command.PING, /*udp=*/false, /*timeout=*/5000, /*msg=*/new byte[0], msg->{
 			Main.LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg)));
 		});
 	}
@@ -140,11 +146,12 @@ public final class RemoteServerSender{
 
 		RemoteServerSender rss = new RemoteServerSender("localhost", 14441, 1, "some_unique_key", /*botMsgKeybinds=*/null);
 
-		rss.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, ByteBuffer.allocate(32)
+		byte[] storePearlOwnerMsg = ByteBuffer.allocate(32)
 				.putLong(pearlUUID.getMostSignificantBits()).putLong(pearlUUID.getLeastSignificantBits())
-				.putLong(ownerUUID.getMostSignificantBits()).putLong(ownerUUID.getLeastSignificantBits()).array(), true, null);
+				.putLong(ownerUUID.getMostSignificantBits()).putLong(ownerUUID.getLeastSignificantBits()).array();
+		rss.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, /*udp=*/true, /*timeout=*/5000, storePearlOwnerMsg, /*recv=*/null);
 
-		rss.sendBotMessage(Command.DB_PEARL_FETCH_BY_UUID, PacketHelper.toByteArray(pearlUUID), true, new MessageReceiver(){
+		rss.sendBotMessage(Command.DB_PEARL_FETCH_BY_UUID, /*udp=*/true, /*timeout=*/5000, PacketHelper.toByteArray(pearlUUID), new MessageReceiver(){
 			@Override public void receiveMessage(byte[] msg){
 				if(msg == null){System.err.println("Expected msg non-null !");return;}
 				if(msg.length != 16){System.err.println("Expected msg size == 16 !!!");return;}
