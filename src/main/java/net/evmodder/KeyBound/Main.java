@@ -37,6 +37,7 @@ import net.minecraft.client.MinecraftClient;
 public class Main implements ClientModInitializer{
 	//TODO:
 	// Reference/depend on https://github.com/Siphalor/amecs-api
+	// majorly improve TravelHelper (mining blocks only in way, specifically non-diag & mining 3 high tunnel)
 
 	// Feature Ideas:
 	// Maps - smaller text for item count in slot
