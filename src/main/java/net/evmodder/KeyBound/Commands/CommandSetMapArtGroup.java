@@ -7,6 +7,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.MapGroupUtils;
 //import net.minecraft.client.multiplayer.PlayerInfo;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -27,8 +28,8 @@ public class CommandSetMapArtGroup{
 //	}
 
 	private int setActiveGroupFromLoadedMaps(CommandContext<FabricClientCommandSource> ctx){
-		if(Main.mapsInGroup != null) Main.mapsInGroup.clear();
-		else Main.mapsInGroup = new HashSet<>();
+		if(MapGroupUtils.mapsInGroup != null) MapGroupUtils.mapsInGroup.clear();
+		else MapGroupUtils.mapsInGroup = new HashSet<>();
 		MinecraftClient client = ctx.getSource().getClient();
 //		int minIdsToCheck = 0;
 //		for(ItemStack stack : client.player.getEnderChestInventory().getHeldStacks()){
@@ -41,19 +42,19 @@ public class CommandSetMapArtGroup{
 		int i=0;
 		MapState mapState;
 		while((mapState=client.world.getMapState(new MapIdComponent(i))) != null || i < MAX_MAPS_IN_INV_AND_ECHEST){
-			if(mapState != null) Main.mapsInGroup.add(UUID.nameUUIDFromBytes(mapState.colors));//TODO: include mapState.locked in nameUUIDFromBytes()
+			if(mapState != null) MapGroupUtils.mapsInGroup.add(MapGroupUtils.getIdForMapState(mapState));
 			++i;
 		}
-		if(Main.mapsInGroup.isEmpty()){
-			Main.mapsInGroup = null;
+		if(MapGroupUtils.mapsInGroup.isEmpty()){
+			MapGroupUtils.mapsInGroup = null;
 			return 0;
 		}
-		return Main.mapsInGroup.size();
+		return MapGroupUtils.mapsInGroup.size();
 	}
 	private int runCommandNoArg(CommandContext<FabricClientCommandSource> ctx){
 		final int numLoaded = setActiveGroupFromLoadedMaps(ctx);
 		if(numLoaded == 0) ctx.getSource().sendFeedback(Text.literal("No maps found").copy().withColor(/*&c=*/16733525));
-		else ctx.getSource().sendFeedback(Text.literal("Set the current active group (ids: "+Main.mapsInGroup.size()+").").copy().withColor(/*&a=*/5635925));
+		else ctx.getSource().sendFeedback(Text.literal("Set the current active group (ids: "+MapGroupUtils.mapsInGroup.size()+").").copy().withColor(/*&a=*/5635925));
 		return 1;
 	}
 	private int runCommandWithGroupName(CommandContext<FabricClientCommandSource> ctx){
@@ -65,11 +66,11 @@ public class CommandSetMapArtGroup{
 				ctx.getSource().sendFeedback(Text.literal("Corrupted/unrecognized map group file").copy().withColor(/*&c=*/16733525));
 				return 1;
 			}
-			if(Main.mapsInGroup != null) Main.mapsInGroup.clear();
-			else Main.mapsInGroup = new HashSet<>();
+			if(MapGroupUtils.mapsInGroup != null) MapGroupUtils.mapsInGroup.clear();
+			else MapGroupUtils.mapsInGroup = new HashSet<>();
 			final ByteBuffer bb = ByteBuffer.wrap(data);
-			for(int i=0; i<numInGroup; ++i) Main.mapsInGroup.add(new UUID(bb.getLong(), bb.getLong()));
-			ctx.getSource().sendFeedback(Text.literal("Loaded group '"+groupName+"' (ids: "+ Main.mapsInGroup.size()+").").copy().withColor(/*&6=*/16755200));
+			for(int i=0; i<numInGroup; ++i) MapGroupUtils.mapsInGroup.add(new UUID(bb.getLong(), bb.getLong()));
+			ctx.getSource().sendFeedback(Text.literal("Loaded group '"+groupName+"' (ids: "+ MapGroupUtils.mapsInGroup.size()+").").copy().withColor(/*&6=*/16755200));
 			return 1;
 		}
 		final int numLoaded = setActiveGroupFromLoadedMaps(ctx);
@@ -78,15 +79,15 @@ public class CommandSetMapArtGroup{
 			return 1;
 		}
 
-		final ByteBuffer bb = ByteBuffer.allocate(Main.mapsInGroup.size()*16);
-		for(UUID uuid : Main.mapsInGroup){
+		final ByteBuffer bb = ByteBuffer.allocate(MapGroupUtils.mapsInGroup.size()*16);
+		for(UUID uuid : MapGroupUtils.mapsInGroup){
 			bb.putLong(uuid.getMostSignificantBits());
 			bb.putLong(uuid.getLeastSignificantBits());
 		}
 		FileIO.saveFileBytes(Main.MOD_ID+"-mapart_group_"+groupName, bb.array());
 
 		ctx.getSource().sendFeedback(Text.literal("Created new group '"+groupName+"' and set as active (ids: "
-					+ Main.mapsInGroup.size()+").").copy().withColor(/*&a=*/5635925));
+					+ MapGroupUtils.mapsInGroup.size()+").").copy().withColor(/*&a=*/5635925));
 		return 1;
 	}
 

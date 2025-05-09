@@ -16,9 +16,7 @@ strictfp
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.UUID;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +60,6 @@ public class Main implements ClientModInitializer{
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	private static HashMap<String, String> config;
 
-	public static HashSet<UUID> mapsInGroup;
 	public static InventoryUtils inventoryUtils;
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
@@ -72,7 +69,7 @@ public class Main implements ClientModInitializer{
 	private void loadConfig(){
 		//=================================== Parsing config into a map
 		config = new HashMap<>();
-		final String configContents = FileIO.loadFile(configFilename, getClass().getResourceAsStream("/"+configFilename));
+		final String configContents = FileIO.loadFile(configFilename, getClass().getResourceAsStream("/"+MOD_ID+"/"+configFilename));
 		String listKey = null, listValue = null;
 		int listDepth = 0;
 		for(String line : configContents.split("\\r?\\n")){
@@ -161,7 +158,8 @@ public class Main implements ClientModInitializer{
 				case "mapart_placement_helper": mapPlaceHelper=true; break;
 				case "mapart_placement_helper_use_name": mapPlaceHelperByName=true; break;
 				case "mapart_placement_helper_use_image": mapPlaceHelperByImg=true; break;
-				case "mapart_set_group_command": if(!value.equalsIgnoreCase("false")) new CommandSetMapArtGroup(); break;
+				case "mapart_group_track_locked": MapGroupUtils.ENFORCE_LOCKED_STATE = !value.equalsIgnoreCase("false"); break;
+				case "mapart_group_command": new CommandSetMapArtGroup();
 //				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
 //				case "millis_between_clicks": millis_between_clicks = Integer.parseInt(value); break;
 

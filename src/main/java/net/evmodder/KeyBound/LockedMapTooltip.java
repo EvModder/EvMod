@@ -1,7 +1,6 @@
 package net.evmodder.KeyBound;
 
 import java.util.List;
-import java.util.UUID;
 import net.minecraft.item.Item.TooltipContext;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
@@ -18,12 +17,12 @@ public final class LockedMapTooltip{
 	public static final int UNCOLLECTED_COLOR = 706660;
 
 	private static final boolean isNotInCurrentGroup(ItemStack item, TooltipContext context){
-		if(Main.mapsInGroup == null) return false;
+		if(MapGroupUtils.mapsInGroup == null) return false;
 		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
 		if(id == null) return false;
 		MapState state = context.getMapState(id);
 		if(state == null) return false;
-		return !Main.mapsInGroup.contains(UUID.nameUUIDFromBytes(state.colors));
+		return MapGroupUtils.isMapNotInCurrentGroup(state);
 	}
 	private static final boolean isUnlockedMap(ItemStack item, TooltipContext context){
 		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
