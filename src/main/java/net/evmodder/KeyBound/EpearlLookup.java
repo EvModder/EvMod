@@ -27,8 +27,8 @@ public final class EpearlLookup{
 	private static final UUID UUID_404 = null, UUID_LOADING = new UUID(114141414, 282828282);
 	private static final PearlDataClient PD_404 = new PearlDataClient(UUID_404, 0, 0, 0), PD_LOADING = new PearlDataClient(UUID_LOADING, 0, 0, 0);
 	//private static final boolean ONLY_FOR_2b2t = true;
-	private static final String DB_FILENAME_UUID = Main.MOD_ID+"-epearl_cache_uuid";
-	private static final String DB_FILENAME_XZ = Main.MOD_ID+"-epearl_cache_xz";
+	private static final String DB_FILENAME_UUID = "epearl_cache_uuid";
+	private static final String DB_FILENAME_XZ = "epearl_cache_xz";
 
 	private final HashMap<Integer, UUID> updateKeyXZ; // Map of epearl.id -> epearl.pos (x.Double, z.Double, concatenated as UUID)
 	private final HashMap<UUID, XYZ> idToPos; // Map of epearl.uuid -> epearl.pos

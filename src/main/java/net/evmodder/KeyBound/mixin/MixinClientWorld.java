@@ -24,7 +24,7 @@ public abstract class MixinClientWorld{
 	private static final MinecraftClient client = MinecraftClient.getInstance();
 	private static final HashMap<String, HashSet<UUID>> mapsSaved;
 	private static final HashSet<UUID> mapsInTransit, mapsToSave;
-	private static final String DB_FILENAME = "keybound-seen_maps";
+	private static final String DB_FILENAME = "seen_maps";
 	private static final long MAPART_STORE_TIMEOUT = 15*1000;
 	//private static final boolean preloadMapStates = true; // requires saving full byte[] 128x128 and not just the hash (UUID)
 

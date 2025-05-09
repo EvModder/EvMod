@@ -6,7 +6,6 @@ import java.util.UUID;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.evmodder.EvLib.FileIO;
-import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
 //import net.minecraft.client.multiplayer.PlayerInfo;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
@@ -59,7 +58,7 @@ public class CommandSetMapArtGroup{
 	}
 	private int runCommandWithGroupName(CommandContext<FabricClientCommandSource> ctx){
 		final String groupName = ctx.getArgument("group_name", String.class);
-		final byte[] data = FileIO.loadFileBytes(Main.MOD_ID+"-mapart_group_"+groupName);
+		final byte[] data = FileIO.loadFileBytes("mapart_group_"+groupName);
 		if(data != null){
 			final int numInGroup = data.length / 16;
 			if(numInGroup*16 != data.length){
@@ -84,7 +83,7 @@ public class CommandSetMapArtGroup{
 			bb.putLong(uuid.getMostSignificantBits());
 			bb.putLong(uuid.getLeastSignificantBits());
 		}
-		FileIO.saveFileBytes(Main.MOD_ID+"-mapart_group_"+groupName, bb.array());
+		FileIO.saveFileBytes("mapart_group_"+groupName, bb.array());
 
 		ctx.getSource().sendFeedback(Text.literal("Created new group '"+groupName+"' and set as active (ids: "
 					+ MapGroupUtils.mapsInGroup.size()+").").copy().withColor(/*&a=*/5635925));

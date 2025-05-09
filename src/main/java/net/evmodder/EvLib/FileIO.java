@@ -25,8 +25,10 @@ public final class FileIO{
 		String tempDir = "./";
 		try{
 			Object fabricLoader = Class.forName("net.fabricmc.loader.api.FabricLoader").getMethod("getInstance").invoke(null);
-			tempDir = fabricLoader.getClass().getMethod("getConfigDir").invoke(fabricLoader).toString()+"/";
+			tempDir = fabricLoader.getClass().getMethod("getConfigDir").invoke(fabricLoader).toString()+"/"+
+						Class.forName("net.evmodder.KeyBound.Main").getField("MOD_ID").get(null)+"/";
 		}
+		catch(IllegalArgumentException | NoSuchFieldException e){e.printStackTrace();}
 		catch(ClassNotFoundException | IllegalAccessException | InvocationTargetException | NoSuchMethodException | SecurityException e){}
 		DIR = tempDir;
 
