@@ -152,9 +152,9 @@ public class Main implements ClientModInitializer{
 				case "unlocked_map_red_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(LockedMapTooltip::redName); break;
 				case "unlocked_map_red_hotbarhud": mapColorHUD = !value.equalsIgnoreCase("false"); break;
 				case "unlocked_map_red_itemframe": mapColorIFrame = !value.equalsIgnoreCase("false"); break;
-				case "keybind_mapart_load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
-				case "keybind_mapart_take_from_shulker": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
-				case "keybind_mapart_copy_in_inventory": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
+				case "keybind.mapart.load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
+				case "keybind.mapart.take_from_shulker": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
+				case "keybind.mapart.copy_in_inventory": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
 				case "mapart_placement_helper": mapPlaceHelper=true; break;
 				case "mapart_placement_helper_use_name": mapPlaceHelperByName=true; break;
 				case "mapart_placement_helper_use_image": mapPlaceHelperByImg=true; break;
@@ -163,11 +163,11 @@ public class Main implements ClientModInitializer{
 //				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
 //				case "millis_between_clicks": millis_between_clicks = Integer.parseInt(value); break;
 
-				case "keybind_eject_junk_items": if(!value.equalsIgnoreCase("false")) ejectJunk = new KeybindEjectJunk(); break;
-				case "keybind_toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
-//				case "keybind_smart_inventory_craft": keybindSmartInvCraft = !value.equalsIgnoreCase("false"); break;
-				case "keybind_smart_inventory_craft": if(!value.equalsIgnoreCase("false")) new KeybindSmartInvCraft(); break;
-				case "keybind_2b2t_highway_travel_helper": keybindHighwayTravelHelper = !value.equalsIgnoreCase("false"); break;
+				case "keybind.eject_junk_items": if(!value.equalsIgnoreCase("false")) ejectJunk = new KeybindEjectJunk(); break;
+				case "keybind.toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
+//				case "keybind_smart_inventory_craft": if(!value.equalsIgnoreCase("false")) new KeybindSmartInvCraft(); break;
+				case "keybind.2b2t_highway_travel_helper": keybindHighwayTravelHelper = !value.equalsIgnoreCase("false"); break;
+				case "keybind.aie_travel_helper": if(!value.equalsIgnoreCase("false")) new KeybindAIETravelHelper(); break;
 				case "scroll_order": {
 					final String listOfListsStr = value.replaceAll("\\s","");
 					List<String[]> colorLists = Arrays.stream(

@@ -11,9 +11,9 @@ temp_event_timestamp: 1738990800 # Fri, Feb7, 2025, 11pm CST
 limiter_clicks_in_duration: 162
 limiter_duration_ticks: 77
 
-keybind_mapart_load_from_shulker: true
-keybind_mapart_take_from_shulker: true
-keybind_mapart_copy_in_inventory: true
+keybind.mapart.load_from_shulker: true
+keybind.mapart.take_from_shulker: true
+keybind.mapart.copy_in_inventory: true
 mapart_placement_helper: true
 mapart_placement_helper_use_name: true
 mapart_placement_helper_use_image: true
@@ -77,6 +77,7 @@ keybind.eject_junk_items: true
 keybind.toggle_skin_layers: true
 keybind.smart_inventory_craft: true
 keybind.2b2t_highway_travel_helper: true
+keybind.aie_travel_helper: true
 
 organize_inventory.EvInv: [
   # Armor
