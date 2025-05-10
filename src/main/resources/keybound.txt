@@ -3,7 +3,7 @@
 #========== Chat Broadcast ==========#
 temp_event_account: Anuvin
 temp_event_broadcast: []
-temp_event_timestamp: 1738990800 # Fri, Feb7, 11pm CST
+temp_event_timestamp: 1738990800 # Fri, Feb7, 2025, 11pm CST
 
 
 #========== MapArt Tools ==========#
@@ -56,27 +56,28 @@ remote_port: 14441
 
 
 # List of remote messages
-#keybind_remote_msg.a: P2P_MSG,27aa6a20-4a0d-4779-bcd5-dce162dd7467
-#keybind_remote_msg.b: EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c
-#keybind_remote_msg.c: EPEARL_TRIGGER,690406c8-53eb-482c-8309-96789e98d07a
-#keybind_remote_msg.mainbase: EPEARL_TRIGGER,36b128f9-c502-4879-928e-0b9637dcd65e
+#keybind.remote_msg.a: P2P_MSG,27aa6a20-4a0d-4779-bcd5-dce162dd7467
+#keybind.remote_msg.b: EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c
+#keybind.remote_msg.c: EPEARL_TRIGGER,690406c8-53eb-482c-8309-96789e98d07a
+#keybind.remote_msg.mainbase: EPEARL_TRIGGER,36b128f9-c502-4879-928e-0b9637dcd65e
 
 
 #========== Chat/commands ==========#
 join_messages: [/toggledeathmsgs]
-#keybind_chat_msg.meow: meow :3
-keybind_chat_msg.rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost
+#keybind.chat_msg.meow: meow :3
+keybind.chat_msg.rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost
 
 
 #========== Misc Keybinds ==========#
-keybind_snap_angle.a: 156.14,-45.89
-#keybind_snap_angle.b: -245.14,-54.23
+# Yaw[-180,180],Pitch[-90,90]
+keybind.snap_angle.a: 156.14,-45.89
+#keybind.snap_angle.b: -245.14,-54.23
 
-keybind_drop_items: true
-keybind_toggle_skin_layers: true
-keybind_smart_inventory_craft: true
-keybind_2b2t_highway_travel_helper: true
-# Yaw[-180,180,Pitch[-90,90]
+keybind.eject_junk_items: true
+keybind.toggle_skin_layers: true
+keybind.smart_inventory_craft: true
+keybind.2b2t_highway_travel_helper: true
+
 organize_inventory.EvInv: [
   # Armor
   5:netherite_helmet, 6:elytra, 6:netherite_chestplate, 7:netherite_leggings, 8:netherite_boots,

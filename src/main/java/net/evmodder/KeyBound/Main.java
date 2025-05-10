@@ -69,7 +69,7 @@ public class Main implements ClientModInitializer{
 	private void loadConfig(){
 		//=================================== Parsing config into a map
 		config = new HashMap<>();
-		final String configContents = FileIO.loadFile(configFilename, getClass().getResourceAsStream("/"+MOD_ID+"/"+configFilename));
+		final String configContents = FileIO.loadFile(configFilename, getClass().getResourceAsStream("/"+configFilename));
 		String listKey = null, listValue = null;
 		int listDepth = 0;
 		for(String line : configContents.split("\\r?\\n")){
@@ -116,9 +116,9 @@ public class Main implements ClientModInitializer{
 		//config.forEach((key, value) -> {
 		for(String key : config.keySet()){
 			String value = config.get(key);
-			if(key.startsWith("keybind_chat_msg.")) KeybindsSimple.registerChatKeybind(key, value);
-			else if(key.startsWith("keybind_remote_msg.")) remoteMessages.put(key, value);
-			else if(key.startsWith("keybind_snap_angle")) KeybindsSimple.registerChatKeybind(key, value);
+			if(key.startsWith("keybind.chat_msg.")) KeybindsSimple.registerChatKeybind(key.substring(8), value);
+			else if(key.startsWith("keybind.remote_msg.")) remoteMessages.put(key.substring(8), value);
+			else if(key.startsWith("keybind.snap_angle")) KeybindsSimple.registerSnapAngleKeybind(key.substring(8), value);
 			else if(key.startsWith("organize_inventory.")) new KeybindInventoryOrganize(key, value.replaceAll("\\s",""));
 			else switch(key){
 				// Database
@@ -159,11 +159,11 @@ public class Main implements ClientModInitializer{
 				case "mapart_placement_helper_use_name": mapPlaceHelperByName=true; break;
 				case "mapart_placement_helper_use_image": mapPlaceHelperByImg=true; break;
 				case "mapart_group_track_locked": MapGroupUtils.ENFORCE_LOCKED_STATE = !value.equalsIgnoreCase("false"); break;
-				case "mapart_group_command": new CommandSetMapArtGroup();
+				case "mapart_group_command": new CommandSetMapArtGroup(); break;
 //				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
 //				case "millis_between_clicks": millis_between_clicks = Integer.parseInt(value); break;
 
-				case "keybind_drop_items": if(!value.equalsIgnoreCase("false")) ejectJunk = new KeybindEjectJunk(); break;
+				case "keybind_eject_junk_items": if(!value.equalsIgnoreCase("false")) ejectJunk = new KeybindEjectJunk(); break;
 				case "keybind_toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
 //				case "keybind_smart_inventory_craft": keybindSmartInvCraft = !value.equalsIgnoreCase("false"); break;
 				case "keybind_smart_inventory_craft": if(!value.equalsIgnoreCase("false")) new KeybindSmartInvCraft(); break;
@@ -190,11 +190,10 @@ public class Main implements ClientModInitializer{
 		if(keybindMapArtMove) new KeybindMapMove();
 		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg);
 		if(keybindHighwayTravelHelper) new Keybind2b2tHighwayTravelHelper(ejectJunk);
-		new KeybindSpamclick();
+		//new KeybindSpamclick();
 
 		MinecraftClient client = MinecraftClient.getInstance();
 		String username = client.getSession().getUsername();
-		if(temp_evt_ts*1000L > System.currentTimeMillis() && temp_evt_msgs != null && username.equals(evt_account))
-			new ChatBroadcaster(temp_evt_ts, temp_evt_msgs);
+		if(temp_evt_ts*1000L > System.currentTimeMillis() && temp_evt_msgs != null && username.equals(evt_account)) new ChatBroadcaster(temp_evt_ts, temp_evt_msgs);
 	}
 }

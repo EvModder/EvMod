@@ -16,13 +16,21 @@
 
 	"key.categories.keybound.remote_messages": "Send messages to the bot server",
 	"key.keybound.remote_msg.mainbase": "Main base stasis pearl",
-	"key.keybound.remote_msg.a": "A",
-	"key.keybound.remote_msg.b": "B",
-	"key.keybound.remote_msg.c": "C",
+	"key.keybound.remote_msg.a": "BotMsg: A",
+	"key.keybound.remote_msg.b": "BotMsg: B",
+	"key.keybound.remote_msg.c": "BotMsg: C",
 
 	"key.categories.keybound.chat_messages": "Send messages in chat",
-	"key.keybound.chat_msg.meow": "Meow :3",
-	"key.keybound.chat_msg.rc": "Check RC",
+	"key.keybound.chat_msg.meow": "Chat: Meow :3",
+	"key.keybound.chat_msg.rc": "Cmd: Check RC",
+
+	"key.categories.keybound.snap_angles": "Snap yaw & pitch to specific values",
+	"key.keybound.snap_angle.a": "Snap angle: A",
+	"key.keybound.snap_angle.b": "Snap angle: B",
+	"key.keybound.snap_angle.c": "Snap angle: C",
+
+	"key.keybound.organize_inventory.EvInv": "Organize: Ev's Inv",
+	"key.keybound.organize_inventory.CarpetMapart": "Organize: Carpet Map ",
 
 	"key.categories.keybound.misc": "Misc",
 	"key.keybound.eject_junk_items": "AutoEject",
@@ -31,6 +39,5 @@
 	"key.keybound.mapart_load_data": "MapArt Load",
 	"key.keybound.mapart_take_place": "MapArt Take/Place",
 	"key.keybound.travel_helper": "2b2t Highway Travel Helper",
-	"key.keybound.smart_inventory_craft": "Auto-craft in the 2x2",
-	"key.keybound.organize_inventory.EvInv": "Ev's Inv Organize"
+	"key.keybound.smart_inventory_craft": "Auto-craft in the 2x2"
 }
