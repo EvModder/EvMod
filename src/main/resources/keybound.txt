@@ -27,6 +27,7 @@ unlocked_map_red_hotbarhud: true
 unlocked_map_red_itemframe: true
 
 #========== Added Visuals ==========#
+totem_total_count: true
 repaircost_tooltip: true
 repaircost_hotbarhud: false
 enderpearl_owners: true

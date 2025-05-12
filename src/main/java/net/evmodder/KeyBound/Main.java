@@ -28,6 +28,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.item.ItemRenderer;
 // gradle genSources/eclipse/cleanloom/--stop
 //MC source will be in ~/.gradle/caches/fabric-loom or ./.gradle/loom-cache
 // gradle build --refresh-dependencies
@@ -38,6 +39,7 @@ public class Main implements ClientModInitializer{
 	// majorly improve TravelHelper (mining blocks only in way, specifically non-diag & mining 3 high tunnel)
 
 	// Feature Ideas:
+	// totems in offhand - render itemcount for total totems in inv
 	// Maps - smaller text for item count in slot
 	// Map - next hand autorestock, consider all maps in inv (later: look at all edges) and stick to RowByCol or ColByRow for whole map
 	// cont.: save LastMapCommonSubstr and LastMapRowByCol
@@ -63,7 +65,7 @@ public class Main implements ClientModInitializer{
 	public static InventoryUtils inventoryUtils;
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
-	public static boolean rcHotbarHUD, mapartDb=true, mapartDbContact, mapColorHUD, mapColorIFrame;
+	public static boolean rcHotbarHUD, mapartDb=true, mapartDbContact, mapColorHUD, mapColorIFrame, totemShowTotalCount;
 	public static long joinedServerTimestamp;
 
 	private void loadConfig(){
@@ -103,10 +105,10 @@ public class Main implements ClientModInitializer{
 		HashMap<String, String> remoteMessages = new HashMap<>();
 		int clientId=0; String clientKey=null;
 		String remoteAddr=null; int remotePort=0;
-		int clicksInDuration = 190, durationTicks = 75;
+		//int clicksInDuration = 190, durationTicks = 75;
+		int clicksInDuration = 1, durationTicks = 1;
 		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false,
 				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false;
-//		int clicks_per_gt=36, millis_between_clicks=50;
 		boolean mapPlaceHelper=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false;
 		boolean keybindHighwayTravelHelper=false;
 
@@ -147,6 +149,7 @@ public class Main implements ClientModInitializer{
 				case "temp_event_account": evt_account = value; break;
 
 //				case "spawner_highlight": if(!value.equalsIgnoreCase("false")) new SpawnerHighlighter(); break;
+				case "totem_total_count": if(!value.equalsIgnoreCase("false")) totemShowTotalCount = !value.equalsIgnoreCase("false"); break;
 				case "repaircost_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC); break;
 				case "repaircost_hotbarhud": rcHotbarHUD = !value.equalsIgnoreCase("false"); break;
 				case "unlocked_map_red_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(LockedMapTooltip::redName); break;
