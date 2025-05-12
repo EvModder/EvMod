@@ -71,7 +71,7 @@ public final class KeybindMapLoad{
 		}
 		ongoingLoad = true;
 		Main.inventoryUtils.executeClicks(client, clicks,
-				c->!isUnloadedMapArt(client.player.clientWorld, client.player.getInventory().getStack(c.button())),
+				c->client.player == null || !isUnloadedMapArt(client.player.clientWorld, client.player.getInventory().getStack(c.button())),
 				()->{
 					Main.LOGGER.info("MapLoad: DONE!");
 					ongoingLoad = false;

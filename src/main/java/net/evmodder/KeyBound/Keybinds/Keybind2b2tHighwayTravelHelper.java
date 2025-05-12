@@ -199,7 +199,7 @@ public final class Keybind2b2tHighwayTravelHelper{
 		String path = Registries.ITEM.getId(client.player.getStackInHand(hand).getItem()).getPath();
 		if(useBlock != null && !path.equals(useBlock)){
 			client.player.sendMessage(Text.of("(!) Missing block: "+useBlock), true);
-			return false;
+			//return false;
 		}
 		return placeBlock(bp, hand);
 	}
