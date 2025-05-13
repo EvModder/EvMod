@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import net.evmodder.EvLib.Pair;
 import net.evmodder.KeyBound.Main;
-import net.evmodder.KeyBound.Keybinds.InventoryUtils.ClickEvent;
+import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;

@@ -1,7 +1,7 @@
 package net.evmodder.KeyBound.Keybinds;
 
 import net.evmodder.KeyBound.Main;
-import net.evmodder.KeyBound.Keybinds.InventoryUtils.ClickEvent;
+import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
@@ -54,7 +54,7 @@ public final class KeybindSpamclick{
 			if(numTicks*50l % numClicks != 0){
 				client.player.sendMessage(Text.of("SpamClick: ms per click is not exact: "+((numTicks*50d)/numClicks)).copy().withColor(16763080), /*overlay=*/false);
 			}
-			InventoryUtils.executeClicksLEGACY(client, clicks, msPerClick, /*MAX_CLICKS_PER_SECOND=*/Integer.MAX_VALUE, _->true, ()->{
+			ClickUtils.executeClicksLEGACY(client, clicks, msPerClick, /*MAX_CLICKS_PER_SECOND=*/Integer.MAX_VALUE, _->true, ()->{
 				ongoingSpamClick = false;
 				//Main.LOGGER.info("SpamClick: DONE");
 				if(client.player != null) client.player.sendMessage(Text.of("SpamClick: DONE"), /*overlay=*/false);

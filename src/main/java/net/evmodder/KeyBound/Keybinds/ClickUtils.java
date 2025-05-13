@@ -9,7 +9,7 @@ import net.evmodder.KeyBound.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.screen.slot.SlotActionType;
 
-public class InventoryUtils{
+public class ClickUtils{
 	record ClickEvent(int syncId, int slotId, int button, SlotActionType actionType){
 		ClickEvent(int slotId, int button, SlotActionType actionType){this(0, slotId, button, actionType);}
 	}
@@ -19,7 +19,7 @@ public class InventoryUtils{
 	private int tickDurIndex, sumClicksInDuration;
 	private long lastTick;
 
-	public InventoryUtils(final int MAX_CLICKS, int FOR_TICKS){
+	public ClickUtils(final int MAX_CLICKS, int FOR_TICKS){
 		if(MAX_CLICKS > 100_000){
 			Main.LOGGER.error("InventoryUtils() initialized with insanely-large click-limit: "+MAX_CLICKS+", treating it as limitless");
 			this.MAX_CLICKS = Integer.MAX_VALUE;
