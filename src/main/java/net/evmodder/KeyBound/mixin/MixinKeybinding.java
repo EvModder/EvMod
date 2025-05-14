@@ -38,19 +38,19 @@ public abstract class MixinKeybinding{
 	@Shadow private InputUtil.Key boundKey;
 
 	@Inject(method="onKeyPressed", at=@At(value="HEAD"), cancellable=true)
-	private static void onKeyPressedFixed(InputUtil.Key key, CallbackInfo ci){
+	private static void onKeyPressed_Mixin(InputUtil.Key key, CallbackInfo ci){
 		KeybindFixer.onKeyPressed(key);
 		ci.cancel();
 	}
 
 	@Inject(method="setKeyPressed", at=@At(value="HEAD"), cancellable=true)
-	private static void setKeyPressedFixed(InputUtil.Key key, boolean pressed, CallbackInfo ci){
+	private static void setKeyPressed_Mixin(InputUtil.Key key, boolean pressed, CallbackInfo ci){
 		KeybindFixer.setKeyPressed(key, pressed);
 		ci.cancel();
 	}
 
 	@Inject(method="updateKeysByCode", at=@At(value="TAIL"))
-	private static void updateByCodeToMultiMap(CallbackInfo ci){
+	private static void updateKeysByCode_Mixin(CallbackInfo ci){
 		KeybindFixer.clearMap();
 		for(KeyBinding keyBinding : KEYS_BY_ID.values()) {
 			KeybindFixer.putKey(((AccessorBoundKey)keyBinding).getBoundKey(), keyBinding);
@@ -58,7 +58,7 @@ public abstract class MixinKeybinding{
 	}
 
 	@Inject(method="<init>(Ljava/lang/String;Lnet/minecraft/client/util/InputUtil$Type;ILjava/lang/String;)V", at=@At(value="TAIL"))
-	private void putToMultiMap(String translationKey, InputUtil.Type type, int code, String category, CallbackInfo ci){
+	private void KeyBindingConstr_Mixin(String translationKey, InputUtil.Type type, int code, String category, CallbackInfo ci){
 		KeybindFixer.putKey(boundKey, (KeyBinding)(Object)this);
 	}
 }

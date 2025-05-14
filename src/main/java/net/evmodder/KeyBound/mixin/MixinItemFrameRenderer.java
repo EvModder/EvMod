@@ -35,7 +35,7 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 	}
 
 	@Inject(method = "hasLabel", at = @At("HEAD"), cancellable = true)
-	public void yupyupyup(T itemFrameEntity, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
+	public void hasLabel_Mixin(T itemFrameEntity, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
 		if(!Main.mapColorIFrame) return; // Feature is disabled
 		if(squaredDistanceToCamera > 20*20) return;
 		ItemStack stack = itemFrameEntity.getHeldItemStack();
@@ -52,7 +52,7 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 	}
 
 	@Inject(method = "getDisplayName", at = @At("INVOKE"), cancellable = true)
-	public void yupyupyup(T itemFrameEntity, CallbackInfoReturnable<Text> cir){
+	public void getDisplayName_Mixin(T itemFrameEntity, CallbackInfoReturnable<Text> cir){
 		if(!Main.mapColorIFrame) return; // Feature is disabled
 		ItemStack stack = itemFrameEntity.getHeldItemStack();
 		if(stack == null || stack.isEmpty() || !Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")) return;
