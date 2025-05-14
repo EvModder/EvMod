@@ -62,6 +62,9 @@ remote_port: 14441
 #keybind.remote_msg.c: EPEARL_TRIGGER,690406c8-53eb-482c-8309-96789e98d07a
 #keybind.remote_msg.mainbase: EPEARL_TRIGGER,36b128f9-c502-4879-928e-0b9637dcd65e
 
+# Note: this currently won't work outside of 2b2t.
+publish_my_ignore_list: true
+add_other_ignore_lists: [34471e8d-d0c5-47b9-b8e1-b5b9472affa4, 0e314b60-29c7-4e35-bef3-3c652c8fb467]
 
 #========== Chat/commands ==========#
 join_messages: [/toggledeathmsgs, /setmapartgroup end]
