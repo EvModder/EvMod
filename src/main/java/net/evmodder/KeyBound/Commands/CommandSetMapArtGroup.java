@@ -110,7 +110,10 @@ public class CommandSetMapArtGroup{
 	}
 
 	public CommandSetMapArtGroup(){
-		ClientCommandRegistrationCallback.EVENT.register((dispatcher, _0) -> {
+		ClientCommandRegistrationCallback.EVENT.register(
+//				new ClientCommandRegistrationCallback(){
+//				@Override public void register(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess){
+				(dispatcher, _0) -> {
 			dispatcher.register(
 				ClientCommandManager.literal("setmapartgroup")
 				.executes(this::runCommandNoArg)

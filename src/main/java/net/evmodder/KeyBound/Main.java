@@ -37,6 +37,7 @@ public class Main implements ClientModInitializer{
 	//TODO:
 	// Reference/depend on https://github.com/Siphalor/amecs-api
 	// majorly improve TravelHelper (mining blocks only in way, specifically non-diag & mining 3 high tunnel)
+	//SendOnServerJoin configured per-server (via ip?)
 
 	// Feature Ideas:
 	// totems in offhand - render itemcount for total totems in inv

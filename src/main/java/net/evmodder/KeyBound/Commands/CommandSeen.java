@@ -14,6 +14,12 @@ public class CommandSeen{
 	//TODO: NO-OP if not connected to the server
 	//TODO: 
 	public CommandSeen(){
+		/*ClientCommandManager.getActiveDispatcher().register(
+			ClientCommandManager.literal("hello").executes(context -> {
+				context.getSource().sendFeedback(Text.of("Hello world!"));
+				return 0;
+			})
+		);*/
 		ClientCommandRegistrationCallback.EVENT.register(
 			(dispatcher, _0) -> dispatcher.register(
 				ClientCommandManager.literal("seen").then(
