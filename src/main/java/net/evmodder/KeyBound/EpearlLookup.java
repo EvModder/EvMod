@@ -48,7 +48,7 @@ public final class EpearlLookup{
 			DB_FETCH_COMMAND = uuidOrXZ ? Command.DB_PEARL_FETCH_BY_UUID : Command.DB_PEARL_FETCH_BY_XZ;
 		}
 		@Override public PearlDataClient load(UUID key){
-			Main.LOGGER.info("fetch ownerUUID called for pearlUUID: "+key+" at "+idToPos.get(key));
+			Main.LOGGER.debug("fetch ownerUUID called for pearlUUID: "+key+" at "+idToPos.get(key));
 			if(Main.remoteSender == null){
 				Main.LOGGER.info("Remote server offline. Returning "+NAME_U_404);
 				return PD_404;
