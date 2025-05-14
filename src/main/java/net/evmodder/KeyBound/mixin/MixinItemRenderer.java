@@ -2,14 +2,14 @@ package net.evmodder.KeyBound.mixin;
 
 import net.evmodder.KeyBound.Main;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.item.ItemRenderer;
+import net.minecraft.client.item.ItemModelManager;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-@Mixin(ItemRenderer.class)
+@Mixin(ItemModelManager.class)
 public abstract class MixinItemRenderer{
 	private final MinecraftClient client = MinecraftClient.getInstance();
 
@@ -33,24 +33,25 @@ public abstract class MixinItemRenderer{
 	//@Inject(at=@At("HEAD"), method="update")
 	//@ModifyArg(method="update", at=@At(value="INVOKE", target="update"), index=0)
 
-
-	@ModifyVariable(at=@At("HEAD"), method="renderItem(Lnet/minecraft/entity/LivingEntity;"
+	/*@ModifyVariable(at=@At("HEAD"), method="renderItem(Lnet/minecraft/entity/LivingEntity;"
 			+ "Lnet/minecraft/item/ItemStack;"
 			+ "Lnet/minecraft/client/render/model/json/ModelTransformationMode;"
 			+ "Z"
 			+ "Lnet/minecraft/client/util/math/MatrixStack;"
 			+ "Lnet/minecraft/client/render/VertexConsumerProvider;"
 			+ "Lnet/minecraft/world/World;"
-			+ "III)V")
-	public ItemStack editFirstItemStackParam(ItemStack stack){;;
-		Main.LOGGER.info("mixin triggered");
+			+ "III)V")*/
+
+	@ModifyVariable(method="update", at=@At("HEAD"))
+	public ItemStack editFirstItemStackParam(ItemStack stack){
 		if(Main.totemShowTotalCount && stack.getItem() == Items.TOTEM_OF_UNDYING){
 			Main.LOGGER.info("holding totem");
 			final int numberOfTotems = client.player.getInventory().count(Items.TOTEM_OF_UNDYING);
 			if(numberOfTotems > 1){
 				Main.LOGGER.info("number of totems: "+numberOfTotems);
-				stack = stack.copy();
-				stack.setCount(numberOfTotems);
+				// NOTE: for some reason, changing the stack type here works, but changing the count does not :(
+				return new ItemStack(Items.RED_BUNDLE, numberOfTotems);
+				//return stack.copyWithCount(numberOfTotems);
 			}
 		}
 		return stack;

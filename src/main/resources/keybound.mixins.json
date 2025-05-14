@@ -12,7 +12,7 @@
 		"MixinHandledScreen",
 		"MixinInGameHud",
 		"MixinItemFrameRenderer",
-		"MixinItemRenderer",
+		//"MixinItemRenderer",
 		"MixinKeybinding",
 		"MixinScreenHandler"
 	],
