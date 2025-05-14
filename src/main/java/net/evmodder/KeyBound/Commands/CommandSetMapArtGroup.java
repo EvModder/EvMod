@@ -96,7 +96,7 @@ public class CommandSetMapArtGroup{
 
 		source.sendFeedback(Text.literal(
 				(data == null ? "Created new" : "Modified") + " group '"+groupName
-				+"' and set as active (ids: "+ MapGroupUtils.mapsInGroup.size()+").").copy().withColor(/*&a=*/5635925));
+				+"' and set as active (ids: "+ (data == null ? "" : (data.length/16)+" -> ") + MapGroupUtils.mapsInGroup.size()+").").copy().withColor(/*&a=*/5635925));
 		return 1;
 	}
 	private int runCommandWithGroupName(CommandContext<FabricClientCommandSource> ctx){
