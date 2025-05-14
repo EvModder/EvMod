@@ -110,7 +110,7 @@ public class CommandSetMapArtGroup{
 	}
 
 	public CommandSetMapArtGroup(){
-		ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> {
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, _0) -> {
 			dispatcher.register(
 				ClientCommandManager.literal("setmapartgroup")
 				.executes(this::runCommandNoArg)

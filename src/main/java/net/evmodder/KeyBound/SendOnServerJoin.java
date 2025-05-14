@@ -12,7 +12,7 @@ public class SendOnServerJoin{
 		Main.LOGGER.info("waiting for world to load...");
 		ServerPlayConnectionEvents.JOIN.register(
 				//ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server
-				(_, _, _) ->
+				(_0, _1, _2) ->
 		{
 			new Timer().schedule(new TimerTask(){@Override public void run(){
 				MinecraftClient client  = MinecraftClient.getInstance();

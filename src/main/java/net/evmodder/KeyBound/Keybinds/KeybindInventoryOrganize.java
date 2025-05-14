@@ -238,7 +238,7 @@ public final class KeybindInventoryOrganize{
 		ongoingOrganize = true;
 		Main.inventoryUtils.executeClicks(client, clicks,
 				//_->true,
-				_->{
+				_0->{
 					//client.player.sendMessage(Text.of("click "+c.slotId()+" "+c.button()+" "+c.actionType()), false);
 					return true;
 				},

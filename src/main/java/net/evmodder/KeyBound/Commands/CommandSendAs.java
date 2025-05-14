@@ -10,7 +10,7 @@ import net.minecraft.text.Text;
 public class CommandSendAs{
 	CommandSendAs(){
 		ClientCommandRegistrationCallback.EVENT.register(
-			(dispatcher, _) -> dispatcher.register(
+			(dispatcher, _0) -> dispatcher.register(
 				ClientCommandManager.literal("sendas")
 					.then(ClientCommandManager.argument("name", StringArgumentType.word())
 					.then(ClientCommandManager.argument("message", StringArgumentType.greedyString()))

@@ -154,7 +154,7 @@ public final class MapHandRestock{
 	MapHandRestock(boolean useName, boolean useImg){
 		USE_NAME = useName;
 		USE_IMG = useImg;
-		UseEntityCallback.EVENT.register((player, _, hand, entity, _) -> {
+		UseEntityCallback.EVENT.register((player, _0, hand, entity, _1) -> {
 			if(!(entity instanceof ItemFrameEntity itemFrame)) return ActionResult.PASS;
 			//Main.LOGGER.info("clicked item frame");
 			if(hand != Hand.MAIN_HAND){

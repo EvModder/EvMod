@@ -338,7 +338,7 @@ public final class Keybind2b2tHighwayTravelHelper{
 			client.player.sendMessage(Text.of(status), true);
 		}));
 
-		ClientTickEvents.START_CLIENT_TICK.register(_ -> {
+		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
 			if(!isEnabled) return;
 			if(client.player == null || client.world == null) return;
 			Item chestItem = client.player.getInventory().getArmorStack(2).getItem();

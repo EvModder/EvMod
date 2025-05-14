@@ -10,7 +10,7 @@ import net.minecraft.text.Text;
 public class CommandTimeOnline{
 	public CommandTimeOnline(){
 		ClientCommandRegistrationCallback.EVENT.register(
-			(dispatcher, _) -> dispatcher.register(
+			(dispatcher, _0) -> dispatcher.register(
 				ClientCommandManager.literal("timeonline")
 //					.then(ClientCommandManager.argument("yeet", StringArgumentType.word()))
 				.executes(ctx->{

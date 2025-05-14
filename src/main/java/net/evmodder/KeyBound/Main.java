@@ -137,7 +137,7 @@ public class Main implements ClientModInitializer{
 				case "mapart_database": mapartDb = !value.equalsIgnoreCase("false"); break;
 				case "mapart_database_share_contact": mapartDbContact = !value.equalsIgnoreCase("false"); break;
 				case "track_time_online": if(!value.equalsIgnoreCase("false")){
-					ServerPlayConnectionEvents.JOIN.register((_, _, _)->joinedServerTimestamp=System.currentTimeMillis());
+					ServerPlayConnectionEvents.JOIN.register((_0, _1, _2)->joinedServerTimestamp=System.currentTimeMillis());
 					new CommandTimeOnline();
 					break;
 				}

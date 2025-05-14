@@ -49,7 +49,7 @@ public final class KeybindAIETravelHelper{
 			client.player.sendMessage(Text.of("AutomaticInfiniteElytra Travel Helper: "+(isEnabled ? "enabled" : "disabled")), true);
 		}));
 
-		ClientTickEvents.START_CLIENT_TICK.register(_ -> {
+		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
 			if(!isEnabled) return;
 			if(client.player == null || client.world == null){isEnabled = false; return;}
 
