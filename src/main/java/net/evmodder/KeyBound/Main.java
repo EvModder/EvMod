@@ -28,10 +28,10 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.item.ItemRenderer;
 // gradle genSources/eclipse/cleanloom/--stop
 //MC source will be in ~/.gradle/caches/fabric-loom or ./.gradle/loom-cache
 // gradle build --refresh-dependencies
+// gradle migrateMappings --mappings "1.21.4+build.8"
 // Fix broken eclipse build paths after updating loom,fabric-api,version in configs: gradle eclipse
 public class Main implements ClientModInitializer{
 	//TODO:
@@ -62,7 +62,7 @@ public class Main implements ClientModInitializer{
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	private static HashMap<String, String> config;
 
-	public static InventoryUtils inventoryUtils;
+	public static ClickUtils inventoryUtils;
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
 	public static boolean rcHotbarHUD, mapartDb=true, mapartDbContact, mapColorHUD, mapColorIFrame, totemShowTotalCount;
@@ -111,6 +111,8 @@ public class Main implements ClientModInitializer{
 				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false;
 		boolean mapPlaceHelper=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false;
 		boolean keybindHighwayTravelHelper=false;
+		boolean uploadIgnoreList=false;
+		String[] downloadIgnoreLists=null;
 
 		String[] temp_evt_msgs=null; long temp_evt_ts=0; String evt_account="";
 		KeybindEjectJunk ejectJunk = null;
@@ -139,6 +141,8 @@ public class Main implements ClientModInitializer{
 					new CommandTimeOnline();
 					break;
 				}
+				case "publish_my_ignore_list": uploadIgnoreList = !value.equalsIgnoreCase("false"); break;
+				case "add_other_ignore_lists": if(value.startsWith("[")) downloadIgnoreLists = value.substring(1, value.length()-1).split(","); break;
 
 				case "limiter_clicks_in_duration": clicksInDuration = Integer.parseInt(value); break;
 				case "limiter_duration_ticks": durationTicks = Integer.parseInt(value); break;
@@ -182,11 +186,13 @@ public class Main implements ClientModInitializer{
 					LOGGER.warn("Unrecognized config setting: "+key);
 			}
 		}
-		inventoryUtils = new InventoryUtils(clicksInDuration, durationTicks);
-		if(epearlOwners) epearlLookup = new EpearlLookup(epearlOwnersDbUUID, epearlOwnersDbXZ);
-		final boolean anyDbFeaturesEnabled = !remoteMessages.isEmpty() || epearlOwnersDbUUID || epearlOwnersDbXZ || mapartDb;
+		inventoryUtils = new ClickUtils(clicksInDuration, durationTicks);
+		final boolean anyDbFeaturesEnabled = !remoteMessages.isEmpty() || epearlOwnersDbUUID || epearlOwnersDbXZ || mapartDb
+				|| uploadIgnoreList || downloadIgnoreLists != null;
 		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && anyDbFeaturesEnabled){
 			remoteSender = new RemoteServerSender(remoteAddr, remotePort, clientId, clientKey, remoteMessages);
+			if(epearlOwners) epearlLookup = new EpearlLookup(epearlOwnersDbUUID, epearlOwnersDbXZ);
+			if(uploadIgnoreList || downloadIgnoreLists != null) new IgnoreListSync2b2t(uploadIgnoreList, downloadIgnoreLists);
 		}
 		if(keybindMapArtLoad) new KeybindMapLoad();
 		if(keybindMapArtCopy) new KeybindMapCopy();
