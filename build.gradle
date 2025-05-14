@@ -27,13 +27,16 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.4.1")))
 }
 
 processResources {
 	inputs.property "version", project.version
+	//inputs.property "minecraft_version", project.minecraft_version
+	inputs.property "loader_version", project.loader_version
 
 	filesMatching("fabric.mod.json") {
-		expand "version": inputs.properties.version
+		expand "version": project.version/*, "minecraft_version": project.minecraft_version*/, "loader_version": project.loader_version
 	}
 }
 
@@ -46,8 +49,8 @@ java {
 	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_23
-	targetCompatibility = JavaVersion.VERSION_23
+	sourceCompatibility = JavaVersion.VERSION_21
+	targetCompatibility = JavaVersion.VERSION_21
 }
 
 jar {

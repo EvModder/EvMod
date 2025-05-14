@@ -1,0 +1,7 @@
+accessWidener   v1      named
+
+accessible      class   net/minecraft/client/render/model/json/ModelOverrideList$BakedOverride
+accessible      field   net/minecraft/client/render/model/json/ModelOverrideList$BakedOverride model Lnet/minecraft/client/render/model/BakedModel;
+accessible      method  net/minecraft/client/render/model/json/ModelOverrideList$BakedOverride test ([F)Z
+accessible      class   net/minecraft/client/render/model/json/ModelOverrideList$InlinedCondition
+accessible method net/minecraft/client/render/model/json/ModelOverrideList$BakedOverride <init> ([Lnet/minecraft/client/render/model/json/ModelOverrideList$InlinedCondition;Lnet/minecraft/client/render/model/BakedModel;)V
