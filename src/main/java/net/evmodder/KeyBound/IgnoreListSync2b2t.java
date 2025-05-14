@@ -23,10 +23,9 @@ class IgnoreListSync2b2t{
 		if(ignored) ignoreList.add(ignoredUUID);
 		else ignoreList.remove(ignoredUUID);
 		if(syncMyIgnored){
-			final byte[] msg = ByteBuffer.allocate(17)
-					.putLong(ignoredUUID.getMostSignificantBits()).putLong(ignoredUUID.getLeastSignificantBits())
-					.put((byte)(ignored ? 0xFF : 0)).array();
-			Main.remoteSender.sendBotMessage(Command.DB_PLAYER_STORE_IGNORE, /*udp=*/true, 2000, msg, /*recv=*/null);
+			Main.remoteSender.sendBotMessage(
+					ignored ? Command.DB_PLAYER_STORE_IGNORE : Command.DB_PLAYER_STORE_UNIGNORE,
+					/*udp=*/true, 2000, PacketHelper.toByteArray(ignoredUUID), /*recv=*/null);
 		}
 	}
 
@@ -63,8 +62,9 @@ class IgnoreListSync2b2t{
 			});
 		}
 		ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {
-			Main.LOGGER.info("GAME Message: {}, overlay: {}", msg, overlay);
-			final String literal = msg.getLiteralString();
+			if(overlay) return;
+			//Main.LOGGER.info("GAME Message: "+msg.getString());
+			final String literal = msg.getString();
 			if(literal == null) return;
 			if(literal.startsWith("Now ignoring ")) handleIgnoreEvent(literal.substring(13), true);
 			if(literal.startsWith("No longer ignoring ")) handleIgnoreEvent(literal.substring(19, literal.length()-1), false);

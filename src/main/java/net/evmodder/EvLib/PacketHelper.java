@@ -3,6 +3,7 @@ package net.evmodder.EvLib;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.BindException;
 import java.net.ConnectException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -108,8 +109,8 @@ public final class PacketHelper{
 
 	public interface MessageReceiver{void receiveMessage(byte[] message);}
 
-	public static final void sendPacket(final InetAddress addr, final int port, final boolean udp, final long timeout,
-			final boolean waitForReply, final byte[] msg, final MessageReceiver callback){
+	private static final void sendPacket(final InetAddress addr, final int port, final boolean udp, final long timeout,
+			final boolean waitForReply, final byte[] msg, final MessageReceiver callback, final boolean isFallbackPort){
 		if(callback == null && waitForReply){
 			LOGGER.severe("PacketHelper: waitForReply=true but recv is null!");
 		}
@@ -117,6 +118,7 @@ public final class PacketHelper{
 		if(udp){
 			if(addr.isLoopbackAddress()){
 				LOGGER.severe("UDP does not work on a local address due to feedback loops");
+				if(callback != null) callback.receiveMessage(null);
 				return;
 			}
 			if(socketUDP == null || socketUDP.isClosed() || lastPortUDP != port){
@@ -128,6 +130,17 @@ public final class PacketHelper{
 					socketUDP.setSendBufferSize(MAX_PACKET_SIZE_SEND);
 					socketUDP.setReceiveBufferSize(MAX_PACKET_SIZE_RECV); // Minimum it allows is 1024 bytes. Putting any value below (like 64) still gives 1024
 				}
+				catch(BindException e){
+					if(isFallbackPort){
+						LOGGER.warning("Fallback port is also unavailable! (UDP)");
+						if(callback != null) callback.receiveMessage(null);
+					}
+					else{
+						LOGGER.warning("Port "+port+" is unavailable! (UDP)");
+						sendPacket(addr, port+1, udp, timeout, waitForReply, msg, callback, /*isFallbackPort=*/true);
+					}
+					return;
+				}
 				catch(SocketException e){e.printStackTrace(); return;}
 				try{socketUDP.setOption(ExtendedSocketOptions.IP_DONTFRAGMENT, true);}
 				catch(IOException e){e.printStackTrace(); return;}
@@ -137,10 +150,14 @@ public final class PacketHelper{
 				try{socketUDP.setSoTimeout((int)timeout);}
 				catch(SocketException e){e.printStackTrace(); return;}
 			}
-			try{socketUDP.send(new DatagramPacket(msg, msg.length, addr, port));}
+			try{socketUDP.send(new DatagramPacket(msg, msg.length, addr, isFallbackPort ? port-1 : port));}
 			catch(IOException e){e.printStackTrace(); return;}
 
-			if(!waitForReply || callback == null){if(callback != null) callback.receiveMessage(null); return;}
+			if(!waitForReply || callback == null){
+				if(isFallbackPort) socketUDP.close();
+				if(callback != null) callback.receiveMessage(null);
+				return;
+			}
 			//LOGGER.info("sendPacket() is waiting for UDP reply");
 			new Thread(()->{
 				if(replyUDP == null) replyUDP = new byte[MAX_PACKET_SIZE_RECV];
@@ -148,9 +165,11 @@ public final class PacketHelper{
 				try{socketUDP.receive(packet);}
 				catch(IOException e){
 					if(e instanceof SocketTimeoutException) LOGGER.warning("Waiting for UDP response timed out");
-					else {e.printStackTrace(); LOGGER.info(e.getMessage());}
-					callback.receiveMessage(null);
+					else e.printStackTrace();
 					return;
+				}
+				finally{
+					if(isFallbackPort) socketUDP.close();
 				}
 				//LOGGER.info("got UDP reply: "+new String(replyUDP)+", len="+packet.getLength());
 				callback.receiveMessage(Arrays.copyOf(replyUDP, packet.getLength()));
@@ -237,6 +256,10 @@ public final class PacketHelper{
 				callback.receiveMessage(reply);
 			}).start();
 		}
+	}
+	public static final void sendPacket(final InetAddress addr, final int port, final boolean udp, final long timeout,
+			final boolean waitForReply, final byte[] msg, final MessageReceiver callback){
+		sendPacket(addr, port, udp, timeout, waitForReply, msg, callback, /*isFallbackPort=*/false);
 	}
 
 	public static byte[] toByteArray(UUID... uuids){

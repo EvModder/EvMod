@@ -230,6 +230,7 @@ public final class EpearlLookup{
 			else if(isLoadedOwnerName(ownerName)){
 				final PearlDataClient pdc = new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
 				if(cacheByUUID.putIfAbsent(key, pdc)){
+					Main.LOGGER.info("Sending STORE_OWNER '"+ownerName+"' for pearl at "+epearl.getBlockX()+","+epearl.getBlockZ());
 					Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, ownerUUID), msg->{
 						if(msg != null && msg.length == 1){
 							if(msg[0] != 0){

@@ -64,7 +64,7 @@ public final class RemoteServerSender{
 				if(latency >= timeout && reply == null) Main.LOGGER.info("RemoteServerSender "+(udp?"UDP":"TCP")+" request timed out");
 //				else Main.LOGGER.info("RemoteServerSender got "+(udp?"UDP":"TCP")+" reply (in "+TextUtils.formatTime(latency)+
 //						") from RS: "+(reply == null ? "null" : new String(reply)+" ["+reply.length+"]"));
-				recv.receiveMessage(reply);
+				if(recv != null) recv.receiveMessage(reply);
 				synchronized(packetList){
 					packetList.remove();
 					recvList.remove();
