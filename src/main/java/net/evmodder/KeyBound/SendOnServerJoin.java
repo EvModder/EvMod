@@ -5,6 +5,7 @@ import java.util.TimerTask;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.text.Text;
 
 public class SendOnServerJoin{
 	SendOnServerJoin(String[] messages){
@@ -20,6 +21,7 @@ public class SendOnServerJoin{
 
 				ClientPlayNetworkHandler handler = client.getNetworkHandler();
 				for(String msg : messages){
+					client.player.sendMessage(Text.of("Sending msg: "+msg), false);
 					if(msg.startsWith("/")) handler.sendChatCommand(msg.substring(1));
 					else handler.sendChatCommand(msg);
 				}
