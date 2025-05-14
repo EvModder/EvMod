@@ -74,20 +74,7 @@ public final class RemoteServerSender{
 		}
 	}
 	public void sendBotMessage(final Command command, final boolean udp, final long timeout, final byte[] message, final MessageReceiver recv){
-
 		final byte[] packet = packageAndEncryptMessage(command, message);
-
-//		// 4=id, 16=data=encrypted{4=id,4=cmd,4=server,4=ts}
-//		switch(packet.length){
-//			//20, 36, 52
-//			case 4 + 16*1: // id + data
-//			case 4 + 16*2: // id + data + uuid1
-//			case 4 + 16*3: // id + data + uuid1 + uuid2
-//			case 4 + 16*1 + 128*128: // id + data + map_colors
-//				break;
-//			default:
-//				Main.LOGGER.error("Sending an invalid packet! length="+packet.length);
-//		}
 		if(addrResolved == null) resolveAddress();
 		if(addrResolved == null) Main.LOGGER.warn("RemoteSender address could not be resolved!: "+ADDR);
 		else{
