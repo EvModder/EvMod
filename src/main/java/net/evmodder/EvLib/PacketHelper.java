@@ -219,6 +219,10 @@ public final class PacketHelper{
 						callback.receiveMessage(null);
 						return;
 					}
+					if(len > socketTCP.getReceiveBufferSize()){
+						LOGGER.warning("Length of incoming response is too big, adjusting buffer size");
+						socketTCP.setReceiveBufferSize(len);
+					}
 					while(!socketTCP.isClosed() && is.available() < len && !Thread.currentThread().isInterrupted() &&
 							(timeout == 0 || System.currentTimeMillis() - startTime < timeout))/*...wait...*/;//Thread.yield();
 					if(is.available() >= len){
