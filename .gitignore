@@ -6,6 +6,7 @@ out/
 classes/
 gradlew
 gradlew.bat
+settings.gradle
 
 ########## Eclipse
 *.launch
