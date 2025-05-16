@@ -285,19 +285,35 @@ public final class Keybind2b2tHighwayTravelHelper{
 		ArrayList<BlockPos> mineSpots = new ArrayList<>();
 		Vec3d pos = client.player.getPos();
 		if(dx != 0){
-			mineSpots.add(bp.add(dx, 0, 0));
+			mineSpots.add(bp.add(dx, 0, 0));// mineSpots.add(bp.add(dx, 1, 0)); mineSpots.add(bp.add(dx, 2, 0));
 			int ddz = Math.round(pos.getZ()) > pos.getZ() ? 1 : -1;
-			mineSpots.add(bp.add(dx, 0, ddz));
+			mineSpots.add(bp.add(dx, 0, ddz)); mineSpots.add(bp.add(dx, 1, ddz)); mineSpots.add(bp.add(dx, 2, ddz));
 		}
 		if(dz != 0){
-			mineSpots.add(bp.add(0, 0, dz));
+			mineSpots.add(bp.add(0, 0, dz));// mineSpots.add(bp.add(0, 1, dz)); mineSpots.add(bp.add(0, 2, dz));
 			int ddx = Math.round(pos.getX()) > pos.getX() ? 1 : -1;
-			mineSpots.add(bp.add(ddx, 0, dz));
+			mineSpots.add(bp.add(ddx, 0, dz));// mineSpots.add(bp.add(ddx, 1, dz)); mineSpots.add(bp.add(ddx, 2, dz));
 		}
-		if(dx != 0 && dz != 0) mineSpots.add(bp.add(dx, 0, dz));
+		if(dx != 0 && dz != 0){
+			mineSpots.add(bp.add(dx, 0, dz));// mineSpots.add(bp.add(dx, 1, dz)); mineSpots.add(bp.add(dx, 2, dz));
+		}
 
 		for(BlockPos bpDig : mineSpots){
-			if(client.world.getBlockState(bpDig).getCollisionShape(client.world, client.player.getBlockPos()).isEmpty()) continue;
+			if(client.world.getBlockState(bpDig).getCollisionShape(client.world, client.player.getBlockPos()).isEmpty()){
+				bpDig = bpDig.add(0, 2, 0);
+				if(client.world.getBlockState(bpDig).getCollisionShape(client.world, client.player.getBlockPos()).isEmpty()){
+					bpDig = bpDig.add(0, -1, 0);
+					if(client.world.getBlockState(bpDig).getCollisionShape(client.world, client.player.getBlockPos()).isEmpty()){
+						continue;
+					}
+				}
+			}
+			// Same as above, but goes 0->1->2 instead of 0->2->1
+//			int i=0;
+//			for(; i<3 && client.world.getBlockState(bpDig).getCollisionShape(client.world, client.player.getBlockPos()).isEmpty(); ++i)
+//				bpDig = bpDig.add(0, 1, 0);
+//			if(i == 3) continue;
+
 			if(selectPickaxeInHotbar()) return true;
 			isMining = true;
 			//if(client.player.getMainHandStack().getItem() instanceof PickaxeItem) return false;
