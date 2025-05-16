@@ -44,8 +44,9 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(mapId == null) return;
 		MapState state = itemFrameEntity.getWorld().getMapState(mapId);
 		if(state == null) return;
-		if(stack.getCustomName() == null || !state.locked || MapGroupUtils.isMapNotInCurrentGroup(state)){
-			if(!client.player.canSee(itemFrameEntity)) return;
+		final boolean newMapart = MapGroupUtils.isMapNotInCurrentGroup(state);
+		if(stack.getCustomName() == null || !state.locked || newMapart){
+			if(!newMapart && !client.player.canSee(itemFrameEntity)) return; // Skip if player doesn't have LOS to the map (unless uncollected)
 			if(!isLookngInGeneralDirection(itemFrameEntity)) return;
 			cir.setReturnValue(true);
 		}
