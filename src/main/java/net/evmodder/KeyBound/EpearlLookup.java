@@ -233,12 +233,9 @@ public final class EpearlLookup{
 					Main.LOGGER.info("Sending STORE_OWNER '"+ownerName+"' for pearl at "+epearl.getBlockX()+","+epearl.getBlockZ());
 					Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, ownerUUID), msg->{
 						if(msg != null && msg.length == 1){
-							if(msg[0] != 0){
-								Main.LOGGER.info("Added pearl UUID to remote DB!");
-								FileIO.appendToClientFile(DB_FILENAME_UUID, key, pdc);
-							}
-							// AlreadyStored/AlreadyDeleted/InvalidOwnerUUID
+							if(msg[0] != 0) Main.LOGGER.info("Added pearl UUID to remote DB!");
 							else Main.LOGGER.info("Remote DB already contains pearl UUID (or rejected it for other reasons)");
+							FileIO.appendToClientFile(DB_FILENAME_UUID, key, pdc);
 						}
 						else Main.LOGGER.info("Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_UUID: "+msg);
 					});
@@ -263,11 +260,12 @@ public final class EpearlLookup{
 					final PearlDataClient pdc = new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
 					if(cacheByXZ.putIfAbsent(key, pdc)){
 						Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_XZ, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, ownerUUID), msg->{
-							if(msg != null && msg.length > 0 && msg[0] != 0){
-								Main.LOGGER.info("Added pearl XZ to remote DB!");
+							if(msg != null && msg.length == 1){
+								if(msg[0] != 0) Main.LOGGER.info("Added pearl XZ to remote DB!");
+								else Main.LOGGER.info("Remote DB already contains pearl XZ (or rejected it for other reasons)");
 								FileIO.appendToClientFile(DB_FILENAME_XZ, key, pdc);
 							}
-							else Main.LOGGER.info("Failed to add pearl XZ to remote DB!");
+							else Main.LOGGER.info("Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_XZ: "+msg);
 						});
 					}
 				}
