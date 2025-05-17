@@ -25,12 +25,12 @@ public final class KeybindSpamclick{
 		KeyBindingHelper.registerKeyBinding(new EvKeybind("incr_clicks", ()->{
 			//if(client.currentScreen instanceof InventoryScreen == false){Main.LOGGER.warn("SpamClickIncrClick: not in InventoryScreen"); return;}
 			if(numClicks >= 1000){numClicks = 0; numTicks = 0;}//<<<<<<<<<<<<<<<<<
-			client.player.sendMessage(Text.of("SpamClick: numClicks="+(numClicks+=(Screen.hasShiftDown() ? 1 : 20))+" numTicks="+numTicks), /*overlay=*/false);
+			client.player.sendMessage(Text.literal("SpamClick: numClicks="+(numClicks+=(Screen.hasShiftDown() ? 1 : 20))+" numTicks="+numTicks), /*overlay=*/false);
 		}));
 
 		KeyBindingHelper.registerKeyBinding(new EvKeybind("incr_ticks", ()->{
 			//if(client.currentScreen instanceof InventoryScreen == false){Main.LOGGER.warn("SpamClickIncrTicks: not in InventoryScreen"); return;}
-			client.player.sendMessage(Text.of("SpamClick: numClicks="+numClicks+" numTicks="+(numTicks+=(Screen.hasShiftDown() ? 20 : 1))), /*overlay=*/false);
+			client.player.sendMessage(Text.literal("SpamClick: numClicks="+numClicks+" numTicks="+(numTicks+=(Screen.hasShiftDown() ? 20 : 1))), /*overlay=*/false);
 		}));
 
 		KeyBindingHelper.registerKeyBinding(new EvKeybind("spam_click", ()->{
@@ -42,7 +42,7 @@ public final class KeybindSpamclick{
 			else lastPress = ts;
 			ongoingSpamClick = true;
 
-			client.player.sendMessage(Text.of("SpamClick: executing "+numClicks+"c in "+numTicks+"t"), /*overlay=*/false);
+			client.player.sendMessage(Text.literal("SpamClick: executing "+numClicks+"c in "+numTicks+"t"), /*overlay=*/false);
 
 			ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 			for(int i=0; i<numClicks; ++i){
@@ -52,12 +52,12 @@ public final class KeybindSpamclick{
 			}
 			final int msPerClick = (int)((numTicks*50l)/numClicks);
 			if(numTicks*50l % numClicks != 0){
-				client.player.sendMessage(Text.of("SpamClick: ms per click is not exact: "+((numTicks*50d)/numClicks)).copy().withColor(16763080), /*overlay=*/false);
+				client.player.sendMessage(Text.literal("SpamClick: ms per click is not exact: "+((numTicks*50d)/numClicks)).copy().withColor(16763080), /*overlay=*/false);
 			}
 			ClickUtils.executeClicksLEGACY(client, clicks, msPerClick, /*MAX_CLICKS_PER_SECOND=*/Integer.MAX_VALUE, _0->true, ()->{
 				ongoingSpamClick = false;
 				//Main.LOGGER.info("SpamClick: DONE");
-				if(client.player != null) client.player.sendMessage(Text.of("SpamClick: DONE"), /*overlay=*/false);
+				if(client.player != null) client.player.sendMessage(Text.literal("SpamClick: DONE"), /*overlay=*/false);
 			});
 		}, s->s instanceof InventoryScreen));
 	}

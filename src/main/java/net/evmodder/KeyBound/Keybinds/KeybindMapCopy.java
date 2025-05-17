@@ -21,7 +21,7 @@ public final class KeybindMapCopy{
 	private static boolean ongoingCopy;
 	private static long lastCopy;
 	private static final long copyCooldown = 250l;
-	private boolean PRESERVE_MAP_POS = true;
+	private final boolean PRESERVE_MAP_POS = true;
 	private final ItemStack EMPTY_ITEM = new ItemStack(Items.AIR);
 
 	// Shift-click results:
@@ -62,6 +62,7 @@ public final class KeybindMapCopy{
 		return false;
 	}
 
+	@SuppressWarnings("unused")
 	private void copyMapArtInInventory(){
 		if(ongoingCopy){Main.LOGGER.warn("MapCopy: Already ongoing"); return;}
 		//

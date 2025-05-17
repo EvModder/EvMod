@@ -14,7 +14,7 @@ public class ClickUtils{
 		ClickEvent(int slotId, int button, SlotActionType actionType){this(0, slotId, button, actionType);}
 	}
 
-	private final int MAX_CLICKS;
+	public final int MAX_CLICKS;
 	private final int[] tickDurationArr;
 	private int tickDurIndex, sumClicksInDuration;
 	private long lastTick;

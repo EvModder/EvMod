@@ -41,12 +41,12 @@ public final class KeybindAIETravelHelper{
 		KeyBindingHelper.registerKeyBinding(new EvKeybind("aie_travel_helper", ()->{
 			if(!isEnabled){
 				if(client.player == null || client.world == null) return;
-				if(!client.player.isGliding()){client.player.sendMessage(Text.of("You need to be flying first"), true); return;}
+				if(!client.player.isGliding()){client.player.sendMessage(Text.literal("You need to be flying first"), true); return;}
 				enabledTs = System.currentTimeMillis();
 				lastY = client.player.getY();
 			}
 			isEnabled = !isEnabled;
-			client.player.sendMessage(Text.of("AutomaticInfiniteElytra Travel Helper: "+(isEnabled ? "enabled" : "disabled")), true);
+			client.player.sendMessage(Text.literal("AutomaticInfiniteElytra Travel Helper: "+(isEnabled ? "enabled" : "disabled")), true);
 		}));
 
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
@@ -56,7 +56,7 @@ public final class KeybindAIETravelHelper{
 			ItemStack chestStack = client.player.getInventory().getArmorStack(2);
 //			//Identifier chestItemId = Registries.ITEM.getId(chestStack.getItem()); // Not really needed thanks to 
 //			if(chestStack.getItem() != Items.ELYTRA){
-//				client.player.sendMessage(Text.of("Not wearing elytra"), true);
+//				client.player.sendMessage(Text.literal("Not wearing elytra"), true);
 //				isEnabled = false;
 //				return;
 //			}
@@ -75,7 +75,7 @@ public final class KeybindAIETravelHelper{
 					if(stoppedFlyingTs == 0) stoppedFlyingTs = System.currentTimeMillis();
 					final long countDownToKick = safeKickDelay - (System.currentTimeMillis() - enabledTs);
 					if(countDownToKick > 0){
-						client.player.sendMessage(Text.of("AIE helper will disconnect due to not-flying in: " + TextUtils.formatTime(countDownToKick)), true);
+						client.player.sendMessage(Text.literal("AIE helper will disconnect due to not-flying in: " + TextUtils.formatTime(countDownToKick)), true);
 						return;
 					}
 					stoppedFlyingTs = 0;
@@ -96,19 +96,19 @@ public final class KeybindAIETravelHelper{
 						}
 						else client.interactionManager.clickSlot(0, 6, i-36, SlotActionType.SWAP, client.player); // Swap with hotbar
 						if(!atKickY){
-							client.player.sendMessage(Text.of("Swapped to fresh elytra"), true);
+							client.player.sendMessage(Text.literal("Swapped to fresh elytra"), true);
 							return;
 						}
 					}
 					if(!atKickY && dur > kickDur && waitForSafePitch && (pitch < safePitchLower || pitch > safePitchUpper || pitch <= lastPitch)){
-						client.player.sendMessage(Text.of("Current AIE helper settings will trigger disconnect due to too low dur"), true);
+						client.player.sendMessage(Text.literal("Current AIE helper settings will trigger disconnect due to too low dur"), true);
 						return;
 					}
 				}
 				if(!atKickY && dur > kickDur){
 					final long countDownToKick = safeKickDelay - (System.currentTimeMillis() - enabledTs);
 					if(countDownToKick > 0){
-						client.player.sendMessage(Text.of("Current AIE helper settings will trigger disconnect due to too low "
+						client.player.sendMessage(Text.literal("Current AIE helper settings will trigger disconnect due to too low "
 								+(atUnsafeY?"Y":"dur")+" in: "+TextUtils.formatTime(countDownToKick)), true);
 						return;
 					}

@@ -43,11 +43,11 @@ public class SendOnServerJoin{
 				if(System.currentTimeMillis() - loadedAt < JOIN_DELAY) return;
 
 				//Main.LOGGER.info("JOIN_DELAY reached, triggering commands...");
-				client.player.sendMessage(Text.of("Sending "+messages.length+" msgs/cmds"), false);
+				client.player.sendMessage(Text.literal("Sending "+messages.length+" msgs/cmds"), false);
 				ClientPlayNetworkHandler handler = client.getNetworkHandler();
 				for(String msg : messages){
 					msg = msg.trim();
-					//client.player.sendMessage(Text.of("Sending "+(msg.startsWith("/")?"cmd":"msg")+": "+msg), false);
+					//client.player.sendMessage(Text.literal("Sending "+(msg.startsWith("/")?"cmd":"msg")+": "+msg), false);
 					if(msg.startsWith("/")) handler.sendChatCommand(msg.substring(1));
 					else handler.sendChatMessage(msg);
 				}

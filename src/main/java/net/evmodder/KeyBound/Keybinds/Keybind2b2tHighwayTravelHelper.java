@@ -132,12 +132,12 @@ public final class Keybind2b2tHighwayTravelHelper{
 			if(path == null || Registries.ITEM.getId(item).getPath().equals(path)) break;
 		}
 		if(i == 9){
-			client.player.sendMessage(Text.of("(!) No blocks in hotbar"), true);
+			client.player.sendMessage(Text.literal("(!) No blocks in hotbar"), true);
 			return false;
 		}
 		client.player.getInventory().selectedSlot = i;
 		client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(i));
-		client.player.sendMessage(Text.of("Selected hotbar blocks"), true);
+		client.player.sendMessage(Text.literal("Selected hotbar blocks"), true);
 //		Main.LOGGER.info("Selected hotbar blocks");
 		return true;
 	}
@@ -198,7 +198,7 @@ public final class Keybind2b2tHighwayTravelHelper{
 		if(!holdingBlock) selectBlocksInHotbar(useBlock);
 		String path = Registries.ITEM.getId(client.player.getStackInHand(hand).getItem()).getPath();
 		if(useBlock != null && !path.equals(useBlock)){
-			client.player.sendMessage(Text.of("(!) Missing block: "+useBlock), true);
+			client.player.sendMessage(Text.literal("(!) Missing block: "+useBlock), true);
 			//return false;
 		}
 		return placeBlock(bp, hand);
@@ -258,12 +258,12 @@ public final class Keybind2b2tHighwayTravelHelper{
 		int i=0;
 		for(; i<9 && client.player.getInventory().getStack(i).getItem() instanceof PickaxeItem == false; ++i);
 		if(i == 9){
-			client.player.sendMessage(Text.of("(!) No pickaxe in hotbar"), true);
+			client.player.sendMessage(Text.literal("(!) No pickaxe in hotbar"), true);
 			return false;
 		}
 		client.player.getInventory().selectedSlot = i;
 		client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(i));
-		client.player.sendMessage(Text.of("Selected hotbar pickaxe"), true);
+		client.player.sendMessage(Text.literal("Selected hotbar pickaxe"), true);
 //		Main.LOGGER.info("Selected hotbar pickaxe");
 		return true;
 	}
@@ -272,7 +272,7 @@ public final class Keybind2b2tHighwayTravelHelper{
 		BlockPos bp = client.player.getBlockPos();
 		if(client.world.getBlockState(bp).getBlock() instanceof AbstractFireBlock){
 			client.interactionManager.updateBlockBreakingProgress(bp, getBlockBreakingSide(bp));
-			client.player.sendMessage(Text.of("Put out a fire"), true);
+			client.player.sendMessage(Text.literal("Put out a fire"), true);
 //			Main.LOGGER.info("Put out a fire");
 			return true;
 		}
@@ -318,7 +318,7 @@ public final class Keybind2b2tHighwayTravelHelper{
 			isMining = true;
 			//if(client.player.getMainHandStack().getItem() instanceof PickaxeItem) return false;
 			client.interactionManager.updateBlockBreakingProgress(bpDig, getBlockBreakingSide(bpDig));
-			client.player.sendMessage(Text.of("Mining block: ").copy().append(client.world.getBlockState(bpDig).getBlock().getName())
+			client.player.sendMessage(Text.literal("Mining block: ").copy().append(client.world.getBlockState(bpDig).getBlock().getName())
 //					.append(" yaw:"+client.player.getYaw()+", dirX:"+dir.x+",dirZ:"+dir.z+", xyz: ")
 //					.append(bp.getX()+","+bp.getY()+","+bp.getZ())
 					, true);
@@ -338,7 +338,7 @@ public final class Keybind2b2tHighwayTravelHelper{
 		boolean didBarf = false;
 		for(int i=9; i<36; ++i) if(ejectJunk.shouldEject(client.player.getInventory().getStack(i))){
 //			if(!didBarf){
-//				client.player.sendMessage(Text.of("Tossed item: ").copy().append(client.player.getInventory().getStack(i).getName()), true);
+//				client.player.sendMessage(Text.literal("Tossed item: ").copy().append(client.player.getInventory().getStack(i).getName()), true);
 //				Main.LOGGER.info("Tossed item: "+client.player.getInventory().getStack(i).getName().getLiteralString());
 //			}
 			client.interactionManager.clickSlot(0, i, 1, SlotActionType.THROW, client.player);
@@ -351,7 +351,7 @@ public final class Keybind2b2tHighwayTravelHelper{
 		client = MinecraftClient.getInstance();
 		KeyBindingHelper.registerKeyBinding(new EvKeybind("ebounce_travel_helper", ()->{
 			String status = "2b2t Travel Helper: "+((isEnabled=!isEnabled) ? "enabled" : "disabled");
-			client.player.sendMessage(Text.of(status), true);
+			client.player.sendMessage(Text.literal(status), true);
 		}));
 
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
@@ -360,7 +360,7 @@ public final class Keybind2b2tHighwayTravelHelper{
 			Item chestItem = client.player.getInventory().getArmorStack(2).getItem();
 			Identifier chestItemId = Registries.ITEM.getId(chestItem);
 			if(chestItemId == null || !chestItemId.getPath().equals("elytra")){
-				client.player.sendMessage(Text.of("Not wearing elytra"), true);
+				client.player.sendMessage(Text.literal("Not wearing elytra"), true);
 				return;
 			}
 			int y = client.player.getBlockY();
@@ -371,14 +371,14 @@ public final class Keybind2b2tHighwayTravelHelper{
 			if(y != 119 && y != 120) return;
 
 			if(fillHighwayHole(y == 119 ? null : "obsidian")){
-				client.player.sendMessage(Text.of("Filled a hole"), true);
+				client.player.sendMessage(Text.literal("Filled a hole"), true);
 //				Main.LOGGER.info("Filled a hole");
 				return;
 			}
 			if(putOutFireAndMineObstacles()) return;
 
 			if(ejectJunk != null && barfTrash(ejectJunk)){
-//				client.player.sendMessage(Text.of("Tossed trashed"), true);
+//				client.player.sendMessage(Text.literal("Tossed trashed"), true);
 //				Main.LOGGER.info("Tossed trash");
 			}
 		});

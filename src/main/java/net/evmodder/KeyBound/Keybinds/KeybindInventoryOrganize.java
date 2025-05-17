@@ -128,10 +128,10 @@ public final class KeybindInventoryOrganize{
 					Main.LOGGER.warn("InvOrganize: Unable to unequip incorrect armor - no room in inventory!");
 					return;
 				}
-				//client.player.sendMessage(Text.of("Click: Unequipping armor"), false);
+				//client.player.sendMessage(Text.literal("Click: Unequipping armor"), false);
 				clicks.add(new ClickEvent(p.a, 0, SlotActionType.QUICK_MOVE));
 			}
-			//client.player.sendMessage(Text.of("Click: "+dstSlot+" Equipping armor"), false);
+			//client.player.sendMessage(Text.literal("Click: "+dstSlot+" Equipping armor"), false);
 			clicks.add(new ClickEvent(srcSlot, 0, SlotActionType.QUICK_MOVE));
 			swapSlots(simSlots, emptySlots, srcSlot, dstSlot);
 			doneSlots[dstSlot] = true;
@@ -158,7 +158,7 @@ public final class KeybindInventoryOrganize{
 			final int srcSlot = findSlotWithItem(simSlots, p.b.getPath(), doneSlots);
 			//if(srcSlot == -1) continue;
 			if(srcSlot < 36) continue; // We want items coming FROM hotbar/offhand
-			//client.player.sendMessage(Text.of("Click: "+dstSlot+" Hotbar->Anywhere (sorting"), false);
+			//client.player.sendMessage(Text.literal("Click: "+dstSlot+" Hotbar->Anywhere (sorting"), false);
 			if(srcSlot == 45) clicks.add(new ClickEvent(dstSlot, 40, SlotActionType.SWAP));
 			else clicks.add(new ClickEvent(dstSlot, srcSlot-36, SlotActionType.SWAP));
 
@@ -173,7 +173,7 @@ public final class KeybindInventoryOrganize{
 			for(int i=36; i<45; ++i) if(!doneSlots[i] && !emptySlots[i]/* && !usedHotbarAndOffhandSlots[i-36]*/){
 				final int originalCount = simSlots[i].getCount();
 				if(simulateShiftClick(simSlots, emptySlots, /*fromArmor=*/false, i) < originalCount){
-					//client.player.sendMessage(Text.of("Click: "+i+" Hotbar->UpperInv (cleaning)"), false);
+					//client.player.sendMessage(Text.literal("Click: "+i+" Hotbar->UpperInv (cleaning)"), false);
 					clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
 				}
 			}
@@ -201,7 +201,7 @@ public final class KeybindInventoryOrganize{
 
 			// Attempt to pick an empty hotbar/offhand slot to swap with
 			int hb = 40; for(int i=0; i<9; ++i) if(emptySlots[i+36]){hb = i; break;}
-			//client.player.sendMessage(Text.of("Click: "+dstSlot+" UpperInv->Hotbar->UpperInv"), false);
+			//client.player.sendMessage(Text.literal("Click: "+dstSlot+" UpperInv->Hotbar->UpperInv"), false);
 			clicks.add(new ClickEvent(srcSlot, hb, SlotActionType.SWAP));
 			clicks.add(new ClickEvent(dstSlot, hb, SlotActionType.SWAP));
 			if(!emptySlots[dstSlot] || !emptySlots[hb == 40 ? 45 : hb+36]){
@@ -226,7 +226,7 @@ public final class KeybindInventoryOrganize{
 			if(dstSlot < 36) continue; // items going INTO hotbar/offhand
 			final int srcSlot = findSlotWithItem(simSlots, p.b.getPath(), doneSlots);
 			if(srcSlot == -1) continue;
-			//client.player.sendMessage(Text.of("Click: "+dstSlot+" UpperInv->Hotbar"), false);
+			//client.player.sendMessage(Text.literal("Click: "+dstSlot+" UpperInv->Hotbar"), false);
 			if(dstSlot == 45) clicks.add(new ClickEvent(srcSlot, 40, SlotActionType.SWAP));
 			else clicks.add(new ClickEvent(srcSlot, dstSlot-36, SlotActionType.SWAP));
 
@@ -239,11 +239,11 @@ public final class KeybindInventoryOrganize{
 		Main.inventoryUtils.executeClicks(client, clicks,
 				//_->true,
 				_0->{
-					//client.player.sendMessage(Text.of("click "+c.slotId()+" "+c.button()+" "+c.actionType()), false);
+					//client.player.sendMessage(Text.literal("click "+c.slotId()+" "+c.button()+" "+c.actionType()), false);
 					return true;
 				},
 				()->{
-					//client.player.sendMessage(Text.of("InvOrganize: done! clicks required: "+numClicks), false);
+					//client.player.sendMessage(Text.literal("InvOrganize: done! clicks required: "+numClicks), false);
 					Main.LOGGER.info("InvOrganize: done! clicks required: "+numClicks);
 					ongoingOrganize = false;
 				});
