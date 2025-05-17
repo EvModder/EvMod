@@ -48,7 +48,7 @@ public final class MapHandRestock{
 			if(posA1.equals(posB1)) return checkComesAfter(posA2, posB2);
 			//if(posA2.equals(posB2)) return checkComesAfter(posA1, posB1)-2;// TODO: nerf with -2 (until impl edge matching), col should not be before row..
 			int dim1Step = checkComesAfter(posA1, posB1);
-			if(dim1Step >= 3 && posB2.matches("[A01]")) return dim1Step - (posB2.equals("1") ? 2 : 1);
+			if(dim1Step >= 3) return posB2.matches("[A0]") ? dim1Step : posB2.equals("1") ? dim1Step-1 : 1;
 //			int dim2Step = checkComesAfter(posA2, posB2);
 //			if(dim2Step >= 3 && posB1.matches("[A01]")) return dim2Step - (posB1.equals("1") ? 2 : 1) - 1;//TODO: nerfed with -1
 			//Main.LOGGER.info("MapRestock: Unable to resolve 2d pos");
