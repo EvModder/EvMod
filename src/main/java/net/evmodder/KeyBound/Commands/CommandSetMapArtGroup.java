@@ -69,7 +69,7 @@ public class CommandSetMapArtGroup{
 				source.sendFeedback(Text.literal("Corrupted/unrecognized map group file").copy().withColor(/*&c=*/16733525));
 				return 1;
 			}
-			if(append) setActiveGroupFromLoadedMaps(source.getWorld());
+			if(append && setActiveGroupFromLoadedMaps(source.getWorld()) != 0)/**/;
 			else if(MapGroupUtils.mapsInGroup == null) MapGroupUtils.mapsInGroup = new HashSet<>(numIdsInFile);
 			else MapGroupUtils.mapsInGroup.clear();
 			final ByteBuffer bb = ByteBuffer.wrap(data);
