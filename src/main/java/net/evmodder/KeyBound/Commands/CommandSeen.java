@@ -16,7 +16,7 @@ public class CommandSeen{
 	public CommandSeen(){
 		/*ClientCommandManager.getActiveDispatcher().register(
 			ClientCommandManager.literal("hello").executes(context -> {
-				context.getSource().sendFeedback(Text.of("Hello world!"));
+				context.getSource().sendFeedback(Text.literal("Hello world!"));
 				return 0;
 			})
 		);*/

@@ -12,7 +12,7 @@ public class SendOnServerJoin{
 	private long loadedAt/*, joinedAt*/;
 	private double loadedAtX, loadedAtZ;
 	private TimerTask timerTask;
-	private final boolean WAIT_FOR_MOVEMENT = true;
+	private final boolean WAIT_FOR_MOVEMENT = false;
 
 	SendOnServerJoin(String[] messages){
 		ClientPlayConnectionEvents.JOIN.register(
@@ -37,7 +37,12 @@ public class SendOnServerJoin{
 				}
 
 				//Main.LOGGER.info("Stuff seems loaded, waiting for player movement");
-				if(WAIT_FOR_MOVEMENT && client.player.getX() == loadedAtX && client.player.getZ() == loadedAtZ) return;
+				if(WAIT_FOR_MOVEMENT){
+					double diffX = client.player.getX() - loadedAtX, diffZ = client.player.getZ() - loadedAtZ;
+					if(diffX < 1d && diffZ < 1d) return; // Didn't move (enough)
+					if(diffX > 70d || diffZ > 70d){loadedAtX += diffX; loadedAtZ += diffZ; return;} // Teleported
+					//client.player.sendMessage(Text.literal("Movement: "+loadedAtX+","+loadedAtZ+"->"+client.player.getX()+","+client.player.getZ()), false);
+				}
 
 				//Main.LOGGER.info("Player movement detected, checking JOIN_DELAY");
 				if(System.currentTimeMillis() - loadedAt < JOIN_DELAY) return;

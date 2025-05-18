@@ -16,7 +16,6 @@
 	"entrypoints": {
 		"client": [ "net.evmodder.KeyBound.Main" ]
 	},
-	"accessWidener" : "keybound.accesswidener",
 	"mixins": [ "keybound.mixins.json" ],
 	"depends": {
 		"fabricloader": ">=${loader_version}",

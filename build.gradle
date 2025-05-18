@@ -1,3 +1,12 @@
+/*buildscript {
+	repositories {
+		mavenCentral()
+	}
+	dependencies {
+		classpath 'com.guardsquare:proguard-gradle:7.7.0'
+	}
+}*/
+
 plugins {
 	id 'fabric-loom' version '1.10-SNAPSHOT'
 	id 'maven-publish'
@@ -47,7 +56,7 @@ tasks.withType(JavaCompile).configureEach {
 java {
 	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task if it is present.
 	// If you remove this line, sources will not be generated.
-	withSourcesJar()
+	//withSourcesJar()
 
 	sourceCompatibility = JavaVersion.VERSION_21
 	targetCompatibility = JavaVersion.VERSION_21
@@ -78,3 +87,38 @@ publishing {
 		// retrieving dependencies.
 	}
 }
+
+/*task unmappedJar(type: Jar) {
+	archiveClassifier = "unmapped"
+	from sourceSets.main.output
+}
+def compiler = javaToolchains.compilerFor {
+	languageVersion = JavaLanguageVersion.of(21)
+}
+// TODO depends on loom implementation details I don't understand
+task ('proguard', type: proguard.gradle.ProGuardTask) {
+	dependsOn "unmappedJar"
+	configuration 'proguard.conf'
+	ignorewarnings
+	verbose
+	target "21"
+
+	// Workaround for ProGuard seemingly not recognising when the output .jar file doesn't exist
+	//outputs.upToDateWhen { false }
+
+	//injars "build/libs/" + project.archives_base_name + "-" + version + "-unmapped.jar"
+	//outjars "build/libs/" + project.archives_base_name + "-" + version + "-dev" + ".jar"
+
+	// Get the Java standard library from the provided toolchain.
+	libraryjars compiler.get().metadata.installationPath.asFile.absolutePath + "/jmods/java.base.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
+
+	// Add relevant Minecraft libraries to ProGuard's list of libraries to obfuscate against. TODO this is very janky
+	libraryjars project.configurations.compileClasspath
+}
+
+//artifacts.add('archives', file(proguard.outputs.files.singleFile)) {
+//	type='jar'
+//	builtBy(proguard)
+//}
+
+remapJar.finalizedBy proguard*/
