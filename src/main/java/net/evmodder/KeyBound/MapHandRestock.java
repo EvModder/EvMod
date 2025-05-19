@@ -1,27 +1,41 @@
 package net.evmodder.KeyBound;
 
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.item.map.MapState;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
-import net.minecraft.registry.Registries;
 import net.minecraft.screen.PlayerScreenHandler;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 
 public final class MapHandRestock{
 	final boolean USE_NAME, USE_IMG, JUST_PICK_A_MAP = true;
-	private boolean isMapArtWithCount(ItemStack stack, int count){
-		if(stack == null || stack.isEmpty() || stack.getCount() != count) return false;
-		return Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map");
-	}
-	private boolean isMapArt(ItemStack stack){
-		return stack != null && !stack.isEmpty() && Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map");
+
+	private final int getNextSlotByImage(final PlayerEntity player, final byte[] colors, final int count){
+		List<Slot> slots = player.playerScreenHandler.slots;
+		int bestSlot = -1, bestScore = 64;
+		for(int i=0; i<slots.size(); ++i){
+			ItemStack stack = slots.get(i).getStack();
+			if(stack.getItem() != Items.FILLED_MAP) continue;
+			MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
+			if(mapId == null) continue;
+			MapState state = player.getWorld().getMapState(mapId);
+			if(state == null) continue;
+			final int score = AdjacentMapUtils.adjacentEdgeScore(colors, state.colors, /*leftRight=*/true);
+			if(score > bestScore){bestScore = score; bestSlot = i;}
+		}
+		return bestSlot;
 	}
 
 	//TODO: passing metadata, particularly NxM if known.
@@ -30,7 +44,7 @@ public final class MapHandRestock{
 	// 3 = likely next (but not 100%)
 	// 2 = maybe next (line wrapping?)
 	// 1 = not impossibly next
-	private static final int checkComesAfter(String posA, String posB){
+	private final int checkComesAfter(String posA, String posB){
 		if(posA.isBlank() || posB.isBlank() || posA.equals(posB)) return 1; // "Map"->"Map p2", "Map start"->"Map"
 
 		if(posA.equals("T R") && posB.equals("M L")) return 4;
@@ -68,8 +82,7 @@ public final class MapHandRestock{
 		//Main.LOGGER.info("MapRestock: pos are not adjacent. A:"+posA+", B:"+posB);
 		return 1;
 	}
-
-	private int getNextSlotByName(final PlayerEntity player, final String prevName, final int count){
+	private final int getNextSlotByName(final PlayerEntity player, final String prevName, final int count){
 		final PlayerScreenHandler psh = player.playerScreenHandler;
 		final RelatedMapsData data = AdjacentMapUtils.getRelatedMapsByName(psh.slots, prevName, count);
 		if(data.slots().isEmpty()) return -1;
@@ -99,41 +112,47 @@ public final class MapHandRestock{
 		if(bestConfidence == 0) Main.LOGGER.warn("MapRestock: Likely skipping a map");
 		return bestSlot;
 	}
-	private int getNextSlotAny(PlayerEntity player, Hand hand, final int count){
+	private final int getNextSlotAny(PlayerEntity player, Hand hand, final int count){
 		//TODO: prioritize "start maps", i.e. posStr "1/4", "Name #0", etc.
 		for(int i=PlayerScreenHandler.HOTBAR_START; i<PlayerScreenHandler.HOTBAR_END; ++i){
 			if(hand == Hand.MAIN_HAND && i-PlayerScreenHandler.HOTBAR_START == player.getInventory().selectedSlot) continue;
-			if(isMapArtWithCount(player.playerScreenHandler.getSlot(i).getStack(), count)) return i;
+			if(AdjacentMapUtils.isMapArtWithCount(player.playerScreenHandler.getSlot(i).getStack(), count)) return i;
 		}
 		if(count == 1){
 			for(int i=PlayerScreenHandler.INVENTORY_START; i<PlayerScreenHandler.INVENTORY_END; ++i){
-				if(isMapArtWithCount(player.playerScreenHandler.getSlot(i).getStack(), count)) return i;
+				if(AdjacentMapUtils.isMapArtWithCount(player.playerScreenHandler.getSlot(i).getStack(), count)) return i;
 			}
-			if(hand != Hand.OFF_HAND && isMapArtWithCount(player.getStackInHand(Hand.OFF_HAND), count)) return PlayerScreenHandler.OFFHAND_ID;
+			if(hand != Hand.OFF_HAND && AdjacentMapUtils.isMapArtWithCount(player.getStackInHand(Hand.OFF_HAND), count)) return PlayerScreenHandler.OFFHAND_ID;
 		}
 		return -1;
 	}
 
-	private void tryToStockNextMap(PlayerEntity player, Hand hand, ItemStack prevMap){
+	private final void tryToStockNextMap(PlayerEntity player, Hand hand, ItemStack prevMap){
 //		if(!player.getStackInHand(hand).isEmpty()){
 //			Main.LOGGER.info("MapRestock: hand still not empty after right-clicking item frame"); return;
 //		}
 		Main.LOGGER.info("Single mapart placed, hand:"+hand.ordinal()+", looking for restock map...");
-		int restockFromSlot;
-		final String prevName = prevMap.getCustomName() == null ? null : prevMap.getCustomName().getLiteralString();
+		int restockFromSlot = -1;
 		final int prevCount = prevMap.getCount();
-		//if(USE_IMG) restockFromSlot = getNextSlotByImage(player.playerScreenHandler, prevMap);
-		//else if
-		if(USE_NAME && prevName != null){
-			Main.LOGGER.info("MapRestock: finding next map by-name: "+prevName);
-			restockFromSlot = getNextSlotByName(player, prevName, prevCount);
-			if(JUST_PICK_A_MAP && restockFromSlot == -1) restockFromSlot = getNextSlotAny(player, hand, prevCount);
+		if(USE_NAME && restockFromSlot == -1){
+			final String prevName = prevMap.getCustomName() == null ? null : prevMap.getCustomName().getLiteralString();
+			if(prevName != null){
+				Main.LOGGER.info("MapRestock: finding next map by-name: "+prevName);
+				restockFromSlot = getNextSlotByName(player, prevName, prevCount);
+			}
 		}
-		else if(JUST_PICK_A_MAP){
+		if(USE_IMG && restockFromSlot == -1){
+			MapIdComponent mapId = prevMap.get(DataComponentTypes.MAP_ID);
+			MapState state = mapId == null ? null : player.getWorld().getMapState(mapId);
+			if(state != null){
+				Main.LOGGER.info("MapRestock: finding next map by-img-edge");
+				restockFromSlot = getNextSlotByImage(player, state.colors, prevCount);
+			}
+		}
+		if(JUST_PICK_A_MAP && restockFromSlot == -1){
 			Main.LOGGER.info("MapRestock: finding any single map");
 			restockFromSlot = getNextSlotAny(player, hand, prevCount);
 		}
-		else restockFromSlot = -1;
 		if(restockFromSlot == -1){Main.LOGGER.info("MapRestock: unable to find next map"); return;}
 
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -164,7 +183,7 @@ public final class MapHandRestock{
 			//Main.LOGGER.info("placed item from offhand");
 			if(!itemFrame.getHeldItemStack().isEmpty()) return ActionResult.PASS;
 			//Main.LOGGER.info("item frame is empty");
-			if(!isMapArt(player.getStackInHand(hand))) return ActionResult.PASS;
+			if(player.getStackInHand(hand).getItem() != Items.FILLED_MAP) return ActionResult.PASS;
 			if(player.getStackInHand(hand).getCount() > 2) return ActionResult.PASS;
 			//Main.LOGGER.info("item in hand is filled_map [1or2]");
 			final ItemStack stack = player.getStackInHand(hand).copy();

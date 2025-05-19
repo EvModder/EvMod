@@ -4,15 +4,10 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
+import net.minecraft.item.Items;
 import net.minecraft.screen.slot.Slot;
 
 public abstract class AdjacentMapUtils{
-	private static final boolean isMapArtWithCount(ItemStack stack, int count){
-		if(stack == null || stack.isEmpty() || stack.getCount() != count) return false;
-		return Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map");
-	}
-
 	private static final int commonPrefixLen(String a, String b){
 		int i=0; while(i<a.length() && i<b.length() && a.charAt(i) == b.charAt(i)) ++i; return i;
 	}
@@ -32,6 +27,36 @@ public abstract class AdjacentMapUtils{
 		return !posStr.isBlank() && posStr.split(" ").length <= 2;
 	}
 
+	public static final int adjacentEdgeScore(final byte[] tl, final byte[] br, boolean lr_tb){
+		if(tl.length != br.length || tl.length != 16384){
+			Main.LOGGER.error("AdjacentMapUtils: input byte[] arrays are invalid! Expected length == 128x128");
+			return -1;
+		}
+		int score = 0;
+		boolean lastAcross = true, lastUp = true, lastDown = true;
+		final int incr = lr_tb ? 128 : 1, tlStart = lr_tb ? 127 : tl.length-128;
+		for(int i=0; i<tl.length; i+=incr){
+			// Score of [0,3] per pixel
+			final boolean sameAcross = tl[i+tlStart] == br[i];
+			final boolean sameUp = i > 0 && tl[i+tlStart] == br[i-incr];
+			final boolean sameDown = i+incr < tl.length && tl[i+tlStart] == br[i+incr];
+			if(!sameAcross && !sameUp && !sameDown) continue;
+			if(sameAcross){
+				score += 2;
+				if(sameAcross == lastAcross) score += 1;
+			}
+			else if(sameUp || sameDown){
+				score += 1;
+				if((sameUp && sameUp == lastUp) || (sameDown && sameDown == lastDown)) score += 1;
+			}
+			lastAcross = sameAcross; lastUp = sameUp; lastDown = sameDown;
+		}
+		return score; // Maximum score = 3*128 = 384
+	}
+
+	public static final boolean isMapArtWithCount(final ItemStack stack, final int count){
+		return stack.getCount() != count || stack.getItem() != Items.FILLED_MAP;
+	}
 	public static final RelatedMapsData getRelatedMapsByName(List<Slot> slots, String sourceName, final int count){
 		List<Integer> relatedMapSlots = new ArrayList<>();
 		int prefixLen = -1, suffixLen = -1;

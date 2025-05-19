@@ -10,7 +10,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.screen.slot.SlotActionType;
 
 public class ClickUtils{
-	record ClickEvent(int syncId, int slotId, int button, SlotActionType actionType){
+	public record ClickEvent(int syncId, int slotId, int button, SlotActionType actionType){
 		ClickEvent(int slotId, int button, SlotActionType actionType){this(0, slotId, button, actionType);}
 	}
 
