@@ -64,21 +64,23 @@ public class ClickUtils{
 		}
 		new Timer().schedule(new TimerTask(){
 			@Override public void run(){
-				final int availableClicks = MAX_CLICKS - addClick(null);
-				for(int i=0; i<availableClicks; ++i){
+				//final int availableClicks = MAX_CLICKS - addClick(null);
+				//for(int i=0; i<availableClicks; ++i){
+				while(addClick(null) < MAX_CLICKS){
 					if(!canProceed.apply(clicks.peek())) return;
 					ClickEvent click = clicks.remove();
 					try{
+						//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
 						client.interactionManager.clickSlot(click.syncId, click.slotId, click.button, click.actionType, client.player);
 					}
 					catch(NullPointerException e){
-						Main.LOGGER.error("executeClicks() failed due to null client. Clicks left: "+clicks.size()+", sumClicksInDuration: "+(sumClicksInDuration+i));
+						Main.LOGGER.error("executeClicks() failed due to null client. Clicks left: "+clicks.size()+", sumClicksInDuration: "+sumClicksInDuration);
 						clicks.clear();
 					}
 					if(clicks.isEmpty()){cancel(); onComplete.run(); return;}
 				}
 			}
-		}, 0l, 50l);
+		}, 0l, 51l);
 	}
 
 

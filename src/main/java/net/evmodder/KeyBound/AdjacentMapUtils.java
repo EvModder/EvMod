@@ -28,14 +28,15 @@ public abstract class AdjacentMapUtils{
 	}
 
 	public static final int adjacentEdgeScore(final byte[] tl, final byte[] br, boolean lr_tb){
-		if(tl.length != br.length || tl.length != 16384){
-			Main.LOGGER.error("AdjacentMapUtils: input byte[] arrays are invalid! Expected length == 128x128");
+		if(tl == null || br == null || tl.length != br.length || tl.length != 16384){
+			Main.LOGGER.error("AdjacentMapUtils: input byte[] arrays are invalid! Expected non-null, length=128x128");
 			return -1;
 		}
 		int score = 0;
 		boolean lastAcross = true, lastUp = true, lastDown = true;
 		final int incr = lr_tb ? 128 : 1, tlStart = lr_tb ? 127 : tl.length-128;
-		for(int i=0; i<tl.length; i+=incr){
+		final int tlEnd = tl.length - tlStart;
+		for(int i=0; i<tlEnd; i+=incr){
 			// Score of [0,3] per pixel
 			final boolean sameAcross = tl[i+tlStart] == br[i];
 			final boolean sameUp = i > 0 && tl[i+tlStart] == br[i-incr];
@@ -55,7 +56,7 @@ public abstract class AdjacentMapUtils{
 	}
 
 	public static final boolean isMapArtWithCount(final ItemStack stack, final int count){
-		return stack.getCount() != count || stack.getItem() != Items.FILLED_MAP;
+		return stack.getCount() == count && stack.getItem() == Items.FILLED_MAP;
 	}
 	public static final RelatedMapsData getRelatedMapsByName(List<Slot> slots, String sourceName, final int count){
 		List<Integer> relatedMapSlots = new ArrayList<>();
@@ -95,10 +96,10 @@ public abstract class AdjacentMapUtils{
 			}
 		}
 		if(prefixLen == -1){
-			if(relatedMapSlots.isEmpty()) Main.LOGGER.info("MapRestock: no shared prefix/suffix named maps found");
+			if(relatedMapSlots.isEmpty()) Main.LOGGER.info("MapAdjUtil: no shared prefix/suffix named maps found for name: "+sourceName);
 			return new RelatedMapsData(prefixLen, suffixLen, relatedMapSlots);
 		}
-		Main.LOGGER.info("MapAdjUtil: prefixLen="+prefixLen+", suffixLen="+suffixLen);
+		//Main.LOGGER.info("MapAdjUtil: prefixLen="+prefixLen+", suffixLen="+suffixLen);
 		final String sourcePosStr = simplifyPosStr(sourceName.substring(prefixLen, sourceName.length()-suffixLen));
 		final boolean sourcePosIs2d = sourcePosStr.indexOf(' ') != -1;
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){

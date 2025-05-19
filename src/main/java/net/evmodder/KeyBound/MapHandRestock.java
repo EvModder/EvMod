@@ -3,6 +3,7 @@ package net.evmodder.KeyBound;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.stream.IntStream;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
@@ -113,18 +114,31 @@ public final class MapHandRestock{
 		return bestSlot;
 	}
 	private final int getNextSlotAny(PlayerEntity player, Hand hand, final int count){
-		//TODO: prioritize "start maps", i.e. posStr "1/4", "Name #0", etc.
-		for(int i=PlayerScreenHandler.HOTBAR_START; i<PlayerScreenHandler.HOTBAR_END; ++i){
-			if(hand == Hand.MAIN_HAND && i-PlayerScreenHandler.HOTBAR_START == player.getInventory().selectedSlot) continue;
-			if(AdjacentMapUtils.isMapArtWithCount(player.playerScreenHandler.getSlot(i).getStack(), count)) return i;
+		int bestSlot = -1, bestScore = 0;
+		final int[] slots = 
+		IntStream.concat(
+			IntStream.concat(
+				IntStream.range(PlayerScreenHandler.HOTBAR_START, PlayerScreenHandler.HOTBAR_END),
+				IntStream.range(PlayerScreenHandler.INVENTORY_START, PlayerScreenHandler.INVENTORY_END)
+			),
+			IntStream.of(PlayerScreenHandler.OFFHAND_ID)
+		).toArray();
+		for(int i : slots){
+			final ItemStack stack = player.playerScreenHandler.getSlot(i).getStack();
+			if(!AdjacentMapUtils.isMapArtWithCount(stack, count)) continue;
+			if(bestScore < 1){bestScore = 1; bestSlot = i;} // It's a map, with the same count
+			if(stack.getCustomName() == null) continue;
+			final String name = stack.getCustomName().getLiteralString();
+			if(name == null) continue;
+			if(bestScore < 2){bestScore = 2; bestSlot = i;} // It's a named map, with the same count
+			final RelatedMapsData data = AdjacentMapUtils.getRelatedMapsByName(player.playerScreenHandler.slots, name, count);
+			if(data.slots().isEmpty()) continue;
+			final String posStr = data.prefixLen() == -1 ? name : AdjacentMapUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()))
+					.replace("A", "0");
+			if(posStr.equals("1") || posStr.equals("1 1")) if(bestScore < 3){bestScore = 3; bestSlot = i;} // Same map group, possible starter
+			if(posStr.equals("T L") || posStr.equals("0") || posStr.equals("0 0")) if(bestScore < 4){bestScore = 4; bestSlot = i;} // Definitely starter
 		}
-		if(count == 1){
-			for(int i=PlayerScreenHandler.INVENTORY_START; i<PlayerScreenHandler.INVENTORY_END; ++i){
-				if(AdjacentMapUtils.isMapArtWithCount(player.playerScreenHandler.getSlot(i).getStack(), count)) return i;
-			}
-			if(hand != Hand.OFF_HAND && AdjacentMapUtils.isMapArtWithCount(player.getStackInHand(Hand.OFF_HAND), count)) return PlayerScreenHandler.OFFHAND_ID;
-		}
-		return -1;
+		return bestSlot;
 	}
 
 	private final void tryToStockNextMap(PlayerEntity player, Hand hand, ItemStack prevMap){

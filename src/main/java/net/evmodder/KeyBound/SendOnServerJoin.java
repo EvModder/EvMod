@@ -35,7 +35,7 @@ public class SendOnServerJoin{
 					return;
 				}
 
-				Main.LOGGER.info("Stuff seems loaded, waiting for player movement");
+				//Main.LOGGER.info("Stuff seems loaded, waiting for player movement");
 				if(WAIT_FOR_MOVEMENT){
 					final double diffX = client.player.getX() - loadedAtX, diffZ = client.player.getZ() - loadedAtZ;
 					if(Math.abs(diffX) <= 1d && Math.abs(diffZ) <= 1d) return; // Didn't move (enough)

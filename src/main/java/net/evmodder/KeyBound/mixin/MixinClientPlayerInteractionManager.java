@@ -30,4 +30,19 @@ public abstract class MixinClientPlayerInteractionManager{
 		Main.LOGGER.info("onProcessRightClickPost");
 		//if(MapHandRestock.isEnabled) MapHandRestock.onProcessRightClickPost(player, hand);
 	}
+
+	/*@Inject(method = "clickSlot", at = @At("TAIL"))
+	private void click_move_neighbors_caller(int syncId, int slot, int button, SlotActionType actionType, PlayerEntity player, CallbackInfo ci){
+		if(syncId != player.currentScreenHandler.syncId) return;
+		if(button != 0 || actionType != SlotActionType.PICKUP) return;
+		if(!Screen.hasShiftDown()) return;
+		if(!player.currentScreenHandler.getCursorStack().isEmpty()) return;
+		final ItemStack itemPlaced = player.currentScreenHandler.getSlot(slot).getStack();
+		if(itemPlaced.getItem() != Items.FILLED_MAP) return;
+		if(itemPlaced.getCustomName() == null || itemPlaced.getCustomName().getLiteralString() == null) return; // TODO: support unnamed maps
+
+		//new Timer().schedule(new TimerTask(){@Override public void run(){
+			MapClickMoveNeighbors.moveNeighbors(player, slot, itemPlaced);
+		//}}, 10l);
+	}*/
 }

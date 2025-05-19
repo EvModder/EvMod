@@ -4,19 +4,37 @@ import java.util.ArrayDeque;
 import java.util.List;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.item.map.MapState;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.world.World;
 
 public abstract class MapClickMoveNeighbors{
+	private static boolean ongoingClickMove;
+
 	record Rectangle(int tl, int w, int h){}
 
+	private static final byte[] getColors(World world, ItemStack stack){
+		if(stack.getItem() != Items.FILLED_MAP) return null;
+		MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
+		if(mapId == null) return null;
+		MapState state = world.getMapState(mapId);
+		return state == null ? null : state.colors;
+	}
+
 	public static void moveNeighbors(PlayerEntity player, int destSlot, ItemStack mapMoved){
+		if(ongoingClickMove){Main.LOGGER.warn("MapMoveClick: Already ongoing"); return;}
+
 		Main.LOGGER.info("MapMoveClick: moveNeighbors() called");
 		final List<Slot> slots = player.currentScreenHandler.slots;
 		final String movedName = mapMoved.getCustomName().getLiteralString();
 		final RelatedMapsData data =  AdjacentMapUtils.getRelatedMapsByName(slots, movedName, mapMoved.getCount());
+		if(data.prefixLen() == -1) return;
 		data.slots().removeIf(i -> {
 			if(i == destSlot) return true;
 			if(ItemStack.areItemsAndComponentsEqual(slots.get(i).getStack(), mapMoved)){
@@ -37,21 +55,43 @@ public abstract class MapClickMoveNeighbors{
 		int h = (br/9)-(tl/9)+1;
 		int w = (br%9)-(tl%9)+1;
 
-		if(h == 1){if(w != data.slots().size()+1){++w; --tl;}} // Assume missing map is leftmost (TODO: edge detect, it could be on the right)
-		else if(w == 1){if(h != data.slots().size()+1){++h; tl-=9;}} // Assume missing map is topmost (TODO: edge detect, it could be on the bottom)
-
-		Main.LOGGER.info("MapMoveClick: tl="+tl+",br="+br+" : h="+h+",w="+w);
+		if((h == 1 || w == 1) && w*h == data.slots().size()){
+			final byte[] colors = getColors(player.getWorld(), mapMoved);
+			final byte[] tlColors = getColors(player.getWorld(), slots.get(tl).getStack());
+			final byte[] brColors = getColors(player.getWorld(), slots.get(br).getStack());
+			int scoreLeft = -2, scoreRight = -2, scoreTop = -2, scoreBottom = -2;
+			if(h == 1){
+				scoreLeft = AdjacentMapUtils.adjacentEdgeScore(colors, tlColors, true);
+				scoreRight = AdjacentMapUtils.adjacentEdgeScore(brColors, colors, true);
+			}
+			if(w == 1){
+				scoreTop = AdjacentMapUtils.adjacentEdgeScore(colors, tlColors, false);
+				scoreBottom = AdjacentMapUtils.adjacentEdgeScore(brColors, colors, false);
+			}
+			if(Math.max(scoreLeft, scoreRight) >= Math.max(scoreTop, scoreBottom)){
+				++w;
+				tl += scoreLeft >= scoreRight ? -1 : 1;
+				Main.LOGGER.info("MapMoveClick: extending width of 1-tall map, scoreLeft:"+scoreLeft+", scoreRight:"+scoreRight);
+			}
+			else{
+				++h;
+				tl += scoreTop >= scoreBottom ? -9 : 9;
+				Main.LOGGER.info("MapMoveClick: extending height of 1-wide map, scoreTop:"+scoreTop+", scoreBottom:"+scoreBottom);
+			}
+		}
 
 		if(h*w != data.slots().size()+1){Main.LOGGER.info("MapMoveClick: H*W not found (expected:"+data.slots().size()+")");return;}
 
 		int fromSlot = -1;
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 			int s = tl + i*9 + j;
-			if(!data.slots().contains(s)){
-				if(fromSlot != -1){Main.LOGGER.info("MapMoveClick: Maps not in a rectangle");return;}
-				fromSlot = s;
-			}
+			if(data.slots().contains(s)) continue;
+			if(fromSlot != -1){Main.LOGGER.info("MapMoveClick: Maps not in a rectangle");return;}
+			ItemStack stack = slots.get(i).getStack();
+			if(!stack.isEmpty() && stack.getItem() != Items.FILLED_MAP) Main.LOGGER.warn("MapMoveClick: moveFrom slot:"+s+" contains junk item: "+stack.getItem());
+			fromSlot = s;
 		}
+		Main.LOGGER.info("MapMoveClick: tl="+tl+",br="+br+" | h="+h+",w="+w+" | "+fromSlot+"->"+destSlot);
 
 		final int tlDest = destSlot-(fromSlot-tl);
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
@@ -90,30 +130,47 @@ public abstract class MapClickMoveNeighbors{
 		}
 
 		final int syncId = player.currentScreenHandler.syncId;
+//		final MinecraftClient client = MinecraftClient.getInstance();
 		final ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		if(tempSlot != -1) clicks.add(new ClickEvent(syncId, tempSlot, hotbarButton, SlotActionType.SWAP));
 
 		if(tl > tlDest){
-			//Main.LOGGER.info("MapMoveClick: Moving all, starting from TL");
+			Main.LOGGER.info("MapMoveClick: Moving all, starting from TL");
 			for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 				int s = tl + i*9 + j, d = tlDest + i*9 + j;
 				if(d == destSlot) continue;
+				Main.LOGGER.warn("MapMoveClick: adding 2 clicks: "+s+"->"+d+", hb:"+hotbarButton);
 				clicks.add(new ClickEvent(syncId, s, hotbarButton, SlotActionType.SWAP));
 				clicks.add(new ClickEvent(syncId, d, hotbarButton, SlotActionType.SWAP));
+//				client.interactionManager.clickSlot(syncId, s, hotbarButton, SlotActionType.SWAP, player);
+//				client.interactionManager.clickSlot(syncId, d, hotbarButton, SlotActionType.SWAP, player);
 			}
 		}
 		else{
-			//Main.LOGGER.info("MapMoveClick: Moving all, starting from BR");
+			Main.LOGGER.info("MapMoveClick: Moving all, starting from BR");
 			for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 				int s = br - i*9 - j, d = brDest - i*9 - j;
 				if(d == destSlot) continue;
+				Main.LOGGER.warn("MapMoveClick: adding 2 clicks: "+s+"->"+d+", hb:"+hotbarButton);
 				clicks.add(new ClickEvent(syncId, s, hotbarButton, SlotActionType.SWAP));
 				clicks.add(new ClickEvent(syncId, d, hotbarButton, SlotActionType.SWAP));
+//				client.interactionManager.clickSlot(syncId, s, hotbarButton, SlotActionType.SWAP, player);
+//				client.interactionManager.clickSlot(syncId, d, hotbarButton, SlotActionType.SWAP, player);
 			}
 		}
 		if(tempSlot != -1) clicks.add(new ClickEvent(syncId, tempSlot, hotbarButton, SlotActionType.SWAP));
 
-		Main.inventoryUtils.executeClicks(MinecraftClient.getInstance(), clicks, /*canProceed=*/_0->true,
-				()->Main.LOGGER.info("MapMoveClick: DONE"));
+//		final int numClicks = clicks.size();
+//		ongoingClickMove = true;
+//		Main.inventoryUtils.executeClicks(MinecraftClient.getInstance(), clicks, /*canProceed=*/_0->true, ()->{
+//			ongoingClickMove = false;
+//			Main.LOGGER.info("MapMoveClick: DONE (clicks:"+numClicks+")");
+//		});
+		if(Main.inventoryUtils.addClick(null) >= Main.inventoryUtils.MAX_CLICKS){
+			Main.LOGGER.warn("Not enough clicks available to execute MapMoveNeighbors :(");
+			return;
+		}
+		final MinecraftClient client = MinecraftClient.getInstance();
+		for(ClickEvent c : clicks) client.interactionManager.clickSlot(syncId, c.slotId(), c.button(), c.actionType(), player);
 	}
 }
