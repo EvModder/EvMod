@@ -50,6 +50,8 @@ import net.minecraft.world.World;
 public final class Keybind2b2tHighwayTravelHelper{
 	private boolean isEnabled;
 	private final MinecraftClient client;
+	private long enabledTs;
+	private final long ENABLE_DELAY = 1500l;
 
 	private boolean hasRightClickFunction(Block block) {
 		return block instanceof CraftingTableBlock
@@ -350,11 +352,20 @@ public final class Keybind2b2tHighwayTravelHelper{
 	public Keybind2b2tHighwayTravelHelper(KeybindEjectJunk ejectJunk){
 		client = MinecraftClient.getInstance();
 		KeyBindingHelper.registerKeyBinding(new EvKeybind("ebounce_travel_helper", ()->{
-			String status = "2b2t Travel Helper: "+((isEnabled=!isEnabled) ? "enabled" : "disabled");
-			client.player.sendMessage(Text.literal(status), true);
+			if(isEnabled || enabledTs != 0){
+				isEnabled = false;
+				enabledTs = 0;
+				if(isEnabled) client.player.sendMessage(Text.literal("2b2t Travel Helper: disabled"), true);
+			}
+			else enabledTs = System.currentTimeMillis();
 		}));
 
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
+			if(enabledTs != 0 && System.currentTimeMillis() - enabledTs > ENABLE_DELAY){
+				isEnabled = true;
+				enabledTs = 0;
+				client.player.sendMessage(Text.literal("2b2t Travel Helper: enabled"), true);
+			}
 			if(!isEnabled) return;
 			if(client.player == null || client.world == null) return;
 			Item chestItem = client.player.getInventory().getArmorStack(2).getItem();

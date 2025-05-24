@@ -34,12 +34,14 @@ import net.minecraft.client.MinecraftClient;
 // gradle migrateMappings --mappings "1.21.4+build.8"
 // Fix broken eclipse build paths after updating loom,fabric-api,version in configs: gradle eclipse
 public class Main implements ClientModInitializer{
+	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
 	// Reference/depend on https://github.com/Siphalor/amecs-api
 	// majorly improve TravelHelper (mining blocks only in way, specifically non-diag & mining 3 high tunnel)
 	//SendOnServerJoin configured per-server (via ip?)
 
 	// Feature Ideas:
+	// change render order of certain trades (in particular: cleric redstone always above rotten flesh)
 	// totems in offhand - render itemcount for total totems in inv
 	// Maps - smaller text for item count in slot
 	// Map - next hand autorestock, consider all maps in inv (later: look at all edges) and stick to RowByCol or ColByRow for whole map
@@ -66,7 +68,7 @@ public class Main implements ClientModInitializer{
 	public static ClickUtils inventoryUtils;
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
-	public static boolean rcHotbarHUD, mapartDb=true, mapartDbContact, mapColorHUD, mapColorIFrame, totemShowTotalCount;
+	public static boolean rcHotbarHUD, mapartDb=true, mapartDbContact, mapColorHUD, mapColorIFrame, totemShowTotalCount, notifyIfNotInGroup=true;
 	public static long joinedServerTimestamp;
 
 	private void loadConfig(){
@@ -160,6 +162,7 @@ public class Main implements ClientModInitializer{
 				case "unlocked_map_red_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(LockedMapTooltip::redName); break;
 				case "unlocked_map_red_hotbarhud": mapColorHUD = !value.equalsIgnoreCase("false"); break;
 				case "unlocked_map_red_itemframe": mapColorIFrame = !value.equalsIgnoreCase("false"); break;
+				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.take_from_shulker": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.copy_in_inventory": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;

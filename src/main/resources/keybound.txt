@@ -87,8 +87,9 @@ keybind.aie_travel_helper: true
 organize_inventory.EvInv: [
   # Armor
   5:carved_pumpkin,
-  5:netherite_helmet, 6:elytra, 6:netherite_chestplate, 7:netherite_leggings, 8:netherite_boots,
-  5:diamond_helmet, 6:elytra, 6:diamond_chestplate, 7:diamond_leggings, 8:diamond_boots,
+  5:netherite_helmet, 6:netherite_chestplate, 7:netherite_leggings, 8:netherite_boots,
+  5:diamond_helmet, 6:diamond_chestplate, 7:diamond_leggings, 8:diamond_boots,
+  6:elytra,
 
   # Offhand
   45:totem_of_undying, 45:enchanted_golden_apple, 45:golden_carrot, 45:cooked_beef,

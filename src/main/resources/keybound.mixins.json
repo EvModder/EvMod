@@ -6,7 +6,7 @@
 		"AccessorBoundKey",
 		"AccessorProjectileEntity",
 		"AccessorTimesPressed",
-		//"MixinClientPlayerInteractionManager",
+		"MixinClientPlayerInteractionManager",
 		"MixinClientWorld",
 		"MixinEntityRenderer",
 		"MixinHandledScreen",

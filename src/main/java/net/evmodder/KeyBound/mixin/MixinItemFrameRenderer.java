@@ -23,6 +23,7 @@ import net.minecraft.util.math.Vec3d;
 @Mixin(ItemFrameEntityRenderer.class)
 class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 	private static final MinecraftClient client = MinecraftClient.getInstance();
+	private static long lastNotif;
 
 	private boolean isLookngInGeneralDirection(Entity entity){
 		Vec3d vec3d = client.player.getRotationVec(1.0F).normalize();
@@ -36,8 +37,7 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 
 	@Inject(method = "hasLabel", at = @At("HEAD"), cancellable = true)
 	public void hasLabel_Mixin(T itemFrameEntity, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
-		if(!Main.mapColorIFrame) return; // Feature is disabled
-		if(squaredDistanceToCamera > 20*20) return;
+		if(!Main.mapColorIFrame && !Main.notifyIfNotInGroup) return; // Features are disabled
 		ItemStack stack = itemFrameEntity.getHeldItemStack();
 		if(stack == null || stack.isEmpty()) return;
 		MapIdComponent mapId = itemFrameEntity.getHeldItemStack().get(DataComponentTypes.MAP_ID);
@@ -45,6 +45,19 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		MapState state = itemFrameEntity.getWorld().getMapState(mapId);
 		if(state == null) return;
 		final boolean newMapart = MapGroupUtils.isMapNotInCurrentGroup(state);
+		if(Main.notifyIfNotInGroup && newMapart){
+			final long now = System.currentTimeMillis();
+			if(now - lastNotif > 20*1000){
+				lastNotif = now;
+				client.player.sendMessage(Text.literal("New mapart detected! % "
+						+(itemFrameEntity.getBlockX()%100)+" "+(itemFrameEntity.getBlockZ()%100)), true);
+			}
+		}
+
+		if(!Main.mapColorIFrame) return; // Feature is disabled
+		if(!MinecraftClient.isHudEnabled()) return;
+		if(squaredDistanceToCamera > 20*20) return;
+
 		if(stack.getCustomName() == null || !state.locked || newMapart){
 			if(!newMapart && !client.player.canSee(itemFrameEntity)) return; // Skip if player doesn't have LOS to the map (unless uncollected)
 			if(!isLookngInGeneralDirection(itemFrameEntity)) return;
