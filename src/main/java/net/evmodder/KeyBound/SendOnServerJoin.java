@@ -12,12 +12,14 @@ public class SendOnServerJoin{
 	private double loadedAtX, loadedAtZ;
 	private TimerTask timerTask;
 	private final boolean WAIT_FOR_MOVEMENT = true;
+	public static final int HASHCODE_2B2T = -437714968;//"2b2t.org".hashCode()
 
 	SendOnServerJoin(String[] messages){
 		ClientPlayConnectionEvents.JOIN.register(
 				//ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server
 				(_0, _1, _2) ->
 		{
+			if(_0.getServerInfo().address.hashCode() != HASHCODE_2B2T) return; // TODO: customize per-server
 			if(timerTask != null) timerTask.cancel(); // Restart timer
 
 			//joinedAt = System.currentTimeMillis();

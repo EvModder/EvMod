@@ -13,6 +13,7 @@ import net.minecraft.client.network.PlayerListEntry;
 class IgnoreListSync2b2t{
 	private final boolean syncMyIgnored;
 	private final ArrayList<UUID> ignoreList;
+	public static final int HASHCODE_2B2T = -437714968;//"2b2t.org".hashCode()
 
 	private void handleIgnoreEvent(final String name, final boolean ignored){
 		Main.LOGGER.info("Ignore update: "+name+"="+ignored);
@@ -31,7 +32,11 @@ class IgnoreListSync2b2t{
 
 	IgnoreListSync2b2t(final boolean shareMyIgnoreList, final String[] borrowIgnoreLists){
 		syncMyIgnored = shareMyIgnoreList;
+		final MinecraftClient client = MinecraftClient.getInstance();
+		final int address = (client == null || client.getCurrentServerEntry() == null) ? 0 : client.getCurrentServerEntry().address.hashCode();
+		if(address != HASHCODE_2B2T){ignoreList = null; return;}
 		ignoreList = new ArrayList<>();
+
 		final byte[] data = FileIO.loadFileBytes("2b2t_ignorelist");
 		if(data != null){
 			final int numIdsInFile = data.length / 16;
@@ -45,7 +50,7 @@ class IgnoreListSync2b2t{
 			UUID uuid;
 			try{uuid = UUID.fromString(name);}
 			catch(IllegalArgumentException e){
-				Main.LOGGER.error("Usernames for 'include_2b2t_ignore_lists' are not yet supported, please provide UUIDs instead");
+				Main.LOGGER.error("Usernames for 'add_other_ignore_lists' are not yet supported, please provide UUIDs instead");
 				continue;
 			}
 			Main.remoteSender.sendBotMessage(Command.DB_PLAYER_FETCH_IGNORES, /*udp=*/false, 20_000, PacketHelper.toByteArray(uuid), reply -> {
@@ -54,7 +59,6 @@ class IgnoreListSync2b2t{
 					return;
 				}
 				final ByteBuffer bb = ByteBuffer.wrap(reply);
-				MinecraftClient client = MinecraftClient.getInstance();
 				for(int i=0; i<reply.length/16; ++i){
 					final UUID ignoredUUID = new UUID(bb.getLong(), bb.getLong());
 					if(!ignoreList.contains(ignoredUUID)) client.getNetworkHandler().sendChatCommand("/ignore "+ignoredUUID);

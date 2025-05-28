@@ -8,6 +8,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
@@ -55,23 +56,36 @@ public final class KeybindMapLoad{
 		//
 		int[] putBackSlots = new int[9];
 		for(int i=0; i<putBackSlots.length; ++i) putBackSlots[i] = -1;
+		//
+		int usableHotbarSlots = 0;
+		for(int i=-1; (i=getNextUsableHotbarButton(client, i)) != 9; ++usableHotbarSlots);
 
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
+		int batchSize = 0;
+		final int MAX_BATCH_SIZE = Math.min(usableHotbarSlots, Main.inventoryUtils.MAX_CLICKS/2);
 		for(int i=0; i<sh.slots.size() && numToLoad > 0; ++i){
 			if(!isUnloadedMapArt(client.player.clientWorld, sh.getSlot(i).getStack())) continue;
 			clicks.add(new ClickEvent(sh.syncId, i, hotbarButton, SlotActionType.SWAP));
+			++batchSize;
 			putBackSlots[hotbarButton] = i;
 			--numToLoad;
 
 			hotbarButton = getNextUsableHotbarButton(client, hotbarButton);
-			if(hotbarButton == 9 || numToLoad == 0){
+			if(hotbarButton == 9 || numToLoad == 0 || batchSize == MAX_BATCH_SIZE){
 				for(int j=0; j<hotbarButton; ++j) if(putBackSlots[j] != -1) clicks.add(new ClickEvent(sh.syncId, putBackSlots[j], j, SlotActionType.SWAP));
 				hotbarButton = getNextUsableHotbarButton(client, -1);
+				batchSize = 0;
 			}
 		}
 		ongoingLoad = true;
-		Main.inventoryUtils.executeClicks(client, clicks,
-				c->client.player == null || !isUnloadedMapArt(client.player.clientWorld, client.player.getInventory().getStack(c.button())),
+		Main.inventoryUtils.executeClicks(clicks,
+				c->client.player == null || (
+						!isUnloadedMapArt(client.player.clientWorld, client.player.getInventory().getStack(c.button())) // Don't send back till loaded
+
+						&& (client.player.getInventory().getStack(c.button()).getItem() == Items.FILLED_MAP ||
+							getNextUsableHotbarButton(client, -1) != c.button() || // Don't start pulling next batch till clicks are available
+							Main.inventoryUtils.MAX_CLICKS-Main.inventoryUtils.addClick(null) >= MAX_BATCH_SIZE)
+						),
 				()->{
 					Main.LOGGER.info("MapLoad: DONE!");
 					ongoingLoad = false;

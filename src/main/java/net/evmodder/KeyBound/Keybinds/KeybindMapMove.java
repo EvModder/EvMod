@@ -121,7 +121,7 @@ public final class KeybindMapMove{
 		}
 
 		ongoingStealStore = true;
-		Main.inventoryUtils.executeClicks(client, clicks, /*canProceed=*/_0->true,
+		Main.inventoryUtils.executeClicks(clicks, /*canProceed=*/_0->true,
 				()->{
 					Main.LOGGER.info("MapMove: DONE!");
 					ongoingStealStore = false;

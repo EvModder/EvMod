@@ -363,7 +363,7 @@ public final class KeybindMapCopy_bak{
 			clicks.add(new ClickEvent(syncId, blankMapCraftingSlot, 0, SlotActionType.THROW)); // throw leftovers if quick_move fails
 		}
 		ongoingCopy = true;
-		Main.inventoryUtils.executeClicks(client, clicks, /*canProceed=*/_0->true, ()->{
+		Main.inventoryUtils.executeClicks(clicks, /*canProceed=*/_0->true, ()->{
 			Main.LOGGER.info("MapCopy: DONE");
 			ongoingCopy = false;
 		});

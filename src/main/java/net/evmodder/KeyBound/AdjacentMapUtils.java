@@ -16,15 +16,27 @@ public abstract class AdjacentMapUtils{
 	}
 
 	static final String simplifyPosStr(String rawPos){
-		String pos = Normalizer.normalize(
-				rawPos.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", " ").trim(),
-				Normalizer.Form.NFD).toUpperCase()
-				.replaceAll("\\s+", " ");
+		String pos = Normalizer.normalize(rawPos, Normalizer.Form.NFD).toUpperCase();
+		pos = pos.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", " ").trim().replaceAll("\\s+", " ");
+		pos = pos.replace("TOP", "T").replace("BOTTOM", "B").replace("LEFT", "L").replace("RIGHT", "R").replace("MIDDLE", "M");
+		pos = pos.replace("UP", "T").replace("DOWN", "B");
+		pos = pos.replace("FIRST", "0").replace("SECOND", "1").replace("ONE", "0").replace("TWO", "1");
 		while(pos.matches(".*[^0-9 ][^0-9 ].*")) pos = pos.replaceAll("([^0-9 ])([^0-9 ])", "$1 $2");
 		return pos;
 	}
 	private static final boolean isValidPosStr(String posStr){
 		return !posStr.isBlank() && posStr.split(" ").length <= 2;
+	}
+
+	public static final boolean areMapNamesRelated(final String name1, final String name2){
+		if(name1 == null && name2 == null) return true;
+		if(name1 == null || name2 == null) return false;
+		if(name1.equals(name2)) return true;
+		final int a = AdjacentMapUtils.commonPrefixLen(name1, name2);
+		final int b = AdjacentMapUtils.commonSuffixLen(name1, name2);
+		final boolean name1ValidPos = isValidPosStr(simplifyPosStr(name1.substring(a, name1.length()-b)));
+		final boolean name2ValidPos = isValidPosStr(simplifyPosStr(name2.substring(a, name2.length()-b)));
+		return name1ValidPos && name2ValidPos;
 	}
 
 	public static final int adjacentEdgeScore(final byte[] tl, final byte[] br, boolean lr_tb){

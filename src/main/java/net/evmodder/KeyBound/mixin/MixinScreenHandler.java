@@ -37,7 +37,9 @@ public abstract class MixinScreenHandler{
 		if(itemPlaced.getItem() != Items.FILLED_MAP) return;
 		if(itemPlaced.getCustomName() == null || itemPlaced.getCustomName().getLiteralString() == null) return; // TODO: support unnamed maps
 
+		player.getInventory().markDirty();
 		new Timer().schedule(new TimerTask(){@Override public void run(){
+			player.getInventory().markDirty();
 			MapClickMoveNeighbors.moveNeighbors(player, slotIndex, itemPlaced);
 		}}, 10l);
 	}

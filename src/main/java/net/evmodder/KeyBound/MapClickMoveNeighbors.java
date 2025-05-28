@@ -3,7 +3,6 @@ package net.evmodder.KeyBound;
 import java.util.ArrayDeque;
 import java.util.List;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.entity.player.PlayerEntity;
@@ -160,17 +159,17 @@ public abstract class MapClickMoveNeighbors{
 		}
 		if(tempSlot != -1) clicks.add(new ClickEvent(syncId, tempSlot, hotbarButton, SlotActionType.SWAP));
 
-//		final int numClicks = clicks.size();
-//		ongoingClickMove = true;
-//		Main.inventoryUtils.executeClicks(MinecraftClient.getInstance(), clicks, /*canProceed=*/_0->true, ()->{
-//			ongoingClickMove = false;
-//			Main.LOGGER.info("MapMoveClick: DONE (clicks:"+numClicks+")");
-//		});
-		if(Main.inventoryUtils.addClick(null) >= Main.inventoryUtils.MAX_CLICKS){
-			Main.LOGGER.warn("Not enough clicks available to execute MapMoveNeighbors :(");
-			return;
-		}
-		final MinecraftClient client = MinecraftClient.getInstance();
-		for(ClickEvent c : clicks) client.interactionManager.clickSlot(syncId, c.slotId(), c.button(), c.actionType(), player);
+		final int numClicks = clicks.size();
+		ongoingClickMove = true;
+		Main.inventoryUtils.executeClicks(clicks, /*canProceed=*/_0->true, ()->{
+			ongoingClickMove = false;
+			Main.LOGGER.info("MapMoveClick: DONE (clicks:"+numClicks+")");
+		});
+//		if(Main.inventoryUtils.addClick(null) >= Main.inventoryUtils.MAX_CLICKS){
+//			Main.LOGGER.warn("Not enough clicks available to execute MapMoveNeighbors :(");
+//			return;
+//		}
+//		final MinecraftClient client = MinecraftClient.getInstance();
+//		for(ClickEvent c : clicks) client.interactionManager.clickSlot(syncId, c.slotId(), c.button(), c.actionType(), player);
 	}
 }

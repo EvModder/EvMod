@@ -14,6 +14,7 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 import java.util.ArrayDeque;
+import java.util.HashMap;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
 
@@ -179,6 +180,7 @@ public final class KeybindMapCopy{
 		}
 
 		// Execute copy operations
+		HashMap<ClickEvent, Integer> reserveClicks = new HashMap<>();
 		Main.LOGGER.info("MapCopy: Starting copy");
 		for(int i=HOTBAR_END-1; i>=INV_START; --i){
 			if(slots[i].getItem() != Items.FILLED_MAP) continue;
@@ -219,14 +221,16 @@ public final class KeybindMapCopy{
 				if(numEmptyMapsInGrid == 64) break;
 			}// restock
 
+			final int clicksAtStart = clicks.size();
+			final ClickEvent firstClick;
 			// Move filled map(s) to crafter input
 			final boolean copyAll = minMapCount == emptyMapsPerCopy;//=minMapCount*2 == secondMinMapCount; // Equivalent
-			if(copyAll && i >= HOTBAR_START) clicks.add(new ClickEvent(syncId, INPUT_START+1, i-HOTBAR_START, SlotActionType.SWAP));
-			else if(copyAll && isCrafter) clicks.add(new ClickEvent(syncId, i, 0, SlotActionType.QUICK_MOVE));
+			if(copyAll && i >= HOTBAR_START) clicks.add(firstClick=new ClickEvent(syncId, INPUT_START+1, i-HOTBAR_START, SlotActionType.SWAP));
+			else if(copyAll && isCrafter) clicks.add(firstClick=new ClickEvent(syncId, i, 0, SlotActionType.QUICK_MOVE));
 			else{
 				final boolean takeHalf = (minMapCount+1)/2 >= emptyMapsPerCopy;
 				final int amtTaken = takeHalf ? (minMapCount+1)/2 : minMapCount;
-				clicks.add(new ClickEvent(syncId, i, takeHalf ? 1 : 0, SlotActionType.PICKUP)); // Pickup all or half
+				clicks.add(firstClick=new ClickEvent(syncId, i, takeHalf ? 1 : 0, SlotActionType.PICKUP)); // Pickup all or half
 				for(int j=emptyMapsPerCopy; j<amtTaken; ++j) clicks.add(new ClickEvent(syncId, i, 1, SlotActionType.PICKUP)); // Put back one
 				clicks.add(new ClickEvent(syncId, INPUT_START+1, 0, SlotActionType.PICKUP)); // Place all
 			}
@@ -246,12 +250,20 @@ public final class KeybindMapCopy{
 					clicks.add(new ClickEvent(syncId, i, 0, SlotActionType.PICKUP)); // Place all
 				}
 			}
+			final int clicksUsed = clicks.size() - clicksAtStart;
+			if(clicksUsed <= Main.inventoryUtils.MAX_CLICKS) reserveClicks.put(firstClick, clicksUsed);
 		}// copy maps
 
 		if(numEmptyMapsInGrid > 0) clicks.add(new ClickEvent(syncId, INPUT_START, 0, SlotActionType.QUICK_MOVE));
 
 		ongoingCopy = true;
-		Main.inventoryUtils.executeClicks(client, clicks, /*canProceed=*/_0->true, ()->{
+		Main.inventoryUtils.executeClicks(clicks,
+		c->{
+			// Don't start individual copy operation unless we can fully knock it out (unless impossible to do in 1 go)
+			final Integer clicksNeeded = reserveClicks.get(c);
+			return clicksNeeded == null || clicksNeeded <= Main.inventoryUtils.MAX_CLICKS - Main.inventoryUtils.addClick(null);
+		},
+		()->{
 			Main.LOGGER.info("MapCopy: DONE");
 			ongoingCopy = false;
 		});

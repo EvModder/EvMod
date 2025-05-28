@@ -147,6 +147,8 @@ public class Main implements ClientModInitializer{
 				case "publish_my_ignore_list": uploadIgnoreList = !value.equalsIgnoreCase("false"); break;
 				case "add_other_ignore_lists": if(value.startsWith("[")) downloadIgnoreLists = value.substring(1, value.length()-1).split(","); break;
 
+				case "msg_for_pearl_trigger": new AutoPearlActivator(value); break;
+
 				case "limiter_clicks_in_duration": clicksInDuration = Integer.parseInt(value); break;
 				case "limiter_duration_ticks": durationTicks = Integer.parseInt(value); break;
 

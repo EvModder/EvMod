@@ -56,7 +56,7 @@ public class ClickUtils{
 		return sumClicksInDuration;
 	}
 
-	public void executeClicks(MinecraftClient client, Queue<ClickEvent> clicks, Function<ClickEvent, Boolean> canProceed, Runnable onComplete){
+	public void executeClicks(Queue<ClickEvent> clicks, Function<ClickEvent, Boolean> canProceed, Runnable onComplete){
 		if(clicks.isEmpty()){
 			Main.LOGGER.warn("executeClicks() called with an empty ClickEvent list");
 			onComplete.run();
@@ -71,7 +71,8 @@ public class ClickUtils{
 					ClickEvent click = clicks.remove();
 					try{
 						//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
-						client.interactionManager.clickSlot(click.syncId, click.slotId, click.button, click.actionType, client.player);
+						MinecraftClient.getInstance()
+							.interactionManager.clickSlot(click.syncId, click.slotId, click.button, click.actionType, MinecraftClient.getInstance().player);
 					}
 					catch(NullPointerException e){
 						Main.LOGGER.error("executeClicks() failed due to null client. Clicks left: "+clicks.size()+", sumClicksInDuration: "+sumClicksInDuration);
