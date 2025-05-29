@@ -1,7 +1,8 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.EventListeners;
 
 import java.util.Arrays;
 import com.google.common.collect.Streams;
+import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ButtonBlock;
@@ -19,7 +20,7 @@ import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.RaycastContext;
 
-class AutoPearlActivator{
+public class AutoPearlActivator{
 	final int reach = 10;
 
 	public static boolean hasLineOfSight(MinecraftClient client, Vec3d from, Vec3d to){
@@ -70,7 +71,7 @@ class AutoPearlActivator{
 		return new BlockHitResult(hitVecs[bestSide], sides[bestSide], pos, /*insideBlock=*/false);
 	}
 
-	AutoPearlActivator(final String trigger){
+	public AutoPearlActivator(final String trigger){
 		ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {
 			if(overlay) return;
 			//Main.LOGGER.info("GAME Message: "+msg.getString());

@@ -21,6 +21,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 
 public final class EpearlLookup{
+	public record XYZ(int x, int y, int z){}
+
 	private static final MinecraftClient client = MinecraftClient.getInstance();
 
 	private static final String NAME_404 = "n[404]", NAME_U_404 = "u[404]", NAME_LOADING = "Loading name...", NAME_U_LOADING = "Loading UUID...";

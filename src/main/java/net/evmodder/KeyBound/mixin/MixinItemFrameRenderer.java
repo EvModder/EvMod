@@ -4,9 +4,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import net.evmodder.KeyBound.LockedMapTooltip;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
+import net.evmodder.KeyBound.EventListeners.TooltipMapNameColor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.ItemFrameEntityRenderer;
 import net.minecraft.component.DataComponentTypes;
@@ -72,8 +72,8 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(stack == null || stack.isEmpty() || !Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")) return;
 		MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
 		if(state == null) return;
-		if(MapGroupUtils.isMapNotInCurrentGroup(state)) cir.setReturnValue(stack.getName().copy().withColor(LockedMapTooltip.UNCOLLECTED_COLOR));
-		else if(!state.locked) cir.setReturnValue(stack.getName().copy().withColor(LockedMapTooltip.UNLOCKED_COLOR));
-		else if(stack.getCustomName() == null) cir.setReturnValue(stack.getName().copy().withColor(LockedMapTooltip.UNNAMED_COLOR));
+		if(MapGroupUtils.isMapNotInCurrentGroup(state)) cir.setReturnValue(stack.getName().copy().withColor(TooltipMapNameColor.UNCOLLECTED_COLOR));
+		else if(!state.locked) cir.setReturnValue(stack.getName().copy().withColor(TooltipMapNameColor.UNLOCKED_COLOR));
+		else if(stack.getCustomName() == null) cir.setReturnValue(stack.getName().copy().withColor(TooltipMapNameColor.UNNAMED_COLOR));
 	}
 }

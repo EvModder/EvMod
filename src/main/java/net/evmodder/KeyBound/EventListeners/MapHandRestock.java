@@ -1,9 +1,12 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.EventListeners;
 
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.stream.IntStream;
+import net.evmodder.KeyBound.AdjacentMapUtils;
+import net.evmodder.KeyBound.AdjacentMapUtils.RelatedMapsData;
+import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
@@ -203,7 +206,7 @@ public final class MapHandRestock{
 		}
 	}
 
-	MapHandRestock(boolean useName, boolean useImg){
+	public MapHandRestock(boolean useName, boolean useImg){
 		USE_NAME = useName;
 		USE_IMG = useImg;
 		UseEntityCallback.EVENT.register((player, _0, hand, entity, _1) -> {

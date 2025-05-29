@@ -1,7 +1,10 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.EventListeners;
 
 import java.util.ArrayDeque;
 import java.util.List;
+import net.evmodder.KeyBound.AdjacentMapUtils;
+import net.evmodder.KeyBound.AdjacentMapUtils.RelatedMapsData;
+import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;

@@ -1,7 +1,7 @@
 package net.evmodder.KeyBound.mixin;
 
-import net.evmodder.KeyBound.LockedMapTooltip;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.EventListeners.TooltipMapNameColor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.component.DataComponentTypes;
@@ -27,8 +27,8 @@ public abstract class MixinInGameHud{
 			MapIdComponent id = currentStack.get(DataComponentTypes.MAP_ID);
 			if(id != null){
 				MapState state = client.world.getMapState(id);
-				if(state != null && !state.locked) text = text.withColor(LockedMapTooltip.UNLOCKED_COLOR);
-				else if(currentStack.getCustomName() == null) text = text.withColor(LockedMapTooltip.UNNAMED_COLOR);
+				if(state != null && !state.locked) text = text.withColor(TooltipMapNameColor.UNLOCKED_COLOR);
+				else if(currentStack.getCustomName() == null) text = text.withColor(TooltipMapNameColor.UNNAMED_COLOR);
 			}
 		}
 		if(Main.rcHotbarHUD && currentStack.contains(DataComponentTypes.REPAIR_COST)){

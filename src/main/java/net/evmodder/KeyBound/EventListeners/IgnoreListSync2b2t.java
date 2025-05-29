@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.EventListeners;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -6,11 +6,12 @@ import java.util.UUID;
 import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.EvLib.PacketHelper;
+import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 
-class IgnoreListSync2b2t{
+public class IgnoreListSync2b2t{
 	private final boolean syncMyIgnored;
 	private final ArrayList<UUID> ignoreList;
 	public static final int HASHCODE_2B2T = -437714968;//"2b2t.org".hashCode()
@@ -30,7 +31,7 @@ class IgnoreListSync2b2t{
 		}
 	}
 
-	IgnoreListSync2b2t(final boolean shareMyIgnoreList, final String[] borrowIgnoreLists){
+	public IgnoreListSync2b2t(final boolean shareMyIgnoreList, final String[] borrowIgnoreLists){
 		syncMyIgnored = shareMyIgnoreList;
 		final MinecraftClient client = MinecraftClient.getInstance();
 		final int address = (client == null || client.getCurrentServerEntry() == null) ? 0 : client.getCurrentServerEntry().address.hashCode();

@@ -1,7 +1,8 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.EventListeners;
 
 import java.util.List;
 import net.minecraft.item.Item.TooltipContext;
+import net.evmodder.KeyBound.MapGroupUtils;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.component.type.MapIdComponent;
@@ -11,7 +12,7 @@ import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
-public final class LockedMapTooltip{
+public final class TooltipMapNameColor{
 	public static final int UNLOCKED_COLOR = 14692709;
 	public static final int UNNAMED_COLOR = 15652823;
 	public static final int UNCOLLECTED_COLOR = 706660;

@@ -8,6 +8,8 @@ import net.minecraft.item.Items;
 import net.minecraft.screen.slot.Slot;
 
 public abstract class AdjacentMapUtils{
+	public record RelatedMapsData(int prefixLen, int suffixLen, List<Integer> slots){}
+
 	private static final int commonPrefixLen(String a, String b){
 		int i=0; while(i<a.length() && i<b.length() && a.charAt(i) == b.charAt(i)) ++i; return i;
 	}
@@ -15,7 +17,7 @@ public abstract class AdjacentMapUtils{
 		int i=0; while(a.length()-i > 0 && b.length()-i > 0 && a.charAt(a.length()-i-1) == b.charAt(b.length()-i-1)) ++i; return i;
 	}
 
-	static final String simplifyPosStr(String rawPos){
+	public static final String simplifyPosStr(String rawPos){
 		String pos = Normalizer.normalize(rawPos, Normalizer.Form.NFD).toUpperCase();
 		pos = pos.replace("┌", "TL").replace("┐", "TR").replace("└", "BL").replace("┘", "BR");
 		pos = pos.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", " ").trim().replaceAll("\\s+", " ");

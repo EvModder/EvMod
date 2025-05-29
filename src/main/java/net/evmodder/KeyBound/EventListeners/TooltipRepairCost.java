@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.EventListeners;
 
 import java.util.List;
 import net.minecraft.item.Item.TooltipContext;
@@ -8,7 +8,7 @@ import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
-final class RepairCostTooltip{
+public final class TooltipRepairCost{
 	public static final void addRC(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
 		if(type == TooltipType.BASIC) return;
 		final int rc = item.getComponents().get(DataComponentTypes.REPAIR_COST);

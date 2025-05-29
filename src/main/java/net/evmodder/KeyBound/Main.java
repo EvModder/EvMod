@@ -22,6 +22,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.Commands.*;
+import net.evmodder.KeyBound.EventListeners.AutoPearlActivator;
+import net.evmodder.KeyBound.EventListeners.IgnoreListSync2b2t;
+import net.evmodder.KeyBound.EventListeners.TooltipMapNameColor;
+import net.evmodder.KeyBound.EventListeners.MapHandRestock;
+import net.evmodder.KeyBound.EventListeners.TooltipRepairCost;
 import net.evmodder.KeyBound.Keybinds.*;
 import net.evmodder.KeyBound.Keybinds.KeybindsSimple;
 import net.fabricmc.api.ClientModInitializer;
@@ -159,9 +164,9 @@ public class Main implements ClientModInitializer{
 
 //				case "spawner_highlight": if(!value.equalsIgnoreCase("false")) new SpawnerHighlighter(); break;
 				case "totem_total_count": if(!value.equalsIgnoreCase("false")) totemShowTotalCount = !value.equalsIgnoreCase("false"); break;
-				case "repaircost_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(RepairCostTooltip::addRC); break;
+				case "repaircost_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipRepairCost::addRC); break;
 				case "repaircost_hotbarhud": rcHotbarHUD = !value.equalsIgnoreCase("false"); break;
-				case "unlocked_map_red_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(LockedMapTooltip::redName); break;
+				case "unlocked_map_red_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::redName); break;
 				case "unlocked_map_red_hotbarhud": mapColorHUD = !value.equalsIgnoreCase("false"); break;
 				case "unlocked_map_red_itemframe": mapColorIFrame = !value.equalsIgnoreCase("false"); break;
 				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
