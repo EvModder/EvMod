@@ -50,7 +50,7 @@ import net.minecraft.world.World;
 public final class Keybind2b2tHighwayTravelHelper{
 	private boolean isEnabled;
 	private final MinecraftClient client;
-	private long enabledTs;
+	private long enabledTs, targetY = Long.MIN_VALUE;
 	private final long ENABLE_DELAY = 1500l;
 
 	private boolean hasRightClickFunction(Block block) {
@@ -299,17 +299,17 @@ public final class Keybind2b2tHighwayTravelHelper{
 		if(dx != 0 && dz != 0){
 			mineSpots.add(bp.add(dx, 0, dz));// mineSpots.add(bp.add(dx, 1, dz)); mineSpots.add(bp.add(dx, 2, dz));
 		}
+		mineSpots.add(bp);// mineSpots.add(bp.add(0, 1, 0)); mineSpots.add(bp.add(0, 2, 0));
 
 		for(BlockPos bpDig : mineSpots){
-			if(client.world.getBlockState(bpDig).getCollisionShape(client.world, client.player.getBlockPos()).isEmpty()){
-				bpDig = bpDig.add(0, 2, 0);
-				if(client.world.getBlockState(bpDig).getCollisionShape(client.world, client.player.getBlockPos()).isEmpty()){
-					bpDig = bpDig.add(0, -1, 0);
-					if(client.world.getBlockState(bpDig).getCollisionShape(client.world, client.player.getBlockPos()).isEmpty()){
-						continue;
-					}
-				}
+			boolean foundDig = false;
+			for(int i=0; i<2; ++i){
+				if(i==1) bpDig = bpDig.add(0, 2, 0);
+				else if(i==2) bpDig = bpDig.add(0, -1, 0);
+				BlockState bs = client.world.getBlockState(bpDig);
+				if(bs.getBlock() != Blocks.BEDROCK && !bs.getCollisionShape(client.world, bpDig).isEmpty()){foundDig = true; break;}
 			}
+			if(foundDig == false) continue;
 			// Same as above, but goes 0->1->2 instead of 0->2->1
 //			int i=0;
 //			for(; i<3 && client.world.getBlockState(bpDig).getCollisionShape(client.world, client.player.getBlockPos()).isEmpty(); ++i)
@@ -367,19 +367,24 @@ public final class Keybind2b2tHighwayTravelHelper{
 				client.player.sendMessage(Text.literal("2b2t Travel Helper: enabled"), true);
 			}
 			if(!isEnabled) return;
-			if(client.player == null || client.world == null) return;
+			if(client.player == null || client.world == null){isEnabled = false; return;}
 			Item chestItem = client.player.getInventory().getArmorStack(2).getItem();
 			Identifier chestItemId = Registries.ITEM.getId(chestItem);
 			if(chestItemId == null || !chestItemId.getPath().equals("elytra")){
 				client.player.sendMessage(Text.literal("Not wearing elytra"), true);
 				return;
 			}
-			int y = client.player.getBlockY();
-			if(y == 118){
-				client.player.jump();
-				//TODO: temporarily turn off meteor efly, then turn it back on
+			final int y = client.player.getBlockY();
+			if(targetY == Long.MIN_VALUE) targetY = y;
+			if(targetY != y){
+				client.player.sendMessage(Text.literal("Y-height has changed!"), true);
+				return;
 			}
-			if(y != 119 && y != 120) return;
+//			if(y == 118){
+//				client.player.jump();
+//				//TODO: temporarily turn off meteor efly, then turn it back on
+//			}
+//			if(y != 119 && y != 120) return;
 
 			if(fillHighwayHole(y == 119 ? null : "obsidian")){
 				client.player.sendMessage(Text.literal("Filled a hole"), true);
