@@ -12,8 +12,9 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
-import net.minecraft.screen.ShulkerBoxScreenHandler;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.util.collection.DefaultedList;
 
 //TODO: Maybe preserve relative position of maps (eg., in a 3x3, keep them in a 3x3 in result GUI)?
 
@@ -42,7 +43,7 @@ public final class KeybindMapMove{
 		if(ts - lastStealStore < stealStoreCooldown){/*Main.LOGGER.warn("MapMove cancelled: Cooldown, "+ts+","+lastStealStore+","+stealStoreCooldown); */return;}
 		lastStealStore = ts;
 		//
-		ShulkerBoxScreenHandler sh = sbs.getScreenHandler();
+		final DefaultedList<Slot> slots = sbs.getScreenHandler().slots;
 		int numInInv = 0, emptySlotsInv = 0, sameCountInv = 0;
 		HashMap<Integer, Integer> mapsInPlayerInv = new HashMap<>();// id -> available stackable space
 		for(int i=0; i<36; ++i){
@@ -61,7 +62,7 @@ public final class KeybindMapMove{
 		boolean cantMergeMapsIntoShulker = false;
 		int numInShulk = 0, emptySlotsShulk = 0, sameCountShulk = 0;
 		for(int i=0; i<27; ++i){
-			ItemStack stack = sh.getSlot(i).getStack();
+			ItemStack stack = slots.get(i).getStack();
 			if(stack == null || stack.isEmpty()) ++emptySlotsShulk;
 			else if(isMapArt(stack)){
 				++numInShulk;
@@ -92,31 +93,31 @@ public final class KeybindMapMove{
 		final boolean isShiftClick = Screen.hasShiftDown();
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		if(moveToShulk) for(int i=27; i<63; ++i){
-			if(!isMapArt(sh.getSlot(i).getStack())) continue;
+			if(!isMapArt(slots.get(i).getStack())) continue;
 			if((sameCountInv == 2 || sameCountInv == 3) && !isShiftClick){
 				//clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.PICKUP)); // left-click: pickup all
-				clicks.add(new ClickEvent(sh.syncId, i, 1, SlotActionType.PICKUP)); // right-click: pickup half
+				clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // right-click: pickup half
 			}
-			clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.QUICK_MOVE)); // shift-click: all in slot to shulker
+			clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE)); // shift-click: all in slot to shulker
 			if((sameCountInv == 2 || sameCountInv == 3) && !isShiftClick){
-				clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.PICKUP)); // left-click: put back all on cursor
+				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // left-click: put back all on cursor
 			}
 		}
 		else for(int i=26; i>=0; --i){
 //			if(isMapArt(sh.getSlot(i).getStack())) clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.QUICK_MOVE));
-			if(!isMapArt(sh.getSlot(i).getStack())) continue;
+			if(!isMapArt(slots.get(i).getStack())) continue;
 			if(sameCountShulk > 1 && !isShiftClick){
 				if(sameCountShulk <= 3){
-					clicks.add(new ClickEvent(sh.syncId, i, 1, SlotActionType.PICKUP)); // right-click: pickup half
+					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // right-click: pickup half
 				}
 				else{
-					clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.PICKUP)); // left-click: pickup all
-					clicks.add(new ClickEvent(sh.syncId, i, 1, SlotActionType.PICKUP)); // right-click: place one
+					clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // left-click: pickup all
+					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // right-click: place one
 				}
 			}
-			clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.QUICK_MOVE));
+			clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
 			if(sameCountShulk > 1 && !isShiftClick){
-				clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.PICKUP)); // left-click: place all
+				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // left-click: place all
 			}
 		}
 

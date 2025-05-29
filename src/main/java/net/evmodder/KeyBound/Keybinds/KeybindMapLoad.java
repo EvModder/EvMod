@@ -5,7 +5,6 @@ import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.screen.ScreenHandler;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -13,7 +12,9 @@ import net.minecraft.registry.Registries;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
+import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.world.World;
 
 public final class KeybindMapLoad{
@@ -46,9 +47,9 @@ public final class KeybindMapLoad{
 		if(ts - lastLoad < loadCooldown){Main.LOGGER.warn("MapLoad cancelled: Cooldown"); return;}
 		lastLoad = ts;
 		//
-		ScreenHandler sh = hs.getScreenHandler();
+		final DefaultedList<Slot> slots = hs.getScreenHandler().slots;
 		int numToLoad = 0;
-		for(int i=0; i<sh.slots.size(); ++i) if(isUnloadedMapArt(client.player.clientWorld, sh.getSlot(i).getStack())) ++numToLoad;
+		for(int i=0; i<slots.size(); ++i) if(isUnloadedMapArt(client.player.clientWorld, slots.get(i).getStack())) ++numToLoad;
 		if(numToLoad == 0){Main.LOGGER.warn("MapLoad cancelled: none to load"); return;}
 		//
 		int hotbarButton = getNextUsableHotbarButton(client, -1);
@@ -63,16 +64,16 @@ public final class KeybindMapLoad{
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		int batchSize = 0;
 		final int MAX_BATCH_SIZE = Math.min(usableHotbarSlots, Main.inventoryUtils.MAX_CLICKS/2);
-		for(int i=0; i<sh.slots.size() && numToLoad > 0; ++i){
-			if(!isUnloadedMapArt(client.player.clientWorld, sh.getSlot(i).getStack())) continue;
-			clicks.add(new ClickEvent(sh.syncId, i, hotbarButton, SlotActionType.SWAP));
+		for(int i=0; i<slots.size() && numToLoad > 0; ++i){
+			if(!isUnloadedMapArt(client.player.clientWorld, slots.get(i).getStack())) continue;
+			clicks.add(new ClickEvent(i, hotbarButton, SlotActionType.SWAP));
 			++batchSize;
 			putBackSlots[hotbarButton] = i;
 			--numToLoad;
 
 			hotbarButton = getNextUsableHotbarButton(client, hotbarButton);
 			if(hotbarButton == 9 || numToLoad == 0 || batchSize == MAX_BATCH_SIZE){
-				for(int j=0; j<hotbarButton; ++j) if(putBackSlots[j] != -1) clicks.add(new ClickEvent(sh.syncId, putBackSlots[j], j, SlotActionType.SWAP));
+				for(int j=0; j<hotbarButton; ++j) if(putBackSlots[j] != -1) clicks.add(new ClickEvent(putBackSlots[j], j, SlotActionType.SWAP));
 				hotbarButton = getNextUsableHotbarButton(client, -1);
 				batchSize = 0;
 			}
@@ -81,7 +82,6 @@ public final class KeybindMapLoad{
 		Main.inventoryUtils.executeClicks(clicks,
 				c->client.player == null || (
 						!isUnloadedMapArt(client.player.clientWorld, client.player.getInventory().getStack(c.button())) // Don't send back till loaded
-
 						&& (client.player.getInventory().getStack(c.button()).getItem() == Items.FILLED_MAP ||
 							getNextUsableHotbarButton(client, -1) != c.button() || // Don't start pulling next batch till clicks are available
 							Main.inventoryUtils.MAX_CLICKS-Main.inventoryUtils.addClick(null) >= MAX_BATCH_SIZE)

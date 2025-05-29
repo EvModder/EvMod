@@ -10,9 +10,10 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.screen.slot.SlotActionType;
 
 public class ClickUtils{
-	public record ClickEvent(int syncId, int slotId, int button, SlotActionType actionType){
-		ClickEvent(int slotId, int button, SlotActionType actionType){this(0, slotId, button, actionType);}
-	}
+	public record ClickEvent(int slotId, int button, SlotActionType actionType){}
+//	public record ClickEvent(int syncId, int slotId, int button, SlotActionType actionType){
+//		ClickEvent(int slotId, int button, SlotActionType actionType){this(0, slotId, button, actionType);}
+//	}
 
 	public final int MAX_CLICKS;
 	private final int[] tickDurationArr;
@@ -57,6 +58,7 @@ public class ClickUtils{
 	}
 
 	public void executeClicks(Queue<ClickEvent> clicks, Function<ClickEvent, Boolean> canProceed, Runnable onComplete){
+		final int syncId = MinecraftClient.getInstance().player.currentScreenHandler.syncId;
 		if(clicks.isEmpty()){
 			Main.LOGGER.warn("executeClicks() called with an empty ClickEvent list");
 			onComplete.run();
@@ -64,6 +66,12 @@ public class ClickUtils{
 		}
 		new Timer().schedule(new TimerTask(){
 			@Override public void run(){
+				final MinecraftClient client = MinecraftClient.getInstance();
+				if(client.player.currentScreenHandler.syncId != syncId){
+					Main.LOGGER.error("executeClicks() failed due to syncId changing mid-operation");
+					onComplete.run();
+					return;
+				}
 				//final int availableClicks = MAX_CLICKS - addClick(null);
 				//for(int i=0; i<availableClicks; ++i){
 				while(addClick(null) < MAX_CLICKS){
@@ -71,8 +79,7 @@ public class ClickUtils{
 					ClickEvent click = clicks.remove();
 					try{
 						//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
-						MinecraftClient.getInstance()
-							.interactionManager.clickSlot(click.syncId, click.slotId, click.button, click.actionType, MinecraftClient.getInstance().player);
+						client.interactionManager.clickSlot(syncId, click.slotId, click.button, click.actionType, client.player);
 					}
 					catch(NullPointerException e){
 						Main.LOGGER.error("executeClicks() failed due to null client. Clicks left: "+clicks.size()+", sumClicksInDuration: "+sumClicksInDuration);
@@ -99,6 +106,7 @@ public class ClickUtils{
 			Main.LOGGER.error("Invalid settings! clicks_per_second cannot be < 1 and millis_between clicks cannot be < 0");
 			return;
 		}
+		final int syncId = MinecraftClient.getInstance().player.currentScreenHandler.syncId;
 		if(MILLIS_BETWEEN_CLICKS == 0){
 			new Timer().schedule(new TimerTask(){
 				int clicksInLastSecond = 0;
@@ -109,7 +117,7 @@ public class ClickUtils{
 					while(clicksInLastSecond < MAX_CLICKS_PER_SECOND && canProceed.apply(clicks.peek())){
 						ClickEvent click = clicks.remove();
 						try{
-							client.interactionManager.clickSlot(click.syncId, click.slotId, click.button, click.actionType, client.player);
+							client.interactionManager.clickSlot(syncId, click.slotId, click.button, click.actionType, client.player);
 						}
 						catch(NullPointerException e){
 							Main.LOGGER.error("executeClicks()-MODE:c/ms(array) failure due to null client. Clicks left: "+clicks.size());
@@ -131,7 +139,7 @@ public class ClickUtils{
 				if(!canProceed.apply(clicks.peek())) return;
 				ClickEvent click = clicks.remove();
 				try{
-					client.interactionManager.clickSlot(click.syncId, click.slotId, click.button, click.actionType, client.player);
+					client.interactionManager.clickSlot(syncId, click.slotId, click.button, click.actionType, client.player);
 				}
 				catch(NullPointerException e){
 					Main.LOGGER.error("executeClicks()-MODE:c/ms(simple) failure due to null client. Clicks left: "+clicks.size());
@@ -148,7 +156,7 @@ public class ClickUtils{
 					ClickEvent click = clicks.remove();
 					//Main.LOGGER.info("click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
 					try{
-						client.interactionManager.clickSlot(click.syncId, click.slotId, click.button, click.actionType, client.player);
+						client.interactionManager.clickSlot(syncId, click.slotId, click.button, click.actionType, client.player);
 					}
 					catch(NullPointerException e){
 						Main.LOGGER.error("executeClicks()-MODE:ms/c failure due to null client. Clicks left: "+clicks.size());

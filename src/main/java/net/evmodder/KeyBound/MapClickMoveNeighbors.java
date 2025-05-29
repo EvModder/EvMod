@@ -128,10 +128,9 @@ public abstract class MapClickMoveNeighbors{
 			if(tempSlot == -1) Main.LOGGER.warn("MapMoveClick: No available slot with which to free up offhand");
 		}
 
-		final int syncId = player.currentScreenHandler.syncId;
 //		final MinecraftClient client = MinecraftClient.getInstance();
 		final ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
-		if(tempSlot != -1) clicks.add(new ClickEvent(syncId, tempSlot, hotbarButton, SlotActionType.SWAP));
+		if(tempSlot != -1) clicks.add(new ClickEvent(tempSlot, hotbarButton, SlotActionType.SWAP));
 
 		if(tl > tlDest){
 			Main.LOGGER.info("MapMoveClick: Moving all, starting from TL");
@@ -139,8 +138,8 @@ public abstract class MapClickMoveNeighbors{
 				int s = tl + i*9 + j, d = tlDest + i*9 + j;
 				if(d == destSlot) continue;
 				Main.LOGGER.warn("MapMoveClick: adding 2 clicks: "+s+"->"+d+", hb:"+hotbarButton);
-				clicks.add(new ClickEvent(syncId, s, hotbarButton, SlotActionType.SWAP));
-				clicks.add(new ClickEvent(syncId, d, hotbarButton, SlotActionType.SWAP));
+				clicks.add(new ClickEvent(s, hotbarButton, SlotActionType.SWAP));
+				clicks.add(new ClickEvent(d, hotbarButton, SlotActionType.SWAP));
 //				client.interactionManager.clickSlot(syncId, s, hotbarButton, SlotActionType.SWAP, player);
 //				client.interactionManager.clickSlot(syncId, d, hotbarButton, SlotActionType.SWAP, player);
 			}
@@ -151,13 +150,13 @@ public abstract class MapClickMoveNeighbors{
 				int s = br - i*9 - j, d = brDest - i*9 - j;
 				if(d == destSlot) continue;
 				Main.LOGGER.warn("MapMoveClick: adding 2 clicks: "+s+"->"+d+", hb:"+hotbarButton);
-				clicks.add(new ClickEvent(syncId, s, hotbarButton, SlotActionType.SWAP));
-				clicks.add(new ClickEvent(syncId, d, hotbarButton, SlotActionType.SWAP));
+				clicks.add(new ClickEvent(s, hotbarButton, SlotActionType.SWAP));
+				clicks.add(new ClickEvent(d, hotbarButton, SlotActionType.SWAP));
 //				client.interactionManager.clickSlot(syncId, s, hotbarButton, SlotActionType.SWAP, player);
 //				client.interactionManager.clickSlot(syncId, d, hotbarButton, SlotActionType.SWAP, player);
 			}
 		}
-		if(tempSlot != -1) clicks.add(new ClickEvent(syncId, tempSlot, hotbarButton, SlotActionType.SWAP));
+		if(tempSlot != -1) clicks.add(new ClickEvent(tempSlot, hotbarButton, SlotActionType.SWAP));
 
 		final int numClicks = clicks.size();
 		ongoingClickMove = true;

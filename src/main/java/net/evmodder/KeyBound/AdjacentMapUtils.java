@@ -17,6 +17,7 @@ public abstract class AdjacentMapUtils{
 
 	static final String simplifyPosStr(String rawPos){
 		String pos = Normalizer.normalize(rawPos, Normalizer.Form.NFD).toUpperCase();
+		pos = pos.replace("┌", "TL").replace("┐", "TR").replace("└", "BL").replace("┘", "BR");
 		pos = pos.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", " ").trim().replaceAll("\\s+", " ");
 		pos = pos.replace("TOP", "T").replace("BOTTOM", "B").replace("LEFT", "L").replace("RIGHT", "R").replace("MIDDLE", "M");
 		pos = pos.replace("UP", "T").replace("DOWN", "B");
