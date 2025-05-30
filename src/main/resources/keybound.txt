@@ -109,7 +109,7 @@ organize_inventory.EvInv: [
   44:enchanted_golden_apple, 44:golden_carrot, 44:cooked_beef,
 
   # Inventory top LHS
-  9:elytra, 10:ender_chest,
+  9:netherite_chestplate, 9:diamond_chestplate, 9:elytra, 10:ender_chest,
   11:totem_of_undying, 12:totem_of_undying, 13:totem_of_undying,
 
   # Extra rockets, food

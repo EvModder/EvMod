@@ -15,7 +15,7 @@ public final class KeybindAIETravelHelper{
 	private boolean isEnabled;
 	private final MinecraftClient client;
 	private int unsafeDur = 20, kickDur = 5, unsafeYinEnd = 80, kickYinEnd = 50;
-	private final long safeKickDelay = 10_000l;
+	private final long SAFE_KICK_DELAY = 10_000l;
 	private long enabledTs, stoppedFlyingTs;
 	private final boolean waitForSafePitch = true, kickIfStopsFlying = true;
 	private final float safePitchUpper = -1, safePitchLower = -10, setSafePitch = -5;
@@ -73,7 +73,7 @@ public final class KeybindAIETravelHelper{
 				if(pitch > safePitchUpper || pitch < safePitchLower) client.player.setPitch(setSafePitch);
 				if(!goingDownInEnd){
 					if(stoppedFlyingTs == 0) stoppedFlyingTs = System.currentTimeMillis();
-					final long countDownToKick = safeKickDelay - (System.currentTimeMillis() - enabledTs);
+					final long countDownToKick = SAFE_KICK_DELAY - (System.currentTimeMillis() - stoppedFlyingTs);
 					if(countDownToKick > 0){
 						client.player.sendMessage(Text.literal("AIE helper will disconnect due to not-flying in: " + TextUtils.formatTime(countDownToKick)), true);
 						return;
@@ -106,7 +106,7 @@ public final class KeybindAIETravelHelper{
 					}
 				}
 				if(!atKickY && dur > kickDur){
-					final long countDownToKick = safeKickDelay - (System.currentTimeMillis() - enabledTs);
+					final long countDownToKick = SAFE_KICK_DELAY - (System.currentTimeMillis() - enabledTs);
 					if(countDownToKick > 0){
 						client.player.sendMessage(Text.literal("Current AIE helper settings will trigger disconnect due to too low "
 								+(atUnsafeY?"Y":"dur")+" in: "+TextUtils.formatTime(countDownToKick)), true);
