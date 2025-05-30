@@ -50,7 +50,7 @@ import net.minecraft.world.World;
 public final class Keybind2b2tHighwayTravelHelper{
 	private boolean isEnabled;
 	private final MinecraftClient client;
-	private long enabledTs, targetY = Long.MIN_VALUE;
+	private long enabledTs, targetY;
 	private final long ENABLE_DELAY = 1500l;
 
 	private boolean hasRightClickFunction(Block block) {
@@ -363,6 +363,7 @@ public final class Keybind2b2tHighwayTravelHelper{
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
 			if(enabledTs != 0 && System.currentTimeMillis() - enabledTs > ENABLE_DELAY){
 				isEnabled = true;
+				targetY = Long.MIN_VALUE;
 				enabledTs = 0;
 				client.player.sendMessage(Text.literal("2b2t Travel Helper: enabled"), true);
 			}
