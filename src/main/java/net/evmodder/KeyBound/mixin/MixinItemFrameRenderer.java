@@ -56,10 +56,10 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 
 		if(!Main.mapColorIFrame) return; // Feature is disabled
 		if(!MinecraftClient.isHudEnabled()) return;
-		if(squaredDistanceToCamera > 20*20) return;
 
 		if(stack.getCustomName() == null || !state.locked || newMapart){
-			if(!newMapart && !client.player.canSee(itemFrameEntity)) return; // Skip if player doesn't have LOS to the map (unless uncollected)
+			///Skip if player doesn't have LOS or IF is far enough away
+			if(!newMapart && (!client.player.canSee(itemFrameEntity) || squaredDistanceToCamera > 20*20)) return;
 			if(!isLookngInGeneralDirection(itemFrameEntity)) return;
 			cir.setReturnValue(true);
 		}

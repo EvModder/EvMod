@@ -272,6 +272,7 @@ public final class Keybind2b2tHighwayTravelHelper{
 	private boolean isMining;
 	private boolean putOutFireAndMineObstacles(){
 		BlockPos bp = client.player.getBlockPos();
+		if(bp.getY() == targetY+1) bp = bp.offset(Direction.DOWN);
 		if(client.world.getBlockState(bp).getBlock() instanceof AbstractFireBlock){
 			client.interactionManager.updateBlockBreakingProgress(bp, getBlockBreakingSide(bp));
 			client.player.sendMessage(Text.literal("Put out a fire"), true);
@@ -286,27 +287,29 @@ public final class Keybind2b2tHighwayTravelHelper{
 		int dz = (int)Math.round(dir.z);
 		ArrayList<BlockPos> mineSpots = new ArrayList<>();
 		Vec3d pos = client.player.getPos();
+		if(pos.getY() > targetY) pos = new Vec3d(pos.x, targetY, pos.z);
 		if(dx != 0){
-			mineSpots.add(bp.add(dx, 0, 0));// mineSpots.add(bp.add(dx, 1, 0)); mineSpots.add(bp.add(dx, 2, 0));
-			int ddz = Math.round(pos.getZ()) > pos.getZ() ? 1 : -1;
-			mineSpots.add(bp.add(dx, 0, ddz)); mineSpots.add(bp.add(dx, 1, ddz)); mineSpots.add(bp.add(dx, 2, ddz));
+			mineSpots.add(bp.add(dx, 0, 0));
+			if(dz != 0) mineSpots.add(bp.add(dx, 0, Math.round(pos.getZ()) > pos.getZ() ? 1 : -1));
+			else if(pos.getZ()+.3 > Math.floor(pos.getZ())+1) mineSpots.add(bp.add(dx, 0, 1));
+			else if(pos.getZ()-.3 < Math.floor(pos.getZ())) mineSpots.add(bp.add(dx, 0, -1));
 		}
 		if(dz != 0){
-			mineSpots.add(bp.add(0, 0, dz));// mineSpots.add(bp.add(0, 1, dz)); mineSpots.add(bp.add(0, 2, dz));
-			int ddx = Math.round(pos.getX()) > pos.getX() ? 1 : -1;
-			mineSpots.add(bp.add(ddx, 0, dz));// mineSpots.add(bp.add(ddx, 1, dz)); mineSpots.add(bp.add(ddx, 2, dz));
+			mineSpots.add(bp.add(0, 0, dz));
+			if(dx != 0) mineSpots.add(bp.add(Math.round(pos.getZ()) > pos.getZ() ? 1 : -1, 0, dz));
+			else if(pos.getX()+.3 > Math.floor(pos.getX())+1) mineSpots.add(bp.add(1, 0, dz));
+			else if(pos.getX()-.3 < Math.floor(pos.getX())) mineSpots.add(bp.add(-1, 0, -dz));
 		}
-		if(dx != 0 && dz != 0){
-			mineSpots.add(bp.add(dx, 0, dz));// mineSpots.add(bp.add(dx, 1, dz)); mineSpots.add(bp.add(dx, 2, dz));
-		}
-		mineSpots.add(bp);// mineSpots.add(bp.add(0, 1, 0)); mineSpots.add(bp.add(0, 2, 0));
+		mineSpots.add(bp);
+		if(dx != 0 && dz != 0) mineSpots.add(bp.add(dx, 0, dz));
 
+		BlockState bs = null;
 		for(BlockPos bpDig : mineSpots){
 			boolean foundDig = false;
 			for(int i=0; i<2; ++i){
 				if(i==1) bpDig = bpDig.add(0, 2, 0);
 				else if(i==2) bpDig = bpDig.add(0, -1, 0);
-				BlockState bs = client.world.getBlockState(bpDig);
+				bs = client.world.getBlockState(bpDig);
 				if(bs.getBlock() != Blocks.BEDROCK && !bs.getCollisionShape(client.world, bpDig).isEmpty()){foundDig = true; break;}
 			}
 			if(foundDig == false) continue;
@@ -320,7 +323,7 @@ public final class Keybind2b2tHighwayTravelHelper{
 			isMining = true;
 			//if(client.player.getMainHandStack().getItem() instanceof PickaxeItem) return false;
 			client.interactionManager.updateBlockBreakingProgress(bpDig, getBlockBreakingSide(bpDig));
-			client.player.sendMessage(Text.literal("Mining block: ").copy().append(client.world.getBlockState(bpDig).getBlock().getName())
+			client.player.sendMessage(Text.literal("Mining: ").copy().append(bs.getBlock().getName())
 //					.append(" yaw:"+client.player.getYaw()+", dirX:"+dir.x+",dirZ:"+dir.z+", xyz: ")
 //					.append(bp.getX()+","+bp.getY()+","+bp.getZ())
 					, true);
