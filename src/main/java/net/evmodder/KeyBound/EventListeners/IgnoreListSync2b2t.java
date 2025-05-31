@@ -26,8 +26,8 @@ public class IgnoreListSync2b2t{
 		else ignoreList.remove(ignoredUUID);
 		if(syncMyIgnored){
 			Main.remoteSender.sendBotMessage(
-					ignored ? Command.DB_PLAYER_STORE_IGNORE : Command.DB_PLAYER_STORE_UNIGNORE,
-					/*udp=*/true, 2000, PacketHelper.toByteArray(ignoredUUID), /*recv=*/null);
+					ignored ? Command.DB_PLAYER_STORE_IGNORE : Command.DB_PLAYER_STORE_IGNORE,
+					/*udp=*/true, 2000, PacketHelper.toByteArray(client.player.getUuid(), ignoredUUID), /*recv=*/null);
 		}
 	}
 
@@ -71,8 +71,12 @@ public class IgnoreListSync2b2t{
 			//Main.LOGGER.info("GAME Message: "+msg.getString());
 			final String literal = msg.getString();
 			if(literal == null) return;
-			if(literal.startsWith("Now ignoring ")) handleIgnoreEvent(literal.substring(13), true);
-			if(literal.startsWith("No longer ignoring ")) handleIgnoreEvent(literal.substring(19, literal.length()-1), false);
+			if(literal.startsWith("Permanently ignoring ") && literal.endsWith(". This is saved in /ignorelist."))
+				handleIgnoreEvent(literal.substring(21, literal.length()-31), true);
+			if(literal.startsWith("No longer permanently ignoring "))
+				handleIgnoreEvent(literal.substring(31), false);
+//			if(literal.startsWith("Now ignoring ")) handleIgnoreEvent(literal.substring(13), true);
+//			if(literal.startsWith("No longer ignoring ")) handleIgnoreEvent(literal.substring(19, literal.length()-1), false);
 		});
 	}
 }
