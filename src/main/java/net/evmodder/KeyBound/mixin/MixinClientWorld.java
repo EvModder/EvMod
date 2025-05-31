@@ -46,12 +46,11 @@ public abstract class MixinClientWorld{
 
 	@Inject(method="putClientsideMapState", at=@At("HEAD"))
 	private void e(MapIdComponent id, MapState state, CallbackInfo ci){
-		//TODO: see if possible to pre-load MapState when joining 2b2t
 		if(!Main.mapartDb) return;
+		if(!state.locked) return; // TODO: supporting unlocked maps could waste a LOT of disk with 1-pixel changes while building
 		final String addr = client != null && client.getCurrentServerEntry() != null ? client.getCurrentServerEntry().address : null;
 		if(addr == null) return;
 		if(saveAddr != null && !saveAddr.equals(addr)) return;
-		//if(world == null) Main.LOGGER.info("MapDB: wtf, world instance is null???");
 		final UUID uuid = UUID.nameUUIDFromBytes(state.colors);
 		synchronized(mapsSaved){
 			HashSet<UUID> savedPerServer = mapsSaved.get(addr);
@@ -69,8 +68,15 @@ public abstract class MixinClientWorld{
 					if(mapsInTransit.isEmpty() && mapsToSave.isEmpty()) saveAddr = null;
 					return;
 				}
-				if(msg.length == 0 || msg[0] == 0) Main.LOGGER.info("MapDB: Server already contained map"+id.id());
-				else Main.LOGGER.info("MapDB: Server indicated map"+id.id()+" is a new addition");
+				if(msg.length != 1){
+					Main.LOGGER.warn("MapDB: Got unexpected response from server: "+new String(msg));
+					if(mapsInTransit.isEmpty() && mapsToSave.isEmpty()) saveAddr = null;
+					return;
+				}
+				else{
+					if(msg[0] == 0) Main.LOGGER.info("MapDB: Server already contained map"+id.id());
+					else Main.LOGGER.info("MapDB: Server indicated map"+id.id()+" is a new addition");
+				}
 
 				if(!mapsToSave.add(uuid) || mapsToSave.size() > 1) return;
 			}

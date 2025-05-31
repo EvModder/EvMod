@@ -41,6 +41,7 @@ import net.minecraft.client.MinecraftClient;
 public class Main implements ClientModInitializer{
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
+	// see if possible to pre-load MapStates when joining a server (to reduce lag?)
 	// Reference/depend on https://github.com/Siphalor/amecs-api
 	// majorly improve TravelHelper (mining blocks only in way, specifically non-diag & mining 3 high tunnel)
 	//SendOnServerJoin configured per-server (via ip?)
@@ -73,7 +74,7 @@ public class Main implements ClientModInitializer{
 	public static ClickUtils inventoryUtils;
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
-	public static boolean rcHotbarHUD, mapartDb=true, mapartDbContact, mapColorHUD, mapColorIFrame, totemShowTotalCount, notifyIfNotInGroup=true;
+	public static boolean rcHotbarHUD, mapartDb, mapartDbContact, mapColorHUD, mapColorIFrame, totemShowTotalCount, notifyIfNotInGroup=true;
 	public static long joinedServerTimestamp;
 
 	private void loadConfig(){

@@ -358,7 +358,7 @@ public final class Keybind2b2tHighwayTravelHelper{
 			if(isEnabled || enabledTs != 0){
 				isEnabled = false;
 				enabledTs = 0;
-				if(isEnabled) client.player.sendMessage(Text.literal("2b2t Travel Helper: disabled"), true);
+				client.player.sendMessage(Text.literal("2b2t Travel Helper: disabled"), true);
 			}
 			else enabledTs = System.currentTimeMillis();
 		}));
