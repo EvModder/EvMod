@@ -269,39 +269,43 @@ public final class Keybind2b2tHighwayTravelHelper{
 //		Main.LOGGER.info("Selected hotbar pickaxe");
 		return true;
 	}
-	private boolean isMining;
+	private int isMining;
 	private boolean putOutFireAndMineObstacles(){
 		BlockPos bp = client.player.getBlockPos();
 		if(bp.getY() == targetY+1) bp = bp.offset(Direction.DOWN);
-		if(client.world.getBlockState(bp).getBlock() instanceof AbstractFireBlock){
-			client.interactionManager.updateBlockBreakingProgress(bp, getBlockBreakingSide(bp));
-			client.player.sendMessage(Text.literal("Put out a fire"), true);
-//			Main.LOGGER.info("Put out a fire");
-			return true;
-		}
-		// Don't try to mine blocks if the player isn't stuck
-		if(client.player.prevX != client.player.getX() || client.player.prevZ != client.player.getZ()) return false;
 
 		Vec3d dir = Vec3d.fromPolar(0, client.player.getYaw());
 		int dx = (int)Math.round(dir.x);
 		int dz = (int)Math.round(dir.z);
+		final boolean diag = dx != 0 && dz != 0;
+		for(int i=0; i<(diag ? 1 : 3); ++i){
+			BlockPos aheadPos = bp.add(i*dx, 0, i*dz);
+			if(client.world.getBlockState(aheadPos).getBlock() instanceof AbstractFireBlock){
+				client.interactionManager.updateBlockBreakingProgress(aheadPos, getBlockBreakingSide(aheadPos));
+				client.player.sendMessage(Text.literal("Put out a fire"), true);
+				return true;
+			}
+		}
+		// Don't try to mine blocks if the player isn't stuck
+		if(client.player.prevX != client.player.getX() || client.player.prevZ != client.player.getZ()) return false;
+
 		ArrayList<BlockPos> mineSpots = new ArrayList<>();
 		Vec3d pos = client.player.getPos();
 		if(pos.getY() > targetY) pos = new Vec3d(pos.x, targetY, pos.z);
 		if(dx != 0){
 			mineSpots.add(bp.add(dx, 0, 0));
-			if(dz != 0) mineSpots.add(bp.add(dx, 0, Math.round(pos.getZ()) > pos.getZ() ? 1 : -1));
+			if(diag) mineSpots.add(bp.add(dx, 0, Math.round(pos.getZ()) > pos.getZ() ? 1 : -1));
 			else if(pos.getZ()+.3 > Math.floor(pos.getZ())+1) mineSpots.add(bp.add(dx, 0, 1));
 			else if(pos.getZ()-.3 < Math.floor(pos.getZ())) mineSpots.add(bp.add(dx, 0, -1));
 		}
 		if(dz != 0){
 			mineSpots.add(bp.add(0, 0, dz));
-			if(dx != 0) mineSpots.add(bp.add(Math.round(pos.getZ()) > pos.getZ() ? 1 : -1, 0, dz));
+			if(diag) mineSpots.add(bp.add(Math.round(pos.getZ()) > pos.getZ() ? 1 : -1, 0, dz));
 			else if(pos.getX()+.3 > Math.floor(pos.getX())+1) mineSpots.add(bp.add(1, 0, dz));
 			else if(pos.getX()-.3 < Math.floor(pos.getX())) mineSpots.add(bp.add(-1, 0, -dz));
 		}
 		mineSpots.add(bp);
-		if(dx != 0 && dz != 0) mineSpots.add(bp.add(dx, 0, dz));
+		if(diag) mineSpots.add(bp.add(dx, 0, dz));
 
 		BlockState bs = null;
 		for(BlockPos bpDig : mineSpots){
@@ -320,7 +324,7 @@ public final class Keybind2b2tHighwayTravelHelper{
 //			if(i == 3) continue;
 
 			if(selectPickaxeInHotbar()) return true;
-			isMining = true;
+			if(isMining == 0) isMining = 4;
 			//if(client.player.getMainHandStack().getItem() instanceof PickaxeItem) return false;
 			client.interactionManager.updateBlockBreakingProgress(bpDig, getBlockBreakingSide(bpDig));
 			client.player.sendMessage(Text.literal("Mining: ").copy().append(bs.getBlock().getName())
@@ -330,9 +334,12 @@ public final class Keybind2b2tHighwayTravelHelper{
 //			Main.LOGGER.info("Mining block: "+client.world.getBlockState(bp).getBlock().getName().getLiteralString());
 			return true;
 		}
-		if(isMining){
-			isMining = false;
-			selectBlocksInHotbar(null);
+		if(isMining > 0){
+			if(--isMining == 0){
+				selectBlocksInHotbar(null);
+				client.player.sendMessage(Text.literal("Mined: ").copy().append(bs.getBlock().getName()), true);
+			}
+			return true; // Wait a bit before declaring it done
 		}
 		return false;
 	}

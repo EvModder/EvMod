@@ -14,7 +14,7 @@ import net.minecraft.screen.slot.SlotActionType;
 public final class KeybindAIETravelHelper{
 	private boolean isEnabled;
 	private final MinecraftClient client;
-	private int unsafeDur = 20, kickDur = 5, unsafeYinEnd = 80, kickYinEnd = 50;
+	private int unsafeDur = 20, kickDur = 5, unsafeYinEnd = 60, kickYinEnd = 40;
 	private final long SAFE_KICK_DELAY = 10_000l;
 	private long enabledTs, stoppedFlyingTs;
 	private final boolean waitForSafePitch = true, kickIfStopsFlying = true;
