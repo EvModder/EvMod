@@ -106,7 +106,8 @@ organize_inventory.EvInv: [
   40:fishing_rod,
 
   # Hotbar RHS
-  44:enchanted_golden_apple, 44:golden_carrot, 44:cooked_beef,
+  44:golden_carrot, 44:cooked_beef, 44:enchanted_golden_apple,
+  43:enchanted_golden_apple,
 
   # Inventory top LHS
   9:netherite_chestplate, 9:diamond_chestplate, 9:elytra, 10:ender_chest,
@@ -114,5 +115,8 @@ organize_inventory.EvInv: [
 
   # Extra rockets, food
   30:firework_rocket, 21:firework_rocket,
-  35:enchanted_golden_apple, 35:golden_carrot, 35:cooked_beef
+  35:enchanted_golden_apple, 35:golden_carrot, 35:cooked_beef,
+
+  # Fill extra hotbar slots with crystals
+  36:end_crystal, 37:end_crystal, 38:end_crystal, 39:end_crystal, 40:end_crystal, 41:end_crystal, 42:end_crystal
 ]

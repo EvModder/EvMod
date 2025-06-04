@@ -3,8 +3,11 @@ package net.evmodder.KeyBound;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.item.map.MapState;
 import net.minecraft.screen.slot.Slot;
 
 public abstract class AdjacentMapUtils{
@@ -18,7 +21,7 @@ public abstract class AdjacentMapUtils{
 	}
 
 	public static final String simplifyPosStr(String rawPos){
-		String pos = Normalizer.normalize(rawPos, Normalizer.Form.NFD).toUpperCase();
+		String pos = Normalizer.normalize(rawPos, Normalizer.Form.NFKD).toUpperCase();
 		pos = pos.replace("┌", "TL").replace("┐", "TR").replace("└", "BL").replace("┘", "BR");
 		pos = pos.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", " ").trim().replaceAll("\\s+", " ");
 		pos = pos.replace("TOP", "T").replace("BOTTOM", "B").replace("LEFT", "L").replace("RIGHT", "R").replace("MIDDLE", "M");
@@ -73,7 +76,7 @@ public abstract class AdjacentMapUtils{
 	public static final boolean isMapArtWithCount(final ItemStack stack, final int count){
 		return stack.getCount() == count && stack.getItem() == Items.FILLED_MAP;
 	}
-	public static final RelatedMapsData getRelatedMapsByName(List<Slot> slots, String sourceName, final int count){
+	public static final RelatedMapsData getRelatedMapsByName(List<Slot> slots, String sourceName, final int count, final boolean locked){
 		List<Integer> relatedMapSlots = new ArrayList<>();
 		int prefixLen = -1, suffixLen = -1;
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
@@ -81,6 +84,10 @@ public abstract class AdjacentMapUtils{
 		for(int i=0; i<slots.size(); ++i){
 			final ItemStack item = slots.get(i).getStack();
 			if(item.getCustomName() == null || !isMapArtWithCount(item, count)) continue;
+
+			final MapIdComponent mapId = item.get(DataComponentTypes.MAP_ID);
+			final MapState state = mapId == null ? null : item.getHolder().getWorld().getMapState(mapId);
+			if(state != null && state.locked != locked) continue;
 
 			final String name = item.getCustomName().getLiteralString();
 			if(name == null) continue;
@@ -117,6 +124,7 @@ public abstract class AdjacentMapUtils{
 		//Main.LOGGER.info("MapAdjUtil: prefixLen="+prefixLen+", suffixLen="+suffixLen);
 		final String sourcePosStr = simplifyPosStr(sourceName.substring(prefixLen, sourceName.length()-suffixLen));
 		final boolean sourcePosIs2d = sourcePosStr.indexOf(' ') != -1;
+		Main.LOGGER.info("AdjacentMapUtils:sourcePosStr: "+sourcePosStr);
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
 //			final int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
 		for(int i=0; i<slots.size(); ++i){
