@@ -76,7 +76,7 @@ public abstract class AdjacentMapUtils{
 	public static final boolean isMapArtWithCount(final ItemStack stack, final int count){
 		return stack.getCount() == count && stack.getItem() == Items.FILLED_MAP;
 	}
-	public static final RelatedMapsData getRelatedMapsByName(List<Slot> slots, String sourceName, final int count, final boolean locked){
+	public static final RelatedMapsData getRelatedMapsByName(List<Slot> slots, String sourceName, final int count, final Boolean locked){
 		List<Integer> relatedMapSlots = new ArrayList<>();
 		int prefixLen = -1, suffixLen = -1;
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
@@ -85,9 +85,11 @@ public abstract class AdjacentMapUtils{
 			final ItemStack item = slots.get(i).getStack();
 			if(item.getCustomName() == null || !isMapArtWithCount(item, count)) continue;
 
-			final MapIdComponent mapId = item.get(DataComponentTypes.MAP_ID);
-			final MapState state = mapId == null ? null : item.getHolder().getWorld().getMapState(mapId);
-			if(state != null && state.locked != locked) continue;
+			if(locked != null){
+				final MapIdComponent mapId = item.get(DataComponentTypes.MAP_ID);
+				final MapState state = mapId == null ? null : item.getHolder().getWorld().getMapState(mapId);
+				if(state != null && state.locked != locked) continue;
+			}
 
 			final String name = item.getCustomName().getLiteralString();
 			if(name == null) continue;

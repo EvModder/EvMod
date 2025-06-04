@@ -35,7 +35,7 @@ public abstract class MapClickMoveNeighbors{
 		Main.LOGGER.info("MapMoveClick: moveNeighbors() called");
 		final List<Slot> slots = player.currentScreenHandler.slots;
 		final String movedName = mapMoved.getCustomName().getLiteralString();
-		final RelatedMapsData data =  AdjacentMapUtils.getRelatedMapsByName(slots, movedName, mapMoved.getCount());
+		final RelatedMapsData data =  AdjacentMapUtils.getRelatedMapsByName(slots, movedName, mapMoved.getCount(), null);
 		if(data.prefixLen() == -1) return;
 		data.slots().removeIf(i -> {
 			if(i == destSlot) return true;
