@@ -92,11 +92,12 @@ public final class KeybindMapMove{
 		//
 		final boolean isShiftClick = Screen.hasShiftDown();
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
+		HashMap<ClickEvent, Integer> reserveClicks = new HashMap<>();
 		if(moveToShulk) for(int i=27; i<63; ++i){
 			if(!isMapArt(slots.get(i).getStack())) continue;
 			if((sameCountInv == 2 || sameCountInv == 3) && !isShiftClick){
-				//clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.PICKUP)); // left-click: pickup all
 				clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // right-click: pickup half
+				if(Main.inventoryUtils.MAX_CLICKS >= 3) reserveClicks.put(clicks.peekLast(), 3);
 			}
 			clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE)); // shift-click: all in slot to shulker
 			if((sameCountInv == 2 || sameCountInv == 3) && !isShiftClick){
@@ -109,9 +110,11 @@ public final class KeybindMapMove{
 			if(sameCountShulk > 1 && !isShiftClick){
 				if(sameCountShulk <= 3){
 					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // right-click: pickup half
+					if(Main.inventoryUtils.MAX_CLICKS >= 3) reserveClicks.put(clicks.peekLast(), 3);
 				}
 				else{
 					clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // left-click: pickup all
+					if(Main.inventoryUtils.MAX_CLICKS >= 4) reserveClicks.put(clicks.peekLast(), 4);
 					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // right-click: place one
 				}
 			}
@@ -122,7 +125,12 @@ public final class KeybindMapMove{
 		}
 
 		ongoingStealStore = true;
-		Main.inventoryUtils.executeClicks(clicks, /*canProceed=*/_0->true,
+		Main.inventoryUtils.executeClicks(clicks,
+				c->{
+					// Don't start cursor-pickup move operation if we can't complete it in 1 go
+					final Integer clicksNeeded = reserveClicks.get(c);
+					return clicksNeeded == null || clicksNeeded <= Main.inventoryUtils.MAX_CLICKS - Main.inventoryUtils.addClick(null);
+				},
 				()->{
 					Main.LOGGER.info("MapMove: DONE!");
 					ongoingStealStore = false;
