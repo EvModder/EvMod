@@ -19,13 +19,13 @@ mapart_placement_helper: true
 mapart_placement_helper_use_name: true
 mapart_placement_helper_use_image: true
 mapart_group_command: true
-mapart_group_track_locked: true
+mapart_group_include_unlocked: true
 mapart_database: true
 mapart_database_share_contact: true
 
-unlocked_map_red_tooltip: true
-unlocked_map_red_hotbarhud: true
-unlocked_map_red_itemframe: true
+unlocked_map_red_name_in_tooltip: true
+unlocked_map_red_name_in_hotbarhud: true
+unlocked_map_red_name_in_itemframe: true
 
 #========== Added Visuals ==========#
 totem_total_count: true
@@ -53,8 +53,7 @@ scroll_order: [
 # TODO: maybe rename as "my_id" and "my_token"?
 client_id: 1
 client_key: some_unique_key
-remote_addr: altcraft.net
-remote_port: 14441
+remote_address: evmodder.net:14441
 
 
 # List of remote messages

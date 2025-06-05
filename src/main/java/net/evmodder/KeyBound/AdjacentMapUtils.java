@@ -9,6 +9,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.world.World;
 
 public abstract class AdjacentMapUtils{
 	public record RelatedMapsData(int prefixLen, int suffixLen, List<Integer> slots){}
@@ -22,7 +23,7 @@ public abstract class AdjacentMapUtils{
 
 	public static final String simplifyPosStr(String rawPos){
 		String pos = Normalizer.normalize(rawPos, Normalizer.Form.NFKD).toUpperCase();
-		pos = pos.replace("┌", "TL").replace("┐", "TR").replace("└", "BL").replace("┘", "BR");
+		pos = pos.replace("\u250c", "TL").replace("\u2510", "TR").replace("\u2514", "BL").replace("\u2518", "BR");
 		pos = pos.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", " ").trim().replaceAll("\\s+", " ");
 		pos = pos.replace("TOP", "T").replace("BOTTOM", "B").replace("LEFT", "L").replace("RIGHT", "R").replace("MIDDLE", "M");
 		pos = pos.replace("UP", "T").replace("DOWN", "B");
@@ -54,6 +55,8 @@ public abstract class AdjacentMapUtils{
 		boolean lastAcross = true, lastUp = true, lastDown = true;
 		final int incr = lr_tb ? 128 : 1, tlStart = lr_tb ? 127 : tl.length-128;
 		final int tlEnd = tl.length - tlStart;
+		int conseqAcrossMatchCnt = 0;
+		byte conseqAcrossColor = -1;
 		for(int i=0; i<tlEnd; i+=incr){
 			// Score of [0,3] per pixel
 			final boolean sameAcross = tl[i+tlStart] == br[i];
@@ -61,13 +64,19 @@ public abstract class AdjacentMapUtils{
 			final boolean sameDown = i+incr < tl.length && tl[i+tlStart] == br[i+incr];
 			if(!sameAcross && !sameUp && !sameDown) continue;
 			if(sameAcross){
+				if(br[i] != conseqAcrossColor) conseqAcrossMatchCnt = 1;
+				else if(++conseqAcrossMatchCnt > 8) continue; // Avoid edges that match TOO perfectly - mitigates over-preference for imgs with solid outlines
 				score += 2;
 				if(sameAcross == lastAcross) score += 1;
 			}
-			else if(sameUp || sameDown){
-				score += 1;
-				if((sameUp && sameUp == lastUp) || (sameDown && sameDown == lastDown)) score += 1;
+			else{
+				conseqAcrossMatchCnt = 0;
+				if(sameUp || sameDown){
+					score += 1;
+					if((sameUp && sameUp == lastUp) || (sameDown && sameDown == lastDown)) score += 1;
+				}
 			}
+			conseqAcrossColor = br[i];
 			lastAcross = sameAcross; lastUp = sameUp; lastDown = sameDown;
 		}
 		return score; // Maximum score = 3*128 = 384
@@ -76,7 +85,7 @@ public abstract class AdjacentMapUtils{
 	public static final boolean isMapArtWithCount(final ItemStack stack, final int count){
 		return stack.getCount() == count && stack.getItem() == Items.FILLED_MAP;
 	}
-	public static final RelatedMapsData getRelatedMapsByName(List<Slot> slots, String sourceName, final int count, final Boolean locked){
+	public static final RelatedMapsData getRelatedMapsByName(List<Slot> slots, String sourceName, final int count, final Boolean locked, final World world){
 		List<Integer> relatedMapSlots = new ArrayList<>();
 		int prefixLen = -1, suffixLen = -1;
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
@@ -87,7 +96,7 @@ public abstract class AdjacentMapUtils{
 
 			if(locked != null){
 				final MapIdComponent mapId = item.get(DataComponentTypes.MAP_ID);
-				final MapState state = mapId == null ? null : item.getHolder().getWorld().getMapState(mapId);
+				final MapState state = mapId == null ? null : world.getMapState(mapId);
 				if(state != null && state.locked != locked) continue;
 			}
 

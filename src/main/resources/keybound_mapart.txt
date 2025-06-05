@@ -1,0 +1,45 @@
+# Config for "KeyBound" by EvModder
+# This is a Mapart-specific version
+
+#========== Enable Keybinds ==========#
+keybind.mapart.load_from_shulker: true
+keybind.mapart.take_from_shulker: true
+keybind.mapart.copy_in_inventory: true
+
+#========== Enable Commands ==========#
+# /setmapartgroup <name> - Create a file in ./mods/config/keybound/mapart_group_<name>, which is a binary list of all MapStates loaded for you client's current session.
+# This can be manually compared against other files to find overlap, set compliments, etc.
+# I've also made it so any MapState the game encounters which are NOT in the currently set group will have a colored name ingame (which is useful to quickly identify maps you haven't yet collected)
+mapart_group_command: true
+mapart_group_include_unlocked: false
+
+#========== Packet Settings ==========#
+# 2b2t will kick you for sending 200+ clicks in 70 ticks (Updated: 2025-04-27)
+# 2b2t will kick you for sending 80+ clicks in 80 ticks (Updated: 2025-05-15, ty IceTank)
+
+# I made it a bit stricter, just to be safe.
+limiter_clicks_in_duration: 79
+limiter_duration_ticks: 85
+
+#========== Misc Utilities ==========#
+mapart_placement_helper: true
+mapart_placement_helper_use_name: true
+mapart_placement_helper_use_image: true
+
+#========== Added Visuals ==========#
+unlocked_map_red_name_in_tooltip: true
+unlocked_map_red_name_in_hotbarhud: true
+unlocked_map_red_name_in_itemframe: true
+
+
+#========== Remote Database ==========#
+# just if u wanna contribute. (ily <3)
+# uncomment lines below:
+
+#client_id: 999
+#client_key: public_access_token_for_map_artists
+#remote_address: evmodder.net:14441
+#mapart_database: true
+#mapart_database_share_contact: true
+
+# if u "share contact", ppl (well, just me rn) can see which maps u have

@@ -46,7 +46,9 @@ public class CommandSetMapArtGroup{
 		int i=0;
 		MapState mapState;
 		while((mapState=world.getMapState(new MapIdComponent(i))) != null || i < MAX_MAPS_IN_INV_AND_ECHEST/*getNumMapsInInvAndEchest()*/){
-			if(mapState != null) MapGroupUtils.mapsInGroup.add(MapGroupUtils.getIdForMapState(mapState));
+			if(mapState != null){
+				if(MapGroupUtils.INCLUDE_UNLOCKED || mapState.locked) MapGroupUtils.mapsInGroup.add(MapGroupUtils.getIdForMapState(mapState));
+			}
 			++i;
 		}
 		if(MapGroupUtils.mapsInGroup.isEmpty()){

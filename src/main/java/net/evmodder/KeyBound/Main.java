@@ -137,7 +137,13 @@ public class Main implements ClientModInitializer{
 				// Database
 				case "client_id": clientId = Integer.parseInt(value); break;
 				case "client_key": clientKey = value; break;
-				case "remote_addr": remoteAddr = value; break;
+				case "remote_address":{
+					final int sep = value.indexOf(':');
+					if(sep == -1){LOGGER.warn("Invalid server address (RemoteDB): "+value); break;}
+					remoteAddr = value.substring(0, sep).trim();
+					remotePort = Integer.parseInt(value.substring(sep+1).trim());
+					break;
+				}
 				case "remote_port": remotePort = Integer.parseInt(value); break;
 				case "enderpearl_owners": epearlOwners = !value.equalsIgnoreCase("false"); break;
 				case "enderpearl_database_by_uuid": epearlOwnersDbUUID = !value.equalsIgnoreCase("false"); break;
@@ -167,9 +173,9 @@ public class Main implements ClientModInitializer{
 				case "totem_total_count": if(!value.equalsIgnoreCase("false")) totemShowTotalCount = !value.equalsIgnoreCase("false"); break;
 				case "repaircost_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipRepairCost::addRC); break;
 				case "repaircost_hotbarhud": rcHotbarHUD = !value.equalsIgnoreCase("false"); break;
-				case "unlocked_map_red_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::redName); break;
-				case "unlocked_map_red_hotbarhud": mapColorHUD = !value.equalsIgnoreCase("false"); break;
-				case "unlocked_map_red_itemframe": mapColorIFrame = !value.equalsIgnoreCase("false"); break;
+				case "unlocked_map_red_name_in_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::redName); break;
+				case "unlocked_map_red_name_in_hotbarhud": mapColorHUD = !value.equalsIgnoreCase("false"); break;
+				case "unlocked_map_red_name_in_itemframe": mapColorIFrame = !value.equalsIgnoreCase("false"); break;
 				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.take_from_shulker": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
@@ -177,7 +183,9 @@ public class Main implements ClientModInitializer{
 				case "mapart_placement_helper": mapPlaceHelper=true; break;
 				case "mapart_placement_helper_use_name": mapPlaceHelperByName=true; break;
 				case "mapart_placement_helper_use_image": mapPlaceHelperByImg=true; break;
-				case "mapart_group_track_locked": MapGroupUtils.ENFORCE_LOCKED_STATE = !value.equalsIgnoreCase("false"); break;
+				case "mapart_group_include_unlocked":
+					MapGroupUtils.INCLUDE_UNLOCKED = !value.equalsIgnoreCase("false");
+					break;
 				case "mapart_group_command": new CommandSetMapArtGroup(); break;
 //				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
 //				case "millis_between_clicks": millis_between_clicks = Integer.parseInt(value); break;

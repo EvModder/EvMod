@@ -99,7 +99,7 @@ public final class MapHandRestock{
 	}
 	private final int getNextSlotByName(final PlayerEntity player, final String prevName, final int count, final boolean locked){
 		final PlayerScreenHandler psh = player.playerScreenHandler;
-		final RelatedMapsData data = AdjacentMapUtils.getRelatedMapsByName(psh.slots, prevName, count, locked);
+		final RelatedMapsData data = AdjacentMapUtils.getRelatedMapsByName(psh.slots, prevName, count, locked, player.getWorld());
 		if(data.slots().isEmpty()) return -1;
 
 		// Offhand, hotbar ascending, inv ascending
@@ -156,7 +156,7 @@ public final class MapHandRestock{
 			final String name = stack.getCustomName().getLiteralString();
 			if(name == null) continue;
 			if(bestScore < 3){bestScore = 3; bestSlot = i;} // It's a named map, with the same count
-			final RelatedMapsData data = AdjacentMapUtils.getRelatedMapsByName(player.playerScreenHandler.slots, name, count, locked);
+			final RelatedMapsData data = AdjacentMapUtils.getRelatedMapsByName(player.playerScreenHandler.slots, name, count, locked, player.getWorld());
 			if(data.slots().size() < 2) continue;
 			String posStr = data.prefixLen() == -1 ? name : AdjacentMapUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
 			if(bestPosStr == null || posStr.compareTo(bestPosStr) < 0){bestPosStr = posStr; bestScore=4; bestSlot = i;} // In a map group, possible starter

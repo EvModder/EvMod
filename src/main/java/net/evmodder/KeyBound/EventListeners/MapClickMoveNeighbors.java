@@ -14,6 +14,7 @@ import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.text.Text;
 import net.minecraft.world.World;
 
 public abstract class MapClickMoveNeighbors{
@@ -35,7 +36,10 @@ public abstract class MapClickMoveNeighbors{
 		Main.LOGGER.info("MapMoveClick: moveNeighbors() called");
 		final List<Slot> slots = player.currentScreenHandler.slots;
 		final String movedName = mapMoved.getCustomName().getLiteralString();
-		final RelatedMapsData data =  AdjacentMapUtils.getRelatedMapsByName(slots, movedName, mapMoved.getCount(), null);
+		final MapIdComponent mapId = mapMoved.get(DataComponentTypes.MAP_ID);
+		final MapState state = mapId == null ? null : player.getWorld().getMapState(mapId);
+		final Boolean locked = state == null ? null : state.locked;
+		final RelatedMapsData data =  AdjacentMapUtils.getRelatedMapsByName(slots, movedName, mapMoved.getCount(), locked, player.getWorld());
 		if(data.prefixLen() == -1) return;
 		data.slots().removeIf(i -> {
 			if(i == destSlot) return true;
@@ -58,28 +62,31 @@ public abstract class MapClickMoveNeighbors{
 		int w = (br%9)-(tl%9)+1;
 
 		if((h == 1 || w == 1) && w*h == data.slots().size()){
-			final byte[] colors = getColors(player.getWorld(), mapMoved);
-			final byte[] tlColors = getColors(player.getWorld(), slots.get(tl).getStack());
-			final byte[] brColors = getColors(player.getWorld(), slots.get(br).getStack());
-			int scoreLeft = -2, scoreRight = -2, scoreTop = -2, scoreBottom = -2;
-			if(h == 1){
-				scoreLeft = AdjacentMapUtils.adjacentEdgeScore(colors, tlColors, true);
-				scoreRight = AdjacentMapUtils.adjacentEdgeScore(brColors, colors, true);
-			}
-			if(w == 1){
-				scoreTop = AdjacentMapUtils.adjacentEdgeScore(colors, tlColors, false);
-				scoreBottom = AdjacentMapUtils.adjacentEdgeScore(brColors, colors, false);
-			}
-			if(Math.max(scoreLeft, scoreRight) >= Math.max(scoreTop, scoreBottom)){
-				++w;
-				tl += scoreLeft >= scoreRight ? -1 : 1;
-				Main.LOGGER.info("MapMoveClick: extending width of 1-tall map, scoreLeft:"+scoreLeft+", scoreRight:"+scoreRight);
-			}
+			if(state == null){++w; br += 1;}
 			else{
-				++h;
-				tl += scoreTop >= scoreBottom ? -9 : 9;
-				Main.LOGGER.info("MapMoveClick: extending height of 1-wide map, scoreTop:"+scoreTop+", scoreBottom:"+scoreBottom);
-			}
+				final byte[] colors = state.colors;
+				final byte[] tlColors = getColors(player.getWorld(), slots.get(tl).getStack());
+				final byte[] brColors = getColors(player.getWorld(), slots.get(br).getStack());
+				int scoreLeft = -2, scoreRight = -2, scoreTop = -2, scoreBottom = -2;
+				if(h == 1){
+					scoreLeft = AdjacentMapUtils.adjacentEdgeScore(colors, tlColors, true);
+					scoreRight = AdjacentMapUtils.adjacentEdgeScore(brColors, colors, true);
+				}
+				if(w == 1){
+					scoreTop = AdjacentMapUtils.adjacentEdgeScore(colors, tlColors, false);
+					scoreBottom = AdjacentMapUtils.adjacentEdgeScore(brColors, colors, false);
+				}
+				if(Math.max(scoreLeft, scoreRight) >= Math.max(scoreTop, scoreBottom)){
+					++w;
+					if(scoreLeft > scoreRight) tl -= 1; else br += 1;
+					Main.LOGGER.info("MapMoveClick: extending width of 1-tall map, scoreLeft:"+scoreLeft+", scoreRight:"+scoreRight);
+				}
+				else{
+					++h;
+					if(scoreTop > scoreBottom) tl -= 9; else br += 9;
+					Main.LOGGER.info("MapMoveClick: extending height of 1-wide map, scoreTop:"+scoreTop+", scoreBottom:"+scoreBottom);
+				}
+			}//state != null
 		}
 
 		if(h*w != data.slots().size()+1){Main.LOGGER.info("MapMoveClick: H*W not found (expected:"+data.slots().size()+")");return;}
@@ -94,6 +101,7 @@ public abstract class MapClickMoveNeighbors{
 			fromSlot = s;
 		}
 		Main.LOGGER.info("MapMoveClick: tl="+tl+",br="+br+" | h="+h+",w="+w+" | "+fromSlot+"->"+destSlot);
+		player.sendMessage(Text.literal("MapMoveClick: tl="+tl+",br="+br+" | h="+h+",w="+w+" | "+fromSlot+"->"+destSlot), false);////
 
 		final int tlDest = destSlot-(fromSlot-tl);
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
@@ -166,6 +174,7 @@ public abstract class MapClickMoveNeighbors{
 		Main.inventoryUtils.executeClicks(clicks, /*canProceed=*/_0->true, ()->{
 			ongoingClickMove = false;
 			Main.LOGGER.info("MapMoveClick: DONE (clicks:"+numClicks+")");
+			player.sendMessage(Text.literal("MapMoveClick: DONE (clicks:"+numClicks+")"), false);////
 		});
 //		if(Main.inventoryUtils.addClick(null) >= Main.inventoryUtils.MAX_CLICKS){
 //			Main.LOGGER.warn("Not enough clicks available to execute MapMoveNeighbors :(");

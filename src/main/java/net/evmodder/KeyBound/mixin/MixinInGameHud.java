@@ -34,7 +34,7 @@ public abstract class MixinInGameHud{
 		if(Main.rcHotbarHUD && currentStack.contains(DataComponentTypes.REPAIR_COST)){
 			int rc = currentStack.get(DataComponentTypes.REPAIR_COST);
 			if(rc != 0 || currentStack.hasEnchantments() || currentStack.contains(DataComponentTypes.STORED_ENCHANTMENTS)){
-				text = text.append(Text.literal(" ʳᶜ").formatted(Formatting.GRAY)).append(Text.literal(""+rc).formatted(Formatting.GOLD));
+				text = text.append(Text.literal(" \u02b3\u1d9c").formatted(Formatting.GRAY)).append(Text.literal(""+rc).formatted(Formatting.GOLD));
 			}
 		}
 		return text;
