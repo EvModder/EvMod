@@ -77,6 +77,10 @@ public class Main implements ClientModInitializer{
 	public static boolean rcHotbarHUD, mapartDb, mapartDbContact, mapColorHUD, mapColorIFrame, totemShowTotalCount, notifyIfNotInGroup=true;
 	public static long joinedServerTimestamp;
 
+	public static int MAP_COLOR_UNLOCKED = 14692709;
+	public static int MAP_COLOR_UNNAMED = 15652823;
+	public static int MAP_COLOR_NOT_IN_GROUP = 706660;
+
 	private void loadConfig(){
 		//=================================== Parsing config into a map
 		config = new HashMap<>();
@@ -173,9 +177,12 @@ public class Main implements ClientModInitializer{
 				case "totem_total_count": if(!value.equalsIgnoreCase("false")) totemShowTotalCount = !value.equalsIgnoreCase("false"); break;
 				case "repaircost_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipRepairCost::addRC); break;
 				case "repaircost_hotbarhud": rcHotbarHUD = !value.equalsIgnoreCase("false"); break;
-				case "unlocked_map_red_name_in_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::redName); break;
-				case "unlocked_map_red_name_in_hotbarhud": mapColorHUD = !value.equalsIgnoreCase("false"); break;
-				case "unlocked_map_red_name_in_itemframe": mapColorIFrame = !value.equalsIgnoreCase("false"); break;
+				case "map_highlight_in_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors); break;
+				case "map_highlight_in_hotbarhud": mapColorHUD = !value.equalsIgnoreCase("false"); break;
+				case "map_highlight_in_itemframe": mapColorIFrame = !value.equalsIgnoreCase("false"); break;
+				case "map_highlight_color_unlocked": MAP_COLOR_UNLOCKED = Integer.parseInt(value); break;
+				case "map_highlight_color_unnamed": MAP_COLOR_UNNAMED = Integer.parseInt(value); break;
+				case "map_highlight_color_ungrouped": MAP_COLOR_NOT_IN_GROUP = Integer.parseInt(value); break;
 				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.take_from_shulker": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;

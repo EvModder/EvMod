@@ -23,9 +23,13 @@ mapart_group_include_unlocked: true
 mapart_database: true
 mapart_database_share_contact: true
 
-unlocked_map_red_name_in_tooltip: true
-unlocked_map_red_name_in_hotbarhud: true
-unlocked_map_red_name_in_itemframe: true
+map_highlight_in_tooltip: true
+map_highlight_in_hotbarhud: true
+map_highlight_in_itemframe: true
+
+map_highlight_color_unlocked: 14692709 # Red
+map_highlight_color_unnamed: 15652823 # Pink
+map_highlight_color_ungrouped: 706660 # Green
 
 #========== Added Visuals ==========#
 totem_total_count: true
