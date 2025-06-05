@@ -85,6 +85,13 @@ public abstract class AdjacentMapUtils{
 	public static final boolean isMapArtWithCount(final ItemStack stack, final int count){
 		return stack.getCount() == count && stack.getItem() == Items.FILLED_MAP;
 	}
+	private static final boolean differentLockedState(final Boolean locked, final ItemStack item, final World world){
+		if(locked == null) return false;
+		final MapIdComponent mapId = item.get(DataComponentTypes.MAP_ID);
+		if(mapId == null) return false;
+		final MapState state = world.getMapState(mapId);
+		return state != null && state.locked != locked;
+	}
 	public static final RelatedMapsData getRelatedMapsByName(List<Slot> slots, String sourceName, final int count, final Boolean locked, final World world){
 		List<Integer> relatedMapSlots = new ArrayList<>();
 		int prefixLen = -1, suffixLen = -1;
@@ -93,12 +100,7 @@ public abstract class AdjacentMapUtils{
 		for(int i=0; i<slots.size(); ++i){
 			final ItemStack item = slots.get(i).getStack();
 			if(item.getCustomName() == null || !isMapArtWithCount(item, count)) continue;
-
-			if(locked != null){
-				final MapIdComponent mapId = item.get(DataComponentTypes.MAP_ID);
-				final MapState state = mapId == null ? null : world.getMapState(mapId);
-				if(state != null && state.locked != locked) continue;
-			}
+			if(differentLockedState(locked, item, world)) continue;
 
 			final String name = item.getCustomName().getLiteralString();
 			if(name == null) continue;
@@ -141,6 +143,8 @@ public abstract class AdjacentMapUtils{
 		for(int i=0; i<slots.size(); ++i){
 			ItemStack item = slots.get(i).getStack();
 			if(!isMapArtWithCount(item, count) || item.getCustomName() == null) continue;
+			if(differentLockedState(locked, item, world)) continue;
+
 			final String name = item.getCustomName().getLiteralString();
 			if(name == null) continue;
 			if(name.length() < prefixLen+suffixLen+1 || name.equals(sourceName)) continue;

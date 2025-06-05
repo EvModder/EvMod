@@ -6,6 +6,8 @@ keybind.mapart.load_from_shulker: true
 keybind.mapart.take_from_shulker: true
 keybind.mapart.copy_in_inventory: true
 
+#No keybind toggle for this yet, but FYI you can hold Alt/Option when placing a map in a slot to move all adjacent related maps
+
 #========== Enable Commands ==========#
 # /setmapartgroup <name> - Create a file in ./mods/config/keybound/mapart_group_<name>, which is a binary list of all MapStates loaded for you client's current session.
 # This can be manually compared against other files to find overlap, set compliments, etc.

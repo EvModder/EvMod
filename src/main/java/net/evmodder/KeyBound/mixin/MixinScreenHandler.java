@@ -7,8 +7,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
-import java.util.Timer;
-import java.util.TimerTask;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -30,17 +28,17 @@ public abstract class MixinScreenHandler{
 	@Inject(method = "internalOnSlotClick", at = @At("TAIL"))
 	private void click_move_neighbors_caller(int slotIndex, int button, SlotActionType actionType, PlayerEntity player, CallbackInfo ci){
 		if(button != 0 || actionType != SlotActionType.PICKUP) return;
-		if(!Screen.hasShiftDown()) return;
+		if(!Screen.hasShiftDown() && !Screen.hasControlDown() && !Screen.hasAltDown()) return;
 		if(!player.currentScreenHandler.getCursorStack().isEmpty()) return;
 		if(slotIndex < 0 || slotIndex >= player.currentScreenHandler.slots.size()) return;
 		final ItemStack itemPlaced = player.currentScreenHandler.getSlot(slotIndex).getStack();
 		if(itemPlaced.getItem() != Items.FILLED_MAP) return;
 		if(itemPlaced.getCustomName() == null || itemPlaced.getCustomName().getLiteralString() == null) return; // TODO: support unnamed maps
 
-		player.getInventory().markDirty();
-		new Timer().schedule(new TimerTask(){@Override public void run(){
-			player.getInventory().markDirty();
+//		player.getInventory().markDirty();
+//		new Timer().schedule(new TimerTask(){@Override public void run(){
+//			player.getInventory().markDirty();
 			MapClickMoveNeighbors.moveNeighbors(player, slotIndex, itemPlaced);
-		}}, 10l);
+//		}}, 10l);
 	}
 }

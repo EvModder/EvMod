@@ -12,6 +12,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
+import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
@@ -39,6 +40,7 @@ public abstract class MapClickMoveNeighbors{
 		final MapIdComponent mapId = mapMoved.get(DataComponentTypes.MAP_ID);
 		final MapState state = mapId == null ? null : player.getWorld().getMapState(mapId);
 		final Boolean locked = state == null ? null : state.locked;
+		Main.LOGGER.info("MapMoveClick: locked="+locked);
 		final RelatedMapsData data =  AdjacentMapUtils.getRelatedMapsByName(slots, movedName, mapMoved.getCount(), locked, player.getWorld());
 		if(data.prefixLen() == -1) return;
 		data.slots().removeIf(i -> {
@@ -89,7 +91,8 @@ public abstract class MapClickMoveNeighbors{
 			}//state != null
 		}
 
-		if(h*w != data.slots().size()+1){Main.LOGGER.info("MapMoveClick: H*W not found (expected:"+data.slots().size()+")");return;}
+		Main.LOGGER.info("MapMoveClick: tl="+tl+",br="+br+" | h="+h+",w="+w+" | x>"+destSlot);
+		if(h*w != data.slots().size()+1){Main.LOGGER.info("MapMoveClick: H*W not found (#maps:"+(data.slots().size()+1)+")");return;}
 
 		int fromSlot = -1;
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
@@ -101,7 +104,7 @@ public abstract class MapClickMoveNeighbors{
 			fromSlot = s;
 		}
 		Main.LOGGER.info("MapMoveClick: tl="+tl+",br="+br+" | h="+h+",w="+w+" | "+fromSlot+"->"+destSlot);
-		player.sendMessage(Text.literal("MapMoveClick: tl="+tl+",br="+br+" | h="+h+",w="+w+" | "+fromSlot+"->"+destSlot), false);////
+		//player.sendMessage(Text.literal("MapMoveClick: tl="+tl+",br="+br+" | h="+h+",w="+w+" | "+fromSlot+"->"+destSlot), false);////
 
 		final int tlDest = destSlot-(fromSlot-tl);
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
@@ -112,10 +115,12 @@ public abstract class MapClickMoveNeighbors{
 				return;
 			}
 		}
-		final int brDest = destSlot+(br-fromSlot);
+		final int brDest = tlDest + (br-tl);//equivalent: destSlot+(br-fromSlot);
 
-		final int hbStart = slots.size()-9;
+		final boolean isPlayerInv = player.currentScreenHandler instanceof PlayerScreenHandler;
+		final int hbStart = slots.size()-(isPlayerInv ? 10 : 9); // extra slot at end to account for offhand
 		final boolean fromHotbar = br >= hbStart, toHotbar = brDest >= hbStart;
+		//Main.LOGGER.warn("MapMoveClick: fromHotbar:"+fromHotbar+", toHotbar:"+toHotbar+", brDest:"+brDest+", last  hotbar if to: "+(brDest-hbStart));
 		//if(PREFER_HOTBAR_SWAPS){
 		int hotbarButton = 40;
 		for(int i=0; i<9; ++i){
@@ -148,7 +153,7 @@ public abstract class MapClickMoveNeighbors{
 			for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 				int s = tl + i*9 + j, d = tlDest + i*9 + j;
 				if(d == destSlot) continue;
-				Main.LOGGER.warn("MapMoveClick: adding 2 clicks: "+s+"->"+d+", hb:"+hotbarButton);
+				//Main.LOGGER.warn("MapMoveClick: adding 2 clicks: "+s+"->"+d+", hb:"+hotbarButton);
 				clicks.add(new ClickEvent(s, hotbarButton, SlotActionType.SWAP));
 				clicks.add(new ClickEvent(d, hotbarButton, SlotActionType.SWAP));
 //				client.interactionManager.clickSlot(syncId, s, hotbarButton, SlotActionType.SWAP, player);
@@ -160,7 +165,7 @@ public abstract class MapClickMoveNeighbors{
 			for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 				int s = br - i*9 - j, d = brDest - i*9 - j;
 				if(d == destSlot) continue;
-				Main.LOGGER.warn("MapMoveClick: adding 2 clicks: "+s+"->"+d+", hb:"+hotbarButton);
+				//Main.LOGGER.warn("MapMoveClick: adding 2 clicks: "+s+"->"+d+", hb:"+hotbarButton);
 				clicks.add(new ClickEvent(s, hotbarButton, SlotActionType.SWAP));
 				clicks.add(new ClickEvent(d, hotbarButton, SlotActionType.SWAP));
 //				client.interactionManager.clickSlot(syncId, s, hotbarButton, SlotActionType.SWAP, player);
@@ -174,7 +179,7 @@ public abstract class MapClickMoveNeighbors{
 		Main.inventoryUtils.executeClicks(clicks, /*canProceed=*/_0->true, ()->{
 			ongoingClickMove = false;
 			Main.LOGGER.info("MapMoveClick: DONE (clicks:"+numClicks+")");
-			player.sendMessage(Text.literal("MapMoveClick: DONE (clicks:"+numClicks+")"), false);////
+			//player.sendMessage(Text.literal("MapMoveClick: DONE (clicks:"+numClicks+")"), false);////
 		});
 //		if(Main.inventoryUtils.addClick(null) >= Main.inventoryUtils.MAX_CLICKS){
 //			Main.LOGGER.warn("Not enough clicks available to execute MapMoveNeighbors :(");
