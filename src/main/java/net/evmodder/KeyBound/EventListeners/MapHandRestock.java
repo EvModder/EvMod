@@ -28,7 +28,7 @@ public final class MapHandRestock{
 
 	private final int getNextSlotByImage(final PlayerEntity player, final byte[] colors, final int count, final String prevName){
 		List<Slot> slots = player.playerScreenHandler.slots;
-		int bestSlot = -1, bestScore = 64;
+		int bestSlot = -1, bestScore = 50;//TODO: magic number
 		for(int i=0; i<slots.size(); ++i){
 			ItemStack stack = slots.get(i).getStack();
 			if(stack.getItem() != Items.FILLED_MAP) continue;
@@ -41,7 +41,8 @@ public final class MapHandRestock{
 			final int score = AdjacentMapUtils.adjacentEdgeScore(colors, state.colors, /*leftRight=*/true);
 			if(score > bestScore){bestScore = score; bestSlot = i;}
 		}
-		Main.LOGGER.info("MapRestock: bestScore: "+bestScore);
+		if(bestSlot != -1) Main.LOGGER.info("MapRestock: findByImage() succeeded, confidence score: "+bestScore);
+		else Main.LOGGER.info("MapRestock: findByImage() failed");
 		return bestSlot;
 	}
 
@@ -123,8 +124,8 @@ public final class MapHandRestock{
 				bestConfidence = confidence; bestSlot = slot; bestName = name;
 			}
 		}
-		if(bestSlot != -1) Main.LOGGER.info("MapRestock: find-by-name succeeded");
-		else Main.LOGGER.info("MapRestock: find-by-name failed");
+		if(bestSlot != -1) Main.LOGGER.info("MapRestock: findByName() succeeded");
+		else Main.LOGGER.info("MapRestock: findByName() failed");
 		if(bestConfidence == 0) Main.LOGGER.warn("MapRestock: Likely skipping a map");
 		return bestSlot;
 	}
@@ -147,15 +148,15 @@ public final class MapHandRestock{
 		for(int i : slots){
 			final ItemStack stack = player.playerScreenHandler.getSlot(i).getStack();
 			if(!AdjacentMapUtils.isMapArtWithCount(stack, count)) continue;
-			if(bestScore < 1){bestScore = 1; bestSlot = i;} // It's a map, with the same count and locked state
+			if(bestScore < 1){bestScore = 1; bestSlot = i;} // It's a map with the same count
 			final MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
-			final MapState state = stack.getHolder().getWorld().getMapState(mapId);
+			final MapState state = player.getWorld().getMapState(mapId);
 			if(state == null || state.locked != locked) continue;
 			if(bestScore < 2){bestScore = 2; bestSlot = i;} // It's a map with the same locked state
 			if(stack.getCustomName() == null) continue;
 			final String name = stack.getCustomName().getLiteralString();
 			if(name == null) continue;
-			if(bestScore < 3){bestScore = 3; bestSlot = i;} // It's a named map, with the same count
+			if(bestScore < 3){bestScore = 3; bestSlot = i;} // It's a named map
 			final RelatedMapsData data = AdjacentMapUtils.getRelatedMapsByName(player.playerScreenHandler.slots, name, count, locked, player.getWorld());
 			if(data.slots().size() < 2) continue;
 			String posStr = data.prefixLen() == -1 ? name : AdjacentMapUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
@@ -180,13 +181,13 @@ public final class MapHandRestock{
 		final MapState state = mapId == null ? null : player.getWorld().getMapState(mapId);
 		if(USE_NAME && restockFromSlot == -1){
 			if(prevName != null){
-				Main.LOGGER.info("MapRestock: finding next map by-name: "+prevName);
+				Main.LOGGER.info("MapRestock: finding next map by name: "+prevName);
 				restockFromSlot = getNextSlotByName(player, prevName, prevCount, state.locked);
 			}
 		}
 		if(USE_IMG && restockFromSlot == -1){
 			if(state != null){
-				Main.LOGGER.info("MapRestock: finding next map by-img-edge");
+				Main.LOGGER.info("MapRestock: finding next map by img-edge");
 				restockFromSlot = getNextSlotByImage(player, state.colors, prevCount, prevName);
 			}
 		}
@@ -196,18 +197,19 @@ public final class MapHandRestock{
 		}
 		if(restockFromSlot == -1){Main.LOGGER.info("MapRestock: unable to find next map"); return;}
 
+		//PlayerScreenHandler.HOTBAR_START=36
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(restockFromSlot >= 36 && restockFromSlot < 45){
 			player.getInventory().selectedSlot = restockFromSlot - 36;
 			client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
-			Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap");
+			Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().selectedSlot);
 		}
 		else if(prevCount != 1){
 			Main.LOGGER.warn("MapRestock: Won't swap with inventory since prevMap count != 1");
 		}
 		else{
 			client.interactionManager.clickSlot(0, restockFromSlot, player.getInventory().selectedSlot, SlotActionType.SWAP, player);
-			Main.LOGGER.info("MapRestock: Swapped inv.selectedSlot to nextMap");
+			Main.LOGGER.info("MapRestock: Swapped inv.selectedSlot to nextMap: s="+restockFromSlot);
 		}
 	}
 

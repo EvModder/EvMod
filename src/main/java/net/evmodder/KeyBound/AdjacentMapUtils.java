@@ -15,14 +15,14 @@ public abstract class AdjacentMapUtils{
 	public record RelatedMapsData(int prefixLen, int suffixLen, List<Integer> slots){}
 
 	private static final int commonPrefixLen(String a, String b){
-		int i=0; while(i<a.length() && i<b.length() && a.charAt(i) == b.charAt(i)) ++i; return i;
+		int i=0; while(i<a.length() && i<b.length() && a.codePointAt(i) == b.codePointAt(i)) ++i; return i;
 	}
 	private static final int commonSuffixLen(String a, String b){
-		int i=0; while(a.length()-i > 0 && b.length()-i > 0 && a.charAt(a.length()-i-1) == b.charAt(b.length()-i-1)) ++i; return i;
+		int i=0; while(a.length()-i > 0 && b.length()-i > 0 && a.codePointAt(a.length()-i-1) == b.codePointAt(b.length()-i-1)) ++i; return i;
 	}
 
-	public static final String simplifyPosStr(String rawPos){
-		String pos = Normalizer.normalize(rawPos, Normalizer.Form.NFKD).toUpperCase();
+	public static final String simplifyPosStr(String pos){
+		pos = Normalizer.normalize(pos, Normalizer.Form.NFKD).toUpperCase();
 		pos = pos.replace("\u250c", "TL").replace("\u2510", "TR").replace("\u2514", "BL").replace("\u2518", "BR");
 		pos = pos.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", " ").trim().replaceAll("\\s+", " ");
 		pos = pos.replace("TOP", "T").replace("BOTTOM", "B").replace("LEFT", "L").replace("RIGHT", "R").replace("MIDDLE", "M");
@@ -55,28 +55,17 @@ public abstract class AdjacentMapUtils{
 		boolean lastAcross = true, lastUp = true, lastDown = true;
 		final int incr = lr_tb ? 128 : 1, tlStart = lr_tb ? 127 : tl.length-128;
 		final int tlEnd = tl.length - tlStart;
-		int conseqAcrossMatchCnt = 0;
-		byte conseqAcrossColor = -1;
+		byte lastBrColor = -1;
 		for(int i=0; i<tlEnd; i+=incr){
 			// Score of [0,3] per pixel
 			final boolean sameAcross = tl[i+tlStart] == br[i];
 			final boolean sameUp = i > 0 && tl[i+tlStart] == br[i-incr];
 			final boolean sameDown = i+incr < tl.length && tl[i+tlStart] == br[i+incr];
-			if(!sameAcross && !sameUp && !sameDown) continue;
-			if(sameAcross){
-				if(br[i] != conseqAcrossColor) conseqAcrossMatchCnt = 1;
-				else if(++conseqAcrossMatchCnt > 8) continue; // Avoid edges that match TOO perfectly - mitigates over-preference for imgs with solid outlines
-				score += 2;
-				if(sameAcross == lastAcross) score += 1;
+			if(sameAcross || sameUp || sameDown){
+				score += 1;
+				if(br[i] != lastBrColor && ((sameAcross && lastAcross) || (sameUp && lastUp) || (sameDown && lastDown))) score += 2;
 			}
-			else{
-				conseqAcrossMatchCnt = 0;
-				if(sameUp || sameDown){
-					score += 1;
-					if((sameUp && sameUp == lastUp) || (sameDown && sameDown == lastDown)) score += 1;
-				}
-			}
-			conseqAcrossColor = br[i];
+			lastBrColor = br[i];
 			lastAcross = sameAcross; lastUp = sameUp; lastDown = sameDown;
 		}
 		return score; // Maximum score = 3*128 = 384
@@ -95,6 +84,7 @@ public abstract class AdjacentMapUtils{
 	public static final RelatedMapsData getRelatedMapsByName(List<Slot> slots, String sourceName, final int count, final Boolean locked, final World world){
 		List<Integer> relatedMapSlots = new ArrayList<>();
 		int prefixLen = -1, suffixLen = -1;
+		//Main.LOGGER.info("MapAdjUtil: getRelatedMapsByName() called");
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
 //			final int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
 		for(int i=0; i<slots.size(); ++i){
@@ -114,9 +104,13 @@ public abstract class AdjacentMapUtils{
 			//Main.LOGGER.info("MapRestock: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
 			if(prefixLen == a && suffixLen == b) continue;// No change to prefix/suffix
 			//Main.LOGGER.info("MapRestock: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
-			final boolean validPosStr = isValidPosStr(simplifyPosStr(name.substring(a, name.length()-b)));
+			final String posStr = simplifyPosStr(name.substring(a, name.length()-b));
+			if(posStr.isBlank()) Main.LOGGER.info("Empty posStr for name: "+name+", prefix/suffix: "+a+"/"+b);
+			final boolean validPosStr = isValidPosStr(posStr);
 			if(prefixLen == -1 && suffixLen == -1){ // Prefix/suffix not yet determined
 				if(validPosStr){prefixLen = a; suffixLen = b;}
+				else if(a != 0 || b != 0) Main.LOGGER.info("MapAdjUtil: found matching prefix/suffix ("+a+"/"+b+"), but invalid PosStr: "
+												+ simplifyPosStr(name.substring(a, name.length()-b)));
 				continue;
 			}
 			final boolean oldContainsNew = prefixLen >= a && suffixLen >= b;
@@ -137,7 +131,7 @@ public abstract class AdjacentMapUtils{
 		//Main.LOGGER.info("MapAdjUtil: prefixLen="+prefixLen+", suffixLen="+suffixLen);
 		final String sourcePosStr = simplifyPosStr(sourceName.substring(prefixLen, sourceName.length()-suffixLen));
 		final boolean sourcePosIs2d = sourcePosStr.indexOf(' ') != -1;
-		Main.LOGGER.info("AdjacentMapUtils:sourcePosStr: "+sourcePosStr);
+		//Main.LOGGER.info("AdjacentMapUtils:sourcePosStr: "+sourcePosStr);
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
 //			final int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
 		for(int i=0; i<slots.size(); ++i){

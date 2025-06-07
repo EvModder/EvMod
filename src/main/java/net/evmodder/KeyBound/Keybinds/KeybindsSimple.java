@@ -18,7 +18,7 @@ public final class KeybindsSimple{
 		.map(part -> new EvKeybind("skin_toggle."+part.name().toLowerCase(), ()->{
 			//Main.LOGGER.info("skin toggle pressed for part: "+part.name());
 			final MinecraftClient client = MinecraftClient.getInstance();
-			if(SYNC_CAPE_WITH_ELYTRA && client.player != null && client.options.isPlayerModelPartEnabled(part)){
+			if(SYNC_CAPE_WITH_ELYTRA && part == PlayerModelPart.CAPE && client.player != null && client.options.isPlayerModelPartEnabled(part)){
 				ItemStack chestItem = client.player.getInventory().getArmorStack(2);
 				// Don't disable cape if we just switched to an elytra
 				if(Registries.ITEM.getId(chestItem.getItem()).getPath().equals("elytra")) return;

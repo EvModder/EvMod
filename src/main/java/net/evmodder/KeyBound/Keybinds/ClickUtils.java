@@ -8,6 +8,7 @@ import java.util.function.Function;
 import net.evmodder.KeyBound.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.text.Text;
 
 public class ClickUtils{
 	public record ClickEvent(int slotId, int button, SlotActionType actionType){}
@@ -19,6 +20,7 @@ public class ClickUtils{
 	private final int[] tickDurationArr;
 	private int tickDurIndex, sumClicksInDuration;
 	private long lastTick;
+	private final int OUTTA_CLICKS_COLOR = 15764490;
 
 	public ClickUtils(final int MAX_CLICKS, int FOR_TICKS){
 		if(MAX_CLICKS > 100_000){
@@ -57,7 +59,9 @@ public class ClickUtils{
 		return sumClicksInDuration;
 	}
 
+	private static boolean waitedForClicks;
 	public void executeClicks(Queue<ClickEvent> clicks, Function<ClickEvent, Boolean> canProceed, Runnable onComplete){
+		waitedForClicks = false;
 		final int syncId = MinecraftClient.getInstance().player.currentScreenHandler.syncId;
 		if(clicks.isEmpty()){
 			Main.LOGGER.warn("executeClicks() called with an empty ClickEvent list");
@@ -69,8 +73,7 @@ public class ClickUtils{
 				final MinecraftClient client = MinecraftClient.getInstance();
 				if(client.player.currentScreenHandler.syncId != syncId){
 					Main.LOGGER.error("executeClicks() failed due to syncId changing mid-operation");
-					onComplete.run();
-					return;
+					cancel(); onComplete.run(); return;
 				}
 				//final int availableClicks = MAX_CLICKS - addClick(null);
 				//for(int i=0; i<availableClicks; ++i){
@@ -85,8 +88,13 @@ public class ClickUtils{
 						Main.LOGGER.error("executeClicks() failed due to null client. Clicks left: "+clicks.size()+", sumClicksInDuration: "+sumClicksInDuration);
 						clicks.clear();
 					}
-					if(clicks.isEmpty()){cancel(); onComplete.run(); return;}
+					if(clicks.isEmpty()){
+						if(waitedForClicks) client.player.sendMessage(Text.literal("Clicks done!"), true);
+						cancel(); onComplete.run(); return;
+					}
 				}
+				client.player.sendMessage(Text.literal("Waiting for available clicks...").withColor(OUTTA_CLICKS_COLOR), true);
+				waitedForClicks = true;
 			}
 		}, 0l, 51l);
 	}
