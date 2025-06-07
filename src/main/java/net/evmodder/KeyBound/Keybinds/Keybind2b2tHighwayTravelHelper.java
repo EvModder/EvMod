@@ -371,6 +371,7 @@ public final class Keybind2b2tHighwayTravelHelper{
 		}));
 
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
+			if(client.player == null || client.world == null){isEnabled = false; enabledTs = 0; return;}
 			if(enabledTs != 0 && System.currentTimeMillis() - enabledTs > ENABLE_DELAY){
 				isEnabled = true;
 				targetY = Long.MIN_VALUE;
@@ -378,7 +379,6 @@ public final class Keybind2b2tHighwayTravelHelper{
 				client.player.sendMessage(Text.literal("2b2t Travel Helper: enabled"), true);
 			}
 			if(!isEnabled) return;
-			if(client.player == null || client.world == null){isEnabled = false; return;}
 			Item chestItem = client.player.getInventory().getArmorStack(2).getItem();
 			Identifier chestItemId = Registries.ITEM.getId(chestItem);
 			if(chestItemId == null || !chestItemId.getPath().equals("elytra")){
