@@ -71,6 +71,10 @@ public class ClickUtils{
 		new Timer().schedule(new TimerTask(){
 			@Override public void run(){
 				final MinecraftClient client = MinecraftClient.getInstance();
+				if(client.player == null){
+					Main.LOGGER.error("executeClicks() failed due to null player");
+					cancel(); onComplete.run(); return;
+				}
 				if(client.player.currentScreenHandler.syncId != syncId){
 					Main.LOGGER.error("executeClicks() failed due to syncId changing mid-operation ("+syncId+" -> "+client.player.currentScreenHandler.syncId+")");
 					cancel(); onComplete.run(); return;

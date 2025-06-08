@@ -125,6 +125,7 @@ public final class KeybindMapMove{
 			}
 		}
 
+		//Main.LOGGER.info("MapMove: STARTED");
 		ongoingStealStore = true;
 		Main.inventoryUtils.executeClicks(clicks,
 				c->{

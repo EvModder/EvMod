@@ -256,6 +256,7 @@ public final class KeybindMapCopy{
 
 		if(numEmptyMapsInGrid > 0) clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.QUICK_MOVE));
 
+		//Main.LOGGER.info("MapCopy: STARTED");
 		ongoingCopy = true;
 		Main.inventoryUtils.executeClicks(clicks,
 		c->{

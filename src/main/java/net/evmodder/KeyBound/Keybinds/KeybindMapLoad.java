@@ -20,12 +20,13 @@ import net.minecraft.world.World;
 
 public final class KeybindMapLoad{
 	private boolean isUnloadedMapArt(World world, ItemStack stack){
-		if(stack == null || stack.isEmpty()) return false;
-		if(!Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")) return false;
-		return FilledMapItem.getMapState(stack, world) == null;
+//		if(stack == null || stack.isEmpty()) return false;
+//		if(!Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")) return false;
+//		return FilledMapItem.getMapState(stack, world) == null;
+		return stack.getItem() == Items.FILLED_MAP && FilledMapItem.getMapState(stack, world) == null;
 	}
 	private boolean isLoadedMapArt(World world, ItemStack stack){
-		return stack.getItem() == Items.FILLED_MAP && FilledMapItem.getMapState(stack, world) == null;
+		return stack.getItem() == Items.FILLED_MAP && FilledMapItem.getMapState(stack, world) != null;
 	}
 
 	private boolean isShulkerBox(ItemStack stack){
@@ -82,14 +83,16 @@ public final class KeybindMapLoad{
 				batchSize = 0;
 			}
 		}
+		//Main.LOGGER.info("MapLoad: STARTED");
 		ongoingLoad = true;
 		Main.inventoryUtils.executeClicks(clicks,
 				c->{
 					if(client.player == null || client.world == null) return true;
 					ItemStack item = client.player.getInventory().getStack(c.button());
+					if(isUnloadedMapArt(/*client.player.clientWorld*/client.world, item)) return false;
 					if(isLoadedMapArt(/*client.player.clientWorld*/client.world, item)) return true;
-					if(!isUnloadedMapArt(client.world, item) && (getNextUsableHotbarButton(client, -1) != c.button()
-						|| Main.inventoryUtils.MAX_CLICKS-Main.inventoryUtils.addClick(null) >= MAX_BATCH_SIZE)) return true;
+					if(getNextUsableHotbarButton(client, -1) != c.button()
+						|| Main.inventoryUtils.MAX_CLICKS-Main.inventoryUtils.addClick(null) >= MAX_BATCH_SIZE) return true;
 					client.player.sendMessage(Text.literal("MapLoad: Waiting for clicks...").withColor(15764490), true);
 					return false;
 				},
