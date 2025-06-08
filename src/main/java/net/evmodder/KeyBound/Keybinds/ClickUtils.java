@@ -72,7 +72,7 @@ public class ClickUtils{
 			@Override public void run(){
 				final MinecraftClient client = MinecraftClient.getInstance();
 				if(client.player.currentScreenHandler.syncId != syncId){
-					Main.LOGGER.error("executeClicks() failed due to syncId changing mid-operation");
+					Main.LOGGER.error("executeClicks() failed due to syncId changing mid-operation ("+syncId+" -> "+client.player.currentScreenHandler.syncId+")");
 					cancel(); onComplete.run(); return;
 				}
 				//final int availableClicks = MAX_CLICKS - addClick(null);

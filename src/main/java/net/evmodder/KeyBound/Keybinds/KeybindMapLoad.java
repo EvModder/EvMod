@@ -14,6 +14,7 @@ import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.text.Text;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.world.World;
 
@@ -22,6 +23,9 @@ public final class KeybindMapLoad{
 		if(stack == null || stack.isEmpty()) return false;
 		if(!Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")) return false;
 		return FilledMapItem.getMapState(stack, world) == null;
+	}
+	private boolean isLoadedMapArt(World world, ItemStack stack){
+		return stack.getItem() == Items.FILLED_MAP && FilledMapItem.getMapState(stack, world) == null;
 	}
 
 	private boolean isShulkerBox(ItemStack stack){
@@ -80,12 +84,15 @@ public final class KeybindMapLoad{
 		}
 		ongoingLoad = true;
 		Main.inventoryUtils.executeClicks(clicks,
-				c->client.player == null || (
-						!isUnloadedMapArt(client.player.clientWorld, client.player.getInventory().getStack(c.button())) // Don't send back till loaded
-						&& (client.player.getInventory().getStack(c.button()).getItem() == Items.FILLED_MAP ||
-							getNextUsableHotbarButton(client, -1) != c.button() || // Don't start pulling next batch till clicks are available
-							Main.inventoryUtils.MAX_CLICKS-Main.inventoryUtils.addClick(null) >= MAX_BATCH_SIZE)
-						),
+				c->{
+					if(client.player == null || client.world == null) return true;
+					ItemStack item = client.player.getInventory().getStack(c.button());
+					if(isLoadedMapArt(/*client.player.clientWorld*/client.world, item)) return true;
+					if(!isUnloadedMapArt(client.world, item) && (getNextUsableHotbarButton(client, -1) != c.button()
+						|| Main.inventoryUtils.MAX_CLICKS-Main.inventoryUtils.addClick(null) >= MAX_BATCH_SIZE)) return true;
+					client.player.sendMessage(Text.literal("MapLoad: Waiting for clicks...").withColor(15764490), true);
+					return false;
+				},
 				()->{
 					Main.LOGGER.info("MapLoad: DONE!");
 					ongoingLoad = false;
