@@ -48,7 +48,7 @@ public final class MapHandRestock{
 
 	//TODO: passing metadata, particularly NxM if known.
 	// Higher number = closer match
-	// 4 = definitely next (no doubt)
+	// 5,4 = definitely next (no doubt)
 	// 3 = likely next (but not 100%)
 	// 2 = maybe next (line wrapping?)
 	// 1 = not impossibly next
@@ -63,39 +63,54 @@ public final class MapHandRestock{
 		if(posA.equals("L") && posB.equals("R")) return 3;
 		if(posA.equals("9") && posB.equals("A")) return 2;//hex?
 
-		final int cutA = posA.indexOf(' '), cutB = posB.indexOf(' ');
-		//assert (cutA==-1) == (cutB==-1);
-		if(cutA != -1 && cutB != -1){
-			//Main.LOGGER.info("MapRestock: 2D pos not yet fully supported. A:"+posA+", B:"+posB);
-			String posA1 = posA.substring(0, cutA), posA2 = posA.substring(cutA+1);
-			String posB1 = posB.substring(0, cutB), posB2 = posB.substring(cutB+1);
-			if(posA1.equals(posB1)){
-				Main.LOGGER.info("MapRestock: 2D pos: A1=B1");
-				return checkComesAfter(posA2, posB2);
-			}
-			//if(posA2.equals(posB2)) return checkComesAfter(posA1, posB1)-2;// TODO: nerf with -2 (until impl edge matching), col should not be before row..
-			if(posB2.matches("[A0]") && !posA2.equals(posB2)){
-				//Main.LOGGER.info("MapRestock: 2D pos: B2=0");
-				return checkComesAfter(posA1, posB1)-1;
-			}
-			if(posB2.equals("1") && !posA2.matches("[01]")){
-				//Main.LOGGER.info("MapRestock: 2D pos: B2=1");
-				return checkComesAfter(posA1, posB1)-2;
-			}
-			return 0;
-		}
-
 		final boolean sameLen = posA.length() == posB.length();
-		if(sameLen && posA.regionMatches(0, posB, 0, posA.length()-1) && posA.charAt(posA.length()-1)+1 == posB.charAt(posA.length()-1)){
+		if(sameLen && posA.regionMatches(0, posB, 0, posA.length()-1) && (
+				posA.codePointAt(posA.length()-1)+1 == posB.codePointAt(posA.length()-1)) ||
+				(posA.codePointAt(posA.length()-1) == '9' && posB.codePointAt(posA.length()-1) == 'A' && posA.length() > 1)//49->4a
+		){
 			Main.LOGGER.info("MapRestock: c->c+1");
-			return 4; // 4->5, E->F
+			return 5; // 4->5, E->F
 		}
 		if((sameLen || posA.length()+1 == posB.length()) && posA.matches("\\d{1,3}") && (""+(Integer.parseInt(posA)+1)).equals(posB)){
 			Main.LOGGER.info("MapRestock: i->i+1");
 			return 4; // 4->5, 9->10
 		}
 
-		//Main.LOGGER.info("MapRestock: pos are not adjacent. A:"+posA+", B:"+posB);
+		int cutA, cutB, cutSpaceA, cutSpaceB;
+		if(sameLen && posA.length() == 2){cutA = cutB = 1; cutSpaceA = cutSpaceB = 0;}
+		else{cutA = posA.indexOf(' '); cutB = posB.indexOf(' '); cutSpaceA = cutSpaceB = 1;}
+		//assert (cutA==-1) == (cutB==-1);
+		if(cutA != -1 || cutB != -1){
+			if((cutA == -1) != (cutB == -1)){
+				if(cutA != -1 && posA.length() == posB.length()+1){cutB = cutA; cutSpaceB = 0;}
+				else if(cutB != -1 && posB.length() == posA.length()+1){cutA = cutB; cutSpaceA = 0;}
+				else{
+					//Main.LOGGER.info("MapRestock: mismatched-2D");
+					return 0;
+				}
+			}
+			//Main.LOGGER.info("MapRestock: 2D pos not yet fully supported. A:"+posA+", B:"+posB);
+			final String posA1 = posA.substring(0, cutA), posA2 = posA.substring(cutA+cutSpaceA);
+			final String posB1 = posB.substring(0, cutB), posB2 = posB.substring(cutB+cutSpaceB);
+			if(posA1.equals(posB1)){
+				Main.LOGGER.info("MapRestock: 2D, A1==B1");
+				return checkComesAfter(posA2, posB2)+1;
+			}
+			//if(posA2.equals(posB2)) return checkComesAfter(posA1, posB1)-2;// TODO: nerf with -2 (until impl edge matching), col should not be before row..
+			if(posB2.matches("[A0]") && !posA2.equals(posB2)){
+				Main.LOGGER.info("MapRestock: 2D, B2==[A0], recur checkComesAfter(A1, B1)");
+				//Main.LOGGER.info("MapRestock: 2D pos: B2=0");
+				return checkComesAfter(posA1, posB1)-1;
+			}
+			if(posB2.equals("1") && !posA2.matches("[01]")){
+				Main.LOGGER.info("MapRestock: 2D, B2==[1], recur checkComesAfter(A1, B1)");
+				return checkComesAfter(posA1, posB1)-2;
+			}
+			//Main.LOGGER.info("MapRestock: 2D, checkComesAfter=1. A:"+posA+", B:"+posB);
+			return 1;
+		}
+
+		//Main.LOGGER.info("MapRestock: checkComesAfter=1. A:"+posA+", B:"+posB);
 		return 1;
 	}
 	private final int getNextSlotByName(final PlayerEntity player, final String prevName, final int count, final boolean locked){
@@ -117,7 +132,7 @@ public final class MapHandRestock{
 			if(name == null) continue;
 			if(name.equals(prevName) && slot-36 == player.getInventory().selectedSlot) continue;
 			final String posStr = data.prefixLen() == -1 ? name : AdjacentMapUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
-			Main.LOGGER.info("MapRestock: checkComesAfter for name: "+name);
+			//Main.LOGGER.info("MapRestock: checkComesAfter for name: "+name);
 			final int confidence = checkComesAfter(prevPosStr, posStr);
 			if(confidence > bestConfidence || (confidence==bestConfidence && name.compareTo(bestName) < 0)){
 				Main.LOGGER.info("MapRestock: new best confidence for "+name+": "+confidence);
