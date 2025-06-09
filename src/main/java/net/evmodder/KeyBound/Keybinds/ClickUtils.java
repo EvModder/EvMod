@@ -72,7 +72,7 @@ public class ClickUtils{
 			@Override public void run(){
 				final MinecraftClient client = MinecraftClient.getInstance();
 				if(client.player == null){
-					Main.LOGGER.error("executeClicks() failed due to null player");
+					Main.LOGGER.error("executeClicks() failed due to null player! num clicks in arr: "+sumClicksInDuration);
 					cancel(); onComplete.run(); return;
 				}
 				if(client.player.currentScreenHandler.syncId != syncId){

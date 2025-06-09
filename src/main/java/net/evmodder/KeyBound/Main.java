@@ -193,7 +193,7 @@ public class Main implements ClientModInitializer{
 				case "mapart_group_include_unlocked":
 					MapGroupUtils.INCLUDE_UNLOCKED = !value.equalsIgnoreCase("false");
 					break;
-				case "mapart_group_command": new CommandSetMapArtGroup(); break;
+				case "mapart_group_command": new CommandMapArtGroup(); break;
 //				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
 //				case "millis_between_clicks": millis_between_clicks = Integer.parseInt(value); break;
 

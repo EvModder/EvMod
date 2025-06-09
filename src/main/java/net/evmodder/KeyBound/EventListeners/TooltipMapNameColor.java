@@ -15,7 +15,7 @@ import net.minecraft.util.Formatting;
 
 public final class TooltipMapNameColor{
 	private static final boolean isNotInCurrentGroup(ItemStack item, TooltipContext context){
-		if(MapGroupUtils.mapsInGroup == null) return false;
+		//if(MapGroupUtils.mapsInGroup == null) return false;
 		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
 		if(id == null) return false;
 		MapState state = context.getMapState(id);
