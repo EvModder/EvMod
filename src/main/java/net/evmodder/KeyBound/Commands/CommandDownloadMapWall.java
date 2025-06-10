@@ -33,7 +33,7 @@ import net.minecraft.util.math.Direction.Axis;
 public class CommandDownloadMapWall{
 	final int RENDER_DIST = 10;
 	final boolean SCALE_TO_640, BLOCK_BORDER;
-	final int BORDER_1 = -14236, BORDER_2 = -13495266; // Orange, Near-black purple
+	final int BORDER_1 = -14236, BORDER_2 = -8555656; // Yellow and Gray
 	//final Box everythingBox = Box.of(client.player.getPos(), RENDER_DIST*16, RENDER_DIST*16, RENDER_DIST*16);
 
 	/*static int getIntFromARGB(int a, int r, int g, int b){return (a<<24) | (r<<16) | (g<<8) | b;}
@@ -159,7 +159,7 @@ public class CommandDownloadMapWall{
 		final int w;
 		switch(facing){
 			case UP: w=1+maxX-minX; for(int z=minZ; z<=maxZ; ++z) for(int x=minX; x<=maxX; ++x) mapWall.add(new Vec3i(x, tY, z)); break;
-			case DOWN: w=1+maxX-minX; for(int z=maxZ; z>=minZ; --z) for(int x=maxX; x>=minX; --x) mapWall.add(new Vec3i(x, tY, z)); break;
+			case DOWN: w=1+maxX-minX; for(int z=maxZ; z>=minZ; --z) for(int x=minX; x<=maxX; ++x) mapWall.add(new Vec3i(x, tY, z)); break;
 			case NORTH: w=1+maxX-minX; for(int y=maxY; y>=minY; --y) for(int x=maxX; x>=minX; --x) mapWall.add(new Vec3i(x, y, tZ)); break;
 			case SOUTH: w=1+maxX-minX; for(int y=maxY; y>=minY; --y) for(int x=minX; x<=maxX; ++x) mapWall.add(new Vec3i(x, y, tZ)); break;
 			case EAST: w=1+maxZ-minZ; for(int y=maxY; y>=minY; --y) for(int z=maxZ; z>=minZ; --z) mapWall.add(new Vec3i(tX, y, z)); break;
@@ -172,17 +172,18 @@ public class CommandDownloadMapWall{
 		final int h = mapWall.size()/w;
 
 		ctx.getSource().sendFeedback(Text.literal("Map wall size: "+w+"x"+h+" ("+mapWall.size()+")"));
-		final int border = BLOCK_BORDER ? 1 : 0;
+		final int border = BLOCK_BORDER ? 8 : 0;
 		BufferedImage img = new BufferedImage(128*w+border*2, 128*h+border*2, BufferedImage.TYPE_INT_ARGB);
 		if(BLOCK_BORDER){
+			int MAGIC = 128-border;
 			int symW = w & 1, symH = h&1;
-			for(int x=0; x<img.getWidth(); ++x){
-				img.setRGB(x, 0, (((x+127)/128) & 1) == 1 ? BORDER_1 : BORDER_2);
-				img.setRGB(x, img.getHeight()-1, (((x+127)/128) & 1) == symH ? BORDER_1 : BORDER_2);
+			for(int x=border; x<img.getWidth()-border; ++x) for(int i=0; i<border; ++i){
+				img.setRGB(x, i, (((x+MAGIC)/128) & 1) == 1 ? BORDER_1 : BORDER_2);
+				img.setRGB(x, img.getHeight()-1-i, (((x+MAGIC)/128) & 1) == symH ? BORDER_1 : BORDER_2);
 			}
-			for(int y=0; y<img.getHeight(); ++y){
-				img.setRGB(0, y, (((y+127)/128) & 1) == 1 ? BORDER_1 : BORDER_2);
-				img.setRGB(img.getWidth()-1, y, (((y+127)/128) & 1) == symW ? BORDER_1 : BORDER_2);
+			for(int y=border; y<img.getHeight()-border; ++y) for(int i=0; i<border; ++i){
+				img.setRGB(i, y, (((y+MAGIC)/128) & 1) == 1 ? BORDER_1 : BORDER_2);
+				img.setRGB(img.getWidth()-1-i, y, (((y+MAGIC)/128) & 1) == symW ? BORDER_1 : BORDER_2);
 			}
 		}
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
