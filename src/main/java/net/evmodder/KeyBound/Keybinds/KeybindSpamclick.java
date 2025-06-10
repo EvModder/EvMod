@@ -22,18 +22,18 @@ public final class KeybindSpamclick{
 	public KeybindSpamclick(){
 		MinecraftClient client = MinecraftClient.getInstance();
 
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("incr_clicks", ()->{
+		KeyBindingHelper.registerKeyBinding(new Keybind("incr_clicks", ()->{
 			//if(client.currentScreen instanceof InventoryScreen == false){Main.LOGGER.warn("SpamClickIncrClick: not in InventoryScreen"); return;}
 			if(numClicks >= 1000){numClicks = 0; numTicks = 0;}//<<<<<<<<<<<<<<<<<
 			client.player.sendMessage(Text.literal("SpamClick: numClicks="+(numClicks+=(Screen.hasShiftDown() ? 1 : 20))+" numTicks="+numTicks), /*overlay=*/false);
 		}));
 
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("incr_ticks", ()->{
+		KeyBindingHelper.registerKeyBinding(new Keybind("incr_ticks", ()->{
 			//if(client.currentScreen instanceof InventoryScreen == false){Main.LOGGER.warn("SpamClickIncrTicks: not in InventoryScreen"); return;}
 			client.player.sendMessage(Text.literal("SpamClick: numClicks="+numClicks+" numTicks="+(numTicks+=(Screen.hasShiftDown() ? 20 : 1))), /*overlay=*/false);
 		}));
 
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("spam_click", ()->{
+		KeyBindingHelper.registerKeyBinding(new Keybind("spam_click", ()->{
 			if(ongoingSpamClick) return;
 			if(numClicks == 0 || numTicks == 0) return;
 			if(client.currentScreen instanceof InventoryScreen == false){Main.LOGGER.warn("SpamClick: not in InventoryScreen"); return;}

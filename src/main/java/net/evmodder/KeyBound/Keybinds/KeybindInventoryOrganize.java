@@ -265,6 +265,6 @@ public final class KeybindInventoryOrganize{
 		)
 		.filter(p -> p != null)
 		.toList();
-		KeyBindingHelper.registerKeyBinding(new EvKeybind(keybind_name, this::organizeInventory, InventoryScreen.class::isInstance));
+		KeyBindingHelper.registerKeyBinding(new Keybind(keybind_name, this::organizeInventory, InventoryScreen.class::isInstance));
 	}
 }

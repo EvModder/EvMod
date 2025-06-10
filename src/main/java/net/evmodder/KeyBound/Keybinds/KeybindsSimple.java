@@ -15,7 +15,7 @@ public final class KeybindsSimple{
 
 	public static final void registerSkinLayerKeybinds(){
 		Arrays.stream(PlayerModelPart.values())
-		.map(part -> new EvKeybind("skin_toggle."+part.name().toLowerCase(), ()->{
+		.map(part -> new Keybind("skin_toggle."+part.name().toLowerCase(), ()->{
 			//Main.LOGGER.info("skin toggle pressed for part: "+part.name());
 			final MinecraftClient client = MinecraftClient.getInstance();
 			if(SYNC_CAPE_WITH_ELYTRA && part == PlayerModelPart.CAPE && client.player != null && client.options.isPlayerModelPartEnabled(part)){
@@ -32,13 +32,13 @@ public final class KeybindsSimple{
 	public static final void registerChatKeybind(String keybind_name, String chat_message){
 		if(chat_message.charAt(0) == '/'){
 			final String command = chat_message.substring(1);
-			KeyBindingHelper.registerKeyBinding(new EvKeybind(keybind_name, ()->{
+			KeyBindingHelper.registerKeyBinding(new Keybind(keybind_name, ()->{
 				MinecraftClient instance = MinecraftClient.getInstance();
 				instance.player.networkHandler.sendChatCommand(command);
 			}));
 		}
 		else{
-			KeyBindingHelper.registerKeyBinding(new EvKeybind(keybind_name, ()->{
+			KeyBindingHelper.registerKeyBinding(new Keybind(keybind_name, ()->{
 				MinecraftClient instance = MinecraftClient.getInstance();
 				instance.player.networkHandler.sendChatMessage(chat_message);
 			}));
@@ -57,7 +57,7 @@ public final class KeybindsSimple{
 			Main.LOGGER.error("Invalid number value in yaw,pitch for "+keybind_name+": "+yaw_pitch);
 			return;
 		}
-		KeyBindingHelper.registerKeyBinding(new EvKeybind(keybind_name, ()->{
+		KeyBindingHelper.registerKeyBinding(new Keybind(keybind_name, ()->{
 			MinecraftClient instance = MinecraftClient.getInstance();
 			instance.player.setAngles(yaw, pitch);
 		}));

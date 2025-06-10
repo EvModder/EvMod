@@ -273,7 +273,7 @@ public final class KeybindMapCopy{
 	}
 
 	public KeybindMapCopy(){
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_copy", ()->copyMapArtInInventory(),
+		KeyBindingHelper.registerKeyBinding(new Keybind("mapart_copy", ()->copyMapArtInInventory(),
 				s->s instanceof InventoryScreen || s instanceof CraftingScreen));
 	}
 }

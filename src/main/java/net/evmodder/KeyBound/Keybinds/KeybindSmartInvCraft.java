@@ -8,6 +8,6 @@ public final class KeybindSmartInvCraft{
 	}
 
 	public KeybindSmartInvCraft(){
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("smart_inventory_craft", this::craftSomeItem, PlayerScreenHandler.class::isInstance));
+		KeyBindingHelper.registerKeyBinding(new Keybind("smart_inventory_craft", this::craftSomeItem, PlayerScreenHandler.class::isInstance));
 	}
 }

@@ -38,7 +38,7 @@ public final class KeybindAIETravelHelper{
 		assert safePitchLower < setSafePitch && setSafePitch < safePitchUpper;
 
 		client = MinecraftClient.getInstance();
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("aie_travel_helper", ()->{
+		KeyBindingHelper.registerKeyBinding(new Keybind("aie_travel_helper", ()->{
 			if(!isEnabled){
 				if(client.player == null || client.world == null) return;
 				if(!client.player.isGliding()){client.player.sendMessage(Text.literal("You need to be flying first"), true); return;}

@@ -169,6 +169,6 @@ public final class KeybindEjectJunk{
 	}
 
 	public KeybindEjectJunk(){
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("eject_junk_items", this::ejectJunkItems, HandledScreen.class::isInstance));
+		KeyBindingHelper.registerKeyBinding(new Keybind("eject_junk_items", this::ejectJunkItems, HandledScreen.class::isInstance));
 	}
 }

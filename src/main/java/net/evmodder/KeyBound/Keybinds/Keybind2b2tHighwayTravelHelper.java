@@ -361,7 +361,7 @@ public final class Keybind2b2tHighwayTravelHelper{
 
 	public Keybind2b2tHighwayTravelHelper(KeybindEjectJunk ejectJunk){
 		client = MinecraftClient.getInstance();
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("ebounce_travel_helper", ()->{
+		KeyBindingHelper.registerKeyBinding(new Keybind("ebounce_travel_helper", ()->{
 			if(isEnabled || enabledTs != 0){
 				isEnabled = false;
 				enabledTs = 0;

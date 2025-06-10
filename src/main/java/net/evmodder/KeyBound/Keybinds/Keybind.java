@@ -7,13 +7,13 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil.Type;
 
-public final class EvKeybind extends KeyBinding{
-	public static HashSet<EvKeybind> allowedInInventory = new HashSet<>();
+public final class Keybind extends KeyBinding{
+	public static HashSet<Keybind> allowedInInventory = new HashSet<>();
 	public final Function<Screen, Boolean> allowInScreen;
 	//public AbstractKeybind(String translationKey, Type type, int code, String category){super(translationKey, type, code, category);}
 
 	public final Runnable onPressedSupplier, onReleasedSupplier;
-	public EvKeybind(String translationKey, Runnable onPressed, Runnable onReleased, Function<Screen, Boolean> allowInScreen){
+	public Keybind(String translationKey, Runnable onPressed, Runnable onReleased, Function<Screen, Boolean> allowInScreen){
 		super("key."+Main.MOD_ID+"."+translationKey, Type.KEYSYM, -1, Main.KEYBIND_CATEGORY);
 		onPressedSupplier = onPressed;
 		onReleasedSupplier = onReleased;
@@ -22,11 +22,11 @@ public final class EvKeybind extends KeyBinding{
 		//Main.LOGGER.debug("Registered keybind: "+translationKey);
 	}
 
-	public EvKeybind(String translationKey, Runnable onPressed){this(translationKey, onPressed, ()->{}, null);}
-	public EvKeybind(String translationKey){this(translationKey, ()->{}, ()->{}, null);}
+	public Keybind(String translationKey, Runnable onPressed){this(translationKey, onPressed, ()->{}, null);}
+	public Keybind(String translationKey){this(translationKey, ()->{}, ()->{}, null);}
 
-	public EvKeybind(String translationKey, Runnable onPressed, Function<Screen, Boolean> allowInScreen){this(translationKey, onPressed, ()->{}, allowInScreen);}
-	public EvKeybind(String translationKey, Function<Screen, Boolean> allowInScreen){this(translationKey, ()->{}, ()->{}, allowInScreen);}
+	public Keybind(String translationKey, Runnable onPressed, Function<Screen, Boolean> allowInScreen){this(translationKey, onPressed, ()->{}, allowInScreen);}
+	public Keybind(String translationKey, Function<Screen, Boolean> allowInScreen){this(translationKey, ()->{}, ()->{}, allowInScreen);}
 
 //	public void onPressed(){
 //		Main.LOGGER.info("Keybind pressed: "+getTranslationKey());

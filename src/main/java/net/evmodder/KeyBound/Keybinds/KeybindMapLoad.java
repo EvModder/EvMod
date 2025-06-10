@@ -103,7 +103,7 @@ public final class KeybindMapLoad{
 	}
 
 	public KeybindMapLoad(){
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_load_data", ()->loadMapArtFromContainer(),
+		KeyBindingHelper.registerKeyBinding(new Keybind("mapart_load_data", ()->loadMapArtFromContainer(),
 				s->s instanceof InventoryScreen == false));
 	}
 }

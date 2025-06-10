@@ -142,6 +142,6 @@ public final class KeybindMapMove{
 	}
 
 	public KeybindMapMove(){
-		KeyBindingHelper.registerKeyBinding(new EvKeybind("mapart_take_place", ()->moveMapArtToFromShulker(), s->s instanceof ShulkerBoxScreen));
+		KeyBindingHelper.registerKeyBinding(new Keybind("mapart_take_place", ()->moveMapArtToFromShulker(), s->s instanceof ShulkerBoxScreen));
 	}
 }

@@ -114,8 +114,8 @@ public final class KeybindHotbarTypeScroller{
 		Main.LOGGER.debug("Found matching items: "+String.join(", ", scrollableItems.keySet()));
 
 		if(!scrollableItems.isEmpty()){
-			KeyBindingHelper.registerKeyBinding(new EvKeybind("color_scroll.up", ()->scrollHotbarSlot(true)));
-			KeyBindingHelper.registerKeyBinding(new EvKeybind("color_scroll.down", ()->scrollHotbarSlot(false)));
+			KeyBindingHelper.registerKeyBinding(new Keybind("color_scroll.up", ()->scrollHotbarSlot(true)));
+			KeyBindingHelper.registerKeyBinding(new Keybind("color_scroll.down", ()->scrollHotbarSlot(false)));
 		}
 	}
 }

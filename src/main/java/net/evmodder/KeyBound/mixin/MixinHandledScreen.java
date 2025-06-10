@@ -1,6 +1,6 @@
 package net.evmodder.KeyBound.mixin;
 
-import net.evmodder.KeyBound.Keybinds.EvKeybind;
+import net.evmodder.KeyBound.Keybinds.Keybind;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.text.Text;
@@ -20,7 +20,7 @@ public abstract class MixinHandledScreen<T> extends Screen{
 		//Main.LOGGER.info("handleAllowedInContainerKey: "+keyCode);
 		//MinecraftClient client = MinecraftClient.getInstance();
 		//GameOptions keys = client.options;
-		return EvKeybind.allowedInInventory.stream().anyMatch(kb ->{
+		return Keybind.allowedInInventory.stream().anyMatch(kb ->{
 			if(kb.matchesKey(keyCode, scanCode)){kb.onPressedSupplier.run(); return kb.allowInScreen.apply(this);}
 			return false;
 		});
