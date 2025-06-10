@@ -17,12 +17,15 @@ keybind.mapart.load_from_shulker: true
 keybind.mapart.take_from_shulker: true
 keybind.mapart.copy_in_inventory: true
 
-mapart_placement_helper: true
+mapart_placement_helper: true #TODO: also support placing sequential shulker boxes
 mapart_placement_helper_use_name: true
 mapart_placement_helper_use_image: true
 
 mapart_group_command: true
 mapart_group_include_unlocked: true
+mapart_generate_img_command: true
+mapart_generate_img_upscale: true
+mapart_generate_img_border: true
 
 mapart_database: true
 mapart_database_share_contact: true
@@ -90,7 +93,7 @@ keybind.snap_angle.a: 156.14,-45.89
 
 keybind.eject_junk_items: true
 keybind.toggle_skin_layers: true
-keybind.smart_inventory_craft: true
+keybind.smart_inventory_craft: false #TODO: implement
 keybind.2b2t_highway_travel_helper: true
 keybind.aie_travel_helper: true
 

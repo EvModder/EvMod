@@ -4,7 +4,6 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
@@ -142,6 +141,6 @@ public final class KeybindMapMove{
 	}
 
 	public KeybindMapMove(){
-		KeyBindingHelper.registerKeyBinding(new Keybind("mapart_take_place", ()->moveMapArtToFromShulker(), s->s instanceof ShulkerBoxScreen));
+		new Keybind("mapart_take_place", ()->moveMapArtToFromShulker(), s->s instanceof ShulkerBoxScreen);
 	}
 }

@@ -6,7 +6,6 @@ import java.util.List;
 import net.evmodder.EvLib.Pair;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.item.ItemStack;
@@ -265,6 +264,6 @@ public final class KeybindInventoryOrganize{
 		)
 		.filter(p -> p != null)
 		.toList();
-		KeyBindingHelper.registerKeyBinding(new Keybind(keybind_name, this::organizeInventory, InventoryScreen.class::isInstance));
+		new Keybind(keybind_name, this::organizeInventory, InventoryScreen.class::isInstance);
 	}
 }

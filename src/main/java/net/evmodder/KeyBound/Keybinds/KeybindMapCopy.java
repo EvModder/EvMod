@@ -2,7 +2,6 @@ package net.evmodder.KeyBound.Keybinds;
 
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -273,7 +272,6 @@ public final class KeybindMapCopy{
 	}
 
 	public KeybindMapCopy(){
-		KeyBindingHelper.registerKeyBinding(new Keybind("mapart_copy", ()->copyMapArtInInventory(),
-				s->s instanceof InventoryScreen || s instanceof CraftingScreen));
+		new Keybind("mapart_copy", ()->copyMapArtInInventory(), s->s instanceof InventoryScreen || s instanceof CraftingScreen);
 	}
 }

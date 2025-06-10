@@ -2,7 +2,6 @@ package net.evmodder.KeyBound.Keybinds;
 
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
@@ -22,18 +21,18 @@ public final class KeybindSpamclick{
 	public KeybindSpamclick(){
 		MinecraftClient client = MinecraftClient.getInstance();
 
-		KeyBindingHelper.registerKeyBinding(new Keybind("incr_clicks", ()->{
+		new Keybind("incr_clicks", ()->{
 			//if(client.currentScreen instanceof InventoryScreen == false){Main.LOGGER.warn("SpamClickIncrClick: not in InventoryScreen"); return;}
 			if(numClicks >= 1000){numClicks = 0; numTicks = 0;}//<<<<<<<<<<<<<<<<<
 			client.player.sendMessage(Text.literal("SpamClick: numClicks="+(numClicks+=(Screen.hasShiftDown() ? 1 : 20))+" numTicks="+numTicks), /*overlay=*/false);
-		}));
+		});
 
-		KeyBindingHelper.registerKeyBinding(new Keybind("incr_ticks", ()->{
+		new Keybind("incr_ticks", ()->{
 			//if(client.currentScreen instanceof InventoryScreen == false){Main.LOGGER.warn("SpamClickIncrTicks: not in InventoryScreen"); return;}
 			client.player.sendMessage(Text.literal("SpamClick: numClicks="+numClicks+" numTicks="+(numTicks+=(Screen.hasShiftDown() ? 20 : 1))), /*overlay=*/false);
-		}));
+		});
 
-		KeyBindingHelper.registerKeyBinding(new Keybind("spam_click", ()->{
+		new Keybind("spam_click", ()->{
 			if(ongoingSpamClick) return;
 			if(numClicks == 0 || numTicks == 0) return;
 			if(client.currentScreen instanceof InventoryScreen == false){Main.LOGGER.warn("SpamClick: not in InventoryScreen"); return;}
@@ -59,6 +58,6 @@ public final class KeybindSpamclick{
 				//Main.LOGGER.info("SpamClick: DONE");
 				if(client.player != null) client.player.sendMessage(Text.literal("SpamClick: DONE"), /*overlay=*/false);
 			});
-		}, s->s instanceof InventoryScreen));
+		}, s->s instanceof InventoryScreen);
 	}
 }

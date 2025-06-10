@@ -21,7 +21,7 @@ public abstract class MixinHandledScreen<T> extends Screen{
 		//MinecraftClient client = MinecraftClient.getInstance();
 		//GameOptions keys = client.options;
 		return Keybind.allowedInInventory.stream().anyMatch(kb ->{
-			if(kb.matchesKey(keyCode, scanCode)){kb.onPressedSupplier.run(); return kb.allowInScreen.apply(this);}
+			if(kb.keybindInternal.matchesKey(keyCode, scanCode)){kb.onPressedSupplier.run(); return kb.allowInScreen.apply(this);}
 			return false;
 		});
 	}

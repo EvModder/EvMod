@@ -3,7 +3,6 @@ package net.evmodder.KeyBound.Keybinds;
 import java.util.ArrayList;
 import java.util.Comparator;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.block.AbstractFireBlock;
 import net.minecraft.block.AbstractPressurePlateBlock;
 import net.minecraft.block.AnvilBlock;
@@ -361,14 +360,14 @@ public final class Keybind2b2tHighwayTravelHelper{
 
 	public Keybind2b2tHighwayTravelHelper(KeybindEjectJunk ejectJunk){
 		client = MinecraftClient.getInstance();
-		KeyBindingHelper.registerKeyBinding(new Keybind("ebounce_travel_helper", ()->{
+		new Keybind("ebounce_travel_helper", ()->{
 			if(isEnabled || enabledTs != 0){
 				isEnabled = false;
 				enabledTs = 0;
 				client.player.sendMessage(Text.literal("2b2t Travel Helper: disabled"), true);
 			}
 			else enabledTs = System.currentTimeMillis();
-		}));
+		});
 
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
 			if(client.player == null || client.world == null){isEnabled = false; enabledTs = 0; return;}

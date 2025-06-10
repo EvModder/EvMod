@@ -2,7 +2,6 @@ package net.evmodder.KeyBound.Keybinds;
 
 import java.util.Set;
 import net.evmodder.KeyBound.Main;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -169,6 +168,6 @@ public final class KeybindEjectJunk{
 	}
 
 	public KeybindEjectJunk(){
-		KeyBindingHelper.registerKeyBinding(new Keybind("eject_junk_items", this::ejectJunkItems, HandledScreen.class::isInstance));
+		new Keybind("eject_junk_items", this::ejectJunkItems, HandledScreen.class::isInstance);
 	}
 }

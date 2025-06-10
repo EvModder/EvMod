@@ -12,7 +12,6 @@ import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.EvLib.PacketHelper.MessageReceiver;
 import net.evmodder.KeyBound.Keybinds.Keybind;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 
 public final class RemoteServerSender{
@@ -116,7 +115,7 @@ public final class RemoteServerSender{
 			}
 			else{
 				final byte[] byteMsg = PacketHelper.toByteArray(Arrays.stream(Arrays.copyOfRange(arr, 1, arr.length)).map(UUID::fromString).toArray(UUID[]::new));
-				KeyBindingHelper.registerKeyBinding(new Keybind(key, ()->sendBotMessage(command, /*udp=*/true, /*timeout=*/5000, byteMsg, /*recv=*/null)));
+				new Keybind(key, ()->sendBotMessage(command, /*udp=*/true, /*timeout=*/5000, byteMsg, /*recv=*/null));
 			}
 		});
 

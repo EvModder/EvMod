@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Stream;
 import net.evmodder.KeyBound.Main;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
@@ -114,8 +113,8 @@ public final class KeybindHotbarTypeScroller{
 		Main.LOGGER.debug("Found matching items: "+String.join(", ", scrollableItems.keySet()));
 
 		if(!scrollableItems.isEmpty()){
-			KeyBindingHelper.registerKeyBinding(new Keybind("color_scroll.up", ()->scrollHotbarSlot(true)));
-			KeyBindingHelper.registerKeyBinding(new Keybind("color_scroll.down", ()->scrollHotbarSlot(false)));
+			new Keybind("color_scroll.up", ()->scrollHotbarSlot(true));
+			new Keybind("color_scroll.down", ()->scrollHotbarSlot(false));
 		}
 	}
 }

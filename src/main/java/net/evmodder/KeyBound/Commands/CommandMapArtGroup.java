@@ -27,17 +27,17 @@ public class CommandMapArtGroup{
 
 	private int runCompareCommand(final FabricClientCommandSource source, final String group, final String group2){
 		if(group2 == null){
-			source.sendFeedback(Text.literal("Specify a 2nd group to compare against").copy().withColor(ERROR_COLOR));
+			source.sendError(Text.literal("Specify a 2nd group to compare against").copy().withColor(ERROR_COLOR));
 			return 1;
 		}
 		final byte[] data1 = FileIO.loadFileBytes(FILE_PATH+group);
 		if(data1 == null){
-			source.sendFeedback(Text.literal("MapArtGroup not found: "+FileIO.DIR+FILE_PATH+group).copy().withColor(ERROR_COLOR));
+			source.sendError(Text.literal("MapArtGroup not found: "+FileIO.DIR+FILE_PATH+group).copy().withColor(ERROR_COLOR));
 			return 1;
 		}
 		final byte[] data2 = FileIO.loadFileBytes(FILE_PATH+group2);
 		if(data2 == null){
-			source.sendFeedback(Text.literal("MapArtGroup not found: "+FileIO.DIR+FILE_PATH+group2).copy().withColor(ERROR_COLOR));
+			source.sendError(Text.literal("MapArtGroup not found: "+FileIO.DIR+FILE_PATH+group2).copy().withColor(ERROR_COLOR));
 			return 1;
 		}
 		return 1;
@@ -46,23 +46,23 @@ public class CommandMapArtGroup{
 		if(cmd == Command.COMPARE) return runCompareCommand(source, group, group2);
 		final byte[] data = FileIO.loadFileBytes(FILE_PATH+group);
 		if(data == null && cmd != Command.CREATE){
-			source.sendFeedback(Text.literal("MapArtGroup not found: "+FileIO.DIR+FILE_PATH+group).copy().withColor(ERROR_COLOR));
+			source.sendError(Text.literal("MapArtGroup not found: "+FileIO.DIR+FILE_PATH+group).copy().withColor(ERROR_COLOR));
 			return 1;
 		}
 		if(data != null && cmd == Command.CREATE && !CONFIRM.equalsIgnoreCase(group2)){
-			source.sendFeedback(Text.literal("MapArtGroup '"+group+"' already exists!").copy().withColor(ERROR_COLOR));
+			source.sendError(Text.literal("MapArtGroup '"+group+"' already exists!").copy().withColor(ERROR_COLOR));
 			source.sendFeedback(Text.literal("To overwrite it, add 'confirm' to the end of the command"));
 			return 1;
 		}
 		if(group2 != null && (cmd != Command.CREATE || !CONFIRM.equalsIgnoreCase(group2))){
-			source.sendFeedback(Text.literal("Too many arguments provided").copy().withColor(ERROR_COLOR));
+			source.sendError(Text.literal("Too many arguments provided").copy().withColor(ERROR_COLOR));
 			return 1;
 		}
 		HashSet<UUID> mapsInGroup = new HashSet<>();
 		if(data != null && cmd != Command.CREATE){
 			final int numIdsInFile = data.length / 16;
 			if(numIdsInFile*16 != data.length || numIdsInFile == 0){
-				source.sendFeedback(Text.literal("Corrupted/unrecognized map group file").copy().withColor(ERROR_COLOR));
+				source.sendError(Text.literal("Corrupted/unrecognized map group file").copy().withColor(ERROR_COLOR));
 				return 1;
 			}
 			final ByteBuffer bb = ByteBuffer.wrap(data);
@@ -72,12 +72,12 @@ public class CommandMapArtGroup{
 			final int oldSize = mapsInGroup.size();
 			final HashSet<UUID> loadedMaps = MapGroupUtils.getLoadedMaps(source.getWorld());
 			if(loadedMaps.isEmpty()){
-				source.sendFeedback(Text.literal("No maps found").copy().withColor(ERROR_COLOR));
+				source.sendError(Text.literal("No maps found").copy().withColor(ERROR_COLOR));
 				return 1;
 			}
 			for(UUID uuid : loadedMaps) mapsInGroup.add(uuid);
 			if(mapsInGroup.size() == oldSize){
-				source.sendFeedback(Text.literal("No new maps (that weren't already in the group)").copy().withColor(DONE_COLOR));
+				source.sendError(Text.literal("No new maps (that weren't already in the group)").copy().withColor(DONE_COLOR));
 				return 1;
 			}
 			for(UUID uuid : MapGroupUtils.getLoadedMaps(source.getWorld())) mapsInGroup.add(uuid);
@@ -116,7 +116,7 @@ public class CommandMapArtGroup{
 			dispatcher.register(
 				ClientCommandManager.literal("mapartgroup")
 				.executes(ctx->{
-					ctx.getSource().sendFeedback(Text.literal("Missing subcommand: set/create/append <g>, or compare <g1> <g2>"));
+					ctx.getSource().sendError(Text.literal("Missing subcommand: set/create/append <g>, or compare <g1> <g2>"));
 					return 1;
 				})
 				.then(
@@ -128,7 +128,7 @@ public class CommandMapArtGroup{
 					.executes(ctx->{
 						final String cmd = ctx.getArgument("command", String.class);
 						if(cmd.equalsIgnoreCase("reset")) MapGroupUtils.setCurrentGroup(null);
-						else ctx.getSource().sendFeedback(Text.literal("Command needs a group name").copy().withColor(ERROR_COLOR));
+						else ctx.getSource().sendError(Text.literal("Command needs a group name").copy().withColor(ERROR_COLOR));
 						return 1;
 					})
 					.then(
@@ -141,7 +141,7 @@ public class CommandMapArtGroup{
 								return runCommand(ctx.getSource(), Command.valueOf(cmdStr.toUpperCase()), group, null);
 							}
 							catch(IllegalArgumentException ex){
-								ctx.getSource().sendFeedback(Text.literal("Invalid subcommand: "+cmdStr).copy().withColor(ERROR_COLOR));
+								ctx.getSource().sendError(Text.literal("Invalid subcommand: "+cmdStr).copy().withColor(ERROR_COLOR));
 								return 1;
 							}
 						})
@@ -181,7 +181,7 @@ public class CommandMapArtGroup{
 									return runCommand(ctx.getSource(), Command.valueOf(cmdStr.toUpperCase()), group, group2);
 								}
 								catch(IllegalArgumentException ex){
-									ctx.getSource().sendFeedback(Text.literal("Invalid subcommand: "+cmdStr).copy().withColor(ERROR_COLOR));
+									ctx.getSource().sendError(Text.literal("Invalid subcommand: "+cmdStr).copy().withColor(ERROR_COLOR));
 									return 1;
 								}
 							})

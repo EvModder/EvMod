@@ -3,7 +3,6 @@ package net.evmodder.KeyBound.Keybinds;
 import net.evmodder.EvLib.TextUtils;
 import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;
 import net.minecraft.client.MinecraftClient;
@@ -38,7 +37,7 @@ public final class KeybindAIETravelHelper{
 		assert safePitchLower < setSafePitch && setSafePitch < safePitchUpper;
 
 		client = MinecraftClient.getInstance();
-		KeyBindingHelper.registerKeyBinding(new Keybind("aie_travel_helper", ()->{
+		new Keybind("aie_travel_helper", ()->{
 			if(!isEnabled){
 				if(client.player == null || client.world == null) return;
 				if(!client.player.isGliding()){client.player.sendMessage(Text.literal("You need to be flying first"), true); return;}
@@ -47,7 +46,7 @@ public final class KeybindAIETravelHelper{
 			}
 			isEnabled = !isEnabled;
 			client.player.sendMessage(Text.literal("AutomaticInfiniteElytra Travel Helper: "+(isEnabled ? "enabled" : "disabled")), true);
-		}));
+		});
 
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
 			if(!isEnabled) return;

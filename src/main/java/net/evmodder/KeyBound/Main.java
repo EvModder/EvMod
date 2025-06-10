@@ -123,6 +123,7 @@ public class Main implements ClientModInitializer{
 		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false,
 				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false;
 		boolean mapPlaceHelper=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false;
+		boolean mapWallCmd=false, mapWallUpscale=false, mapWallBorder=false;
 		boolean keybindHighwayTravelHelper=false;
 		boolean uploadIgnoreList=false;
 		String[] downloadIgnoreLists=null;
@@ -177,7 +178,8 @@ public class Main implements ClientModInitializer{
 				case "totem_total_count": if(!value.equalsIgnoreCase("false")) totemShowTotalCount = !value.equalsIgnoreCase("false"); break;
 				case "repaircost_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipRepairCost::addRC); break;
 				case "repaircost_hotbarhud": rcHotbarHUD = !value.equalsIgnoreCase("false"); break;
-				case "map_highlight_in_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors); break;
+				case "map_highlight_in_tooltip": if(!value.equalsIgnoreCase("false"))
+					ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors); break;
 				case "map_highlight_in_hotbarhud": mapColorHUD = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_in_itemframe": mapColorIFrame = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_color_unlocked": MAP_COLOR_UNLOCKED = Integer.parseInt(value); break;
@@ -187,13 +189,16 @@ public class Main implements ClientModInitializer{
 				case "keybind.mapart.load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.take_from_shulker": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.copy_in_inventory": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
-				case "mapart_placement_helper": mapPlaceHelper=true; break;
-				case "mapart_placement_helper_use_name": mapPlaceHelperByName=true; break;
-				case "mapart_placement_helper_use_image": mapPlaceHelperByImg=true; break;
+				case "mapart_placement_helper": mapPlaceHelper=!value.equalsIgnoreCase("false"); break;
+				case "mapart_placement_helper_use_name": mapPlaceHelperByName=!value.equalsIgnoreCase("false"); break;
+				case "mapart_placement_helper_use_image": mapPlaceHelperByImg=!value.equalsIgnoreCase("false"); break;
 				case "mapart_group_include_unlocked":
 					MapGroupUtils.INCLUDE_UNLOCKED = !value.equalsIgnoreCase("false");
 					break;
 				case "mapart_group_command": new CommandMapArtGroup(); break;
+				case "mapart_generate_img_upscale": mapWallUpscale=!value.equalsIgnoreCase("false"); break;
+				case "mapart_generate_img_border": mapWallBorder=!value.equalsIgnoreCase("false"); break;
+				case "mapart_generate_img_command": mapWallCmd=!value.equalsIgnoreCase("false"); break;
 //				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
 //				case "millis_between_clicks": millis_between_clicks = Integer.parseInt(value); break;
 
@@ -228,8 +233,11 @@ public class Main implements ClientModInitializer{
 		if(keybindHighwayTravelHelper) new Keybind2b2tHighwayTravelHelper(ejectJunk);
 		//new KeybindSpamclick();
 
+		if(mapWallCmd) new CommandDownloadMapWall(mapWallUpscale, mapWallBorder);
+
 		MinecraftClient client = MinecraftClient.getInstance();
 		String username = client.getSession().getUsername();
-		if(temp_evt_ts*1000L > System.currentTimeMillis() && temp_evt_msgs != null && username.equals(evt_account)) new ChatBroadcaster(temp_evt_ts, temp_evt_msgs);
+		if(temp_evt_ts*1000L > System.currentTimeMillis() && temp_evt_msgs != null && username.equals(evt_account))
+			new ChatBroadcaster(temp_evt_ts, temp_evt_msgs);
 	}
 }

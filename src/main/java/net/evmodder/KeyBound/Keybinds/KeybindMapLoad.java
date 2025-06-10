@@ -3,7 +3,6 @@ package net.evmodder.KeyBound.Keybinds;
 import java.util.ArrayDeque;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
-import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
@@ -103,7 +102,6 @@ public final class KeybindMapLoad{
 	}
 
 	public KeybindMapLoad(){
-		KeyBindingHelper.registerKeyBinding(new Keybind("mapart_load_data", ()->loadMapArtFromContainer(),
-				s->s instanceof InventoryScreen == false));
+		new Keybind("mapart_load_data", ()->loadMapArtFromContainer(), s->s instanceof InventoryScreen == false);
 	}
 }
