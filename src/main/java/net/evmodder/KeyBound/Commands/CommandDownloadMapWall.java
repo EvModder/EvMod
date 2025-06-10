@@ -33,7 +33,7 @@ import net.minecraft.util.math.Direction.Axis;
 public class CommandDownloadMapWall{
 	final int RENDER_DIST = 10;
 	final boolean SCALE_TO_640, BLOCK_BORDER;
-	final int BORDER_1 = 16435300, BORDER_2 = 2626590; // Orange, Near-black purple
+	final int BORDER_1 = -14236, BORDER_2 = -13495266; // Orange, Near-black purple
 	//final Box everythingBox = Box.of(client.player.getPos(), RENDER_DIST*16, RENDER_DIST*16, RENDER_DIST*16);
 
 	/*static int getIntFromARGB(int a, int r, int g, int b){return (a<<24) | (r<<16) | (g<<8) | b;}
@@ -62,7 +62,8 @@ public class CommandDownloadMapWall{
 		}
 	}*/
 
-	private int[] MAP_COLORS = new int[] { 0, 0, 0, 0, -10912473, -9594576, -8408520, -12362211, -5331853, -2766452, -530013, -8225962, -7566196, -5526613,
+	private int[] MAP_COLORS = new int[] { 0, 0, 0, 0,
+			-10912473, -9594576, -8408520, -12362211, -5331853, -2766452, -530013, -8225962, -7566196, -5526613,
 			-3684409, -9868951, -4980736, -2359296, -65536, -7929856, -9408332, -7697700, -6250241, -11250553, -9079435, -7303024, -5789785, -10987432,
 			-16754944, -16750080, -16745472, -16760576, -4934476, -2302756, -1, -7895161, -9210239, -7499618, -5986120, -11118495, -9810890, -8233406, -6853299,
 			-11585240, -11579569, -10461088, -9408400, -12895429, -13816396, -13158436, -12566273, -14605945, -10202062, -8690114, -7375032, -11845850,
@@ -199,6 +200,7 @@ public class CommandDownloadMapWall{
 		}
 		if(SCALE_TO_640 && (w < 5 || h < 5)){
 			int s = 2; while(128*w*s < 640 || 128*h*s < 640) ++s;
+			ctx.getSource().sendFeedback(Text.literal("Upscaling img: x"+s));
 			BufferedImage upscaledImg = new BufferedImage(128*w*s+(BLOCK_BORDER?s*2:0), 128*h*s+(BLOCK_BORDER?s*2:0), img.getType());
 			Graphics2D g2d = upscaledImg.createGraphics();
 			g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
