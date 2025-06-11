@@ -121,7 +121,7 @@ public class Main implements ClientModInitializer{
 		//int clicksInDuration = 190, durationTicks = 75;
 		int clicksInDuration = 1, durationTicks = 1;
 		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false,
-				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false;
+				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false, keybindMapArtBundleStow=false;
 		boolean mapPlaceHelper=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false;
 		boolean mapWallCmd=false, mapWallUpscale=false, mapWallBorder=false;
 		boolean keybindHighwayTravelHelper=false;
@@ -188,6 +188,7 @@ public class Main implements ClientModInitializer{
 				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.take_from_shulker": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
+				case "keybind.mapart.take_from_bundle": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.copy_in_inventory": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
 				case "mapart_placement_helper": mapPlaceHelper=!value.equalsIgnoreCase("false"); break;
 				case "mapart_placement_helper_use_name": mapPlaceHelperByName=!value.equalsIgnoreCase("false"); break;
@@ -229,6 +230,7 @@ public class Main implements ClientModInitializer{
 		if(keybindMapArtLoad) new KeybindMapLoad();
 		if(keybindMapArtCopy) new KeybindMapCopy();
 		if(keybindMapArtMove) new KeybindMapMove();
+		if(keybindMapArtBundleStow) new KeybindMapArtBundleStow();
 		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg);
 		if(keybindHighwayTravelHelper) new Keybind2b2tHighwayTravelHelper(ejectJunk);
 		//new KeybindSpamclick();
