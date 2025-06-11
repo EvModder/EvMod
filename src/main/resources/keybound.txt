@@ -27,6 +27,8 @@ mapart_group_include_unlocked: true
 mapart_generate_img_command: true
 mapart_generate_img_upscale: true
 mapart_generate_img_border: true
+mapart_generate_img_border_color1: -14236 # Yellow
+mapart_generate_img_border_color2: -8555656 # Gray
 
 mapart_database: true
 mapart_database_share_contact: true

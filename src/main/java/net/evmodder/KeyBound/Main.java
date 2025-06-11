@@ -123,9 +123,10 @@ public class Main implements ClientModInitializer{
 		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false,
 				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false, keybindMapArtBundleStow=false;
 		boolean mapPlaceHelper=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false;
-		boolean mapWallCmd=false, mapWallUpscale=false, mapWallBorder=false;
+		boolean mapWallCmd=false, mapWallBorder=false;
 		boolean keybindHighwayTravelHelper=false;
 		boolean uploadIgnoreList=false;
+		int mapWallBorderColor1=-14236, mapWallBorderColor2=-8555656, mapWallUpscale=128;
 		String[] downloadIgnoreLists=null;
 
 		String[] temp_evt_msgs=null; long temp_evt_ts=0; String evt_account="";
@@ -188,7 +189,7 @@ public class Main implements ClientModInitializer{
 				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.take_from_shulker": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
-				case "keybind.mapart.take_from_bundle": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
+				case "keybind.mapart.take_from_bundle": keybindMapArtBundleStow = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.copy_in_inventory": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
 				case "mapart_placement_helper": mapPlaceHelper=!value.equalsIgnoreCase("false"); break;
 				case "mapart_placement_helper_use_name": mapPlaceHelperByName=!value.equalsIgnoreCase("false"); break;
@@ -197,9 +198,11 @@ public class Main implements ClientModInitializer{
 					MapGroupUtils.INCLUDE_UNLOCKED = !value.equalsIgnoreCase("false");
 					break;
 				case "mapart_group_command": new CommandMapArtGroup(); break;
-				case "mapart_generate_img_upscale": mapWallUpscale=!value.equalsIgnoreCase("false"); break;
+				case "mapart_generate_img_upscale_to": mapWallUpscale=Integer.parseInt(value); break;
 				case "mapart_generate_img_border": mapWallBorder=!value.equalsIgnoreCase("false"); break;
 				case "mapart_generate_img_command": mapWallCmd=!value.equalsIgnoreCase("false"); break;
+				case "mapart_generate_img_border_color1": mapWallBorderColor1=Integer.parseInt(value); break;
+				case "mapart_generate_img_border_color2": mapWallBorderColor2=Integer.parseInt(value); break;
 //				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
 //				case "millis_between_clicks": millis_between_clicks = Integer.parseInt(value); break;
 
@@ -235,7 +238,7 @@ public class Main implements ClientModInitializer{
 		if(keybindHighwayTravelHelper) new Keybind2b2tHighwayTravelHelper(ejectJunk);
 		//new KeybindSpamclick();
 
-		if(mapWallCmd) new CommandDownloadMapWall(mapWallUpscale, mapWallBorder);
+		if(mapWallCmd) new CommandDownloadMapWall(mapWallUpscale, mapWallBorder, mapWallBorderColor1, mapWallBorderColor2);
 
 		MinecraftClient client = MinecraftClient.getInstance();
 		String username = client.getSession().getUsername();

@@ -15,9 +15,12 @@ keybind.mapart.copy_in_inventory: true
 # I've also made it so any MapState the game encounters which are NOT in the currently set group will have a colored name ingame (which is useful to quickly identify maps you haven't yet collected)
 mapart_group_command: true
 mapart_group_include_unlocked: false
+
 mapart_generate_img_command: true
-mapart_generate_img_upscale: true
+mapart_generate_img_upscale_to: 640
 mapart_generate_img_border: true
+mapart_generate_img_border_color1: -14236 # Yellow
+mapart_generate_img_border_color2: -8555656 # Gray
 
 #========== Packet Settings ==========#
 # 2b2t will kick you for sending 200+ clicks in 70 ticks (Updated: 2025-04-27)
