@@ -1,5 +1,6 @@
 package net.evmodder.KeyBound.EventListeners;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -46,13 +47,14 @@ public final class MapHandRestock{
 		return bestSlot;
 	}
 
+	private final HashMap<String, Boolean> isSideways2d;
 	//TODO: passing metadata, particularly NxM if known.
 	// Higher number = closer match
 	// 5,4 = definitely next (no doubt)
 	// 3 = likely next (but not 100%)
 	// 2 = maybe next (line wrapping?)
 	// 1 = not impossibly next
-	private final int checkComesAfter(String posA, String posB){
+	private final int checkComesAfter(String posA, String posB, Boolean hintSideways){
 		if(posA.isBlank() || posB.isBlank() || posA.equals(posB)) return 1; // "Map"->"Map p2", "Map start"->"Map"
 
 		if(posA.equals("T R") && posB.equals("M L")) return 4;
@@ -90,21 +92,26 @@ public final class MapHandRestock{
 				}
 			}
 			//Main.LOGGER.info("MapRestock: 2D pos not yet fully supported. A:"+posA+", B:"+posB);
-			final String posA1 = posA.substring(0, cutA), posA2 = posA.substring(cutA+cutSpaceA);
-			final String posB1 = posB.substring(0, cutB), posB2 = posB.substring(cutB+cutSpaceB);
+			final String posA1t = posA.substring(0, cutA), posA2t = posA.substring(cutA+cutSpaceA);
+			final String posB1t = posB.substring(0, cutB), posB2t = posB.substring(cutB+cutSpaceB);
+			final String posA1, posA2, posB1, posB2;
+
+			if(!hintSideways){posA1=posA1t; posA2=posA2t; posB1=posB1t; posB2=posB2t;}
+			else{posA1=posA2t; posA2=posA1t; posB1=posB2t; posB2=posB1t;}
+
 			if(posA1.equals(posB1)){
 				Main.LOGGER.info("MapRestock: 2D, A1==B1");
-				return checkComesAfter(posA2, posB2)+1;
+				return checkComesAfter(posA2, posB2, null)+1;
 			}
 			//if(posA2.equals(posB2)) return checkComesAfter(posA1, posB1)-2;// TODO: nerf with -2 (until impl edge matching), col should not be before row..
 			if(posB2.matches("[A0]") && !posA2.equals(posB2)){
 				Main.LOGGER.info("MapRestock: 2D, B2==[A0], recur checkComesAfter(A1, B1)");
 				//Main.LOGGER.info("MapRestock: 2D pos: B2=0");
-				return checkComesAfter(posA1, posB1)-1;
+				return checkComesAfter(posA1, posB1, null)-1;
 			}
 			if(posB2.equals("1") && !posA2.matches("[01]")){
 				Main.LOGGER.info("MapRestock: 2D, B2==[1], recur checkComesAfter(A1, B1)");
-				return checkComesAfter(posA1, posB1)-2;
+				return checkComesAfter(posA1, posB1, null)-2;
 			}
 			//Main.LOGGER.info("MapRestock: 2D, checkComesAfter=1. A:"+posA+", B:"+posB);
 			return 1;
@@ -112,6 +119,18 @@ public final class MapHandRestock{
 
 		//Main.LOGGER.info("MapRestock: checkComesAfter=1. A:"+posA+", B:"+posB);
 		return 1;
+	}
+	private int getLongestNameTrail(final PlayerEntity player, String prevName, int prevCount, final boolean locked){
+		int trailLength = 0;
+		while(true){
+			int slot = getNextSlotByName(player, prevName, prevCount, locked);
+			if(slot == -1) return trailLength;
+			ItemStack stack = player.playerScreenHandler.slots.get(slot).getStack();
+			prevName = stack.getCustomName() == null ? null : stack.getCustomName().getLiteralString();
+			if(prevName == null) return trailLength;
+			prevCount = stack.getCount();
+			++trailLength;
+		}
 	}
 	private final int getNextSlotByName(final PlayerEntity player, final String prevName, final int count, final boolean locked){
 		final PlayerScreenHandler psh = player.playerScreenHandler;
@@ -123,6 +142,20 @@ public final class MapHandRestock{
 
 		final String prevPosStr = data.prefixLen() == -1 ? prevName
 				: AdjacentMapUtils.simplifyPosStr(prevName.substring(data.prefixLen(), prevName.length()-data.suffixLen()));
+
+		final String nameWithoutPos = prevName.substring(0, data.prefixLen()) + prevName.substring(prevName.length()-data.suffixLen());
+		Boolean isSideways = isSideways2d.get(nameWithoutPos);
+		if(isSideways == null){
+			isSideways2d.put(nameWithoutPos, true); // Try it
+			int withSideways = getLongestNameTrail(player, prevName, count, locked);
+			isSideways2d.put(nameWithoutPos, isSideways=false);
+			int withoutSideways = getLongestNameTrail(player, prevName, count, locked);
+			if(withSideways > withoutSideways){
+				Main.LOGGER.info("MapRestock: findByName() detected likely sideways 2d map (trail len "+withSideways+" vs "+withoutSideways+")");
+				isSideways2d.put(nameWithoutPos, isSideways=true);
+			}
+		}
+
 		int bestSlot = -1, bestConfidence=1;//bestConfidence = -1;
 		String bestName = prevName;
 		for(int slot : data.slots()){
@@ -131,9 +164,10 @@ public final class MapHandRestock{
 			final String name = stack.getCustomName() == null ? null : stack.getCustomName().getLiteralString();
 			if(name == null) continue;
 			if(name.equals(prevName) && slot-36 == player.getInventory().selectedSlot) continue;
-			final String posStr = data.prefixLen() == -1 ? name : AdjacentMapUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
+			final String posStr = data.prefixLen() == -1 ? name :
+					AdjacentMapUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
 			//Main.LOGGER.info("MapRestock: checkComesAfter for name: "+name);
-			final int confidence = checkComesAfter(prevPosStr, posStr);
+			final int confidence = checkComesAfter(prevPosStr, posStr, isSideways);
 			if(confidence > bestConfidence || (confidence==bestConfidence && name.compareTo(bestName) < 0)){
 				Main.LOGGER.info("MapRestock: new best confidence for "+name+": "+confidence);
 				bestConfidence = confidence; bestSlot = slot; bestName = name;
@@ -219,8 +253,8 @@ public final class MapHandRestock{
 			client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
 			Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().selectedSlot);
 		}
-		else if(prevCount != 1){
-			Main.LOGGER.warn("MapRestock: Won't swap with inventory since prevMap count != 1");
+		else if(prevCount > 2){
+			Main.LOGGER.warn("MapRestock: Won't swap with inventory since prevMap count > 2");
 		}
 		else{
 			client.interactionManager.clickSlot(0, restockFromSlot, player.getInventory().selectedSlot, SlotActionType.SWAP, player);
@@ -231,6 +265,7 @@ public final class MapHandRestock{
 	public MapHandRestock(boolean useName, boolean useImg){
 		USE_NAME = useName;
 		USE_IMG = useImg;
+		isSideways2d = USE_NAME ? new HashMap<>() : null;
 		UseEntityCallback.EVENT.register((player, _0, hand, entity, _1) -> {
 			if(!(entity instanceof ItemFrameEntity itemFrame)) return ActionResult.PASS;
 			//Main.LOGGER.info("clicked item frame");
