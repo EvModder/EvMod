@@ -1,5 +1,6 @@
 package net.evmodder.KeyBound.mixin;
 
+import java.util.HashSet;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -18,6 +19,7 @@ import net.minecraft.item.map.MapState;
 import net.minecraft.registry.Registries;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 
 @Mixin(ItemFrameEntityRenderer.class)
 class MixinItemFrameRenderer<T extends ItemFrameEntity>{
@@ -34,6 +36,7 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		return e > 1.0d - asdf / d;
 	}
 
+	HashSet<Vec3i> newMapartNotified = new HashSet<Vec3i>();
 	@Inject(method = "hasLabel", at = @At("HEAD"), cancellable = true)
 	public void hasLabel_Mixin(T itemFrameEntity, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
 		if(!Main.mapColorIFrame && !Main.notifyIfNotInGroup) return; // Features are disabled
@@ -44,12 +47,13 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		MapState state = itemFrameEntity.getWorld().getMapState(mapId);
 		if(state == null) return;
 		final boolean newMapart = MapGroupUtils.isMapNotInCurrentGroup(state);
-		if(Main.notifyIfNotInGroup && newMapart){
+		if(Main.notifyIfNotInGroup && newMapart && newMapartNotified.contains(itemFrameEntity.getBlockPos())){
 			final long now = System.currentTimeMillis();
-			if(now - lastNotif > 20*1000){
+			if(now - lastNotif > 10*1000){
 				lastNotif = now;
 				client.player.sendMessage(Text.literal("New mapart detected! % "
-						+(itemFrameEntity.getBlockX()%100)+" "+(itemFrameEntity.getBlockZ()%100)), true);
+						+(itemFrameEntity.getBlockX()%100)+" "+(itemFrameEntity.getBlockZ()%100)).withColor(5635925), true);
+				newMapartNotified.add(itemFrameEntity.getBlockPos());
 			}
 		}
 
