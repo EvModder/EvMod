@@ -112,11 +112,11 @@ public class CommandDownloadMapWall{
 		if(BLOCK_BORDER){
 			int MAGIC = 128-border;
 			int symW = w & 1, symH = h&1;
-			for(int x=border; x<img.getWidth()-border; ++x) for(int i=0; i<border; ++i){
+			for(int x=0; x<img.getWidth(); ++x) for(int i=0; i<border; ++i){
 				img.setRGB(x, i, (((x+MAGIC)/128) & 1) == 1 ? BORDER_1 : BORDER_2);
 				img.setRGB(x, img.getHeight()-1-i, (((x+MAGIC)/128) & 1) == symH ? BORDER_1 : BORDER_2);
 			}
-			for(int y=border; y<img.getHeight()-border; ++y) for(int i=0; i<border; ++i){
+			for(int y=0; y<img.getHeight(); ++y) for(int i=0; i<border; ++i){
 				img.setRGB(i, y, (((y+MAGIC)/128) & 1) == 1 ? BORDER_1 : BORDER_2);
 				img.setRGB(img.getWidth()-1-i, y, (((y+MAGIC)/128) & 1) == symW ? BORDER_1 : BORDER_2);
 			}
