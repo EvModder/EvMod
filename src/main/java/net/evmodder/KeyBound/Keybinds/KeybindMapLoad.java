@@ -1,6 +1,7 @@
 package net.evmodder.KeyBound.Keybinds;
 
 import java.util.ArrayDeque;
+import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
@@ -92,7 +93,7 @@ public final class KeybindMapLoad{
 					if(isLoadedMapArt(/*client.player.clientWorld*/client.world, item)) return true;
 					if(getNextUsableHotbarButton(client, -1) != c.button()
 						|| Main.inventoryUtils.MAX_CLICKS-Main.inventoryUtils.addClick(null) >= MAX_BATCH_SIZE) return true;
-					client.player.sendMessage(Text.literal("MapLoad: Waiting for clicks...").withColor(15764490), true);
+					client.player.sendMessage(Text.literal("MapLoad: Waiting for clicks...").withColor(KeybindMapCopy.WAITING_FOR_CLICKS_COLOR), true);
 					return false;
 				},
 				()->{
@@ -102,6 +103,6 @@ public final class KeybindMapLoad{
 	}
 
 	public KeybindMapLoad(){
-		new Keybind("mapart_load_data", ()->loadMapArtFromContainer(), s->s instanceof InventoryScreen == false);
+		new Keybind("mapart_load_data", ()->loadMapArtFromContainer(), s->s instanceof InventoryScreen == false, GLFW.GLFW_KEY_E);
 	}
 }

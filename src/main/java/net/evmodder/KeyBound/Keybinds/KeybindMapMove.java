@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.TreeSet;
 import java.util.stream.IntStream;
+import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
@@ -161,7 +162,7 @@ public final class KeybindMapMove{
 					// Don't start cursor-pickup move operation if we can't complete it in 1 go
 					final Integer clicksNeeded = reserveClicks.get(c);
 					if(clicksNeeded == null || clicksNeeded <= Main.inventoryUtils.MAX_CLICKS - Main.inventoryUtils.addClick(null)) return true;
-					client.player.sendMessage(Text.literal("MapMove: Waiting for clicks...").withColor(15764490), true);
+					client.player.sendMessage(Text.literal("MapMove: Waiting for clicks...").withColor(KeybindMapCopy.WAITING_FOR_CLICKS_COLOR), true);
 					return false;
 				},
 				()->{
@@ -171,6 +172,6 @@ public final class KeybindMapMove{
 	}
 
 	public KeybindMapMove(){
-		new Keybind("mapart_take_place", ()->moveMapArtToFromShulker(), s->s instanceof ShulkerBoxScreen);
+		new Keybind("mapart_take_place", ()->moveMapArtToFromShulker(), s->s instanceof ShulkerBoxScreen, GLFW.GLFW_KEY_T);
 	}
 }

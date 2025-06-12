@@ -3,6 +3,7 @@ package net.evmodder.KeyBound.Keybinds;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.List;
+import org.lwjgl.glfw.GLFW;
 import net.evmodder.EvLib.Pair;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
@@ -264,6 +265,6 @@ public final class KeybindInventoryOrganize{
 		)
 		.filter(p -> p != null)
 		.toList();
-		new Keybind(keybind_name, this::organizeInventory, InventoryScreen.class::isInstance);
+		new Keybind(keybind_name, this::organizeInventory, InventoryScreen.class::isInstance, GLFW.GLFW_KEY_E);
 	}
 }

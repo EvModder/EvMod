@@ -20,7 +20,7 @@ public class ClickUtils{
 	private final int[] tickDurationArr;
 	private int tickDurIndex, sumClicksInDuration;
 	private long lastTick;
-	private final int OUTTA_CLICKS_COLOR = 15764490;
+	private final int OUTTA_CLICKS_COLOR = 15764490, SYNC_ID_CHANGED_COLOR = 16733525;
 
 	public ClickUtils(final int MAX_CLICKS, int FOR_TICKS){
 		if(MAX_CLICKS > 100_000){
@@ -77,6 +77,7 @@ public class ClickUtils{
 				}
 				if(client.player.currentScreenHandler.syncId != syncId){
 					Main.LOGGER.error("executeClicks() failed due to syncId changing mid-operation ("+syncId+" -> "+client.player.currentScreenHandler.syncId+")");
+					client.player.sendMessage(Text.literal("Clicks cancelled: container ID changed").withColor(SYNC_ID_CHANGED_COLOR), true);
 					cancel(); onComplete.run(); return;
 				}
 				//final int availableClicks = MAX_CLICKS - addClick(null);

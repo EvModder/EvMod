@@ -16,6 +16,7 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
+import org.lwjgl.glfw.GLFW;
 
 public final class KeybindMapCopy{
 	private static boolean ongoingCopy;
@@ -23,6 +24,7 @@ public final class KeybindMapCopy{
 	private static final long copyCooldown = 250l;
 	private final boolean PRESERVE_MAP_POS = true;
 	private final ItemStack EMPTY_ITEM = new ItemStack(Items.AIR);
+	final static int WAITING_FOR_CLICKS_COLOR = 15764490;
 
 	// Shift-click results:
 	// Shift-click in crafting input -> TL of inv
@@ -262,7 +264,7 @@ public final class KeybindMapCopy{
 			// Don't start individual copy operation unless we can fully knock it out (unless impossible to do in 1 go)
 			final Integer clicksNeeded = reserveClicks.get(c);
 			if(clicksNeeded == null || clicksNeeded <= Main.inventoryUtils.MAX_CLICKS - Main.inventoryUtils.addClick(null)) return true;
-			client.player.sendMessage(Text.literal("MapCopy: Waiting for clicks...").withColor(15764490), true);
+			client.player.sendMessage(Text.literal("MapCopy: Waiting for clicks...").withColor(WAITING_FOR_CLICKS_COLOR), true);
 			return false;
 		},
 		()->{
@@ -272,6 +274,6 @@ public final class KeybindMapCopy{
 	}
 
 	public KeybindMapCopy(){
-		new Keybind("mapart_copy", ()->copyMapArtInInventory(), s->s instanceof InventoryScreen || s instanceof CraftingScreen);
+		new Keybind("mapart_copy", ()->copyMapArtInInventory(), s->s instanceof InventoryScreen || s instanceof CraftingScreen, GLFW.GLFW_KEY_T);
 	}
 }

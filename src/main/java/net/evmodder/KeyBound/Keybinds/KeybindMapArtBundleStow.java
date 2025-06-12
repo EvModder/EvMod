@@ -3,6 +3,7 @@ package net.evmodder.KeyBound.Keybinds;
 import java.util.ArrayDeque;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.math.Fraction;
+import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
@@ -12,7 +13,6 @@ import net.minecraft.component.type.BundleContentsComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
-import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 
@@ -32,24 +32,29 @@ public final class KeybindMapArtBundleStow{
 	private long lastBundleOp = 0;
 	private final long bundleOpCooldown = 250l;
 	private final void moveMapArtToFromBundle(){
-		if(ongoingBundleOp){Main.LOGGER.warn("MapBundleOp cancelled: Already ongoing"); return;}
+		if(ongoingBundleOp){Main.LOGGER.warn("MapBundleOp: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof InventoryScreen is)) return;
 		//
 		final long ts = System.currentTimeMillis();
-		if(ts - lastBundleOp < bundleOpCooldown) return;
+		if(ts - lastBundleOp < bundleOpCooldown){Main.LOGGER.warn("MapBundleOp: in cooldown"); return;}
 		lastBundleOp = ts;
 		//
 		final ItemStack[] slots = is.getScreenHandler().slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		final boolean anyArtToPickup = IntStream.range(9, 46).anyMatch(i -> slots[i].getItem() == Items.FILLED_MAP);
 
+		Main.LOGGER.info("MapBundleOp: begin bundle search");
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		final ItemStack cursorStack = is.getScreenHandler().getCursorStack();
 		int bundleFromSlot = -1;
 		Fraction occupancy = null;
 		if(isNotBundle(cursorStack)){
-			if(!cursorStack.isEmpty()) clicks.add(new ClickEvent(ScreenHandler.EMPTY_SPACE_SLOT_INDEX, 0, SlotActionType.PICKUP));
+			if(!cursorStack.isEmpty()){
+				Main.LOGGER.warn("MapBundleOp: Non-bundle item on cursor");
+				return;
+				//clicks.add(new ClickEvent(ScreenHandler.EMPTY_SPACE_SLOT_INDEX, 0, SlotActionType.PICKUP));
+			}
 			for(int i=9; i<46; ++i){
 				if(isNotBundle(slots[i])) continue;
 				BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
@@ -63,7 +68,7 @@ public final class KeybindMapArtBundleStow{
 				break;
 			}
 			if(bundleFromSlot == -1){
-				Main.LOGGER.warn("MapBundleOp cancelled: No usable bundle found");
+				Main.LOGGER.warn("MapBundleOp: No usable bundle found");
 				return;
 			}
 		}
@@ -95,6 +100,6 @@ public final class KeybindMapArtBundleStow{
 	}
 
 	public KeybindMapArtBundleStow(){
-		new Keybind("mapart_bundle", this::moveMapArtToFromBundle, InventoryScreen.class::isInstance);
+		new Keybind("mapart_bundle", this::moveMapArtToFromBundle, InventoryScreen.class::isInstance, GLFW.GLFW_KEY_F);
 	}
 }

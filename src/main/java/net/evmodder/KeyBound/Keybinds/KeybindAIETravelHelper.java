@@ -1,5 +1,6 @@
 package net.evmodder.KeyBound.Keybinds;
 
+import org.lwjgl.glfw.GLFW;
 import net.evmodder.EvLib.TextUtils;
 import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -46,7 +47,7 @@ public final class KeybindAIETravelHelper{
 			}
 			isEnabled = !isEnabled;
 			client.player.sendMessage(Text.literal("AutomaticInfiniteElytra Travel Helper: "+(isEnabled ? "enabled" : "disabled")), true);
-		});
+		}, null, GLFW.GLFW_KEY_SEMICOLON);
 
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
 			if(!isEnabled) return;

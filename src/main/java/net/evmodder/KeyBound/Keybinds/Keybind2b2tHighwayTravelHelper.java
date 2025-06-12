@@ -2,6 +2,7 @@ package net.evmodder.KeyBound.Keybinds;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import org.lwjgl.glfw.GLFW;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.AbstractFireBlock;
 import net.minecraft.block.AbstractPressurePlateBlock;
@@ -367,7 +368,7 @@ public final class Keybind2b2tHighwayTravelHelper{
 				client.player.sendMessage(Text.literal("2b2t Travel Helper: disabled"), true);
 			}
 			else enabledTs = System.currentTimeMillis();
-		});
+		}, null, GLFW.GLFW_KEY_A);
 
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
 			if(client.player == null || client.world == null){isEnabled = false; enabledTs = 0; return;}

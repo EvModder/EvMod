@@ -14,22 +14,25 @@ public final class Keybind{
 	public final KeyBinding keybindInternal;
 	//public AbstractKeybind(String translationKey, Type type, int code, String category){super(translationKey, type, code, category);}
 
+	final int ERROR_COLOR = 16733525, SUCCESS_COLOR = 5635925;
+
 	public final Runnable onPressedSupplier, onReleasedSupplier;
-	public Keybind(String translationKey, Runnable onPressed, Runnable onReleased, Function<Screen, Boolean> allowInScreen){
+	public Keybind(String translationKey, Runnable onPressed, Runnable onReleased, Function<Screen, Boolean> allowInScreen, int defaultKey){
 		onPressedSupplier = onPressed;
 		onReleasedSupplier = onReleased;
 		this.allowInScreen = allowInScreen;
 		if(allowInScreen != null) allowedInInventory.add(this);
-		keybindInternal = new KeyBinding("key."+Main.MOD_ID+"."+translationKey, Type.KEYSYM, -1, Main.KEYBIND_CATEGORY);
+		keybindInternal = new KeyBinding("key."+Main.MOD_ID+"."+translationKey, Type.KEYSYM, defaultKey, Main.KEYBIND_CATEGORY);
 		KeyBindingHelper.registerKeyBinding(keybindInternal);
 		//Main.LOGGER.debug("Registered keybind: "+translationKey);
 	}
 
-	public Keybind(String translationKey, Runnable onPressed){this(translationKey, onPressed, ()->{}, null);}
-	public Keybind(String translationKey){this(translationKey, ()->{}, ()->{}, null);}
+	public Keybind(String translationKey, Runnable onPressed){this(translationKey, onPressed, ()->{}, null, -1);}
+	public Keybind(String translationKey){this(translationKey, ()->{}, ()->{}, null, -1);}
 
-	public Keybind(String translationKey, Runnable onPressed, Function<Screen, Boolean> allowInScreen){this(translationKey, onPressed, ()->{}, allowInScreen);}
-	public Keybind(String translationKey, Function<Screen, Boolean> allowInScreen){this(translationKey, ()->{}, ()->{}, allowInScreen);}
+	public Keybind(String translationKey, Runnable onPressed, Function<Screen, Boolean> allowInScreen, int defaultKey){this(translationKey, onPressed, ()->{}, allowInScreen, defaultKey);}
+	public Keybind(String translationKey, Runnable onPressed, Function<Screen, Boolean> allowInScreen){this(translationKey, onPressed, ()->{}, allowInScreen, -1);}
+	public Keybind(String translationKey, Function<Screen, Boolean> allowInScreen){this(translationKey, ()->{}, ()->{}, allowInScreen, -1);}
 
 //	public void onPressed(){
 //		Main.LOGGER.info("Keybind pressed: "+getTranslationKey());

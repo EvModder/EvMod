@@ -1,6 +1,7 @@
 package net.evmodder.KeyBound.Keybinds;
 
 import java.util.Set;
+import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
@@ -168,6 +169,6 @@ public final class KeybindEjectJunk{
 	}
 
 	public KeybindEjectJunk(){
-		new Keybind("eject_junk_items", this::ejectJunkItems, HandledScreen.class::isInstance);
+		new Keybind("eject_junk_items", this::ejectJunkItems, HandledScreen.class::isInstance, GLFW.GLFW_KEY_R);
 	}
 }
