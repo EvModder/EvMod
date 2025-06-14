@@ -13,6 +13,7 @@ public abstract class LoadingCache<K, V>{
 	public abstract V load(final K k);
 	public V loadSyncOrNull(final K k){return null;}
 	public final V remove(final K k){return cache.remove(k);}
+	public final int size(){return cache.size();}
 
 	public final boolean putIfAbsent(final K k, final V v){
 		synchronized(cache){
@@ -39,7 +40,7 @@ public abstract class LoadingCache<K, V>{
 				final V v = load(k);
 				if(v.equals(V_LOADING)){
 					synchronized(loading){if(loading.containsKey(k)) loading.put(k, null);} // null out this Thread so it can be garbage collected
-					return; // Assume the caller will do put() themselves
+					return; // Assume the caller will call putIfAbsent() once a value is loaded
 				}
 				synchronized(cache){cache.put(k, v);}
 				synchronized(loading){loading.remove(k);}
