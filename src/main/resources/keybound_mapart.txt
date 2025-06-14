@@ -7,35 +7,29 @@ keybind.mapart.take_from_shulker: true
 keybind.mapart.take_from_bundle: true
 keybind.mapart.copy_in_inventory: true
 
-#No keybind toggle for this yet, but FYI you can hold Alt/Option when placing a map in a slot to move all adjacent related maps
 
-#========== Enable Commands ==========#
-# /setmapartgroup <name> - Create a file in ./mods/config/keybound/mapart_group_<name>, which is a binary list of all MapStates loaded for you client's current session.
-# This can be manually compared against other files to find overlap, set compliments, etc.
-# I've also made it so any MapState the game encounters which are NOT in the currently set group will have a colored name ingame (which is useful to quickly identify maps you haven't yet collected)
-mapart_group_command: true
-mapart_group_include_unlocked: false
-
-mapart_generate_img_command: true
-mapart_generate_img_upscale_to: 640
-mapart_generate_img_border: true
-mapart_generate_img_border_color1: -14236 # Yellow
-mapart_generate_img_border_color2: -8555656 # Gray
-
-#========== Packet Settings ==========#
-# 2b2t will kick you for sending 200+ clicks in 70 ticks (Updated: 2025-04-27)
-# 2b2t will kick you for sending 80+ clicks in 80 ticks (Updated: 2025-05-15, ty IceTank)
-
-# I made it a bit stricter, just to be safe.
-limiter_clicks_in_duration: 79
-limiter_duration_ticks: 85
-
-#========== Misc Utilities ==========#
+#========== MapArt Tools ==========#
 mapart_placement_helper: true
 mapart_placement_helper_use_name: true
 mapart_placement_helper_use_image: true
 
-#========== Added Visuals ==========#
+mapart_group_command: true
+mapart_group_include_unlocked: true
+
+mapart_generate_img_command: true
+mapart_generate_img_upscale: true
+mapart_generate_img_border: true
+mapart_generate_img_border_color1: -14236 # Yellow
+mapart_generate_img_border_color2: -8555656 # Gray
+
+# 2b2t will kick you for sending 200+ clicks in 70 ticks (Updated: 2025-04-27)
+# 2b2t will kick you for sending 80+ clicks in 80 ticks (Updated: 2025-05-15, ty IceTank)
+# Note: I recommend setting it to 90 ticks (if u have ping issues like me)
+limiter_clicks_in_duration: 78
+limiter_duration_ticks: 90
+
+
+#========== Visuals ==========#
 map_highlight_in_tooltip: true
 map_highlight_in_hotbarhud: true
 map_highlight_in_itemframe: true
@@ -45,14 +39,52 @@ map_highlight_color_unnamed: 15652823 # Pink
 map_highlight_color_ungrouped: 706660 # Green
 
 
-#========== Remote Database ==========#
-# just if u wanna contribute. (ily <3)
-# uncomment lines below:
+#========== MapArt Database ==========#
+# opt-in if u wanna contribute (ily <3) uncomment lines below:
 
 #client_id: 999
 #client_key: public_access_token_for_map_artists
 #remote_address: evmodder.net:14441
 #mapart_database: true
 #mapart_database_share_contact: true
+# if u do "share_contact:true", ppl can see which maps u have
 
-# if u "share contact", ppl (well, just me rn) can see which maps u have
+
+#========== Some nice sneaky features I'm including, sorry not sorry (#comment out if u dont want) ==========#
+enderpearl_owners: true
+enderpearl_database_by_uuid: true
+repaircost_tooltip: true
+keybind.toggle_skin_layers: false
+
+organize_inventory.EvInv: [
+  # Armor
+  6:elytra,
+  #8:gold_boots,
+  5:netherite_helmet, 6:netherite_chestplate, 7:netherite_leggings, 8:netherite_boots,
+  5:diamond_helmet, 6:diamond_chestplate, 7:diamond_leggings, 8:diamond_boots,
+
+  # Offhand
+  45:totem_of_undying, 45:enchanted_golden_apple, 45:golden_carrot, 45:cooked_beef,
+
+  # Hotbar LHS
+  36:netherite_sword, 36:diamond_sword, 36:netherite_axe, 36:diamond_axe,
+  37:netherite_pickaxe, 37:diamond_pickaxe,
+  38:netherite_axe, 38:diamond_axe, 38:netherite_shovel, 38:diamond_shovel, 38:firework_rocket, 39:end_crystal
+  39:end_crystal, 39:netherite_shovel, 39:diamond_shovel, 39:firework_rocket, 39:fishing_rod,
+  40:fishing_rod,
+
+  # Hotbar RHS
+  44:golden_carrot, 44:cooked_beef, 44:enchanted_golden_apple,
+  43:enchanted_golden_apple,
+
+  # Inventory top LHS
+  9:netherite_chestplate, 9:diamond_chestplate, 9:elytra, 10:ender_chest,
+  11:totem_of_undying, 12:totem_of_undying, 13:totem_of_undying,
+
+  # Extra rockets, food
+  30:firework_rocket, 21:firework_rocket,
+  35:enchanted_golden_apple, 35:golden_carrot, 35:cooked_beef, 35:cooked_porkchop, 35:pumpkin_pie
+
+  # Fill extra hotbar slots with crystals
+  36:end_crystal, 37:end_crystal, 38:end_crystal, 39:end_crystal, 40:end_crystal, 41:end_crystal, 42:end_crystal
+]

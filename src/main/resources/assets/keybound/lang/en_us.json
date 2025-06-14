@@ -29,8 +29,8 @@
 	"key.keybound.snap_angle.b": "Snap angle: B",
 	"key.keybound.snap_angle.c": "Snap angle: C",
 
-	"key.keybound.organize_inventory.EvInv": "Organize: Ev's Inv",
-	"key.keybound.organize_inventory.CarpetMapart": "Organize: Carpet Map ",
+	"key.keybound.organize_inventory.EvInv": "OrganizeInv: Ev's Preset",
+	"key.keybound.organize_inventory.CarpetMapart": "OrganizeInv: Carpet Map ",
 
 	"key.categories.keybound.misc": "Misc",
 	"key.keybound.eject_junk_items": "AutoEject",
