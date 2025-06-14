@@ -100,20 +100,20 @@ public final class MapHandRestock{
 			else{posA1=posA2t; posA2=posA1t; posB1=posB2t; posB2=posB1t;}
 
 			if(posA1.equals(posB1)){
-				Main.LOGGER.info("MapRestock: 2D, A1==B1");
+				Main.LOGGER.info("MapRestock: 2D, A1==B1"+(hintSideways?" (SIDEWAYS)":""));
 				return checkComesAfter(posA2, posB2, null)+1;
 			}
 			//if(posA2.equals(posB2)) return checkComesAfter(posA1, posB1)-2;// TODO: nerf with -2 (until impl edge matching), col should not be before row..
 			if(posB2.matches("[A0]") && !posA2.equals(posB2)){
-				Main.LOGGER.info("MapRestock: 2D, B2==[A0], recur checkComesAfter(A1, B1)");
+				Main.LOGGER.info("MapRestock: 2D, B2==[A0], recur checkComesAfter(A1, B1)"+(hintSideways?" (SIDEWAYS)":""));
 				//Main.LOGGER.info("MapRestock: 2D pos: B2=0");
 				return checkComesAfter(posA1, posB1, null)-1;
 			}
 			if(posB2.equals("1") && !posA2.matches("[01]")){
-				Main.LOGGER.info("MapRestock: 2D, B2==[1], recur checkComesAfter(A1, B1)");
+				Main.LOGGER.info("MapRestock: 2D, B2==[1], recur checkComesAfter(A1, B1)"+(hintSideways?" (SIDEWAYS)":""));
 				return checkComesAfter(posA1, posB1, null)-2;
 			}
-			//Main.LOGGER.info("MapRestock: 2D, checkComesAfter=1. A:"+posA+", B:"+posB);
+			Main.LOGGER.info("MapRestock: 2D, checkComesAfter=1. A:"+posA+", B:"+posB+(hintSideways?" (SIDEWAYS)":""));
 			return 1;
 		}
 
@@ -130,6 +130,8 @@ public final class MapHandRestock{
 			if(prevName == null) return trailLength;
 			prevCount = stack.getCount();
 			++trailLength;
+			stack.setCount(0); // Avoid looping back to the same slot
+			player.getInventory().markDirty();
 		}
 	}
 	private final int getNextSlotByName(final PlayerEntity player, final String prevName, final int count, final boolean locked){

@@ -84,9 +84,9 @@ public final class KeybindMapMove{
 				//if(id == null){Main.LOGGER.warn("MapMove cancelled: Unloaded map in shulker"); return;}
 				if(id == null){++cantMergeIntoInv; continue;}
 				mapIdsInShulker.put(id.id(), mapIdsInInv.getOrDefault(id.id(), 0)+(stack.getMaxCount()-count));
-				Integer space = mapIdsInInv.get(id.id());
-				if(space == null || count > space) ++cantMergeIntoInv;
-				else mapIdsInInv.put(space, space - count);
+				Integer space = mapIdsInInv.getOrDefault(id.id(), 0);
+				if(count > space) ++cantMergeIntoInv;
+				else mapIdsInInv.put(id.id(), space - count);
 			}
 		}
 
@@ -96,9 +96,9 @@ public final class KeybindMapMove{
 				.filter(s -> !isSpaceFillerMap(client.world, s))
 				.filter(s -> {
 					MapIdComponent id = s.get(DataComponentTypes.MAP_ID);
-					Integer space = mapIdsInShulker.get(id.id());
-					if(space == null || s.getCount() > space) return false;
-					mapIdsInShulker.put(space, space - s.getCount());
+					Integer space = mapIdsInShulker.getOrDefault(id.id(), 0);
+					if(s.getCount() > space) return false;
+					mapIdsInShulker.put(id.id(), space - s.getCount());
 					return true;
 				}).count();
 
