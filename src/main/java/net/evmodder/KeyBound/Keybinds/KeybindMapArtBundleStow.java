@@ -7,12 +7,16 @@ import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.BundleContentsComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
+import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 
@@ -37,19 +41,26 @@ public final class KeybindMapArtBundleStow{
 		if(ongoingBundleOp){Main.LOGGER.warn("MapBundleOp: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
-		if(!(client.currentScreen instanceof InventoryScreen is)) return;
+		if(!(client.currentScreen instanceof HandledScreen hs)) return;
 		//
 		final long ts = System.currentTimeMillis();
 		if(ts - lastBundleOp < bundleOpCooldown){Main.LOGGER.warn("MapBundleOp: in cooldown"); return;}
 		lastBundleOp = ts;
 		//
-		final ItemStack[] slots = is.getScreenHandler().slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
-		final boolean pickupHalf = IntStream.range(9, 46).filter(i -> slots[i].getItem() == Items.FILLED_MAP).allMatch(i -> slots[i].getCount() == 2);
-		final boolean anyArtToPickup = IntStream.range(9, 46).anyMatch(i -> slots[i].getCount() == (pickupHalf ? 2 : 1) && slots[i].getItem() == Items.FILLED_MAP);
+		final int SLOT_START = hs instanceof InventoryScreen ? 9 : 0;
+		final int SLOT_END =
+				hs instanceof InventoryScreen ? 45 :
+				hs.getScreenHandler() instanceof GenericContainerScreenHandler gcsh ? gcsh.getRows()*9 :
+				hs instanceof ShulkerBoxScreen ? 27 : 0/*unreachable?*/;
+		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
+		final boolean pickupHalf = IntStream.range(SLOT_START, SLOT_END)
+				.filter(i -> slots[i].getItem() == Items.FILLED_MAP).allMatch(i -> slots[i].getCount() == 2);
+		final boolean anyArtToPickup = IntStream.range(SLOT_START, SLOT_END)
+				.anyMatch(i -> slots[i].getCount() == (pickupHalf ? 2 : 1) && slots[i].getItem() == Items.FILLED_MAP);
 
 		Main.LOGGER.info("MapBundleOp: begin bundle search");
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
-		final ItemStack cursorStack = is.getScreenHandler().getCursorStack();
+		final ItemStack cursorStack = hs.getScreenHandler().getCursorStack();
 		int bundleSlot = -1, mostEmpty = Integer.MAX_VALUE, mostFull = 0;
 		Fraction occupancy = null;
 		if(isBundle(cursorStack)){
@@ -65,7 +76,7 @@ public final class KeybindMapArtBundleStow{
 			//clicks.add(new ClickEvent(ScreenHandler.EMPTY_SPACE_SLOT_INDEX, 0, SlotActionType.PICKUP));
 		}
 		else{
-			for(int i=9; i<46; ++i){
+			for(int i=0; i<slots.length; ++i){ // Hmm, allow using bundles from outside the container screen
 				if(!isBundle(slots[i])) continue;
 				BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
 				occupancy = contents.getOccupancy();
@@ -89,7 +100,7 @@ public final class KeybindMapArtBundleStow{
 
 		if(anyArtToPickup){
 			int available = 64 - getNumStored(occupancy);
-			for(int i=9; i<46 && available > 0; ++i){
+			for(int i=SLOT_START; i<SLOT_END && available > 0; ++i){
 				if(slots[i].getItem() == Items.FILLED_MAP) continue;
 				if(slots[i].getCount() != (pickupHalf ? 2 : 1)) continue;
 				if(pickupHalf){
@@ -102,7 +113,7 @@ public final class KeybindMapArtBundleStow{
 		}
 		else{
 			int stored = Math.min(WITHDRAW_MAX, getNumStored(occupancy));
-			for(int i=44; i>8 && stored > 0; --i){
+			for(int i=SLOT_END-1; i>=SLOT_START && stored > 0; --i){
 				if(!slots[i].isEmpty()) continue;
 				clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP));
 				--stored;
@@ -115,6 +126,9 @@ public final class KeybindMapArtBundleStow{
 	}
 
 	public KeybindMapArtBundleStow(){
-		new Keybind("mapart_bundle", this::moveMapArtToFromBundle, InventoryScreen.class::isInstance, GLFW.GLFW_KEY_R);
+		new Keybind("mapart_bundle", this::moveMapArtToFromBundle,
+				s->s instanceof InventoryScreen || s instanceof GenericContainerScreen || s instanceof ShulkerBoxScreen,
+//				InventoryScreen.class::isInstance,
+				GLFW.GLFW_KEY_R);
 	}
 }
