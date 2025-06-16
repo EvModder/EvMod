@@ -8,16 +8,15 @@ import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
-import net.minecraft.screen.slot.Slot;
 import net.minecraft.world.World;
 
 public abstract class AdjacentMapUtils{
 	public record RelatedMapsData(int prefixLen, int suffixLen, List<Integer> slots){}
 
-	private static final int commonPrefixLen(String a, String b){
+	public static final int commonPrefixLen(String a, String b){
 		int i=0; while(i<a.length() && i<b.length() && a.codePointAt(i) == b.codePointAt(i)) ++i; return i;
 	}
-	private static final int commonSuffixLen(String a, String b){
+	public static final int commonSuffixLen(String a, String b){
 		int i=0; while(a.length()-i > 0 && b.length()-i > 0 && a.codePointAt(a.length()-i-1) == b.codePointAt(b.length()-i-1)) ++i; return i;
 	}
 
@@ -31,11 +30,11 @@ public abstract class AdjacentMapUtils{
 		while(pos.matches(".*[^0-9 ][^0-9 ].*")) pos = pos.replaceAll("([^0-9 ])([^0-9 ])", "$1 $2");
 		return pos;
 	}
-	private static final boolean isValidPosStr(String posStr){
+	public static final boolean isValidPosStr(String posStr){
 		return !posStr.isBlank() && posStr.split(" ").length <= 2;
 	}
 
-	public static final boolean areMapNamesRelated(final String name1, final String name2){
+	/*public static final boolean areMapNamesRelated(final String name1, final String name2){
 		if(name1 == null && name2 == null) return true;
 		if(name1 == null || name2 == null) return false;
 		if(name1.equals(name2)) return true;
@@ -44,7 +43,7 @@ public abstract class AdjacentMapUtils{
 		final boolean name1ValidPos = isValidPosStr(simplifyPosStr(name1.substring(a, name1.length()-b)));
 		final boolean name2ValidPos = isValidPosStr(simplifyPosStr(name2.substring(a, name2.length()-b)));
 		return name1ValidPos && name2ValidPos;
-	}
+	}*/
 
 	public static final int adjacentEdgeScore(final byte[] tl, final byte[] br, boolean lr_tb){
 		if(tl == null || br == null || tl.length != br.length || tl.length != 16384){
@@ -81,14 +80,14 @@ public abstract class AdjacentMapUtils{
 		final MapState state = world.getMapState(mapId);
 		return state != null && state.locked != locked;
 	}
-	public static final RelatedMapsData getRelatedMapsByName(List<Slot> slots, String sourceName, final int count, final Boolean locked, final World world){
+	public static final RelatedMapsData getRelatedMapsByName(ItemStack[] slots, String sourceName, final int count, final Boolean locked, final World world){
 		List<Integer> relatedMapSlots = new ArrayList<>();
 		int prefixLen = -1, suffixLen = -1;
 		//Main.LOGGER.info("MapAdjUtil: getRelatedMapsByName() called");
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
 //			final int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
-		for(int i=0; i<slots.size(); ++i){
-			final ItemStack item = slots.get(i).getStack();
+		for(int i=0; i<slots.length; ++i){
+			final ItemStack item = slots[i];
 			if(item.getCustomName() == null || !isMapArtWithCount(item, count)) continue;
 			if(differentLockedState(locked, item, world)) continue;
 
@@ -134,8 +133,8 @@ public abstract class AdjacentMapUtils{
 		//Main.LOGGER.info("AdjacentMapUtils:sourcePosStr: "+sourcePosStr);
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
 //			final int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
-		for(int i=0; i<slots.size(); ++i){
-			ItemStack item = slots.get(i).getStack();
+		for(int i=0; i<slots.length; ++i){
+			ItemStack item = slots[i];
 			if(!isMapArtWithCount(item, count) || item.getCustomName() == null) continue;
 			if(differentLockedState(locked, item, world)) continue;
 

@@ -1,7 +1,6 @@
 package net.evmodder.KeyBound.EventListeners;
 
 import java.util.ArrayDeque;
-import java.util.List;
 import net.evmodder.KeyBound.AdjacentMapUtils;
 import net.evmodder.KeyBound.AdjacentMapUtils.RelatedMapsData;
 import net.evmodder.KeyBound.Main;
@@ -34,7 +33,7 @@ public abstract class MapClickMoveNeighbors{
 		if(ongoingClickMove){Main.LOGGER.warn("MapMoveClick: Already ongoing"); return;}
 
 		Main.LOGGER.info("MapMoveClick: moveNeighbors() called");
-		final List<Slot> slots = player.currentScreenHandler.slots;
+		final ItemStack[] slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		final String movedName = mapMoved.getCustomName().getLiteralString();
 		final MapIdComponent mapId = mapMoved.get(DataComponentTypes.MAP_ID);
 		final MapState state = mapId == null ? null : player.getWorld().getMapState(mapId);
@@ -44,7 +43,7 @@ public abstract class MapClickMoveNeighbors{
 		if(data.prefixLen() == -1) return;
 		data.slots().removeIf(i -> {
 			if(i == destSlot) return true;
-			if(ItemStack.areItemsAndComponentsEqual(slots.get(i).getStack(), mapMoved)){
+			if(ItemStack.areItemsAndComponentsEqual(slots[i], mapMoved)){
 				Main.LOGGER.info("MapMoveClick: TODO:support multiple copies (i:"+i+",dest"+destSlot);
 				return true;
 			}
@@ -66,8 +65,8 @@ public abstract class MapClickMoveNeighbors{
 			if(state == null){++w; br += 1;}
 			else{
 				final byte[] colors = state.colors;
-				final byte[] tlColors = getColors(player.getWorld(), slots.get(tl).getStack());
-				final byte[] brColors = getColors(player.getWorld(), slots.get(br).getStack());
+				final byte[] tlColors = getColors(player.getWorld(), slots[tl]);
+				final byte[] brColors = getColors(player.getWorld(), slots[br]);
 				int scoreLeft = -2, scoreRight = -2, scoreTop = -2, scoreBottom = -2;
 				if(h == 1){
 					scoreLeft = AdjacentMapUtils.adjacentEdgeScore(colors, tlColors, true);
@@ -98,7 +97,7 @@ public abstract class MapClickMoveNeighbors{
 			int s = tl + i*9 + j;
 			if(data.slots().contains(s)) continue;
 			if(fromSlot != -1){Main.LOGGER.info("MapMoveClick: Maps not in a rectangle");return;}
-			ItemStack stack = slots.get(i).getStack();
+			ItemStack stack = slots[i];
 			if(!stack.isEmpty() && stack.getItem() != Items.FILLED_MAP) Main.LOGGER.warn("MapMoveClick: moveFrom slot:"+s+" contains junk item: "+stack.getItem());
 			fromSlot = s;
 		}
@@ -109,7 +108,7 @@ public abstract class MapClickMoveNeighbors{
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 			int d = tlDest + i*9 + j;
 			if(d == destSlot) continue;
-			if(!slots.get(d).getStack().isEmpty() && !data.slots().contains(d)){
+			if(!slots[d].isEmpty() && !data.slots().contains(d)){
 				Main.LOGGER.info("MapMoveClick: Destination is not empty (dTL="+tlDest+",cur="+d+")");
 				return;
 			}
@@ -117,7 +116,7 @@ public abstract class MapClickMoveNeighbors{
 		final int brDest = tlDest + (br-tl);//equivalent: destSlot+(br-fromSlot);
 
 		final boolean isPlayerInv = player.currentScreenHandler instanceof PlayerScreenHandler;
-		final int hbStart = slots.size()-(isPlayerInv ? 10 : 9); // extra slot at end to account for offhand
+		final int hbStart = slots.length-(isPlayerInv ? 10 : 9); // extra slot at end to account for offhand
 		final boolean fromHotbar = br >= hbStart, toHotbar = brDest >= hbStart;
 		//Main.LOGGER.warn("MapMoveClick: fromHotbar:"+fromHotbar+", toHotbar:"+toHotbar+", brDest:"+brDest+", last  hotbar if to: "+(brDest-hbStart));
 		//if(PREFER_HOTBAR_SWAPS){
@@ -133,12 +132,12 @@ public abstract class MapClickMoveNeighbors{
 		if(!player.getInventory().getStack(hotbarButton).isEmpty()){
 			Main.LOGGER.warn("MapMoveClick: No available hotbar slot");
 			if(tl > tlDest){
-				for(int i=tlDest-1; i>=0; --i) if(slots.get(i).getStack().isEmpty()){tempSlot=i; break;}
-				if(tempSlot==-1) for(int i=br; i<slots.size(); ++i) if(slots.get(i).getStack().isEmpty()){tempSlot=i; break;}
+				for(int i=tlDest-1; i>=0; --i) if(slots[i].isEmpty()){tempSlot=i; break;}
+				if(tempSlot==-1) for(int i=br; i<slots.length; ++i) if(slots[i].isEmpty()){tempSlot=i; break;}
 			}
 			else{
-				for(int i=tl; i>=0; --i) if(slots.get(i).getStack().isEmpty()){tempSlot=i; break;}
-				if(tempSlot==-1) for(int i=brDest; i<slots.size(); ++i) if(slots.get(i).getStack().isEmpty()){tempSlot=i; break;}
+				for(int i=tl; i>=0; --i) if(slots[i].isEmpty()){tempSlot=i; break;}
+				if(tempSlot==-1) for(int i=brDest; i<slots.length; ++i) if(slots[i].isEmpty()){tempSlot=i; break;}
 			}
 			if(tempSlot == -1) Main.LOGGER.warn("MapMoveClick: No available slot with which to free up offhand");
 		}
