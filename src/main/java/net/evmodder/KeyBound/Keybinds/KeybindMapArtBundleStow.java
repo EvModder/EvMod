@@ -17,16 +17,18 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 
 public final class KeybindMapArtBundleStow{
-	final int WITHDRAW_MAX = 27;
+	final int WITHDRAW_MAX = 36;
+	//enum BundleSelectionMode{FIRST, LAST, MOST_FULL_butNOT_FULL, MOST_EMPTY_butNOT_EMPTY};
 
-	private boolean isNotBundle(ItemStack stack){
-		return stack.isEmpty() || !Registries.ITEM.getId(stack.getItem()).getPath().endsWith("bundle");
+	private boolean isBundle(ItemStack stack){
+		return !stack.isEmpty() || Registries.ITEM.getId(stack.getItem()).getPath().endsWith("bundle");
 	}
-	private boolean isNotUsableMapArt(ItemStack stack){
-		return stack.getItem() != Items.FILLED_MAP || stack.getCount() != 1;
+	private int getNumStored(Fraction fraction){
+		assert 64 % fraction.getDenominator() == 0;
+		return  (64/fraction.getDenominator())*fraction.getNumerator();
 	}
 
-	//TODO: support inventories besides InventoryScreen (in particular, shulker screen)
+	//TODO: support inventories besides InventoryScreen (in particular, shulker screen, double-chest screen)
 
 	private boolean ongoingBundleOp;
 	private long lastBundleOp = 0;
@@ -42,64 +44,77 @@ public final class KeybindMapArtBundleStow{
 		lastBundleOp = ts;
 		//
 		final ItemStack[] slots = is.getScreenHandler().slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
-		final boolean anyArtToPickup = IntStream.range(9, 46).anyMatch(i -> slots[i].getItem() == Items.FILLED_MAP);
+		final boolean pickupHalf = IntStream.range(9, 46).filter(i -> slots[i].getItem() == Items.FILLED_MAP).allMatch(i -> slots[i].getCount() == 2);
+		final boolean anyArtToPickup = IntStream.range(9, 46).anyMatch(i -> slots[i].getCount() == (pickupHalf ? 2 : 1) && slots[i].getItem() == Items.FILLED_MAP);
 
 		Main.LOGGER.info("MapBundleOp: begin bundle search");
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		final ItemStack cursorStack = is.getScreenHandler().getCursorStack();
-		int bundleFromSlot = -1;
+		int bundleSlot = -1, mostEmpty = Integer.MAX_VALUE, mostFull = 0;
 		Fraction occupancy = null;
-		if(isNotBundle(cursorStack)){
-			if(!cursorStack.isEmpty()){
-				Main.LOGGER.warn("MapBundleOp: Non-bundle item on cursor");
+		if(isBundle(cursorStack)){
+			if(pickupHalf){
+				Main.LOGGER.warn("MapBundleOp: Cannot use cursor-bundle when splitting stacked maps");
 				return;
-				//clicks.add(new ClickEvent(ScreenHandler.EMPTY_SPACE_SLOT_INDEX, 0, SlotActionType.PICKUP));
 			}
+			occupancy = cursorStack.get(DataComponentTypes.BUNDLE_CONTENTS).getOccupancy();
+		}
+		else if(!cursorStack.isEmpty()){
+			Main.LOGGER.warn("MapBundleOp: Non-bundle item on cursor");
+			return;
+			//clicks.add(new ClickEvent(ScreenHandler.EMPTY_SPACE_SLOT_INDEX, 0, SlotActionType.PICKUP));
+		}
+		else{
 			for(int i=9; i<46; ++i){
-				if(isNotBundle(slots[i])) continue;
+				if(!isBundle(slots[i])) continue;
 				BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
 				occupancy = contents.getOccupancy();
-//				Main.LOGGER.info("contents: "+occupancy.getNumerator()+"/"+occupancy.getDenominator());
 				if(anyArtToPickup && occupancy.intValue() == 1) continue; // Skip full bundles
-				if(!anyArtToPickup && occupancy.intValue() == 0) continue; // Skip empty bundles
-				if(contents.stream().anyMatch(this::isNotUsableMapArt)) continue; // Skip bundles with non-mapart contents
-				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP));
-				bundleFromSlot = i;
-				break;
+				if(!anyArtToPickup && contents.isEmpty()) continue; // Skip empty bundles
+				if(contents.stream().anyMatch(s -> s.getItem() != Items.FILLED_MAP)) continue; // Skip bundles with non-mapart contents
+				int stored = getNumStored(occupancy);
+				if(anyArtToPickup){if(stored < mostEmpty){mostEmpty = stored; bundleSlot = i;}}
+				else if(stored > mostFull){mostFull = stored; bundleSlot = i;}
+				//if(mode == FIRST) break;
 			}
-			if(bundleFromSlot == -1){
+			if(bundleSlot != -1){
+				if(!pickupHalf) clicks.add(new ClickEvent(bundleSlot, 0, SlotActionType.PICKUP));
+			}
+			else{
 				Main.LOGGER.warn("MapBundleOp: No usable bundle found");
 				return;
 			}
 		}
-		else occupancy = cursorStack.get(DataComponentTypes.BUNDLE_CONTENTS).getOccupancy();
 		Main.LOGGER.info("MapBundleOp: contents: "+occupancy.getNumerator()+"/"+occupancy.getDenominator());
 
 		if(anyArtToPickup){
-			int available = 64 - (64/occupancy.getDenominator())*occupancy.getNumerator();
-			Main.LOGGER.info("MapBundleOp: contents: "+occupancy.getNumerator()+"/"+occupancy.getDenominator());
+			int available = 64 - getNumStored(occupancy);
 			for(int i=9; i<46 && available > 0; ++i){
-				if(isNotUsableMapArt(slots[i])) continue;
-				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP));
+				if(slots[i].getItem() == Items.FILLED_MAP) continue;
+				if(slots[i].getCount() != (pickupHalf ? 2 : 1)) continue;
+				if(pickupHalf){
+					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // Pickup half
+					clicks.add(new ClickEvent(i, bundleSlot, SlotActionType.PICKUP)); // Put into bundle
+				}
+				else clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // Suck up item with bundle on cursor
 				--available;
 			}
 		}
 		else{
-			int stored = Math.min(WITHDRAW_MAX, (64/occupancy.getDenominator())*occupancy.getNumerator());
-			Main.LOGGER.info("MapBundleOp: contents: "+occupancy.getNumerator()+"/"+occupancy.getDenominator());
+			int stored = Math.min(WITHDRAW_MAX, getNumStored(occupancy));
 			for(int i=44; i>8 && stored > 0; --i){
 				if(!slots[i].isEmpty()) continue;
 				clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP));
 				--stored;
 			}
 		}
-		if(bundleFromSlot != -1) clicks.add(new ClickEvent(bundleFromSlot, 0, SlotActionType.PICKUP));
+		if(bundleSlot != -1 && !pickupHalf) clicks.add(new ClickEvent(bundleSlot, 0, SlotActionType.PICKUP));
 
 		ongoingBundleOp = true;
 		Main.inventoryUtils.executeClicks(clicks, _0->true, ()->{Main.LOGGER.info("MapBundleOp: DONE!"); ongoingBundleOp = false;});
 	}
 
 	public KeybindMapArtBundleStow(){
-		new Keybind("mapart_bundle", this::moveMapArtToFromBundle, InventoryScreen.class::isInstance, GLFW.GLFW_KEY_F);
+		new Keybind("mapart_bundle", this::moveMapArtToFromBundle, InventoryScreen.class::isInstance, GLFW.GLFW_KEY_R);
 	}
 }
