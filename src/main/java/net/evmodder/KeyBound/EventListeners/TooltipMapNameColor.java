@@ -10,6 +10,7 @@ import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.map.MapState;
 import net.minecraft.item.tooltip.TooltipType;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
@@ -49,7 +50,11 @@ public final class TooltipMapNameColor{
 			}
 			return;
 		}
-		if(isNotInCurrentGroup(item, context)) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_NOT_IN_GROUP));
+		if(isNotInCurrentGroup(item, context)){
+			MutableText text = lines.removeFirst().copy().withColor(Main.MAP_COLOR_NOT_IN_GROUP);
+			if(isUnlockedMap(item, context)) text = text.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
+			lines.addFirst(text);
+		}
 		else if(isUnlockedMap(item, context)) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNLOCKED));
 		else if(isUnnamedMap(item)) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNNAMED));
 	}

@@ -47,6 +47,7 @@ public class Main implements ClientModInitializer{
 	//SendOnServerJoin configured per-server (via ip?)
 
 	// Feature Ideas:
+	// multiple itemframes nearby (100? 1k? 10k?) with the same map -> purple name/color/asterisk
 	// change render order of certain trades (in particular: cleric redstone always above rotten flesh)
 	// totems in offhand - render itemcount for total totems in inv
 	// Maps - smaller text for item count in slot

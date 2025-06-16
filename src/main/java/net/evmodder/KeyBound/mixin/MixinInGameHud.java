@@ -27,7 +27,10 @@ public abstract class MixinInGameHud{
 			MapIdComponent id = currentStack.get(DataComponentTypes.MAP_ID);
 			if(id != null){
 				MapState state = client.world.getMapState(id);
-				if(state != null && MapGroupUtils.isMapNotInCurrentGroup(state)) text = text.withColor(Main.MAP_COLOR_NOT_IN_GROUP);
+				if(state != null && MapGroupUtils.isMapNotInCurrentGroup(state)){
+					text = text.withColor(Main.MAP_COLOR_NOT_IN_GROUP);
+					if(!state.locked) text = text.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
+				}
 				else if(state != null && !state.locked) text = text.withColor(Main.MAP_COLOR_UNLOCKED);
 				else if(currentStack.getCustomName() == null) text = text.withColor(Main.MAP_COLOR_UNNAMED);
 			}

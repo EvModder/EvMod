@@ -15,8 +15,9 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
-import net.minecraft.registry.Registries;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
@@ -71,11 +72,16 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 	@Inject(method = "getDisplayName", at = @At("INVOKE"), cancellable = true)
 	public void getDisplayName_Mixin(T itemFrameEntity, CallbackInfoReturnable<Text> cir){
 		if(!Main.mapColorIFrame) return; // Feature is disabled
-		ItemStack stack = itemFrameEntity.getHeldItemStack();
-		if(stack == null || stack.isEmpty() || !Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")) return;
+		final ItemStack stack = itemFrameEntity.getHeldItemStack();
+		//Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")
+		if(stack == null || stack.isEmpty() || stack.getItem() != Items.FILLED_MAP) return;
 		MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
 		if(state == null) return;
-		if(MapGroupUtils.isMapNotInCurrentGroup(state)) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_NOT_IN_GROUP));
+		final boolean notInCurrGroup = MapGroupUtils.isMapNotInCurrentGroup(state);
+		if(notInCurrGroup){
+			final MutableText coloredName = stack.getName().copy().withColor(Main.MAP_COLOR_NOT_IN_GROUP);
+			cir.setReturnValue(state.locked ? coloredName : coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED)));
+		}
 		else if(!state.locked) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_UNLOCKED));
 		else if(stack.getCustomName() == null) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_UNNAMED));
 	}

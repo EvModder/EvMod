@@ -23,7 +23,7 @@ public final class MapGroupUtils{
 		final HashSet<UUID> loadedMaps = new HashSet<UUID>();
 		MapState state;
 		for(int i=0; (state=world.getMapState(new MapIdComponent(i))) != null || i < MAX_MAPS_IN_INV_AND_ECHEST; ++i){
-			if(state != null &&(INCLUDE_UNLOCKED || state.locked)) loadedMaps.add(getIdForMapState(state));
+			if(state != null && (INCLUDE_UNLOCKED || state.locked)) loadedMaps.add(getIdForMapState(state));
 		}
 		return loadedMaps;
 	}
