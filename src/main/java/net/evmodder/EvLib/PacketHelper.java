@@ -198,7 +198,7 @@ public final class PacketHelper{
 
 			new Thread(()->{
 				final long startTime = timeout == 0 ? 0 : System.currentTimeMillis();
-				if(socketTCP.isClosed() || !socketTCP.isConnected() || lastPortTCP != port){
+				if(socketTCP.isClosed() || !socketTCP.isConnected() || lastPortTCP != port || socketTCP.isOutputShutdown()){
 					lastPortTCP = port;
 					try{socketTCP.connect(new InetSocketAddress(addr, port), (int)timeout);}
 					catch(ConnectException e){LOGGER.severe("Failed to connect to RemoteServer"); return;}
@@ -213,7 +213,9 @@ public final class PacketHelper{
 				}
 				try{
 					OutputStream out = socketTCP.getOutputStream();
-					writeShort(out, (short)msg.length);
+					//writeShort(out, (short)msg.length);
+					out.write((msg.length>>8) & 0xff);
+					out.write(msg.length & 0xff);
 					out.write(msg);
 					out.flush();
 				}
