@@ -124,7 +124,7 @@ public class Main implements ClientModInitializer{
 				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false, keybindMapArtBundleStow=false;
 		boolean mapPlaceHelper=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false;
 		boolean mapWallCmd=false, mapWallBorder=false;
-		boolean keybindHighwayTravelHelper=false;
+		boolean keybindEbounceTravelHelper=false;
 		boolean uploadIgnoreList=false;
 		int mapWallBorderColor1=-14236, mapWallBorderColor2=-8555656, mapWallUpscale=128;
 		String[] downloadIgnoreLists=null;
@@ -209,7 +209,7 @@ public class Main implements ClientModInitializer{
 				case "keybind.eject_junk_items": if(!value.equalsIgnoreCase("false")) ejectJunk = new KeybindEjectJunk(); break;
 				case "keybind.toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
 //				case "keybind_smart_inventory_craft": if(!value.equalsIgnoreCase("false")) new KeybindSmartInvCraft(); break;
-				case "keybind.2b2t_highway_travel_helper": keybindHighwayTravelHelper = !value.equalsIgnoreCase("false"); break;
+				case "keybind.ebounce_travel_helper": keybindEbounceTravelHelper = !value.equalsIgnoreCase("false"); break;
 				case "keybind.aie_travel_helper": if(!value.equalsIgnoreCase("false")) new KeybindAIETravelHelper(); break;
 				case "scroll_order": {
 					final String listOfListsStr = value.replaceAll("\\s","");
@@ -235,7 +235,7 @@ public class Main implements ClientModInitializer{
 		if(keybindMapArtMove) new KeybindMapMove();
 		if(keybindMapArtBundleStow) new KeybindMapArtBundleStow();
 		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg);
-		if(keybindHighwayTravelHelper) new Keybind2b2tHighwayTravelHelper(ejectJunk);
+		if(keybindEbounceTravelHelper) new KeybindEbounceTravelHelper(ejectJunk);
 		//new KeybindSpamclick();
 
 		if(mapWallCmd) new CommandDownloadMapWall(mapWallUpscale, mapWallBorder, mapWallBorderColor1, mapWallBorderColor2);

@@ -97,7 +97,7 @@ keybind.snap_angle.a: 156.14,-45.89
 keybind.eject_junk_items: true
 keybind.toggle_skin_layers: true
 keybind.smart_inventory_craft: false #TODO: implement
-keybind.2b2t_highway_travel_helper: true
+keybind.ebounce_travel_helper: true
 keybind.aie_travel_helper: true
 
 organize_inventory.EvInv: [

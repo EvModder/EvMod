@@ -3,6 +3,7 @@ package net.evmodder.KeyBound.Keybinds;
 import java.util.ArrayList;
 import java.util.Comparator;
 import org.lwjgl.glfw.GLFW;
+import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.AbstractFireBlock;
 import net.minecraft.block.AbstractPressurePlateBlock;
@@ -47,7 +48,7 @@ import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 
-public final class Keybind2b2tHighwayTravelHelper{
+public final class KeybindEbounceTravelHelper{
 	private boolean isEnabled;
 	private final MinecraftClient client;
 	private long enabledTs, targetY;
@@ -359,15 +360,21 @@ public final class Keybind2b2tHighwayTravelHelper{
 		return didBarf;
 	}
 
-	public Keybind2b2tHighwayTravelHelper(KeybindEjectJunk ejectJunk){
+	public KeybindEbounceTravelHelper(KeybindEjectJunk ejectJunk){
+		Main.LOGGER.info("ebounce_travel_helper registered");
 		client = MinecraftClient.getInstance();
 		new Keybind("ebounce_travel_helper", ()->{
+			Main.LOGGER.info("ebounce_travel_helper key pressed");
 			if(isEnabled || enabledTs != 0){
 				isEnabled = false;
 				enabledTs = 0;
-				client.player.sendMessage(Text.literal("2b2t Travel Helper: disabled"), true);
+				client.player.sendMessage(Text.literal("eBounce Helper: disabled"), true);
+				client.player.sendMessage(Text.literal("eBounce Helper: disabled"), false);
 			}
-			else enabledTs = System.currentTimeMillis();
+			else{
+				client.player.sendMessage(Text.literal("Enabling in "+String.format("%.2f", (ENABLE_DELAY/1000d))+"s..."), true);
+				enabledTs = System.currentTimeMillis();
+			}
 		}, null, GLFW.GLFW_KEY_A);
 
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
@@ -376,7 +383,8 @@ public final class Keybind2b2tHighwayTravelHelper{
 				isEnabled = true;
 				targetY = Long.MIN_VALUE;
 				enabledTs = 0;
-				client.player.sendMessage(Text.literal("2b2t Travel Helper: enabled"), true);
+				client.player.sendMessage(Text.literal("eBounce Helper: enabled"), true);
+				client.player.sendMessage(Text.literal("eBounce Helper: enabled"), false);
 			}
 			if(!isEnabled) return;
 			Item chestItem = client.player.getInventory().getArmorStack(2).getItem();

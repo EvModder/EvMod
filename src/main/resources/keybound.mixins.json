@@ -3,9 +3,9 @@
 	"package": "net.evmodder.KeyBound.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"AccessorBoundKey",
+		//"AccessorBoundKey",
 		"AccessorProjectileEntity",
-		"AccessorTimesPressed",
+		//"AccessorTimesPressed",
 		"MixinClientPlayerInteractionManager",
 		"MixinClientWorld",
 		"MixinEntityRenderer",
@@ -13,7 +13,7 @@
 		"MixinInGameHud",
 		"MixinItemFrameRenderer",
 		//"MixinItemRenderer",
-		"MixinKeybinding",
+		//"MixinKeybinding",
 		"MixinScreenHandler"
 	],
 	"injectors": {

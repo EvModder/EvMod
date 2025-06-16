@@ -27,7 +27,7 @@ public abstract class MixinHandledScreen<T> extends Screen{
 	}
 
 	@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
-	private void AsSeenInFreeMoveMod_keyPressed(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir){
+	private void handle_keyPressed(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir){
 		//Main.LOGGER.info("keyPressed");
 		if(handleAllowedInContainerKey(keyCode, scanCode, true)) cir.setReturnValue(true);
 	}
@@ -37,4 +37,11 @@ public abstract class MixinHandledScreen<T> extends Screen{
 		if(handleAllowedInContainerKey(keyCode, scanCode, false)) return true;
 		return super.keyReleased(keyCode, scanCode, modifiers);
 	}
+
+//	//@Mixin(net.minecraft.client.gui.ParentElement.class)
+//	@Inject(method = "keyReleased", at = @At("HEAD"), cancellable = true)
+//	private void handle_keyReleased(int keyCode, int scanCode, int modifiers, CallbackInfoReturnable<Boolean> cir){
+//		//Main.LOGGER.info("keyReleased");
+//		if(handleAllowedInContainerKey(keyCode, scanCode, false)) cir.setReturnValue(true);
+//	}
 }
