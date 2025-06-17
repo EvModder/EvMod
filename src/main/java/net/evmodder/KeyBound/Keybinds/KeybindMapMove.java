@@ -137,7 +137,7 @@ public final class KeybindMapMove{
 			if(slots[i].getItem() != Items.FILLED_MAP) continue;
 			if(isSpaceFillerMap(client.world, slots[i])) continue;
 			final int count = slots[i].getCount();
-			if(selectiveMove && count != countsInInv.last()) continue;
+			if(selectiveMove && count != countsInShulk.last()) continue;
 			if(count > 1 && !isShiftClick){
 				if(count <= 3){
 					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // right-click: pickup half

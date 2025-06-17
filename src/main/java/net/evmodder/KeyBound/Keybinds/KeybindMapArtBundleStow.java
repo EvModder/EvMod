@@ -1,6 +1,7 @@
 package net.evmodder.KeyBound.Keybinds;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.math.Fraction;
 import org.lwjgl.glfw.GLFW;
@@ -25,7 +26,7 @@ public final class KeybindMapArtBundleStow{
 	//enum BundleSelectionMode{FIRST, LAST, MOST_FULL_butNOT_FULL, MOST_EMPTY_butNOT_EMPTY};
 
 	private boolean isBundle(ItemStack stack){
-		return !stack.isEmpty() || Registries.ITEM.getId(stack.getItem()).getPath().endsWith("bundle");
+		return Registries.ITEM.getId(stack.getItem()).getPath().endsWith("bundle");
 	}
 	private int getNumStored(Fraction fraction){
 		assert 64 % fraction.getDenominator() == 0;
@@ -53,10 +54,9 @@ public final class KeybindMapArtBundleStow{
 				hs.getScreenHandler() instanceof GenericContainerScreenHandler gcsh ? gcsh.getRows()*9 :
 				hs instanceof ShulkerBoxScreen ? 27 : 0/*unreachable?*/;
 		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
-		final boolean pickupHalf = IntStream.range(SLOT_START, SLOT_END)
-				.filter(i -> slots[i].getItem() == Items.FILLED_MAP).allMatch(i -> slots[i].getCount() == 2);
-		final boolean anyArtToPickup = IntStream.range(SLOT_START, SLOT_END)
-				.anyMatch(i -> slots[i].getCount() == (pickupHalf ? 2 : 1) && slots[i].getItem() == Items.FILLED_MAP);
+		final int[] slotsWithMapArt = IntStream.range(SLOT_START, SLOT_END).filter(i -> slots[i].getItem() == Items.FILLED_MAP).toArray();
+		final boolean pickupHalf = slotsWithMapArt.length > 0 && Arrays.stream(slotsWithMapArt).allMatch(i -> slots[i].getCount() == 2);
+		final boolean anyArtToPickup = Arrays.stream(slotsWithMapArt).anyMatch(i -> slots[i].getCount() == (pickupHalf ? 2 : 1));
 
 		Main.LOGGER.info("MapBundleOp: begin bundle search");
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
@@ -89,7 +89,10 @@ public final class KeybindMapArtBundleStow{
 				//if(mode == FIRST) break;
 			}
 			if(bundleSlot != -1){
-				if(!pickupHalf) clicks.add(new ClickEvent(bundleSlot, 0, SlotActionType.PICKUP));
+				if(!pickupHalf){
+					Main.LOGGER.warn("MapBundleOp: picking up bundle from slot: "+bundleSlot);
+					clicks.add(new ClickEvent(bundleSlot, 0, SlotActionType.PICKUP));
+				}
 			}
 			else{
 				Main.LOGGER.warn("MapBundleOp: No usable bundle found");
@@ -99,25 +102,30 @@ public final class KeybindMapArtBundleStow{
 		Main.LOGGER.info("MapBundleOp: contents: "+occupancy.getNumerator()+"/"+occupancy.getDenominator());
 
 		if(anyArtToPickup){
-			int available = 64 - getNumStored(occupancy);
-			for(int i=SLOT_START; i<SLOT_END && available > 0; ++i){
-				if(slots[i].getItem() == Items.FILLED_MAP) continue;
+			final int space = 64 - getNumStored(occupancy);
+			int suckedUp = 0;
+			//for(int i=SLOT_START; i<SLOT_END && deposited < space; ++i){
+			for(int i : slotsWithMapArt){
+				if(slots[i].getItem() != Items.FILLED_MAP) continue;
 				if(slots[i].getCount() != (pickupHalf ? 2 : 1)) continue;
 				if(pickupHalf){
 					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // Pickup half
-					clicks.add(new ClickEvent(i, bundleSlot, SlotActionType.PICKUP)); // Put into bundle
+					clicks.add(new ClickEvent(bundleSlot, 0, SlotActionType.PICKUP)); // Put into bundle
 				}
 				else clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // Suck up item with bundle on cursor
-				--available;
+				if(++suckedUp == space) break;
 			}
+			Main.LOGGER.info("MapBundleOp: stored "+suckedUp+" maps in bundle");
 		}
 		else{
-			int stored = Math.min(WITHDRAW_MAX, getNumStored(occupancy));
-			for(int i=SLOT_END-1; i>=SLOT_START && stored > 0; --i){
+			final int stored = Math.min(WITHDRAW_MAX, getNumStored(occupancy));
+			int withdrawn = 0;
+			for(int i=SLOT_END-1; i>=SLOT_START && withdrawn < stored; --i){
 				if(!slots[i].isEmpty()) continue;
 				clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP));
-				--stored;
+				++withdrawn;
 			}
+			Main.LOGGER.info("MapBundleOp: withdrew "+withdrawn+" maps from bundle");
 		}
 		if(bundleSlot != -1 && !pickupHalf) clicks.add(new ClickEvent(bundleSlot, 0, SlotActionType.PICKUP));
 
