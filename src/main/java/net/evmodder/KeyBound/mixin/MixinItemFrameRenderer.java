@@ -1,6 +1,5 @@
 package net.evmodder.KeyBound.mixin;
 
-import java.util.HashSet;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -9,23 +8,18 @@ import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.ItemFrameEntityRenderer;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3i;
 
 @Mixin(ItemFrameEntityRenderer.class)
 class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 	private static final MinecraftClient client = MinecraftClient.getInstance();
-	private static long lastNotif;
 
 	private boolean isLookngInGeneralDirection(Entity entity){
 		Vec3d vec3d = client.player.getRotationVec(1.0F).normalize();
@@ -37,34 +31,21 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		return e > 1.0d - asdf / d;
 	}
 
-	HashSet<Vec3i> newMapartNotified = new HashSet<Vec3i>();
 	@Inject(method = "hasLabel", at = @At("HEAD"), cancellable = true)
 	public void hasLabel_Mixin(T itemFrameEntity, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
-		if(!Main.mapColorIFrame && !Main.notifyIfNotInGroup) return; // Features are disabled
-		ItemStack stack = itemFrameEntity.getHeldItemStack();
-		if(stack == null || stack.isEmpty()) return;
-		MapIdComponent mapId = itemFrameEntity.getHeldItemStack().get(DataComponentTypes.MAP_ID);
-		if(mapId == null) return;
-		MapState state = itemFrameEntity.getWorld().getMapState(mapId);
-		if(state == null) return;
-		final boolean newMapart = MapGroupUtils.isMapNotInCurrentGroup(state);
-		if(Main.notifyIfNotInGroup && newMapart && newMapartNotified.contains(itemFrameEntity.getBlockPos())){
-			final long now = System.currentTimeMillis();
-			if(now - lastNotif > 10*1000){
-				lastNotif = now;
-				client.player.sendMessage(Text.literal("New mapart detected! % "
-						+(itemFrameEntity.getBlockX()%100)+" "+(itemFrameEntity.getBlockZ()%100)).withColor(5635925), true);
-				newMapartNotified.add(itemFrameEntity.getBlockPos());
-			}
-		}
-
-		if(!Main.mapColorIFrame) return; // Feature is disabled
+		if(!Main.mapHighlightIFrame) return; // Feature is disabled
 		if(!MinecraftClient.isHudEnabled()) return;
+		final ItemStack stack = itemFrameEntity.getHeldItemStack();
+		if(stack == null || stack.isEmpty()) return;
+		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
+		if(state == null) return;
 
-		final boolean isInInv = MapGroupUtils.isInInventory(client.player, mapId.id(), state);
-		if(isInInv || stack.getCustomName() == null || !state.locked || newMapart){
+		final boolean isInInv = MapGroupUtils.isInInventory(MapGroupUtils.getIdForMapState(state));
+		final boolean isNotInCurrGroup = MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
+
+		if(isInInv || isNotInCurrGroup || stack.getCustomName() == null || !state.locked){
 			//Skip if player doesn't have LOS or IF is far enough away
-			if(!isInInv && !newMapart && (!client.player.canSee(itemFrameEntity) || squaredDistanceToCamera > 20*20)) return;
+			if(!isInInv && !isNotInCurrGroup && (!client.player.canSee(itemFrameEntity) || squaredDistanceToCamera > 20*20)) return;
 			if(!isInInv && !isLookngInGeneralDirection(itemFrameEntity)) return;
 			cir.setReturnValue(true);
 		}
@@ -72,16 +53,14 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 
 	@Inject(method = "getDisplayName", at = @At("INVOKE"), cancellable = true)
 	public void getDisplayName_Mixin(T itemFrameEntity, CallbackInfoReturnable<Text> cir){
-		if(!Main.mapColorIFrame) return; // Feature is disabled
+		if(!Main.mapHighlightIFrame) return; // Feature is disabled
 		final ItemStack stack = itemFrameEntity.getHeldItemStack();
 		//Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")
-		if(stack == null || stack.isEmpty() || stack.getItem() != Items.FILLED_MAP) return;
-		final MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
-		assert mapId != null;
-		final MapState state = itemFrameEntity.getWorld().getMapState(mapId);
+		if(stack == null || stack.isEmpty());
+		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
 		if(state == null) return;
-		final boolean notInCurrGroup = MapGroupUtils.isMapNotInCurrentGroup(state);
-		if(MapGroupUtils.isInInventory(client.player, mapId.id(), state)){
+		final boolean notInCurrGroup = MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
+		if(MapGroupUtils.isInInventory(MapGroupUtils.getIdForMapState(state))){
 			MutableText coloredName = stack.getName().copy().withColor(Main.MAP_COLOR_IN_INV);
 			if(notInCurrGroup) coloredName = coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_NOT_IN_GROUP));
 			if(!state.locked) coloredName = coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));

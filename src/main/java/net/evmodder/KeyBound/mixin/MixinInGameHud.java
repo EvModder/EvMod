@@ -19,15 +19,15 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public abstract class MixinInGameHud{
 	@ModifyVariable(method = "renderHeldItemTooltip", at = @At("STORE"), ordinal = 0)
 	private MutableText showRepairCostNextToItemName(MutableText originalText){
-		if(Main.rcHotbarHUD == false && Main.mapColorHUD == false) return originalText;
+		if(Main.rcHotbarHUD == false && Main.mapHighlightHUD == false) return originalText;
 		MinecraftClient client = MinecraftClient.getInstance();
 		ItemStack currentStack = client.player.getInventory().getMainHandStack();
 		MutableText text = originalText;
-		if(Main.mapColorHUD){
+		if(Main.mapHighlightHUD){
 			MapIdComponent id = currentStack.get(DataComponentTypes.MAP_ID);
 			if(id != null){
 				MapState state = client.world.getMapState(id);
-				if(state != null && MapGroupUtils.isMapNotInCurrentGroup(state)){
+				if(state != null && MapGroupUtils.shouldHighlightNotInCurrentGroup(state)){
 					text = text.withColor(Main.MAP_COLOR_NOT_IN_GROUP);
 					if(!state.locked) text = text.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
 				}

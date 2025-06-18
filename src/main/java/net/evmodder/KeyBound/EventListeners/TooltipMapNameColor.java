@@ -4,7 +4,6 @@ import java.util.List;
 import net.minecraft.item.Item.TooltipContext;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.component.type.MapIdComponent;
@@ -22,7 +21,7 @@ public final class TooltipMapNameColor{
 		if(id == null) return false;
 		MapState state = context.getMapState(id);
 		if(state == null) return false;
-		return MapGroupUtils.isInInventory(MinecraftClient.getInstance().player, id.id(), state);
+		return MapGroupUtils.isInInventory(MapGroupUtils.getIdForMapState(state));
 	}
 	private static final boolean isNotInCurrentGroup(ItemStack item, TooltipContext context){
 		//if(MapGroupUtils.mapsInGroup == null) return false;
@@ -30,7 +29,7 @@ public final class TooltipMapNameColor{
 		if(id == null) return false;
 		MapState state = context.getMapState(id);
 		if(state == null) return false;
-		return MapGroupUtils.isMapNotInCurrentGroup(state);
+		return MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
 	}
 	private static final boolean isUnlockedMap(ItemStack item, TooltipContext context){
 		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);

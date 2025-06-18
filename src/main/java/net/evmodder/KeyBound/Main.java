@@ -30,6 +30,7 @@ import net.evmodder.KeyBound.EventListeners.TooltipRepairCost;
 import net.evmodder.KeyBound.Keybinds.*;
 import net.evmodder.KeyBound.Keybinds.KeybindsSimple;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
@@ -75,7 +76,7 @@ public class Main implements ClientModInitializer{
 	public static ClickUtils inventoryUtils;
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
-	public static boolean rcHotbarHUD, mapartDb, mapartDbContact, mapColorHUD, mapColorIFrame, totemShowTotalCount, notifyIfNotInGroup=true;
+	public static boolean rcHotbarHUD, mapartDb, mapartDbContact, mapHighlightHUD, mapHighlightIFrame, totemShowTotalCount;
 	public static long joinedServerTimestamp;
 
 	public static int MAP_COLOR_UNLOCKED = 14692709;
@@ -124,7 +125,7 @@ public class Main implements ClientModInitializer{
 		int clicksInDuration = 1, durationTicks = 1;
 		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false,
 				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false, keybindMapArtBundleStow=false;
-		boolean mapPlaceHelper=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false;
+		boolean mapPlaceHelper=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false, mapHighlightTooltip=false;
 		boolean mapWallCmd=false, mapWallBorder=false;
 		boolean keybindEbounceTravelHelper=false;
 		boolean uploadIgnoreList=false;
@@ -181,10 +182,9 @@ public class Main implements ClientModInitializer{
 				case "totem_total_count": if(!value.equalsIgnoreCase("false")) totemShowTotalCount = !value.equalsIgnoreCase("false"); break;
 				case "repaircost_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipRepairCost::addRC); break;
 				case "repaircost_hotbarhud": rcHotbarHUD = !value.equalsIgnoreCase("false"); break;
-				case "map_highlight_in_tooltip": if(!value.equalsIgnoreCase("false"))
-					ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors); break;
-				case "map_highlight_in_hotbarhud": mapColorHUD = !value.equalsIgnoreCase("false"); break;
-				case "map_highlight_in_itemframe": mapColorIFrame = !value.equalsIgnoreCase("false"); break;
+				case "map_highlight_in_tooltip": mapHighlightTooltip = !value.equalsIgnoreCase("false"); break;
+				case "map_highlight_in_hotbarhud": mapHighlightHUD = !value.equalsIgnoreCase("false"); break;
+				case "map_highlight_in_itemframe": mapHighlightIFrame = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_color_unlocked": MAP_COLOR_UNLOCKED = Integer.parseInt(value); break;
 				case "map_highlight_color_unnamed": MAP_COLOR_UNNAMED = Integer.parseInt(value); break;
 				case "map_highlight_color_ungrouped": MAP_COLOR_NOT_IN_GROUP = Integer.parseInt(value); break;
@@ -242,6 +242,9 @@ public class Main implements ClientModInitializer{
 		//new KeybindSpamclick();
 
 		if(mapWallCmd) new CommandDownloadMapWall(mapWallUpscale, mapWallBorder, mapWallBorderColor1, mapWallBorderColor2);
+
+		if(mapHighlightTooltip) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors);
+		if(mapHighlightTooltip || mapHighlightHUD || mapHighlightIFrame) ClientTickEvents.START_CLIENT_TICK.register(MapGroupUtils::updateInvMapGroup);
 
 		MinecraftClient client = MinecraftClient.getInstance();
 		String username = client.getSession().getUsername();
