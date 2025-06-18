@@ -20,10 +20,14 @@ public abstract class MixinHandledScreen<T> extends Screen{
 		//Main.LOGGER.info("handleAllowedInContainerKey: "+keyCode);
 		//MinecraftClient client = MinecraftClient.getInstance();
 		//GameOptions keys = client.options;
-		return Keybind.allowedInInventory.stream().anyMatch(kb ->{
-			if(kb.keybindInternal.matchesKey(keyCode, scanCode)){kb.onPressedSupplier.run(); return kb.allowInScreen.apply(this);}
-			return false;
-		});
+		boolean hadKeyPress = false;
+		for(Keybind kb : Keybind.allowedInInventory){
+			if(kb.keybindInternal.matchesKey(keyCode, scanCode) && kb.allowInScreen.apply(this)){
+				kb.onPressedSupplier.run();
+				hadKeyPress = true;
+			}
+		}
+		return hadKeyPress;
 	}
 
 	@Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
