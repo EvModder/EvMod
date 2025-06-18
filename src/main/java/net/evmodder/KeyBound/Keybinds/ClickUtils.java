@@ -101,7 +101,7 @@ public class ClickUtils{
 				client.player.sendMessage(Text.literal("Waiting for available clicks...").withColor(OUTTA_CLICKS_COLOR), true);
 				waitedForClicks = true;
 			}
-		}, 0l, 51l);
+		}, 1l, 51l);
 	}
 
 

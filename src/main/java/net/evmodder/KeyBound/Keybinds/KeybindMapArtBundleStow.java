@@ -20,7 +20,6 @@ import net.minecraft.registry.Registries;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.text.Text;
 
 public final class KeybindMapArtBundleStow{
 	final int WITHDRAW_MAX = 36;
@@ -44,11 +43,6 @@ public final class KeybindMapArtBundleStow{
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof HandledScreen hs)) return;
-		if(!(client.currentScreen instanceof InventoryScreen || client.currentScreen instanceof GenericContainerScreen || client.currentScreen instanceof ShulkerBoxScreen)){
-			Main.LOGGER.warn("MapBundleOp: wtf this should be unreachable");
-			client.player.sendMessage(Text.literal("wtf this should be unreachable"), false);
-			return;
-		}
 		//
 		final long ts = System.currentTimeMillis();
 		if(ts - lastBundleOp < bundleOpCooldown){Main.LOGGER.warn("MapBundleOp: in cooldown"); return;}

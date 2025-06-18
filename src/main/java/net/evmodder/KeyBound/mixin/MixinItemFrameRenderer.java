@@ -61,10 +61,11 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(!Main.mapColorIFrame) return; // Feature is disabled
 		if(!MinecraftClient.isHudEnabled()) return;
 
-		if(stack.getCustomName() == null || !state.locked || newMapart){
+		final boolean isInInv = MapGroupUtils.isInInventory(client.player, mapId.id(), state);
+		if(isInInv || stack.getCustomName() == null || !state.locked || newMapart){
 			//Skip if player doesn't have LOS or IF is far enough away
-			if(!newMapart && (!client.player.canSee(itemFrameEntity) || squaredDistanceToCamera > 20*20)) return;
-			if(!isLookngInGeneralDirection(itemFrameEntity)) return;
+			if(!isInInv && !newMapart && (!client.player.canSee(itemFrameEntity) || squaredDistanceToCamera > 20*20)) return;
+			if(!isInInv && !isLookngInGeneralDirection(itemFrameEntity)) return;
 			cir.setReturnValue(true);
 		}
 	}
@@ -75,10 +76,18 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		final ItemStack stack = itemFrameEntity.getHeldItemStack();
 		//Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")
 		if(stack == null || stack.isEmpty() || stack.getItem() != Items.FILLED_MAP) return;
-		MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
+		final MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
+		assert mapId != null;
+		final MapState state = itemFrameEntity.getWorld().getMapState(mapId);
 		if(state == null) return;
 		final boolean notInCurrGroup = MapGroupUtils.isMapNotInCurrentGroup(state);
-		if(notInCurrGroup){
+		if(MapGroupUtils.isInInventory(client.player, mapId.id(), state)){
+			MutableText coloredName = stack.getName().copy().withColor(Main.MAP_COLOR_IN_INV);
+			if(notInCurrGroup) coloredName = coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_NOT_IN_GROUP));
+			if(!state.locked) coloredName = coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
+			cir.setReturnValue(coloredName);
+		}
+		else if(notInCurrGroup){
 			final MutableText coloredName = stack.getName().copy().withColor(Main.MAP_COLOR_NOT_IN_GROUP);
 			cir.setReturnValue(state.locked ? coloredName : coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED)));
 		}

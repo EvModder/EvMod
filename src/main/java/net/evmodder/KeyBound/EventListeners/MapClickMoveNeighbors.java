@@ -14,6 +14,7 @@ import net.minecraft.item.map.MapState;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.text.Text;
 import net.minecraft.world.World;
 
 public abstract class MapClickMoveNeighbors{
@@ -177,7 +178,7 @@ public abstract class MapClickMoveNeighbors{
 		Main.inventoryUtils.executeClicks(clicks, /*canProceed=*/_0->true, ()->{
 			ongoingClickMove = false;
 			Main.LOGGER.info("MapMoveClick: DONE (clicks:"+numClicks+")");
-			//player.sendMessage(Text.literal("MapMoveClick: DONE (clicks:"+numClicks+")"), false);////
+			player.sendMessage(Text.literal("MapMoveClick: DONE (clicks:"+numClicks+")"), true);
 		});
 //		if(Main.inventoryUtils.addClick(null) >= Main.inventoryUtils.MAX_CLICKS){
 //			Main.LOGGER.warn("Not enough clicks available to execute MapMoveNeighbors :(");

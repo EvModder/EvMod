@@ -2,8 +2,13 @@ package net.evmodder.KeyBound;
 
 import java.util.HashSet;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.FilledMapItem;
+import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
 
 public final class MapGroupUtils{
@@ -40,5 +45,17 @@ public final class MapGroupUtils{
 		// toggle 1st bit on/off
 		uuid = new UUID(uuid.getMostSignificantBits() ^ 1l, uuid.getLeastSignificantBits());
 		return !currentMapGroup.contains(uuid);
+	}
+	public static final boolean isInInventory(PlayerEntity player, final int id, final MapState state){
+		final UUID invMapUUID = getIdForMapState(state);
+		return
+				(id != -1 && IntStream.range(0, 41)
+				.mapToObj(i -> player.getInventory().getStack(i)).filter(s -> s.getItem() == Items.FILLED_MAP)
+				.anyMatch(s-> s.get(DataComponentTypes.MAP_ID).id() == id))
+				||
+				(state != null && IntStream.range(0, 41)
+				.mapToObj(i -> player.getInventory().getStack(i)).filter(s -> s.getItem() == Items.FILLED_MAP)
+				.map(s -> FilledMapItem.getMapState(s, player.getWorld())).filter(s -> s != null)
+				.anyMatch(s -> invMapUUID.equals(getIdForMapState(s))));
 	}
 }
