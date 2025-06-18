@@ -5,8 +5,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import net.evmodder.KeyBound.AdjacentMapUtils;
-import net.evmodder.KeyBound.AdjacentMapUtils.RelatedMapsData;
+import net.evmodder.KeyBound.MapRelationUtils;
+import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
 import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.client.MinecraftClient;
@@ -104,12 +104,12 @@ public final class MapHandRestock{
 		if(name1 == null && name2 == null) return true;
 		if(name1 == null || name2 == null) return false;
 		if(name1.equals(name2)) return true;
-		final int a = AdjacentMapUtils.commonPrefixLen(name1, name2);
-		final int b = AdjacentMapUtils.commonSuffixLen(name1, name2);
-		final String posA = AdjacentMapUtils.simplifyPosStr(name1.substring(a, name1.length()-b));
-		final String posB = AdjacentMapUtils.simplifyPosStr(name2.substring(a, name2.length()-b));
-		final boolean name1ValidPos = AdjacentMapUtils.isValidPosStr(posA);
-		final boolean name2ValidPos = AdjacentMapUtils.isValidPosStr(posB);
+		final int a = MapRelationUtils.commonPrefixLen(name1, name2);
+		final int b = MapRelationUtils.commonSuffixLen(name1, name2);
+		final String posA = MapRelationUtils.simplifyPosStr(name1.substring(a, name1.length()-b));
+		final String posB = MapRelationUtils.simplifyPosStr(name2.substring(a, name2.length()-b));
+		final boolean name1ValidPos = MapRelationUtils.isValidPosStr(posA);
+		final boolean name2ValidPos = MapRelationUtils.isValidPosStr(posB);
 		if(!name1ValidPos && !name2ValidPos) return true;
 		if(!name1ValidPos || !name2ValidPos) return false;
 		return checkComesAfter(posA, posB, /*hintSideways=*/false) > 0 || checkComesAfter(posA, posB, /*hintSideways=*/true) > 0;
@@ -130,7 +130,7 @@ public final class MapHandRestock{
 		final String prevName = slots[prevSlot].getCustomName().getLiteralString();
 		final int prevCount = slots[prevSlot].getCount();
 		final boolean locked = FilledMapItem.getMapState(slots[prevSlot], world).locked;
-		final RelatedMapsData data = AdjacentMapUtils.getRelatedMapsByName(slots, prevName, prevCount, locked, world);
+		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, prevName, prevCount, locked, world);
 		if(data.slots().isEmpty()) return -1;
 
 		// Offhand, hotbar ascending, inv ascending
@@ -140,7 +140,7 @@ public final class MapHandRestock{
 		assert data.prefixLen() < prevName.length() && data.suffixLen() < prevName.length();
 
 		final String prevPosStr = data.prefixLen() == -1 ? prevName
-				: AdjacentMapUtils.simplifyPosStr(prevName.substring(data.prefixLen(), prevName.length()-data.suffixLen()));
+				: MapRelationUtils.simplifyPosStr(prevName.substring(data.prefixLen(), prevName.length()-data.suffixLen()));
 
 		final String nameWithoutPos = data.prefixLen() == -1 ? prevName
 				: prevName.substring(0, data.prefixLen()) + prevName.substring(prevName.length()-data.suffixLen());
@@ -163,7 +163,7 @@ public final class MapHandRestock{
 			if(slots[i].getCustomName() == null) continue;
 			final String name = slots[i].getCustomName().getLiteralString();
 			if(name == null) continue;
-			final String posStr = data.prefixLen() == -1 ? name : AdjacentMapUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
+			final String posStr = data.prefixLen() == -1 ? name : MapRelationUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
 			//Main.LOGGER.info("MapRestock: checkComesAfter for name: "+name);
 			final int confidence = checkComesAfter(prevPosStr, posStr, isSideways);
 			if(confidence > bestConfidence || (confidence==bestConfidence && name.compareTo(bestName) < 0)){
@@ -185,13 +185,13 @@ public final class MapHandRestock{
 
 		int bestSlot = -1, bestScore = 50;//TODO: magic number
 		for(int i=0; i<slots.length; ++i){
-			if(!AdjacentMapUtils.isMapArtWithCount(slots[i], prevCount) || i == prevSlot) continue;
+			if(!MapRelationUtils.isMapArtWithCount(slots[i], prevCount) || i == prevSlot) continue;
 			final MapState state = FilledMapItem.getMapState(slots[i], world);
 			if(state == null) continue;
 			final String name = slots[i].getCustomName() == null ? null : slots[i].getCustomName().getLiteralString();
 			if(!simpleCanComeAfter(prevName, name)) continue;
 
-			final int score = AdjacentMapUtils.adjacentEdgeScore(prevState.colors, state.colors, /*leftRight=*/true);//TODO: up/down & sideways hint
+			final int score = MapRelationUtils.adjacentEdgeScore(prevState.colors, state.colors, /*leftRight=*/true);//TODO: up/down & sideways hint
 			if(score > bestScore){bestScore = score; bestSlot = i;}
 		}
 		if(bestSlot != -1) Main.LOGGER.info("MapRestock: findByImage() succeeded, confidence score: "+bestScore);
@@ -222,7 +222,7 @@ public final class MapHandRestock{
 			IntStream.of(PlayerScreenHandler.OFFHAND_ID)
 		).toArray();
 		for(int i : slotScanOrder){
-			if(!AdjacentMapUtils.isMapArtWithCount(slots[i], prevCount) || i == prevSlot) continue;
+			if(!MapRelationUtils.isMapArtWithCount(slots[i], prevCount) || i == prevSlot) continue;
 			if(bestScore < 1){bestScore = 1; bestSlot = i;} // It's a map with the same count
 			final MapState state = FilledMapItem.getMapState(slots[i], world);
 			assert state != null;
@@ -232,9 +232,9 @@ public final class MapHandRestock{
 			final String name = slots[i].getCustomName().getLiteralString();
 			if(name == null) continue;
 			if(bestScore < 3){bestScore = 3; bestSlot = i;} // It's a named map
-			final RelatedMapsData data = AdjacentMapUtils.getRelatedMapsByName(slots, name, prevCount, prevLocked, world);
+			final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, name, prevCount, prevLocked, world);
 			if(data.slots().size() < 2) continue;
-			String posStr = data.prefixLen() == -1 ? name : AdjacentMapUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
+			String posStr = data.prefixLen() == -1 ? name : MapRelationUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
 			if(bestPosStr == null || posStr.compareTo(bestPosStr) < 0){bestPosStr = posStr; bestScore=4; bestSlot = i;} // In a map group, possible starter
 		}
 		if(bestScore == 4) Main.LOGGER.info("MapRestock: findAny() found potential TL named map");

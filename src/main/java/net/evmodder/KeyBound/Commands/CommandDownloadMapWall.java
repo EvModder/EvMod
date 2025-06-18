@@ -172,7 +172,7 @@ public class CommandDownloadMapWall{
 		BORDER_2 = border2;
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, _0) -> {
 			dispatcher.register(
-				ClientCommandManager.literal(getClass().getName().substring(7).toLowerCase()/*"mapwallimg"*/)
+				ClientCommandManager.literal(getClass().getSimpleName().substring(7).toLowerCase()/*"mapwallimg"*/)
 				.executes(this::runCommandNoArg)
 				.then(
 					ClientCommandManager.argument("map_name", StringArgumentType.word())

@@ -1,8 +1,8 @@
 package net.evmodder.KeyBound.EventListeners;
 
 import java.util.ArrayDeque;
-import net.evmodder.KeyBound.AdjacentMapUtils;
-import net.evmodder.KeyBound.AdjacentMapUtils.RelatedMapsData;
+import net.evmodder.KeyBound.MapRelationUtils;
+import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
 import net.minecraft.component.DataComponentTypes;
@@ -39,7 +39,7 @@ public abstract class MapClickMoveNeighbors{
 		final MapState state = mapId == null ? null : player.getWorld().getMapState(mapId);
 		final Boolean locked = state == null ? null : state.locked;
 		Main.LOGGER.info("MapMoveClick: locked="+locked);
-		final RelatedMapsData data =  AdjacentMapUtils.getRelatedMapsByName(slots, movedName, mapMoved.getCount(), locked, player.getWorld());
+		final RelatedMapsData data =  MapRelationUtils.getRelatedMapsByName(slots, movedName, mapMoved.getCount(), locked, player.getWorld());
 		if(data.prefixLen() == -1) return;
 		data.slots().removeIf(i -> {
 			if(i == destSlot) return true;
@@ -69,12 +69,12 @@ public abstract class MapClickMoveNeighbors{
 				final byte[] brColors = getColors(player.getWorld(), slots[br]);
 				int scoreLeft = -2, scoreRight = -2, scoreTop = -2, scoreBottom = -2;
 				if(h == 1){
-					scoreLeft = AdjacentMapUtils.adjacentEdgeScore(colors, tlColors, true);
-					scoreRight = AdjacentMapUtils.adjacentEdgeScore(brColors, colors, true);
+					scoreLeft = MapRelationUtils.adjacentEdgeScore(colors, tlColors, true);
+					scoreRight = MapRelationUtils.adjacentEdgeScore(brColors, colors, true);
 				}
 				if(w == 1){
-					scoreTop = AdjacentMapUtils.adjacentEdgeScore(colors, tlColors, false);
-					scoreBottom = AdjacentMapUtils.adjacentEdgeScore(brColors, colors, false);
+					scoreTop = MapRelationUtils.adjacentEdgeScore(colors, tlColors, false);
+					scoreBottom = MapRelationUtils.adjacentEdgeScore(brColors, colors, false);
 				}
 				if(Math.max(scoreLeft, scoreRight) >= Math.max(scoreTop, scoreBottom)){
 					++w;

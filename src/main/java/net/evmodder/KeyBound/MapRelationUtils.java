@@ -10,7 +10,7 @@ import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
 import net.minecraft.world.World;
 
-public abstract class AdjacentMapUtils{
+public abstract class MapRelationUtils{
 	public record RelatedMapsData(int prefixLen, int suffixLen, List<Integer> slots){}
 
 	public static final int commonPrefixLen(String a, String b){
