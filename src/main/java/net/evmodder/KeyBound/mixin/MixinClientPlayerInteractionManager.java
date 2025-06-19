@@ -13,7 +13,7 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 
 @Mixin(ClientPlayerInteractionManager.class)
-public abstract class MixinClientPlayerInteractionManager{
+abstract class MixinClientPlayerInteractionManager{
 	/*@Shadow @Final private MinecraftClient client;
 	@Shadow private int blockBreakingCooldown;
 

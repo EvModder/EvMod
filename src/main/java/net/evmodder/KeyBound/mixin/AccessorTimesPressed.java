@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 //Author: fzzyhmstrs
 @Mixin(KeyBinding.class)
-public interface AccessorTimesPressed {
+interface AccessorTimesPressed {
 	@Accessor(value="timesPressed")
 	int getTimesPressed();
 	@Accessor(value="timesPressed")

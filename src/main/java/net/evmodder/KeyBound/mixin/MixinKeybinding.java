@@ -13,7 +13,7 @@ import java.util.Map;
 
 //Authors: fzzyhmstrs, EvModder
 @Mixin(value = KeyBinding.class, priority = 10000)
-public abstract class MixinKeybinding{
+abstract class MixinKeybinding{
 	class KeybindFixer{
 		private static ArrayListMultimap<InputUtil.Key, KeyBinding> keyFixMap = ArrayListMultimap.create();
 

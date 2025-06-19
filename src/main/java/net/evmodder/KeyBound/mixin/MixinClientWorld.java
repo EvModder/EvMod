@@ -20,7 +20,7 @@ import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.map.MapState;
 
 @Mixin(ClientWorld.class)
-public abstract class MixinClientWorld{
+abstract class MixinClientWorld{
 	private static final MinecraftClient client = MinecraftClient.getInstance();
 	private static final HashMap<String, HashSet<UUID>> mapsSaved;
 	private static final HashSet<UUID> mapsInTransit, mapsToSave;
