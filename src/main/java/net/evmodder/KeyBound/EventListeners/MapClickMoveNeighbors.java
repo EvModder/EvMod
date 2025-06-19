@@ -34,14 +34,17 @@ public abstract class MapClickMoveNeighbors{
 		if(ongoingClickMove){Main.LOGGER.warn("MapMoveClick: Already ongoing"); return;}
 
 		Main.LOGGER.info("MapMoveClick: moveNeighbors() called");
-		final ItemStack[] slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
+		final ItemStack[] slots = player.currentScreenHandler.slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		final String movedName = mapMoved.getCustomName().getLiteralString();
 		final MapIdComponent mapId = mapMoved.get(DataComponentTypes.MAP_ID);
 		final MapState state = mapId == null ? null : player.getWorld().getMapState(mapId);
 		final Boolean locked = state == null ? null : state.locked;
-		Main.LOGGER.info("MapMoveClick: locked="+locked);
+		//Main.LOGGER.info("MapMoveClick: locked="+locked);
 		final RelatedMapsData data =  MapRelationUtils.getRelatedMapsByName(slots, movedName, mapMoved.getCount(), locked, player.getWorld());
-		if(data.prefixLen() == -1) return;
+		if(data.prefixLen() == -1){
+			Main.LOGGER.info("MapMoveClick: related-name maps not found");
+			return;
+		}
 		data.slots().removeIf(i -> {
 			if(i == destSlot) return true;
 			if(ItemStack.areItemsAndComponentsEqual(slots[i], mapMoved)){
