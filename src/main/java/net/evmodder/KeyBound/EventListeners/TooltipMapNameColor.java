@@ -39,7 +39,7 @@ public final class TooltipMapNameColor{
 		return state != null && !state.locked;
 	}
 	private static final boolean isUnnamedMap(ItemStack item){
-		return item.getCustomName() != null && item.contains(DataComponentTypes.MAP_ID);
+		return item.getCustomName() == null && item.contains(DataComponentTypes.MAP_ID);
 	}
 
 	public static final void tooltipColors(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
