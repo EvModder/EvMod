@@ -112,15 +112,15 @@ public abstract class MapRelationUtils{
 												+ simplifyPosStr(name.substring(a, name.length()-b)));
 				continue;
 			}
-			final boolean oldContainsNew = prefixLen >= a && suffixLen >= b;
+			final boolean oldContainsNew = prefixLen >= a && suffixLen >= b && (prefixLen > a || suffixLen > b);
 			//final boolean newContainsOld = a >= prefixLen && b >= suffixLen;
 			if(oldContainsNew && validPosStr){
-				Main.LOGGER.info("MapAdjUtil: decreasing prefix/suffix len (expanding posStr) to "+a+"/"+b+" for name: "+name);
-				prefixLen = a; suffixLen = b;
+				//Main.LOGGER.info("MapAdjUtil: decreasing prefix/suffix from "+prefixLen+"/"+suffixLen+" to "+a+"/"+b+" for name: "+name);
+				prefixLen = a; suffixLen = b; // Expand posStr
 			}
 			if(a+b > prefixLen+suffixLen && !isValidPosStr(simplifyPosStr(name.substring(Math.min(a, prefixLen), name.length()-Math.min(b, suffixLen))))){
-				Main.LOGGER.info("MapAdjUtil: increasing prefix/suffix len (shrinking posStr) to "+a+"/"+b+" for name: "+name);
-				prefixLen = a; suffixLen = b;
+				//Main.LOGGER.info("MapAdjUtil: increasing prefix/suffix from "+prefixLen+"/"+suffixLen+" to "+a+"/"+b+" for name: "+name);
+				prefixLen = a; suffixLen = b; // Shrink posStr
 			}
 		}
 		if(prefixLen == -1){
