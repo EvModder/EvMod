@@ -83,6 +83,7 @@ public class Main implements ClientModInitializer{
 	public static int MAP_COLOR_UNNAMED = 15652823;
 	public static int MAP_COLOR_NOT_IN_GROUP = 706660;
 	public static int MAP_COLOR_IN_INV = 11862015;
+	public static int MAP_COLOR_MULTI_IFRAME = 11817190;
 
 	private void loadConfig(){
 		//=================================== Parsing config into a map
@@ -189,6 +190,7 @@ public class Main implements ClientModInitializer{
 				case "map_highlight_color_unnamed": MAP_COLOR_UNNAMED = Integer.parseInt(value); break;
 				case "map_highlight_color_ungrouped": MAP_COLOR_NOT_IN_GROUP = Integer.parseInt(value); break;
 				case "map_highlight_color_selected": MAP_COLOR_IN_INV = Integer.parseInt(value); break;
+				case "map_highlight_color_reused": MAP_COLOR_MULTI_IFRAME = Integer.parseInt(value); break;
 				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.take_from_shulker": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;

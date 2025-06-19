@@ -41,6 +41,7 @@ map_highlight_color_unlocked: 14692709 # Red
 map_highlight_color_unnamed: 15652823 # Pink
 map_highlight_color_ungrouped: 706660 # Green
 map_highlight_color_selected: 11862015 # Teal
+map_highlight_color_reused: 11817190 # Purple
 
 #========== Added Visuals ==========#
 totem_total_count: true

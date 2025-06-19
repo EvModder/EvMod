@@ -1,5 +1,9 @@
 package net.evmodder.KeyBound.mixin;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.UUID;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,10 +20,12 @@ import net.minecraft.item.map.MapState;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 
 @Mixin(ItemFrameEntityRenderer.class)
-class MixinItemFrameRenderer<T extends ItemFrameEntity>{
-	private static final MinecraftClient client = MinecraftClient.getInstance();
+public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
+	private final MinecraftClient client = MinecraftClient.getInstance();
+	private final HashMap<UUID, HashSet<Vec3i>> hangLocs = new HashMap<>();
 
 	private boolean isLookngInGeneralDirection(Entity entity){
 		Vec3d vec3d = client.player.getRotationVec(1.0F).normalize();
@@ -40,15 +46,28 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
 		if(state == null) return;
 
-		final boolean isInInv = MapGroupUtils.isInInventory(MapGroupUtils.getIdForMapState(state));
-		final boolean isNotInCurrGroup = MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
+		if(MapGroupUtils.skipIFrameHasLabel.contains(itemFrameEntity.getId())) return;
 
+		final UUID colorsId = MapGroupUtils.getIdForMapState(state);
+		final HashSet<Vec3i> l = hangLocs.get(colorsId);
+		final boolean isMultiHung;
+		if(l == null){hangLocs.put(colorsId, new HashSet<>(List.of(itemFrameEntity.getBlockPos()))); isMultiHung = false;}
+		else{l.add(itemFrameEntity.getBlockPos()); isMultiHung = l.size() > 1;}
+
+		final boolean isInInv = MapGroupUtils.isInInventory(colorsId);
+		final boolean isNotInCurrGroup = MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
 		if(isInInv || isNotInCurrGroup || stack.getCustomName() == null || !state.locked){
 			//Skip if player doesn't have LOS or IF is far enough away
-			if(!isInInv && !isNotInCurrGroup && (!client.player.canSee(itemFrameEntity) || squaredDistanceToCamera > 20*20)) return;
+			if(!isInInv && !isNotInCurrGroup && !isMultiHung && (!client.player.canSee(itemFrameEntity) || squaredDistanceToCamera > 20*20)) return;
 			if(!isInInv && !isLookngInGeneralDirection(itemFrameEntity)) return;
 			cir.setReturnValue(true);
 		}
+		else MapGroupUtils.skipIFrameHasLabel.add(itemFrameEntity.getId());
+	}
+
+	private boolean isHungMultiplePlaces(UUID colorsId){
+		final HashSet<Vec3i> l = hangLocs.get(colorsId);
+		return l != null && l.size() > 1;
 	}
 
 	@Inject(method = "getDisplayName", at = @At("INVOKE"), cancellable = true)
@@ -59,8 +78,9 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(stack == null || stack.isEmpty());
 		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
 		if(state == null) return;
+		final UUID colorsId = MapGroupUtils.getIdForMapState(state);
 		final boolean notInCurrGroup = MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
-		if(MapGroupUtils.isInInventory(MapGroupUtils.getIdForMapState(state))){
+		if(MapGroupUtils.isInInventory(colorsId)){
 			MutableText coloredName = stack.getName().copy().withColor(Main.MAP_COLOR_IN_INV);
 			if(notInCurrGroup) coloredName = coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_NOT_IN_GROUP));
 			if(!state.locked) coloredName = coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
@@ -72,5 +92,6 @@ class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		}
 		else if(!state.locked) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_UNLOCKED));
 		else if(stack.getCustomName() == null) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_UNNAMED));
+		else if(isHungMultiplePlaces(colorsId)) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_MULTI_IFRAME));
 	}
 }

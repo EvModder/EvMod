@@ -4,17 +4,18 @@ import java.util.HashSet;
 import java.util.UUID;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.item.ItemStack;
+import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.map.MapState;
 
 public final class MapGroupUtils{
 	//private static HashSet<Integer> inventoryMapGroupRawIds;
-	private static HashSet<UUID> currentMapGroup, inventoryMapGroup;
+	private static HashSet<UUID> currentMapGroup, inventoryMapGroup = new HashSet<>();
 	static boolean INCLUDE_UNLOCKED;
 	private static boolean ENFORCE_MATCHES_LOCKEDNESS = true; // TODO: config setting
 
+	//TODO: Figure out something nicer than this shared global var
+	public static final HashSet<Integer> skipIFrameHasLabel = new HashSet<>();
 
 	public static final UUID getIdForMapState(MapState state){
 		UUID uuid = UUID.nameUUIDFromBytes(state.colors);
@@ -33,6 +34,7 @@ public final class MapGroupUtils{
 	}
 	public static final void setCurrentGroup(HashSet<UUID> newGroup){
 		currentMapGroup = newGroup;
+		skipIFrameHasLabel.clear();
 	}
 	public static final boolean isMapNotInCurrentGroup(final UUID colorsUUID){
 		return currentMapGroup != null && !currentMapGroup.contains(colorsUUID);
@@ -62,19 +64,14 @@ public final class MapGroupUtils{
 //				.anyMatch(s -> colorsUUID.equals(getIdForMapState(s))));
 	}
 
+	private static int tickIdx = 0;
 	static final void updateInvMapGroup(MinecraftClient client){
-		if(client.player == null || client.world == null || client.player.isSpectator() || !client.player.isAlive()){
-			//inventoryMapGroupRawIds = null;
-			inventoryMapGroup = null;
-		}
-		else for(int i=0; i<41; ++i){
-			final ItemStack stack = client.player.getInventory().getStack(i);
-			final MapIdComponent id = stack.get(DataComponentTypes.MAP_ID);
-			if(id == null) continue;
-			//inventoryMapGroupRawIds.add(id.id());
-			final MapState state = client.world.getMapState(id);
-			if(state == null) continue;
-			inventoryMapGroup.add(getIdForMapState(state));
+		if(client.player == null || client.world == null || !client.player.isAlive()) return;
+		inventoryMapGroup.clear();
+		if(++tickIdx == 4) skipIFrameHasLabel.clear(); // Only run every 4 ticks; TODO: this can probably be run every tick safely
+		for(int i=0; i<41; ++i){
+			final MapState state = FilledMapItem.getMapState(client.player.getInventory().getStack(i), client.world);
+			if(state != null) inventoryMapGroup.add(getIdForMapState(state));
 		}
 	}
 }

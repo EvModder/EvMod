@@ -191,7 +191,10 @@ public final class MapHandRestock{
 			final String name = slots[i].getCustomName() == null ? null : slots[i].getCustomName().getLiteralString();
 			if(!simpleCanComeAfter(prevName, name)) continue;
 
-			final int score = MapRelationUtils.adjacentEdgeScore(prevState.colors, state.colors, /*leftRight=*/true);//TODO: up/down & sideways hint
+			//TODO: up/down & sideways hint
+			final int score = Math.max(MapRelationUtils.adjacentEdgeScore(prevState.colors, state.colors, /*leftRight=*/true),
+										(int)(0.8*MapRelationUtils.adjacentEdgeScore(prevState.colors, state.colors, /*leftRight=*/false)));
+			Main.LOGGER.info("Score for "+name+": "+score);
 			if(score > bestScore){bestScore = score; bestSlot = i;}
 		}
 		if(bestSlot != -1) Main.LOGGER.info("MapRestock: findByImage() succeeded, confidence score: "+bestScore);
