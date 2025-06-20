@@ -213,13 +213,16 @@ public final class PacketHelper{
 				}
 				try{
 					OutputStream out = socketTCP.getOutputStream();
-					//writeShort(out, (short)msg.length);
-					out.write((msg.length>>8) & 0xff);
-					out.write(msg.length & 0xff);
+					writeShort(out, (short)msg.length);
+//					out.write((msg.length>>8) & 0xff); out.write(msg.length & 0xff);
 					out.write(msg);
 					out.flush();
 				}
-				catch(IOException e){e.printStackTrace(); return;}
+				catch(IOException e){
+					try{socketTCP.close();}catch(IOException e1){} socketTCP = null; // Reset socket
+					e.printStackTrace();
+					return;
+				}
 
 				if(!waitForReply || callback == null){if(callback != null) callback.receiveMessage(null); return;}
 				//LOGGER.info("sendPacket() is waiting for TCP reply");
