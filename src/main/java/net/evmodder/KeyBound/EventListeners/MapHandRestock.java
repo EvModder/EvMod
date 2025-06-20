@@ -10,7 +10,9 @@ import java.util.stream.IntStream;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
+import net.evmodder.EvLib.Pair;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.MapGroupUtils;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.decoration.ItemFrameEntity;
@@ -129,26 +131,26 @@ public final class MapHandRestock{
 			else{posA1=posA2t; posA2=posA1t; posB1=posB2t; posB2=posB1t;}
 
 			if(posA1.equals(posB1)){
-				if(infoLogs) Main.LOGGER.info("MapRestock: 2D, A1==B1"+(posData2d.isSideways?" (SIDEWAYS)":""));
+				if(infoLogs) Main.LOGGER.info("MapRestock: 2D, A:"+posA+", B:"+posB+", A1==B1"+(posData2d.isSideways?" (SIDEWAYS)":"")+"");
 				return checkComesAfter1d(posA2, posB2, infoLogs);
 			}
 			if(posData2d.minPos2 != null){
 				if(posB2.equals(posData2d.minPos2) && posA2.equals(posData2d.maxPos2)){
-					if(infoLogs) Main.LOGGER.info("MapRestock: 2D, A2==[end], B2==[start], recur checkComesAfter(A1, B1)"+(posData2d.isSideways?" (SIDEWAYS)":""));
+					if(infoLogs) Main.LOGGER.info("MapRestock: 2D, A:"+posA+", B:"+posB+", A2==^ && B2==$, check(A1, B1)"+(posData2d.isSideways?" (SIDEWAYS)":""));
 					return checkComesAfter1d(posA1, posB1, infoLogs);
 				}
 			}
 			else{
 				if(posB2.matches("[A0]") && posData2d.maxPos2 == null ? !posA2.equals(posB2) : posA2.equals(posData2d.maxPos2)){
-					if(infoLogs) Main.LOGGER.info("MapRestock: 2D, B2==[A0], recur checkComesAfter(A1, B1)"+(posData2d.isSideways?" (SIDEWAYS)":""));
+					if(infoLogs) Main.LOGGER.info("MapRestock: 2D, A:"+posA+", B:"+posB+", B2==[A0], check(A1, B1)"+(posData2d.isSideways?" (SIDEWAYS)":""));
 					return Math.max(checkComesAfter1d(posA1, posB1, infoLogs)-1, 0);
 				}
 				if(posB2.equals("1") && posData2d.maxPos2 == null ? !posA2.matches("[01]") : posA2.equals(posData2d.maxPos2)){
-					if(infoLogs) Main.LOGGER.info("MapRestock: 2D, B2==[1], recur checkComesAfter(A1, B1)"+(posData2d.isSideways?" (SIDEWAYS)":""));
+					if(infoLogs) Main.LOGGER.info("MapRestock: 2D, A:"+posA+", B:"+posB+", B2==[1], check(A1, B1)"+(posData2d.isSideways?" (SIDEWAYS)":""));
 					return Math.max(checkComesAfter1d(posA1, posB1, infoLogs)-2, 0);
 				}
 			}
-			if(infoLogs) Main.LOGGER.info("MapRestock: 2D, confidence=0. A:"+posA+", B:"+posB+(posData2d.isSideways?" (SIDEWAYS)":""));
+			if(infoLogs) Main.LOGGER.info("MapRestock: 2D, A:"+posA+", B:"+posB+", confidence=0"+(posData2d.isSideways?" (SIDEWAYS)":""));
 			return 0;
 		}
 		return checkComesAfter1d(posA, posB, infoLogs);
@@ -199,16 +201,27 @@ public final class MapHandRestock{
 		if(bestConfidence == 0) Main.LOGGER.warn("MapRestock: Likely skipping a map");
 		return bestSlot;
 	}
-	private int getTrailLength(final ItemStack[] slots, final RelatedMapsData data, int prevSlot, final String prevPosStr, final PosData2D posData2d){
+	private Pair<Integer, Long> getTrailLengthAndScore(final ItemStack[] slots, final RelatedMapsData data, int prevSlot,
+			final PosData2D posData2d, final World world){
 		int trailLength = 0;
+		long scoreSum = 0;
 		final RelatedMapsData copiedData = new RelatedMapsData(data.prefixLen(), data.suffixLen(), new ArrayList<>(data.slots()));
-		while(prevSlot != -1){
-			++trailLength;
+		while(/*prevSlot != -1*/true){
+			final String prevName = slots[prevSlot].getCustomName().getLiteralString();
+			final String prevPosStr = getPosStrFromName(prevName, data);
 			final int i = getNextSlotByName(slots, copiedData, prevPosStr, posData2d, /*infoLogs=*/false);
+			if(i == -1){
+				Main.LOGGER.info("MapRestock: Trail ended on pos: "+prevPosStr);
+				return new Pair<>(trailLength, scoreSum);
+			}
+			final byte[] prevColors = FilledMapItem.getMapState(slots[prevSlot], world).colors;
+			final byte[] colors = FilledMapItem.getMapState(slots[i], world).colors;
+			scoreSum += MapRelationUtils.adjacentEdgeScore(prevColors, colors, /*leftRight=*/true);//TODO: detect when up/down vs left/right
 			copiedData.slots().remove(Integer.valueOf(prevSlot));
 			prevSlot = i;
+			++trailLength;
 		}
-		return trailLength;
+		//return new Pair<>(trailLength, scoreSum);
 	}
 	private final int getNextSlotByName(final ItemStack[] slots, final int prevSlot, final World world){
 		final String prevName = slots[prevSlot].getCustomName().getLiteralString();
@@ -233,12 +246,13 @@ public final class MapHandRestock{
 			final List<String> mapPosStrs = mapNames.stream().map(name -> getPosStrFromName(name, data)).toList();
 			final PosData2D sidewaysPos2dData = getPosData2D(mapPosStrs, true);
 			final PosData2D regularPos2dData = getPosData2D(mapPosStrs, false);
-			final int sidewaysLen = getTrailLength(slots, data, prevSlot, prevPosStr, sidewaysPos2dData);
-			final int regularLen = getTrailLength(slots, data, prevSlot, prevPosStr, regularPos2dData);
-			posData2d = sidewaysLen > regularLen ? sidewaysPos2dData : regularPos2dData;
+			final Pair<Integer, Long> sidewaysTrail = getTrailLengthAndScore(slots, data, prevSlot, sidewaysPos2dData, world);
+			final Pair<Integer, Long> regularTrail = getTrailLengthAndScore(slots, data, prevSlot, regularPos2dData, world);
+			final boolean isSideways = sidewaysTrail.a > regularTrail.a || (sidewaysTrail.a == regularTrail.a && sidewaysTrail.b > regularTrail.b);
+			posData2d = isSideways ? sidewaysPos2dData : regularPos2dData;
 			//TODO: if sidewaysLen == regularLen, determine which has better ImgEdgeStitching sum
 			for(String name : mapNames) posData2dForName.put(name, posData2d);
-			Main.LOGGER.info("MapRestock: Determined sideways="+posData2d.isSideways+" (trail len "+sidewaysLen+" vs "+regularLen+")");
+			Main.LOGGER.info("MapRestock: Determined sideways="+posData2d.isSideways+" (trail len "+sidewaysTrail.a+" vs "+regularTrail.a+")");
 		}
 		Main.LOGGER.info("MapRestock: findByName() minPos2="+posData2d.minPos2+", maxPos2="+posData2d.maxPos2+", sideways="+posData2d.isSideways);
 		return getNextSlotByName(slots, data, prevPosStr, posData2d, /*infoLogs=*/true);
@@ -317,10 +331,11 @@ public final class MapHandRestock{
 		return bestSlot;
 	}
 
-	private final void tryToStockNextMap(PlayerEntity player, ItemStack mapInHand){
+	private final void tryToStockNextMap(PlayerEntity player, Hand hand){
 		int restockFromSlot = -1;
 		final ItemStack[] slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		final int prevSlot = player.getInventory().selectedSlot+36;
+		final ItemStack mapInHand = player.getStackInHand(hand);
 		assert slots[prevSlot] == mapInHand;
 
 		if(USE_NAME && restockFromSlot == -1){
@@ -344,21 +359,27 @@ public final class MapHandRestock{
 		if(restockFromSlot == -1){Main.LOGGER.info("MapRestock: unable to find next map"); return;}
 
 		//PlayerScreenHandler.HOTBAR_START=36
+		final boolean isHotbarSlot = restockFromSlot >= 36 && restockFromSlot < 45;
+		if(mapInHand.getCount() > 2 && !isHotbarSlot){
+			Main.LOGGER.warn("MapRestock: Won't swap with inventory since prevMap count > 2");
+			return;
+		}
+
 		MinecraftClient client = MinecraftClient.getInstance();
+		//player.setStackInHand(hand, ItemStack.EMPTY); MapGroupUtils.updateInvMapGroup(client);
+
 		final int restockFromSlotFinal = restockFromSlot;
 		new Timer().schedule(new TimerTask(){@Override public void run(){
-			if(restockFromSlotFinal >= 36 && restockFromSlotFinal < 45){
+			if(isHotbarSlot){
 				player.getInventory().selectedSlot = restockFromSlotFinal - 36;
 				client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
 				Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().selectedSlot);
-			}
-			else if(slots[prevSlot].getCount() > 2){
-				Main.LOGGER.warn("MapRestock: Won't swap with inventory since prevMap count > 2");
 			}
 			else{
 				client.interactionManager.clickSlot(0, restockFromSlotFinal, player.getInventory().selectedSlot, SlotActionType.SWAP, player);
 				Main.LOGGER.info("MapRestock: Swapped inv.selectedSlot to nextMap: s="+restockFromSlotFinal);
 			}
+			MapGroupUtils.updateInvMapGroup(client);
 		}}, 50l);
 	}
 
@@ -380,9 +401,7 @@ public final class MapHandRestock{
 			if(player.getStackInHand(hand).getCount() > 2) return ActionResult.PASS;
 			//Main.LOGGER.info("item in hand is filled_map [1or2]");
 			Main.LOGGER.info("Single mapart placed, hand:"+hand.ordinal()+", looking for restock map...");
-			//new Timer().schedule(new TimerTask(){@Override public void run(){
-				tryToStockNextMap(player, player.getStackInHand(hand));
-			//}}, 50l);
+			tryToStockNextMap(player, hand);
 			return ActionResult.PASS;
 		});
 	}
