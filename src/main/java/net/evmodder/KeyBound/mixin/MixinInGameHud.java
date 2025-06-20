@@ -32,6 +32,7 @@ abstract class MixinInGameHud{
 					if(!state.locked) text = text.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
 				}
 				else if(state != null && !state.locked) text = text.withColor(Main.MAP_COLOR_UNLOCKED);
+				else if(state != null && MapGroupUtils.isInItemFrame(MapGroupUtils.getIdForMapState(state))) text = text.withColor(Main.MAP_COLOR_IN_IFRAME);
 				else if(currentStack.getCustomName() == null) text = text.withColor(Main.MAP_COLOR_UNNAMED);
 			}
 		}

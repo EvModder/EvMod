@@ -42,6 +42,7 @@ import net.minecraft.client.MinecraftClient;
 public class Main implements ClientModInitializer{
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
+	// Mixin onEntityTick_iFrame instead of hasLabel_iFrame <--- less lag, better compatibility with mods, etc.
 	// see if possible to pre-load MapStates when joining a server (to reduce lag?)
 	// Reference/depend on https://github.com/Siphalor/amecs-api
 	// majorly improve TravelHelper (mining blocks only in way, specifically non-diag & mining 3 high tunnel)
@@ -82,7 +83,7 @@ public class Main implements ClientModInitializer{
 	public static int MAP_COLOR_UNLOCKED = 14692709;
 	public static int MAP_COLOR_UNNAMED = 15652823;
 	public static int MAP_COLOR_NOT_IN_GROUP = 706660;
-	public static int MAP_COLOR_IN_INV = 11862015;
+	public static int MAP_COLOR_IN_INV = 11862015, MAP_COLOR_IN_IFRAME = 10542300;
 	public static int MAP_COLOR_MULTI_IFRAME = 11817190;
 
 	private void loadConfig(){
@@ -189,7 +190,8 @@ public class Main implements ClientModInitializer{
 				case "map_highlight_color_unlocked": MAP_COLOR_UNLOCKED = Integer.parseInt(value); break;
 				case "map_highlight_color_unnamed": MAP_COLOR_UNNAMED = Integer.parseInt(value); break;
 				case "map_highlight_color_ungrouped": MAP_COLOR_NOT_IN_GROUP = Integer.parseInt(value); break;
-				case "map_highlight_color_selected": MAP_COLOR_IN_INV = Integer.parseInt(value); break;
+				case "map_highlight_color_matches_inventory": MAP_COLOR_IN_INV = Integer.parseInt(value); break;
+				case "map_highlight_color_matches_itemframe": MAP_COLOR_IN_IFRAME = Integer.parseInt(value); break;
 				case "map_highlight_color_reused": MAP_COLOR_MULTI_IFRAME = Integer.parseInt(value); break;
 				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;

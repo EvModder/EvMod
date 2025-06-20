@@ -26,6 +26,7 @@ import net.minecraft.util.math.Vec3i;
 public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 	private final MinecraftClient client = MinecraftClient.getInstance();
 	private final HashMap<UUID, HashSet<Vec3i>> hangLocs = new HashMap<>();
+	private final HashMap<Vec3i, UUID> hangLocsReverse = new HashMap<>();
 
 	private boolean isLookngInGeneralDirection(Entity entity){
 		Vec3d vec3d = client.player.getRotationVec(1.0F).normalize();
@@ -42,27 +43,35 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(!Main.mapHighlightIFrame) return; // Feature is disabled
 		if(!MinecraftClient.isHudEnabled()) return;
 		final ItemStack stack = itemFrameEntity.getHeldItemStack();
-		if(stack == null || stack.isEmpty()) return;
-		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
-		if(state == null) return;
+		final MapState state = stack == null || stack.isEmpty() ? null : FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
+		final Vec3i xyz = itemFrameEntity.getBlockPos();
+		if(state == null){
+			final UUID oldColorsIdForXYZ = hangLocsReverse.remove(xyz);
+			if(oldColorsIdForXYZ != null) hangLocs.get(oldColorsIdForXYZ).remove(xyz);
+			return;
+		}
 
 		if(MapGroupUtils.skipIFrameHasLabel.contains(itemFrameEntity.getId())) return;
 
 		final UUID colorsId = MapGroupUtils.getIdForMapState(state);
+		MapGroupUtils.addToItemFrameGroup(colorsId);
+		if(hangLocsReverse.put(xyz, colorsId) == null) MapGroupUtils.updateInvMapGroup(client); // Newly hung map detected, ensure inv group is updated
+
 		final HashSet<Vec3i> l = hangLocs.get(colorsId);
 		final boolean isMultiHung;
-		if(l == null){hangLocs.put(colorsId, new HashSet<>(List.of(itemFrameEntity.getBlockPos()))); isMultiHung = false;}
-		else{l.add(itemFrameEntity.getBlockPos()); isMultiHung = l.size() > 1;}
+		if(l == null){hangLocs.put(colorsId, new HashSet<>(List.of(xyz))); isMultiHung = false;}
+		else{l.add(xyz); isMultiHung = l.size() > 1;}
 
 		final boolean isInInv = MapGroupUtils.isInInventory(colorsId);
 		final boolean isNotInCurrGroup = MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
-		if(isInInv || isNotInCurrGroup || stack.getCustomName() == null || !state.locked){
-			//Skip if player doesn't have LOS or IF is far enough away
-			if(!isInInv && !isNotInCurrGroup && !isMultiHung && (!client.player.canSee(itemFrameEntity) || squaredDistanceToCamera > 20*20)) return;
-			if(!isInInv && !isLookngInGeneralDirection(itemFrameEntity)) return;
-			cir.setReturnValue(true);
+		if(!isMultiHung && !isInInv && !isNotInCurrGroup && state.locked && stack.getCustomName() != null){
+			MapGroupUtils.skipIFrameHasLabel.add(itemFrameEntity.getId());
+			return;
 		}
-		else MapGroupUtils.skipIFrameHasLabel.add(itemFrameEntity.getId());
+		//Skip if player doesn't have LOS or is far enough away
+		if(!isInInv && !isNotInCurrGroup/* && !isMultiHung*/ && (squaredDistanceToCamera > 20*20 || !client.player.canSee(itemFrameEntity))) return;
+		if(!isInInv && !isLookngInGeneralDirection(itemFrameEntity)) return;
+		cir.setReturnValue(true);
 	}
 
 	private boolean isHungMultiplePlaces(UUID colorsId){

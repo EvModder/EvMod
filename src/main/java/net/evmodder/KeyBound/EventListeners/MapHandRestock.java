@@ -255,7 +255,9 @@ public final class MapHandRestock{
 			Main.LOGGER.info("MapRestock: Determined sideways="+posData2d.isSideways+" (trail len "+sidewaysTrail.a+" vs "+regularTrail.a+")");
 		}
 		Main.LOGGER.info("MapRestock: findByName() minPos2="+posData2d.minPos2+", maxPos2="+posData2d.maxPos2+", sideways="+posData2d.isSideways);
-		return getNextSlotByName(slots, data, prevPosStr, posData2d, /*infoLogs=*/true);
+
+		final int i = getNextSlotByName(slots, data, prevPosStr, posData2d, /*infoLogs=*/true);
+		return i != -1 ? i : getNextSlotAny(slots, prevSlot, world);
 	}
 
 	private final int getNextSlotByImage(final ItemStack[] slots, final int prevSlot, final World world){
@@ -264,7 +266,11 @@ public final class MapHandRestock{
 		final MapState prevState = FilledMapItem.getMapState(slots[prevSlot], world);
 		assert prevState != null;
 
+		final List<Integer> relatedSlots = MapRelationUtils.getRelatedMapsByName(slots, prevName, prevCount, prevState.locked, world).slots();
+		//List<Integer> usedSlots = !data.slots().isEmpty() ? data.slots() : IntStream.range(0, slots.length).boxed().toList();
+
 		int bestSlot = -1, bestScore = 50;//TODO: magic number
+		//for(int i : usedSlots){
 		for(int i=0; i<slots.length; ++i){
 			if(!MapRelationUtils.isMapArtWithCount(slots[i], prevCount) || i == prevSlot) continue;
 			final MapState state = FilledMapItem.getMapState(slots[i], world);
@@ -274,7 +280,8 @@ public final class MapHandRestock{
 
 			//TODO: up/down & sideways hint
 			final int score = Math.max(MapRelationUtils.adjacentEdgeScore(prevState.colors, state.colors, /*leftRight=*/true),
-										(int)(0.8*MapRelationUtils.adjacentEdgeScore(prevState.colors, state.colors, /*leftRight=*/false)));
+										(int)(0.8*MapRelationUtils.adjacentEdgeScore(prevState.colors, state.colors, /*leftRight=*/false)))
+					* (relatedSlots.contains(i) ? 2 : 1);
 			//Main.LOGGER.info("MapRestock: findByImage() score for "+name+": "+score);
 			if(score > bestScore){
 				Main.LOGGER.info("MapRestock: findByImage() new best score for "+name+": "+bestScore+" (slot"+i+")");
@@ -366,7 +373,9 @@ public final class MapHandRestock{
 		}
 
 		MinecraftClient client = MinecraftClient.getInstance();
-		//player.setStackInHand(hand, ItemStack.EMPTY); MapGroupUtils.updateInvMapGroup(client);
+		new Timer().schedule(new TimerTask(){@Override public void run(){
+			player.setStackInHand(hand, ItemStack.EMPTY); MapGroupUtils.updateInvMapGroup(client);
+		}}, 10l);
 
 		final int restockFromSlotFinal = restockFromSlot;
 		new Timer().schedule(new TimerTask(){@Override public void run(){
