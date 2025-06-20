@@ -152,7 +152,8 @@ public abstract class MapRelationUtils{
 				continue;
 			}
 			final boolean pos2d = posStr.indexOf(' ') != -1;
-			if(pos2d != sourcePosIs2d){Main.LOGGER.warn("MapAdjUtil: mismatched pos data: "+name); return new RelatedMapsData(-1, -1, List.of());}
+			//TODO: finding next map by name: "Flag 2/8" -> mismatched pos data: "Flag 4&8/8"
+			if(pos2d != sourcePosIs2d){Main.LOGGER.warn("MapAdjUtil: mismatched pos data: "+name); return new RelatedMapsData(-1, -1, new ArrayList<>());}
 			relatedMapSlots.add(i);
 		}
 		return new RelatedMapsData(prefixLen, suffixLen, relatedMapSlots);
