@@ -97,7 +97,7 @@ public abstract class MapRelationUtils{
 
 			//if(item.equals(prevMap)) continue;
 			int a = commonPrefixLen(sourceName, name), b = commonSuffixLen(sourceName, name);
-			int o = a-(name.length()-b);
+			int o = a-(Math.min(name.length(), sourceName.length())-b);
 			if(o>0){a-=o; b-=o;}//Handle special case: "a 11/x"+"a 111/x", a=len(a 11)=4,b=len(11/x)=4,o=2 => a=len(a ),b=len(/x)
 			//if(a == 0 && b == 0) continue; // No shared prefix/suffix
 			//Main.LOGGER.info("MapRestock: map"+i+" prefixLen|suffixLen: "+a+"|"+b);

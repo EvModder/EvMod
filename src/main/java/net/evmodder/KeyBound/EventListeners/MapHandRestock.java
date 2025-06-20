@@ -2,9 +2,12 @@ package net.evmodder.KeyBound.EventListeners;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
+import com.nimbusds.oauth2.sdk.util.StringUtils;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
 import net.evmodder.KeyBound.Main;
@@ -27,14 +30,15 @@ import net.minecraft.world.World;
 public final class MapHandRestock{
 	final boolean USE_NAME, USE_IMG, JUST_PICK_A_MAP = true;
 
-	private final HashMap<String, Boolean> isSideways2d;
+	record PosData2D(boolean isSideways, String maxPos2){}
+	private final HashMap<String, PosData2D> posData2dForName;
 	//TODO: passing metadata, particularly NxM if known.
 	// Higher number = closer match
 	// 5 = definitely next (no doubt)
 	// 4 = likely next (but not 100%)
 	// 3 = maybe next (line wrapping? hex?)
 	// 1,2 = not impossibly next
-	private final int checkComesAfter(String posA, String posB, boolean hintSideways, boolean infoLogs){
+	private final int checkComesAfter(String posA, String posB, PosData2D posData2d, boolean infoLogs){
 		if(posA.isBlank() || posB.isBlank() || posA.equals(posB)) return 1; // "Map"->"Map p2", "Map start"->"Map"
 
 		if(posA.equals("T R") && posB.equals("M L")) return 5;
@@ -67,7 +71,7 @@ public final class MapHandRestock{
 				if(cutA != -1 && posA.length() == posB.length()+1){cutB = cutA; cutSpaceB = 0;}
 				else if(cutB != -1 && posB.length() == posA.length()+1){cutA = cutB; cutSpaceA = 0;}
 				else{
-					//Main.LOGGER.info("MapRestock: mismatched-2D");
+					if(infoLogs) Main.LOGGER.info("MapRestock: mismatched-2D");
 					return 0;
 				}
 			}
@@ -76,56 +80,58 @@ public final class MapHandRestock{
 			final String posB1t = posB.substring(0, cutB), posB2t = posB.substring(cutB+cutSpaceB);
 			final String posA1, posA2, posB1, posB2;
 
-			if(!hintSideways){posA1=posA1t; posA2=posA2t; posB1=posB1t; posB2=posB2t;}
+			if(!posData2d.isSideways){posA1=posA1t; posA2=posA2t; posB1=posB1t; posB2=posB2t;}
 			else{posA1=posA2t; posA2=posA1t; posB1=posB2t; posB2=posB1t;}
 
 			if(posA1.equals(posB1)){
-				if(infoLogs) Main.LOGGER.info("MapRestock: 2D, A1==B1"+(hintSideways?" (SIDEWAYS)":""));
-				return checkComesAfter(posA2, posB2, false, infoLogs);
+				if(infoLogs) Main.LOGGER.info("MapRestock: 2D, A1==B1"+(posData2d.isSideways?" (SIDEWAYS)":""));
+				return checkComesAfter(posA2, posB2, null, infoLogs);
 			}
-			//if(posA2.equals(posB2)) return checkComesAfter(posA1, posB1)-2;// TODO: nerf with -2 (until impl edge matching), col should not be before row..
-			if(posB2.matches("[A0]") && !posA2.equals(posB2)){
-				if(infoLogs) Main.LOGGER.info("MapRestock: 2D, B2==[A0], recur checkComesAfter(A1, B1)"+(hintSideways?" (SIDEWAYS)":""));
-				//Main.LOGGER.info("MapRestock: 2D pos: B2=0");
-				return Math.max(checkComesAfter(posA1, posB1, false, infoLogs)-1, 0);
+			if(posB2.matches("[A0]") && (posData2d != null ? posA2.equals(posData2d.maxPos2) : !posA2.equals(posB2))){
+				if(infoLogs) Main.LOGGER.info("MapRestock: 2D, B2==[A0], recur checkComesAfter(A1, B1)"+(posData2d.isSideways?" (SIDEWAYS)":""));
+				return Math.max(checkComesAfter(posA1, posB1, null, infoLogs)-1, 0);
 			}
 			if(posB2.equals("1") && !posA2.matches("[01]")){
-				if(infoLogs) Main.LOGGER.info("MapRestock: 2D, B2==[1], recur checkComesAfter(A1, B1)"+(hintSideways?" (SIDEWAYS)":""));
-				return Math.max(checkComesAfter(posA1, posB1, false, infoLogs)-2, 0);
+				if(infoLogs) Main.LOGGER.info("MapRestock: 2D, B2==[1], recur checkComesAfter(A1, B1)"+(posData2d.isSideways?" (SIDEWAYS)":""));
+				return Math.max(checkComesAfter(posA1, posB1, null, infoLogs)-2, 0);
 			}
-			if(infoLogs) Main.LOGGER.info("MapRestock: 2D, checkComesAfter=0. A:"+posA+", B:"+posB+(hintSideways?" (SIDEWAYS)":""));
+			if(infoLogs) Main.LOGGER.info("MapRestock: 2D, checkComesAfter=0. A:"+posA+", B:"+posB+(posData2d.isSideways?" (SIDEWAYS)":""));
 			return 0;
 		}
 
-		//Main.LOGGER.info("MapRestock: checkComesAfter=1. A:"+posA+", B:"+posB);
+		if(infoLogs) Main.LOGGER.info("MapRestock: checkComesAfter=1. A:"+posA+", B:"+posB);
 		return 0;
 	}
 	public final boolean simpleCanComeAfter(final String name1, final String name2){
 		if(name1 == null && name2 == null) return true;
 		if(name1 == null || name2 == null) return false;
 		if(name1.equals(name2)) return true;
-		final int a = MapRelationUtils.commonPrefixLen(name1, name2);
-		final int b = MapRelationUtils.commonSuffixLen(name1, name2);
+		int a = MapRelationUtils.commonPrefixLen(name1, name2);
+		int b = MapRelationUtils.commonSuffixLen(name1, name2);
+		final int o = a-(Math.min(name1.length(), name2.length())-b);
+		if(o>0){a-=o; b-=o;}//Handle special case: "a 11/x"+"a 111/x", a=len(a 11)=4,b=len(11/x)=4,o=2 => a=len(a ),b=len(/x)
 		final String posA = MapRelationUtils.simplifyPosStr(name1.substring(a, name1.length()-b));
 		final String posB = MapRelationUtils.simplifyPosStr(name2.substring(a, name2.length()-b));
 		final boolean name1ValidPos = MapRelationUtils.isValidPosStr(posA);
 		final boolean name2ValidPos = MapRelationUtils.isValidPosStr(posB);
 		if(!name1ValidPos && !name2ValidPos) return true;
 		if(!name1ValidPos || !name2ValidPos) return false;
-		return checkComesAfter(posA, posB, /*hintSideways=*/false, true) > 0 || checkComesAfter(posA, posB, /*hintSideways=*/true, true) > 0;
+		final PosData2D regular2dData = new PosData2D(false, getMaxPos2(List.of(posA, posB), false));
+		final PosData2D sideways2dData = new PosData2D(true, getMaxPos2(List.of(posA, posB), true));
+		//TODO: set final boolean param to true for debugging
+		return checkComesAfter(posA, posB, regular2dData, /*infoLogs=*/false) > 0 || checkComesAfter(posA, posB, sideways2dData, /*infoLogs=*/false) > 0;
+	}
+	private String getPosStrFromName(final String name, final RelatedMapsData data){
+		return data.prefixLen() == -1 ? name : MapRelationUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
 	}
 	private int getNextSlotByName(final ItemStack[] slots, final RelatedMapsData data,
-			final int prevSlot, final String prevName, final String prevPosStr, final boolean isSideways, final boolean infoLogs){
+			final String prevPosStr, final PosData2D posData2d, final boolean infoLogs){
 		int bestSlot = -1, bestConfidence=1;//bestConfidence = -1;
 		//String bestName = prevName;
 		for(int i : data.slots()){
-			if(i == prevSlot) continue;
-			if(slots[i].getCustomName() == null) continue;
-			final String name = slots[i].getCustomName().getLiteralString();
-			if(name == null) continue;
-			final String posStr = data.prefixLen() == -1 ? name : MapRelationUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
+			final String posStr = getPosStrFromName(slots[i].getCustomName().getLiteralString(), data);
 			//if(infoLogs) Main.LOGGER.info("MapRestock: checkComesAfter for name: "+name);
-			final int confidence = checkComesAfter(prevPosStr, posStr, isSideways, infoLogs);
+			final int confidence = checkComesAfter(prevPosStr, posStr, posData2d, infoLogs);
 			if(confidence > bestConfidence/* || (confidence==bestConfidence && name.compareTo(bestName) < 0)*/){
 				if(infoLogs) Main.LOGGER.info("MapRestock: new best confidence for "+prevPosStr+"->"+posStr+": "+confidence+" (slot"+i+")");
 				bestConfidence = confidence; bestSlot = i;// bestName = name;
@@ -138,23 +144,51 @@ public final class MapHandRestock{
 		if(bestConfidence == 0) Main.LOGGER.warn("MapRestock: Likely skipping a map");
 		return bestSlot;
 	}
-	private int getTrailLength(final ItemStack[] slots, final RelatedMapsData data,
-			int prevSlot, final String prevName, final String prevPosStr, final boolean isSideways){
+	private int getTrailLength(final ItemStack[] slots, final RelatedMapsData data, int prevSlot, final String prevPosStr, final PosData2D posData2d){
 		int trailLength = 0;
 		final RelatedMapsData copiedData = new RelatedMapsData(data.prefixLen(), data.suffixLen(), new ArrayList<>(data.slots()));
 		while(prevSlot != -1){
 			++trailLength;
-			final int i = getNextSlotByName(slots, copiedData, prevSlot, prevName, prevPosStr, isSideways, /*infoLogs=*/false);
+			final int i = getNextSlotByName(slots, copiedData, prevPosStr, posData2d, /*infoLogs=*/false);
 			copiedData.slots().remove(Integer.valueOf(prevSlot));
 			prevSlot = i;
 		}
 		return trailLength;
+	}
+	// For 2D maps, figure out the largest A2/B2 (2nd pos) in the available collection
+	private String getMaxPos2(final List<String> posStrs, final boolean isSideways){
+		assert posStrs.size() >= 2;
+		final boolean hasSpace = posStrs.stream().anyMatch(n -> n.indexOf(' ') != -1);
+		final boolean cutMid = !hasSpace && posStrs.stream().allMatch(n -> n.length() == 2);
+		final boolean someSpace = hasSpace && posStrs.stream().anyMatch(n -> n.indexOf(' ') == -1);
+		final Stream<String> pos2s;
+		if(cutMid){
+			pos2s = posStrs.stream().map(n -> n.substring(1));
+		}
+		else if(someSpace){
+			final int spaceIdx = !someSpace ? -1 : posStrs.stream().filter(n -> n.indexOf(' ') != -1).findAny().get().indexOf(' ');
+			if(posStrs.stream().map(n -> n.indexOf(' ')).anyMatch(i -> i != -1 && i != spaceIdx)){
+				Main.LOGGER.warn("MapRestock: getMaxPos2() detected mismatched pos2d spacing");
+			}
+			pos2s = posStrs.stream().map(n -> n.substring(spaceIdx + (n.indexOf(' ') == spaceIdx ? 1 : 0)));
+		}
+		else if(hasSpace){
+			pos2s = posStrs.stream().map(n -> n.substring(n.indexOf(' ')+1));
+		}
+		else{
+			Main.LOGGER.warn("MapRestock: getMaxPos2() does not recognize pos '"+posStrs.getFirst()+"' as 2D");
+			pos2s = posStrs.stream();
+		}
+		return pos2s.max((a, b) -> {
+			return StringUtils.isNumeric(a) && StringUtils.isNumeric(b) ? Integer.parseInt(a)-Integer.parseInt(b) : a.compareTo(b);
+		}).get();
 	}
 	private final int getNextSlotByName(final ItemStack[] slots, final int prevSlot, final World world){
 		final String prevName = slots[prevSlot].getCustomName().getLiteralString();
 		final int prevCount = slots[prevSlot].getCount();
 		final boolean locked = FilledMapItem.getMapState(slots[prevSlot], world).locked;
 		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, prevName, prevCount, locked, world);
+		data.slots().remove(Integer.valueOf(prevSlot));
 		if(data.slots().isEmpty()) return -1;
 
 		// Offhand, hotbar ascending, inv ascending
@@ -163,21 +197,21 @@ public final class MapHandRestock{
 		assert (data.prefixLen() == -1) == (data.suffixLen() == -1);
 		assert data.prefixLen() < prevName.length() && data.suffixLen() < prevName.length();
 
-		final String prevPosStr = data.prefixLen() == -1 ? prevName
-				: MapRelationUtils.simplifyPosStr(prevName.substring(data.prefixLen(), prevName.length()-data.suffixLen()));
+		final String prevPosStr = getPosStrFromName(prevName, data);
 
-		final String nameWithoutPos = data.prefixLen() == -1 ? prevName
-				: prevName.substring(0, data.prefixLen()) + prevName.substring(prevName.length()-data.suffixLen());
-		Boolean isSideways = isSideways2d.get(nameWithoutPos);
-		Main.LOGGER.info("MapRestock: findByName() called, hbSlot="+(prevSlot-36)
-				+", prevPos="+prevPosStr+", prevCount="+prevCount+", numRelated="+data.slots().size());
-		if(isSideways == null){
-			final int sidewaysLen = getTrailLength(slots, data, prevSlot, prevName, prevPosStr, true);
-			final int regularLen = getTrailLength(slots, data, prevSlot, prevName, prevPosStr, false);
-			isSideways2d.put(nameWithoutPos, isSideways=(sidewaysLen > regularLen));
-			Main.LOGGER.info("MapRestock: findByName() sideways2d="+(isSideways?"TRUE":"FALSE")+" (trail len "+sidewaysLen+" vs "+regularLen+")");
+		PosData2D posData2d = posData2dForName.get(prevName);
+		Main.LOGGER.info("MapRestock: findByName() called, hbSlot="+(prevSlot-36)+", prevPos="+prevPosStr+", numRelated="+data.slots().size());
+		if(posData2d == null){
+			final List<String> mapNames = data.slots().stream().map(i -> slots[i].getCustomName().getLiteralString()).toList();
+			final PosData2D sidewaysPos2dData = new PosData2D(true, getMaxPos2(mapNames, true));
+			final PosData2D regularPos2dData = new PosData2D(false, getMaxPos2(mapNames, false));
+			final int sidewaysLen = getTrailLength(slots, data, prevSlot, prevPosStr, sidewaysPos2dData);
+			final int regularLen = getTrailLength(slots, data, prevSlot, prevPosStr, regularPos2dData);
+			posData2d = sidewaysLen > regularLen ? sidewaysPos2dData : regularPos2dData;
+			for(String name : mapNames) posData2dForName.put(name, posData2d);
+			Main.LOGGER.info("MapRestock: findByName() sideways="+(posData2d.isSideways?"TRUE":"FALSE")+" (trail len "+sidewaysLen+" vs "+regularLen+")");
 		}
-		return getNextSlotByName(slots, data, prevSlot, prevName, prevPosStr, isSideways, /*infoLogs=*/false);//TODO: set this to true for debugging
+		return getNextSlotByName(slots, data, prevPosStr, posData2d, /*infoLogs=*/true);
 	}
 
 	private final int getNextSlotByImage(final ItemStack[] slots, final int prevSlot, final World world){
@@ -301,7 +335,7 @@ public final class MapHandRestock{
 	public MapHandRestock(boolean useName, boolean useImg){
 		USE_NAME = useName;
 		USE_IMG = useImg;
-		isSideways2d = USE_NAME ? new HashMap<>() : null;
+		posData2dForName = USE_NAME ? new HashMap<>() : null;
 		UseEntityCallback.EVENT.register((player, _0, hand, entity, _1) -> {
 			if(!(entity instanceof ItemFrameEntity itemFrame)) return ActionResult.PASS;
 			//Main.LOGGER.info("clicked item frame");
