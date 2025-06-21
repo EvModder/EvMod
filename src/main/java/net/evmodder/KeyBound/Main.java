@@ -24,6 +24,8 @@ import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.Commands.*;
 import net.evmodder.KeyBound.EventListeners.AutoPearlActivator;
 import net.evmodder.KeyBound.EventListeners.IgnoreListSync2b2t;
+import net.evmodder.KeyBound.EventListeners.InventoryHighlightUpdater;
+import net.evmodder.KeyBound.EventListeners.ItemFrameHighlightUpdater;
 import net.evmodder.KeyBound.EventListeners.TooltipMapNameColor;
 import net.evmodder.KeyBound.EventListeners.MapHandRestock;
 import net.evmodder.KeyBound.EventListeners.TooltipRepairCost;
@@ -248,7 +250,10 @@ public class Main implements ClientModInitializer{
 		if(mapWallCmd) new CommandDownloadMapWall(mapWallUpscale, mapWallBorder, mapWallBorderColor1, mapWallBorderColor2);
 
 		if(mapHighlightTooltip) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors);
-		if(mapHighlightTooltip || mapHighlightHUD || mapHighlightIFrame) ClientTickEvents.START_CLIENT_TICK.register(MapGroupUtils::updateInvMapGroup);
+		if(mapHighlightTooltip || mapHighlightHUD || mapHighlightIFrame){
+			ClientTickEvents.START_CLIENT_TICK.register(ItemFrameHighlightUpdater::onUpdateTick);
+			ClientTickEvents.START_CLIENT_TICK.register(InventoryHighlightUpdater::onUpdateTick);
+		}
 
 		MinecraftClient client = MinecraftClient.getInstance();
 		String username = client.getSession().getUsername();

@@ -108,18 +108,18 @@ public abstract class MapRelationUtils{
 			final boolean validPosStr = isValidPosStr(posStr);
 			if(prefixLen == -1 && suffixLen == -1){ // Prefix/suffix not yet determined
 				if(validPosStr){prefixLen = a; suffixLen = b;}
-				else if(a != 0 || b != 0) Main.LOGGER.info("MapAdjUtil: found matching prefix/suffix ("+a+"/"+b+"), but invalid PosStr: "
-												+ simplifyPosStr(name.substring(a, name.length()-b)));
+				else if(a != 0 || b != 0)
+					Main.LOGGER.info("MapAdjUtil: found matching prefix/suffix ("+a+"/"+b+"), but invalid PosStr: "+name.substring(a, name.length()-b));
 				continue;
 			}
 			final boolean oldContainsNew = prefixLen >= a && suffixLen >= b && (prefixLen > a || suffixLen > b);
 			//final boolean newContainsOld = a >= prefixLen && b >= suffixLen;
 			if(oldContainsNew && validPosStr){
-				//Main.LOGGER.info("MapAdjUtil: decreasing prefix/suffix from "+prefixLen+"/"+suffixLen+" to "+a+"/"+b+" for name: "+name);
+				Main.LOGGER.info("MapAdjUtil: decreasing prefix/suffix from "+prefixLen+"/"+suffixLen+" to "+a+"/"+b+" for name: "+name);
 				prefixLen = a; suffixLen = b; // Expand posStr
 			}
 			if(a+b > prefixLen+suffixLen && !isValidPosStr(simplifyPosStr(name.substring(Math.min(a, prefixLen), name.length()-Math.min(b, suffixLen))))){
-				//Main.LOGGER.info("MapAdjUtil: increasing prefix/suffix from "+prefixLen+"/"+suffixLen+" to "+a+"/"+b+" for name: "+name);
+				Main.LOGGER.info("MapAdjUtil: increasing prefix/suffix from "+prefixLen+"/"+suffixLen+" to "+a+"/"+b+" for name: "+name);
 				prefixLen = a; suffixLen = b; // Shrink posStr
 			}
 		}

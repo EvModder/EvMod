@@ -2,6 +2,7 @@ package net.evmodder.KeyBound.mixin;
 
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
+import net.evmodder.KeyBound.EventListeners.ItemFrameHighlightUpdater;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.component.DataComponentTypes;
@@ -32,7 +33,8 @@ abstract class MixinInGameHud{
 					if(!state.locked) text = text.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
 				}
 				else if(state != null && !state.locked) text = text.withColor(Main.MAP_COLOR_UNLOCKED);
-				else if(state != null && MapGroupUtils.isInItemFrame(MapGroupUtils.getIdForMapState(state))) text = text.withColor(Main.MAP_COLOR_IN_IFRAME);
+				else if(state != null && ItemFrameHighlightUpdater.isInItemFrame(MapGroupUtils.getIdForMapState(state)))
+					text = text.withColor(Main.MAP_COLOR_IN_IFRAME);
 				else if(currentStack.getCustomName() == null) text = text.withColor(Main.MAP_COLOR_UNNAMED);
 			}
 		}

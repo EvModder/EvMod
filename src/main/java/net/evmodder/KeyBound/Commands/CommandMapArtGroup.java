@@ -133,7 +133,7 @@ public class CommandMapArtGroup{
 //				@Override public void register(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess){
 				(dispatcher, _0) -> {
 			dispatcher.register(
-				ClientCommandManager.literal(getClass().getSimpleName().substring(7))
+				ClientCommandManager.literal(getClass().getSimpleName().substring(7).toLowerCase())
 				.executes(ctx->{
 					ctx.getSource().sendError(Text.literal("Missing subcommand: set/create/append <g>, or compare <g1> <g2>"));
 					return 1;

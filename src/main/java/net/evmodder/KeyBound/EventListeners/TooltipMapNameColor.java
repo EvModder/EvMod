@@ -21,7 +21,7 @@ public final class TooltipMapNameColor{
 		if(id == null) return false;
 		MapState state = context.getMapState(id);
 		if(state == null) return false;
-		return MapGroupUtils.isInInventory(MapGroupUtils.getIdForMapState(state));
+		return InventoryHighlightUpdater.isInInventory(MapGroupUtils.getIdForMapState(state));
 	}
 	private static final boolean isNotInCurrentGroup(ItemStack item, TooltipContext context){
 		//if(MapGroupUtils.mapsInGroup == null) return false;
@@ -43,7 +43,7 @@ public final class TooltipMapNameColor{
 		if(id == null) return false;
 		MapState state = context.getMapState(id);
 		if(state == null) return false;
-		return MapGroupUtils.isInItemFrame(MapGroupUtils.getIdForMapState(state));
+		return ItemFrameHighlightUpdater.isInItemFrame(MapGroupUtils.getIdForMapState(state));
 	}
 	private static final boolean isUnnamedMap(ItemStack item){
 		return item.getCustomName() == null && item.contains(DataComponentTypes.MAP_ID);

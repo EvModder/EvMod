@@ -345,6 +345,12 @@ public final class MapHandRestock{
 		final ItemStack mapInHand = player.getStackInHand(hand);
 		assert slots[prevSlot] == mapInHand;
 
+		final MapState state = FilledMapItem.getMapState(mapInHand, player.getWorld());
+		if(state != null){
+			InventoryHighlightUpdater.currentlyBeingPlacedIntoItemFrameSlot = player.getInventory().selectedSlot;
+			InventoryHighlightUpdater.currentlyBeingPlacedIntoItemFrame = MapGroupUtils.getIdForMapState(state);
+		}
+
 		if(USE_NAME && restockFromSlot == -1){
 			final String prevName = mapInHand.getCustomName() == null ? null : mapInHand.getCustomName().getLiteralString();
 			if(prevName != null){
@@ -353,7 +359,6 @@ public final class MapHandRestock{
 			}
 		}
 		if(USE_IMG && restockFromSlot == -1){
-			final MapState state = FilledMapItem.getMapState(mapInHand, player.getWorld());
 			if(state != null){
 				Main.LOGGER.info("MapRestock: finding next map by img-edge");
 				restockFromSlot = getNextSlotByImage(slots, prevSlot, player.getWorld());
@@ -373,10 +378,6 @@ public final class MapHandRestock{
 		}
 
 		MinecraftClient client = MinecraftClient.getInstance();
-		new Timer().schedule(new TimerTask(){@Override public void run(){
-			player.setStackInHand(hand, ItemStack.EMPTY); MapGroupUtils.updateInvMapGroup(client);
-		}}, 10l);
-
 		final int restockFromSlotFinal = restockFromSlot;
 		new Timer().schedule(new TimerTask(){@Override public void run(){
 			if(isHotbarSlot){
@@ -388,7 +389,6 @@ public final class MapHandRestock{
 				client.interactionManager.clickSlot(0, restockFromSlotFinal, player.getInventory().selectedSlot, SlotActionType.SWAP, player);
 				Main.LOGGER.info("MapRestock: Swapped inv.selectedSlot to nextMap: s="+restockFromSlotFinal);
 			}
-			MapGroupUtils.updateInvMapGroup(client);
 		}}, 50l);
 	}
 
