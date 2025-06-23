@@ -45,6 +45,13 @@ public final class TooltipMapNameColor{
 		if(state == null) return false;
 		return ItemFrameHighlightUpdater.isInItemFrame(MapGroupUtils.getIdForMapState(state));
 	}
+	private static final boolean isNotOnDisplayMap(ItemStack item, TooltipContext context){
+		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
+		if(id == null) return false;
+		MapState state = context.getMapState(id);
+		if(state == null) return false;
+		return !ItemFrameHighlightUpdater.isInItemFrame(MapGroupUtils.getIdForMapState(state));
+	}
 	private static final boolean isUnnamedMap(ItemStack item){
 		return item.getCustomName() == null && item.contains(DataComponentTypes.MAP_ID);
 	}
@@ -61,9 +68,10 @@ public final class TooltipMapNameColor{
 			if(container.streamNonEmpty().anyMatch(i -> isUnlockedMap(i, context))){
 				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED).formatted(Formatting.BOLD)));
 			}
-//			if(container.streamNonEmpty().anyMatch(i -> isOnDisplayMap(i, context))){
-//				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_IN_IFRAME).formatted(Formatting.BOLD)));
-//			}
+			// Don't add * if all maps in shulker are on display or none are only display, only if it's mixed
+			if(container.streamNonEmpty().anyMatch(i -> isOnDisplayMap(i, context)) && container.streamNonEmpty().anyMatch(i -> isNotOnDisplayMap(i, context))){
+				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_IN_IFRAME).formatted(Formatting.BOLD)));
+			}
 			if(container.streamNonEmpty().anyMatch(i -> isUnnamedMap(i))){
 				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_UNNAMED).formatted(Formatting.BOLD)));
 			}

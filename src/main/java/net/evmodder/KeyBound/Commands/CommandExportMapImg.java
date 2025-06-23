@@ -39,6 +39,7 @@ public class CommandExportMapImg{
 	final int RENDER_DIST = 10;
 	final boolean BLOCK_BORDER;
 	final int BORDER_1, BORDER_2, UPSCALE_TO;
+	final String MAP_EXPORT_DIR = "mapart_exports/";
 
 	private void drawBorder(BufferedImage img){
 		final int border = 8;
@@ -58,14 +59,14 @@ public class CommandExportMapImg{
 
 	private boolean genImgForMapsInInv(FabricClientCommandSource source){
 		MinecraftClient client = MinecraftClient.getInstance();
-		for(int i=0; i<41; ++i){
-			ContainerComponent container = client.player.getInventory().getStack(i).get(DataComponentTypes.CONTAINER);
-			if(container.streamNonEmpty().allMatch(s -> FilledMapItem.getMapState(s, client.world) == null)) continue;
+		int numShulksSaved = 0;
+		/*invloop:*/for(int i=0; i<41; ++i){
+			ItemStack stack = client.player.getInventory().getStack(i);
+			ContainerComponent container = stack.get(DataComponentTypes.CONTAINER);
+			if(container == null) continue;
+			if(!container.streamNonEmpty().anyMatch(s -> FilledMapItem.getMapState(s, client.world) != null)) continue;
 			final int size = (int)container.stream().count();
-			if(size % 9 != 0){
-				source.sendError(Text.literal("Unsupported container size: "+size));
-				continue;
-			}
+			if(size % 9 != 0){source.sendError(Text.literal("Unsupported container size: "+size)); continue;}
 			final int border = BLOCK_BORDER ? 8 : 0;
 			BufferedImage img = new BufferedImage(128*9+border*2, 128*(size/9)+border*2, BufferedImage.TYPE_INT_ARGB);
 			if(border > 0) drawBorder(img);
@@ -74,22 +75,26 @@ public class CommandExportMapImg{
 			for(int y=0; y<(size/9); ++y) for(int x=0; x<9; ++x){
 				final MapState state = FilledMapItem.getMapState(contents.next(), client.world);
 				if(state == null){
-					source.sendError(Text.literal("Slot "+x+","+y+" does not contain a loaded map"));
-					return true;
+					//source.sendError(Text.literal("Slot "+x+","+y+" does not contain a loaded map"));
+					//continue invloop;
+					continue;
 				}
 				final int xo = x*128+border, yo = y*128+border;
 				for(int a=0; a<128; ++a) for(int b=0; b<128; ++b) img.setRGB(xo+a, yo+b, MapColor.getRenderColor(state.colors[a + b*128]));
 			}
+			if(contents.hasNext()) source.sendError(Text.literal("HUH?! Leftover items in container iterator.. bug"));
 
-			final Text nameText = client.player.getInventory().getStack(i).getCustomName();
+			final Text nameText = stack.getCustomName();
 			final String nameStr = nameText == null ? null : nameText.getLiteralString();
-			final String imgName = nameStr != null ? nameStr : client.player.getInventory().getStack(i).get(DataComponentTypes.MAP_ID).asString();
+			final String imgName = nameStr != null ? nameStr : stack.get(DataComponentTypes.MAP_ID).asString();
 
-			if(!new File(FileIO.DIR+"mapwalls/").exists()) new File(FileIO.DIR+"mapwalls/").mkdir();
-			try{ImageIO.write(img, "png", new File(FileIO.DIR+"mapwalls/"+imgName+".png"));}
+			if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdir();
+			try{ImageIO.write(img, "png", new File(FileIO.DIR+MAP_EXPORT_DIR+imgName+".png"));}
 			catch(IOException e){e.printStackTrace();}
+			++numShulksSaved;
 		}
-		return false;
+		if(numShulksSaved > 0) source.sendFeedback(Text.literal("Exported "+numShulksSaved+" map shulk imgs to ./config/"+Main.MOD_ID+"/"+MAP_EXPORT_DIR));
+		return numShulksSaved > 0;
 	}
 
 	private int runCommandNoArg(final CommandContext<FabricClientCommandSource> ctx){
@@ -207,11 +212,11 @@ public class CommandExportMapImg{
 		final String nameStr = nameText == null ? null : nameText.getLiteralString();
 		final String imgName = nameStr != null ? nameStr : targetIFrame.getHeldItemStack().get(DataComponentTypes.MAP_ID).asString();
 
-		if(!new File(FileIO.DIR+"mapwalls/").exists()) new File(FileIO.DIR+"mapwalls/").mkdir();
-		try{ImageIO.write(img, "png", new File(FileIO.DIR+"mapwalls/"+imgName+".png"));}
+		if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdir();
+		try{ImageIO.write(img, "png", new File(FileIO.DIR+MAP_EXPORT_DIR+imgName+".png"));}
 		catch(IOException e){e.printStackTrace();}
 
-		ctx.getSource().sendFeedback(Text.literal("Saved mapwall to ./config/"+Main.MOD_ID+"/mapwalls/"+imgName+".png"));
+		ctx.getSource().sendFeedback(Text.literal("Saved mapwall to ./config/"+Main.MOD_ID+"/"+MAP_EXPORT_DIR+imgName+".png"));
 		return 1;
 	}
 	private int runCommandWithMapName(CommandContext<FabricClientCommandSource> ctx){

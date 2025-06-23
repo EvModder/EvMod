@@ -126,7 +126,7 @@ organize_inventory.EvInv: [
   43:enchanted_golden_apple,
 
   # Inventory top LHS
-  9:netherite_chestplate, 9:diamond_chestplate, 9:elytra, 9:ender_chest,
+  9:netherite_chestplate, 9:diamond_chestplate, 9:elytra, 9:ender_chest, 9:totem_of_undying,
   10:ender_chest, 10:totem_of_undying,
   11:totem_of_undying, 12:totem_of_undying, 13:totem_of_undying,
 
