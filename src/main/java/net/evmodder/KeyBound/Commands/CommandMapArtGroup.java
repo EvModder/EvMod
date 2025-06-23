@@ -108,11 +108,11 @@ public class CommandMapArtGroup{
 		}
 		else if(newActiveGroup.equals(activeGroupName)){
 			if(activeGroup.equals(mapsInGroup)){
-				source.sendError(Text.literal("Group "+activeGroup+" is already active (ids: "+activeGroup.size()+")").copy().withColor(DONE_COLOR));
+				source.sendError(Text.literal("Group "+activeGroupName+" is already active (ids: "+activeGroup.size()+")").copy().withColor(DONE_COLOR));
 				return 1;
 			}
 			else{
-				source.sendFeedback(Text.literal("Updated group from file: '"+activeGroup
+				source.sendFeedback(Text.literal("Updated group from file: '"+activeGroupName
 						+"' (ids: "+activeGroup.size()+" -> "+mapsInGroup.size()+").").copy().withColor(DONE_COLOR));
 			}
 		}
