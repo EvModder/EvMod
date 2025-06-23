@@ -20,7 +20,7 @@ mapart_generate_img_command: true
 mapart_generate_img_upscale: true
 mapart_generate_img_border: true
 mapart_generate_img_border_color1: -14236 # Yellow
-mapart_generate_img_border_color2: -8555656 # Gray
+mapart_generate_img_border_color2: 3288370 # Gray
 
 # 2b2t will kick you for sending 200+ clicks in 70 ticks (Updated: 2025-04-27)
 # 2b2t will kick you for sending 80+ clicks in 80 ticks (Updated: 2025-05-15, ty IceTank)

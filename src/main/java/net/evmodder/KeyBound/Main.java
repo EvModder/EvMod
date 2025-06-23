@@ -50,6 +50,8 @@ public class Main implements ClientModInitializer{
 	// majorly improve TravelHelper (mining blocks only in way, specifically non-diag & mining 3 high tunnel)
 	//SendOnServerJoin configured per-server (via ip?)
 
+	// timeOfDay >= 2000 && timeOfDay < 9000
+
 	// Feature Ideas:
 	// multiple itemframes nearby (100? 1k? 10k?) with the same map -> purple name/color/asterisk
 	// change render order of certain trades (in particular: cleric redstone always above rotten flesh)
@@ -247,7 +249,7 @@ public class Main implements ClientModInitializer{
 		if(keybindEbounceTravelHelper) new KeybindEbounceTravelHelper(ejectJunk);
 		//new KeybindSpamclick();
 
-		if(mapWallCmd) new CommandDownloadMapWall(mapWallUpscale, mapWallBorder, mapWallBorderColor1, mapWallBorderColor2);
+		if(mapWallCmd) new CommandExportMapImg(mapWallUpscale, mapWallBorder, mapWallBorderColor1, mapWallBorderColor2);
 
 		if(mapHighlightTooltip) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors);
 		if(mapHighlightTooltip || mapHighlightHUD || mapHighlightIFrame){

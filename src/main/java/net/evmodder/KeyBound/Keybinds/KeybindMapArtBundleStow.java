@@ -81,7 +81,7 @@ public final class KeybindMapArtBundleStow{
 				BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
 				occupancy = contents.getOccupancy();
 				if(anyArtToPickup && occupancy.intValue() == 1) continue; // Skip full bundles
-				if(!anyArtToPickup && contents.isEmpty()) continue; // Skip empty bundles
+				if(!anyArtToPickup && occupancy.getNumerator() == 0) continue; // Skip empty bundles
 				if(contents.stream().anyMatch(s -> s.getItem() != Items.FILLED_MAP)) continue; // Skip bundles with non-mapart contents
 				int stored = getNumStored(occupancy);
 				//Hacky prefer not fully empty bundles but otherwise prefer more empty

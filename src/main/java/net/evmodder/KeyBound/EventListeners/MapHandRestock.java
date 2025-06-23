@@ -256,7 +256,7 @@ public final class MapHandRestock{
 		}
 		Main.LOGGER.info("MapRestock: findByName() minPos2="+posData2d.minPos2+", maxPos2="+posData2d.maxPos2+", sideways="+posData2d.isSideways);
 
-		final int i = getNextSlotByName(slots, data, prevPosStr, posData2d, /*infoLogs=*/true);
+		final int i = getNextSlotByName(slots, data, prevPosStr, posData2d, /*infoLogs=*/false);//TODO: set to true for debugging
 		return i != -1 ? i : getNextSlotAny(slots, prevSlot, world);
 	}
 
@@ -346,9 +346,11 @@ public final class MapHandRestock{
 		assert slots[prevSlot] == mapInHand;
 
 		final MapState state = FilledMapItem.getMapState(mapInHand, player.getWorld());
+		MinecraftClient client = MinecraftClient.getInstance();
 		if(state != null){
 			InventoryHighlightUpdater.currentlyBeingPlacedIntoItemFrameSlot = player.getInventory().selectedSlot;
 			InventoryHighlightUpdater.currentlyBeingPlacedIntoItemFrame = MapGroupUtils.getIdForMapState(state);
+			InventoryHighlightUpdater.onUpdateTick(client);
 		}
 
 		if(USE_NAME && restockFromSlot == -1){
@@ -377,7 +379,6 @@ public final class MapHandRestock{
 			return;
 		}
 
-		MinecraftClient client = MinecraftClient.getInstance();
 		final int restockFromSlotFinal = restockFromSlot;
 		new Timer().schedule(new TimerTask(){@Override public void run(){
 			if(isHotbarSlot){

@@ -52,19 +52,19 @@ public final class TooltipMapNameColor{
 	public static final void tooltipColors(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
 		ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
 		if(container != null){
-			if(container.stream().anyMatch(i -> isInInv(i, context))){
+			if(container.streamNonEmpty().anyMatch(i -> isInInv(i, context))){
 				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_IN_INV).formatted(Formatting.BOLD)));
 			}
-			if(container.stream().anyMatch(i -> isNotInCurrentGroup(i, context))){
+			if(container.streamNonEmpty().anyMatch(i -> isNotInCurrentGroup(i, context))){
 				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_NOT_IN_GROUP).formatted(Formatting.BOLD)));
 			}
-			if(container.stream().anyMatch(i -> isUnlockedMap(i, context))){
+			if(container.streamNonEmpty().anyMatch(i -> isUnlockedMap(i, context))){
 				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED).formatted(Formatting.BOLD)));
 			}
-//			if(container.stream().anyMatch(i -> isOnDisplayMap(i, context))){
+//			if(container.streamNonEmpty().anyMatch(i -> isOnDisplayMap(i, context))){
 //				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_IN_IFRAME).formatted(Formatting.BOLD)));
 //			}
-			if(container.stream().anyMatch(i -> isUnnamedMap(i))){
+			if(container.streamNonEmpty().anyMatch(i -> isUnnamedMap(i))){
 				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_UNNAMED).formatted(Formatting.BOLD)));
 			}
 			return;

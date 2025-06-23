@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.imageio.ImageIO;
@@ -20,9 +21,12 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.block.MapColor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.FilledMapItem;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.item.map.MapState;
 import net.minecraft.text.Text;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.math.Box;
@@ -31,10 +35,62 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.math.Direction.Axis;
 
-public class CommandDownloadMapWall{
+public class CommandExportMapImg{
 	final int RENDER_DIST = 10;
 	final boolean BLOCK_BORDER;
 	final int BORDER_1, BORDER_2, UPSCALE_TO;
+
+	private void drawBorder(BufferedImage img){
+		final int border = 8;
+		int MAGIC = 128-border;
+		int w = (img.getWidth()-border*2)/128;
+		int h = (img.getHeight()-border*2)/128;
+		int symW = w & 1, symH = h&1;
+		for(int x=0; x<img.getWidth(); ++x) for(int i=0; i<border; ++i){
+			img.setRGB(x, i, (((x+MAGIC)/128) & 1) == 1 ? BORDER_1 : BORDER_2);
+			img.setRGB(x, img.getHeight()-1-i, (((x+MAGIC)/128) & 1) == symH ? BORDER_1 : BORDER_2);
+		}
+		for(int y=0; y<img.getHeight(); ++y) for(int i=0; i<border; ++i){
+			img.setRGB(i, y, (((y+MAGIC)/128) & 1) == 1 ? BORDER_1 : BORDER_2);
+			img.setRGB(img.getWidth()-1-i, y, (((y+MAGIC)/128) & 1) == symW ? BORDER_1 : BORDER_2);
+		}
+	}
+
+	private boolean genImgForMapsInInv(FabricClientCommandSource source){
+		MinecraftClient client = MinecraftClient.getInstance();
+		for(int i=0; i<41; ++i){
+			ContainerComponent container = client.player.getInventory().getStack(i).get(DataComponentTypes.CONTAINER);
+			if(container.streamNonEmpty().allMatch(s -> FilledMapItem.getMapState(s, client.world) == null)) continue;
+			final int size = (int)container.stream().count();
+			if(size % 9 != 0){
+				source.sendError(Text.literal("Unsupported container size: "+size));
+				continue;
+			}
+			final int border = BLOCK_BORDER ? 8 : 0;
+			BufferedImage img = new BufferedImage(128*9+border*2, 128*(size/9)+border*2, BufferedImage.TYPE_INT_ARGB);
+			if(border > 0) drawBorder(img);
+
+			Iterator<ItemStack> contents = container.stream().toList().iterator();
+			for(int y=0; y<(size/9); ++y) for(int x=0; x<9; ++x){
+				final MapState state = FilledMapItem.getMapState(contents.next(), client.world);
+				if(state == null){
+					source.sendError(Text.literal("Slot "+x+","+y+" does not contain a loaded map"));
+					return true;
+				}
+				final int xo = x*128+border, yo = y*128+border;
+				for(int a=0; a<128; ++a) for(int b=0; b<128; ++b) img.setRGB(xo+a, yo+b, MapColor.getRenderColor(state.colors[a + b*128]));
+			}
+
+			final Text nameText = client.player.getInventory().getStack(i).getCustomName();
+			final String nameStr = nameText == null ? null : nameText.getLiteralString();
+			final String imgName = nameStr != null ? nameStr : client.player.getInventory().getStack(i).get(DataComponentTypes.MAP_ID).asString();
+
+			if(!new File(FileIO.DIR+"mapwalls/").exists()) new File(FileIO.DIR+"mapwalls/").mkdir();
+			try{ImageIO.write(img, "png", new File(FileIO.DIR+"mapwalls/"+imgName+".png"));}
+			catch(IOException e){e.printStackTrace();}
+		}
+		return false;
+	}
 
 	private int runCommandNoArg(final CommandContext<FabricClientCommandSource> ctx){
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -57,7 +113,7 @@ public class CommandDownloadMapWall{
 			if(uh < bestUh){bestUh = uh; targetIFrame = ife;}
 		}
 		if(targetIFrame == null){
-			ctx.getSource().sendError(Text.literal("No mapwall (in front of cursor) detected"));
+			if(!genImgForMapsInInv(ctx.getSource())) ctx.getSource().sendError(Text.literal("No mapwall (in front of cursor) detected"));
 			return 1;
 		}
 
@@ -109,18 +165,18 @@ public class CommandDownloadMapWall{
 		ctx.getSource().sendFeedback(Text.literal("Map wall size: "+w+"x"+h+" ("+mapWall.size()+")"));
 		final int border = BLOCK_BORDER ? 8 : 0;
 		BufferedImage img = new BufferedImage(128*w+border*2, 128*h+border*2, BufferedImage.TYPE_INT_ARGB);
-		if(BLOCK_BORDER){
-			int MAGIC = 128-border;
-			int symW = w & 1, symH = h&1;
-			for(int x=0; x<img.getWidth(); ++x) for(int i=0; i<border; ++i){
-				img.setRGB(x, i, (((x+MAGIC)/128) & 1) == 1 ? BORDER_1 : BORDER_2);
-				img.setRGB(x, img.getHeight()-1-i, (((x+MAGIC)/128) & 1) == symH ? BORDER_1 : BORDER_2);
-			}
-			for(int y=0; y<img.getHeight(); ++y) for(int i=0; i<border; ++i){
-				img.setRGB(i, y, (((y+MAGIC)/128) & 1) == 1 ? BORDER_1 : BORDER_2);
-				img.setRGB(img.getWidth()-1-i, y, (((y+MAGIC)/128) & 1) == symW ? BORDER_1 : BORDER_2);
-			}
-		}
+		if(BLOCK_BORDER) drawBorder(img);
+//			int MAGIC = 128-border;
+//			int symW = w & 1, symH = h&1;
+//			for(int x=0; x<img.getWidth(); ++x) for(int i=0; i<border; ++i){
+//				img.setRGB(x, i, (((x+MAGIC)/128) & 1) == 1 ? BORDER_1 : BORDER_2);
+//				img.setRGB(x, img.getHeight()-1-i, (((x+MAGIC)/128) & 1) == symH ? BORDER_1 : BORDER_2);
+//			}
+//			for(int y=0; y<img.getHeight(); ++y) for(int i=0; i<border; ++i){
+//				img.setRGB(i, y, (((y+MAGIC)/128) & 1) == 1 ? BORDER_1 : BORDER_2);
+//				img.setRGB(img.getWidth()-1-i, y, (((y+MAGIC)/128) & 1) == symW ? BORDER_1 : BORDER_2);
+//			}
+//		}
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 			ItemFrameEntity ife = ifeLookup.get(mapWall.get(i*w+j));
 			if(ife == null){
@@ -165,7 +221,7 @@ public class CommandDownloadMapWall{
 		return 1;
 	}
 
-	public CommandDownloadMapWall(final int upscaleTo, final boolean border, final int border1, final int border2){
+	public CommandExportMapImg(final int upscaleTo, final boolean border, final int border1, final int border2){
 		UPSCALE_TO = upscaleTo;
 		BLOCK_BORDER = border;
 		BORDER_1 = border1;

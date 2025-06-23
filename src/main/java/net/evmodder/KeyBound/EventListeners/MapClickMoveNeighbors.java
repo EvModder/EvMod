@@ -73,12 +73,12 @@ public abstract class MapClickMoveNeighbors{
 				final byte[] brColors = getColors(player.getWorld(), slots[br]);
 				int scoreLeft = -2, scoreRight = -2, scoreTop = -2, scoreBottom = -2;
 				if(h == 1){
-					scoreLeft = MapRelationUtils.adjacentEdgeScore(colors, tlColors, true);
-					scoreRight = MapRelationUtils.adjacentEdgeScore(brColors, colors, true);
+					scoreLeft = (tl%9==0||destSlot%9+w>8) ? -2 : MapRelationUtils.adjacentEdgeScore(colors, tlColors, true);
+					scoreRight = (br%9==8||destSlot%9-w<0) ? -2 : MapRelationUtils.adjacentEdgeScore(brColors, colors, true);
 				}
 				if(w == 1){
-					scoreTop = MapRelationUtils.adjacentEdgeScore(colors, tlColors, false);
-					scoreBottom = MapRelationUtils.adjacentEdgeScore(brColors, colors, false);
+					scoreTop = (tl-9<0||destSlot+9*h>=slots.length) ? -2 : MapRelationUtils.adjacentEdgeScore(colors, tlColors, false);
+					scoreBottom = (br+9>=slots.length||destSlot-9*h<0) ? -2 : MapRelationUtils.adjacentEdgeScore(brColors, colors, false);
 				}
 				if(Math.max(scoreLeft, scoreRight) >= Math.max(scoreTop, scoreBottom)){
 					++w;
@@ -93,7 +93,7 @@ public abstract class MapClickMoveNeighbors{
 			}//state != null
 		}
 
-		Main.LOGGER.info("MapMoveClick: tl="+tl+",br="+br+" | h="+h+",w="+w+" | x>"+destSlot);
+		//Main.LOGGER.info("MapMoveClick: tl="+tl+",br="+br+" | h="+h+",w="+w+" | x>"+destSlot);
 		if(h*w != data.slots().size()+1){Main.LOGGER.info("MapMoveClick: H*W not found (#maps:"+(data.slots().size()+1)+")");return;}
 
 		int fromSlot = -1;

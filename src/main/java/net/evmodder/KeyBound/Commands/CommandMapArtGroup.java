@@ -22,10 +22,12 @@ import net.minecraft.text.Text;
 
 public class CommandMapArtGroup{
 	//TODO: /mapartgroup <set/create/compare> <g1> [g2]
-	enum Command{SET, CREATE, APPEND, COMPARE, RESET};
-	final String FILE_PATH = "mapart_group_";
-	final String CONFIRM = "confirm";
-	int ERROR_COLOR = 16733525, CREATE_COLOR = 5635925, DONE_COLOR = 16755200;
+	private enum Command{SET, CREATE, APPEND, COMPARE, RESET};
+	private final String FILE_PATH = "mapart_group_";
+	private final String CONFIRM = "confirm";
+	private HashSet<UUID> activeGroup;
+	private String activeGroupName;
+	private int ERROR_COLOR = 16733525, CREATE_COLOR = 5635925, DONE_COLOR = 16755200;
 
 	private int runCompareCommand(final FabricClientCommandSource source, final String[] groups, final String[] groups2){
 		if(groups2 == null || groups2.length == 0){
@@ -83,6 +85,7 @@ public class CommandMapArtGroup{
 				for(int _0=0; _0<numIdsInFile; ++_0) mapsInGroup.add(new UUID(bb.getLong(), bb.getLong()));
 			}
 		}
+		final String newActiveGroup = String.join(",", groups);
 		if(cmd == Command.CREATE || cmd == Command.APPEND){
 			final int oldSize = mapsInGroup.size();
 			final HashSet<UUID> loadedMaps = MapGroupUtils.getLoadedMaps(source.getWorld());
@@ -100,13 +103,24 @@ public class CommandMapArtGroup{
 			for(UUID uuid : mapsInGroup) bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
 			FileIO.saveFileBytes(FILE_PATH+groups[0], bb.array());
 			source.sendFeedback(Text.literal((data[0] == null ? "Created new" : "Expanded") + " group '"+groups[0]
-					+"' and set as active (ids: "+ (data[0] == null ? "" : (data.length/16)+" -> ") + mapsInGroup.size()+").")
+					+"' and set as active (ids: "+ (data[0] == null ? "" : (data[0].length/16)+" -> ") + mapsInGroup.size()+").")
 					.copy().withColor(CREATE_COLOR));
 		}
-		else{
-			source.sendFeedback(Text.literal("Set active group: '"+String.join(",", groups)+"' (ids: "+mapsInGroup.size()+").").copy().withColor(DONE_COLOR));
+		else if(newActiveGroup.equals(activeGroupName)){
+			if(activeGroup.equals(mapsInGroup)){
+				source.sendError(Text.literal("Group "+activeGroup+" is already active (ids: "+activeGroup.size()+")").copy().withColor(DONE_COLOR));
+				return 1;
+			}
+			else{
+				source.sendFeedback(Text.literal("Updated group from file: '"+activeGroup
+						+"' (ids: "+activeGroup.size()+" -> "+mapsInGroup.size()+").").copy().withColor(DONE_COLOR));
+			}
 		}
-		MapGroupUtils.setCurrentGroup(mapsInGroup);
+		else{
+			source.sendFeedback(Text.literal("Set active group: '"+newActiveGroup+"' (ids: "+mapsInGroup.size()+").").copy().withColor(DONE_COLOR));
+		}
+		MapGroupUtils.setCurrentGroup(activeGroup = mapsInGroup);
+		activeGroupName = newActiveGroup;
 		return 1;
 	}
 
@@ -146,7 +160,7 @@ public class CommandMapArtGroup{
 					})
 					.executes(ctx->{
 						final String cmd = ctx.getArgument("command", String.class);
-						if(cmd.equalsIgnoreCase("reset")) MapGroupUtils.setCurrentGroup(null);
+						if(cmd.equalsIgnoreCase("reset")){MapGroupUtils.setCurrentGroup(activeGroup = null); activeGroupName = null;}
 						else ctx.getSource().sendError(Text.literal("Command needs a group name").copy().withColor(ERROR_COLOR));
 						return 1;
 					})

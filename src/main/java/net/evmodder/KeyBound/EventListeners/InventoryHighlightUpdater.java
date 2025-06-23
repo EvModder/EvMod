@@ -42,15 +42,15 @@ public class InventoryHighlightUpdater{
 			inventoryMapGroup.add(colorsId);
 			newInvMapGroupHash += colorsId.hashCode();
 		}
+		if(!mapPlaceStillOngoing){
+			currentlyBeingPlacedIntoItemFrame = null;
+			currentlyBeingPlacedIntoItemFrameSlot = -1;
+		}
+//		else if(isInItemFrame(currentlyBeingPlacedIntoItemFrame)){
+//			Main.LOGGER.info("MapGroupUtils: Aha, yes, map is placed in itemframe and yet still in inventory. Thanks Minecraft");
+//		}
 		if(newInvMapGroupHash != invMapGroupHash){
 			invMapGroupHash = newInvMapGroupHash;
-			if(!mapPlaceStillOngoing){
-				currentlyBeingPlacedIntoItemFrame = null;
-				currentlyBeingPlacedIntoItemFrameSlot = -1;
-			}
-//			else if(isInItemFrame(currentlyBeingPlacedIntoItemFrame)){
-//				Main.LOGGER.info("MapGroupUtils: Aha, yes, map is placed in itemframe and yet still in inventory. Thanks Minecraft");
-//			}
 			ItemFrameHighlightUpdater.skipIFrameHasLabel.clear();
 		}
 	}
