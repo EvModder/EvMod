@@ -28,13 +28,13 @@ public class ItemFrameHighlightUpdater{
 		final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal());
 		final UUID oldColorsIdForXYZ = colorsId != null ? hangLocsReverse.put(xyzd, colorsId) : hangLocsReverse.remove(xyzd);
 		if(oldColorsIdForXYZ == null){if(colorsId != null){
-			//Main.LOGGER.info("Added map at xyzd");
+			//Main.LOGGER.info("IFHU: Added map at xyzd");
 			InventoryHighlightUpdater.onUpdateTick(client);}
 		}
 		else if(!oldColorsIdForXYZ.equals(colorsId)){
 			InventoryHighlightUpdater.onUpdateTick(client);
-			if(colorsId == null) Main.LOGGER.info("Removed map xyzd");
-			else Main.LOGGER.info("Replaced map at: xyzd");
+			if(colorsId == null)/* Main.LOGGER.info("IFHU: Removed map xyzd");*/;
+			else Main.LOGGER.info("IFHU: Replaced map at: xyzd");
 			final HashSet<XYZD> oldLocs = iFrameMapGroup.get(oldColorsIdForXYZ);
 			if(oldLocs != null && oldLocs.remove(xyzd) && oldLocs.isEmpty()) iFrameMapGroup.remove(oldColorsIdForXYZ);
 		}

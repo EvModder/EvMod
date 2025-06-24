@@ -55,7 +55,6 @@ public final class KeybindMapMove{
 		//
 		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(s -> s.getStack()).toArray(ItemStack[]::new);
 		int numInInv = 0, emptySlotsInv = 0;
-		ItemStack.areItemsAndComponentsEqual(null, null);
 		TreeSet<Integer> countsInInv = new TreeSet<>();
 		HashMap<ItemStack, Integer> invCapacity = new HashMap<>();// id -> available space to merge into
 		for(int i=0; i<36; ++i){
