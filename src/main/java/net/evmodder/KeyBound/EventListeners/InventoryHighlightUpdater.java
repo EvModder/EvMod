@@ -12,7 +12,7 @@ public class InventoryHighlightUpdater{
 	private static int invMapGroupHash;
 	private static HashSet<UUID> inventoryMapGroup = new HashSet<>();
 	public static UUID currentlyBeingPlacedIntoItemFrame;
-	public static int currentlyBeingPlacedIntoItemFrameSlot = -1;
+//	public static int currentlyBeingPlacedIntoItemFrameSlot = -1;
 
 	public static final boolean isInInventory(/*final int id, */final UUID colorsUUID){
 		//return inventoryMapGroup != null && (inventoryMapGroupRawIds.contains(id) || inventoryMapGroup.contains(colorsUUID));
@@ -38,15 +38,15 @@ public class InventoryHighlightUpdater{
 			final MapState state = FilledMapItem.getMapState(client.player.getInventory().getStack(i), client.world);
 			if(state == null) continue;
 			final UUID colorsId = MapGroupUtils.getIdForMapState(state);
-			if(i == currentlyBeingPlacedIntoItemFrameSlot && colorsId.equals(currentlyBeingPlacedIntoItemFrame)){mapPlaceStillOngoing = true; continue;}
+			if(/*i == currentlyBeingPlacedIntoItemFrameSlot && */colorsId.equals(currentlyBeingPlacedIntoItemFrame)){mapPlaceStillOngoing = true; continue;}
 			inventoryMapGroup.add(colorsId);
 			newInvMapGroupHash += colorsId.hashCode();
 		}
 		if(!mapPlaceStillOngoing){
 			currentlyBeingPlacedIntoItemFrame = null;
-			currentlyBeingPlacedIntoItemFrameSlot = -1;
+//			currentlyBeingPlacedIntoItemFrameSlot = -1;
 		}
-//		else if(isInItemFrame(currentlyBeingPlacedIntoItemFrame)){
+//		else if(ItemFrameHighlightUpdater.isInItemFrame(currentlyBeingPlacedIntoItemFrame)){
 //			Main.LOGGER.info("MapGroupUtils: Aha, yes, map is placed in itemframe and yet still in inventory. Thanks Minecraft");
 //		}
 		if(newInvMapGroupHash != invMapGroupHash){

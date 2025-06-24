@@ -338,17 +338,19 @@ public final class MapHandRestock{
 		return bestSlot;
 	}
 
-	private final void tryToStockNextMap(PlayerEntity player, Hand hand){
+	private final void tryToStockNextMap(PlayerEntity player){
 		int restockFromSlot = -1;
 		final ItemStack[] slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		final int prevSlot = player.getInventory().selectedSlot+36;
-		final ItemStack mapInHand = player.getStackInHand(hand);
+		final ItemStack mapInHand = player.getMainHandStack();
 		assert slots[prevSlot] == mapInHand;
 
 		final MapState state = FilledMapItem.getMapState(mapInHand, player.getWorld());
 		MinecraftClient client = MinecraftClient.getInstance();
-		if(state != null){
-			InventoryHighlightUpdater.currentlyBeingPlacedIntoItemFrameSlot = player.getInventory().selectedSlot;
+		if(state != null && mapInHand.getCount() == 1 &&
+				IntStream.range(0, 41).noneMatch(i -> i != player.getInventory().selectedSlot &&
+				FilledMapItem.getMapState(player.getInventory().getStack(i), player.getWorld()) == state)){
+//			InventoryHighlightUpdater.currentlyBeingPlacedIntoItemFrameSlot = player.getInventory().selectedSlot;
 			InventoryHighlightUpdater.currentlyBeingPlacedIntoItemFrame = MapGroupUtils.getIdForMapState(state);
 			InventoryHighlightUpdater.onUpdateTick(client);
 		}
@@ -407,11 +409,11 @@ public final class MapHandRestock{
 			//Main.LOGGER.info("placed item from offhand");
 			if(!itemFrame.getHeldItemStack().isEmpty()) return ActionResult.PASS;
 			//Main.LOGGER.info("item frame is empty");
-			if(player.getStackInHand(hand).getItem() != Items.FILLED_MAP) return ActionResult.PASS;
-			if(player.getStackInHand(hand).getCount() > 2) return ActionResult.PASS;
+			if(player.getMainHandStack().getItem() != Items.FILLED_MAP) return ActionResult.PASS;
+			if(player.getMainHandStack().getCount() > 2) return ActionResult.PASS;
 			//Main.LOGGER.info("item in hand is filled_map [1or2]");
-			Main.LOGGER.info("Single mapart placed, hand:"+hand.ordinal()+", looking for restock map...");
-			tryToStockNextMap(player, hand);
+			Main.LOGGER.info("Single mapart placed, looking for restock map...");
+			tryToStockNextMap(player);
 			return ActionResult.PASS;
 		});
 	}
