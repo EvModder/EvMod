@@ -131,6 +131,7 @@ public class Main implements ClientModInitializer{
 		int clicksInDuration = 1, durationTicks = 1;
 		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false,
 				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false, keybindMapArtBundleStow=false;
+		boolean mapMoveIgnoreAirPockets=true;
 		boolean mapPlaceHelper=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false, mapHighlightTooltip=false;
 		boolean mapWallCmd=false, mapWallBorder=false;
 		boolean keybindEbounceTravelHelper=false;
@@ -198,10 +199,11 @@ public class Main implements ClientModInitializer{
 				case "map_highlight_color_matches_itemframe": MAP_COLOR_IN_IFRAME = Integer.parseInt(value); break;
 				case "map_highlight_color_reused": MAP_COLOR_MULTI_IFRAME = Integer.parseInt(value); break;
 				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
-				case "keybind.mapart.load_from_shulker": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
-				case "keybind.mapart.take_from_shulker": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
-				case "keybind.mapart.take_from_bundle": keybindMapArtBundleStow = !value.equalsIgnoreCase("false"); break;
-				case "keybind.mapart.copy_in_inventory": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
+				case "keybind.mapart.copy": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
+				case "keybind.mapart.load": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
+				case "keybind.mapart.move.bundle": keybindMapArtBundleStow = !value.equalsIgnoreCase("false"); break;
+				case "keybind.mapart.move.3x9": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
+				case "keybind.mapart.move_3x9.ignore_air_pockets": mapMoveIgnoreAirPockets = !value.equalsIgnoreCase("false"); break;
 				case "mapart_placement_helper": mapPlaceHelper=!value.equalsIgnoreCase("false"); break;
 				case "mapart_placement_helper_use_name": mapPlaceHelperByName=!value.equalsIgnoreCase("false"); break;
 				case "mapart_placement_helper_use_image": mapPlaceHelperByImg=!value.equalsIgnoreCase("false"); break;
@@ -243,8 +245,8 @@ public class Main implements ClientModInitializer{
 		}
 		if(keybindMapArtLoad) new KeybindMapLoad();
 		if(keybindMapArtCopy) new KeybindMapCopy();
-		if(keybindMapArtMove) new KeybindMapMove();
-		if(keybindMapArtBundleStow) new KeybindMapArtBundleStow();
+		if(keybindMapArtMove) new KeybindMapMove(mapMoveIgnoreAirPockets);
+		if(keybindMapArtBundleStow) new KeybindMapMoveBundle();
 		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg);
 		if(keybindEbounceTravelHelper) new KeybindEbounceTravelHelper(ejectJunk);
 		//new KeybindSpamclick();

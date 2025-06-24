@@ -13,10 +13,11 @@ temp_event_timestamp: 1738990800 # Fri, Feb7, 2025, 11pm CST
 limiter_clicks_in_duration: 78
 limiter_duration_ticks: 90
 
-keybind.mapart.load_from_shulker: true
-keybind.mapart.take_from_shulker: true
-keybind.mapart.take_from_bundle: true
-keybind.mapart.copy_in_inventory: true
+keybind.mapart.copy: true
+keybind.mapart.load: true
+keybind.mapart.move.bundle: true
+keybind.mapart.move.3x9: true
+keybind.mapart.move.3x9.ignore_air_pockets: false
 
 mapart_placement_helper: true #TODO: also support placing sequential shulker boxes
 mapart_placement_helper_use_name: true

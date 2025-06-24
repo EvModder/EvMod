@@ -8,6 +8,7 @@ import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
@@ -21,7 +22,7 @@ import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 
-public final class KeybindMapArtBundleStow{
+public final class KeybindMapMoveBundle{
 	//final int WITHDRAW_MAX = 27;
 	//enum BundleSelectionMode{FIRST, LAST, MOST_FULL_butNOT_FULL, MOST_EMPTY_butNOT_EMPTY};
 
@@ -48,10 +49,11 @@ public final class KeybindMapArtBundleStow{
 		if(ts - lastBundleOp < bundleOpCooldown){Main.LOGGER.warn("MapBundleOp: in cooldown"); return;}
 		lastBundleOp = ts;
 		//
-		final int SLOT_START = hs instanceof InventoryScreen ? 9 : 0;
+		final int SLOT_START = hs instanceof InventoryScreen ? 9 : hs instanceof CraftingScreen ? 10 : 0;
 		final int SLOT_END =
 				hs instanceof InventoryScreen ? 45 :
 				hs.getScreenHandler() instanceof GenericContainerScreenHandler gcsh ? gcsh.getRows()*9 :
+				hs instanceof CraftingScreen ? 37 :
 				hs instanceof ShulkerBoxScreen ? 27 : 0/*unreachable?*/;
 		final int WITHDRAW_MAX = hs instanceof InventoryScreen ? 27 : SLOT_END;
 		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
@@ -135,9 +137,9 @@ public final class KeybindMapArtBundleStow{
 		Main.inventoryUtils.executeClicks(clicks, _0->true, ()->{Main.LOGGER.info("MapBundleOp: DONE!"); ongoingBundleOp = false;});
 	}
 
-	public KeybindMapArtBundleStow(){
+	public KeybindMapMoveBundle(){
 		new Keybind("mapart_bundle", this::moveMapArtToFromBundle,
-				s->s instanceof InventoryScreen || s instanceof GenericContainerScreen || s instanceof ShulkerBoxScreen,
+				s->s instanceof InventoryScreen || s instanceof GenericContainerScreen || s instanceof ShulkerBoxScreen || s instanceof CraftingScreen,
 //				InventoryScreen.class::isInstance,
 				GLFW.GLFW_KEY_R);
 	}

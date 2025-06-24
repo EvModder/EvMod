@@ -2,10 +2,11 @@
 # This is a Mapart-specific version
 
 #========== Enable Keybinds ==========#
-keybind.mapart.load_from_shulker: true
-keybind.mapart.take_from_shulker: true
-keybind.mapart.take_from_bundle: true
-keybind.mapart.copy_in_inventory: true
+keybind.mapart.copy: true
+keybind.mapart.load: true
+keybind.mapart.move.bundle: true
+keybind.mapart.move.3x9: true
+keybind.mapart.move.3x9.ignore_air_pockets: false
 
 
 #========== MapArt Tools ==========#

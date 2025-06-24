@@ -103,6 +103,6 @@ public final class KeybindMapLoad{
 	}
 
 	public KeybindMapLoad(){
-		new Keybind("mapart_load_data", ()->loadMapArtFromContainer(), s->s instanceof InventoryScreen == false, GLFW.GLFW_KEY_E);
+		new Keybind("mapart_load", ()->loadMapArtFromContainer(), s->s instanceof InventoryScreen == false, GLFW.GLFW_KEY_E);
 	}
 }
