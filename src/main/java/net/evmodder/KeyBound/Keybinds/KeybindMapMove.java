@@ -125,7 +125,12 @@ public final class KeybindMapMove{
 			if(selectiveMove && count != countsInInv.last()) continue;
 			if((count == 2 || count == 3) && !isShiftClick){
 				clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // right-click: pickup half
-				if(Main.inventoryUtils.MAX_CLICKS >= 3) reserveClicks.put(clicks.peekLast(), 3);
+				if(Main.inventoryUtils.MAX_CLICKS >= 3) reserveClicks.put(clicks.peekLast(), emptySlotsShulk==27 ? 2 : 3);
+				if(emptySlotsShulk == 27){
+					//TODO: if not empty==27, instead of i-27 figure out matching-stack slot to place into (lookup in hashmap from earlier)
+					clicks.add(new ClickEvent(i-27, 0, SlotActionType.PICKUP)); //left-click: place all into empty slot
+					continue;
+				}
 			}
 			clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE)); // shift-click: all in slot to shulker
 			if((count == 2 || count == 3) && !isShiftClick){

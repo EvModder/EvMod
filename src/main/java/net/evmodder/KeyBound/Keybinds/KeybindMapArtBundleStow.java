@@ -22,7 +22,7 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 
 public final class KeybindMapArtBundleStow{
-	final int WITHDRAW_MAX = 36;
+	//final int WITHDRAW_MAX = 27;
 	//enum BundleSelectionMode{FIRST, LAST, MOST_FULL_butNOT_FULL, MOST_EMPTY_butNOT_EMPTY};
 
 	private boolean isBundle(ItemStack stack){
@@ -53,6 +53,7 @@ public final class KeybindMapArtBundleStow{
 				hs instanceof InventoryScreen ? 45 :
 				hs.getScreenHandler() instanceof GenericContainerScreenHandler gcsh ? gcsh.getRows()*9 :
 				hs instanceof ShulkerBoxScreen ? 27 : 0/*unreachable?*/;
+		final int WITHDRAW_MAX = hs instanceof InventoryScreen ? 27 : SLOT_END;
 		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		final int[] slotsWithMapArt = IntStream.range(SLOT_START, SLOT_END).filter(i -> slots[i].getItem() == Items.FILLED_MAP).toArray();
 		final boolean pickupHalf = slotsWithMapArt.length > 0 && Arrays.stream(slotsWithMapArt).allMatch(i -> slots[i].getCount() == 2);
