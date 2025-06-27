@@ -86,6 +86,7 @@ public final class KeybindInventoryOrganize{
 		}
 	}
 
+	private int depth;
 	private boolean ongoingOrganize = false;
 	private void organizeInventory(){
 		//Main.LOGGER.info("InvOrganize: keybind pressed");
@@ -235,6 +236,11 @@ public final class KeybindInventoryOrganize{
 			//needEarlier.remove(p.b.getPath());
 		}
 		final int numClicks = clicks.size();
+		if(numClicks == 0){
+			depth = 0;
+//			Main.LOGGER.info("InvOrganize: no clicks required");
+			return;
+		}
 		ongoingOrganize = true;
 		Main.inventoryUtils.executeClicks(clicks,
 				//_->true,
@@ -246,6 +252,8 @@ public final class KeybindInventoryOrganize{
 					//client.player.sendMessage(Text.literal("InvOrganize: done! clicks required: "+numClicks), false);
 					Main.LOGGER.info("InvOrganize: done! clicks required: "+numClicks);
 					ongoingOrganize = false;
+					if(++depth == 3){depth = 0; return;} // Run at most 3 times
+					organizeInventory(); // Try running again in case of straggler items
 				});
 	}
 
