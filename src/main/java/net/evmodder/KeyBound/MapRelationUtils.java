@@ -11,6 +11,14 @@ import net.minecraft.item.map.MapState;
 import net.minecraft.world.World;
 
 public abstract class MapRelationUtils{
+	public static final boolean isFillerMap(MapState state){//TODO: Move to a generic MapUtils.class
+		if(state == null // Would rather a false negative than a false positive
+				|| !Main.skipMonoColorMaps) return false;
+		final byte[] colors = state.colors;
+		for(int i=1; i<colors.length; ++i) if(colors[i] != colors[i-1]) return false;
+		return true;
+	}
+
 	public record RelatedMapsData(int prefixLen, int suffixLen, List<Integer> slots){}
 
 	public static final int commonPrefixLen(String a, String b){

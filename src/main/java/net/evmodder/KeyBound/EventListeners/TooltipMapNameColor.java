@@ -4,6 +4,7 @@ import java.util.List;
 import net.minecraft.item.Item.TooltipContext;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
+import net.evmodder.KeyBound.MapRelationUtils;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.component.type.MapIdComponent;
@@ -15,18 +16,13 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 public final class TooltipMapNameColor{
-	public static final boolean isMonoColorMap(MapState state){//TODO: Move to a MapUtils.class / make not public
-		final byte[] colors = state.colors;
-		for(int i=1; i<colors.length; ++i) if(colors[i] != colors[i-1]) return false;
-		return true;
-	}
 	private static final boolean isInInv(ItemStack item, TooltipContext context){
 		//if(MapGroupUtils.mapsInGroup == null) return false;
 		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
 		if(id == null) return false;
 		MapState state = context.getMapState(id);
-		if(state == null) return false;
-		return InventoryHighlightUpdater.isInInventory(MapGroupUtils.getIdForMapState(state)) && !isMonoColorMap(state);
+		if(state == null || MapRelationUtils.isFillerMap(state)) return false;
+		return InventoryHighlightUpdater.isInInventory(MapGroupUtils.getIdForMapState(state));
 	}
 	private static final boolean isNotInCurrentGroup(ItemStack item, TooltipContext context){
 		//if(MapGroupUtils.mapsInGroup == null) return false;
@@ -47,15 +43,15 @@ public final class TooltipMapNameColor{
 		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
 		if(id == null) return false;
 		MapState state = context.getMapState(id);
-		if(state == null) return false;
-		return ItemFrameHighlightUpdater.isInItemFrame(MapGroupUtils.getIdForMapState(state)) && !isMonoColorMap(state);
+		if(state == null || MapRelationUtils.isFillerMap(state)) return false;
+		return ItemFrameHighlightUpdater.isInItemFrame(MapGroupUtils.getIdForMapState(state));
 	}
 	private static final boolean isNotOnDisplayMap(ItemStack item, TooltipContext context){
 		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
 		if(id == null) return false;
 		MapState state = context.getMapState(id);
-		if(state == null) return false;
-		return !ItemFrameHighlightUpdater.isInItemFrame(MapGroupUtils.getIdForMapState(state))  && !isMonoColorMap(state);
+		if(state == null || MapRelationUtils.isFillerMap(state)) return false;
+		return !ItemFrameHighlightUpdater.isInItemFrame(MapGroupUtils.getIdForMapState(state));
 	}
 	private static final boolean isUnnamedMap(ItemStack item){
 		return item.getCustomName() == null && item.contains(DataComponentTypes.MAP_ID);

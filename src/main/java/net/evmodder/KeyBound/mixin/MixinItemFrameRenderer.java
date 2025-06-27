@@ -7,9 +7,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
+import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.EventListeners.InventoryHighlightUpdater;
 import net.evmodder.KeyBound.EventListeners.ItemFrameHighlightUpdater;
-import net.evmodder.KeyBound.EventListeners.TooltipMapNameColor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.ItemFrameEntityRenderer;
 import net.minecraft.entity.Entity;
@@ -78,7 +78,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		}
 		else if(!state.locked) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_UNLOCKED));
 		else if(stack.getCustomName() == null) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_UNNAMED));
-		else if(ItemFrameHighlightUpdater.isHungMultiplePlaces(colorsId) && !TooltipMapNameColor.isMonoColorMap(state))
+		else if(ItemFrameHighlightUpdater.isHungMultiplePlaces(colorsId) && !MapRelationUtils.isFillerMap(state))
 			cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_MULTI_IFRAME));
 	}
 }

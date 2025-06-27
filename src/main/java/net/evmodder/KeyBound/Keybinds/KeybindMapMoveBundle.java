@@ -6,6 +6,7 @@ import java.util.stream.IntStream;
 import org.apache.commons.lang3.math.Fraction;
 import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
@@ -16,6 +17,7 @@ import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.BundleContentsComponent;
+import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
@@ -58,7 +60,9 @@ public final class KeybindMapMoveBundle{
 				hs instanceof ShulkerBoxScreen ? 27 : 0/*unreachable?*/;
 		final int WITHDRAW_MAX = hs instanceof InventoryScreen ? 27 : SLOT_END;
 		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
-		final int[] slotsWithMapArt = IntStream.range(SLOT_START, SLOT_END).filter(i -> slots[i].getItem() == Items.FILLED_MAP).toArray();
+		final int[] slotsWithMapArt = IntStream.range(SLOT_START, SLOT_END)
+				.filter(i -> slots[i].getItem() == Items.FILLED_MAP && !MapRelationUtils.isFillerMap(FilledMapItem.getMapState(slots[i], client.world)))
+				.toArray();
 		final boolean pickupHalf = slotsWithMapArt.length > 0
 				&& Arrays.stream(slotsWithMapArt).anyMatch(i -> slots[i].getCount() == 2)
 				&& Arrays.stream(slotsWithMapArt).allMatch(i -> slots[i].getCount() <= 2)

@@ -6,6 +6,7 @@ import java.util.TreeSet;
 import java.util.stream.IntStream;
 import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
@@ -14,32 +15,20 @@ import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.item.map.MapState;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
-import net.minecraft.world.World;
 
 //TODO: Maybe preserve relative position of maps (eg., in a 3x3, keep them in a 3x3 in result GUI)?
 
 public final class KeybindMapMove{
 	private final boolean ALLOW_AIR_POCKETS;
+	private final long MOVE_OP_COOLDOWN = 250l;
 
-	private boolean isSpaceFillerMap(World world, ItemStack stack){//TODO: Move to a MapUtils.class
-		if(stack.getCustomName() == null) return false;
-		String name = stack.getCustomName().getLiteralString();
-		if(name == null || !name.startsWith("slot")) return false;
-		MapState state = FilledMapItem.getMapState(stack, world);
-		if(state == null) return false;//Rather a false negative than a false positive
-		byte[] colors = state.colors;
-		for(int i=1; i<colors.length; ++i) if(colors[i] != colors[i-1]) return false;
-		return true;
-	}
+	private boolean ongoingMove;
+	private long lastMoveTs = 0;
 
-	private boolean ongoingStealStore;
-	private long lastStealStore = 0;
-	private final long stealStoreCooldown = 250l;
 	private final void moveMapArtToFromShulker(){
-		if(ongoingStealStore){Main.LOGGER.warn("MapMove cancelled: Already ongoing"); return;}
+		if(ongoingMove){Main.LOGGER.warn("MapMove cancelled: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof HandledScreen hs)){/*Main.LOGGER.warn("MapMove cancelled: Not in ShulkerBoxScreen"); */return;}
@@ -50,8 +39,8 @@ public final class KeybindMapMove{
 		}
 		//
 		final long ts = System.currentTimeMillis();
-		if(ts - lastStealStore < stealStoreCooldown) return;
-		lastStealStore = ts;
+		if(ts - lastMoveTs < MOVE_OP_COOLDOWN) return;
+		lastMoveTs = ts;
 		//
 		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(s -> s.getStack()).toArray(ItemStack[]::new);
 		int numInInv = 0, emptySlotsInv = 0;
@@ -61,7 +50,7 @@ public final class KeybindMapMove{
 			ItemStack stack = client.player.getInventory().getStack(i);
 			if(stack == null || stack.isEmpty()) ++emptySlotsInv;
 			else if(stack.getItem() == Items.FILLED_MAP){
-				if(isSpaceFillerMap(client.world, stack)) continue;
+				if(MapRelationUtils.isFillerMap(FilledMapItem.getMapState(stack, client.world))) continue;
 				if(FilledMapItem.getMapState(stack, client.world) == null){
 					Main.LOGGER.error("MapMove cancelled: Unloaded map in player inventory (!!!)");
 					return;
@@ -80,7 +69,7 @@ public final class KeybindMapMove{
 			ItemStack stack = slots[i];
 			if(stack.isEmpty()) ++emptySlotsShulk;
 			else if(stack.getItem() == Items.FILLED_MAP){
-				if(isSpaceFillerMap(client.world, slots[i])) continue;
+				if(MapRelationUtils.isFillerMap(FilledMapItem.getMapState(stack, client.world))) continue;
 				if(numInShulk != 0 && !ALLOW_AIR_POCKETS){
 					client.player.sendMessage(Text.literal("MapMove: Air gap between items in shulker currently disabled"), true);
 					client.player.sendMessage(Text.literal("MapMove: Air gap between items in shulker currently disabled"), false);
@@ -100,7 +89,7 @@ public final class KeybindMapMove{
 		final long cantMergeIntoShulk =
 				IntStream.range(0, 36).mapToObj(i -> client.player.getInventory().getStack(i))
 				.filter(s -> s.getItem() == Items.FILLED_MAP)
-				.filter(s -> !isSpaceFillerMap(client.world, s))
+				.filter(s -> !MapRelationUtils.isFillerMap(FilledMapItem.getMapState(s, client.world)))
 				.filter(s -> {
 					int space = shulkCapacity.getOrDefault(s, 0);
 					if(s.getCount() > space) return false;
@@ -128,7 +117,7 @@ public final class KeybindMapMove{
 		HashMap<ClickEvent, Integer> reserveClicks = new HashMap<>();
 		if(moveToShulk) for(int i=27, j=0; i<63; ++i){
 			if(slots[i].getItem() != Items.FILLED_MAP) continue;
-			if(isSpaceFillerMap(client.world, slots[i])) continue;
+			if(MapRelationUtils.isFillerMap(FilledMapItem.getMapState(slots[i], client.world))) continue;
 			final int count = slots[i].getCount();
 			if(selectiveMove && count != countsInInv.last()) continue;
 			if((count == 2 || count == 3) && !isShiftClick){
@@ -149,7 +138,7 @@ public final class KeybindMapMove{
 		else for(int i=26, j=62; i>=0; --i){
 //			if(isMapArt(sh.getSlot(i).getStack())) clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.QUICK_MOVE));
 			if(slots[i].getItem() != Items.FILLED_MAP) continue;
-			if(isSpaceFillerMap(client.world, slots[i])) continue;
+			if(MapRelationUtils.isFillerMap(FilledMapItem.getMapState(slots[i], client.world))) continue;
 			final int count = slots[i].getCount();
 			if(selectiveMove && count != countsInShulk.last()) continue;
 			if(count > 1 && !isShiftClick){
@@ -176,9 +165,8 @@ public final class KeybindMapMove{
 		}
 
 		//Main.LOGGER.info("MapMove: STARTED");
-		ongoingStealStore = true;
-		Main.inventoryUtils.executeClicks(clicks,
-				c->{
+		ongoingMove = true;
+		Main.inventoryUtils.executeClicks(clicks, c->{
 					// Don't start cursor-pickup move operation if we can't complete it in 1 go
 					final Integer clicksNeeded = reserveClicks.get(c);
 					if(clicksNeeded == null || clicksNeeded <= Main.inventoryUtils.MAX_CLICKS - Main.inventoryUtils.addClick(null)) return true;
@@ -187,7 +175,7 @@ public final class KeybindMapMove{
 				},
 				()->{
 					Main.LOGGER.info("MapMove: DONE!");
-					ongoingStealStore = false;
+					ongoingMove = false;
 				});
 	}
 

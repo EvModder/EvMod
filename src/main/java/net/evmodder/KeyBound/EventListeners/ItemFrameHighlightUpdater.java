@@ -4,7 +4,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
+import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
+import net.evmodder.KeyBound.MapRelationUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.FilledMapItem;
@@ -16,7 +18,6 @@ public class ItemFrameHighlightUpdater{
 	private static final HashMap<XYZD, UUID> hangLocsReverse = new HashMap<>();
 //	private static final HashMap<XYZD, Long> lastUpdated = new HashMap<>();
 	private static final HashMap<UUID, HashSet<XYZD>> iFrameMapGroup = new HashMap<>();
-	private static double MAX_IFRAME_TRACKING_DIST_SQ = Double.MAX_VALUE;//2048d*2048d;
 
 	//TODO: Figure out something nicer than this shared global var
 	public static final HashSet<Integer> skipIFrameHasLabel = new HashSet<>();
@@ -48,7 +49,7 @@ public class ItemFrameHighlightUpdater{
 		final HashSet<XYZD> locs = iFrameMapGroup.get(colorsId);
 		final boolean isMultiHung;
 		if(locs == null){iFrameMapGroup.put(colorsId, new HashSet<>(List.of(xyzd))); isMultiHung = false;}
-		else{locs.add(xyzd); isMultiHung = locs.size() > 1 && !TooltipMapNameColor.isMonoColorMap(state);}
+		else{locs.add(xyzd); isMultiHung = locs.size() > 1 && !MapRelationUtils.isFillerMap(state);}
 
 		//==================== Mark iFrame as skippable in renderer ====================//
 		final boolean isInInv = InventoryHighlightUpdater.isInInventory(colorsId) || InventoryHighlightUpdater.isNestedInInventory(colorsId);
@@ -66,8 +67,8 @@ public class ItemFrameHighlightUpdater{
 
 	public static final boolean isHungMultiplePlaces(UUID colorsId){
 		final var l = iFrameMapGroup.get(colorsId);
-		if(l != null && MAX_IFRAME_TRACKING_DIST_SQ != Double.MAX_VALUE){
-			l.removeIf(xyzd -> MinecraftClient.getInstance().player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > MAX_IFRAME_TRACKING_DIST_SQ);
+		if(l != null && Main.MAX_IFRAME_TRACKING_DIST_SQ > 0){
+			l.removeIf(xyzd -> MinecraftClient.getInstance().player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > Main.MAX_IFRAME_TRACKING_DIST_SQ);
 			if(l.size() == 0) iFrameMapGroup.remove(colorsId);
 		}
 		return l != null && l.size() > 1;
@@ -75,8 +76,8 @@ public class ItemFrameHighlightUpdater{
 
 	public static final boolean isInItemFrame(final UUID colorsId){
 		final var l = iFrameMapGroup.get(colorsId);
-		if(l != null && MAX_IFRAME_TRACKING_DIST_SQ != Double.MAX_VALUE){
-			l.removeIf(xyzd -> MinecraftClient.getInstance().player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > MAX_IFRAME_TRACKING_DIST_SQ);
+		if(l != null && Main.MAX_IFRAME_TRACKING_DIST_SQ > 0){
+			l.removeIf(xyzd -> MinecraftClient.getInstance().player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > Main.MAX_IFRAME_TRACKING_DIST_SQ);
 			if(l.size() == 0) iFrameMapGroup.remove(colorsId);
 		}
 		return l != null && l.size() > 0;

@@ -81,7 +81,7 @@ public class Main implements ClientModInitializer{
 	public static ClickUtils inventoryUtils;
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
-	public static boolean rcHotbarHUD, mapartDb, mapartDbContact, mapHighlightHUD, mapHighlightIFrame, totemShowTotalCount;
+	public static boolean rcHotbarHUD, mapartDb, mapartDbContact, mapHighlightHUD, mapHighlightIFrame, totemShowTotalCount, skipMonoColorMaps;
 	public static long joinedServerTimestamp;
 
 	public static int MAP_COLOR_UNLOCKED = 14692709;
@@ -89,6 +89,8 @@ public class Main implements ClientModInitializer{
 	public static int MAP_COLOR_NOT_IN_GROUP = 706660;
 	public static int MAP_COLOR_IN_INV = 11862015, MAP_COLOR_IN_IFRAME = 10542300;
 	public static int MAP_COLOR_MULTI_IFRAME = 11817190;
+
+	public static double MAX_IFRAME_TRACKING_DIST_SQ;
 
 	private void loadConfig(){
 		//=================================== Parsing config into a map
@@ -198,6 +200,8 @@ public class Main implements ClientModInitializer{
 				case "map_highlight_color_matches_inventory": MAP_COLOR_IN_INV = Integer.parseInt(value); break;
 				case "map_highlight_color_matches_itemframe": MAP_COLOR_IN_IFRAME = Integer.parseInt(value); break;
 				case "map_highlight_color_reused": MAP_COLOR_MULTI_IFRAME = Integer.parseInt(value); break;
+				case "monocolor_maps_are_filler_items": skipMonoColorMaps = !value.equalsIgnoreCase("false"); break;
+				case "itemframe_tracking_distance": MAX_IFRAME_TRACKING_DIST_SQ = Double.parseDouble(value)*Double.parseDouble(value); break;
 				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.copy": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.load": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;

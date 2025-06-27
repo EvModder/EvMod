@@ -42,6 +42,12 @@ map_highlight_color_reused: 11817190 # Purple
 map_highlight_color_matches_inventory: 11862015 # Teal
 map_highlight_color_matches_itemframe: 10542300 # Teal
 
+# Makes most features ignore mono-color maps (This is a better trust me)
+monocolor_maps_are_filler_items: true
+
+# 0 or - for infinite dist (faster). Requires 'map_highlight_in_itemframe:true'
+itemframe_tracking_distance: -1
+
 
 #========== MapArt Database ==========#
 # opt-in if u wanna contribute (ily <3) uncomment lines below:
