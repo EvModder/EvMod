@@ -54,41 +54,8 @@ map_highlight_color_matches_itemframe: 10542300 # Teal
 # if u do "share_contact:true", ppl can see which maps u have
 
 
-#========== Some nice sneaky features I'm including, sorry not sorry (#comment out if u dont want) ==========#
-enderpearl_owners: true
-enderpearl_database_by_uuid: true
-repaircost_tooltip: true
+#========== Some non-map bonus features I'm including, if u want to enable them ==========#
+enderpearl_owners: false
+enderpearl_database_by_uuid: false
+repaircost_tooltip: false
 keybind.toggle_skin_layers: false
-
-organize_inventory.EvInv: [
-  # Armor
-  6:elytra,
-  #8:gold_boots,
-  5:netherite_helmet, 6:netherite_chestplate, 7:netherite_leggings, 8:netherite_boots,
-  5:diamond_helmet, 6:diamond_chestplate, 7:diamond_leggings, 8:diamond_boots,
-
-  # Offhand
-  45:totem_of_undying, 45:enchanted_golden_apple, 45:golden_carrot, 45:cooked_beef,
-
-  # Hotbar LHS
-  36:netherite_sword, 36:diamond_sword, 36:netherite_axe, 36:diamond_axe,
-  37:netherite_pickaxe, 37:diamond_pickaxe,
-  38:netherite_axe, 38:diamond_axe, 38:netherite_shovel, 38:diamond_shovel, 38:firework_rocket, 39:end_crystal
-  39:end_crystal, 39:netherite_shovel, 39:diamond_shovel, 39:firework_rocket, 39:fishing_rod,
-  40:fishing_rod,
-
-  # Hotbar RHS
-  44:golden_carrot, 44:cooked_beef, 44:enchanted_golden_apple,
-  43:enchanted_golden_apple,
-
-  # Inventory top LHS
-  9:netherite_chestplate, 9:diamond_chestplate, 9:elytra, 10:ender_chest,
-  11:totem_of_undying, 12:totem_of_undying, 13:totem_of_undying,
-
-  # Extra rockets, food
-  30:firework_rocket, 21:firework_rocket,
-  35:enchanted_golden_apple, 35:golden_carrot, 35:cooked_beef, 35:cooked_porkchop, 35:pumpkin_pie,
-
-  # Fill extra hotbar slots with crystals
-  36:end_crystal, 37:end_crystal, 38:end_crystal, 39:end_crystal, 40:end_crystal, 41:end_crystal, 42:end_crystal
-]

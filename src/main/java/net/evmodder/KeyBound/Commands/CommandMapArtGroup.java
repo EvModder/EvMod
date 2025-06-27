@@ -95,7 +95,7 @@ public class CommandMapArtGroup{
 			}
 			for(UUID uuid : loadedMaps) mapsInGroup.add(uuid);
 			if(mapsInGroup.size() == oldSize){
-				source.sendError(Text.literal("No new maps (that weren't already in the group)").copy().withColor(DONE_COLOR));
+				source.sendError(Text.literal("No new maps found for group '"+newActiveGroup+"'").copy().withColor(DONE_COLOR));
 				return 1;
 			}
 			for(UUID uuid : MapGroupUtils.getLoadedMaps(source.getWorld())) mapsInGroup.add(uuid);
@@ -108,7 +108,7 @@ public class CommandMapArtGroup{
 		}
 		else if(newActiveGroup.equals(activeGroupName)){
 			if(activeGroup.equals(mapsInGroup)){
-				source.sendError(Text.literal("Group "+activeGroupName+" is already active (ids: "+activeGroup.size()+")").copy().withColor(DONE_COLOR));
+				source.sendError(Text.literal("Group '"+activeGroupName+"' is already active (ids: "+activeGroup.size()+")").copy().withColor(DONE_COLOR));
 				return 1;
 			}
 			else{

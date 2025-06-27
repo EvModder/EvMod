@@ -8,6 +8,7 @@ import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -58,7 +59,10 @@ public final class KeybindMapMoveBundle{
 		final int WITHDRAW_MAX = hs instanceof InventoryScreen ? 27 : SLOT_END;
 		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		final int[] slotsWithMapArt = IntStream.range(SLOT_START, SLOT_END).filter(i -> slots[i].getItem() == Items.FILLED_MAP).toArray();
-		final boolean pickupHalf = slotsWithMapArt.length > 0 && Arrays.stream(slotsWithMapArt).allMatch(i -> slots[i].getCount() == 2);
+		final boolean pickupHalf = slotsWithMapArt.length > 0
+				&& Arrays.stream(slotsWithMapArt).anyMatch(i -> slots[i].getCount() == 2)
+				&& Arrays.stream(slotsWithMapArt).allMatch(i -> slots[i].getCount() <= 2)
+				&& (!Screen.hasShiftDown() || Arrays.stream(slotsWithMapArt).noneMatch(i -> slots[i].getCount() == 1));
 		final boolean anyArtToPickup = Arrays.stream(slotsWithMapArt).anyMatch(i -> slots[i].getCount() == (pickupHalf ? 2 : 1));
 
 		Main.LOGGER.info("MapBundleOp: begin bundle search");
@@ -123,8 +127,12 @@ public final class KeybindMapMoveBundle{
 		}
 		else{
 			final int stored = Math.min(WITHDRAW_MAX, getNumStored(occupancy));
+			int emptySlots = (int)IntStream.range(SLOT_START, SLOT_END).filter(i -> slots[i].isEmpty()).count();
 			int withdrawn = 0;
-			for(int i=SLOT_END-1; i>=SLOT_START && withdrawn < stored; --i){
+			int i=SLOT_END-1;
+			Main.LOGGER.info("MapBundleOp: emptySlots: "+emptySlots+", stored: "+stored);
+			for(; emptySlots > stored; --i) if(slots[i].isEmpty()) --emptySlots;
+			for(; i>=SLOT_START && withdrawn < stored; --i){
 				if(!slots[i].isEmpty()) continue;
 				clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP));
 				++withdrawn;

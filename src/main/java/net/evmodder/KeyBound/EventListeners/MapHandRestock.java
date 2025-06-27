@@ -39,7 +39,7 @@ public final class MapHandRestock{
 	private PosData2D getPosData2D(final List<String> posStrs, final boolean isSideways){
 		assert posStrs.size() >= 2;
 		final boolean hasSpace = posStrs.stream().anyMatch(n -> n.indexOf(' ') != -1);
-		final boolean cutMid = !hasSpace && posStrs.stream().allMatch(n -> n.length() == 2);
+		final boolean cutMid = !hasSpace && posStrs.stream().allMatch(n -> n.length() == 2); // TODO: A9->A10 support
 		final boolean someSpace = hasSpace && posStrs.stream().anyMatch(n -> n.indexOf(' ') == -1);
 		final List<String> pos2s;
 		if(cutMid){
@@ -76,7 +76,7 @@ public final class MapHandRestock{
 	// 4 = likely next (but not 100%)
 	// 3 = maybe next (line wrapping? hex?)
 	// 1,2 = not impossibly next
-	private final int checkComesAfter1d(String posA, String posB, boolean infoLogs){
+	private final int checkComesAfter1d(final String posA, final String posB, final boolean infoLogs){
 		if(posA.equals("L") && posB.equals("M")) return 5;
 		if(posA.equals("M") && posB.equals("R")) return 4;//4 not 5, because m->n->l->o.. vs m->r
 		if(posA.equals("L") && posB.equals("R")) return 4;
@@ -84,8 +84,8 @@ public final class MapHandRestock{
 
 		final boolean sameLen = posA.length() == posB.length();
 		if(sameLen && posA.regionMatches(0, posB, 0, posA.length()-1) && (
-				posA.codePointAt(posA.length()-1)+1 == posB.codePointAt(posA.length()-1)) ||
-				(posA.codePointAt(posA.length()-1) == '9' && posB.codePointAt(posA.length()-1) == 'A' && posA.length() > 1)//49->4a
+				posA.codePointAt(posA.length()-1)+1 == posB.codePointAt(posB.length()-1)) ||
+				(posA.codePointAt(posA.length()-1) == '9' && posB.codePointAt(posB.length()-1) == 'A' && posA.length() > 1)//49->4a
 		){
 			if(infoLogs) Main.LOGGER.info("MapRestock: confidence=5. c->c+1");
 			return 5; // 4->5, E->F
@@ -103,6 +103,7 @@ public final class MapHandRestock{
 		if(posA.equals("T R") && posB.equals("M L")) return 5;
 		if(posA.equals("M R") && posB.equals("B L")) return 5;
 		if(posA.equals("T R") && posB.equals("B L")) return 4;
+		if(posA.matches("[A-Z]9") && posB.matches("[A-Z]10") && posA.charAt(0) == posB.charAt(0)) return 5;
 
 		if(posData2d.maxPos2 == null){
 			int check1d = checkComesAfter1d(posA, posB, infoLogs);
@@ -256,7 +257,7 @@ public final class MapHandRestock{
 		}
 		Main.LOGGER.info("MapRestock: findByName() minPos2="+posData2d.minPos2+", maxPos2="+posData2d.maxPos2+", sideways="+posData2d.isSideways);
 
-		final int i = getNextSlotByName(slots, data, prevPosStr, posData2d, /*infoLogs=*/false);//TODO: set to true for debugging
+		final int i = getNextSlotByName(slots, data, prevPosStr, posData2d, /*infoLogs=*/true);//TODO: set to true for debugging
 		return i != -1 ? i : getNextSlotAny(slots, prevSlot, world);
 	}
 

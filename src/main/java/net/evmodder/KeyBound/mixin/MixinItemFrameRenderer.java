@@ -9,6 +9,7 @@ import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
 import net.evmodder.KeyBound.EventListeners.InventoryHighlightUpdater;
 import net.evmodder.KeyBound.EventListeners.ItemFrameHighlightUpdater;
+import net.evmodder.KeyBound.EventListeners.TooltipMapNameColor;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.ItemFrameEntityRenderer;
 import net.minecraft.entity.Entity;
@@ -65,7 +66,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(state == null) return;
 		final UUID colorsId = MapGroupUtils.getIdForMapState(state);
 		final boolean notInCurrGroup = MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
-		if(InventoryHighlightUpdater.isInInventory(colorsId)){
+		if(InventoryHighlightUpdater.isInInventory(colorsId) || InventoryHighlightUpdater.isNestedInInventory(colorsId)){
 			MutableText coloredName = stack.getName().copy().withColor(Main.MAP_COLOR_IN_INV);
 			if(notInCurrGroup) coloredName = coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_NOT_IN_GROUP));
 			if(!state.locked) coloredName = coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
@@ -77,6 +78,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		}
 		else if(!state.locked) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_UNLOCKED));
 		else if(stack.getCustomName() == null) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_UNNAMED));
-		else if(ItemFrameHighlightUpdater.isHungMultiplePlaces(colorsId)) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_MULTI_IFRAME));
+		else if(ItemFrameHighlightUpdater.isHungMultiplePlaces(colorsId) && !TooltipMapNameColor.isMonoColorMap(state))
+			cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_MULTI_IFRAME));
 	}
 }

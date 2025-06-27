@@ -24,7 +24,7 @@ import net.minecraft.world.World;
 public final class KeybindMapMove{
 	private final boolean ALLOW_AIR_POCKETS;
 
-	private boolean isSpaceFillerMap(World world, ItemStack stack){
+	private boolean isSpaceFillerMap(World world, ItemStack stack){//TODO: Move to a MapUtils.class
 		if(stack.getCustomName() == null) return false;
 		String name = stack.getCustomName().getLiteralString();
 		if(name == null || !name.startsWith("slot")) return false;
@@ -118,9 +118,11 @@ public final class KeybindMapMove{
 
 		final boolean moveToShulk = numInShulk == 0 || cantMergeIntoInv > emptySlotsInv || (numInInv == numInShulk && cantMergeIntoShulk == 0);
 		final boolean isShiftClick = Screen.hasShiftDown();
-		final boolean selectiveMove = !isShiftClick && moveToShulk
+		final boolean selectiveMove = !isShiftClick && (moveToShulk
 				? (countsInInv.size() == 2 && cantMergeIntoShulk == 0)
-				: (countsInShulk.size() == 2 && (cantMergeIntoInv == 0 || numInInv == 0));
+				: (countsInShulk.size() == 2 && (cantMergeIntoInv == 0 || numInInv == 0)));
+//		Main.LOGGER.info("MapMove: selectiveMove: "+selectiveMove);
+		client.player.sendMessage(Text.literal("MapMove: selectiveMove="+selectiveMove), true);
 
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		HashMap<ClickEvent, Integer> reserveClicks = new HashMap<>();
