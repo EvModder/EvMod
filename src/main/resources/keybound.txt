@@ -37,6 +37,7 @@ mapart_database_share_contact: true
 map_highlight_in_tooltip: true
 map_highlight_in_hotbarhud: true
 map_highlight_in_itemframe: true
+map_highlight_in_container_name: true
 
 map_highlight_color_unlocked: 14692709 # Red
 map_highlight_color_unnamed: 15652823 # Pink
@@ -53,8 +54,8 @@ itemframe_tracking_distance: -1
 
 #========== Added Visuals ==========#
 totem_total_count: true
-repaircost_tooltip: true
-repaircost_hotbarhud: false
+repaircost_in_tooltip: true
+repaircost_in_hotbarhud: false
 enderpearl_owners: true
 enderpearl_database_by_uuid: true
 enderpearl_database_by_coords: false

@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.Commands.*;
 import net.evmodder.KeyBound.EventListeners.AutoPearlActivator;
+import net.evmodder.KeyBound.EventListeners.ContainerHighlightUpdater;
 import net.evmodder.KeyBound.EventListeners.IgnoreListSync2b2t;
 import net.evmodder.KeyBound.EventListeners.InventoryHighlightUpdater;
 import net.evmodder.KeyBound.EventListeners.ItemFrameHighlightUpdater;
@@ -81,14 +82,15 @@ public class Main implements ClientModInitializer{
 	public static ClickUtils inventoryUtils;
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
-	public static boolean rcHotbarHUD, mapartDb, mapartDbContact, mapHighlightHUD, mapHighlightIFrame, totemShowTotalCount, skipMonoColorMaps;
+	public static boolean rcHUD, mapHighlightHUD, mapHighlightIFrame, mapHighlightHandledScreen;
+	public static boolean mapartDb, mapartDbContact, totemShowTotalCount, skipMonoColorMaps;
 	public static long joinedServerTimestamp;
 
 	public static int MAP_COLOR_UNLOCKED = 14692709;
 	public static int MAP_COLOR_UNNAMED = 15652823;
 	public static int MAP_COLOR_NOT_IN_GROUP = 706660;
-	public static int MAP_COLOR_IN_INV = 11862015, MAP_COLOR_IN_IFRAME = 10542300;
-	public static int MAP_COLOR_MULTI_IFRAME = 11817190;
+	public static int MAP_COLOR_IN_INV = 11862015, MAP_COLOR_IN_IFRAME = 10542300;//TODO: MAP_COLOR_IN_CONTAINER=11862015
+	public static int MAP_COLOR_MULTI_IFRAME = 11817190, MAP_COLOR_MULTI_INV = MAP_COLOR_MULTI_IFRAME;//TODO: separate colors?
 
 	public static double MAX_IFRAME_TRACKING_DIST_SQ;
 
@@ -189,17 +191,18 @@ public class Main implements ClientModInitializer{
 
 //				case "spawner_highlight": if(!value.equalsIgnoreCase("false")) new SpawnerHighlighter(); break;
 				case "totem_total_count": if(!value.equalsIgnoreCase("false")) totemShowTotalCount = !value.equalsIgnoreCase("false"); break;
-				case "repaircost_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipRepairCost::addRC); break;
-				case "repaircost_hotbarhud": rcHotbarHUD = !value.equalsIgnoreCase("false"); break;
+				case "repaircost_in_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipRepairCost::addRC); break;
+				case "repaircost_in_hotbarhud": rcHUD = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_in_tooltip": mapHighlightTooltip = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_in_hotbarhud": mapHighlightHUD = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_in_itemframe": mapHighlightIFrame = !value.equalsIgnoreCase("false"); break;
+				case "map_highlight_in_container_name": mapHighlightHandledScreen = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_color_unlocked": MAP_COLOR_UNLOCKED = Integer.parseInt(value); break;
 				case "map_highlight_color_unnamed": MAP_COLOR_UNNAMED = Integer.parseInt(value); break;
 				case "map_highlight_color_ungrouped": MAP_COLOR_NOT_IN_GROUP = Integer.parseInt(value); break;
 				case "map_highlight_color_matches_inventory": MAP_COLOR_IN_INV = Integer.parseInt(value); break;
 				case "map_highlight_color_matches_itemframe": MAP_COLOR_IN_IFRAME = Integer.parseInt(value); break;
-				case "map_highlight_color_reused": MAP_COLOR_MULTI_IFRAME = Integer.parseInt(value); break;
+				case "map_highlight_color_reused": MAP_COLOR_MULTI_INV = MAP_COLOR_MULTI_IFRAME = Integer.parseInt(value); break;
 				case "monocolor_maps_are_filler_items": skipMonoColorMaps = !value.equalsIgnoreCase("false"); break;
 				case "itemframe_tracking_distance": MAX_IFRAME_TRACKING_DIST_SQ = Double.parseDouble(value)*Double.parseDouble(value); break;
 				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
@@ -258,10 +261,11 @@ public class Main implements ClientModInitializer{
 		if(mapWallCmd) new CommandExportMapImg(mapWallUpscale, mapWallBorder, mapWallBorderColor1, mapWallBorderColor2);
 
 		if(mapHighlightTooltip) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors);
-		if(mapHighlightTooltip || mapHighlightHUD || mapHighlightIFrame){
+		if(mapHighlightTooltip || mapHighlightHUD || mapHighlightIFrame || mapHighlightHandledScreen){
 			ClientTickEvents.START_CLIENT_TICK.register(ItemFrameHighlightUpdater::onUpdateTick);
 			ClientTickEvents.START_CLIENT_TICK.register(InventoryHighlightUpdater::onUpdateTick);
 		}
+		if(mapHighlightHandledScreen) ClientTickEvents.START_CLIENT_TICK.register(ContainerHighlightUpdater::onUpdateTick);
 
 		MinecraftClient client = MinecraftClient.getInstance();
 		String username = client.getSession().getUsername();

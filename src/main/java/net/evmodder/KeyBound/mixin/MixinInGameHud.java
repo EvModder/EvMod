@@ -20,7 +20,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 abstract class MixinInGameHud{
 	@ModifyVariable(method = "renderHeldItemTooltip", at = @At("STORE"), ordinal = 0)
 	private MutableText showRepairCostNextToItemName(MutableText originalText){
-		if(Main.rcHotbarHUD == false && Main.mapHighlightHUD == false) return originalText;
+		if(Main.rcHUD == false && Main.mapHighlightHUD == false) return originalText;
 		MinecraftClient client = MinecraftClient.getInstance();
 		ItemStack currentStack = client.player.getInventory().getMainHandStack();
 		MutableText text = originalText;
@@ -38,7 +38,7 @@ abstract class MixinInGameHud{
 				else if(currentStack.getCustomName() == null) text = text.withColor(Main.MAP_COLOR_UNNAMED);
 			}
 		}
-		if(Main.rcHotbarHUD && currentStack.contains(DataComponentTypes.REPAIR_COST)){
+		if(Main.rcHUD && currentStack.contains(DataComponentTypes.REPAIR_COST)){
 			int rc = currentStack.get(DataComponentTypes.REPAIR_COST);
 			if(rc != 0 || currentStack.hasEnchantments() || currentStack.contains(DataComponentTypes.STORED_ENCHANTMENTS)){
 				text = text.append(Text.literal(" \u02b3\u1d9c").formatted(Formatting.GRAY)).append(Text.literal(""+rc).formatted(Formatting.GOLD));

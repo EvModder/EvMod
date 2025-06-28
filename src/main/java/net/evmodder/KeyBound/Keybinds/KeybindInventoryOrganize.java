@@ -86,7 +86,7 @@ public final class KeybindInventoryOrganize{
 		}
 	}
 
-	private int depth;
+	private int depth; // TODO: instead of running up to 3 times, just sort things properly the first time
 	private boolean ongoingOrganize = false;
 	private void organizeInventory(){
 		//Main.LOGGER.info("InvOrganize: keybind pressed");

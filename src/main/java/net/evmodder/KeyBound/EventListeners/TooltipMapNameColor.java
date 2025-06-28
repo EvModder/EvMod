@@ -1,6 +1,7 @@
 package net.evmodder.KeyBound.EventListeners;
 
 import java.util.List;
+import java.util.function.BiFunction;
 import net.minecraft.item.Item.TooltipContext;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
@@ -36,7 +37,6 @@ public final class TooltipMapNameColor{
 		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
 		if(id == null) return false;
 		MapState state = context.getMapState(id);
-		if(state == null) return false;
 		return state != null && !state.locked;
 	}
 	private static final boolean isOnDisplayMap(ItemStack item, TooltipContext context){
@@ -57,20 +57,25 @@ public final class TooltipMapNameColor{
 		return item.getCustomName() == null && item.contains(DataComponentTypes.MAP_ID);
 	}
 
+	private static final boolean recursiveMatch(ItemStack stack, TooltipContext context, BiFunction<ItemStack, TooltipContext, Boolean> matcher){
+		ContainerComponent container = stack.get(DataComponentTypes.CONTAINER);
+		return container == null ? matcher.apply(stack, context) : container.streamNonEmpty().anyMatch(s -> matcher.apply(stack,  context));
+	}
+
 	public static final void tooltipColors(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
 		ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
 		if(container != null){
-			if(container.streamNonEmpty().anyMatch(i -> isInInv(i, context))){
+			if(recursiveMatch(item, context, TooltipMapNameColor::isInInv)){
 				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_IN_INV).formatted(Formatting.BOLD)));
 			}
-			if(container.streamNonEmpty().anyMatch(i -> isNotInCurrentGroup(i, context))){
+			if(recursiveMatch(item, context, TooltipMapNameColor::isNotInCurrentGroup)){
 				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_NOT_IN_GROUP).formatted(Formatting.BOLD)));
 			}
-			if(container.streamNonEmpty().anyMatch(i -> isUnlockedMap(i, context))){
+			if(recursiveMatch(item, context, TooltipMapNameColor::isUnlockedMap)){
 				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED).formatted(Formatting.BOLD)));
 			}
 			// Don't add * if all maps in shulker are on display or none are only display, only if it's mixed
-			if(container.streamNonEmpty().anyMatch(i -> isOnDisplayMap(i, context)) && container.streamNonEmpty().anyMatch(i -> isNotOnDisplayMap(i, context))){
+			if(recursiveMatch(item, context, TooltipMapNameColor::isOnDisplayMap) && recursiveMatch(item, context, TooltipMapNameColor::isNotOnDisplayMap)){
 				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_IN_IFRAME).formatted(Formatting.BOLD)));
 			}
 			if(container.streamNonEmpty().anyMatch(i -> isUnnamedMap(i))){
@@ -81,9 +86,13 @@ public final class TooltipMapNameColor{
 		if(isNotInCurrentGroup(item, context)){
 			MutableText text = lines.removeFirst().copy().withColor(Main.MAP_COLOR_NOT_IN_GROUP);
 			if(isUnlockedMap(item, context)) text = text.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
+			if(isOnDisplayMap(item, context)) text = text.append(Text.literal("*").withColor(Main.MAP_COLOR_IN_IFRAME));
 			lines.addFirst(text);
 		}
-		else if(isUnlockedMap(item, context)) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNLOCKED));
+		else if(isUnlockedMap(item, context)){
+			lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNLOCKED));
+			if(isOnDisplayMap(item, context)) lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_IN_IFRAME)));
+		}
 		else if(isOnDisplayMap(item, context)) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_IN_IFRAME));
 		else if(isUnnamedMap(item)) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNNAMED));
 	}
