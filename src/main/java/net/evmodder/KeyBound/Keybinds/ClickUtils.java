@@ -59,8 +59,15 @@ public class ClickUtils{
 		return sumClicksInDuration;
 	}
 
-	private static boolean waitedForClicks;
+	private static boolean waitedForClicks, clickOpOngoing;
 	public void executeClicks(Queue<ClickEvent> clicks, Function<ClickEvent, Boolean> canProceed, Runnable onComplete){
+		if(clickOpOngoing){
+			Main.LOGGER.warn("executeClicks() already has an ongoing operation");
+			MinecraftClient.getInstance().player.sendMessage(
+					Text.literal("Clicks cancelled: current operation needs to finish before starting a new one"), true);
+			onComplete.run();
+			return;
+		}
 		waitedForClicks = false;
 		final int syncId = MinecraftClient.getInstance().player.currentScreenHandler.syncId;
 		if(clicks.isEmpty()){

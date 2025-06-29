@@ -134,6 +134,7 @@ public abstract class MapRelationUtils{
 			}
 		}
 		if(prefixLen == -1){
+			//TODO: empty, or size==1?
 			if(relatedMapSlots.isEmpty()) Main.LOGGER.info("MapAdjUtil: no shared prefix/suffix named maps found for name: "+sourceName);
 			return new RelatedMapsData(prefixLen, suffixLen, relatedMapSlots);
 		}

@@ -31,12 +31,12 @@ public class ItemFrameHighlightUpdater{
 		final UUID colorsId = state == null ? null : MapGroupUtils.getIdForMapState(state);
 		final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal());
 		final UUID oldColorsIdForXYZ = colorsId != null ? hangLocsReverse.put(xyzd, colorsId) : hangLocsReverse.remove(xyzd);
-		if(oldColorsIdForXYZ == null){if(colorsId != null){
-			InventoryHighlightUpdater.onUpdateTick(client);}
+		if(oldColorsIdForXYZ == null){
+//			if(colorsId != null){InventoryHighlightUpdater.onUpdateTick(client);}
 			//if(wasRecentlyUpdated(xyzd, ts)) Main.LOGGER.info("IFHU: Added map at xyzd");
 		}
 		else if(!oldColorsIdForXYZ.equals(colorsId)){
-			InventoryHighlightUpdater.onUpdateTick(client);
+//			InventoryHighlightUpdater.onUpdateTick(client);
 //			if(wasRecentlyUpdated(xyzd, ts)) Main.LOGGER.info("IFHU: "+(colorsId == null ? "Removed" : "Replaced")+" map xyzd");
 			final HashSet<XYZD> oldLocs = iFrameMapGroup.get(oldColorsIdForXYZ);
 			if(oldLocs != null && oldLocs.remove(xyzd) && oldLocs.isEmpty()) iFrameMapGroup.remove(oldColorsIdForXYZ);

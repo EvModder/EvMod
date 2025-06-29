@@ -8,6 +8,7 @@ import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
+import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
@@ -20,24 +21,34 @@ import net.minecraft.component.type.BundleContentsComponent;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.item.map.MapState;
 import net.minecraft.registry.Registries;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.world.World;
 
 public final class KeybindMapMoveBundle{
 	//final int WITHDRAW_MAX = 27;
 	//enum BundleSelectionMode{FIRST, LAST, MOST_FULL_butNOT_FULL, MOST_EMPTY_butNOT_EMPTY};
 
-	private boolean isBundle(ItemStack stack){
+	private final boolean isFillerMap(ItemStack[] slots, ItemStack stack, World world){
+		final MapState state = FilledMapItem.getMapState(stack, world);
+		if(!MapRelationUtils.isFillerMap(state)) return false;
+		if(stack.getCustomName() == null) return true;
+		final String name = stack.getCustomName().getLiteralString();
+		if(name == null) return true;
+		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, name, stack.getCount(), state.locked, world);
+		return data.slots().size() <= 1;
+	}
+
+	private final boolean isBundle(ItemStack stack){
 		return Registries.ITEM.getId(stack.getItem()).getPath().endsWith("bundle");
 	}
-	private int getNumStored(Fraction fraction){
+	private final int getNumStored(Fraction fraction){
 		assert 64 % fraction.getDenominator() == 0;
 		return  (64/fraction.getDenominator())*fraction.getNumerator();
 	}
-
-	//TODO: support inventories besides InventoryScreen (in particular, shulker screen, double-chest screen)
 
 	private boolean ongoingBundleOp;
 	private long lastBundleOp = 0;
@@ -56,12 +67,12 @@ public final class KeybindMapMoveBundle{
 		final int SLOT_END =
 				hs instanceof InventoryScreen ? 45 :
 				hs.getScreenHandler() instanceof GenericContainerScreenHandler gcsh ? gcsh.getRows()*9 :
-				hs instanceof CraftingScreen ? 37 :
+				hs instanceof CraftingScreen ? 46 :
 				hs instanceof ShulkerBoxScreen ? 27 : 0/*unreachable?*/;
 		final int WITHDRAW_MAX = hs instanceof InventoryScreen ? 27 : SLOT_END;
 		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		final int[] slotsWithMapArt = IntStream.range(SLOT_START, SLOT_END)
-				.filter(i -> slots[i].getItem() == Items.FILLED_MAP && !MapRelationUtils.isFillerMap(FilledMapItem.getMapState(slots[i], client.world)))
+				.filter(i -> slots[i].getItem() == Items.FILLED_MAP && !isFillerMap(slots, slots[i], client.world))
 				.toArray();
 		final boolean pickupHalf = slotsWithMapArt.length > 0
 				&& Arrays.stream(slotsWithMapArt).anyMatch(i -> slots[i].getCount() == 2)
@@ -153,6 +164,6 @@ public final class KeybindMapMoveBundle{
 		new Keybind("mapart_bundle", this::moveMapArtToFromBundle,
 				s->s instanceof InventoryScreen || s instanceof GenericContainerScreen || s instanceof ShulkerBoxScreen || s instanceof CraftingScreen,
 //				InventoryScreen.class::isInstance,
-				GLFW.GLFW_KEY_R);
+				GLFW.GLFW_KEY_D);
 	}
 }

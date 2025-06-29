@@ -262,10 +262,12 @@ public class Main implements ClientModInitializer{
 
 		if(mapHighlightTooltip) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors);
 		if(mapHighlightTooltip || mapHighlightHUD || mapHighlightIFrame || mapHighlightHandledScreen){
-			ClientTickEvents.START_CLIENT_TICK.register(ItemFrameHighlightUpdater::onUpdateTick);
-			ClientTickEvents.START_CLIENT_TICK.register(InventoryHighlightUpdater::onUpdateTick);
+			ClientTickEvents.START_CLIENT_TICK.register(client -> {
+				InventoryHighlightUpdater.onUpdateTick(client);
+				ItemFrameHighlightUpdater.onUpdateTick(client);
+				if(mapHighlightHandledScreen) ContainerHighlightUpdater.onUpdateTick(client);
+			});
 		}
-		if(mapHighlightHandledScreen) ClientTickEvents.START_CLIENT_TICK.register(ContainerHighlightUpdater::onUpdateTick);
 
 		MinecraftClient client = MinecraftClient.getInstance();
 		String username = client.getSession().getUsername();
