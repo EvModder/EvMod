@@ -39,7 +39,7 @@ public final class KeybindMapMoveBundle{
 		final String name = stack.getCustomName().getLiteralString();
 		if(name == null) return true;
 		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, name, stack.getCount(), state.locked, world);
-		return data.slots().size() <= 1;
+		return data.slots().stream().map(i -> slots[i].getCustomName().getLiteralString()).distinct().count() <= 1;
 	}
 
 	private final boolean isBundle(ItemStack stack){

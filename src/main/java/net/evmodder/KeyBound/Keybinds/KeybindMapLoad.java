@@ -8,6 +8,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.item.map.MapState;
 import net.minecraft.registry.Registries;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
@@ -23,10 +24,14 @@ public final class KeybindMapLoad{
 //		if(stack == null || stack.isEmpty()) return false;
 //		if(!Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")) return false;
 //		return FilledMapItem.getMapState(stack, world) == null;
-		return stack.getItem() == Items.FILLED_MAP && FilledMapItem.getMapState(stack, world) == null;
+		if(stack.getItem() != Items.FILLED_MAP) return false;
+		MapState state = FilledMapItem.getMapState(stack, world);
+		return state == null || state.colors == null;
 	}
 	private boolean isLoadedMapArt(World world, ItemStack stack){
-		return stack.getItem() == Items.FILLED_MAP && FilledMapItem.getMapState(stack, world) != null;
+		if(stack.getItem() != Items.FILLED_MAP) return false;
+		MapState state = FilledMapItem.getMapState(stack, world);
+		return state != null && state.colors != null && state.colors.length == 128*128;
 	}
 
 	private boolean isShulkerBox(ItemStack stack){
