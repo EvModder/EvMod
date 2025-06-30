@@ -91,24 +91,26 @@ public class ClickUtils{
 				}
 				//final int availableClicks = MAX_CLICKS - addClick(null);
 				//for(int i=0; i<availableClicks; ++i){
-				while(addClick(null) < MAX_CLICKS){
-					if(!canProceed.apply(clicks.peek())) return;
-					ClickEvent click = clicks.remove();
-					try{
-						//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
-						client.interactionManager.clickSlot(syncId, click.slotId, click.button, click.actionType, client.player);
+				client.executeSync(()->{
+					while(addClick(null) < MAX_CLICKS){
+						if(!canProceed.apply(clicks.peek())) return;
+						ClickEvent click = clicks.remove();
+						try{
+							//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
+							client.interactionManager.clickSlot(syncId, click.slotId, click.button, click.actionType, client.player);
+						}
+						catch(NullPointerException e){
+							Main.LOGGER.error("executeClicks() failed due to null client. Clicks left: "+clicks.size()+", sumClicksInDuration: "+sumClicksInDuration);
+							clicks.clear();
+						}
+						if(clicks.isEmpty()){
+							if(waitedForClicks) client.player.sendMessage(Text.literal("Clicks done!"), true);
+							cancel(); clickOpOngoing=false; onComplete.run(); return;
+						}
 					}
-					catch(NullPointerException e){
-						Main.LOGGER.error("executeClicks() failed due to null client. Clicks left: "+clicks.size()+", sumClicksInDuration: "+sumClicksInDuration);
-						clicks.clear();
-					}
-					if(clicks.isEmpty()){
-						if(waitedForClicks) client.player.sendMessage(Text.literal("Clicks done!"), true);
-						cancel(); clickOpOngoing=false; onComplete.run(); return;
-					}
-				}
-				client.player.sendMessage(Text.literal("Waiting for available clicks...").withColor(OUTTA_CLICKS_COLOR), true);
-				waitedForClicks = true;
+					client.player.sendMessage(Text.literal("Waiting for available clicks...").withColor(OUTTA_CLICKS_COLOR), true);
+					waitedForClicks = true;
+				});
 			}
 		}, 1l, 51l);
 	}
