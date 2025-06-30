@@ -50,11 +50,10 @@ public final class KeybindMapMoveBundle{
 		return  (64/fraction.getDenominator())*fraction.getNumerator();
 	}
 
-	private boolean ongoingBundleOp;
 	private long lastBundleOp = 0;
 	private final long bundleOpCooldown = 250l;
 	private final void moveMapArtToFromBundle(){
-		if(ongoingBundleOp){Main.LOGGER.warn("MapBundleOp: Already ongoing"); return;}
+		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapBundleOp: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof HandledScreen hs)) return;
@@ -156,8 +155,7 @@ public final class KeybindMapMoveBundle{
 		}
 		if(bundleSlot != -1 && !pickupHalf) clicks.add(new ClickEvent(bundleSlot, 0, SlotActionType.PICKUP));
 
-		ongoingBundleOp = true;
-		Main.inventoryUtils.executeClicks(clicks, _0->true, ()->{Main.LOGGER.info("MapBundleOp: DONE!"); ongoingBundleOp = false;});
+		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("MapBundleOp: DONE!"));
 	}
 
 	public KeybindMapMoveBundle(){

@@ -18,7 +18,8 @@ import java.util.OptionalInt;
 import java.util.stream.IntStream;
 import org.lwjgl.glfw.GLFW;
 
-public final class KeybindMapCopy{
+public final class BundleCopyRoutine{
+	private static boolean ongoingCopy;
 	private static long lastCopy;
 	private static final long copyCooldown = 250l;
 	private final boolean PRESERVE_MAP_POS = true;
@@ -65,7 +66,7 @@ public final class KeybindMapCopy{
 
 	@SuppressWarnings("unused")
 	private void copyMapArtInInventory(){
-		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapCopy: Already ongoing"); return;}
+		if(ongoingCopy){Main.LOGGER.warn("MapCopy: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
 		final boolean isCrafter = client.currentScreen instanceof CraftingScreen;
@@ -257,19 +258,22 @@ public final class KeybindMapCopy{
 		if(numEmptyMapsInGrid > 0) clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.QUICK_MOVE));
 
 		//Main.LOGGER.info("MapCopy: STARTED");
+		ongoingCopy = true;
 		Main.clickUtils.executeClicks(clicks,
-			c->{
-				// Don't start individual copy operation unless we can fully knock it out (unless impossible to do in 1 go)
-				final Integer clicksNeeded = reserveClicks.get(c);
-				if(clicksNeeded == null || clicksNeeded <= Main.clickUtils.MAX_CLICKS - Main.clickUtils.addClick(null)) return true;
-				client.player.sendMessage(Text.literal("MapCopy: Waiting for clicks...").withColor(WAITING_FOR_CLICKS_COLOR), true);
-				return false;
-			},
-			()->Main.LOGGER.info("MapCopy: DONE")
-		);
+		c->{
+			// Don't start individual copy operation unless we can fully knock it out (unless impossible to do in 1 go)
+			final Integer clicksNeeded = reserveClicks.get(c);
+			if(clicksNeeded == null || clicksNeeded <= Main.clickUtils.MAX_CLICKS - Main.clickUtils.addClick(null)) return true;
+			client.player.sendMessage(Text.literal("MapCopy: Waiting for clicks...").withColor(WAITING_FOR_CLICKS_COLOR), true);
+			return false;
+		},
+		()->{
+			Main.LOGGER.info("MapCopy: DONE");
+			ongoingCopy = false;
+		});
 	}
 
-	public KeybindMapCopy(){
+	public BundleCopyRoutine(){
 		new Keybind("mapart_copy", ()->copyMapArtInInventory(), s->s instanceof InventoryScreen || s instanceof CraftingScreen, GLFW.GLFW_KEY_T);
 	}
 }

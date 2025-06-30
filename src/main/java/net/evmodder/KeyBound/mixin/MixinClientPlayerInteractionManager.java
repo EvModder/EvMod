@@ -48,7 +48,7 @@ abstract class MixinClientPlayerInteractionManager{
 	@Inject(method = "clickSlot", at = @At("HEAD"), cancellable = true)
 	private void avoid_sending_too_many_clicks(int syncId, int slot, int button, SlotActionType action, PlayerEntity player, CallbackInfo ci){
 		if(action == SlotActionType.THROW/* || action == SlotActionType.CLONE || action == SlotActionType.QUICK_CRAFT*/) return;
-		if(Main.inventoryUtils.addClick(action) > Main.inventoryUtils.MAX_CLICKS){
+		if(Main.clickUtils.addClick(action) > Main.clickUtils.MAX_CLICKS){
 			ci.cancel(); // Throw out clicks that exceed the limit!!
 			Main.LOGGER.error("Discarding click in clickSlot() due to exceeding MAX_CLICKS limit!"
 					+ " slot:"+slot+",button:"+button+",action:"+action.name()+",isShiftClick:"+Screen.hasShiftDown());

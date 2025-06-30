@@ -39,11 +39,10 @@ public final class KeybindMapLoad{
 	}
 
 	//TODO: Consider shift-clicks instead of hotbar swaps (basically, MapMove but only for unloaded maps, and keep track of which)
-	private boolean ongoingLoad;
 	private long lastLoad;
 	private final long loadCooldown = 500L;
 	private final void loadMapArtFromContainer(){
-		if(ongoingLoad){Main.LOGGER.warn("MapLoad cancelled: Already ongoing"); return;}
+		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapLoad cancelled: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof HandledScreen hs)){Main.LOGGER.warn("MapLoad cancelled: not in HandledScreen"); return;}
@@ -68,7 +67,7 @@ public final class KeybindMapLoad{
 
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		int batchSize = 0;
-		final int MAX_BATCH_SIZE = Math.min(usableHotbarSlots, Main.inventoryUtils.MAX_CLICKS/2);
+		final int MAX_BATCH_SIZE = Math.min(usableHotbarSlots, Main.clickUtils.MAX_CLICKS/2);
 		for(int i=0; i<slots.size() && numToLoad > 0; ++i){
 			if(!isUnloadedMapArt(client.player.clientWorld, slots.get(i).getStack())) continue;
 			clicks.add(new ClickEvent(i, hotbarButton, SlotActionType.SWAP));
@@ -84,22 +83,19 @@ public final class KeybindMapLoad{
 			}
 		}
 		//Main.LOGGER.info("MapLoad: STARTED");
-		ongoingLoad = true;
-		Main.inventoryUtils.executeClicks(clicks,
+		Main.clickUtils.executeClicks(clicks,
 				c->{
 					if(client.player == null || client.world == null) return true;
 					ItemStack item = client.player.getInventory().getStack(c.button());
 					if(isUnloadedMapArt(/*client.player.clientWorld*/client.world, item)) return false;
 					if(isLoadedMapArt(/*client.player.clientWorld*/client.world, item)) return true;
 					if(getNextUsableHotbarButton(client, -1) != c.button()
-						|| Main.inventoryUtils.MAX_CLICKS-Main.inventoryUtils.addClick(null) >= MAX_BATCH_SIZE) return true;
+						|| Main.clickUtils.MAX_CLICKS-Main.clickUtils.addClick(null) >= MAX_BATCH_SIZE) return true;
 					client.player.sendMessage(Text.literal("MapLoad: Waiting for clicks...").withColor(KeybindMapCopy.WAITING_FOR_CLICKS_COLOR), true);
 					return false;
 				},
-				()->{
-					Main.LOGGER.info("MapLoad: DONE!");
-					ongoingLoad = false;
-				});
+				()->Main.LOGGER.info("MapLoad: DONE!")
+		);
 	}
 
 	public KeybindMapLoad(){

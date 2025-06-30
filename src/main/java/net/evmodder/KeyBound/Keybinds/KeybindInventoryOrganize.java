@@ -87,13 +87,12 @@ public final class KeybindInventoryOrganize{
 	}
 
 	private int depth; // TODO: instead of running up to 3 times, just sort things properly the first time
-	private boolean ongoingOrganize = false;
 	private void organizeInventory(){
 		//Main.LOGGER.info("InvOrganize: keybind pressed");
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof InventoryScreen is)){/*Main.LOGGER.warn("InvOrganize: not in InventoryScreen"); */return;}
 
-		if(ongoingOrganize) return;
+		if(Main.clickUtils.hasOngoingClicks()) return;
 
 		ItemStack[] simSlots = new ItemStack[46];
 		boolean[] emptySlots = new boolean[46];
@@ -241,8 +240,7 @@ public final class KeybindInventoryOrganize{
 //			Main.LOGGER.info("InvOrganize: no clicks required");
 			return;
 		}
-		ongoingOrganize = true;
-		Main.inventoryUtils.executeClicks(clicks,
+		Main.clickUtils.executeClicks(clicks,
 				//_->true,
 				_0->{
 					//client.player.sendMessage(Text.literal("click "+c.slotId()+" "+c.button()+" "+c.actionType()), false);
@@ -251,7 +249,6 @@ public final class KeybindInventoryOrganize{
 				()->{
 					//client.player.sendMessage(Text.literal("InvOrganize: done! clicks required: "+numClicks), false);
 					Main.LOGGER.info("InvOrganize: done! clicks required: "+numClicks);
-					ongoingOrganize = false;
 					if(++depth == 3){depth = 0; return;} // Run at most 3 times
 					organizeInventory(); // Try running again in case of straggler items
 				});

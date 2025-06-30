@@ -79,7 +79,7 @@ public class Main implements ClientModInitializer{
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	private static HashMap<String, String> config;
 
-	public static ClickUtils inventoryUtils;
+	public static ClickUtils clickUtils;
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
 	public static boolean rcHUD, mapHighlightHUD, mapHighlightIFrame, mapHighlightHandledScreen;
@@ -242,7 +242,7 @@ public class Main implements ClientModInitializer{
 					LOGGER.warn("Unrecognized config setting: "+key);
 			}
 		}
-		inventoryUtils = new ClickUtils(clicksInDuration, durationTicks);
+		clickUtils = new ClickUtils(clicksInDuration, durationTicks);
 		final boolean anyDbFeaturesEnabled = !remoteMessages.isEmpty() || epearlOwnersDbUUID || epearlOwnersDbXZ || mapartDb
 				|| uploadIgnoreList || downloadIgnoreLists != null;
 		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && anyDbFeaturesEnabled){

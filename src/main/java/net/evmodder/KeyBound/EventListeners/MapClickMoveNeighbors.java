@@ -178,7 +178,7 @@ public abstract class MapClickMoveNeighbors{
 
 		final int numClicks = clicks.size();
 		ongoingClickMove = true;
-		Main.inventoryUtils.executeClicks(clicks, /*canProceed=*/_0->true, ()->{
+		Main.clickUtils.executeClicks(clicks, /*canProceed=*/_0->true, ()->{
 			ongoingClickMove = false;
 			Main.LOGGER.info("MapMoveClick: DONE (clicks:"+numClicks+")");
 			player.sendMessage(Text.literal("MapMoveClick: DONE (clicks:"+numClicks+")"), true);

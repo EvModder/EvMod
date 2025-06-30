@@ -27,7 +27,6 @@ public final class KeybindMapMove{
 	private final boolean ALLOW_AIR_POCKETS;
 	private final long MOVE_OP_COOLDOWN = 250l;
 
-	private boolean ongoingMove;
 	private long lastMoveTs = 0;
 
 	private final boolean isFillerMap(ItemStack[] slots, ItemStack stack, World world){
@@ -41,7 +40,7 @@ public final class KeybindMapMove{
 	}
 
 	private final void moveMapArtToFromShulker(){
-		if(ongoingMove){Main.LOGGER.warn("MapMove cancelled: Already ongoing"); return;}
+		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapMove cancelled: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof HandledScreen hs)){/*Main.LOGGER.warn("MapMove cancelled: Not in ShulkerBoxScreen"); */return;}
@@ -136,12 +135,12 @@ public final class KeybindMapMove{
 			if((count == 2 || count == 3) && !isShiftClick){
 				clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // right-click: pickup half
 				if(numInShulk == 0){
-					if(Main.inventoryUtils.MAX_CLICKS >= 2) reserveClicks.put(clicks.peekLast(), 2);
+					if(Main.clickUtils.MAX_CLICKS >= 2) reserveClicks.put(clicks.peekLast(), 2);
 					while(!slots[j].isEmpty()) ++j;
 					clicks.add(new ClickEvent(j++, 0, SlotActionType.PICKUP)); //left-click: place all into next empty slot
 					continue;
 				}
-				else if(Main.inventoryUtils.MAX_CLICKS >= 3) reserveClicks.put(clicks.peekLast(), 3);
+				else if(Main.clickUtils.MAX_CLICKS >= 3) reserveClicks.put(clicks.peekLast(), 3);
 			}
 			clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE)); // shift-click: all in slot to shulker
 			if((count == 2 || count == 3) && !isShiftClick){
@@ -158,16 +157,16 @@ public final class KeybindMapMove{
 				if(count == 2){
 					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // right-click: pickup half
 					if(numInInv == 0){
-						if(Main.inventoryUtils.MAX_CLICKS >= 2) reserveClicks.put(clicks.peekLast(), 2);
+						if(Main.clickUtils.MAX_CLICKS >= 2) reserveClicks.put(clicks.peekLast(), 2);
 						while(!slots[j].isEmpty()) --j;
 						clicks.add(new ClickEvent(j--, 0, SlotActionType.PICKUP)); //left-click: place all into next empty slot
 						continue;
 					}
-					else if(Main.inventoryUtils.MAX_CLICKS >= 3) reserveClicks.put(clicks.peekLast(), 3);
+					else if(Main.clickUtils.MAX_CLICKS >= 3) reserveClicks.put(clicks.peekLast(), 3);
 				}
 				else{
 					clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // left-click: pickup all
-					if(Main.inventoryUtils.MAX_CLICKS >= 4) reserveClicks.put(clicks.peekLast(), 4);
+					if(Main.clickUtils.MAX_CLICKS >= 4) reserveClicks.put(clicks.peekLast(), 4);
 					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // right-click: place one
 				}
 			}
@@ -178,18 +177,15 @@ public final class KeybindMapMove{
 		}
 
 		//Main.LOGGER.info("MapMove: STARTED");
-		ongoingMove = true;
-		Main.inventoryUtils.executeClicks(clicks, c->{
+		Main.clickUtils.executeClicks(clicks, c->{
 					// Don't start cursor-pickup move operation if we can't complete it in 1 go
 					final Integer clicksNeeded = reserveClicks.get(c);
-					if(clicksNeeded == null || clicksNeeded <= Main.inventoryUtils.MAX_CLICKS - Main.inventoryUtils.addClick(null)) return true;
+					if(clicksNeeded == null || clicksNeeded <= Main.clickUtils.MAX_CLICKS - Main.clickUtils.addClick(null)) return true;
 					client.player.sendMessage(Text.literal("MapMove: Waiting for clicks...").withColor(KeybindMapCopy.WAITING_FOR_CLICKS_COLOR), true);
 					return false;
 				},
-				()->{
-					Main.LOGGER.info("MapMove: DONE!");
-					ongoingMove = false;
-				});
+				()->Main.LOGGER.info("MapMove: DONE!")
+		);
 	}
 
 	public KeybindMapMove(final boolean mapMoveIgnoreAirPockets){

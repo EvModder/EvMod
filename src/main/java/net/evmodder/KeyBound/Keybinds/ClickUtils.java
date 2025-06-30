@@ -59,8 +59,9 @@ public class ClickUtils{
 		return sumClicksInDuration;
 	}
 
-	private static boolean waitedForClicks, clickOpOngoing;
-	public void executeClicks(Queue<ClickEvent> clicks, Function<ClickEvent, Boolean> canProceed, Runnable onComplete){
+	private boolean waitedForClicks, clickOpOngoing;
+	public final boolean hasOngoingClicks(){return clickOpOngoing;}
+	public final void executeClicks(Queue<ClickEvent> clicks, Function<ClickEvent, Boolean> canProceed, Runnable onComplete){
 		if(clickOpOngoing){
 			Main.LOGGER.warn("executeClicks() already has an ongoing operation");
 			MinecraftClient.getInstance().player.sendMessage(
@@ -68,24 +69,25 @@ public class ClickUtils{
 			onComplete.run();
 			return;
 		}
-		waitedForClicks = false;
 		final int syncId = MinecraftClient.getInstance().player.currentScreenHandler.syncId;
 		if(clicks.isEmpty()){
 			Main.LOGGER.warn("executeClicks() called with an empty ClickEvent list");
 			onComplete.run();
 			return;
 		}
+		waitedForClicks = false;
+		clickOpOngoing = true;
 		new Timer().schedule(new TimerTask(){
 			@Override public void run(){
 				final MinecraftClient client = MinecraftClient.getInstance();
 				if(client.player == null){
 					Main.LOGGER.error("executeClicks() failed due to null player! num clicks in arr: "+sumClicksInDuration);
-					cancel(); onComplete.run(); return;
+					cancel(); clickOpOngoing=false; onComplete.run(); return;
 				}
 				if(client.player.currentScreenHandler.syncId != syncId){
 					Main.LOGGER.error("executeClicks() failed due to syncId changing mid-operation ("+syncId+" -> "+client.player.currentScreenHandler.syncId+")");
 					client.player.sendMessage(Text.literal("Clicks cancelled: container ID changed").withColor(SYNC_ID_CHANGED_COLOR), true);
-					cancel(); onComplete.run(); return;
+					cancel(); clickOpOngoing=false; onComplete.run(); return;
 				}
 				//final int availableClicks = MAX_CLICKS - addClick(null);
 				//for(int i=0; i<availableClicks; ++i){
@@ -102,7 +104,7 @@ public class ClickUtils{
 					}
 					if(clicks.isEmpty()){
 						if(waitedForClicks) client.player.sendMessage(Text.literal("Clicks done!"), true);
-						cancel(); onComplete.run(); return;
+						cancel(); clickOpOngoing=false; onComplete.run(); return;
 					}
 				}
 				client.player.sendMessage(Text.literal("Waiting for available clicks...").withColor(OUTTA_CLICKS_COLOR), true);
