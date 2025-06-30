@@ -84,9 +84,7 @@ public class CommandExportMapImg{
 			}
 			if(contents.hasNext()) source.sendError(Text.literal("HUH?! Leftover items in container iterator.. bug"));
 
-			final Text nameText = stack.getCustomName();
-			final String nameStr = nameText == null ? null : nameText.getLiteralString();
-			final String imgName = nameStr != null ? nameStr : stack.get(DataComponentTypes.MAP_ID).asString();
+			final String imgName = (stack.getCustomName() != null ? stack.getCustomName() : stack.getItemName()).getString()+" - slot"+i;
 
 			if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdir();
 			try{ImageIO.write(img, "png", new File(FileIO.DIR+MAP_EXPORT_DIR+imgName+".png"));}
