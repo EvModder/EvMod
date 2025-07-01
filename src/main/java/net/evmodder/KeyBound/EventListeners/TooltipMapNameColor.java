@@ -53,6 +53,13 @@ public final class TooltipMapNameColor{
 		if(state == null || MapRelationUtils.isFillerMap(state)) return false;
 		return !ItemFrameHighlightUpdater.isInItemFrame(MapGroupUtils.getIdForMapState(state));
 	}
+	private static final boolean hasDuplicateInSameGUI(ItemStack item, TooltipContext context){
+		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
+		if(id == null) return false;
+		MapState state = context.getMapState(id);
+		if(state == null || MapRelationUtils.isFillerMap(state)) return false;
+		return ContainerHighlightUpdater.duplicatesInContainer.contains(state);
+	}
 	private static final boolean isUnnamedMap(ItemStack item){
 		return item.getCustomName() == null && item.contains(DataComponentTypes.MAP_ID);
 	}
@@ -74,6 +81,9 @@ public final class TooltipMapNameColor{
 			if(recursiveMatch(item, context, TooltipMapNameColor::isUnlockedMap)){
 				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED).formatted(Formatting.BOLD)));
 			}
+			if(recursiveMatch(item, context, TooltipMapNameColor::hasDuplicateInSameGUI)){
+				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_MULTI_INV).formatted(Formatting.BOLD)));
+			}
 			// Don't add * if all maps in shulker are on display or none are only display, only if it's mixed
 			if(recursiveMatch(item, context, TooltipMapNameColor::isOnDisplayMap) && recursiveMatch(item, context, TooltipMapNameColor::isNotOnDisplayMap)){
 				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_IN_IFRAME).formatted(Formatting.BOLD)));
@@ -94,6 +104,7 @@ public final class TooltipMapNameColor{
 			if(isOnDisplayMap(item, context)) lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_IN_IFRAME)));
 		}
 		else if(isOnDisplayMap(item, context)) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_IN_IFRAME));
+		else if(hasDuplicateInSameGUI(item, context)) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_MULTI_INV));
 		else if(isUnnamedMap(item)) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNNAMED));
 	}
 }

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
@@ -23,6 +24,7 @@ import net.minecraft.util.Formatting;
 
 public class ContainerHighlightUpdater{
 	public static MutableText customTitle;
+	public static HashSet<MapState> duplicatesInContainer;
 
 	private static final boolean isNotInCurrentGroup(MapState state){
 		return MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
@@ -64,7 +66,9 @@ public class ContainerHighlightUpdater{
 		if(states.stream().anyMatch(ContainerHighlightUpdater::isOnDisplay) &&
 				states.stream().anyMatch(ContainerHighlightUpdater::isNotOnDisplay)) asterisks.add(Main.MAP_COLOR_IN_IFRAME);
 		if(items.stream().anyMatch(ContainerHighlightUpdater::isUnnamed)) asterisks.add(Main.MAP_COLOR_UNNAMED);
-		if(!states.stream().allMatch(new HashSet<>(states.size())::add)) asterisks.add(Main.MAP_COLOR_MULTI_INV); // Check duplicates within the container
+//		if(!states.stream().allMatch(new HashSet<>(states.size())::add)) asterisks.add(Main.MAP_COLOR_MULTI_INV); // Check duplicates within the container
+		duplicatesInContainer = new HashSet<>(states.stream().filter(Predicate.not(new HashSet<>(states.size())::add)).toList());
+		if(!duplicatesInContainer.isEmpty()) asterisks.add(Main.MAP_COLOR_MULTI_INV);
 
 		if(asterisks.isEmpty()){
 			customTitle = null;

@@ -90,7 +90,7 @@ public class Main implements ClientModInitializer{
 	public static int MAP_COLOR_UNNAMED = 15652823;
 	public static int MAP_COLOR_NOT_IN_GROUP = 706660;
 	public static int MAP_COLOR_IN_INV = 11862015, MAP_COLOR_IN_IFRAME = 10542300;//TODO: MAP_COLOR_IN_CONTAINER=11862015
-	public static int MAP_COLOR_MULTI_IFRAME = 11817190, MAP_COLOR_MULTI_INV = MAP_COLOR_MULTI_IFRAME;//TODO: separate colors?
+	public static int MAP_COLOR_MULTI_IFRAME = 11817190, MAP_COLOR_MULTI_INV = MAP_COLOR_MULTI_IFRAME;
 
 	public static double MAX_IFRAME_TRACKING_DIST_SQ;
 
@@ -202,7 +202,8 @@ public class Main implements ClientModInitializer{
 				case "map_highlight_color_ungrouped": MAP_COLOR_NOT_IN_GROUP = Integer.parseInt(value); break;
 				case "map_highlight_color_matches_inventory": MAP_COLOR_IN_INV = Integer.parseInt(value); break;
 				case "map_highlight_color_matches_itemframe": MAP_COLOR_IN_IFRAME = Integer.parseInt(value); break;
-				case "map_highlight_color_reused": MAP_COLOR_MULTI_INV = MAP_COLOR_MULTI_IFRAME = Integer.parseInt(value); break;
+				case "map_highlight_color_multi_itemframe": MAP_COLOR_MULTI_IFRAME = Integer.parseInt(value); break;
+				case "map_highlight_color_multi_inventory": MAP_COLOR_MULTI_INV = Integer.parseInt(value); break;
 				case "monocolor_maps_are_filler_items": skipMonoColorMaps = !value.equalsIgnoreCase("false"); break;
 				case "itemframe_tracking_distance": MAX_IFRAME_TRACKING_DIST_SQ = Double.parseDouble(value)*Double.parseDouble(value); break;
 				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
