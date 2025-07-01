@@ -41,6 +41,42 @@ public class CommandExportMapImg{
 	final int BORDER_1, BORDER_2, UPSCALE_TO;
 	final String MAP_EXPORT_DIR = "mapart_exports/";
 
+	// Matrix math from the internet:
+	private final void rotate90(byte[] matrix){
+		// Transpose the matrix
+		for(int i=0; i<128; ++i) for(int j=i+1; j<128; ++j){
+			byte temp = matrix[i*128+j];
+			matrix[i*128+j] = matrix[j*128+i];
+			matrix[j*128+i] = temp;
+		}
+		// Reverse each row
+		for(int i=0; i<128; ++i) for(int j=0; j<64; ++j){
+			byte temp = matrix[i*128+j];
+			matrix[i*128+j] = matrix[i*128+127-j];
+			matrix[i*128+127-j] = temp;
+		}
+	}
+	private final void rotate180(byte[] matrix){
+		// Reverse the rows
+		for(int i=0; i<64; ++i) for(int j=0; j<128; ++j){
+			byte temp = matrix[i*128+j];
+			matrix[i*128+j] = matrix[128*(127-i)+j];
+			matrix[128*(127-i)+j] = temp;
+		}
+		// Reverse each row
+		for(int i=0; i<128; ++i) for(int j=0; j<64; ++j){
+			byte temp = matrix[i*128+j];
+			matrix[i*128+j] = matrix[i*128+127-j];
+			matrix[i*128+127-j] = temp;
+		}
+	}
+	private final void rotate270(byte[] matrix){
+		rotate90(matrix);
+		rotate90(matrix);
+		rotate90(matrix);
+	}
+	// </Matrix math from the internet>
+
 	private void drawBorder(BufferedImage img){
 		final int border = 8;
 		int MAGIC = 128-border;
@@ -57,7 +93,7 @@ public class CommandExportMapImg{
 		}
 	}
 
-	private boolean genImgForMapsInInv(FabricClientCommandSource source){
+	private int genImgForMapsInInv(FabricClientCommandSource source){
 		MinecraftClient client = MinecraftClient.getInstance();
 		int numShulksSaved = 0;
 		/*invloop:*/for(int i=0; i<41; ++i){
@@ -92,40 +128,15 @@ public class CommandExportMapImg{
 			++numShulksSaved;
 		}
 		if(numShulksSaved > 0) source.sendFeedback(Text.literal("Exported "+numShulksSaved+" map shulk imgs to ./config/"+Main.MOD_ID+"/"+MAP_EXPORT_DIR));
-		return numShulksSaved > 0;
+		return numShulksSaved;
 	}
 
-	private int runCommandNoArg(final CommandContext<FabricClientCommandSource> ctx){
-		MinecraftClient client = MinecraftClient.getInstance();
-		Box everythingBox = Box.of(client.player.getPos(), RENDER_DIST*16, RENDER_DIST*16, RENDER_DIST*16);
-
-		final List<ItemFrameEntity> iFrames = client.world.getEntitiesByType(TypeFilter.instanceOf(ItemFrameEntity.class), everythingBox,
-				e -> e.getHeldItemStack().getItem() == Items.FILLED_MAP);
-
-		ItemFrameEntity targetIFrame = null;
-		double bestUh = 0;
-		final Vec3d vec3d = client.player.getRotationVec(1.0F).normalize();
-		for(ItemFrameEntity ife : iFrames){
-			if(!client.player.canSee(ife)) continue;
-			Vec3d vec3d2 = new Vec3d(ife.getX()-client.player.getX(), ife.getEyeY()-client.player.getEyeY(), ife.getZ()-client.player.getZ());
-			final double d = vec3d2.length();
-			vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d); // normalize
-			final double e = vec3d.dotProduct(vec3d2);
-			//e > 1.0d - 0.025d / d
-			final double uh = (1.0d - 0.1d/d) - e;
-			if(uh < bestUh){bestUh = uh; targetIFrame = ife;}
-		}
-		if(targetIFrame == null){
-			if(!genImgForMapsInInv(ctx.getSource())) ctx.getSource().sendError(Text.literal("No mapwall (in front of cursor) detected"));
-			return 1;
-		}
-
+	private boolean genImgForMapsInItemFrames(FabricClientCommandSource source, final List<ItemFrameEntity> iFrames, ItemFrameEntity targetIFrame){
 		HashMap<Vec3i, ItemFrameEntity> ifeLookup = new HashMap<>(iFrames.size());
 		final Direction facing = targetIFrame.getFacing();
 		iFrames.stream().filter(ife -> ife.getFacing() == facing).forEach(ife -> ifeLookup.put(ife.getBlockPos(), ife));
 
 		Vec3i targetPos = targetIFrame.getBlockPos();
-//		ctx.getSource().sendFeedback(Text.literal("Facing: "+facing));
 
 		final int tX = targetPos.getX(), tY = targetPos.getY(), tZ = targetPos.getZ();
 		int minX, minY, minZ, maxX, maxY, maxZ;
@@ -160,12 +171,12 @@ public class CommandExportMapImg{
 			case WEST: w=1+maxZ-minZ; for(int y=maxY; y>=minY; --y) for(int z=minZ; z<=maxZ; ++z) mapWall.add(new Vec3i(tX, y, z)); break;
 			default:
 				// UNREACHABLE
-				ctx.getSource().sendError(Text.literal("Invalid attached block distance"));
-				return 1;
+				source.sendError(Text.literal("Invalid attached block distance"));
+				return false;
 		}
 		final int h = mapWall.size()/w;
 
-		ctx.getSource().sendFeedback(Text.literal("Map wall size: "+w+"x"+h+" ("+mapWall.size()+")"));
+		source.sendFeedback(Text.literal("Map wall size: "+w+"x"+h+" ("+mapWall.size()+")"));
 		final int border = BLOCK_BORDER ? 8 : 0;
 		BufferedImage img = new BufferedImage(128*w+border*2, 128*h+border*2, BufferedImage.TYPE_INT_ARGB);
 		if(BLOCK_BORDER) drawBorder(img);
@@ -183,21 +194,21 @@ public class CommandExportMapImg{
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 			ItemFrameEntity ife = ifeLookup.get(mapWall.get(i*w+j));
 			if(ife == null){
-				ctx.getSource().sendError(Text.literal("Non-rectangular MapArt wall not yet supported"));
-				return 1;
+				source.sendError(Text.literal("Non-rectangular MapArt wall not yet supported"));
+				return false;
 			}
-			if(ife.getRotation() != 0 && ife.getRotation() != 4){ // 8 possible rotations, but only 4 for mapart
-				ctx.getSource().sendError(Text.literal("Rotated itemframes not yet supported ("
-						+ife.getBlockX()%1000+" "+ife.getBlockY()+" "+ife.getBlockZ()%1000+")"));
-				return 1;
+			final byte[] colors = FilledMapItem.getMapState(ife.getHeldItemStack(), source.getWorld()).colors;
+			switch(ife.getRotation()%4){
+				case 1: rotate90(colors); break;
+				case 2: rotate180(colors); break;
+				case 3: rotate270(colors); break;
 			}
-			final byte[] colors = FilledMapItem.getMapState(ife.getHeldItemStack(), client.world).colors;
 			final int xo = j*128+border, yo = i*128+border;
 			for(int x=0; x<128; ++x) for(int y=0; y<128; ++y) img.setRGB(xo+x, yo+y, MapColor.getRenderColor(colors[x + y*128]));
 		}
 		if(128*w < UPSCALE_TO || 128*h < UPSCALE_TO){
 			int s = 2; while(128*w*s < UPSCALE_TO || 128*h*s < UPSCALE_TO) ++s;
-			ctx.getSource().sendFeedback(Text.literal("Upscaling img: x"+s));
+			source.sendFeedback(Text.literal("Upscaling img: x"+s));
 			BufferedImage upscaledImg = new BufferedImage(128*w*s+(BLOCK_BORDER?s*2:0), 128*h*s+(BLOCK_BORDER?s*2:0), img.getType());
 			Graphics2D g2d = upscaledImg.createGraphics();
 			g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
@@ -214,8 +225,36 @@ public class CommandExportMapImg{
 		try{ImageIO.write(img, "png", new File(FileIO.DIR+MAP_EXPORT_DIR+imgName+".png"));}
 		catch(IOException e){e.printStackTrace();}
 
-		ctx.getSource().sendFeedback(Text.literal("Saved mapwall to ./config/"+Main.MOD_ID+"/"+MAP_EXPORT_DIR+imgName+".png"));
-		return 1;
+		source.sendFeedback(Text.literal("Saved mapwall to ./config/"+Main.MOD_ID+"/"+MAP_EXPORT_DIR+imgName+".png"));
+		return true;
+	}
+
+	private int runCommandNoArg(final CommandContext<FabricClientCommandSource> ctx){
+		MinecraftClient client = MinecraftClient.getInstance();
+		Box everythingBox = Box.of(client.player.getPos(), RENDER_DIST*16, RENDER_DIST*16, RENDER_DIST*16);
+
+		final List<ItemFrameEntity> iFrames = client.world.getEntitiesByType(TypeFilter.instanceOf(ItemFrameEntity.class), everythingBox,
+				e -> e.getHeldItemStack().getItem() == Items.FILLED_MAP);
+
+		ItemFrameEntity targetIFrame = null;
+		double bestUh = 0;
+		final Vec3d vec3d = client.player.getRotationVec(1.0F).normalize();
+		for(ItemFrameEntity ife : iFrames){
+			if(!client.player.canSee(ife)) continue;
+			Vec3d vec3d2 = new Vec3d(ife.getX()-client.player.getX(), ife.getEyeY()-client.player.getEyeY(), ife.getZ()-client.player.getZ());
+			final double d = vec3d2.length();
+			vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d); // normalize
+			final double e = vec3d.dotProduct(vec3d2);
+			//e > 1.0d - 0.025d / d
+			final double uh = (1.0d - 0.1d/d) - e;
+			if(uh < bestUh){bestUh = uh; targetIFrame = ife;}
+		}
+		if(targetIFrame == null){
+			int numSaved = genImgForMapsInInv(ctx.getSource());
+			if(numSaved == 0) ctx.getSource().sendError(Text.literal("No mapwall (in front of cursor) detected"));
+			return numSaved == 0 ? 1 : 0;
+		}
+		return genImgForMapsInItemFrames(ctx.getSource(), iFrames, targetIFrame) ? 0 : 1;
 	}
 	private int runCommandWithMapName(CommandContext<FabricClientCommandSource> ctx){
 		//final String mapName = ctx.getArgument("map_name", String.class);
