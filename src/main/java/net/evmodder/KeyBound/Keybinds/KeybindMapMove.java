@@ -77,6 +77,7 @@ public final class KeybindMapMove{
 		int numInShulk = 0, emptySlotsShulk = 0;
 		TreeSet<Integer> countsInShulk = new TreeSet<>();
 		HashMap<ItemStack, Integer> shulkCapacity = new HashMap<>();
+		boolean smallerSlotsAtStart = true;
 		for(int i=0; i<27; ++i){
 			ItemStack stack = slots[i];
 			if(stack.isEmpty()) ++emptySlotsShulk;
@@ -90,6 +91,7 @@ public final class KeybindMapMove{
 				++numInShulk;
 				final int count = slots[i].getCount();
 				countsInShulk.add(count);
+				if(count < countsInShulk.last()) smallerSlotsAtStart = false;
 				shulkCapacity.put(stack, shulkCapacity.getOrDefault(stack, 0)+(stack.getMaxCount()-count));
 
 				int space = invCapacity.getOrDefault(stack, 0);
@@ -119,9 +121,9 @@ public final class KeybindMapMove{
 
 		final boolean moveToShulk = numInShulk == 0 || cantMergeIntoInv > emptySlotsInv || (numInInv == numInShulk && cantMergeIntoShulk == 0);
 		final boolean isShiftClick = Screen.hasShiftDown();
-		final boolean selectiveMove = !isShiftClick && (moveToShulk
+		boolean selectiveMove = !isShiftClick && (moveToShulk
 				? (countsInInv.size() == 2 && cantMergeIntoShulk == 0)
-				: (countsInShulk.size() == 2 && (cantMergeIntoInv == 0 || numInInv == 0)));
+				: (countsInShulk.size() == 2 && smallerSlotsAtStart && (cantMergeIntoInv == 0 || numInInv == 0)));
 //		Main.LOGGER.info("MapMove: selectiveMove: "+selectiveMove);
 		client.player.sendMessage(Text.literal("MapMove: selectiveMove="+selectiveMove), true);
 
@@ -159,6 +161,7 @@ public final class KeybindMapMove{
 					if(numInInv == 0){
 						if(Main.clickUtils.MAX_CLICKS >= 2) reserveClicks.put(clicks.peekLast(), 2);
 						while(!slots[j].isEmpty()) --j;
+						if(j < 27) Main.LOGGER.error("MapMove: shulker -> shulker! (Should be unreachable)");
 						clicks.add(new ClickEvent(j--, 0, SlotActionType.PICKUP)); //left-click: place all into next empty slot
 						continue;
 					}

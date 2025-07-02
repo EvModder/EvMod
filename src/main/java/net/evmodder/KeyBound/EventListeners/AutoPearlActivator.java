@@ -76,7 +76,7 @@ public class AutoPearlActivator{
 			if(overlay) return;
 			//Main.LOGGER.info("GAME Message: "+msg.getString());
 			final String literal = msg.getString();
-			if(literal == null || !literal.matches("\\w+ whispers: "+trigger)) return;
+			if(literal == null || !literal.matches("\\w+ whispers: "+trigger+"( .*)?")) return;
 			Main.LOGGER.info("AutoPearlActivator: got whisper");
 
 			final String name = literal.substring(0, literal.indexOf(' '));

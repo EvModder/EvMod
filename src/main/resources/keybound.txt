@@ -27,7 +27,7 @@ mapart_group_command: true
 mapart_group_include_unlocked: true
 mapart_generate_img_command: true
 mapart_generate_img_upscale: true
-mapart_generate_img_border: true
+mapart_generate_img_border: false
 mapart_generate_img_border_color1: -14236 # Yellow
 mapart_generate_img_border_color2: 3288370 # Gray
 
@@ -39,11 +39,12 @@ map_highlight_in_hotbarhud: true
 map_highlight_in_itemframe: true
 map_highlight_in_container_name: true
 
-map_highlight_color_unlocked: 14692709 # Red
+map_highlight_color_unloaded: 13150930 # Light-Purple
+map_highlight_color_unlocked: 14692709 # Violet
 map_highlight_color_unnamed: 15652823 # Pink
 map_highlight_color_ungrouped: 706660 # Green
-map_highlight_color_matches_inventory: 11862015 # Teal
-map_highlight_color_matches_itemframe: 10542300 # Teal
+map_highlight_color_matches_inventory: 11862015 # Light-Teal
+map_highlight_color_matches_itemframe: 5614310 # Light-blue
 map_highlight_color_multi_itemframe: 11817190 # Purple
 map_highlight_color_multi_inventory: 11817190 # Purple
 

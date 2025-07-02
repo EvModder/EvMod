@@ -3,7 +3,10 @@ package net.evmodder.KeyBound;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.BundleContentsComponent;
+import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -17,6 +20,16 @@ public abstract class MapRelationUtils{
 		final byte[] colors = state.colors;
 		for(int i=1; i<colors.length; ++i) if(colors[i] != colors[i-1]) return false;
 		return true;
+	}
+
+	public static final Stream<ItemStack> getAllNestedItems(Stream<ItemStack> items){//TODO: Move to a generic MapUtils.class
+		return items.flatMap(s -> {
+			ContainerComponent container = s.get(DataComponentTypes.CONTAINER);
+			if(container != null) return getAllNestedItems(container.streamNonEmpty());
+			BundleContentsComponent bundle = s.get(DataComponentTypes.BUNDLE_CONTENTS);
+			if(bundle != null) getAllNestedItems(bundle.stream());
+			return Stream.of(s);
+		});
 	}
 
 	public record RelatedMapsData(int prefixLen, int suffixLen, List<Integer> slots){}
@@ -90,6 +103,7 @@ public abstract class MapRelationUtils{
 	}
 	public static final RelatedMapsData getRelatedMapsByName(ItemStack[] slots, String sourceName, final int count, final Boolean locked, final World world){
 		List<Integer> relatedMapSlots = new ArrayList<>();
+		if(sourceName == null) return new RelatedMapsData(-1, -1, relatedMapSlots);
 		int prefixLen = -1, suffixLen = -1;
 		//Main.LOGGER.info("MapAdjUtil: getRelatedMapsByName() called");
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){

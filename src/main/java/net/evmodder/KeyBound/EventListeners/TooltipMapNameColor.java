@@ -1,7 +1,10 @@
 package net.evmodder.KeyBound.EventListeners;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.function.BiFunction;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.function.Predicate;
 import net.minecraft.item.Item.TooltipContext;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
@@ -10,6 +13,7 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.MutableText;
@@ -17,94 +21,58 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 public final class TooltipMapNameColor{
-	private static final boolean isInInv(ItemStack item, TooltipContext context){
-		//if(MapGroupUtils.mapsInGroup == null) return false;
-		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
-		if(id == null) return false;
-		MapState state = context.getMapState(id);
-		if(state == null || MapRelationUtils.isFillerMap(state)) return false;
-		return InventoryHighlightUpdater.isInInventory(MapGroupUtils.getIdForMapState(state));
-	}
-	private static final boolean isNotInCurrentGroup(ItemStack item, TooltipContext context){
-		//if(MapGroupUtils.mapsInGroup == null) return false;
-		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
-		if(id == null) return false;
-		MapState state = context.getMapState(id);
-		if(state == null) return false;
-		return MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
-	}
-	private static final boolean isUnlockedMap(ItemStack item, TooltipContext context){
-		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
-		if(id == null) return false;
-		MapState state = context.getMapState(id);
-		return state != null && !state.locked;
-	}
-	private static final boolean isOnDisplayMap(ItemStack item, TooltipContext context){
-		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
-		if(id == null) return false;
-		MapState state = context.getMapState(id);
-		if(state == null || MapRelationUtils.isFillerMap(state)) return false;
-		return ItemFrameHighlightUpdater.isInItemFrame(MapGroupUtils.getIdForMapState(state));
-	}
-	private static final boolean isNotOnDisplayMap(ItemStack item, TooltipContext context){
-		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
-		if(id == null) return false;
-		MapState state = context.getMapState(id);
-		if(state == null || MapRelationUtils.isFillerMap(state)) return false;
-		return !ItemFrameHighlightUpdater.isInItemFrame(MapGroupUtils.getIdForMapState(state));
-	}
-	private static final boolean hasDuplicateInSameGUI(ItemStack item, TooltipContext context){
-		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
-		if(id == null) return false;
-		MapState state = context.getMapState(id);
-		if(state == null || MapRelationUtils.isFillerMap(state)) return false;
-		return ContainerHighlightUpdater.duplicatesInContainer.contains(state);
-	}
-	private static final boolean isUnnamedMap(ItemStack item){
-		return item.getCustomName() == null && item.contains(DataComponentTypes.MAP_ID);
-	}
-
-	private static final boolean recursiveMatch(ItemStack stack, TooltipContext context, BiFunction<ItemStack, TooltipContext, Boolean> matcher){
-		ContainerComponent container = stack.get(DataComponentTypes.CONTAINER);
-		return container == null ? matcher.apply(stack, context) : container.streamNonEmpty().anyMatch(s -> matcher.apply(stack,  context));
+	private static final boolean mixedOnDisplayAndNotOnDisplay(List<UUID> nonFillerIds){
+		return nonFillerIds.stream().anyMatch(ItemFrameHighlightUpdater::isInItemFrame)
+				&& nonFillerIds.stream().anyMatch(Predicate.not(ItemFrameHighlightUpdater::isInItemFrame));
+		//Equivalent to:
+//		return nonFillerIds.stream().map(ItemFrameHighlightUpdater::isInItemFrame).distinct().count() > 1;
 	}
 
 	public static final void tooltipColors(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
 		ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
 		if(container != null){
-			if(recursiveMatch(item, context, TooltipMapNameColor::isInInv)){
-				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_IN_INV).formatted(Formatting.BOLD)));
-			}
-			if(recursiveMatch(item, context, TooltipMapNameColor::isNotInCurrentGroup)){
-				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_NOT_IN_GROUP).formatted(Formatting.BOLD)));
-			}
-			if(recursiveMatch(item, context, TooltipMapNameColor::isUnlockedMap)){
-				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED).formatted(Formatting.BOLD)));
-			}
-			if(recursiveMatch(item, context, TooltipMapNameColor::hasDuplicateInSameGUI)){
-				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_MULTI_INV).formatted(Formatting.BOLD)));
-			}
-			// Don't add * if all maps in shulker are on display or none are only display, only if it's mixed
-			if(recursiveMatch(item, context, TooltipMapNameColor::isOnDisplayMap) && recursiveMatch(item, context, TooltipMapNameColor::isNotOnDisplayMap)){
-				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_IN_IFRAME).formatted(Formatting.BOLD)));
-			}
-			if(container.streamNonEmpty().anyMatch(i -> isUnnamedMap(i))){
-				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_UNNAMED).formatted(Formatting.BOLD)));
+			List<ItemStack> items = MapRelationUtils.getAllNestedItems(container.streamNonEmpty()).filter(i -> i.getItem() == Items.FILLED_MAP).toList();
+			if(items.isEmpty()) return;
+			final List<MapState> states = items.stream().map(i -> context.getMapState(i.get(DataComponentTypes.MAP_ID))).filter(Objects::nonNull).toList();
+			final List<UUID> nonFillerIds = states.stream().filter(Predicate.not(MapRelationUtils::isFillerMap)).map(MapGroupUtils::getIdForMapState).toList();
+			List<Integer> asterisks = new ArrayList<>(4);
+			if(nonFillerIds.stream().anyMatch(InventoryHighlightUpdater::isInInventory)) asterisks.add(Main.MAP_COLOR_IN_INV);
+			if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(Main.MAP_COLOR_NOT_IN_GROUP);
+			if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(Main.MAP_COLOR_UNLOCKED);
+			if(nonFillerIds.stream().anyMatch(ContainerHighlightUpdater::hasDuplicateInContainer)) asterisks.add(Main.MAP_COLOR_MULTI_INV);
+			if(items.size() > states.size()) asterisks.add(Main.MAP_COLOR_UNLOADED);
+			else if(mixedOnDisplayAndNotOnDisplay(nonFillerIds)) asterisks.add(Main.MAP_COLOR_IN_IFRAME);
+			if(items.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(Main.MAP_COLOR_UNNAMED);
+
+			if(!asterisks.isEmpty()){
+				asterisks = asterisks.stream().distinct().toList();
+				MutableText text = lines.removeFirst().copy();
+				asterisks.forEach(color -> text.append(Text.literal("*").withColor(color).formatted(Formatting.BOLD)));
+				lines.addFirst(text);
 			}
 			return;
 		}
-		if(isNotInCurrentGroup(item, context)){
+		if(item.getItem() != Items.FILLED_MAP) return;
+		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
+		MapState state = id == null ? null : context.getMapState(id);
+		if(state == null){
+			if(item.getCustomName() == null) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNNAMED));
+			return;
+		}
+		UUID colordsId = MapGroupUtils.getIdForMapState(state);
+		if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)){
 			MutableText text = lines.removeFirst().copy().withColor(Main.MAP_COLOR_NOT_IN_GROUP);
-			if(isUnlockedMap(item, context)) text = text.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
-			if(isOnDisplayMap(item, context)) text = text.append(Text.literal("*").withColor(Main.MAP_COLOR_IN_IFRAME));
+			if(!state.locked) text = text.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
+			if(ItemFrameHighlightUpdater.isInItemFrame(colordsId)) text.append(Text.literal("*").withColor(Main.MAP_COLOR_IN_IFRAME));
 			lines.addFirst(text);
 		}
-		else if(isUnlockedMap(item, context)){
-			lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNLOCKED));
-			if(isOnDisplayMap(item, context)) lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_IN_IFRAME)));
+		else if(!state.locked){
+			MutableText text = lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNLOCKED);
+			if(ItemFrameHighlightUpdater.isInItemFrame(colordsId)) text.append(Text.literal("*").withColor(Main.MAP_COLOR_IN_IFRAME));
+			lines.addFirst(text);
 		}
-		else if(isOnDisplayMap(item, context)) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_IN_IFRAME));
-		else if(hasDuplicateInSameGUI(item, context)) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_MULTI_INV));
-		else if(isUnnamedMap(item)) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNNAMED));
+		else if(ItemFrameHighlightUpdater.isInItemFrame(colordsId)) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_IN_IFRAME));
+		else if(ContainerHighlightUpdater.hasDuplicateInContainer(colordsId)) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_MULTI_INV));
+		else if(item.getCustomName() == null) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNNAMED));
 	}
 }

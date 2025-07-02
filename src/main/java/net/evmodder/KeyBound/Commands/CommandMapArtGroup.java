@@ -1,5 +1,6 @@
 package net.evmodder.KeyBound.Commands;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -23,7 +24,7 @@ import net.minecraft.text.Text;
 public class CommandMapArtGroup{
 	//TODO: /mapartgroup <set/create/compare> <g1> [g2]
 	private enum Command{SET, CREATE, APPEND, COMPARE, RESET};
-	private final String FILE_PATH = "mapart_group_";
+	private final String FILE_PATH = "mapart_groups/";
 	private final String CONFIRM = "confirm";
 	private HashSet<UUID> activeGroup;
 	private String activeGroupName;
@@ -101,6 +102,7 @@ public class CommandMapArtGroup{
 			for(UUID uuid : MapGroupUtils.getLoadedMaps(source.getWorld())) mapsInGroup.add(uuid);
 			final ByteBuffer bb = ByteBuffer.allocate(mapsInGroup.size()*16);
 			for(UUID uuid : mapsInGroup) bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
+			if(data[0] == null && FILE_PATH.endsWith("/") && !new File(FileIO.DIR+FILE_PATH).exists()) new File(FileIO.DIR+FILE_PATH).mkdir();
 			FileIO.saveFileBytes(FILE_PATH+groups[0], bb.array());
 			source.sendFeedback(Text.literal((data[0] == null ? "Created new" : "Expanded") + " group '"+groups[0]
 					+"' and set as active (ids: "+ (data[0] == null ? "" : (data[0].length/16)+" -> ") + mapsInGroup.size()+").")
@@ -128,13 +130,17 @@ public class CommandMapArtGroup{
 		int i = ctx.getInput().lastIndexOf(' ');
 		String lastArg = i == -1 ? "" : ctx.getInput().substring(i+1);
 		i = ctx.getInput().lastIndexOf(',');
-		final String lastArgLastPart, lastArgFirstPart;
-		if(i == -1){lastArgLastPart = lastArg; lastArgFirstPart = "";}
-		else{lastArgLastPart = lastArg.substring(i+1); lastArgFirstPart = lastArg.substring(0, i+1);}
+//		final String lastArgLastPart, lastArgFirstPart;
+//		if(i == -1){lastArgLastPart = lastArg; lastArgFirstPart = "";}
+//		else{lastArgLastPart = lastArg.substring(i+1); lastArgFirstPart = lastArg.substring(0, i+1);}
+		final String lastArgLastPart = i == -1 ? lastArg : lastArg.substring(i+1);
 		try{
-			Files.list(Paths.get(FileIO.DIR)).map(path -> path.getFileName().toString())
-			.filter(name -> name.startsWith(FILE_PATH) && name.startsWith(lastArgLastPart, FILE_PATH.length()))
-			.forEach(name -> builder.suggest(lastArgFirstPart+name.substring(FILE_PATH.length())));
+//			Files.list(Paths.get(FileIO.DIR)).map(path -> path.getFileName().toString())
+//			.filter(name -> name.startsWith(FILE_PATH) && name.startsWith(lastArgLastPart, FILE_PATH.length()))
+//			.forEach(name -> builder.suggest(lastArgFirstPart+name.substring(FILE_PATH.length())));
+			Files.list(Paths.get(FileIO.DIR+FILE_PATH)).map(path -> path.getFileName().toString())
+			.filter(name -> name.startsWith(lastArgLastPart))
+			.forEach(name -> builder.suggest(name));
 		}
 		catch(IOException e){e.printStackTrace(); return null;}
 		// Lock the suggestions after we've modified them.

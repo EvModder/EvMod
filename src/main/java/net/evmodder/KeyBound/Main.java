@@ -86,11 +86,12 @@ public class Main implements ClientModInitializer{
 	public static boolean mapartDb, mapartDbContact, totemShowTotalCount, skipMonoColorMaps;
 	public static long joinedServerTimestamp;
 
+	public static int MAP_COLOR_UNLOADED = 13150930;
 	public static int MAP_COLOR_UNLOCKED = 14692709;
 	public static int MAP_COLOR_UNNAMED = 15652823;
 	public static int MAP_COLOR_NOT_IN_GROUP = 706660;
-	public static int MAP_COLOR_IN_INV = 11862015, MAP_COLOR_IN_IFRAME = 10542300;//TODO: MAP_COLOR_IN_CONTAINER=11862015
-	public static int MAP_COLOR_MULTI_IFRAME = 11817190, MAP_COLOR_MULTI_INV = MAP_COLOR_MULTI_IFRAME;
+	public static int MAP_COLOR_IN_INV = 11862015, MAP_COLOR_IN_IFRAME = 5614310;//TODO: MAP_COLOR_IN_CONTAINER=11862015
+	public static int MAP_COLOR_MULTI_IFRAME = 11817190, MAP_COLOR_MULTI_INV = 11817190;
 
 	public static double MAX_IFRAME_TRACKING_DIST_SQ;
 
@@ -197,6 +198,7 @@ public class Main implements ClientModInitializer{
 				case "map_highlight_in_hotbarhud": mapHighlightHUD = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_in_itemframe": mapHighlightIFrame = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_in_container_name": mapHighlightHandledScreen = !value.equalsIgnoreCase("false"); break;
+				case "map_highlight_color_unloaded": MAP_COLOR_UNLOADED = Integer.parseInt(value); break;
 				case "map_highlight_color_unlocked": MAP_COLOR_UNLOCKED = Integer.parseInt(value); break;
 				case "map_highlight_color_unnamed": MAP_COLOR_UNNAMED = Integer.parseInt(value); break;
 				case "map_highlight_color_ungrouped": MAP_COLOR_NOT_IN_GROUP = Integer.parseInt(value); break;
@@ -266,7 +268,7 @@ public class Main implements ClientModInitializer{
 			ClientTickEvents.START_CLIENT_TICK.register(client -> {
 				InventoryHighlightUpdater.onUpdateTick(client);
 				ItemFrameHighlightUpdater.onUpdateTick(client);
-				if(mapHighlightHandledScreen) ContainerHighlightUpdater.onUpdateTick(client);
+				if(mapHighlightHandledScreen/* || mapHighlightTooltip*/) ContainerHighlightUpdater.onUpdateTick(client);
 			});
 		}
 
