@@ -24,10 +24,10 @@ public abstract class MapRelationUtils{
 
 	public static final Stream<ItemStack> getAllNestedItems(Stream<ItemStack> items){//TODO: Move to a generic MapUtils.class
 		return items.flatMap(s -> {
+			BundleContentsComponent contents = s.get(DataComponentTypes.BUNDLE_CONTENTS);
+			if(contents != null) getAllNestedItems(contents.stream());
 			ContainerComponent container = s.get(DataComponentTypes.CONTAINER);
 			if(container != null) return getAllNestedItems(container.streamNonEmpty());
-			BundleContentsComponent bundle = s.get(DataComponentTypes.BUNDLE_CONTENTS);
-			if(bundle != null) getAllNestedItems(bundle.stream());
 			return Stream.of(s);
 		});
 	}

@@ -13,7 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.map.MapState;
 
 public class InventoryHighlightUpdater{
-	private static int invHash;
+//	private static int invHash;
 	private static HashSet<UUID> inventoryMapGroup = new HashSet<>(), nestedInventoryMapGroup = new HashSet<>();
 	public static UUID currentlyBeingPlacedIntoItemFrame;
 
@@ -26,7 +26,7 @@ public class InventoryHighlightUpdater{
 
 	public static final void onUpdateTick(MinecraftClient client){
 		if(client.player == null || client.world == null || !client.player.isAlive()) return;
-		int newInvHash = inventoryMapGroup.size() * nestedInventoryMapGroup.size();
+//		int newInvHash = inventoryMapGroup.size() * nestedInventoryMapGroup.size();
 		inventoryMapGroup.clear();
 		nestedInventoryMapGroup.clear();
 		boolean mapPlaceStillOngoing = false;
@@ -40,14 +40,14 @@ public class InventoryHighlightUpdater{
 						.map(MapGroupUtils::getIdForMapState).toList();
 				if(!colorIds.isEmpty()){
 					nestedInventoryMapGroup.addAll(colorIds);
-					newInvHash += colorIds.hashCode();
+//					newInvHash += colorIds.hashCode();
 				}
 				continue;
 			}
 			final UUID colorsId = MapGroupUtils.getIdForMapState(state);
 			if(/*i == currentlyBeingPlacedIntoItemFrameSlot && */colorsId.equals(currentlyBeingPlacedIntoItemFrame)){mapPlaceStillOngoing = true; continue;}
 			inventoryMapGroup.add(colorsId);
-			newInvHash += colorsId.hashCode();
+//			newInvHash += colorsId.hashCode();
 		}
 		if(!mapPlaceStillOngoing){
 			currentlyBeingPlacedIntoItemFrame = null;
@@ -56,9 +56,9 @@ public class InventoryHighlightUpdater{
 //		else if(ItemFrameHighlightUpdater.isInItemFrame(currentlyBeingPlacedIntoItemFrame)){
 //			Main.LOGGER.info("MapGroupUtils: Aha, yes, map is placed in itemframe and yet still in inventory. Thanks Minecraft");
 //		}
-		if(newInvHash != invHash){
-			invHash = newInvHash;
-			ItemFrameHighlightUpdater.skipIFrameHasLabel.clear();
-		}
+//		if(newInvHash != invHash){
+//			invHash = newInvHash;
+//			ItemFrameHighlightUpdater.highlightedIFrames.clear();
+//		}
 	}
 }

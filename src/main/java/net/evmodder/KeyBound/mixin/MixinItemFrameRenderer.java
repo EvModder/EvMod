@@ -1,6 +1,5 @@
 package net.evmodder.KeyBound.mixin;
 
-import java.util.UUID;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -8,8 +7,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
 import net.evmodder.KeyBound.MapRelationUtils;
-import net.evmodder.KeyBound.EventListeners.InventoryHighlightUpdater;
 import net.evmodder.KeyBound.EventListeners.ItemFrameHighlightUpdater;
+import net.evmodder.KeyBound.EventListeners.ItemFrameHighlightUpdater.Highlight;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.ItemFrameEntityRenderer;
 import net.minecraft.entity.Entity;
@@ -44,13 +43,12 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(stack.isEmpty()) return;
 		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
 		if(state == null) return;
-		if(ItemFrameHighlightUpdater.skipIFrameHasLabel.contains(itemFrameEntity.getId())) return;
+		Highlight hl = ItemFrameHighlightUpdater.iFrameGetHighlight(itemFrameEntity.getId());
+		if(hl == null) return;
 
-		final boolean isInInv = InventoryHighlightUpdater.isInInventory(MapGroupUtils.getIdForMapState(state));
-		if(isInInv){cir.setReturnValue(true); return;} // Show this label even if not looking in general direction
+		if(hl == Highlight.INV_OR_NESTED_INV){cir.setReturnValue(true); return;} // Show this label even if not looking in general direction
 		if(!isLookngInGeneralDirection(itemFrameEntity)) return;
-		final boolean isNotInCurrGroup = MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
-		if(isNotInCurrGroup){cir.setReturnValue(true); return;} // Show this label even if no LOS and > 20 blocks away
+		if(hl == Highlight.NOT_IN_CURR_GROUP){cir.setReturnValue(true); return;} // Show this label even if no LOS and > 20 blocks away
 		if(squaredDistanceToCamera > 20*20 || !client.player.canSee(itemFrameEntity)) return;
 		cir.setReturnValue(true); // Show all other labels only if LOS and <= 20
 	}
@@ -60,25 +58,26 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 	public void getDisplayName_Mixin(T itemFrameEntity, CallbackInfoReturnable<Text> cir){
 		if(!Main.mapHighlightIFrame) return; // Feature is disabled
 		final ItemStack stack = itemFrameEntity.getHeldItemStack();
-		//Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")
 		if(stack == null || stack.isEmpty());
 		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
-		if(state == null) return;
-		final UUID colorsId = MapGroupUtils.getIdForMapState(state);
-		final boolean notInCurrGroup = MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
-		if(InventoryHighlightUpdater.isInInventory(colorsId) || InventoryHighlightUpdater.isNestedInInventory(colorsId)){
+		if(FilledMapItem.getMapState(stack, itemFrameEntity.getWorld()) == null) return;
+		Highlight hl = ItemFrameHighlightUpdater.iFrameGetHighlight(itemFrameEntity.getId());
+		if(hl == null) return;
+
+		if(hl == Highlight.INV_OR_NESTED_INV){
+			final boolean notInCurrGroup = MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
 			MutableText coloredName = stack.getName().copy().withColor(Main.MAP_COLOR_IN_INV);
 			if(notInCurrGroup) coloredName = coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_NOT_IN_GROUP));
 			if(!state.locked) coloredName = coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
 			cir.setReturnValue(coloredName);
 		}
-		else if(notInCurrGroup){
+		else if(hl == Highlight.NOT_IN_CURR_GROUP){
 			final MutableText coloredName = stack.getName().copy().withColor(Main.MAP_COLOR_NOT_IN_GROUP);
 			cir.setReturnValue(state.locked ? coloredName : coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED)));
 		}
 		else if(!state.locked) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_UNLOCKED));
 		else if(stack.getCustomName() == null) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_UNNAMED));
-		else if(ItemFrameHighlightUpdater.isHungMultiplePlaces(colorsId) && !MapRelationUtils.isFillerMap(state))
+		else if(hl == Highlight.MULTI_HUNG && !MapRelationUtils.isFillerMap(state))
 			cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_MULTI_IFRAME));
 	}
 }

@@ -96,7 +96,7 @@ public final class KeybindMapCopy{
 		//PlayerScreenHandler.CRAFTING_INPUT_END=5, CraftingScreenHandler.INPUT_END=10
 		//PlayerScreenHandler.HOTBAR_START=36, CraftingScreenHandler.HOTBAR_START=37
 		final int INPUT_START = 1, INPUT_END = isCrafter ? 10 : 5;
-		final int INV_START = isCrafter ? 10 : 9, INV_END = isCrafter ? 37 : 36;
+		final int INV_START = isCrafter ? 10 : 9;
 		final int HOTBAR_START = isCrafter ? 37 : 36, HOTBAR_END = isCrafter ? 46 : 45;
 
 		// Ensure crafting 2x2 (or 3x3) is clear or has 1 slot with blank_maps
@@ -136,7 +136,7 @@ public final class KeybindMapCopy{
 //		final long numSlotsToCopy = IntStream.range(INV_START, HOTBAR_END)
 //				.filter(i -> slots[i].getItem() == Items.FILLED_MAP && slots[i].getCount() == minMapCount).count();
 		int numSlotsToCopy = 0;
-		for(int i=INV_START; i<INV_END; ++i) if(slots[i].getItem() == Items.FILLED_MAP && slots[i].getCount() == minMapCount) ++numSlotsToCopy;
+		for(int i=INV_START; i<HOTBAR_END; ++i) if(slots[i].getItem() == Items.FILLED_MAP && slots[i].getCount() == minMapCount) ++numSlotsToCopy;
 
 		// Verify we have at least SOME empty maps for copying
 		int lastEmptyMapSlot = -1;

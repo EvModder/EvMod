@@ -3,7 +3,6 @@ package net.evmodder.KeyBound;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.UUID;
-import net.evmodder.KeyBound.EventListeners.ItemFrameHighlightUpdater;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.map.MapState;
@@ -36,7 +35,7 @@ public final class MapGroupUtils{
 	}
 	public static final void setCurrentGroup(HashSet<UUID> newGroup){
 		currentMapGroup = newGroup;
-		ItemFrameHighlightUpdater.skipIFrameHasLabel.clear();
+//		ItemFrameHighlightUpdater.highlightedIFrames.clear();
 	}
 	public static final boolean isMapNotInCurrentGroup(final UUID colorsUUID){
 		return currentMapGroup != null && !currentMapGroup.contains(colorsUUID);

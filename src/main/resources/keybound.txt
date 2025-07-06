@@ -51,8 +51,8 @@ map_highlight_color_multi_inventory: 11817190 # Purple
 # Makes most features ignore mono-color maps (This is a better trust me)
 monocolor_maps_are_filler_items: true
 
-# 0 or - for infinite dist (faster). Requires 'map_highlight_in_itemframe:true'
-itemframe_tracking_distance: -1
+# <= 0 for infinite dist (faster). Requires 'map_highlight_in_itemframe:true'
+itemframe_tracking_distance: 0
 
 #========== Added Visuals ==========#
 totem_total_count: true
