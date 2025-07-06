@@ -67,8 +67,10 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(hl == Highlight.INV_OR_NESTED_INV){
 			final boolean notInCurrGroup = MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
 			MutableText coloredName = stack.getName().copy().withColor(Main.MAP_COLOR_IN_INV);
-			if(notInCurrGroup) coloredName = coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_NOT_IN_GROUP));
-			if(!state.locked) coloredName = coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
+			if(notInCurrGroup) coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_NOT_IN_GROUP));
+			if(!state.locked) coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
+			if(ItemFrameHighlightUpdater.isHungMultiplePlaces(MapGroupUtils.getIdForMapState(state)))
+				coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_MULTI_IFRAME));
 			cir.setReturnValue(coloredName);
 		}
 		else if(hl == Highlight.NOT_IN_CURR_GROUP){
@@ -77,7 +79,11 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		}
 		else if(!state.locked) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_UNLOCKED));
 		else if(stack.getCustomName() == null) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_UNNAMED));
-		else if(hl == Highlight.MULTI_HUNG && !MapRelationUtils.isFillerMap(state))
-			cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_MULTI_IFRAME));
+		else if(hl == Highlight.MULTI_HUNG){
+			if(Main.skipMonoColorMaps && MapRelationUtils.isMonoColor(state.colors)){
+				cir.setReturnValue(stack.getName().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_MULTI_IFRAME)));
+			}
+			else cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_MULTI_IFRAME));
+		}
 	}
 }

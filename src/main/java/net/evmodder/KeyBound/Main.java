@@ -83,7 +83,7 @@ public class Main implements ClientModInitializer{
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
 	public static boolean rcHUD, mapHighlightHUD, mapHighlightIFrame, mapHighlightHandledScreen;
-	public static boolean mapartDb, mapartDbContact, totemShowTotalCount, skipMonoColorMaps;
+	public static boolean mapartDb, mapartDbContact, totemShowTotalCount, skipTransparentMaps, skipMonoColorMaps;
 	public static long joinedServerTimestamp;
 
 	public static int MAP_COLOR_UNLOADED = 13150930;
@@ -206,7 +206,8 @@ public class Main implements ClientModInitializer{
 				case "map_highlight_color_matches_itemframe": MAP_COLOR_IN_IFRAME = Integer.parseInt(value); break;
 				case "map_highlight_color_multi_itemframe": MAP_COLOR_MULTI_IFRAME = Integer.parseInt(value); break;
 				case "map_highlight_color_multi_inventory": MAP_COLOR_MULTI_INV = Integer.parseInt(value); break;
-				case "monocolor_maps_are_filler_items": skipMonoColorMaps = !value.equalsIgnoreCase("false"); break;
+				case "fully_transparent_map_is_filler_item": skipTransparentMaps = !value.equalsIgnoreCase("false"); break;
+				case "highlight_duplicate_monocolor_maps": skipMonoColorMaps = value.equalsIgnoreCase("false"); break;
 				case "itemframe_tracking_distance": MAX_IFRAME_TRACKING_DIST_SQ = Double.parseDouble(value)*Double.parseDouble(value); break;
 				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.copy": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;

@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.UUID;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
-import net.evmodder.KeyBound.MapRelationUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.FilledMapItem;
@@ -21,14 +20,14 @@ public class ItemFrameHighlightUpdater{
 	public enum Highlight{INV_OR_NESTED_INV, NOT_IN_CURR_GROUP, MULTI_HUNG, UNLOCKED_OR_UNNAMED};
 	private static final HashMap<Integer, Highlight> highlightedIFrames = new HashMap<>();
 
-	/*public static final boolean isHungMultiplePlaces(UUID colorsId){
+	public static final boolean isHungMultiplePlaces(UUID colorsId){
 		final var l = iFrameMapGroup.get(colorsId);
 		if(l != null && Main.MAX_IFRAME_TRACKING_DIST_SQ > 0){
 			l.removeIf(xyzd -> MinecraftClient.getInstance().player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > Main.MAX_IFRAME_TRACKING_DIST_SQ);
 			if(l.size() == 0) iFrameMapGroup.remove(colorsId);
 		}
 		return l != null && l.size() > 1;
-	}*/
+	}
 
 	public static final boolean isInItemFrame(final UUID colorsId){
 		final var l = iFrameMapGroup.get(colorsId);
@@ -65,7 +64,7 @@ public class ItemFrameHighlightUpdater{
 		final HashSet<XYZD> locs = iFrameMapGroup.get(colorsId);
 		final boolean isMultiHung;
 		if(locs == null){iFrameMapGroup.put(colorsId, new HashSet<>(List.of(xyzd))); isMultiHung = false;}
-		else{locs.add(xyzd); isMultiHung = locs.size() > 1 && !MapRelationUtils.isFillerMap(state);}
+		else{locs.add(xyzd); isMultiHung = locs.size() > 1;}
 
 		if(InventoryHighlightUpdater.isInInventory(colorsId) || InventoryHighlightUpdater.isNestedInInventory(colorsId))
 			highlightedIFrames.put(ife.getId(), Highlight.INV_OR_NESTED_INV);
@@ -75,6 +74,8 @@ public class ItemFrameHighlightUpdater{
 			highlightedIFrames.put(ife.getId(), Highlight.MULTI_HUNG);
 		else if(!state.locked || stack.getCustomName() == null)
 			highlightedIFrames.put(ife.getId(), Highlight.UNLOCKED_OR_UNNAMED);
+		else
+			highlightedIFrames.remove(ife.getId());
 	}
 	public static final void onUpdateTick(MinecraftClient client){
 		if(client.world != null) client.world.getEntities().forEach(e -> {if(e instanceof ItemFrameEntity ife) updateItemFrameEntity(client, ife);});

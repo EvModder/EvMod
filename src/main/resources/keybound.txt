@@ -48,8 +48,9 @@ map_highlight_color_matches_itemframe: 5614310 # Light-blue
 map_highlight_color_multi_itemframe: 11817190 # Purple
 map_highlight_color_multi_inventory: 11817190 # Purple
 
-# Makes most features ignore mono-color maps (This is a better trust me)
-monocolor_maps_are_filler_items: true
+# Makes most features ignore fully-transparent maps (A really useful filler item)
+fully_transparent_map_is_filler_item: true
+highlight_duplicate_monocolor_maps: false
 
 # <= 0 for infinite dist (faster). Requires 'map_highlight_in_itemframe:true'
 itemframe_tracking_distance: 0

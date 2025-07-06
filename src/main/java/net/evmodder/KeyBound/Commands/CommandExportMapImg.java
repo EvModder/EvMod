@@ -180,17 +180,6 @@ public class CommandExportMapImg{
 		final int border = BLOCK_BORDER ? 8 : 0;
 		BufferedImage img = new BufferedImage(128*w+border*2, 128*h+border*2, BufferedImage.TYPE_INT_ARGB);
 		if(BLOCK_BORDER) drawBorder(img);
-//			int MAGIC = 128-border;
-//			int symW = w & 1, symH = h&1;
-//			for(int x=0; x<img.getWidth(); ++x) for(int i=0; i<border; ++i){
-//				img.setRGB(x, i, (((x+MAGIC)/128) & 1) == 1 ? BORDER_1 : BORDER_2);
-//				img.setRGB(x, img.getHeight()-1-i, (((x+MAGIC)/128) & 1) == symH ? BORDER_1 : BORDER_2);
-//			}
-//			for(int y=0; y<img.getHeight(); ++y) for(int i=0; i<border; ++i){
-//				img.setRGB(i, y, (((y+MAGIC)/128) & 1) == 1 ? BORDER_1 : BORDER_2);
-//				img.setRGB(img.getWidth()-1-i, y, (((y+MAGIC)/128) & 1) == symW ? BORDER_1 : BORDER_2);
-//			}
-//		}
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 			ItemFrameEntity ife = ifeLookup.get(mapWall.get(i*w+j));
 			if(ife == null){
@@ -259,7 +248,7 @@ public class CommandExportMapImg{
 	private int runCommandWithMapName(CommandContext<FabricClientCommandSource> ctx){
 		//final String mapName = ctx.getArgument("map_name", String.class);
 		//TODO: get map by name (or * to download all)
-		ctx.getSource().sendError(Text.literal("This version of the command is not yet implemented"));
+		ctx.getSource().sendError(Text.literal("This version of the command is not yet implemented (try without a param)"));
 		return 1;
 	}
 

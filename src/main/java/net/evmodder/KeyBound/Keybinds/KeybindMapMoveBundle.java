@@ -33,8 +33,9 @@ public final class KeybindMapMoveBundle{
 	//enum BundleSelectionMode{FIRST, LAST, MOST_FULL_butNOT_FULL, MOST_EMPTY_butNOT_EMPTY};
 
 	private final boolean isFillerMap(ItemStack[] slots, ItemStack stack, World world){
+		if(!Main.skipTransparentMaps) return false;
 		final MapState state = FilledMapItem.getMapState(stack, world);
-		if(!MapRelationUtils.isFillerMap(state)) return false;
+		if(state == null || !MapRelationUtils.isFullyTransparent(state.colors)) return false;
 		if(stack.getCustomName() == null) return true;
 		final String name = stack.getCustomName().getLiteralString();
 		if(name == null) return true;
