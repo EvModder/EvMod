@@ -14,11 +14,12 @@ import net.minecraft.item.map.MapState;
 import net.minecraft.world.World;
 
 public abstract class MapRelationUtils{
-	public static final boolean isFullyTransparent(final byte[] colors){//TODO: Move to a generic MapUtils.class
+	public static final boolean isTransparentOrStone(final byte[] colors){//TODO: Move to a generic MapUtils.class
 		// This is faster apparently (less branching beats short-circuit)
 		byte anyColor = 0;
 		for(byte b : colors) anyColor |= b;
-		return anyColor == 0;
+		return anyColor == 0 || anyColor == 45;//11*4+1 = flat stone
+		
 	}
 	public static final boolean isMonoColor(final byte[] colors){//TODO: Move to a generic MapUtils.class
 		for(int i=1; i<colors.length; ++i) if(colors[i] != colors[i-1]) return false;

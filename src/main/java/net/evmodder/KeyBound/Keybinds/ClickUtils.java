@@ -108,8 +108,8 @@ public class ClickUtils{
 							cancel(); clickOpOngoing=false; onComplete.run(); return;
 						}
 					}
-					client.player.sendMessage(Text.literal("Waiting for available clicks...").withColor(OUTTA_CLICKS_COLOR), true);
 					waitedForClicks = true;
+					client.player.sendMessage(Text.literal("Waiting for available clicks...").withColor(OUTTA_CLICKS_COLOR), true);
 				});
 			}
 		}, 1l, 51l);

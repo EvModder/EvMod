@@ -44,9 +44,9 @@ public class ContainerHighlightUpdater{
 	}
 
 	public static final void onUpdateTick(MinecraftClient client){
+		customTitle = null;
 		if(client.player == null || client.world == null || !client.player.isAlive()) return;
 		if(client.currentScreen == null || !(client.currentScreen instanceof HandledScreen hs)) return;
-		/*if(syncId != hs.getScreenHandler().syncId) */customTitle = null;
 		if(client.currentScreen instanceof AnvilScreen ||
 			client.currentScreen instanceof CraftingScreen ||
 			client.currentScreen instanceof CartographyTableScreen) return; // These get false-flagged for "duplicate map in container" with i/o slots
@@ -76,6 +76,5 @@ public class ContainerHighlightUpdater{
 			customTitle = hs.getTitle().copy();
 			asterisks.forEach(color -> customTitle.append(Text.literal("*").withColor(color).formatted(Formatting.BOLD)));
 		}
-//		else customTitle = null;
 	}
 }

@@ -5,9 +5,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -28,44 +31,102 @@ public class CommandMapArtGroup{
 	private final String CONFIRM = "confirm";
 	private HashSet<UUID> activeGroup;
 	private String activeGroupName;
-	private int ERROR_COLOR = 16733525, CREATE_COLOR = 5635925, DONE_COLOR = 16755200;
+	private final int ERROR_COLOR = 16733525, CREATE_COLOR = 5635925, DONE_COLOR = 16755200;
 
-	private int runCompareCommand(final FabricClientCommandSource source, final String[] groups, final String[] groups2){
-		if(groups2 == null || groups2.length == 0){
+	public final HashSet<UUID> getGroupIdsOrSendError(final FabricClientCommandSource source, final String... groups){
+		final byte[][] data = new byte[groups.length][];
+		for(int i=0; i<groups.length; ++i) data[i] = FileIO.loadFileBytes(FILE_PATH+groups[i]);
+
+		final String notFoundGroups = IntStream.range(0, groups.length).filter(i -> data[i] == null).mapToObj(i -> groups[i]).collect(Collectors.joining(","));
+		if(!notFoundGroups.isEmpty()){
+			source.sendError(Text.literal("MapArtGroup file not found: "+FileIO.DIR+FILE_PATH+notFoundGroups).copy().withColor(ERROR_COLOR));
+			return null;
+		}
+		final int[] numIds = new int[groups.length];
+		int totalIds = 0;
+		for(int i=0; i<groups.length; ++i) totalIds += (numIds[i] = data[i].length/16);
+		final String corruptedGroups = IntStream.range(0, groups.length).filter(i -> numIds[i]==0 || numIds[i]*16 != data[i].length)
+				.mapToObj(i -> groups[i]).collect(Collectors.joining(","));
+		if(!corruptedGroups.isEmpty()){
+			source.sendError(Text.literal("MapArtGroup file corrupted/unrecognized: "+corruptedGroups).copy().withColor(ERROR_COLOR));
+			return null;
+		}
+		HashSet<UUID> colorIds = new HashSet<>(totalIds);
+		for(int i=0; i<groups.length; ++i){
+			final ByteBuffer bb = ByteBuffer.wrap(data[i]);
+			for(int j=0; j<numIds[i]; ++j) colorIds.add(new UUID(bb.getLong(), bb.getLong()));
+		}
+		return colorIds;
+	}
+
+	private int runCompareCommand(final FabricClientCommandSource source, final String[] group1, final String[] group2){
+		if(group2 == null || group2.length == 0){
 			source.sendError(Text.literal("Specify a 2nd group to compare against").copy().withColor(ERROR_COLOR));
 			return 1;
 		}
-		final byte[] data1 = FileIO.loadFileBytes(FILE_PATH+groups[0]);
-		if(data1 == null){
-			source.sendError(Text.literal("MapArtGroup not found: "+FileIO.DIR+FILE_PATH+groups[0]).copy().withColor(ERROR_COLOR));
+		HashSet<UUID> colorIds1 = getGroupIdsOrSendError(source, group1);
+		if(colorIds1 == null) return 1;
+		HashSet<UUID> colorIds2 = getGroupIdsOrSendError(source, group2);
+		if(colorIds2 == null) return 1;
+
+		List<UUID> in1Not2 = colorIds1.stream().filter(Predicate.not(colorIds2::contains)).toList();
+		List<UUID> in2Not1 = colorIds2.stream().filter(Predicate.not(colorIds1::contains)).toList();
+
+		String groupName1 = Arrays.stream(group1).collect(Collectors.joining(","));
+		String groupName2 = Arrays.stream(group2).collect(Collectors.joining(","));
+
+		if(in1Not2.isEmpty() && in2Not1.isEmpty()){
+			source.sendFeedback(Text.literal("MapArtGroups "+groupName1+" and "+groupName2+" are identical").copy().withColor(DONE_COLOR));
 			return 1;
 		}
-		final byte[] data2 = FileIO.loadFileBytes(FILE_PATH+groups2[0]);
-		if(data2 == null){
-			source.sendError(Text.literal("MapArtGroup not found: "+FileIO.DIR+FILE_PATH+groups2[0]).copy().withColor(ERROR_COLOR));
-			return 1;
+		if(!in1Not2.isEmpty()){
+			final ByteBuffer bb1 = ByteBuffer.allocate(in1Not2.size()*16);
+			for(UUID uuid : in1Not2) bb1.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
+			final String in1Not2Name = "in_"+groupName1+"_NOT_IN_"+groupName2;
+			FileIO.saveFileBytes(FILE_PATH+in1Not2Name, bb1.array());
+			if(in2Not1.isEmpty()){
+				MapGroupUtils.setCurrentGroup(activeGroup = new HashSet<>(in1Not2));
+				activeGroupName = in1Not2Name;
+				source.sendFeedback(Text.literal("Created group '"+in1Not2Name+"' and set as active (ids: "+in1Not2.size()+")").copy().withColor(CREATE_COLOR));
+				return 1;
+			}
 		}
-		//TODO: implement compare functionality
+		if(!in2Not1.isEmpty()){
+			final ByteBuffer bb2 = ByteBuffer.allocate(in2Not1.size()*16);
+			for(UUID uuid : in2Not1) bb2.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
+			final String in2Not1Name = "in_"+groupName2+"_NOT_IN_"+groupName1;
+			FileIO.saveFileBytes(FILE_PATH+in2Not1Name, bb2.array());
+			if(in1Not2.isEmpty()){
+				MapGroupUtils.setCurrentGroup(activeGroup = new HashSet<>(in2Not1));
+				activeGroupName = in2Not1Name;
+				source.sendFeedback(Text.literal("Created group '"+in2Not1Name+"' and set as active (ids: "+in2Not1.size()+")").copy().withColor(CREATE_COLOR));
+				return 1;
+			}
+		}
+		HashSet<UUID> merged = new HashSet<UUID>(in1Not2.size()+in2Not1.size());
+		merged.addAll(in1Not2);
+		merged.addAll(in2Not1);
+		assert merged.size() == in1Not2.size() + in2Not1.size();
+		MapGroupUtils.setCurrentGroup(activeGroup = merged);
+		activeGroupName = "sym_diff_"+groupName1+"_and_"+groupName2; // Symmetric Difference
+		source.sendFeedback(Text.literal("Using Symmetric-Difference as active group "
+				+ "(ids: "+in1Not2.size()+" + "+in2Not1.size()+" = "+merged.size()+")").copy().withColor(CREATE_COLOR));
 		return 1;
 	}
 	private int runCommand(final FabricClientCommandSource source, final Command cmd, final String[] groups, final String[] groups2){
 		assert groups.length > 0;
 		if(cmd == Command.COMPARE) return runCompareCommand(source, groups, groups2);
 
-		final byte[][] data = new byte[groups.length][];
-		for(int i=0; i<groups.length; ++i) data[i] = FileIO.loadFileBytes(FILE_PATH+groups[i]);
+//		final byte[][] data = new byte[groups.length][];
+//		for(int i=0; i<groups.length; ++i) data[i] = FileIO.loadFileBytes(FILE_PATH+groups[i]);
 
-		final String notFoundGroups = IntStream.range(0, groups.length).filter(i -> data[i] == null).mapToObj(i -> groups[i])
-				.collect(Collectors.joining(","));
-		if(!notFoundGroups.isEmpty() && cmd != Command.CREATE){
-			source.sendError(Text.literal("MapArtGroup not found: "+FileIO.DIR+FILE_PATH+notFoundGroups).copy().withColor(ERROR_COLOR));
-			return 1;
-		}
+		HashSet<UUID> mapsInGroup = cmd == Command.CREATE ? new HashSet<>() : getGroupIdsOrSendError(source, groups);
+		if(mapsInGroup == null) return 1;
 		if(groups.length != 1 && (cmd == Command.CREATE || cmd == Command.APPEND)){
 			source.sendError(Text.literal("Command requires a single MapArtGroup name (no commas)").copy().withColor(ERROR_COLOR));
 			return 1;
 		}
-		if(data[0] != null && cmd == Command.CREATE && !CONFIRM.equalsIgnoreCase(groups[0])){
+		if(cmd == Command.CREATE && !CONFIRM.equalsIgnoreCase(groups[0]) && new File(FileIO.DIR+FILE_PATH+groups[0]).exists()){
 			source.sendError(Text.literal("MapArtGroup '"+groups[0]+"' already exists!").copy().withColor(ERROR_COLOR));
 			source.sendFeedback(Text.literal("To overwrite it, add 'confirm' to the end of the command"));
 			return 1;
@@ -73,18 +134,6 @@ public class CommandMapArtGroup{
 		if(groups2 != null && (cmd != Command.CREATE || !CONFIRM.equalsIgnoreCase(groups2[0]))){
 			source.sendError(Text.literal("Too many arguments provided").copy().withColor(ERROR_COLOR));
 			return 1;
-		}
-		HashSet<UUID> mapsInGroup = new HashSet<>();
-		if(cmd != Command.CREATE){
-			for(int i=0; i<data.length; ++i){
-				final int numIdsInFile = data[i].length / 16;
-				if(numIdsInFile*16 != data[i].length || numIdsInFile == 0){
-					source.sendError(Text.literal("Corrupted/unrecognized map group file").copy().withColor(ERROR_COLOR));
-					return 1;
-				}
-				final ByteBuffer bb = ByteBuffer.wrap(data[i]);
-				for(int _0=0; _0<numIdsInFile; ++_0) mapsInGroup.add(new UUID(bb.getLong(), bb.getLong()));
-			}
 		}
 		final String newActiveGroup = String.join(",", groups);
 		if(cmd == Command.CREATE || cmd == Command.APPEND){
@@ -102,10 +151,10 @@ public class CommandMapArtGroup{
 			for(UUID uuid : MapGroupUtils.getLoadedMaps(source.getWorld())) mapsInGroup.add(uuid);
 			final ByteBuffer bb = ByteBuffer.allocate(mapsInGroup.size()*16);
 			for(UUID uuid : mapsInGroup) bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
-			if(data[0] == null && FILE_PATH.endsWith("/") && !new File(FileIO.DIR+FILE_PATH).exists()) new File(FileIO.DIR+FILE_PATH).mkdir();
+			if(FILE_PATH.endsWith("/") && !new File(FileIO.DIR+FILE_PATH).exists()) new File(FileIO.DIR+FILE_PATH).mkdir();
 			FileIO.saveFileBytes(FILE_PATH+groups[0], bb.array());
-			source.sendFeedback(Text.literal((data[0] == null ? "Created new" : "Expanded") + " group '"+groups[0]
-					+"' and set as active (ids: "+ (data[0] == null ? "" : (data[0].length/16)+" -> ") + mapsInGroup.size()+").")
+			source.sendFeedback(Text.literal((cmd == Command.CREATE ? "Created new" : "Expanded") + " group '"+groups[0]
+					+"' and set as active (ids: "+ (oldSize>0 ? "" : oldSize+" -> ") + mapsInGroup.size()+").")
 					.copy().withColor(CREATE_COLOR));
 		}
 		else if(newActiveGroup.equals(activeGroupName)){
