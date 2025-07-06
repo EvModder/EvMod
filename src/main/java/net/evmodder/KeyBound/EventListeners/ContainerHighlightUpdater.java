@@ -26,7 +26,7 @@ import net.minecraft.util.Formatting;
 public class ContainerHighlightUpdater{
 	public static MutableText customTitle;
 //	private static int syncId;
-	private static HashSet<UUID> duplicatesInContainer = new HashSet<>();
+	private static HashSet<UUID> duplicatesInContainer = new HashSet<>(), uniqueMapIds = new HashSet<>();
 
 	public static boolean hasDuplicateInContainer(UUID colorsId){
 		return duplicatesInContainer.contains(colorsId);
@@ -54,7 +54,7 @@ public class ContainerHighlightUpdater{
 		final List<ItemStack> items = getAllItemsInContainer(hs.getScreenHandler().slots);
 		final List<MapState> states = items.stream().map(i -> FilledMapItem.getMapState(i, client.world)).filter(Objects::nonNull).toList();
 		final List<UUID> nonTransparentIds = (!Main.skipTransparentMaps ? states.stream() :
-			states.stream().filter(s -> !MapRelationUtils.isFullyTransparent(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
+			states.stream().filter(s -> !MapRelationUtils.isTransparentOrStone(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
 		final List<UUID> nonMonoColorIds = (!Main.skipMonoColorMaps ? states.stream() :
 			states.stream().filter(s -> !MapRelationUtils.isMonoColor(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
 
@@ -66,7 +66,8 @@ public class ContainerHighlightUpdater{
 		else if(mixedOnDisplayAndNotOnDisplay(nonTransparentIds)) asterisks.add(Main.MAP_COLOR_IN_IFRAME);
 //		if(!nonFillerIds.stream().allMatch(new HashSet<>(nonFillerIds.size())::add)) asterisks.add(Main.MAP_COLOR_MULTI_INV); // Check duplicates within the container
 		duplicatesInContainer.clear();
-		duplicatesInContainer.addAll(nonMonoColorIds.stream().filter(Predicate.not(new HashSet<>(nonMonoColorIds.size())::add)).toList());
+		uniqueMapIds.clear();
+		nonMonoColorIds.stream().filter(Predicate.not(uniqueMapIds::add)).forEach(duplicatesInContainer::add);
 		if(!duplicatesInContainer.isEmpty()) asterisks.add(Main.MAP_COLOR_MULTI_INV);
 		if(items.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(Main.MAP_COLOR_UNNAMED);
 
