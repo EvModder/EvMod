@@ -45,6 +45,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(state == null) return;
 		Highlight hl = ItemFrameHighlightUpdater.iFrameGetHighlight(itemFrameEntity.getId());
 		if(hl == null) return;
+		if(hl == Highlight.MULTI_HUNG && Main.skipMonoColorMaps && MapRelationUtils.isMonoColor(state.colors)) return; // Don't do boosted hasLabel()
 
 		if(hl == Highlight.INV_OR_NESTED_INV){cir.setReturnValue(true); return;} // Show this label even if not looking in general direction
 		if(!isLookngInGeneralDirection(itemFrameEntity)) return;

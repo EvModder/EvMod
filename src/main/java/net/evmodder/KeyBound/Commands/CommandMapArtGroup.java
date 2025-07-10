@@ -126,7 +126,7 @@ public class CommandMapArtGroup{
 			source.sendError(Text.literal("Command requires a single MapArtGroup name (no commas)").copy().withColor(ERROR_COLOR));
 			return 1;
 		}
-		if(cmd == Command.CREATE && !CONFIRM.equalsIgnoreCase(groups[0]) && new File(FileIO.DIR+FILE_PATH+groups[0]).exists()){
+		if(cmd == Command.CREATE && !CONFIRM.equalsIgnoreCase(groups2[0]) && new File(FileIO.DIR+FILE_PATH+groups[0]).exists()){
 			source.sendError(Text.literal("MapArtGroup '"+groups[0]+"' already exists!").copy().withColor(ERROR_COLOR));
 			source.sendFeedback(Text.literal("To overwrite it, add 'confirm' to the end of the command"));
 			return 1;
@@ -154,7 +154,7 @@ public class CommandMapArtGroup{
 			if(FILE_PATH.endsWith("/") && !new File(FileIO.DIR+FILE_PATH).exists()) new File(FileIO.DIR+FILE_PATH).mkdir();
 			FileIO.saveFileBytes(FILE_PATH+groups[0], bb.array());
 			source.sendFeedback(Text.literal((cmd == Command.CREATE ? "Created new" : "Expanded") + " group '"+groups[0]
-					+"' and set as active (ids: "+ (oldSize>0 ? "" : oldSize+" -> ") + mapsInGroup.size()+").")
+					+"' and set as active (ids: "+ (oldSize==0 ? "" : oldSize+" -> ") + mapsInGroup.size()+").")
 					.copy().withColor(CREATE_COLOR));
 		}
 		else if(newActiveGroup.equals(activeGroupName)){

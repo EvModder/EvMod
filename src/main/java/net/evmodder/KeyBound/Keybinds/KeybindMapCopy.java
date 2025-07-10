@@ -225,20 +225,27 @@ public final class KeybindMapCopy{
 			final ClickEvent firstClick;
 			// Move filled map(s) to crafter input
 			final boolean copyAll = minMapCount == emptyMapsPerCopy;//=minMapCount*2 == secondMinMapCount; // Equivalent
+			boolean takeExactAmt = true;
 			if(copyAll && i >= HOTBAR_START) clicks.add(firstClick=new ClickEvent(INPUT_START+1, i-HOTBAR_START, SlotActionType.SWAP));
 			else if(copyAll && isCrafter) clicks.add(firstClick=new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
 			else{
 				final boolean takeHalf = (minMapCount+1)/2 >= emptyMapsPerCopy;
 				final int amtTaken = takeHalf ? (minMapCount+1)/2 : minMapCount;
+				takeExactAmt = !takeHalf || (amtTaken-emptyMapsPerCopy > emptyMapsPerCopy+2);
 				clicks.add(firstClick=new ClickEvent(i, takeHalf ? 1 : 0, SlotActionType.PICKUP)); // Pickup all or half
-				for(int j=emptyMapsPerCopy; j<amtTaken; ++j) clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // Put back one
+				if(takeExactAmt) for(int j=emptyMapsPerCopy; j<amtTaken; ++j) clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // Put back one
 				clicks.add(new ClickEvent(INPUT_START+1, 0, SlotActionType.PICKUP)); // Place all
 			}
 
 			numEmptyMapsInGrid -= emptyMapsPerCopy; // Deduct empty maps
 
-			// Take filled maps from crafter output
-			clicks.add(new ClickEvent(0, 0, SlotActionType.QUICK_MOVE));
+			if(takeExactAmt) clicks.add(new ClickEvent(0, 0, SlotActionType.QUICK_MOVE)); // Move ALL maps from crafter output
+			else{
+				for(int j=0; j<emptyMapsPerCopy; ++j) clicks.add(new ClickEvent(0, 0, SlotActionType.PICKUP)); // Pickup ONE map from crafter output
+				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // Put back in source slot
+				clicks.add(new ClickEvent(INPUT_START+1, 0, SlotActionType.QUICK_MOVE)); // Move back leftover input maps
+			}
+
 			if(PRESERVE_MAP_POS && lastEmptySlot > i){
 				if(lastEmptySlot >= HOTBAR_START){
 					//Main.LOGGER.info("MapCopy: moving back to correct slot using SWAP: "+lastEmptySlot+","+(lastEmptySlot-HOTBAR_START));
