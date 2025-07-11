@@ -25,9 +25,6 @@ import net.minecraft.world.World;
 
 public final class KeybindMapMove{
 	private final boolean ALLOW_AIR_POCKETS;
-	private final long MOVE_OP_COOLDOWN = 250l;
-
-	private long lastMoveTs = 0;
 
 	private final boolean isFillerMap(ItemStack[] slots, ItemStack stack, World world){
 		if(!Main.skipTransparentMaps) return false;
@@ -48,10 +45,6 @@ public final class KeybindMapMove{
 			Main.LOGGER.warn("MapMove cancelled: Unexpected slot count for MapMove: "+hs.getScreenHandler().slots.size());
 			return;
 		}
-		//
-		final long ts = System.currentTimeMillis();
-		if(ts - lastMoveTs < MOVE_OP_COOLDOWN) return;
-		lastMoveTs = ts;
 		//
 		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(s -> s.getStack()).toArray(ItemStack[]::new);
 		int numInInv = 0, emptySlotsInv = 0;

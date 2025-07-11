@@ -32,7 +32,7 @@ public class ContainerHighlightUpdater{
 		return duplicatesInContainer.contains(colorsId);
 	}
 
-	private static final List<ItemStack> getAllItemsInContainer(List<Slot> slots){
+	private static final List<ItemStack> getAllMapItemsInContainer(List<Slot> slots){
 		final List<Slot> containerSlots = slots.subList(0, slots.size()-36);
 		return MapRelationUtils.getAllNestedItems(containerSlots.stream().map(Slot::getStack)).filter(s -> s.getItem() == Items.FILLED_MAP).toList();
 	}
@@ -51,7 +51,8 @@ public class ContainerHighlightUpdater{
 			client.currentScreen instanceof CraftingScreen ||
 			client.currentScreen instanceof CartographyTableScreen) return; // These get false-flagged for "duplicate map in container" with i/o slots
 
-		final List<ItemStack> items = getAllItemsInContainer(hs.getScreenHandler().slots);
+		final List<ItemStack> items = getAllMapItemsInContainer(hs.getScreenHandler().slots);
+		if(items.isEmpty()) return;
 		final List<MapState> states = items.stream().map(i -> FilledMapItem.getMapState(i, client.world)).filter(Objects::nonNull).toList();
 		final List<UUID> nonTransparentIds = (!Main.skipTransparentMaps ? states.stream() :
 			states.stream().filter(s -> !MapRelationUtils.isTransparentOrStone(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
