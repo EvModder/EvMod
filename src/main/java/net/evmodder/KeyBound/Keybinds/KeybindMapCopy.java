@@ -242,7 +242,7 @@ public final class KeybindMapCopy{
 			if(takeExactAmt) clicks.add(new ClickEvent(0, 0, SlotActionType.QUICK_MOVE)); // Move ALL maps from crafter output
 			else{
 				for(int j=0; j<emptyMapsPerCopy; ++j) clicks.add(new ClickEvent(0, 0, SlotActionType.PICKUP)); // Pickup ONE map from crafter output
-				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // Put back in source slot
+				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // Place back in source slot
 				clicks.add(new ClickEvent(INPUT_START+1, 0, SlotActionType.QUICK_MOVE)); // Move back leftover input maps
 			}
 

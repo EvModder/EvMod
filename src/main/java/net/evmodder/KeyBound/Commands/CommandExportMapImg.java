@@ -5,8 +5,10 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -19,7 +21,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.block.MapColor;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.entity.decoration.ItemFrameEntity;
@@ -94,13 +96,12 @@ public class CommandExportMapImg{
 	}
 
 	private int genImgForMapsInInv(FabricClientCommandSource source){
-		MinecraftClient client = MinecraftClient.getInstance();
 		int numShulksSaved = 0;
 		/*invloop:*/for(int i=0; i<41; ++i){
-			ItemStack stack = client.player.getInventory().getStack(i);
+			ItemStack stack = source.getPlayer().getInventory().getStack(i);
 			ContainerComponent container = stack.get(DataComponentTypes.CONTAINER);
 			if(container == null) continue;
-			if(!container.streamNonEmpty().anyMatch(s -> FilledMapItem.getMapState(s, client.world) != null)) continue;
+			if(!container.streamNonEmpty().anyMatch(s -> FilledMapItem.getMapState(s, source.getWorld()) != null)) continue;
 			final int size = (int)container.stream().count();
 			if(size % 9 != 0){source.sendError(Text.literal("Unsupported container size: "+size)); continue;}
 			final int border = BLOCK_BORDER ? 8 : 0;
@@ -109,7 +110,7 @@ public class CommandExportMapImg{
 
 			Iterator<ItemStack> contents = container.stream().toList().iterator();
 			for(int y=0; y<(size/9); ++y) for(int x=0; x<9; ++x){
-				final MapState state = FilledMapItem.getMapState(contents.next(), client.world);
+				final MapState state = FilledMapItem.getMapState(contents.next(), source.getWorld());
 				if(state == null){
 					//source.sendError(Text.literal("Slot "+x+","+y+" does not contain a loaded map"));
 					//continue invloop;
@@ -131,44 +132,46 @@ public class CommandExportMapImg{
 		return numShulksSaved;
 	}
 
-	private boolean genImgForMapsInItemFrames(FabricClientCommandSource source, final List<ItemFrameEntity> iFrames, ItemFrameEntity targetIFrame){
-		HashMap<Vec3i, ItemFrameEntity> ifeLookup = new HashMap<>(iFrames.size());
+	private List<ItemFrameEntity> getConnectedFrames(HashMap<Vec3i, ItemFrameEntity> ifeLookup, ItemFrameEntity targetIFrame){
+//		HashMap<Vec3i, ItemFrameEntity> ifeLookup = new HashMap<>();
 		final Direction facing = targetIFrame.getFacing();
-		iFrames.stream().filter(ife -> ife.getFacing() == facing).forEach(ife -> ifeLookup.put(ife.getBlockPos(), ife));
+//		iFrames.stream().filter(ife -> ife.getFacing() == facing).forEach(ife -> ifeLookup.put(ife.getBlockPos(), ife));
 
-		Vec3i targetPos = targetIFrame.getBlockPos();
+		HashSet<Vec3i> connected = new HashSet<>();
+		ArrayDeque<Vec3i> adjSides = new ArrayDeque<>();
+		adjSides.add(targetIFrame.getBlockPos());
+		while(!adjSides.isEmpty()){
+			Vec3i pos = adjSides.pop();
+			connected.add(pos);
+			for(Axis axis : Axis.VALUES){
+				if(axis == facing.getAxis()) continue; // constexpr or smth
+				Vec3i a = pos.offset(axis, 1), b = pos.offset(axis, -1);
+				if(!connected.contains(a) && ifeLookup.containsKey(a)) adjSides.add(a);
+				if(!connected.contains(b) && ifeLookup.containsKey(b)) adjSides.add(b);
+			}
+		}
+		return adjSides.stream().map(ifeLookup::get).toList();
+	}
 
-		final int tX = targetPos.getX(), tY = targetPos.getY(), tZ = targetPos.getZ();
-		int minX, minY, minZ, maxX, maxY, maxZ;
-		minX = maxX = tX; minY = maxY = tY; minZ = maxZ = tZ;
-
-//		ctx.getSource().sendFeedback(Text.literal("Loaded ifes: "+ifeLookup.size()));
-		if(facing.getOffsetX() == 0){
-//			ctx.getSource().sendFeedback(Text.literal("Varying X"));
-			while(ifeLookup.containsKey(targetPos.offset(Axis.X, (minX-tX)-1))) --minX;
-			while(ifeLookup.containsKey(targetPos.offset(Axis.X, (maxX-tX)+1))) ++maxX;
-		}
-		if(facing.getOffsetY() == 0){
-//			ctx.getSource().sendFeedback(Text.literal("Varying Y"));
-			while(ifeLookup.containsKey(targetPos.offset(Axis.Y, (minY-tY)-1))) --minY;
-			while(ifeLookup.containsKey(targetPos.offset(Axis.Y, (maxY-tY)+1))) ++maxY;
-		}
-		if(facing.getOffsetZ() == 0){
-//			ctx.getSource().sendFeedback(Text.literal("Varying Z"));
-			while(ifeLookup.containsKey(targetPos.offset(Axis.Z, (minZ-tZ)-1))) --minZ;
-			while(ifeLookup.containsKey(targetPos.offset(Axis.Z, (maxZ-tZ)+1))) ++maxZ;
-		}
-//		ctx.getSource().sendFeedback(Text.literal("Min: "+minX+" "+minY+" "+minZ+" | Max: "+maxX+" "+maxY+" "+maxZ));
+	private boolean genImgForMapsInItemFrames(FabricClientCommandSource source,
+			final HashMap<Vec3i, ItemFrameEntity> ifeLookup, final List<ItemFrameEntity> ifes){
+		Direction facing = ifes.getFirst().getFacing();
+		int minX = facing.getAxis() == Axis.X ? ifes.getFirst().getBlockX() : ifes.stream().mapToInt(ItemFrameEntity::getBlockX).min().getAsInt();
+		int maxX = facing.getAxis() == Axis.X ? ifes.getFirst().getBlockX() : ifes.stream().mapToInt(ItemFrameEntity::getBlockX).max().getAsInt();
+		int minY = facing.getAxis() == Axis.Y ? ifes.getFirst().getBlockY() : ifes.stream().mapToInt(ItemFrameEntity::getBlockY).min().getAsInt();
+		int maxY = facing.getAxis() == Axis.Y ? ifes.getFirst().getBlockY() : ifes.stream().mapToInt(ItemFrameEntity::getBlockY).max().getAsInt();
+		int minZ = facing.getAxis() == Axis.Z ? ifes.getFirst().getBlockZ() : ifes.stream().mapToInt(ItemFrameEntity::getBlockZ).min().getAsInt();
+		int maxZ = facing.getAxis() == Axis.Z ? ifes.getFirst().getBlockZ() : ifes.stream().mapToInt(ItemFrameEntity::getBlockZ).max().getAsInt();
 
 		ArrayList<Vec3i> mapWall = new ArrayList<>();//((1+maxX-minX)*(1+maxY-minY)*(1+maxZ-minZ));
 		final int w;
 		switch(facing){
-			case UP: w=1+maxX-minX; for(int z=minZ; z<=maxZ; ++z) for(int x=minX; x<=maxX; ++x) mapWall.add(new Vec3i(x, tY, z)); break;
-			case DOWN: w=1+maxX-minX; for(int z=maxZ; z>=minZ; --z) for(int x=minX; x<=maxX; ++x) mapWall.add(new Vec3i(x, tY, z)); break;
-			case NORTH: w=1+maxX-minX; for(int y=maxY; y>=minY; --y) for(int x=maxX; x>=minX; --x) mapWall.add(new Vec3i(x, y, tZ)); break;
-			case SOUTH: w=1+maxX-minX; for(int y=maxY; y>=minY; --y) for(int x=minX; x<=maxX; ++x) mapWall.add(new Vec3i(x, y, tZ)); break;
-			case EAST: w=1+maxZ-minZ; for(int y=maxY; y>=minY; --y) for(int z=maxZ; z>=minZ; --z) mapWall.add(new Vec3i(tX, y, z)); break;
-			case WEST: w=1+maxZ-minZ; for(int y=maxY; y>=minY; --y) for(int z=minZ; z<=maxZ; ++z) mapWall.add(new Vec3i(tX, y, z)); break;
+			case UP: w=1+maxX-minX; for(int z=minZ; z<=maxZ; ++z) for(int x=minX; x<=maxX; ++x) mapWall.add(new Vec3i(x, minY, z)); break;
+			case DOWN: w=1+maxX-minX; for(int z=maxZ; z>=minZ; --z) for(int x=minX; x<=maxX; ++x) mapWall.add(new Vec3i(x, minY, z)); break;
+			case NORTH: w=1+maxX-minX; for(int y=maxY; y>=minY; --y) for(int x=maxX; x>=minX; --x) mapWall.add(new Vec3i(x, y, minZ)); break;
+			case SOUTH: w=1+maxX-minX; for(int y=maxY; y>=minY; --y) for(int x=minX; x<=maxX; ++x) mapWall.add(new Vec3i(x, y, minZ)); break;
+			case EAST: w=1+maxZ-minZ; for(int y=maxY; y>=minY; --y) for(int z=maxZ; z>=minZ; --z) mapWall.add(new Vec3i(minX, y, z)); break;
+			case WEST: w=1+maxZ-minZ; for(int y=maxY; y>=minY; --y) for(int z=minZ; z<=maxZ; ++z) mapWall.add(new Vec3i(minX, y, z)); break;
 			default:
 				// UNREACHABLE
 				source.sendError(Text.literal("Invalid attached block distance"));
@@ -183,8 +186,9 @@ public class CommandExportMapImg{
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 			ItemFrameEntity ife = ifeLookup.get(mapWall.get(i*w+j));
 			if(ife == null){
-				source.sendError(Text.literal("Non-rectangular MapArt wall not yet supported"));
-				return false;
+				source.sendError(Text.literal("Non-rectangular MapArt wall is not fully supported"));
+				//return false;
+				continue;
 			}
 			final byte[] colors = FilledMapItem.getMapState(ife.getHeldItemStack(), source.getWorld()).colors;
 			switch(ife.getRotation()%4){
@@ -206,9 +210,9 @@ public class CommandExportMapImg{
 			img = upscaledImg;
 		}
 
-		final Text nameText = targetIFrame.getHeldItemStack().getCustomName();
+		final Text nameText = ifes.getFirst().getHeldItemStack().getCustomName();
 		final String nameStr = nameText == null ? null : nameText.getLiteralString();
-		final String imgName = nameStr != null ? nameStr : targetIFrame.getHeldItemStack().get(DataComponentTypes.MAP_ID).asString();
+		final String imgName = nameStr != null ? nameStr : ifes.getFirst().getHeldItemStack().get(DataComponentTypes.MAP_ID).asString();
 
 		if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdir();
 		try{ImageIO.write(img, "png", new File(FileIO.DIR+MAP_EXPORT_DIR+imgName+".png"));}
@@ -218,19 +222,22 @@ public class CommandExportMapImg{
 		return true;
 	}
 
-	private int runCommandNoArg(final CommandContext<FabricClientCommandSource> ctx){
-		MinecraftClient client = MinecraftClient.getInstance();
-		Box everythingBox = Box.of(client.player.getPos(), RENDER_DIST*16, RENDER_DIST*16, RENDER_DIST*16);
+	private List<ItemFrameEntity> getItemFramesWithMaps(FabricClientCommandSource source){
+		Box everythingBox = Box.of(source.getPlayer().getPos(), RENDER_DIST*16, RENDER_DIST*16, RENDER_DIST*16);
 
-		final List<ItemFrameEntity> iFrames = client.world.getEntitiesByType(TypeFilter.instanceOf(ItemFrameEntity.class), everythingBox,
+		return source.getWorld().getEntitiesByType(TypeFilter.instanceOf(ItemFrameEntity.class), everythingBox,
 				e -> e.getHeldItemStack().getItem() == Items.FILLED_MAP);
+	}
 
+	private int runCommandNoArg(final CommandContext<FabricClientCommandSource> ctx){
 		ItemFrameEntity targetIFrame = null;
 		double bestUh = 0;
-		final Vec3d vec3d = client.player.getRotationVec(1.0F).normalize();
+		ClientPlayerEntity player = ctx.getSource().getPlayer();
+		final Vec3d vec3d = player.getRotationVec(1.0F).normalize();
+		final List<ItemFrameEntity> iFrames = getItemFramesWithMaps(ctx.getSource());
 		for(ItemFrameEntity ife : iFrames){
-			if(!client.player.canSee(ife)) continue;
-			Vec3d vec3d2 = new Vec3d(ife.getX()-client.player.getX(), ife.getEyeY()-client.player.getEyeY(), ife.getZ()-client.player.getZ());
+			if(!player.canSee(ife)) continue;
+			Vec3d vec3d2 = new Vec3d(ife.getX()-player.getX(), ife.getEyeY()-player.getEyeY(), ife.getZ()-player.getZ());
 			final double d = vec3d2.length();
 			vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d); // normalize
 			final double e = vec3d.dotProduct(vec3d2);
@@ -239,15 +246,36 @@ public class CommandExportMapImg{
 			if(uh < bestUh){bestUh = uh; targetIFrame = ife;}
 		}
 		if(targetIFrame == null){
+			// Fetch from inventory
 			int numSaved = genImgForMapsInInv(ctx.getSource());
 			if(numSaved == 0) ctx.getSource().sendError(Text.literal("No mapwall (in front of cursor) detected"));
 			return numSaved == 0 ? 1 : 0;
 		}
-		return genImgForMapsInItemFrames(ctx.getSource(), iFrames, targetIFrame) ? 0 : 1;
+		// Fetch from iframe wall
+		HashMap<Vec3i, ItemFrameEntity> ifeLookup = new HashMap<>();
+		final Direction facing = targetIFrame.getFacing();
+		iFrames.stream().filter(ife -> ife.getFacing() == facing).forEach(ife -> ifeLookup.put(ife.getBlockPos(), ife));
+		List<ItemFrameEntity> ifes = getConnectedFrames(ifeLookup, targetIFrame);
+		return genImgForMapsInItemFrames(ctx.getSource(), ifeLookup, ifes) ? 0 : 1;
 	}
 	private int runCommandWithMapName(CommandContext<FabricClientCommandSource> ctx){
-		//final String mapName = ctx.getArgument("map_name", String.class);
-		//TODO: get map by name (or * to download all)
+		final String mapName = ctx.getArgument("map_name", String.class);
+		if(mapName.equals("*")){
+			final List<ItemFrameEntity> iFrames = getItemFramesWithMaps(ctx.getSource());
+			for(Direction dir : Direction.values()){
+				HashMap<Vec3i, ItemFrameEntity> ifeLookup = new HashMap<>();
+				iFrames.stream().filter(ife -> ife.getFacing() == dir).forEach(ife -> ifeLookup.put(ife.getBlockPos(), ife));
+				while(!ifeLookup.isEmpty()){
+					List<ItemFrameEntity> ifes = getConnectedFrames(ifeLookup, ifeLookup.values().iterator().next());
+					if(!genImgForMapsInItemFrames(ctx.getSource(), ifeLookup, ifes)){
+						Main.LOGGER.error("CmdImgExport: Encountered error while doing exporting * maps");
+						return -1;
+					}
+					ifes.stream().map(ItemFrameEntity::getBlockPos).forEach(ifeLookup::remove);
+				}
+			}
+			return 1;
+		}
 		ctx.getSource().sendError(Text.literal("This version of the command is not yet implemented (try without a param)"));
 		return 1;
 	}
