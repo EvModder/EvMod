@@ -114,7 +114,8 @@ keybind.smart_inventory_craft: false #TODO: implement
 keybind.ebounce_travel_helper: true
 keybind.aie_travel_helper: true
 
-organize_inventory.EvInv: [
+keybind.inventory_restock: true
+keybind.inventory_organize.EvInv: [
   # Armor
   5:carved_pumpkin,
   6:elytra,

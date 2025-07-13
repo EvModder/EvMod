@@ -152,8 +152,8 @@ public class Main implements ClientModInitializer{
 			String value = config.get(key);
 			if(key.startsWith("keybind.chat_msg.")) KeybindsSimple.registerChatKeybind(key.substring(8), value);
 			else if(key.startsWith("keybind.remote_msg.")) remoteMessages.put(key.substring(8), value);
-			else if(key.startsWith("keybind.snap_angle")) KeybindsSimple.registerSnapAngleKeybind(key.substring(8), value);
-			else if(key.startsWith("organize_inventory.")) new KeybindInventoryOrganize(key, value.replaceAll("\\s",""));
+			else if(key.startsWith("keybind.snap_angle.")) KeybindsSimple.registerSnapAngleKeybind(key.substring(8), value);
+			else if(key.startsWith("keybind.inventory_organize.")) new KeybindInventoryOrganize(key.substring(8), value.replaceAll("\\s",""));
 			else switch(key){
 				// Database
 				case "client_id": clientId = Integer.parseInt(value); break;
@@ -232,7 +232,8 @@ public class Main implements ClientModInitializer{
 
 				case "keybind.eject_junk_items": if(!value.equalsIgnoreCase("false")) ejectJunk = new KeybindEjectJunk(); break;
 				case "keybind.toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
-//				case "keybind_smart_inventory_craft": if(!value.equalsIgnoreCase("false")) new KeybindSmartInvCraft(); break;
+//				case "keybind.smart_inventory_craft": if(!value.equalsIgnoreCase("false")) new KeybindSmartInvCraft(); break;
+				case "keybind.inventory_restock": if(!value.equalsIgnoreCase("false")) new KeybindInventoryRestock(); break;
 				case "keybind.ebounce_travel_helper": keybindEbounceTravelHelper = !value.equalsIgnoreCase("false"); break;
 				case "keybind.aie_travel_helper": if(!value.equalsIgnoreCase("false")) new KeybindAIETravelHelper(); break;
 				case "scroll_order": {

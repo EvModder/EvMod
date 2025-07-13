@@ -126,7 +126,7 @@ public class CommandMapArtGroup{
 			source.sendError(Text.literal("Command requires a single MapArtGroup name (no commas)").copy().withColor(ERROR_COLOR));
 			return 1;
 		}
-		if(cmd == Command.CREATE && !CONFIRM.equalsIgnoreCase(groups2[0]) && new File(FileIO.DIR+FILE_PATH+groups[0]).exists()){
+		if(cmd == Command.CREATE && new File(FileIO.DIR+FILE_PATH+groups[0]).exists() && (groups2 == null || !CONFIRM.equalsIgnoreCase(groups2[0]))){
 			source.sendError(Text.literal("MapArtGroup '"+groups[0]+"' already exists!").copy().withColor(ERROR_COLOR));
 			source.sendFeedback(Text.literal("To overwrite it, add 'confirm' to the end of the command"));
 			return 1;
@@ -177,19 +177,21 @@ public class CommandMapArtGroup{
 
 	private CompletableFuture<Suggestions> getGroupNameSuggestions(CommandContext<?> ctx, SuggestionsBuilder builder) {
 		int i = ctx.getInput().lastIndexOf(' ');
-		String lastArg = i == -1 ? "" : ctx.getInput().substring(i+1);
-		i = ctx.getInput().lastIndexOf(',');
+		String lastArg = i == -1 ? "" : ','+ctx.getInput().substring(i+1).replace('+', ',');
+		i = lastArg.lastIndexOf(',');
 //		final String lastArgLastPart, lastArgFirstPart;
 //		if(i == -1){lastArgLastPart = lastArg; lastArgFirstPart = "";}
 //		else{lastArgLastPart = lastArg.substring(i+1); lastArgFirstPart = lastArg.substring(0, i+1);}
 		final String lastArgLastPart = i == -1 ? lastArg : lastArg.substring(i+1);
+		final String lastArgFirstPart = i == -1 ? "" : lastArg.substring(0, i+1);
 		try{
 //			Files.list(Paths.get(FileIO.DIR)).map(path -> path.getFileName().toString())
 //			.filter(name -> name.startsWith(FILE_PATH) && name.startsWith(lastArgLastPart, FILE_PATH.length()))
 //			.forEach(name -> builder.suggest(lastArgFirstPart+name.substring(FILE_PATH.length())));
 			Files.list(Paths.get(FileIO.DIR+FILE_PATH)).map(path -> path.getFileName().toString())
 			.filter(name -> name.startsWith(lastArgLastPart))
-			.forEach(name -> builder.suggest(name));
+			.filter(name -> !lastArg.contains(name))
+			.forEach(name -> builder.suggest(lastArgFirstPart+name));
 		}
 		catch(IOException e){e.printStackTrace(); return null;}
 		// Lock the suggestions after we've modified them.
@@ -224,7 +226,7 @@ public class CommandMapArtGroup{
 						.suggests(this::getGroupNameSuggestions)
 						.executes(ctx->{
 							final String cmdStr = ctx.getArgument("command", String.class);
-							final String[] groups = ctx.getArgument("group", String.class).split(",");
+							final String[] groups = ctx.getArgument("group", String.class).split("[,+]");
 							try{
 								return runCommand(ctx.getSource(), Command.valueOf(cmdStr.toUpperCase()), groups, null);
 							}
@@ -263,8 +265,8 @@ public class CommandMapArtGroup{
 							})
 							.executes(ctx->{
 								final String cmdStr = ctx.getArgument("command", String.class);
-								final String[] groups = ctx.getArgument("group", String.class).split(",");
-								final String[] groups2 = ctx.getArgument("group2", String.class).split(",");
+								final String[] groups = ctx.getArgument("group", String.class).split("[,+]");
+								final String[] groups2 = ctx.getArgument("group2", String.class).split("[,+]");
 								try{
 									return runCommand(ctx.getSource(), Command.valueOf(cmdStr.toUpperCase()), groups, groups2);
 								}
