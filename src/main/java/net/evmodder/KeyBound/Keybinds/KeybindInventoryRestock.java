@@ -33,7 +33,7 @@ public final class KeybindInventoryRestock{
 			if(slots[i].getCount() >= maxCount) continue;
 			for(int j=slots.length-37; j>=0; --j){
 				if(!ItemStack.areItemsAndComponentsEqual(slots[i], slots[j])) continue;
-//				Main.LOGGER.info("Adding clicks to restock "+slots[i].getItem().getName().toString()+" from slot "+j+" -> "+i);
+//				Main.LOGGER.info("Adding clicks to restock "+slots[i].getItem().getName().getString()+" from slot "+j+" -> "+i);
 				clicks.add(new ClickEvent(j, 0, SlotActionType.PICKUP)); // Pickup all
 				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // Place as many as possible
 				final int combinedCount = slots[i].getCount() + slots[j].getCount();

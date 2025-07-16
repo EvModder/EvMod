@@ -13,7 +13,7 @@
 		"MixinInGameHud",
 		"MixinItemFrameRenderer",
 		//"MixinItemRenderer",
-		"MixinKeybinding",
+		//"MixinKeybinding",
 		"MixinScreenHandler"
 	],
 	"injectors": {

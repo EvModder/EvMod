@@ -31,6 +31,7 @@ import net.minecraft.block.StonecutterBlock;
 import net.minecraft.block.TrapdoorBlock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.PickaxeItem;
@@ -51,7 +52,7 @@ import net.minecraft.world.World;
 public final class KeybindEbounceTravelHelper{
 	private boolean isEnabled;
 	private final MinecraftClient client;
-	private long enabledTs, targetY;
+	private long enabledTs, lastPressTs, targetY;
 	private final long ENABLE_DELAY = 1500l;
 
 	private boolean hasRightClickFunction(Block block) {
@@ -365,26 +366,32 @@ public final class KeybindEbounceTravelHelper{
 		client = MinecraftClient.getInstance();
 		new Keybind("ebounce_travel_helper", ()->{
 			Main.LOGGER.info("ebounce_travel_helper key pressed");
-			if(isEnabled || enabledTs != 0){
+			final long ts = System.currentTimeMillis();
+			if(ts-lastPressTs < 200) return;
+			lastPressTs = ts;
+			if(isEnabled || enabledTs != 0 && ts-enabledTs > 200){
 				isEnabled = false;
 				enabledTs = 0;
 				client.player.sendMessage(Text.literal("eBounce Helper: disabled"), true);
 				client.player.sendMessage(Text.literal("eBounce Helper: disabled"), false);
 			}
-			else{
-				client.player.sendMessage(Text.literal("Enabling in "+String.format("%.2f", (ENABLE_DELAY/1000d))+"s..."), true);
-				enabledTs = System.currentTimeMillis();
-			}
-		}, null, GLFW.GLFW_KEY_A);
+			else enabledTs = ts;
+		}, InventoryScreen.class::isInstance, GLFW.GLFW_KEY_A);
 
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
 			if(client.player == null || client.world == null){isEnabled = false; enabledTs = 0; return;}
-			if(enabledTs != 0 && System.currentTimeMillis() - enabledTs > ENABLE_DELAY){
-				isEnabled = true;
-				targetY = Long.MIN_VALUE;
-				enabledTs = 0;
-				client.player.sendMessage(Text.literal("eBounce Helper: enabled"), true);
-				client.player.sendMessage(Text.literal("eBounce Helper: enabled"), false);
+			if(enabledTs != 0){
+				final long timeSinceEnabled = System.currentTimeMillis() - enabledTs;
+				if(timeSinceEnabled > ENABLE_DELAY){
+					isEnabled = true;
+					targetY = Long.MIN_VALUE;
+					enabledTs = 0;
+					client.player.sendMessage(Text.literal("eBounce Helper: enabled"), true);
+					client.player.sendMessage(Text.literal("eBounce Helper: enabled"), false);
+				}
+				else{
+					client.player.sendMessage(Text.literal("Enabling in "+String.format("%.2f", ((ENABLE_DELAY-timeSinceEnabled)/1000d))+"s..."), true);
+				}
 			}
 			if(!isEnabled) return;
 			Item chestItem = client.player.getInventory().getArmorStack(2).getItem();
