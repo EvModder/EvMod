@@ -48,11 +48,11 @@ public final class Keybind{
 	public final void setPresssed(boolean pressed){
 		if(pressed != internalKeyBinding.isPressed()){
 			if(pressed){
-				//Main.LOGGER.info("Keybind pressed: "+getTranslationKey());
+//				Main.LOGGER.info("EvKeybind pressed: "+internalKeyBinding.getTranslationKey());
 				onPressedSupplier.run();
 			}
 			else{
-				//Main.LOGGER.info("Keybind released: "+getTranslationKey());
+//				Main.LOGGER.info("EvKeybind released: "+internalKeyBinding.getTranslationKey());
 				onReleasedSupplier.run();
 			}
 		}
