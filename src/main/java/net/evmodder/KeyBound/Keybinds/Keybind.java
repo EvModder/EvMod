@@ -9,9 +9,10 @@ import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil.Type;
 
 public final class Keybind{
-	public static HashSet<Keybind> allowedInInventory = new HashSet<>();
+	public final static HashSet<Keybind> inventoryKeybinds = new HashSet<>();
+	public final static HashSet<Keybind> allKeybinds = new HashSet<>();
 	public final Function<Screen, Boolean> allowInScreen;
-	public final KeyBinding keybindInternal;
+	public final KeyBinding internalKeyBinding;
 	//public AbstractKeybind(String translationKey, Type type, int code, String category){super(translationKey, type, code, category);}
 
 	final int ERROR_COLOR = 16733525, SUCCESS_COLOR = 5635925;
@@ -21,9 +22,10 @@ public final class Keybind{
 		onPressedSupplier = onPressed;
 		onReleasedSupplier = onReleased;
 		this.allowInScreen = allowInScreen;
-		if(allowInScreen != null) allowedInInventory.add(this);
-		keybindInternal = new KeyBinding("key."+Main.MOD_ID+"."+translationKey, Type.KEYSYM, defaultKey, Main.KEYBIND_CATEGORY);
-		KeyBindingHelper.registerKeyBinding(keybindInternal);
+		allKeybinds.add(this);
+		if(allowInScreen != null) inventoryKeybinds.add(this);
+		internalKeyBinding = new KeyBinding("key."+Main.MOD_ID+"."+translationKey, Type.KEYSYM, defaultKey, Main.KEYBIND_CATEGORY);
+		KeyBindingHelper.registerKeyBinding(internalKeyBinding);
 		//Main.LOGGER.debug("Registered keybind: "+translationKey);
 	}
 
@@ -43,8 +45,8 @@ public final class Keybind{
 //		onReleasedSupplier.run();
 //	}
 
-	public final void setPressed(boolean pressed){
-		if(pressed != keybindInternal.isPressed()){
+	public final void setPresssed(boolean pressed){
+		if(pressed != internalKeyBinding.isPressed()){
 			if(pressed){
 				//Main.LOGGER.info("Keybind pressed: "+getTranslationKey());
 				onPressedSupplier.run();
@@ -54,6 +56,6 @@ public final class Keybind{
 				onReleasedSupplier.run();
 			}
 		}
-		keybindInternal.setPressed(pressed);
+		//internalKeyBinding.setPressed(pressed);
 	}
 }

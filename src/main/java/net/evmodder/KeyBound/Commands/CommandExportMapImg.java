@@ -11,6 +11,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.imageio.ImageIO;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -22,6 +25,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.block.MapColor;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.entity.decoration.ItemFrameEntity;
@@ -31,6 +35,7 @@ import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
 import net.minecraft.text.Text;
 import net.minecraft.util.TypeFilter;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
@@ -143,14 +148,15 @@ public class CommandExportMapImg{
 		while(!adjSides.isEmpty()){
 			Vec3i pos = adjSides.pop();
 			connected.add(pos);
-			for(Axis axis : Axis.VALUES){
-				if(axis == facing.getAxis()) continue; // constexpr or smth
-				Vec3i a = pos.offset(axis, 1), b = pos.offset(axis, -1);
+			for(Direction dir : Direction.values()){
+				if(dir == facing) continue; // constexpr or smth
+				Vec3i a = pos.offset(dir);
+//				Vec3i a = pos.offset(axis, 1), b = pos.offset(axis, -1);
 				if(!connected.contains(a) && ifeLookup.containsKey(a)) adjSides.add(a);
-				if(!connected.contains(b) && ifeLookup.containsKey(b)) adjSides.add(b);
+//				if(!connected.contains(b) && ifeLookup.containsKey(b)) adjSides.add(b);
 			}
 		}
-		return adjSides.stream().map(ifeLookup::get).toList();
+		return connected.stream().map(ifeLookup::get).toList();
 	}
 
 	private boolean genImgForMapsInItemFrames(FabricClientCommandSource source,
@@ -256,11 +262,12 @@ public class CommandExportMapImg{
 		final Direction facing = targetIFrame.getFacing();
 		iFrames.stream().filter(ife -> ife.getFacing() == facing).forEach(ife -> ifeLookup.put(ife.getBlockPos(), ife));
 		List<ItemFrameEntity> ifes = getConnectedFrames(ifeLookup, targetIFrame);
+		//Main.LOGGER.info("Connected iFrames: "+ifes.size());
 		return genImgForMapsInItemFrames(ctx.getSource(), ifeLookup, ifes) ? 0 : 1;
 	}
 	private int runCommandWithMapName(CommandContext<FabricClientCommandSource> ctx){
 		final String mapName = ctx.getArgument("map_name", String.class);
-		if(mapName.equals("*")){
+		if(mapName.equals("*") || mapName.equalsIgnoreCase("all")){
 			final List<ItemFrameEntity> iFrames = getItemFramesWithMaps(ctx.getSource());
 			for(Direction dir : Direction.values()){
 				HashMap<Vec3i, ItemFrameEntity> ifeLookup = new HashMap<>();
@@ -279,6 +286,35 @@ public class CommandExportMapImg{
 		ctx.getSource().sendError(Text.literal("This version of the command is not yet implemented (try without a param)"));
 		return 1;
 	}
+	private final boolean isWithinBox(Vec3i pos, Vec3i minPos, Vec3i maxPos){//Todo: MiscUtils
+		return pos.getX() >= minPos.getX() && pos.getY() >= minPos.getY() && pos.getZ() >= minPos.getZ()
+			&& pos.getX() <= maxPos.getX() && pos.getY() <= maxPos.getY() && pos.getZ() <= maxPos.getZ();
+	}
+	private int runCommandWithPos1AndPos2(CommandContext<FabricClientCommandSource> ctx){
+		final Vec3i pos1 = ctx.getArgument("pos1", BlockPos.class);
+		final Vec3i pos2 = ctx.getArgument("pos2", BlockPos.class);
+		if(pos1.getX() != pos2.getX() && pos1.getY() != pos2.getY() && pos1.getZ() != pos2.getZ()){
+			ctx.getSource().sendError(Text.literal("iFrame selection area must be 2D (flat surface)"));
+			return -1;
+		}
+		final Vec3i minPos = new Vec3i(Math.min(pos1.getX(), pos2.getX()), Math.min(pos1.getY(), pos2.getY()), Math.min(pos1.getZ(), pos2.getZ()));
+		final Vec3i maxPos = new Vec3i(Math.max(pos1.getX(), pos2.getX()), Math.max(pos1.getY(), pos2.getY()), Math.max(pos1.getZ(), pos2.getZ()));
+		final List<ItemFrameEntity> iFrames = getItemFramesWithMaps(ctx.getSource());
+		iFrames.removeIf(ife -> !isWithinBox(ife.getBlockPos(), minPos, maxPos));
+		if(iFrames.isEmpty()){
+			ctx.getSource().sendError(Text.literal("No iFrames found within the given selection"));
+			return -1;
+		}
+		// Get mode (most common occuring facing direction)
+		final Direction facing = iFrames.stream().map(ife -> ife.getFacing())
+				.collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+				.entrySet().stream().max(Map.Entry.comparingByValue()).get().getKey();
+		iFrames.removeIf(ife -> ife.getFacing() != facing);
+
+		HashMap<Vec3i, ItemFrameEntity> ifeLookup = new HashMap<>();
+		iFrames.stream().forEach(ife -> ifeLookup.put(ife.getBlockPos(), ife));
+		return genImgForMapsInItemFrames(ctx.getSource(), ifeLookup, iFrames) ? 0 : 1;
+	}
 
 	public CommandExportMapImg(final int upscaleTo, final boolean border, final int border1, final int border2){
 		UPSCALE_TO = upscaleTo;
@@ -294,12 +330,19 @@ public class CommandExportMapImg{
 					.suggests((ctx, builder) -> {
 						final int i = ctx.getInput().lastIndexOf(' ');
 						final String lastArg = i == -1 ? "" : ctx.getInput().substring(i+1);
-						Stream.of("*", "MapName 1", "MapName 2")
+						Stream.of("all", "MapName1", "MapName2")
 								.filter(name -> name.startsWith(lastArg))
 								.forEach(name -> builder.suggest(name));
 						return builder.buildFuture();
 					})
 					.executes(this::runCommandWithMapName)
+				)
+				.then(
+					ClientCommandManager.argument("pos1", BlockPosArgumentType.blockPos())
+					.then(
+						ClientCommandManager.argument("pos2", BlockPosArgumentType.blockPos())
+						.executes(this::runCommandWithPos1AndPos2)
+					)
 				)
 			);
 		});

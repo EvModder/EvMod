@@ -1,5 +1,6 @@
 package net.evmodder.KeyBound.mixin;
 
+import net.evmodder.KeyBound.Keybinds.Keybind;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import org.spongepowered.asm.mixin.Final;
@@ -13,7 +14,7 @@ import java.util.Map;
 
 //Authors: fzzyhmstrs, EvModder
 @Mixin(value = KeyBinding.class, priority = 10000)
-abstract class MixinKeybinding{
+abstract class MixinKeyBinding{
 	class KeybindFixer{
 		private static ArrayListMultimap<InputUtil.Key, KeyBinding> keyFixMap = ArrayListMultimap.create();
 
@@ -28,7 +29,11 @@ abstract class MixinKeybinding{
 		}
 
 		public static final void setKeyPressed(InputUtil.Key key, boolean pressed){
-			keyFixMap.get(key).forEach(kb -> kb.setPressed(pressed));
+//			keyFixMap.get(key).forEach(kb -> kb.setPressed(pressed));
+			keyFixMap.get(key).forEach(kb -> {
+				kb.setPressed(pressed);
+				Keybind.allKeybinds.forEach(evKb -> {if(evKb.internalKeyBinding == kb) evKb.setPresssed(pressed);});//TODO: this is way too jank
+			});
 		}
 	}
 

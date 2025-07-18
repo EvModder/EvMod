@@ -28,8 +28,8 @@ abstract class MixinHandledScreen<T> extends Screen{
 
 	private boolean handleAllowedInContainerKey(int keyCode, int scanCode, boolean isPressed){
 		boolean hadKeyPress = false;
-		for(Keybind kb : Keybind.allowedInInventory){
-			if(kb.keybindInternal.matchesKey(keyCode, scanCode) && kb.allowInScreen.apply(this)){
+		for(Keybind kb : Keybind.inventoryKeybinds){
+			if(kb.internalKeyBinding.matchesKey(keyCode, scanCode) && kb.allowInScreen.apply(this)){
 				kb.onPressedSupplier.run();
 				hadKeyPress = true;
 			}

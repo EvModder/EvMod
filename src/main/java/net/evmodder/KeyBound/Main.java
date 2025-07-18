@@ -45,6 +45,7 @@ import net.minecraft.client.MinecraftClient;
 public class Main implements ClientModInitializer{
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
+	// FIX KEYBINDS NOT WORKING OUTSIDE GUI
 	// Mixin onEntityTick_iFrame instead of hasLabel_iFrame <--- less lag, better compatibility with mods, etc.
 	// see if possible to pre-load MapStates when joining a server (to reduce lag?)
 	// Reference/depend on https://github.com/Siphalor/amecs-api
@@ -54,6 +55,7 @@ public class Main implements ClientModInitializer{
 	// timeOfDay >= 2000 && timeOfDay < 9000
 
 	// Feature Ideas:
+	// setting to make InvRestockFromContainer automatic (no keybind press needed, maybe auto-open-container even)
 	// multiple itemframes nearby (100? 1k? 10k?) with the same map -> purple name/color/asterisk
 	// change render order of certain trades (in particular: cleric redstone always above rotten flesh)
 	// totems in offhand - render itemcount for total totems in inv
