@@ -15,6 +15,8 @@ import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.BundleContentsComponent;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.FilledMapItem;
@@ -97,7 +99,7 @@ public final class MapHandRestock{
 		if(infoLogs) Main.LOGGER.info("MapRestock: confidence=0. A:"+posA+", B:"+posB);
 		return 0;
 	}
-	private final int checkComesAfter(String posA, String posB, PosData2D posData2d, boolean infoLogs){
+	private final int checkComesAfterStrict(String posA, String posB, PosData2D posData2d, boolean infoLogs){
 		if(posA.isBlank() || posB.isBlank() || posA.equals(posB)) return 1; // "Map"->"Map p2", "Map start"->"Map"
 
 		if(posA.equals("T R") && posB.equals("M L")) return 5;
@@ -156,6 +158,9 @@ public final class MapHandRestock{
 		}
 		return checkComesAfter1d(posA, posB, infoLogs);
 	}
+	private final int checkComesAfterAnyOrder(String posA, String posB, PosData2D posData2d, boolean infoLogs){
+		return Math.max(checkComesAfterStrict(posA, posB, posData2d, infoLogs), checkComesAfterStrict(posA, posB, posData2d, /*infoLogs*/false));
+	}
 	public final boolean simpleCanComeAfter(final String name1, final String name2){
 		if(name1 == null && name2 == null) return true;
 		if(name1 == null || name2 == null) return false;
@@ -174,10 +179,11 @@ public final class MapHandRestock{
 			Main.LOGGER.warn("simpleCanComeAfter: mismatched pos data: "+posA+", "+posB);
 			return true; // TODO: or return false?
 		}
-		final PosData2D regular2dData = getPosData2D(List.of(posA, posB), false);
-		final PosData2D sideways2dData = getPosData2D(List.of(posA, posB), true);
+		final PosData2D regular2dData = getPosData2D(List.of(posA, posB), /*isSideways=*/false);
+		final PosData2D rotated2dData = getPosData2D(List.of(posA, posB), /*isSideways=*/true);
 		//TODO: set final boolean param to true for debugging
-		return checkComesAfter(posA, posB, regular2dData, /*infoLogs=*/false) > 0 || checkComesAfter(posA, posB, sideways2dData, /*infoLogs=*/false) > 0;
+		return checkComesAfterAnyOrder(posA, posB, regular2dData, /*infoLogs=*/false) > 0
+			|| checkComesAfterAnyOrder(posA, posB, rotated2dData, /*infoLogs=*/false) > 0;
 	}
 	private String getPosStrFromName(final String name, final RelatedMapsData data){
 		return data.prefixLen() == -1 ? name : MapRelationUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
@@ -189,7 +195,7 @@ public final class MapHandRestock{
 		for(int i : data.slots()){
 			final String posStr = getPosStrFromName(slots[i].getCustomName().getLiteralString(), data);
 			//if(infoLogs) Main.LOGGER.info("MapRestock: checkComesAfter for name: "+name);
-			final int confidence = checkComesAfter(prevPosStr, posStr, posData2d, infoLogs);
+			final int confidence = checkComesAfterAnyOrder(prevPosStr, posStr, posData2d, infoLogs);
 			if(confidence > bestConfidence/* || (confidence==bestConfidence && name.compareTo(bestName) < 0)*/){
 				if(infoLogs) Main.LOGGER.info("MapRestock: new best confidence for "+prevPosStr+"->"+posStr+": "+confidence+" (slot"+i+")");
 				bestConfidence = confidence; bestSlot = i;// bestName = name;
@@ -341,11 +347,20 @@ public final class MapHandRestock{
 	}
 
 	private final void tryToStockNextMap(PlayerEntity player){
-		int restockFromSlot = -1;
-		final ItemStack[] slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		final int prevSlot = player.getInventory().selectedSlot+36;
 		final ItemStack mapInHand = player.getMainHandStack();
+		final ItemStack[] slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		assert slots[prevSlot] == mapInHand;
+
+		final ItemStack[] ogSlots = slots.clone();
+		for(int i=0; i<slots.length; ++i){
+			BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
+			if(contents == null) continue;
+//			Main.LOGGER.info("Restock 1st bundle item: "+contents.iterate().iterator().next().getName().getString());
+//			Main.LOGGER.info("Restock 1st bundle item: "+contents.get(0).getName().getString());
+//			Main.LOGGER.info("Restock last bundle item: "+contents.get(contents.size()-1).getName().getString());
+			slots[i] = contents.get(0);
+		}
 
 		final MapState state = FilledMapItem.getMapState(mapInHand, player.getWorld());
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -357,6 +372,7 @@ public final class MapHandRestock{
 			InventoryHighlightUpdater.onUpdateTick(client);
 		}
 
+		int restockFromSlot = -1;
 		if(USE_NAME && restockFromSlot == -1){
 			final String prevName = mapInHand.getCustomName() == null ? null : mapInHand.getCustomName().getLiteralString();
 			if(prevName != null){
@@ -385,7 +401,13 @@ public final class MapHandRestock{
 
 		final int restockFromSlotFinal = restockFromSlot;
 		new Timer().schedule(new TimerTask(){@Override public void run(){
-			if(isHotbarSlot){
+			if(ogSlots[restockFromSlotFinal].get(DataComponentTypes.BUNDLE_CONTENTS) != null){
+				client.interactionManager.clickSlot(0, restockFromSlotFinal, 0, SlotActionType.PICKUP, player); // Pickup bundle
+				client.interactionManager.clickSlot(0, 36+player.getInventory().selectedSlot, 1, SlotActionType.PICKUP, player); // Place in active hb slot
+				client.interactionManager.clickSlot(0, restockFromSlotFinal, 0, SlotActionType.PICKUP, player); // Putback bundle
+				Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlotFinal+" -> hb="+player.getInventory().selectedSlot);
+			}
+			else if(isHotbarSlot){
 				player.getInventory().selectedSlot = restockFromSlotFinal - 36;
 				client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
 				Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().selectedSlot);
