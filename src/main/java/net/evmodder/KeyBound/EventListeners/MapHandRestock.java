@@ -227,7 +227,8 @@ public final class MapHandRestock{
 	private final int getNextSlotByName(final ItemStack[] slots, final int prevSlot, final World world){
 		final String prevName = slots[prevSlot].getCustomName().getLiteralString();
 		final int prevCount = slots[prevSlot].getCount();
-		final boolean locked = FilledMapItem.getMapState(slots[prevSlot], world).locked;
+		final MapState state = FilledMapItem.getMapState(slots[prevSlot], world);
+		final Boolean locked = state == null ? null : state.locked;
 		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, prevName, prevCount, locked, world);
 		data.slots().remove(Integer.valueOf(prevSlot));
 		if(data.slots().isEmpty()) return -1;

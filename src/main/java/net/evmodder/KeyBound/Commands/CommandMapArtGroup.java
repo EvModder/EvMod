@@ -177,20 +177,21 @@ public class CommandMapArtGroup{
 
 	private CompletableFuture<Suggestions> getGroupNameSuggestions(CommandContext<?> ctx, SuggestionsBuilder builder) {
 		int i = ctx.getInput().lastIndexOf(' ');
-		String lastArg = i == -1 ? "" : ','+ctx.getInput().substring(i+1).replace('+', ',');
+		String lastArg = i == -1 ? "" : ctx.getInput().substring(i+1).replace('+', ',');
 		i = lastArg.lastIndexOf(',');
 //		final String lastArgLastPart, lastArgFirstPart;
 //		if(i == -1){lastArgLastPart = lastArg; lastArgFirstPart = "";}
 //		else{lastArgLastPart = lastArg.substring(i+1); lastArgFirstPart = lastArg.substring(0, i+1);}
 		final String lastArgLastPart = i == -1 ? lastArg : lastArg.substring(i+1);
 		final String lastArgFirstPart = i == -1 ? "" : lastArg.substring(0, i+1);
+		final String lastArgWithCommasAround = ","+lastArg+",";
 		try{
 //			Files.list(Paths.get(FileIO.DIR)).map(path -> path.getFileName().toString())
 //			.filter(name -> name.startsWith(FILE_PATH) && name.startsWith(lastArgLastPart, FILE_PATH.length()))
 //			.forEach(name -> builder.suggest(lastArgFirstPart+name.substring(FILE_PATH.length())));
 			Files.list(Paths.get(FileIO.DIR+FILE_PATH)).map(path -> path.getFileName().toString())
 			.filter(name -> name.startsWith(lastArgLastPart))
-			.filter(name -> !lastArg.contains(name))
+			.filter(name -> !lastArgWithCommasAround.contains(","+name+","))
 			.forEach(name -> builder.suggest(lastArgFirstPart+name));
 		}
 		catch(IOException e){e.printStackTrace(); return null;}
