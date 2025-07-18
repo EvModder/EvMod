@@ -137,28 +137,6 @@ public class CommandExportMapImg{
 		return numShulksSaved;
 	}
 
-	private List<ItemFrameEntity> getConnectedFrames(HashMap<Vec3i, ItemFrameEntity> ifeLookup, ItemFrameEntity targetIFrame){
-//		HashMap<Vec3i, ItemFrameEntity> ifeLookup = new HashMap<>();
-		final Direction facing = targetIFrame.getFacing();
-//		iFrames.stream().filter(ife -> ife.getFacing() == facing).forEach(ife -> ifeLookup.put(ife.getBlockPos(), ife));
-
-		HashSet<Vec3i> connected = new HashSet<>();
-		ArrayDeque<Vec3i> adjSides = new ArrayDeque<>();
-		adjSides.add(targetIFrame.getBlockPos());
-		while(!adjSides.isEmpty()){
-			Vec3i pos = adjSides.pop();
-			connected.add(pos);
-			for(Direction dir : Direction.values()){
-				if(dir == facing) continue; // constexpr or smth
-				Vec3i a = pos.offset(dir);
-//				Vec3i a = pos.offset(axis, 1), b = pos.offset(axis, -1);
-				if(!connected.contains(a) && ifeLookup.containsKey(a)) adjSides.add(a);
-//				if(!connected.contains(b) && ifeLookup.containsKey(b)) adjSides.add(b);
-			}
-		}
-		return connected.stream().map(ifeLookup::get).toList();
-	}
-
 	private boolean genImgForMapsInItemFrames(FabricClientCommandSource source,
 			final HashMap<Vec3i, ItemFrameEntity> ifeLookup, final List<ItemFrameEntity> ifes){
 		Direction facing = ifes.getFirst().getFacing();
@@ -226,6 +204,28 @@ public class CommandExportMapImg{
 
 		source.sendFeedback(Text.literal("Saved mapwall to ./config/"+Main.MOD_ID+"/"+MAP_EXPORT_DIR+imgName+".png"));
 		return true;
+	}
+
+	private List<ItemFrameEntity> getConnectedFrames(HashMap<Vec3i, ItemFrameEntity> ifeLookup, ItemFrameEntity targetIFrame){
+//		HashMap<Vec3i, ItemFrameEntity> ifeLookup = new HashMap<>();
+		final Direction facing = targetIFrame.getFacing();
+//		iFrames.stream().filter(ife -> ife.getFacing() == facing).forEach(ife -> ifeLookup.put(ife.getBlockPos(), ife));
+
+		HashSet<Vec3i> connected = new HashSet<>();
+		ArrayDeque<Vec3i> adjSides = new ArrayDeque<>();
+		adjSides.add(targetIFrame.getBlockPos());
+		while(!adjSides.isEmpty()){
+			Vec3i pos = adjSides.pop();
+			connected.add(pos);
+			for(Direction dir : Direction.values()){
+				if(dir == facing) continue; // constexpr or smth
+				Vec3i a = pos.offset(dir);
+//				Vec3i a = pos.offset(axis, 1), b = pos.offset(axis, -1);
+				if(!connected.contains(a) && ifeLookup.containsKey(a)) adjSides.add(a);
+//				if(!connected.contains(b) && ifeLookup.containsKey(b)) adjSides.add(b);
+			}
+		}
+		return connected.stream().map(ifeLookup::get).toList();
 	}
 
 	private List<ItemFrameEntity> getItemFramesWithMaps(FabricClientCommandSource source){

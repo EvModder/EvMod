@@ -45,7 +45,8 @@ import net.minecraft.client.MinecraftClient;
 public class Main implements ClientModInitializer{
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
-	// FIX KEYBINDS NOT WORKING OUTSIDE GUI
+	// Ultimate KeyBind mod: Buff MaLiLib mod menu with dropdown option for all vanilla (and mod) categories + allow duplicates
+
 	// Mixin onEntityTick_iFrame instead of hasLabel_iFrame <--- less lag, better compatibility with mods, etc.
 	// see if possible to pre-load MapStates when joining a server (to reduce lag?)
 	// Reference/depend on https://github.com/Siphalor/amecs-api
