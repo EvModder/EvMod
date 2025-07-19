@@ -355,10 +355,12 @@ public final class MapHandRestock{
 		final ItemStack[] ogSlots = slots.clone();
 		for(int i=0; i<slots.length; ++i){
 			BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
-			if(contents == null) continue;
+			if(contents == null || contents.isEmpty()) continue;
 //			Main.LOGGER.info("Restock 1st bundle item: "+contents.iterate().iterator().next().getName().getString());
 //			Main.LOGGER.info("Restock 1st bundle item: "+contents.get(0).getName().getString());
 //			Main.LOGGER.info("Restock last bundle item: "+contents.get(contents.size()-1).getName().getString());
+			if(ItemStack.areItemsAndComponentsEqual(mapInHand, contents.get(0))) continue; // TODO: something smarter,
+			//^ like (detect if fully hung, and if so skip matches in bundle, or skip nextByName altogether
 			slots[i] = contents.get(0);
 		}
 
@@ -372,15 +374,15 @@ public final class MapHandRestock{
 			InventoryHighlightUpdater.onUpdateTick(client);
 		}
 
+		final String prevName = mapInHand.getCustomName() == null ? null : mapInHand.getCustomName().getLiteralString();
 		int restockFromSlot = -1;
 		if(USE_NAME && restockFromSlot == -1){
-			final String prevName = mapInHand.getCustomName() == null ? null : mapInHand.getCustomName().getLiteralString();
 			if(prevName != null){
 				Main.LOGGER.info("MapRestock: finding next map by name: "+prevName);
 				restockFromSlot = getNextSlotByName(slots, prevSlot, player.getWorld());
 			}
 		}
-		if(USE_IMG && restockFromSlot == -1){
+		if(USE_IMG && restockFromSlot == -1 && !posData2dForName.containsKey(prevName)){
 			if(state != null){
 				Main.LOGGER.info("MapRestock: finding next map by img-edge");
 				restockFromSlot = getNextSlotByImage(slots, prevSlot, player.getWorld());

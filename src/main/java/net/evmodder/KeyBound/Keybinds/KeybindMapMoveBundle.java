@@ -48,7 +48,7 @@ public final class KeybindMapMoveBundle{
 	}
 	private final int getNumStored(Fraction fraction){
 		assert 64 % fraction.getDenominator() == 0;
-		return  (64/fraction.getDenominator())*fraction.getNumerator();
+		return (64/fraction.getDenominator())*fraction.getNumerator();
 	}
 
 	private long lastBundleOp = 0;
@@ -84,7 +84,7 @@ public final class KeybindMapMoveBundle{
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		final ItemStack cursorStack = hs.getScreenHandler().getCursorStack();
 		int bundleSlot = -1, mostEmpty = Integer.MAX_VALUE, mostFull = 0;
-		Fraction occupancy = null;
+		final Fraction occupancy;
 		if(isBundle(cursorStack)){
 			if(pickupHalf){
 				Main.LOGGER.warn("MapBundleOp: Cannot use cursor-bundle when splitting stacked maps");
@@ -95,37 +95,37 @@ public final class KeybindMapMoveBundle{
 		else if(!cursorStack.isEmpty()){
 			Main.LOGGER.warn("MapBundleOp: Non-bundle item on cursor");
 			return;
-			//clicks.add(new ClickEvent(ScreenHandler.EMPTY_SPACE_SLOT_INDEX, 0, SlotActionType.PICKUP));
+			//clicks.add(new ClickEvent(ScreenHandler.EMPTY_SPACE_SLOT_INDEX, 0, SlotActionType.PICKUP));//Toss cursor stack
 		}
 		else{
 			for(int i=0; i<slots.length; ++i){ // Hmm, allow using bundles from outside the container screen
 				if(!isBundle(slots[i])) continue;
 				BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
-				occupancy = contents.getOccupancy();
-				if(anyArtToPickup && occupancy.intValue() == 1) continue; // Skip full bundles
-				if(!anyArtToPickup && occupancy.getNumerator() == 0) continue; // Skip empty bundles
+				Fraction occ = contents.getOccupancy();
+				if(anyArtToPickup && occ.intValue() == 1) continue; // Skip full bundles
+				if(!anyArtToPickup && occ.getNumerator() == 0) continue; // Skip empty bundles
 				if(contents.stream().anyMatch(s -> s.getItem() != Items.FILLED_MAP)) continue; // Skip bundles with non-mapart contents
-				int stored = getNumStored(occupancy);
+				int stored = getNumStored(occ);
 				//Hacky prefer not fully empty bundles but otherwise prefer more empty
 				if(anyArtToPickup){if((stored < mostEmpty || mostEmpty == 0) && (stored != 0 || bundleSlot == -1)){mostEmpty = stored; bundleSlot = i;}}
 				else if(stored > mostFull){mostFull = stored; bundleSlot = i;}
 				//if(mode == FIRST) break;
 			}
-			if(bundleSlot != -1){
-				if(!pickupHalf){
-					Main.LOGGER.warn("MapBundleOp: picking up bundle from slot: "+bundleSlot);
-					clicks.add(new ClickEvent(bundleSlot, 0, SlotActionType.PICKUP));
-				}
-			}
-			else{
+			if(bundleSlot == -1){
 				Main.LOGGER.warn("MapBundleOp: No usable bundle found");
 				return;
 			}
+			if(!pickupHalf){
+				Main.LOGGER.warn("MapBundleOp: picking up bundle from slot: "+bundleSlot);
+				clicks.add(new ClickEvent(bundleSlot, 0, SlotActionType.PICKUP));
+			}
+			occupancy = slots[bundleSlot].get(DataComponentTypes.BUNDLE_CONTENTS).getOccupancy();
 		}
 		Main.LOGGER.info("MapBundleOp: contents: "+occupancy.getNumerator()+"/"+occupancy.getDenominator());
 
 		if(anyArtToPickup){
 			final int space = 64 - getNumStored(occupancy);
+			Main.LOGGER.warn("MapBundleOp: space in bundle: "+space);
 			int suckedUp = 0;
 			//for(int i=SLOT_START; i<SLOT_END && deposited < space; ++i){
 			for(int i : slotsWithMapArt){
