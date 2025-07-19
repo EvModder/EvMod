@@ -53,7 +53,7 @@ fully_transparent_map_is_filler_item: true
 highlight_duplicate_monocolor_maps: false
 
 # <= 0 for infinite dist (faster). Requires 'map_highlight_in_itemframe:true'
-itemframe_tracking_distance: 512
+itemframe_tracking_distance: 128
 
 #========== Added Visuals ==========#
 totem_total_count: true

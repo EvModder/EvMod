@@ -31,7 +31,7 @@ public class CommandMapArtGroup{
 	private final String CONFIRM = "confirm";
 	private HashSet<UUID> activeGroup;
 	private String activeGroupName;
-	private final int ERROR_COLOR = 16733525, CREATE_COLOR = 5635925, DONE_COLOR = 16755200;
+	private final int ERROR_COLOR = 16733525/*&c*/, CREATE_COLOR = 5635925/*&a*/, DONE_COLOR = 16755200/*&6*/; // &2=43520
 
 	public final HashSet<UUID> getGroupIdsOrSendError(final FabricClientCommandSource source, final String... groups){
 		final byte[][] data = new byte[groups.length][];

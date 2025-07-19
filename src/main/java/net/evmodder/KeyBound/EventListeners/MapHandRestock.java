@@ -201,10 +201,6 @@ public final class MapHandRestock{
 				bestConfidence = confidence; bestSlot = i;// bestName = name;
 			}
 		}
-		if(infoLogs){
-			if(bestSlot != -1) Main.LOGGER.info("MapRestock: findByName() succeeded, slot="+bestSlot);
-			else Main.LOGGER.info("MapRestock: findByName() failed");
-		}
 		if(bestConfidence == 0) Main.LOGGER.warn("MapRestock: Likely skipping a map");
 		return bestSlot;
 	}
@@ -265,7 +261,9 @@ public final class MapHandRestock{
 		Main.LOGGER.info("MapRestock: findByName() minPos2="+posData2d.minPos2+", maxPos2="+posData2d.maxPos2+", sideways="+posData2d.isSideways);
 
 		final int i = getNextSlotByName(slots, data, prevPosStr, posData2d, /*infoLogs=*/true);//TODO: set to true for debugging
-		return i != -1 ? i : getNextSlotAny(slots, prevSlot, world);
+		if(i != -1) Main.LOGGER.info("MapRestock: findByName() succeeded, slot="+i);
+//		else Main.LOGGER.info("MapRestock: findByName() failed");
+		return i;//i != -1 ? i : getNextSlotAny(slots, prevSlot, world);
 	}
 
 	private final int getNextSlotByImage(final ItemStack[] slots, final int prevSlot, final World world){
@@ -297,7 +295,7 @@ public final class MapHandRestock{
 			}
 		}
 		if(bestSlot != -1) Main.LOGGER.info("MapRestock: findByImage() succeeded, confidence score: "+bestScore);
-		else Main.LOGGER.info("MapRestock: findByImage() failed");
+//		else Main.LOGGER.info("MapRestock: findByImage() failed");
 		return bestSlot;
 	}
 
@@ -394,7 +392,7 @@ public final class MapHandRestock{
 			}
 		}
 		if(JUST_PICK_A_MAP && restockFromSlot == -1){
-			Main.LOGGER.info("MapRestock: finding any single map");
+			Main.LOGGER.info("MapRestock: finding next map by ANY (count->locked->named->related)");
 			restockFromSlot = getNextSlotAny(ogSlots, prevSlot, player.getWorld());
 		}
 		if(restockFromSlot == -1){Main.LOGGER.info("MapRestock: unable to find next map"); return;}

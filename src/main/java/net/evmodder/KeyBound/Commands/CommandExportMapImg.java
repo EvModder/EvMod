@@ -33,7 +33,9 @@ import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
+import net.minecraft.text.ClickEvent;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -102,6 +104,7 @@ public class CommandExportMapImg{
 
 	private int genImgForMapsInInv(FabricClientCommandSource source){
 		int numShulksSaved = 0;
+		String lastRelPath = null;
 		/*invloop:*/for(int i=0; i<41; ++i){
 			ItemStack stack = source.getPlayer().getInventory().getStack(i);
 			ContainerComponent container = stack.get(DataComponentTypes.CONTAINER);
@@ -127,13 +130,26 @@ public class CommandExportMapImg{
 			if(contents.hasNext()) source.sendError(Text.literal("HUH?! Leftover items in container iterator.. bug"));
 
 			final String imgName = (stack.getCustomName() != null ? stack.getCustomName() : stack.getItemName()).getString()+" - slot"+i;
-
 			if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdir();
-			try{ImageIO.write(img, "png", new File(FileIO.DIR+MAP_EXPORT_DIR+imgName+".png"));}
+			try{ImageIO.write(img, "png", new File(lastRelPath=(FileIO.DIR+MAP_EXPORT_DIR+imgName+".png")));}
 			catch(IOException e){e.printStackTrace();}
 			++numShulksSaved;
 		}
-		if(numShulksSaved > 0) source.sendFeedback(Text.literal("Exported "+numShulksSaved+" map shulk imgs to ./config/"+Main.MOD_ID+"/"+MAP_EXPORT_DIR));
+		if(numShulksSaved == 1){
+			final String absolutePath = new File(lastRelPath).getAbsolutePath();
+			final Text text = Text.literal("Saved map shulk img to ").withColor(16755200).append(
+					Text.literal(lastRelPath).withColor(43520).formatted(Formatting.UNDERLINE)
+					.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, absolutePath)))
+			);
+			source.sendFeedback(text);
+		}
+		if(numShulksSaved > 1){
+			final Text text = Text.literal("Saved "+numShulksSaved+" map shulk imgs to ").withColor(16755200).append(
+					Text.literal(FileIO.DIR+MAP_EXPORT_DIR).withColor(43520).formatted(Formatting.UNDERLINE)
+					.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, new File(FileIO.DIR+MAP_EXPORT_DIR).getAbsolutePath())))
+			);
+			source.sendFeedback(text);
+		}
 		return numShulksSaved;
 	}
 
@@ -198,11 +214,18 @@ public class CommandExportMapImg{
 		final String nameStr = nameText == null ? null : nameText.getLiteralString();
 		final String imgName = nameStr != null ? nameStr : ifes.getFirst().getHeldItemStack().get(DataComponentTypes.MAP_ID).asString();
 
+		//16755200
 		if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdir();
-		try{ImageIO.write(img, "png", new File(FileIO.DIR+MAP_EXPORT_DIR+imgName+".png"));}
+		final String relFilePath = FileIO.DIR+MAP_EXPORT_DIR+imgName+".png";
+		File imgFile = new File(relFilePath);
+		try{ImageIO.write(img, "png", imgFile);}
 		catch(IOException e){e.printStackTrace();}
 
-		source.sendFeedback(Text.literal("Saved mapwall to ./config/"+Main.MOD_ID+"/"+MAP_EXPORT_DIR+imgName+".png"));
+		final Text text = Text.literal("Saved mapwall to ").withColor(16755200).append(
+				Text.literal(relFilePath).withColor(43520).formatted(Formatting.UNDERLINE)
+				.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, imgFile.getAbsolutePath())))
+		);
+		source.sendFeedback(text);
 		return true;
 	}
 
