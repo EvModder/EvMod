@@ -351,6 +351,7 @@ public final class MapHandRestock{
 		final ItemStack mapInHand = player.getMainHandStack();
 		final ItemStack[] slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		assert slots[prevSlot] == mapInHand;
+		final String prevName = mapInHand.getCustomName() == null ? null : mapInHand.getCustomName().getLiteralString();
 
 		final ItemStack[] ogSlots = slots.clone();
 		for(int i=0; i<slots.length; ++i){
@@ -359,8 +360,13 @@ public final class MapHandRestock{
 //			Main.LOGGER.info("Restock 1st bundle item: "+contents.iterate().iterator().next().getName().getString());
 //			Main.LOGGER.info("Restock 1st bundle item: "+contents.get(0).getName().getString());
 //			Main.LOGGER.info("Restock last bundle item: "+contents.get(contents.size()-1).getName().getString());
+
+			final boolean nullCustomName = contents.get(0).getCustomName() == null || contents.get(0).getCustomName().getLiteralString() == null;
+			if((prevName == null) != nullCustomName) continue;
+
 			if(ItemStack.areItemsAndComponentsEqual(mapInHand, contents.get(0))) continue; // TODO: something smarter,
 			//^ like (detect if fully hung, and if so skip matches in bundle, or skip nextByName altogether
+
 			slots[i] = contents.get(0);
 		}
 
@@ -374,7 +380,6 @@ public final class MapHandRestock{
 			InventoryHighlightUpdater.onUpdateTick(client);
 		}
 
-		final String prevName = mapInHand.getCustomName() == null ? null : mapInHand.getCustomName().getLiteralString();
 		int restockFromSlot = -1;
 		if(USE_NAME && restockFromSlot == -1){
 			if(prevName != null){
@@ -385,12 +390,12 @@ public final class MapHandRestock{
 		if(USE_IMG && restockFromSlot == -1 && !posData2dForName.containsKey(prevName)){
 			if(state != null){
 				Main.LOGGER.info("MapRestock: finding next map by img-edge");
-				restockFromSlot = getNextSlotByImage(slots, prevSlot, player.getWorld());
+				restockFromSlot = getNextSlotByImage(prevName == null ? slots : ogSlots, prevSlot, player.getWorld());
 			}
 		}
 		if(JUST_PICK_A_MAP && restockFromSlot == -1){
 			Main.LOGGER.info("MapRestock: finding any single map");
-			restockFromSlot = getNextSlotAny(slots, prevSlot, player.getWorld());
+			restockFromSlot = getNextSlotAny(ogSlots, prevSlot, player.getWorld());
 		}
 		if(restockFromSlot == -1){Main.LOGGER.info("MapRestock: unable to find next map"); return;}
 

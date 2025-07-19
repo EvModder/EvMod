@@ -105,9 +105,12 @@ public abstract class MapRelationUtils{
 		final MapState state = world.getMapState(mapId);
 		return state != null && state.locked != locked;
 	}
-	public static final RelatedMapsData getRelatedMapsByName(ItemStack[] slots, String sourceName, final int count, final Boolean locked, final World world){
+	public static final RelatedMapsData getRelatedMapsByName(final ItemStack[] slots, final String sourceName,
+			final int count, final Boolean locked, final World world){
 		List<Integer> relatedMapSlots = new ArrayList<>();
 		if(sourceName == null) return new RelatedMapsData(-1, -1, relatedMapSlots);
+//		sourceName = removeByArtist(sourceName);//TODO
+
 		int prefixLen = -1, suffixLen = -1;
 		//Main.LOGGER.info("MapAdjUtil: getRelatedMapsByName() called");
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
@@ -119,6 +122,7 @@ public abstract class MapRelationUtils{
 
 			final String name = item.getCustomName().getLiteralString();
 			if(name == null) continue;
+//			name = removeByArtist(name);//TODO
 			if(name.equals(sourceName)){relatedMapSlots.add(i); continue;}
 
 			//if(item.equals(prevMap)) continue;

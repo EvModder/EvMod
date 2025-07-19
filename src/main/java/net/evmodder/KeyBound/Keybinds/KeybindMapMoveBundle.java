@@ -80,7 +80,7 @@ public final class KeybindMapMoveBundle{
 				&& (!Screen.hasShiftDown() || Arrays.stream(slotsWithMapArt).noneMatch(i -> slots[i].getCount() == 1));
 		final boolean anyArtToPickup = Arrays.stream(slotsWithMapArt).anyMatch(i -> slots[i].getCount() == (pickupHalf ? 2 : 1));
 
-		Main.LOGGER.info("MapBundleOp: begin bundle search");
+//		Main.LOGGER.info("MapBundleOp: begin bundle search");
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		final ItemStack cursorStack = hs.getScreenHandler().getCursorStack();
 		int bundleSlot = -1, mostEmpty = Integer.MAX_VALUE, mostFull = 0;
@@ -116,16 +116,16 @@ public final class KeybindMapMoveBundle{
 				return;
 			}
 			if(!pickupHalf){
-				Main.LOGGER.warn("MapBundleOp: picking up bundle from slot: "+bundleSlot);
+				Main.LOGGER.warn("MapBundleOp: using bundle in slot: "+bundleSlot);
 				clicks.add(new ClickEvent(bundleSlot, 0, SlotActionType.PICKUP));
 			}
 			occupancy = slots[bundleSlot].get(DataComponentTypes.BUNDLE_CONTENTS).getOccupancy();
 		}
-		Main.LOGGER.info("MapBundleOp: contents: "+occupancy.getNumerator()+"/"+occupancy.getDenominator());
+//		Main.LOGGER.info("MapBundleOp: contents: "+occupancy.getNumerator()+"/"+occupancy.getDenominator());
 
 		if(anyArtToPickup){
 			final int space = 64 - getNumStored(occupancy);
-			Main.LOGGER.warn("MapBundleOp: space in bundle: "+space);
+//			Main.LOGGER.warn("MapBundleOp: space in bundle: "+space);
 			int suckedUp = 0;
 			//for(int i=SLOT_START; i<SLOT_END && deposited < space; ++i){
 			for(int i : slotsWithMapArt){
@@ -145,7 +145,7 @@ public final class KeybindMapMoveBundle{
 			int emptySlots = (int)IntStream.range(SLOT_START, SLOT_END).filter(i -> slots[i].isEmpty()).count();
 			int withdrawn = 0;
 			int i=SLOT_END-1;
-			Main.LOGGER.info("MapBundleOp: emptySlots: "+emptySlots+", stored: "+stored);
+//			Main.LOGGER.info("MapBundleOp: emptySlots: "+emptySlots+", stored: "+stored);
 			for(; emptySlots > stored; --i) if(slots[i].isEmpty()) --emptySlots;
 			for(; i>=SLOT_START && withdrawn < stored; --i){
 				if(!slots[i].isEmpty()) continue;

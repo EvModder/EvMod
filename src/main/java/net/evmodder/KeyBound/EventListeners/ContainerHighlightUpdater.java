@@ -24,12 +24,20 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 public class ContainerHighlightUpdater{
+	// These are only at this scope to avoid calls to "new"
+	private static final HashSet<UUID> uniqueMapIds = new HashSet<>();
+	private static ArrayList<Integer> asterisks = new ArrayList<>(7);
+
+	// These actually need to be at this scope
 	public static MutableText customTitle;
-//	private static int syncId;
-	private static HashSet<UUID> duplicatesInContainer = new HashSet<>(), uniqueMapIds = new HashSet<>();
+	private static final HashSet<UUID> duplicatesInContainer = new HashSet<>(), inContainerAndInInv = new HashSet<>();
 
 	public static boolean hasDuplicateInContainer(UUID colorsId){
 		return duplicatesInContainer.contains(colorsId);
+	}
+
+	public static boolean isInInvAndContainer(UUID colorsId){
+		return inContainerAndInInv.contains(colorsId);
 	}
 
 	private static final List<ItemStack> getAllMapItemsInContainer(List<Slot> slots){
@@ -45,6 +53,7 @@ public class ContainerHighlightUpdater{
 
 	public static final void onUpdateTick(MinecraftClient client){
 		customTitle = null;
+		inContainerAndInInv.clear();
 		if(client.player == null || client.world == null || !client.player.isAlive()) return;
 		if(client.currentScreen == null || !(client.currentScreen instanceof HandledScreen hs)) return;
 		if(client.currentScreen instanceof AnvilScreen ||
@@ -59,8 +68,9 @@ public class ContainerHighlightUpdater{
 		final List<UUID> nonMonoColorIds = (!Main.skipMonoColorMaps ? states.stream() :
 			states.stream().filter(s -> !MapRelationUtils.isMonoColor(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
 
-		List<Integer> asterisks = new ArrayList<>(4);
-		if(nonTransparentIds.stream().anyMatch(InventoryHighlightUpdater::isInInventory)) asterisks.add(Main.MAP_COLOR_IN_INV);
+		asterisks.clear();
+		nonTransparentIds.stream().filter(InventoryHighlightUpdater::isInInventory).forEach(inContainerAndInInv::add);
+		if(!inContainerAndInInv.isEmpty()) asterisks.add(Main.MAP_COLOR_IN_INV);
 		if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(Main.MAP_COLOR_NOT_IN_GROUP);
 		if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(Main.MAP_COLOR_UNLOCKED);
 		if(items.size() > states.size()) asterisks.add(Main.MAP_COLOR_UNLOADED);
@@ -73,9 +83,9 @@ public class ContainerHighlightUpdater{
 		if(items.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(Main.MAP_COLOR_UNNAMED);
 
 		if(!asterisks.isEmpty()){
-			asterisks = asterisks.stream().distinct().toList();
 			customTitle = hs.getTitle().copy();
-			asterisks.forEach(color -> customTitle.append(Text.literal("*").withColor(color).formatted(Formatting.BOLD)));
+			asterisks.stream().distinct() // TODO: the "distinct" only exists in case of configurations where 2+ settings share 1 color
+				.forEach(color -> customTitle.append(Text.literal("*").withColor(color).formatted(Formatting.BOLD)));
 		}
 	}
 }

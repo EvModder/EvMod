@@ -66,24 +66,23 @@ public final class TooltipMapNameColor{
 			return;
 		}
 		UUID colordsId = MapGroupUtils.getIdForMapState(state);
-		if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)){
-			MutableText text = lines.removeFirst().copy().withColor(Main.MAP_COLOR_NOT_IN_GROUP);
-			if(!state.locked) text.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
-			if(ItemFrameHighlightUpdater.isInItemFrame(colordsId)) text.append(Text.literal("*").withColor(Main.MAP_COLOR_IN_IFRAME));
-			lines.addFirst(text);
+		List<Integer> asterisks = new ArrayList<>();
+		if(ContainerHighlightUpdater.isInInvAndContainer(colordsId)) asterisks.add(Main.MAP_COLOR_IN_INV);
+		if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)) asterisks.add(Main.MAP_COLOR_NOT_IN_GROUP);
+		if(!state.locked) asterisks.add(Main.MAP_COLOR_UNLOCKED);
+		if(ItemFrameHighlightUpdater.isInItemFrame(colordsId)) asterisks.add(Main.MAP_COLOR_IN_IFRAME);
+		if(ContainerHighlightUpdater.hasDuplicateInContainer(colordsId)) asterisks.add(Main.MAP_COLOR_MULTI_INV);
+		if(asterisks.isEmpty()){
+			if(item.getCustomName() == null) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNNAMED));
+			return;
 		}
-		else if(!state.locked){
-			MutableText text = lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNLOCKED);
-			if(ItemFrameHighlightUpdater.isInItemFrame(colordsId)) text.append(Text.literal("*").withColor(Main.MAP_COLOR_IN_IFRAME));
-			lines.addFirst(text);
-		}
-		else if(ItemFrameHighlightUpdater.isInItemFrame(colordsId)) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_IN_IFRAME));
-		else if(ContainerHighlightUpdater.hasDuplicateInContainer(colordsId)){
-			if(Main.skipMonoColorMaps && MapRelationUtils.isMonoColor(state.colors)){
-				lines.addFirst(lines.removeFirst().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_MULTI_INV)));
-			}
-			else lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_MULTI_INV));
-		}
-		else if(item.getCustomName() == null) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNNAMED));
+		final boolean nameColor = !(asterisks.get(0) == Main.MAP_COLOR_UNNAMED
+				|| (asterisks.get(0) == Main.MAP_COLOR_MULTI_INV && Main.skipMonoColorMaps && MapRelationUtils.isMonoColor(state.colors)));
+
+		asterisks = asterisks.stream().distinct().toList(); // TODO: this line only exists in case of configurations where 2+ meanings share 1 color
+		MutableText text = lines.removeFirst().copy();
+		if(nameColor) text.withColor(asterisks.get(0));
+		for(int i=nameColor?1:0; i<asterisks.size(); ++i) text.append(Text.literal("*").withColor(asterisks.get(i)));
+		lines.addFirst(text);
 	}
 }
