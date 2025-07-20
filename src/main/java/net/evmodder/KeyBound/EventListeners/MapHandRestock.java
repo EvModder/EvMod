@@ -421,7 +421,7 @@ public final class MapHandRestock{
 				client.interactionManager.clickSlot(0, restockFromSlotFinal, player.getInventory().selectedSlot, SlotActionType.SWAP, player);
 				Main.LOGGER.info("MapRestock: Swapped inv.selectedSlot to nextMap: s="+restockFromSlotFinal);
 			}
-		}}, 50l);
+		}}, 51l);
 	}
 
 	public MapHandRestock(boolean useName, boolean useImg){

@@ -141,7 +141,7 @@ public abstract class MapRelationUtils{
 			if(prefixLen == -1 && suffixLen == -1){ // Prefix/suffix not yet determined
 				if(validMatchingPosStrs){prefixLen = a; suffixLen = b;}
 				else if(a != 0 || b != 0)
-					Main.LOGGER.info("MapAdjUtil: found matching prefix/suffix ("+a+"/"+b+"), but invalid PosStr: "+name.substring(a, name.length()-b));
+					Main.LOGGER.debug("MapAdjUtil: found matching prefix/suffix ("+a+"/"+b+"), but invalid PosStr: "+name.substring(a, name.length()-b));
 				continue;
 			}
 			final boolean oldContainsNew = prefixLen >= a && suffixLen >= b && (prefixLen > a || suffixLen > b);
