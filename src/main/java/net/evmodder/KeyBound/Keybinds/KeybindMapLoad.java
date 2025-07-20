@@ -1,6 +1,9 @@
 package net.evmodder.KeyBound.Keybinds;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.OptionalInt;
+import java.util.stream.IntStream;
 import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
@@ -13,6 +16,8 @@ import net.minecraft.registry.Registries;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.BundleContentsComponent;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
@@ -43,6 +48,25 @@ public final class KeybindMapLoad{
 		return hb;
 	}
 
+	private final void loadMapArtFromBundles(){
+		MinecraftClient client = MinecraftClient.getInstance();
+		InventoryScreen is = (InventoryScreen)client.currentScreen;
+		final BundleContentsComponent[] slots = is.getScreenHandler().slots.stream()
+				.map(s -> s.getStack().get(DataComponentTypes.BUNDLE_CONTENTS)).toArray(BundleContentsComponent[]::new);
+		final int[] slotsWithBundles = IntStream.range(9, 45).filter(i -> slots[i] != null).toArray();
+		if(slotsWithBundles.length == 0) return;
+		OptionalInt emptyBundleSlotOpt = Arrays.stream(slotsWithBundles).filter(i -> slots[i].getOccupancy().getNumerator() == 0).findAny();
+		if(emptyBundleSlotOpt.isEmpty()){Main.LOGGER.warn("MapLoadBundle: Empty bundle not found"); return;}
+		final int emptyBundleSlot = emptyBundleSlotOpt.getAsInt();
+
+		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
+		for(int i : slotsWithBundles){
+			if(slots[i].isEmpty()) continue;
+			if(slots[i].stream().anyMatch(s -> s.getItem() != Items.FILLED_MAP)) continue; // Skip bundles with non-mapart contents
+			if(slots[i].stream().allMatch(s -> isLoadedMapArt(client.world, s))) continue; // Skip bundles with already-loaded mapart
+		}
+	}
+
 	//TODO: Consider shift-clicks instead of hotbar swaps (basically, MapMove but only for unloaded maps, and keep track of which)
 	private long lastLoad;
 	private final long loadCooldown = 500L;
@@ -56,6 +80,7 @@ public final class KeybindMapLoad{
 		if(ts - lastLoad < loadCooldown){Main.LOGGER.warn("MapLoad cancelled: Cooldown"); return;}
 		lastLoad = ts;
 		//
+		if(hs instanceof InventoryScreen){loadMapArtFromBundles(); return;}
 		final DefaultedList<Slot> slots = hs.getScreenHandler().slots;
 		int numToLoad = 0;
 		for(int i=0; i<slots.size(); ++i) if(isUnloadedMapArt(client.player.clientWorld, slots.get(i).getStack())) ++numToLoad;
@@ -104,6 +129,6 @@ public final class KeybindMapLoad{
 	}
 
 	public KeybindMapLoad(){
-		new Keybind("mapart_load", ()->loadMapArtFromContainer(), s->s instanceof InventoryScreen == false, GLFW.GLFW_KEY_E);
+		new Keybind("mapart_load", ()->loadMapArtFromContainer(), _0->true, GLFW.GLFW_KEY_E);
 	}
 }

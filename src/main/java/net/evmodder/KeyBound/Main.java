@@ -187,6 +187,8 @@ public class Main implements ClientModInitializer{
 
 				case "limiter_clicks_in_duration": clicksInDuration = Integer.parseInt(value); break;
 				case "limiter_duration_ticks": durationTicks = Integer.parseInt(value); break;
+//				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
+//				case "millis_between_clicks": millis_between_clicks = Integer.parseInt(value); break;
 
 				case "join_messages": if(value.startsWith("[")) new SendOnServerJoin(value.substring(1, value.length()-1).split(",")); break;
 				case "temp_event_broadcast": if(value.startsWith("[")) temp_evt_msgs = value.substring(1, value.length()-1).split(","); break;
@@ -230,8 +232,6 @@ public class Main implements ClientModInitializer{
 				case "mapart_generate_img_command": mapWallCmd=!value.equalsIgnoreCase("false"); break;
 				case "mapart_generate_img_border_color1": mapWallBorderColor1=Integer.parseInt(value); break;
 				case "mapart_generate_img_border_color2": mapWallBorderColor2=Integer.parseInt(value); break;
-//				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
-//				case "millis_between_clicks": millis_between_clicks = Integer.parseInt(value); break;
 
 				case "keybind.eject_junk_items": if(!value.equalsIgnoreCase("false")) ejectJunk = new KeybindEjectJunk(); break;
 				case "keybind.toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
@@ -277,8 +277,7 @@ public class Main implements ClientModInitializer{
 			});
 		}
 
-		MinecraftClient client = MinecraftClient.getInstance();
-		String username = client.getSession().getUsername();
+		final String username = MinecraftClient.getInstance().getSession().getUsername();
 		if(temp_evt_ts*1000L > System.currentTimeMillis() && temp_evt_msgs != null && username.equals(evt_account))
 			new ChatBroadcaster(temp_evt_ts, temp_evt_msgs);
 	}

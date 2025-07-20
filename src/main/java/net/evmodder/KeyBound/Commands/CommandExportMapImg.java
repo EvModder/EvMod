@@ -5,7 +5,6 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -178,15 +177,20 @@ public class CommandExportMapImg{
 				return false;
 		}
 		final int h = mapWall.size()/w;
-
+		Main.LOGGER.info("ExportMapImg: Map wall size: "+w+"x"+h+" ("+mapWall.size()+")");
 		source.sendFeedback(Text.literal("Map wall size: "+w+"x"+h+" ("+mapWall.size()+")"));
+
 		final int border = BLOCK_BORDER ? 8 : 0;
 		BufferedImage img = new BufferedImage(128*w+border*2, 128*h+border*2, BufferedImage.TYPE_INT_ARGB);
 		if(BLOCK_BORDER) drawBorder(img);
+		boolean nonRectangularWarningShown = false;
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 			ItemFrameEntity ife = ifeLookup.get(mapWall.get(i*w+j));
 			if(ife == null){
-				source.sendError(Text.literal("Non-rectangular MapArt wall is not fully supported"));
+				if(!nonRectangularWarningShown){
+					source.sendError(Text.literal("Non-rectangular MapArt wall is not fully supported"));
+					nonRectangularWarningShown = true;
+				}
 				//return false;
 				continue;
 			}
@@ -212,7 +216,8 @@ public class CommandExportMapImg{
 
 		final Text nameText = ifes.getFirst().getHeldItemStack().getCustomName();
 		final String nameStr = nameText == null ? null : nameText.getLiteralString();
-		final String imgName = nameStr != null ? nameStr : ifes.getFirst().getHeldItemStack().get(DataComponentTypes.MAP_ID).asString();
+		final String imgName = nameStr == null ? ifes.getFirst().getHeldItemStack().get(DataComponentTypes.MAP_ID).asString()
+				: nameStr.replaceAll("[.\\\\/]+", "_");
 
 		//16755200
 		if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdir();
@@ -229,25 +234,36 @@ public class CommandExportMapImg{
 		return true;
 	}
 
-	private List<ItemFrameEntity> getConnectedFrames(HashMap<Vec3i, ItemFrameEntity> ifeLookup, ItemFrameEntity targetIFrame){
-//		HashMap<Vec3i, ItemFrameEntity> ifeLookup = new HashMap<>();
-		final Direction facing = targetIFrame.getFacing();
-//		iFrames.stream().filter(ife -> ife.getFacing() == facing).forEach(ife -> ifeLookup.put(ife.getBlockPos(), ife));
+	private void getConnectedFramesRecur(final HashMap<Vec3i, ?> ifeLookup, final Axis axis, final Vec3i pos, final HashSet<Vec3i> connected){
+		connected.add(pos);
+		for(Direction dir : Direction.values()){
+			if(dir.getAxis() == axis) continue;
+			Vec3i u = pos.offset(dir);
+			if(!connected.contains(u) && ifeLookup.containsKey(u)) getConnectedFramesRecur(ifeLookup, axis, u, connected);
+		}
+	}
+	private List<ItemFrameEntity> getConnectedFrames(HashMap<Vec3i, ItemFrameEntity> ifeLookup, ItemFrameEntity ife){
+		final HashSet<Vec3i> connected = new HashSet<>();
+		getConnectedFramesRecur(ifeLookup, ife.getFacing().getAxis(), ife.getBlockPos(), connected);
+
+		/*//HashMap<Vec3i, ItemFrameEntity> ifeLookup = new HashMap<>();
+		final Axis axis = ife.getFacing().getAxis();
+		//iFrames.stream().filter(ife -> ife.getFacing() == facing).forEach(ife -> ifeLookup.put(ife.getBlockPos(), ife));
 
 		HashSet<Vec3i> connected = new HashSet<>();
 		ArrayDeque<Vec3i> adjSides = new ArrayDeque<>();
-		adjSides.add(targetIFrame.getBlockPos());
+		adjSides.add(ife.getBlockPos());
 		while(!adjSides.isEmpty()){
 			Vec3i pos = adjSides.pop();
 			connected.add(pos);
 			for(Direction dir : Direction.values()){
-				if(dir == facing) continue; // constexpr or smth
+				if(dir.getAxis() == axis) continue; // constexpr or smth
 				Vec3i a = pos.offset(dir);
-//				Vec3i a = pos.offset(axis, 1), b = pos.offset(axis, -1);
+//				//Vec3i a = pos.offset(axis, 1), b = pos.offset(axis, -1);
 				if(!connected.contains(a) && ifeLookup.containsKey(a)) adjSides.add(a);
-//				if(!connected.contains(b) && ifeLookup.containsKey(b)) adjSides.add(b);
+//				//if(!connected.contains(b) && ifeLookup.containsKey(b)) adjSides.add(b);
 			}
-		}
+		}*/
 		return connected.stream().map(ifeLookup::get).toList();
 	}
 
@@ -284,8 +300,9 @@ public class CommandExportMapImg{
 		HashMap<Vec3i, ItemFrameEntity> ifeLookup = new HashMap<>();
 		final Direction facing = targetIFrame.getFacing();
 		iFrames.stream().filter(ife -> ife.getFacing() == facing).forEach(ife -> ifeLookup.put(ife.getBlockPos(), ife));
+		Main.LOGGER.info("ExportMapImg: Same-direction iFrames: "+iFrames.size());
 		List<ItemFrameEntity> ifes = getConnectedFrames(ifeLookup, targetIFrame);
-		//Main.LOGGER.info("Connected iFrames: "+ifes.size());
+		Main.LOGGER.info("ExportMapImg: Connected iFrames: "+ifes.size());
 		return genImgForMapsInItemFrames(ctx.getSource(), ifeLookup, ifes) ? 0 : 1;
 	}
 	private int runCommandWithMapName(CommandContext<FabricClientCommandSource> ctx){

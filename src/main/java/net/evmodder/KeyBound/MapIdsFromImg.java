@@ -120,10 +120,10 @@ public class MapIdsFromImg{
 
 	public static void main(String... args) throws IOException{
 //		calculateMapColors();
-		String groupName = "end";
-		String imgName = "1X1_Test.png";
+		String imgName = "1x1s_generic.png";
+		String grpName = "end_ALL";
 		BufferedImage img = ImageIO.read(new File(imgName));
-		HashSet<UUID> compareColorIds = loadColorIds(groupName);
+		HashSet<UUID> compareColorIds = loadColorIds(grpName);
 
 		if(img.getWidth()%128 != 0 || img.getHeight()%128 != 0){
 			System.err.println("Image W and H must be divisible by 128, but are not: "+img.getWidth()+" x "+img.getHeight());
@@ -157,10 +157,11 @@ public class MapIdsFromImg{
 		if(edited){
 			System.out.print("Saving edited image");
 			g.dispose();
-			ImageIO.write(img, "png", new File("edited_"+imgName));
+			int i = imgName.indexOf('.');
+			ImageIO.write(img, "png", new File(imgName.substring(0, i)+"_edited"+imgName.substring(i)));
 		}
-		final ByteBuffer bb = ByteBuffer.allocate(colorIds.size()*16);
-		for(UUID uuid : colorIds) bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
-		FileIO.saveFileBytes("group_"+imgName.substring(0, imgName.indexOf('.')), bb.array());
+//		final ByteBuffer bb = ByteBuffer.allocate(colorIds.size()*16);
+//		for(UUID uuid : colorIds) bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
+//		FileIO.saveFileBytes("hashcode_"+imgName.substring(0, imgName.indexOf('.')), bb.array());
 	}
 }

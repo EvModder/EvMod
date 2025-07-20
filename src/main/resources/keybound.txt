@@ -98,7 +98,7 @@ add_other_ignore_lists: [34471e8d-d0c5-47b9-b8e1-b5b9472affa4, 0e314b60-29c7-4e3
 msg_for_pearl_trigger: p
 
 #========== Chat/commands ==========#
-join_messages: [/mapartgroup set end_bigmaps+end_smallmaps]
+join_messages: [/mapartgroup set end_misc+end_big+end_square]
 #keybind.chat_msg.meow: meow :3
 keybind.chat_msg.rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost
 
