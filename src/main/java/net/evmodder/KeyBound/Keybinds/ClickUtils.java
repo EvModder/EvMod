@@ -109,10 +109,10 @@ public class ClickUtils{
 						}
 					}
 					waitedForClicks = true;
-					client.player.sendMessage(Text.literal("Waiting for available clicks...").withColor(OUTTA_CLICKS_COLOR), true);
+					client.player.sendMessage(Text.literal("Waiting for available clicks... ("+clicks.size()+")").withColor(OUTTA_CLICKS_COLOR), true);
 				});
 			}
-		}, 1l, 51l);
+		}, 1l, 27l/*51l*/);
 	}
 
 

@@ -2,6 +2,9 @@ package net.evmodder.KeyBound.Keybinds;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
 import org.lwjgl.glfw.GLFW;
@@ -31,7 +34,7 @@ public final class KeybindMapLoad{
 //		return FilledMapItem.getMapState(stack, world) == null;
 		if(stack.getItem() != Items.FILLED_MAP) return false;
 		MapState state = FilledMapItem.getMapState(stack, world);
-		return state == null || state.colors == null;
+		return state == null || state.colors == null || state.colors.length != 128*128;
 	}
 	private boolean isLoadedMapArt(World world, ItemStack stack){
 		if(stack.getItem() != Items.FILLED_MAP) return false;
@@ -48,28 +51,74 @@ public final class KeybindMapLoad{
 		return hb;
 	}
 
+	private boolean waitForState = false;
 	private final void loadMapArtFromBundles(){
-		MinecraftClient client = MinecraftClient.getInstance();
-		InventoryScreen is = (InventoryScreen)client.currentScreen;
-		final BundleContentsComponent[] slots = is.getScreenHandler().slots.stream()
-				.map(s -> s.getStack().get(DataComponentTypes.BUNDLE_CONTENTS)).toArray(BundleContentsComponent[]::new);
-		final int[] slotsWithBundles = IntStream.range(9, 45).filter(i -> slots[i] != null).toArray();
+		Main.LOGGER.warn("MapLoadBundle: in InventoryScreen");
+		final MinecraftClient client = MinecraftClient.getInstance();
+		final InventoryScreen is = (InventoryScreen)client.currentScreen;
+		final ItemStack[] slots = is.getScreenHandler().slots.stream().map(s -> s.getStack()).toArray(ItemStack[]::new);
+		final int[] slotsWithBundles = IntStream.range(9, 45).filter(i -> slots[i].get(DataComponentTypes.BUNDLE_CONTENTS) != null).toArray();
 		if(slotsWithBundles.length == 0) return;
-		OptionalInt emptyBundleSlotOpt = Arrays.stream(slotsWithBundles).filter(i -> slots[i].getOccupancy().getNumerator() == 0).findAny();
+		final OptionalInt emptyBundleSlotOpt = Arrays.stream(slotsWithBundles)
+				.filter(i -> slots[i].get(DataComponentTypes.BUNDLE_CONTENTS).getOccupancy().getNumerator() == 0).findAny();
 		if(emptyBundleSlotOpt.isEmpty()){Main.LOGGER.warn("MapLoadBundle: Empty bundle not found"); return;}
 		final int emptyBundleSlot = emptyBundleSlotOpt.getAsInt();
+//		final OptionalInt emptySlotOpt = IntStream.range(9, 45).filter(i -> slots[i].isEmpty()).min(Comparator.comparingInt(i -> Math.abs(i-emptyBundleSlot)));
+		Optional<Integer> emptySlotOpt = IntStream.range(9, 45).filter(i -> slots[i].isEmpty()).boxed()
+				.min(Comparator.comparingInt(i -> Math.abs(i-emptyBundleSlot)));
+		if(emptySlotOpt.isEmpty()){Main.LOGGER.warn("MapLoadBundle: Empty slot not found"); return;}
+		final int emptySlot = emptySlotOpt.get();
 
-		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
+		final ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		for(int i : slotsWithBundles){
-			if(slots[i].isEmpty()) continue;
-			if(slots[i].stream().anyMatch(s -> s.getItem() != Items.FILLED_MAP)) continue; // Skip bundles with non-mapart contents
-			if(slots[i].stream().allMatch(s -> isLoadedMapArt(client.world, s))) continue; // Skip bundles with already-loaded mapart
+			BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
+			if(contents.isEmpty()) continue;
+			if(contents.stream().anyMatch(s -> s.getItem() != Items.FILLED_MAP)) continue; // Skip bundles with non-mapart contents
+			if(contents.stream().allMatch(s -> isLoadedMapArt(client.world, s))) continue; // Skip bundles with already-loaded mapart
+			Main.LOGGER.info("MapLoadBundle: found bundle with "+contents.size()+" maps");
+			for(int j=0; j<contents.size(); ++j){
+				clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // Take last map from bundle
+				clicks.add(new ClickEvent(emptySlot, 0, SlotActionType.PICKUP)); // Place map in empty slot
+				// Wait for map state to load
+				clicks.add(new ClickEvent(emptySlot, 0, SlotActionType.PICKUP)); // Take map from empty slot
+				clicks.add(new ClickEvent(emptyBundleSlot, 0, SlotActionType.PICKUP)); // Place map in empty bundle
+			}
+			for(int j=0; j<contents.size(); ++j){
+				clicks.add(new ClickEvent(emptyBundleSlot, 1, SlotActionType.PICKUP)); // Take last map from empty bundle
+				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // Place map back in original bundle
+			}
 		}
+		if(clicks.isEmpty()) return; // No bundles with maps
+//		client.player.sendMessage(Text.literal("Scheduling clicks: "+clicks.size()), true);
+		Main.LOGGER.info("MapLoadBundle: STARTED");
+		Main.clickUtils.executeClicks(clicks,
+			c->{
+				if(client.player == null || client.world == null || c.slotId() != emptySlot) return true;
+				if(!waitForState){waitForState = true; return true;}
+				ItemStack item = client.player.currentScreenHandler.slots.get(emptySlot).getStack();
+				if(waitForState && !isLoadedMapArt(client.world, item)) return false;
+//				if(isUnloadedMapArt(client.world, item)) return false;
+//				if(client.player.currentScreenHandler.getCursorStack().isEmpty()){
+//					if(!isLoadedMapArt(client.world, item)) return false;
+//					if(!isLoadedMapArt(client.player.getWorld(), item)) return false; //Which of these 3 actually works? none of them??
+//					if(!isLoadedMapArt(client.player.clientWorld, item)) return false;
+//					MapIdComponent mapId = item.get(DataComponentTypes.MAP_ID);
+//					if(mapId == null) return false;
+//					MapState mapState = client.player.clientWorld.getMapState(mapId);
+//					if(mapState == null) return false;
+//					client.player.clientWorld.putClientsideMapState(mapId, mapState);
+//				}
+				waitForState = false;
+				return true;
+			},
+			()->Main.LOGGER.info("MapLoadBundle: DONE!")
+		);
 	}
 
 	//TODO: Consider shift-clicks instead of hotbar swaps (basically, MapMove but only for unloaded maps, and keep track of which)
 	private long lastLoad;
 	private final long loadCooldown = 500L;
+	private boolean moveToHotbarPhase = false;
 	private final void loadMapArtFromContainer(){
 		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapLoad cancelled: Already ongoing"); return;}
 		//
@@ -96,35 +145,50 @@ public final class KeybindMapLoad{
 		for(int i=-1; (i=getNextUsableHotbarButton(client, i)) != 9; ++usableHotbarSlots);
 
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
+		HashSet<ClickEvent> batchStarts = new HashSet<>();
 		int batchSize = 0;
 		final int MAX_BATCH_SIZE = Math.min(usableHotbarSlots, Main.clickUtils.MAX_CLICKS/2);
 		for(int i=0; i<slots.size() && numToLoad > 0; ++i){
 			if(!isUnloadedMapArt(client.player.clientWorld, slots.get(i).getStack())) continue;
-			clicks.add(new ClickEvent(i, hotbarButton, SlotActionType.SWAP));
+			ClickEvent c1 = new ClickEvent(i, hotbarButton, SlotActionType.SWAP);
+			clicks.add(c1);
+			if(batchSize == 0) batchStarts.add(c1);
 			++batchSize;
 			putBackSlots[hotbarButton] = i;
 			--numToLoad;
 
 			hotbarButton = getNextUsableHotbarButton(client, hotbarButton);
 			if(hotbarButton == 9 || numToLoad == 0 || batchSize == MAX_BATCH_SIZE){
-				for(int j=0; j<hotbarButton; ++j) if(putBackSlots[j] != -1) clicks.add(new ClickEvent(putBackSlots[j], j, SlotActionType.SWAP));
+				for(int j=0; j<hotbarButton; ++j) if(putBackSlots[j] != -1){
+					ClickEvent c2 = new ClickEvent(putBackSlots[j], j, SlotActionType.SWAP);
+					clicks.add(c2);
+					if(batchSize != 0){
+						batchStarts.add(c2);
+						batchSize = 0;
+					}
+				}
 				hotbarButton = getNextUsableHotbarButton(client, -1);
-				batchSize = 0;
 			}
 		}
 		//Main.LOGGER.info("MapLoad: STARTED");
 		Main.clickUtils.executeClicks(clicks,
-				c->{
-					if(client.player == null || client.world == null) return true;
-					ItemStack item = client.player.getInventory().getStack(c.button());
-					if(isUnloadedMapArt(/*client.player.clientWorld*/client.world, item)) return false;
-					if(isLoadedMapArt(/*client.player.clientWorld*/client.world, item)) return true;
-					if(getNextUsableHotbarButton(client, -1) != c.button()
-						|| Main.clickUtils.MAX_CLICKS-Main.clickUtils.addClick(null) >= MAX_BATCH_SIZE) return true;
-					client.player.sendMessage(Text.literal("MapLoad: Waiting for clicks...").withColor(KeybindMapCopy.WAITING_FOR_CLICKS_COLOR), true);
-					return false;
-				},
-				()->Main.LOGGER.info("MapLoad: DONE!")
+			c->{
+				if(client.player == null || client.world == null) return true;
+//				if(isUnloadedMapArt(/*client.player.clientWorld*/client.world, item)) return false;
+				if(batchStarts.contains(c)){
+					if(Main.clickUtils.MAX_CLICKS-Main.clickUtils.addClick(null) < MAX_BATCH_SIZE){
+						client.player.sendMessage(Text.literal("MapLoad: Waiting for clicks...").withColor(KeybindMapCopy.WAITING_FOR_CLICKS_COLOR), true);
+						return false;
+					}
+					moveToHotbarPhase = !moveToHotbarPhase;
+				}
+				if(moveToHotbarPhase){waitForState = false; return true;}
+				ItemStack item = client.player.getInventory().getStack(c.button());
+				if(!isLoadedMapArt(client.world, item) || (waitForState=!waitForState)) return false;
+				waitForState = true;
+				return true;
+			},
+			()->Main.LOGGER.info("MapLoad: DONE!")
 		);
 	}
 
