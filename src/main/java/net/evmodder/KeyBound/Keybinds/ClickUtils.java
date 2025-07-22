@@ -64,8 +64,7 @@ public class ClickUtils{
 	public final void executeClicks(Queue<ClickEvent> clicks, Function<ClickEvent, Boolean> canProceed, Runnable onComplete){
 		if(clickOpOngoing){
 			Main.LOGGER.warn("executeClicks() already has an ongoing operation");
-			MinecraftClient.getInstance().player.sendMessage(
-					Text.literal("Clicks cancelled: current operation needs to finish before starting a new one"), true);
+			MinecraftClient.getInstance().player.sendMessage(Text.literal("Clicks cancelled: current operation needs to finish before starting a new one"), true);
 			onComplete.run();
 			return;
 		}
@@ -89,11 +88,18 @@ public class ClickUtils{
 					client.player.sendMessage(Text.literal("Clicks cancelled: container ID changed").withColor(SYNC_ID_CHANGED_COLOR), true);
 					cancel(); clickOpOngoing=false; onComplete.run(); return;
 				}
+				if(clicks.isEmpty()){
+					if(waitedForClicks) client.player.sendMessage(Text.literal("Clicks finished early!"), true);
+					cancel(); clickOpOngoing=false; onComplete.run(); return;
+				}
 				//final int availableClicks = MAX_CLICKS - addClick(null);
 				//for(int i=0; i<availableClicks; ++i){
 				client.executeSync(()->{
 					while(addClick(null) < MAX_CLICKS){
-						if(!canProceed.apply(clicks.peek())) return;
+						if(!canProceed.apply(clicks.peek())){
+							client.player.sendMessage(Text.literal("canProceed failed").withColor(OUTTA_CLICKS_COLOR), true);
+							return;
+						}
 						ClickEvent click = clicks.remove();
 						try{
 							//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
