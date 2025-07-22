@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
@@ -70,18 +71,22 @@ public final class KeybindMapLoad{
 		final int emptySlot = emptySlotOpt.get();
 
 		final ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
+		final IdentityHashMap<ClickEvent, Integer> ableToSkipClicks = new IdentityHashMap<>();
 		for(int i : slotsWithBundles){
 			BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
 			if(contents.isEmpty()) continue;
 			if(contents.stream().anyMatch(s -> s.getItem() != Items.FILLED_MAP)) continue; // Skip bundles with non-mapart contents
 			if(contents.stream().allMatch(s -> isLoadedMapArt(client.world, s))) continue; // Skip bundles with already-loaded mapart
-			Main.LOGGER.info("MapLoadBundle: found bundle with "+contents.size()+" maps");
+//			Main.LOGGER.info("MapLoadBundle: found bundle with "+contents.size()+" maps");
 			for(int j=0; j<contents.size(); ++j){
-				clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // Take last map from bundle
+				ClickEvent c;
+				clicks.add(c=new ClickEvent(i, 1, SlotActionType.PICKUP)); // Take last map from bundle
 				clicks.add(new ClickEvent(emptySlot, 0, SlotActionType.PICKUP)); // Place map in empty slot
 				// Wait for map state to load
 				clicks.add(new ClickEvent(emptySlot, 0, SlotActionType.PICKUP)); // Take map from empty slot
 				clicks.add(new ClickEvent(emptyBundleSlot, 0, SlotActionType.PICKUP)); // Place map in empty bundle
+
+				ableToSkipClicks.put(c, 6*(contents.size()-j));
 			}
 			for(int j=0; j<contents.size(); ++j){
 				clicks.add(new ClickEvent(emptyBundleSlot, 1, SlotActionType.PICKUP)); // Take last map from empty bundle
@@ -93,7 +98,19 @@ public final class KeybindMapLoad{
 		Main.LOGGER.info("MapLoadBundle: STARTED");
 		Main.clickUtils.executeClicks(clicks,
 			c->{
-				if(client.player == null || client.world == null || c.slotId() != emptySlot) return true;
+				if(client.player == null || client.world == null) return true;
+				Integer skipIfLoaded = ableToSkipClicks.get(c);
+//				Main.LOGGER.info("click for slot: "+c.slotId()+", clicksLeft: "+clicks.size());
+				if(skipIfLoaded != null){
+					//Main.LOGGER.info("MapLoadBundle: potentially skippable");
+					BundleContentsComponent contents = client.player.currentScreenHandler.slots.get(c.slotId()).getStack().get(DataComponentTypes.BUNDLE_CONTENTS);
+					if(contents != null && contents.stream().allMatch(s -> isLoadedMapArt(client.world, s))){
+//						Main.LOGGER.info("MapLoadBundle: skippable! whoop whoop: "+(skipIfLoaded));
+						for(int i=0; i<skipIfLoaded; ++i) clicks.remove();
+						return false;
+					}
+				}
+				if(c.slotId() != emptySlot) return true;
 				if(!waitForState){waitForState = true; return true;}
 				ItemStack item = client.player.currentScreenHandler.slots.get(emptySlot).getStack();
 				if(waitForState && !isLoadedMapArt(client.world, item)) return false;
