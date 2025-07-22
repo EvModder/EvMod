@@ -2,11 +2,12 @@ package net.evmodder.KeyBound.Keybinds;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 import java.util.stream.IntStream;
 import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
@@ -162,7 +163,7 @@ public final class KeybindMapLoad{
 		for(int i=-1; (i=getNextUsableHotbarButton(client, i)) != 9; ++usableHotbarSlots);
 
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
-		HashSet<ClickEvent> batchStarts = new HashSet<>();
+		Set<ClickEvent> batchStarts = Collections.newSetFromMap(new IdentityHashMap<>());
 		int batchSize = 0;
 		final int MAX_BATCH_SIZE = Math.min(usableHotbarSlots, Main.clickUtils.MAX_CLICKS/2);
 		for(int i=0; i<slots.size() && numToLoad > 0; ++i){

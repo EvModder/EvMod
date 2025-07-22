@@ -46,6 +46,8 @@ public class Main implements ClientModInitializer{
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
 	// Ultimate KeyBind mod: Buff MaLiLib mod menu with dropdown option for all vanilla (and mod) categories + allow duplicates
+	// auto-replenish from opened containers (and maybe even auto-open containers)
+	// keybind to sort maps in inventory
 
 	// Mixin onEntityTick_iFrame instead of hasLabel_iFrame <--- less lag, better compatibility with mods, etc.
 	// see if possible to pre-load MapStates when joining a server (to reduce lag?)

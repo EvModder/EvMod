@@ -2,6 +2,7 @@ package net.evmodder.KeyBound.Keybinds;
 
 import java.util.ArrayDeque;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.TreeSet;
 import java.util.stream.IntStream;
 import org.lwjgl.glfw.GLFW;
@@ -120,7 +121,7 @@ public final class KeybindMapMove{
 		client.player.sendMessage(Text.literal("MapMove: selectiveMove="+selectiveMove), true);
 
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
-		HashMap<ClickEvent, Integer> reserveClicks = new HashMap<>();
+		IdentityHashMap<ClickEvent, Integer> reserveClicks = new IdentityHashMap<>();
 		if(moveToShulk) for(int i=27, j=0; i<63; ++i){
 			if(slots[i].getItem() != Items.FILLED_MAP) continue;
 			if(isFillerMap(slots, slots[i], client.world)) continue;

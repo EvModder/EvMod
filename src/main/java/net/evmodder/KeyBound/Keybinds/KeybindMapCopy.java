@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
@@ -379,7 +380,7 @@ public final class KeybindMapCopy{
 		final boolean leftoversInSlot = moveExactToCrafter && minMapCount > emptyMapsPerCopy;
 
 		// Execute copy operations
-		HashMap<ClickEvent, Integer> reserveClicks = new HashMap<>();
+		IdentityHashMap<ClickEvent, Integer> reserveClicks = new IdentityHashMap<>();
 		Main.LOGGER.info("MapCopy: Starting copy, item.count "+minMapCount+" -> "+secondMinMapCount+". leftover: "+leftoversInSlot);
 		for(int i=HOTBAR_END-1; i>=INV_START; --i){
 			if(slots[i].getItem() != Items.FILLED_MAP) continue;
