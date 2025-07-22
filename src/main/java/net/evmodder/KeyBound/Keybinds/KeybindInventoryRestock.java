@@ -16,7 +16,7 @@ import net.minecraft.screen.slot.SlotActionType;
 //TODO: Shift-click (only 2 clicks intead of 3) when possible
 
 public final class KeybindInventoryRestock{
-	private final void moveMapArtToFromShulker(){
+	public static final void doRestock(){
 		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("InvRestock cancelled: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -57,6 +57,6 @@ public final class KeybindInventoryRestock{
 	}
 
 	public KeybindInventoryRestock(){
-		new Keybind("inventory_restock", ()->moveMapArtToFromShulker(), s->s instanceof HandledScreen && s instanceof InventoryScreen == false, GLFW.GLFW_KEY_R);
+		new Keybind("inventory_restock", KeybindInventoryRestock::doRestock, s->s instanceof HandledScreen && s instanceof InventoryScreen == false, GLFW.GLFW_KEY_R);
 	}
 }

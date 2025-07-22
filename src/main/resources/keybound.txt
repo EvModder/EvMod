@@ -31,7 +31,7 @@ mapart_generate_img_border: false
 mapart_generate_img_border_color1: -14236 # Yellow
 mapart_generate_img_border_color2: 3288370 # Gray
 
-mapart_database: true
+mapart_database: false
 mapart_database_share_contact: true
 
 map_highlight_in_tooltip: true
@@ -54,6 +54,7 @@ highlight_duplicate_monocolor_maps: false
 
 # <= 0 for infinite dist (faster). Requires 'map_highlight_in_itemframe:true'
 itemframe_tracking_distance: 128
+
 
 #========== Added Visuals ==========#
 totem_total_count: true
@@ -83,7 +84,6 @@ client_id: 1
 client_key: some_unique_key
 remote_address: evmodder.net:14441
 
-
 # List of remote messages
 #keybind.remote_msg.a: P2P_MSG,27aa6a20-4a0d-4779-bcd5-dce162dd7467
 #keybind.remote_msg.b: EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c
@@ -96,6 +96,7 @@ add_other_ignore_lists: [34471e8d-d0c5-47b9-b8e1-b5b9472affa4, 0e314b60-29c7-4e3
 
 #Presses the nearest button if someone sends you this in /msg and you are next to their pearl
 msg_for_pearl_trigger: p
+
 
 #========== Chat/commands ==========#
 join_messages: [/mapartgroup set end_misc+end_big+end_square]
@@ -115,6 +116,7 @@ keybind.ebounce_travel_helper: true
 keybind.aie_travel_helper: true
 
 keybind.inventory_restock: true
+keybind.inventory_restock.auto: true
 keybind.inventory_organize.EvInv: [
   # Armor
   5:carved_pumpkin,

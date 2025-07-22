@@ -24,6 +24,7 @@ import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.Commands.*;
 import net.evmodder.KeyBound.EventListeners.AutoPearlActivator;
 import net.evmodder.KeyBound.EventListeners.ContainerHighlightUpdater;
+import net.evmodder.KeyBound.EventListeners.ContainerOpenListener;
 import net.evmodder.KeyBound.EventListeners.IgnoreListSync2b2t;
 import net.evmodder.KeyBound.EventListeners.InventoryHighlightUpdater;
 import net.evmodder.KeyBound.EventListeners.ItemFrameHighlightUpdater;
@@ -45,6 +46,7 @@ import net.minecraft.client.MinecraftClient;
 public class Main implements ClientModInitializer{
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
+	// ignorelist sync, /seen
 	// Ultimate KeyBind mod: Buff MaLiLib mod menu with dropdown option for all vanilla (and mod) categories + allow duplicates
 	// auto-replenish from opened containers (and maybe even auto-open containers)
 	// keybind to sort maps in inventory
@@ -239,6 +241,8 @@ public class Main implements ClientModInitializer{
 				case "keybind.toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
 //				case "keybind.smart_inventory_craft": if(!value.equalsIgnoreCase("false")) new KeybindSmartInvCraft(); break;
 				case "keybind.inventory_restock": if(!value.equalsIgnoreCase("false")) new KeybindInventoryRestock(); break;
+				case "keybind.inventory_restock.auto": if(!value.equalsIgnoreCase("false"))
+					ClientTickEvents.END_CLIENT_TICK.register(ContainerOpenListener::onUpdateTick); break;
 				case "keybind.ebounce_travel_helper": keybindEbounceTravelHelper = !value.equalsIgnoreCase("false"); break;
 				case "keybind.aie_travel_helper": if(!value.equalsIgnoreCase("false")) new KeybindAIETravelHelper(); break;
 				case "scroll_order": {

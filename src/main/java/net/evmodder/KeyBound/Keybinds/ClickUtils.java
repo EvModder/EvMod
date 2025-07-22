@@ -96,10 +96,7 @@ public class ClickUtils{
 				//for(int i=0; i<availableClicks; ++i){
 				client.executeSync(()->{
 					while(addClick(null) < MAX_CLICKS){
-						if(!canProceed.apply(clicks.peek())){
-							client.player.sendMessage(Text.literal("canProceed failed").withColor(OUTTA_CLICKS_COLOR), true);
-							return;
-						}
+						if(!canProceed.apply(clicks.peek())) return;
 						ClickEvent click = clicks.remove();
 						try{
 							//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);

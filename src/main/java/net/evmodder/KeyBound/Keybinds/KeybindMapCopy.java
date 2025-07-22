@@ -89,9 +89,8 @@ public final class KeybindMapCopy{
 
 			if(j >= HOTBAR_START && (!leaveOne || amtInGrid > 0) && slots[j].getCount() >= amtNeeded){
 				clicks.add(new ClickEvent(INPUT_START, j-HOTBAR_START, SlotActionType.SWAP));
-				int temp = slots[j].getCount();
-				slots[j].setCount(amtInGrid);
-				amtInGrid = temp;
+				amtInGrid = slots[j].getCount();
+				slots[j].setCount(combinedCnt-amtInGrid); // Effectively swap the counts
 				break;
 			}
 			else if(isCrafter && !leaveOne && combinedCnt <= 64){
@@ -214,8 +213,11 @@ public final class KeybindMapCopy{
 				//Main.LOGGER.info("MapCopyBundle: Coping map item into "+bundlesToCopy.get(k).size()+" dest bundles");
 				for(int d : bundlesToCopy.get(k)){
 					if(numEmptyMapsInGrid < count){
+//						Main.LOGGER.info("restocking empty maps at least: "+count+" (curr: "+numEmptyMapsInGrid+")");
 						numEmptyMapsInGrid = getEmptyMapsIntoInput(clicks, slots, isCrafter, count, numEmptyMapsInGrid, HOTBAR_END);
+//						Main.LOGGER.info("numEmptyMapsInGrid after restock: "+numEmptyMapsInGrid);
 					}
+					numEmptyMapsInGrid -= count;
 					if(count > 1){
 						if(leftoverMapSlot != INPUT_START+1){
 							clicks.add(new ClickEvent(leftoverMapSlot, 0, SlotActionType.PICKUP)); // Pickup all
