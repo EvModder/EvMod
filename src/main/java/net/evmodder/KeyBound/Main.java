@@ -140,7 +140,7 @@ public class Main implements ClientModInitializer{
 		int clientId=0; String clientKey=null;
 		String remoteAddr=null; int remotePort=0;
 		//int clicksInDuration = 190, durationTicks = 75;
-		int clicksInDuration = 1, durationTicks = 1;
+		int clicksInDuration = 78, durationTicks = 90;
 		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false,
 				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false, keybindMapArtBundleStow=false;
 		boolean mapMoveIgnoreAirPockets=true;

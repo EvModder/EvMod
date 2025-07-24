@@ -53,7 +53,8 @@ public final class KeybindMapLoad{
 		return hb;
 	}
 
-	private boolean waitForState = false;
+	private final long WAIT_FOR_STATE_UPDATE = 95; // 50 = 1 tick
+	private long stateWaitStart;
 	private final void loadMapArtFromBundles(){
 		Main.LOGGER.warn("MapLoadBundle: in InventoryScreen");
 		final MinecraftClient client = MinecraftClient.getInstance();
@@ -112,21 +113,13 @@ public final class KeybindMapLoad{
 					}
 				}
 				if(c.slotId() != emptySlot) return true;
-				if(!waitForState){waitForState = true; return true;}
+				if(stateWaitStart == 0){stateWaitStart = -1; return true;}
 				ItemStack item = client.player.currentScreenHandler.slots.get(emptySlot).getStack();
-				if(waitForState && !isLoadedMapArt(client.world, item)) return false;
-//				if(isUnloadedMapArt(client.world, item)) return false;
-//				if(client.player.currentScreenHandler.getCursorStack().isEmpty()){
-//					if(!isLoadedMapArt(client.world, item)) return false;
-//					if(!isLoadedMapArt(client.player.getWorld(), item)) return false; //Which of these 3 actually works? none of them??
-//					if(!isLoadedMapArt(client.player.clientWorld, item)) return false;
-//					MapIdComponent mapId = item.get(DataComponentTypes.MAP_ID);
-//					if(mapId == null) return false;
-//					MapState mapState = client.player.clientWorld.getMapState(mapId);
-//					if(mapState == null) return false;
-//					client.player.clientWorld.putClientsideMapState(mapId, mapState);
-//				}
-				waitForState = false;
+				if(!isLoadedMapArt(client.world, item)) return false;
+				// Wait a bit even aft map state is loaded, to ensure it REALLY gets loaded
+				else if(stateWaitStart <= 0){stateWaitStart = System.currentTimeMillis(); return false;}
+				else if(System.currentTimeMillis() - stateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
+				stateWaitStart = 0;
 				return true;
 			},
 			()->Main.LOGGER.info("MapLoadBundle: DONE!")
@@ -200,10 +193,12 @@ public final class KeybindMapLoad{
 					}
 					moveToHotbarPhase = !moveToHotbarPhase;
 				}
-				if(moveToHotbarPhase){waitForState = false; return true;}
+				if(moveToHotbarPhase) return true;
 				ItemStack item = client.player.getInventory().getStack(c.button());
-				if(!isLoadedMapArt(client.world, item) || (waitForState=!waitForState)) return false;
-				waitForState = true;
+				if(!isLoadedMapArt(client.world, item)) return false;
+				else if(stateWaitStart == 0){stateWaitStart = System.currentTimeMillis(); return false;}
+				else if(System.currentTimeMillis() - stateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
+				stateWaitStart = 0;
 				return true;
 			},
 			()->Main.LOGGER.info("MapLoad: DONE!")

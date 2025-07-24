@@ -164,11 +164,11 @@ public final class KeybindMapCopy{
 			ArrayList<Integer> copyDests = new ArrayList<>();
 			++storageBundles;
 			final String name1 = slots[s1].getCustomName() == null ? null : slots[s1].getCustomName().getString();
-			Main.LOGGER.info("looking for dest bundles for "+slots[s1].getName().getString()+" in slot "+s1);
+//			Main.LOGGER.info("looking for dest bundles for "+slots[s1].getName().getString()+" in slot "+s1);
 			for(int j=0; j<slotsWithBundles.length; ++j){
 				final int s2 = slotsWithBundles[j];
 				if(!slots[s2].get(DataComponentTypes.BUNDLE_CONTENTS).isEmpty()) continue;
-				Main.LOGGER.info("empty bundle in slot "+s2);
+//				Main.LOGGER.info("empty bundle in slot "+s2);
 				if(name1 != null){
 					final String name2 = slots[s2].getCustomName() == null ? null : slots[s2].getCustomName().getString();
 					if(name1.equals(name2)) copyDests.add(s2);
@@ -198,13 +198,13 @@ public final class KeybindMapCopy{
 		Main.LOGGER.info("MapCopyBundle: Intermediary bundle slot "+tempBundleSlot+", "+slots[tempBundleSlot].getName().getString());
 
 		for(int k : bundlesToCopy.keySet()){
-			Main.LOGGER.info("MapCopyBundle: Copying map bundle in slot "+k+", "+slots[k].getName().getString()+" to slots: "+bundlesToCopy.get(k));
+//			Main.LOGGER.info("MapCopyBundle: Copying map bundle in slot "+k+", "+slots[k].getName().getString()+" to slots: "+bundlesToCopy.get(k));
 			BundleContentsComponent contents = slots[k].get(DataComponentTypes.BUNDLE_CONTENTS);
 			for(int i=0; i<contents.size(); ++i){
 				clicks.add(new ClickEvent(k, 1, SlotActionType.PICKUP)); // Take last map from src bundle
 				clicks.add(new ClickEvent(tempBundleSlot, 0, SlotActionType.PICKUP)); // Place map in temp bundle
 			}
-			Main.LOGGER.info("MapCopyBundle: Move to intermediary bundle complete, beginning copy");
+//			Main.LOGGER.info("MapCopyBundle: Move to intermediary bundle complete, beginning copy");
 			for(int i=0; i<contents.size(); ++i){
 				final int count = contents.get(i).getCount();
 				clicks.add(new ClickEvent(tempBundleSlot, 1, SlotActionType.PICKUP)); // Take last map from temp bundle
