@@ -44,7 +44,8 @@ public final class KeybindMapMoveBundle{
 	}
 
 	private final boolean isBundle(ItemStack stack){
-		return Registries.ITEM.getId(stack.getItem()).getPath().endsWith("bundle");
+		return stack.get(DataComponentTypes.BUNDLE_CONTENTS) != null;
+//		return Registries.ITEM.getId(stack.getItem()).getPath().endsWith("bundle");
 	}
 	private final int getNumStored(Fraction fraction){
 		assert 64 % fraction.getDenominator() == 0;

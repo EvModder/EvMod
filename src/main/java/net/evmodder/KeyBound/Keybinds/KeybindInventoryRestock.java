@@ -1,8 +1,12 @@
 package net.evmodder.KeyBound.Keybinds;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
@@ -14,31 +18,18 @@ import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.registry.Registries;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.util.Identifier;
 
 //TODO: Shift-click (only 2 clicks intead of 3) when possible
 
 public final class KeybindInventoryRestock{
-	private static final boolean LEAVE_1 = true;
-	private static final boolean USE_WHITELIST = true;
-	private static final HashSet<Item> blacklistItems = new HashSet<>(), whitelistItems = new HashSet<>();
-	static{
-		blacklistItems.add(Items.FILLED_MAP);
-		blacklistItems.add(Items.ENDER_CHEST);
+	private final boolean LEAVE_1 = true;
+	private final boolean IS_WHITELIST;
+	private final Set<Item> itemList;
 
-		whitelistItems.add(Items.FIREWORK_ROCKET);
-		whitelistItems.add(Items.END_CRYSTAL); whitelistItems.add(Items.RESPAWN_ANCHOR);
-		whitelistItems.add(Items.OBSIDIAN);
-		whitelistItems.add(Items.ENDER_PEARL); whitelistItems.add(Items.CHORUS_FRUIT); whitelistItems.add(Items.WIND_CHARGE);
-		whitelistItems.add(Items.EXPERIENCE_BOTTLE);
-		whitelistItems.add(Items.ARROW); whitelistItems.add(Items.SPECTRAL_ARROW); whitelistItems.add(Items.TIPPED_ARROW);
-		whitelistItems.add(Items.GOLDEN_CARROT);
-		whitelistItems.add(Items.ENCHANTED_GOLDEN_APPLE);
-		whitelistItems.add(Items.COOKED_BEEF); whitelistItems.add(Items.COOKED_PORKCHOP); whitelistItems.add(Items.COOKED_CHICKEN);
-	}
-
-	public static final void doRestock(){
+	public final void doRestock(){
 		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("InvRestock cancelled: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -58,7 +49,7 @@ public final class KeybindInventoryRestock{
 			if(slots[i].isEmpty()) continue;
 			final int maxCount = slots[i].getMaxCount();
 			if(slots[i].getCount() >= maxCount) continue;
-			if(USE_WHITELIST ? !whitelistItems.contains(slots[i].getItem()) : blacklistItems.contains(slots[i].getItem())) continue;
+			if(IS_WHITELIST != itemList.contains(slots[i].getItem())) continue;
 			Integer totalInContainer = supply.get(slots[i].getItem());
 			if(totalInContainer == null || (LEAVE_1 && totalInContainer == 1)) continue;
 
@@ -94,7 +85,29 @@ public final class KeybindInventoryRestock{
 		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("InvRestock: DONE!"));
 	}
 
-	public KeybindInventoryRestock(){
-		new Keybind("inventory_restock", KeybindInventoryRestock::doRestock, s->s instanceof HandledScreen && s instanceof InventoryScreen == false, GLFW.GLFW_KEY_R);
+	public List<Item> parseItemList(String[] list){
+		return Arrays.stream(list).map(
+//				s -> Registries.ITEM.get(Identifier.of(s))
+				s -> {
+					Identifier id = Identifier.of(s);
+					if(!Registries.ITEM.containsId(id)) Main.LOGGER.error("InvRestock: Unknown item: "+s);
+					return Registries.ITEM.get(id);
+				}
+		).toList();
+	}
+	public KeybindInventoryRestock(String[] blacklist, String[] whitelist){
+		if(whitelist == null){
+			IS_WHITELIST = false;
+			itemList = blacklist != null ? new HashSet<Item>(parseItemList(blacklist)) : Collections.emptySet();
+		}
+		else{
+			IS_WHITELIST = true;
+			itemList = new HashSet<Item>(parseItemList(whitelist));
+			if(blacklist != null){
+				itemList.removeAll(parseItemList(blacklist));
+				Main.LOGGER.warn("InvRestock: BOTH whitelist/blacklist were defined in the config");
+			}
+		}
+		new Keybind("inventory_restock", this::doRestock, s->s instanceof HandledScreen && s instanceof InventoryScreen == false, GLFW.GLFW_KEY_R);
 	}
 }

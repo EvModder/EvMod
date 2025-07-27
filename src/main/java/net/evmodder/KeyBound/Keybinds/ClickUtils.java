@@ -52,7 +52,7 @@ public class ClickUtils{
 			tickDurationArr[tickDurIndex] = 0;
 			++lastTick;
 		}
-		if(type != null){// null is a special flag to update/remove old clicks without adding a new click
+		if(type != null && sumClicksInDuration < MAX_CLICKS){ // null is a special flag to update/remove old clicks without adding a new click
 			++tickDurationArr[tickDurIndex];
 			++sumClicksInDuration;
 		}

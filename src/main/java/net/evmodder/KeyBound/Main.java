@@ -146,13 +146,15 @@ public class Main implements ClientModInitializer{
 		boolean mapMoveIgnoreAirPockets=true;
 		boolean mapPlaceHelper=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false, mapHighlightTooltip=false;
 		boolean mapWallCmd=false, mapWallBorder=false;
-		boolean keybindEbounceTravelHelper=false;
+		boolean keybindEbounceTravelHelper=false, keybindRestock=false, inventoryRestockAuto=false;
 		boolean uploadIgnoreList=false;
 		int mapWallBorderColor1=-14236, mapWallBorderColor2=-8555656, mapWallUpscale=128;
 		String[] downloadIgnoreLists=null;
+		String[] restockBlacklist=null, restockWhitelist=null;
 
 		String[] temp_evt_msgs=null; long temp_evt_ts=0; String evt_account="";
 		KeybindEjectJunk ejectJunk = null;
+		KeybindInventoryRestock inventoryRestock = null;
 
 		//config.forEach((key, value) -> {
 		for(String key : config.keySet()){
@@ -185,7 +187,7 @@ public class Main implements ClientModInitializer{
 					break;
 				}
 				case "publish_my_ignore_list": uploadIgnoreList = !value.equalsIgnoreCase("false"); break;
-				case "add_other_ignore_lists": if(value.startsWith("[")) downloadIgnoreLists = value.substring(1, value.length()-1).split(","); break;
+				case "add_other_ignore_lists": if(value.startsWith("[")) downloadIgnoreLists = value.substring(1, value.length()-1).split("\\s&,\\s&"); break;
 
 				case "msg_for_pearl_trigger": new AutoPearlActivator(value); break;
 
@@ -240,9 +242,12 @@ public class Main implements ClientModInitializer{
 				case "keybind.eject_junk_items": if(!value.equalsIgnoreCase("false")) ejectJunk = new KeybindEjectJunk(); break;
 				case "keybind.toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
 //				case "keybind.smart_inventory_craft": if(!value.equalsIgnoreCase("false")) new KeybindSmartInvCraft(); break;
-				case "keybind.inventory_restock": if(!value.equalsIgnoreCase("false")) new KeybindInventoryRestock(); break;
-				case "keybind.inventory_restock.auto": if(!value.equalsIgnoreCase("false"))
-					ClientTickEvents.END_CLIENT_TICK.register(ContainerOpenListener::onUpdateTick); break;
+				case "keybind.inventory_restock": keybindRestock=!value.equalsIgnoreCase("false"); break;
+				case "keybind.inventory_restock.blacklist": if(value.startsWith("[")) restockBlacklist
+						= value.substring(1, value.length()-1).split("\\s*,\\s*"); break;
+				case "keybind.inventory_restock.whitelist": if(value.startsWith("[")) restockWhitelist
+						= value.substring(1, value.length()-1).split("\\s*,\\s*"); break;
+				case "keybind.inventory_restock.auto": inventoryRestockAuto=!value.equalsIgnoreCase("false"); break;
 				case "keybind.ebounce_travel_helper": keybindEbounceTravelHelper = !value.equalsIgnoreCase("false"); break;
 				case "keybind.aie_travel_helper": if(!value.equalsIgnoreCase("false")) new KeybindAIETravelHelper(); break;
 				case "scroll_order": {
@@ -270,6 +275,10 @@ public class Main implements ClientModInitializer{
 		if(keybindMapArtBundleStow) new KeybindMapMoveBundle();
 		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg);
 		if(keybindEbounceTravelHelper) new KeybindEbounceTravelHelper(ejectJunk);
+		if(keybindRestock){
+			inventoryRestock = new KeybindInventoryRestock(restockBlacklist, restockWhitelist);
+			if(inventoryRestockAuto) ClientTickEvents.END_CLIENT_TICK.register(new ContainerOpenListener(inventoryRestock)::onUpdateTick);
+		}
 		//new KeybindSpamclick();
 
 		if(mapWallCmd) new CommandExportMapImg(mapWallUpscale, mapWallBorder, mapWallBorderColor1, mapWallBorderColor2);
