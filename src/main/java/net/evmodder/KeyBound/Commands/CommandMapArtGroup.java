@@ -39,7 +39,8 @@ public class CommandMapArtGroup{
 
 		final String notFoundGroups = IntStream.range(0, groups.length).filter(i -> data[i] == null).mapToObj(i -> groups[i]).collect(Collectors.joining(","));
 		if(!notFoundGroups.isEmpty()){
-			source.sendError(Text.literal("MapArtGroup file not found: "+FileIO.DIR+FILE_PATH+notFoundGroups).copy().withColor(ERROR_COLOR));
+//			source.sendError(Text.literal("MapArtGroup file not found: "+FileIO.DIR+FILE_PATH+notFoundGroups).copy().withColor(ERROR_COLOR));
+			source.sendError(Text.literal("MapArtGroup"+(notFoundGroups.indexOf(',')!=-1 ? "s" : "")+" not found: "+notFoundGroups).copy().withColor(ERROR_COLOR));
 			return null;
 		}
 		final int[] numIds = new int[groups.length];
@@ -175,28 +176,25 @@ public class CommandMapArtGroup{
 		return 1;
 	}
 
-	private CompletableFuture<Suggestions> getGroupNameSuggestions(CommandContext<?> ctx, SuggestionsBuilder builder) {
+	private CompletableFuture<Suggestions> getGroupNameSuggestions(CommandContext<?> ctx, SuggestionsBuilder builder){
 		int i = ctx.getInput().lastIndexOf(' ');
-		String lastArg = i == -1 ? "" : ctx.getInput().substring(i+1).replace(',', '+');
-		i = lastArg.lastIndexOf('+');
-//		final String lastArgLastPart, lastArgFirstPart;
-//		if(i == -1){lastArgLastPart = lastArg; lastArgFirstPart = "";}
-//		else{lastArgLastPart = lastArg.substring(i+1); lastArgFirstPart = lastArg.substring(0, i+1);}
+		String lastArg = i == -1 ? "" : ctx.getInput().substring(i+1).replace('+', ',');
+		if(ctx.getArgument("command", String.class).equalsIgnoreCase("create") || !new File(FileIO.DIR+FILE_PATH).exists()){
+			builder.suggest(lastArg.isEmpty() ? "test" : lastArg);
+			return builder.buildFuture();
+		}
+		i = lastArg.lastIndexOf(',');
 		final String lastArgLastPart = i == -1 ? lastArg : lastArg.substring(i+1);
 		final String lastArgFirstPart = i == -1 ? "" : lastArg.substring(0, i+1);
-		final String lastArgWithCommasAround = "+"+lastArg+"+";
+		final String lastArgWithCommasAround = ","+lastArg+",";
 		try{
-//			Files.list(Paths.get(FileIO.DIR)).map(path -> path.getFileName().toString())
-//			.filter(name -> name.startsWith(FILE_PATH) && name.startsWith(lastArgLastPart, FILE_PATH.length()))
-//			.forEach(name -> builder.suggest(lastArgFirstPart+name.substring(FILE_PATH.length())));
 			Files.list(Paths.get(FileIO.DIR+FILE_PATH)).map(path -> path.getFileName().toString())
 			.filter(name -> name.startsWith(lastArgLastPart))
-			.filter(name -> !lastArgWithCommasAround.contains("+"+name+"+"))
+			.filter(name -> !lastArgWithCommasAround.contains(","+name+","))
 			.forEach(name -> builder.suggest(lastArgFirstPart+name));
 		}
 		catch(IOException e){e.printStackTrace(); return null;}
-		// Lock the suggestions after we've modified them.
-		return builder.buildFuture();//TODO: why not .build() ?
+		return builder.buildFuture();
 	}
 
 	public CommandMapArtGroup(){
@@ -223,13 +221,20 @@ public class CommandMapArtGroup{
 						return 1;
 					})
 					.then(
-						ClientCommandManager.argument("group", StringArgumentType.word())
+						ClientCommandManager.argument("group", StringArgumentType.greedyString())
 						.suggests(this::getGroupNameSuggestions)
 						.executes(ctx->{
 							final String cmdStr = ctx.getArgument("command", String.class);
-							final String[] groups = ctx.getArgument("group", String.class).split("[,+]");
+							final String groupStr = ctx.getArgument("group", String.class);
+							int space = groupStr.indexOf(' ');
+							if(groupStr.indexOf(' ', space+1) != -1){
+								ctx.getSource().sendError(Text.literal("Too many arguments").copy().withColor(ERROR_COLOR));
+								return 1;
+							}
+							final String[] groups = (space == -1 ? groupStr : groupStr.substring(0, space)).split("[,+]");
+							final String[] groups2 = (space == -1 ? null : groupStr.substring(space+1).split("[,+]"));
 							try{
-								return runCommand(ctx.getSource(), Command.valueOf(cmdStr.toUpperCase()), groups, null);
+								return runCommand(ctx.getSource(), Command.valueOf(cmdStr.toUpperCase()), groups, groups2);
 							}
 							catch(IllegalArgumentException ex){
 								ctx.getSource().sendError(Text.literal("Invalid subcommand: "+cmdStr).copy().withColor(ERROR_COLOR));
@@ -253,7 +258,7 @@ public class CommandMapArtGroup{
 //							})
 //						)
 						.then(
-							ClientCommandManager.argument("group2", StringArgumentType.word())
+							ClientCommandManager.argument("group2", StringArgumentType.greedyString())
 							.suggests((ctx, builder) -> {
 								final int i = ctx.getInput().indexOf(' '), j = ctx.getInput().lastIndexOf(' ');
 								if(i != j && ctx.getInput().substring(i+1, j).equalsIgnoreCase(Command.COMPARE.name())){
