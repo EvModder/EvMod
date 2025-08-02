@@ -111,7 +111,7 @@ public class CommandMapArtGroup{
 		MapGroupUtils.setCurrentGroup(activeGroup = merged);
 		activeGroupName = "sym_diff_"+groupName1+"_and_"+groupName2; // Symmetric Difference
 		source.sendFeedback(Text.literal("Using Symmetric-Difference as active group "
-				+ "(ids: "+in1Not2.size()+" + "+in2Not1.size()+" = "+merged.size()+")").copy().withColor(CREATE_COLOR));
+				+ "(ids: "+in1Not2.size()+"+"+in2Not1.size()+"="+merged.size()+")").copy().withColor(CREATE_COLOR));
 		return 1;
 	}
 	private int runCommand(final FabricClientCommandSource source, final Command cmd, final String[] groups, final String[] groups2){
@@ -154,8 +154,8 @@ public class CommandMapArtGroup{
 			for(UUID uuid : mapsInGroup) bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
 			if(FILE_PATH.endsWith("/") && !new File(FileIO.DIR+FILE_PATH).exists()) new File(FileIO.DIR+FILE_PATH).mkdir();
 			FileIO.saveFileBytes(FILE_PATH+groups[0], bb.array());
-			source.sendFeedback(Text.literal((cmd == Command.CREATE ? "Created new" : "Expanded") + " group '"+groups[0]
-					+"' and set as active (ids: "+ (oldSize==0 ? "" : oldSize+" -> ") + mapsInGroup.size()+").")
+			source.sendFeedback(Text.literal((cmd == Command.CREATE ? "Created " : "Expanded") + " group '"+groups[0]
+					+"' (ids: "+ (oldSize==0 ? "" : oldSize+"\u2192") + mapsInGroup.size()+") and set as active.")
 					.copy().withColor(CREATE_COLOR));
 		}
 		else if(newActiveGroup.equals(activeGroupName)){
@@ -165,7 +165,7 @@ public class CommandMapArtGroup{
 			}
 			else{
 				source.sendFeedback(Text.literal("Updated group from file: '"+activeGroupName
-						+"' (ids: "+activeGroup.size()+" -> "+mapsInGroup.size()+").").copy().withColor(DONE_COLOR));
+						+"' (ids: "+activeGroup.size()+"\u2192"+mapsInGroup.size()+").").copy().withColor(DONE_COLOR));
 			}
 		}
 		else{
@@ -177,13 +177,16 @@ public class CommandMapArtGroup{
 	}
 
 	private CompletableFuture<Suggestions> getGroupNameSuggestions(CommandContext<?> ctx, SuggestionsBuilder builder){
-		int i = ctx.getInput().lastIndexOf(' ');
-		String lastArg = i == -1 ? "" : ctx.getInput().substring(i+1).replace('+', ',');
+		String lastArg = "";
+		try{lastArg = ctx.getArgument("group2", String.class);} catch(IllegalArgumentException e){}
+		if(lastArg.isEmpty()){
+			try{lastArg = ctx.getArgument("group", String.class);} catch(IllegalArgumentException e){}
+		}
 		if(ctx.getArgument("command", String.class).equalsIgnoreCase("create") || !new File(FileIO.DIR+FILE_PATH).exists()){
 			builder.suggest(lastArg.isEmpty() ? "test" : lastArg);
 			return builder.buildFuture();
 		}
-		i = lastArg.lastIndexOf(',');
+		int i = lastArg.lastIndexOf(',');
 		final String lastArgLastPart = i == -1 ? lastArg : lastArg.substring(i+1);
 		final String lastArgFirstPart = i == -1 ? "" : lastArg.substring(0, i+1);
 		final String lastArgWithCommasAround = ","+lastArg+",";
