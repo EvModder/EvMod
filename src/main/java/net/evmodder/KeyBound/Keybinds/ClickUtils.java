@@ -20,7 +20,7 @@ public class ClickUtils{
 	private final int[] tickDurationArr;
 	private int tickDurIndex, sumClicksInDuration;
 	private long lastTick;
-	private final int OUTTA_CLICKS_COLOR = 15764490, SYNC_ID_CHANGED_COLOR = 16733525;
+	public final int OUTTA_CLICKS_COLOR = 15764490, SYNC_ID_CHANGED_COLOR = 16733525;
 
 	public ClickUtils(final int MAX_CLICKS, int FOR_TICKS){
 		if(MAX_CLICKS > 100_000){
@@ -96,7 +96,7 @@ public class ClickUtils{
 				//for(int i=0; i<availableClicks; ++i){
 				client.executeSync(()->{
 					while(addClick(null) < MAX_CLICKS){
-						if(!canProceed.apply(clicks.peek())) return;
+						if(!canProceed.apply(clicks.peek())){waitedForClicks = true; return;}
 						ClickEvent click = clicks.remove();
 						try{
 							//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);

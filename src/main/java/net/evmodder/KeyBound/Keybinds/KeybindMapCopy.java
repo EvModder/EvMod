@@ -27,8 +27,8 @@ import org.apache.commons.lang3.math.Fraction;
 import org.lwjgl.glfw.GLFW;
 
 public final class KeybindMapCopy{
-	private static long lastCopy;
-	private static final long copyCooldown = 250l;
+	private long lastCopy;
+	private final long copyCooldown = 250l;
 	private final boolean PRESERVE_EXACT_POS = true;
 	private final ItemStack EMPTY_ITEM = new ItemStack(Items.AIR);
 	final static int WAITING_FOR_CLICKS_COLOR = 15764490;
@@ -442,10 +442,12 @@ public final class KeybindMapCopy{
 				// Don't start individual copy operation unless we can fully knock it out (unless impossible to do in 1 go)
 				final Integer clicksNeeded = reserveClicks.get(c);
 				if(clicksNeeded == null || clicksNeeded <= Main.clickUtils.MAX_CLICKS - Main.clickUtils.addClick(null)) return true;
-				client.player.sendMessage(Text.literal("MapCopy: Waiting for clicks...").withColor(WAITING_FOR_CLICKS_COLOR), true);
+				client.player.sendMessage(Text.literal("MapCopy: Waiting for clicks... ("+clicks.size()+")").withColor(WAITING_FOR_CLICKS_COLOR), true);
 				return false;
 			},
-			()->Main.LOGGER.info("MapCopy: DONE")
+			()->{
+				Main.LOGGER.info("MapCopy: DONE");
+			}
 		);
 	}
 
