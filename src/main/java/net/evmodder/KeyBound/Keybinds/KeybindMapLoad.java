@@ -2,12 +2,10 @@ package net.evmodder.KeyBound.Keybinds;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.IdentityHashMap;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.Set;
 import java.util.stream.IntStream;
 import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
@@ -48,12 +46,17 @@ public final class KeybindMapLoad{
 		return !stack.isEmpty() && Registries.ITEM.getId(stack.getItem()).getPath().endsWith("shulker_box");
 	}
 
-	private int getNextUsableHotbarButton(MinecraftClient client, int hb){
-		while(++hb < 9 && client.currentScreen instanceof ShulkerBoxScreen && isShulkerBox(client.player.getInventory().getStack(hb)));
-		return hb;
+//	private int getNextUsableHotbarButton(MinecraftClient client, int hb){
+//		while(++hb < 9 && client.currentScreen instanceof ShulkerBoxScreen && isShulkerBox(client.player.getInventory().getStack(hb)));
+//		return hb;
+//	}
+
+	private int[] getUsableHotbarButtons(MinecraftClient client){
+		if(client.currentScreen instanceof ShulkerBoxScreen == false) IntStream.range(0, 9).toArray();
+		return IntStream.range(0, 9).filter(hb -> !isShulkerBox(client.player.getInventory().getStack(hb))).toArray();
 	}
 
-	private final long WAIT_FOR_STATE_UPDATE = 95; // 50 = 1 tick
+	private final long WAIT_FOR_STATE_UPDATE = 71; // 50 = 1 tick
 	private long stateWaitStart;
 	private final void loadMapArtFromBundles(){
 		Main.LOGGER.warn("MapLoadBundle: in InventoryScreen");
@@ -119,8 +122,7 @@ public final class KeybindMapLoad{
 				// Wait a bit even aft map state is loaded, to ensure it REALLY gets loaded
 				else if(stateWaitStart <= 0){stateWaitStart = System.currentTimeMillis(); return false;}
 				else if(System.currentTimeMillis() - stateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
-				stateWaitStart = 0;
-				return true;
+				else{stateWaitStart = 0; return true;}
 			},
 			()->Main.LOGGER.info("MapLoadBundle: DONE!")
 		);
@@ -129,7 +131,7 @@ public final class KeybindMapLoad{
 	//TODO: Consider shift-clicks instead of hotbar swaps (basically, MapMove but only for unloaded maps, and keep track of which)
 	private long lastLoad;
 	private final long loadCooldown = 500L;
-	private boolean moveToHotbarPhase = false;
+	private int clickIndex;
 	private final void loadMapArtFromContainer(){
 		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapLoad cancelled: Already ongoing"); return;}
 		//
@@ -142,66 +144,55 @@ public final class KeybindMapLoad{
 		//
 		if(hs instanceof InventoryScreen){loadMapArtFromBundles(); return;}
 		final DefaultedList<Slot> slots = hs.getScreenHandler().slots;
-		int numToLoad = 0;
-		for(int i=0; i<slots.size(); ++i) if(isUnloadedMapArt(client.player.clientWorld, slots.get(i).getStack())) ++numToLoad;
-		if(numToLoad == 0){Main.LOGGER.warn("MapLoad cancelled: none to load"); return;}
+		if(slots.stream().noneMatch(s -> isUnloadedMapArt(client.player.clientWorld, s.getStack()))){
+			Main.LOGGER.warn("MapLoad cancelled: none to load");
+			return;
+		}
+		int[] hbButtons = getUsableHotbarButtons(client);
+		if(hbButtons.length == 0){Main.LOGGER.warn("MapLoad cancelled: in shulker, and hotbar is full of shulkers"); return;}
 		//
-		int hotbarButton = getNextUsableHotbarButton(client, -1);
-		if(hotbarButton == 9){Main.LOGGER.warn("MapLoad cancelled: in shulker, and hotbar is full of shulkers"); return;}
-		//
-		int[] putBackSlots = new int[9];
-		for(int i=0; i<putBackSlots.length; ++i) putBackSlots[i] = -1;
-		//
-		int usableHotbarSlots = 0;
-		for(int i=-1; (i=getNextUsableHotbarButton(client, i)) != 9; ++usableHotbarSlots);
-
+		int[] putBackSlots = new int[hbButtons.length];
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
-		Set<ClickEvent> batchStarts = Collections.newSetFromMap(new IdentityHashMap<>());
-		int batchSize = 0;
-		final int MAX_BATCH_SIZE = Math.min(usableHotbarSlots, Main.clickUtils.MAX_CLICKS/2);
-		for(int i=0; i<slots.size() && numToLoad > 0; ++i){
-			if(!isUnloadedMapArt(client.player.clientWorld, slots.get(i).getStack())) continue;
-			ClickEvent c1 = new ClickEvent(i, hotbarButton, SlotActionType.SWAP);
-			clicks.add(c1);
-			if(batchSize == 0) batchStarts.add(c1);
-			++batchSize;
-			putBackSlots[hotbarButton] = i;
-			--numToLoad;
+		final int MAX_BATCH_SIZE = Math.min(hbButtons.length, Main.clickUtils.MAX_CLICKS/2);
 
-			hotbarButton = getNextUsableHotbarButton(client, hotbarButton);
-			if(hotbarButton == 9 || numToLoad == 0 || batchSize == MAX_BATCH_SIZE){
-				for(int j=0; j<hotbarButton; ++j) if(putBackSlots[j] != -1){
-					ClickEvent c2 = new ClickEvent(putBackSlots[j], j, SlotActionType.SWAP);
-					clicks.add(c2);
-					if(batchSize != 0){
-						batchStarts.add(c2);
-						batchSize = 0;
-					}
-				}
-				hotbarButton = getNextUsableHotbarButton(client, -1);
+		int hbi = 0;
+		for(int i=0; i<slots.size(); ++i){
+			if(!isUnloadedMapArt(client.player.clientWorld, slots.get(i).getStack())) continue;
+			clicks.add(new ClickEvent(i, hbButtons[hbi], SlotActionType.SWAP));
+			putBackSlots[hbi] = i;
+			if(++hbi == hbButtons.length){
+				hbi = 0;
+				for(int j=0; j<hbButtons.length; ++j) clicks.add(new ClickEvent(putBackSlots[j], hbButtons[j], SlotActionType.SWAP));
 			}
 		}
-		//Main.LOGGER.info("MapLoad: STARTED");
+		int extraPutBackIndex = clicks.size();
+		for(int j=0; j<hbi; ++j) clicks.add(new ClickEvent(putBackSlots[j], hbButtons[j], SlotActionType.SWAP));
+
+		Main.LOGGER.info("MapLoad: STARTED, clicks: "+clicks.size()+", extraPutBackIndex: "+extraPutBackIndex);
 		Main.clickUtils.executeClicks(clicks,
 			c->{
 				if(client.player == null || client.world == null) return true;
 //				if(isUnloadedMapArt(/*client.player.clientWorld*/client.world, item)) return false;
-				if(batchStarts.contains(c)){
-					if(Main.clickUtils.MAX_CLICKS-Main.clickUtils.addClick(null) < MAX_BATCH_SIZE){
-						client.player.sendMessage(Text.literal("MapLoad: Waiting for clicks...").withColor(KeybindMapCopy.WAITING_FOR_CLICKS_COLOR), true);
-						return false;
-					}
-					moveToHotbarPhase = !moveToHotbarPhase;
+				if(clickIndex % hbButtons.length != 0 && clickIndex != extraPutBackIndex){++clickIndex; return true;}
+				if(Main.clickUtils.MAX_CLICKS-Main.clickUtils.addClick(null) < MAX_BATCH_SIZE){
+					client.player.sendMessage(Text.literal("MapLoad: Waiting for available clicks... ("+clicks.size()+")")
+							.withColor(KeybindMapCopy.WAITING_FOR_CLICKS_COLOR), true);
+					return false;
 				}
-				if(moveToHotbarPhase) return true;
+				if((clickIndex/hbButtons.length)%2 == 0 && clickIndex < extraPutBackIndex){++clickIndex; return true;} // Moving TO hotbar
 				ItemStack item = client.player.getInventory().getStack(c.button());
 				if(!isLoadedMapArt(client.world, item)) return false;
 				else if(stateWaitStart == 0){stateWaitStart = System.currentTimeMillis(); return false;}
 				else if(System.currentTimeMillis() - stateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
+				Main.LOGGER.info("map state load finished");
 				stateWaitStart = 0;
+				++clickIndex;
 				return true;
 			},
-			()->Main.LOGGER.info("MapLoad: DONE!")
+			()->{
+				clickIndex = 0;
+				Main.LOGGER.info("MapLoad: DONE!");
+			}
 		);
 	}
 
