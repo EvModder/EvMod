@@ -2,7 +2,9 @@ package net.evmodder.KeyBound.Keybinds;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.function.Function;
 import java.util.stream.IntStream;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.math.Fraction;
 import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
@@ -22,7 +24,6 @@ import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
-import net.minecraft.registry.Registries;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
@@ -54,7 +55,7 @@ public final class KeybindMapMoveBundle{
 
 	private long lastBundleOp = 0;
 	private final long bundleOpCooldown = 250l;
-	private final void moveMapArtToFromBundle(){
+	private final void moveMapArtToFromBundle(final boolean reverse){
 		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapBundleOp: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -129,6 +130,7 @@ public final class KeybindMapMoveBundle{
 //			Main.LOGGER.warn("MapBundleOp: space in bundle: "+space);
 			int suckedUp = 0;
 			//for(int i=SLOT_START; i<SLOT_END && deposited < space; ++i){
+			if(reverse) ArrayUtils.reverse(slotsWithMapArt);
 			for(int i : slotsWithMapArt){
 				if(slots[i].getItem() != Items.FILLED_MAP) continue;
 				if(slots[i].getCount() != (pickupHalf ? 2 : 1)) continue;
@@ -143,15 +145,24 @@ public final class KeybindMapMoveBundle{
 		}
 		else{
 			final int stored = Math.min(WITHDRAW_MAX, getNumStored(occupancy));
-			int emptySlots = (int)IntStream.range(SLOT_START, SLOT_END).filter(i -> slots[i].isEmpty()).count();
 			int withdrawn = 0;
-			int i=SLOT_END-1;
-//			Main.LOGGER.info("MapBundleOp: emptySlots: "+emptySlots+", stored: "+stored);
-			for(; emptySlots > stored; --i) if(slots[i].isEmpty()) --emptySlots;
-			for(; i>=SLOT_START && withdrawn < stored; --i){
-				if(!slots[i].isEmpty()) continue;
-				clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP));
-				++withdrawn;
+			if(reverse){
+				for(int i=SLOT_START; i<SLOT_END && withdrawn < stored; ++i){
+					if(!slots[i].isEmpty()) continue;
+					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP));
+					++withdrawn;
+				}
+			}
+			else{
+				int emptySlots = (int)IntStream.range(SLOT_START, SLOT_END).filter(i -> slots[i].isEmpty()).count();
+//				Main.LOGGER.info("MapBundleOp: emptySlots: "+emptySlots+", stored: "+stored);
+				int i=SLOT_END-1;
+				for(; emptySlots > stored; --i) if(slots[i].isEmpty()) --emptySlots;
+				for(; i>=SLOT_START && withdrawn < stored; --i){
+					if(!slots[i].isEmpty()) continue;
+					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP));
+					++withdrawn;
+				}
 			}
 			Main.LOGGER.info("MapBundleOp: withdrew "+withdrawn+" maps from bundle");
 		}
@@ -160,10 +171,12 @@ public final class KeybindMapMoveBundle{
 		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("MapBundleOp: DONE!"));
 	}
 
-	public KeybindMapMoveBundle(){
-		new Keybind("mapart_bundle", this::moveMapArtToFromBundle,
-				s->s instanceof InventoryScreen || s instanceof GenericContainerScreen || s instanceof ShulkerBoxScreen || s instanceof CraftingScreen,
-//				InventoryScreen.class::isInstance,
-				GLFW.GLFW_KEY_D);
+	public KeybindMapMoveBundle(boolean regular, boolean reverse){
+		Function<Screen, Boolean> allowInScreen =
+				//InventoryScreen.class::isInstance
+				s->s instanceof InventoryScreen || s instanceof GenericContainerScreen || s instanceof ShulkerBoxScreen || s instanceof CraftingScreen;
+
+		if(regular) new Keybind("mapart_bundle", ()->moveMapArtToFromBundle(false), allowInScreen, GLFW.GLFW_KEY_D);
+		if(reverse) new Keybind("mapart_bundle_reverse", ()->moveMapArtToFromBundle(true), allowInScreen, regular ? -1 : GLFW.GLFW_KEY_D);
 	}
 }

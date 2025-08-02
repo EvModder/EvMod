@@ -6,6 +6,7 @@
 keybind.mapart.copy: true
 keybind.mapart.load: true
 keybind.mapart.move.bundle: true
+keybind.mapart.move.bundle.reverse: false
 keybind.mapart.move.3x9: true
 keybind.mapart.move.3x9.ignore_air_pockets: false
 

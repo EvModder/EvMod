@@ -38,8 +38,9 @@
 	"key.keybound.mapart_copy": "MapArt Copy",
 	"key.keybound.mapart_copy_bulk": "MapArt Copy-Bulk",
 	"key.keybound.mapart_load": "MapArt Load",
-	"key.keybound.mapart_move": "MapArt Take/Place",
-	"key.keybound.mapart_bundle": "MapArt Take/Stow (Bundle)",
+	"key.keybound.mapart_move": "MapArt Shulker Take/Stow",
+	"key.keybound.mapart_bundle": "MapArt Bundle Take/Stow",
+	"key.keybound.mapart_bundle_reverse": "MapArt Bundle Take/Stow (Reverse)",
 	"key.keybound.aie_travel_helper": "AutoInfEly Travel Helper",
 	"key.keybound.ebounce_travel_helper": "eBounce Travel Helper",
 	"key.keybound.smart_inventory_craft": "Auto-craft in the 2x2"

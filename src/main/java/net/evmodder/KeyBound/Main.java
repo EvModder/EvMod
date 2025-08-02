@@ -142,7 +142,7 @@ public class Main implements ClientModInitializer{
 		//int clicksInDuration = 190, durationTicks = 75;
 		int clicksInDuration = 78, durationTicks = 90;
 		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false,
-				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false, keybindMapArtBundleStow=false;
+				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false, keybindMapArtBundleStow=false, keybindMapArtBundleStowReverse=false;
 		boolean mapMoveIgnoreAirPockets=true;
 		boolean mapPlaceHelper=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false, mapHighlightTooltip=false;
 		boolean mapWallCmd=false, mapWallBorder=false;
@@ -224,6 +224,7 @@ public class Main implements ClientModInitializer{
 				case "keybind.mapart.copy": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.load": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.move.bundle": keybindMapArtBundleStow = !value.equalsIgnoreCase("false"); break;
+				case "keybind.mapart.move.bundle.reverse": keybindMapArtBundleStowReverse = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.move.3x9": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.move_3x9.ignore_air_pockets": mapMoveIgnoreAirPockets = !value.equalsIgnoreCase("false"); break;
 				case "mapart_placement_helper": mapPlaceHelper=!value.equalsIgnoreCase("false"); break;
@@ -272,7 +273,7 @@ public class Main implements ClientModInitializer{
 		if(keybindMapArtLoad) new KeybindMapLoad();
 		if(keybindMapArtCopy) new KeybindMapCopy();
 		if(keybindMapArtMove) new KeybindMapMove(mapMoveIgnoreAirPockets);
-		if(keybindMapArtBundleStow) new KeybindMapMoveBundle();
+		if(keybindMapArtBundleStow || keybindMapArtBundleStowReverse) new KeybindMapMoveBundle(keybindMapArtBundleStow, keybindMapArtBundleStowReverse);
 		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg);
 		if(keybindEbounceTravelHelper) new KeybindEbounceTravelHelper(ejectJunk);
 		if(keybindRestock){

@@ -7,12 +7,15 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.UUID;
 import javax.imageio.ImageIO;
 import net.evmodder.EvLib.FileIO;
+import net.minecraft.block.MapColor;
 
 public class MapIdsFromImg{
 	/*static int getIntFromARGB(int a, int r, int g, int b){return (a<<24) | (r<<16) | (g<<8) | b;}
@@ -43,7 +46,7 @@ public class MapIdsFromImg{
 	}*/
 
 	//0xff000000 = 255<<24
-	private static final int[] MAP_COLORS = new int[] { 0xff000000, 0xff000000, 0xff000000, 0xff000000,
+	/*private static final int[] MAP_COLORS = new int[] { 0xff000000, 0xff000000, 0xff000000, 0xff000000,
 			-10912473, -9594576, -8408520, -12362211, -5331853, -2766452, -530013, -8225962, -7566196, -5526613,
 			-3684409, -9868951, -4980736, -2359296, -65536, -7929856, -9408332, -7697700, -6250241, -11250553, -9079435, -7303024, -5789785, -10987432,
 			-16754944, -16750080, -16745472, -16760576, -4934476, -2302756, -1, -7895161, -9210239, -7499618, -5986120, -11118495, -9810890, -8233406, -6853299,
@@ -69,6 +72,26 @@ public class MapIdsFromImg{
 		for(int b=0; b<MAP_COLORS.length; ++b) MAP_COLORS_REVERSE.put(MAP_COLORS[b], (byte)b);
 		MAP_COLORS_REVERSE.put(0, (byte)0);
 		MAP_COLORS_REVERSE.put(0xff000000, (byte)0);
+	}*/
+
+	private static MapColor[] MAP_COLORS;
+	private static final HashMap<Integer, Byte> MAP_COLORS_REVERSE = new HashMap<>();
+	static{
+		try{
+			Field f = MapColor.class.getDeclaredField("COLORS");
+			f.setAccessible(true);
+			MAP_COLORS = (MapColor[])f.get(null);
+			for(MapColor mc : MAP_COLORS){
+				if(mc == null) continue;
+				for(MapColor.Brightness brightness : MapColor.Brightness.values()){
+					MAP_COLORS_REVERSE.put(mc.getRenderColor(brightness), mc.getRenderColorByte(brightness));
+				}
+			}
+			MAP_COLORS_REVERSE.put(0xff000000, (byte)0);
+		}
+		catch(NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e){
+			e.printStackTrace();
+		}
 	}
 
 	/*private static BufferedImage getMapImg(final byte[] colors){
@@ -121,7 +144,7 @@ public class MapIdsFromImg{
 	public static void main(String... args) throws IOException{
 //		calculateMapColors();
 		String imgName = "1x1s_generic.png";
-		String grpName = "end_ALL";
+		String grpName = "hashcode_1x1s_ev";
 		BufferedImage img = ImageIO.read(new File(imgName));
 		HashSet<UUID> compareColorIds = loadColorIds(grpName);
 
@@ -129,36 +152,53 @@ public class MapIdsFromImg{
 			System.err.println("Image W and H must be divisible by 128, but are not: "+img.getWidth()+" x "+img.getHeight());
 			return;
 		}
-//		System.out.println("Img type: "+img.getType()+" goal: "+BufferedImage.TYPE_INT_ARGB);
+		System.out.println("Img type: "+img.getType()+" goal: "+BufferedImage.TYPE_INT_ARGB);
 		if(img.getType() != BufferedImage.TYPE_INT_ARGB){
 			BufferedImage convertedImg = new BufferedImage(img.getWidth(), img.getHeight(), BufferedImage.TYPE_INT_ARGB);
 			convertedImg.getGraphics().drawImage(img, 0, 0, null);
 			img = convertedImg;
 //			ImageIO.write(convertedImg, "png", new File("test.png"));
 		}
-		HashSet<UUID> colorIds = new HashSet<>();
 		Graphics g = img.getGraphics();
 		g.setColor(new Color(0, 0, 0, 0));
 		((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.CLEAR));
 		boolean edited = false;
+
+		HashSet<UUID> newMapIds = new HashSet<>(), hadMapIds = new HashSet<>();
+		ArrayDeque<byte[]> newMapColors = new ArrayDeque<>();
 		int w = img.getWidth()/128, h = img.getHeight()/128;
 		for(int y=0; y<h; ++y) for(int x=0; x<w; ++x){
 			byte[] colors = colorsFromImg(img, 128*x, 128*y);
 			UUID uuid = getLockedIdForColors(colors);
-			if(compareColorIds.contains(uuid)){
-//				System.out.println("already have this map");
+			boolean newToMe = !compareColorIds.contains(uuid);
+			if(newToMe && newMapIds.add(uuid)) newMapColors.add(colors);
+			else{
 				g.fillRect(128*x, 128*y, 128, 128);
 				edited = true;
 			}
+			(newToMe ? newMapIds : hadMapIds).add(uuid);
 //			System.out.print(uuid+", ");
-			colorIds.add(uuid);
 		}
-		System.out.println("\nDone!");
+		System.out.println("Unique ids: "+(hadMapIds.size()+newMapIds.size())+", NewToMe: "+newMapIds.size()+", iAlrGot: "+hadMapIds.size());
 		if(edited){
-			System.out.print("Saving edited image");
+			System.out.print("Saving edited images");
 			g.dispose();
-			int i = imgName.indexOf('.');
-			ImageIO.write(img, "png", new File(imgName.substring(0, i)+"_edited"+imgName.substring(i)));
+			int idx = imgName.indexOf('.');
+			ImageIO.write(img, "png", new File(imgName.substring(0, idx)+"_edited"+imgName.substring(idx)));
+
+			// Get new W & H
+			int editW = (int)Math.ceil(Math.sqrt(newMapColors.size()));
+			int editH = editW*(editW-1) >= newMapColors.size() ? editW-1 : editW;
+
+			// Make new (smaller) img
+			img = new BufferedImage(128*editW, 128*editH, BufferedImage.TYPE_INT_ARGB);
+			for(int i=0; i<editW; ++i) for(int j=0; j<editH; ++j){
+				if(newMapColors.isEmpty()) break;
+				byte[] colors = newMapColors.poll();
+				final int xo = i*128, yo = j*128;
+				for(int x=0; x<128; ++x) for(int y=0; y<128; ++y) img.setRGB(xo+x, yo+y, MapColor.getRenderColor(colors[x + y*128]));
+			}
+			ImageIO.write(img, "png", new File(imgName.substring(0, idx)+"_edited_small"+imgName.substring(idx)));
 		}
 //		final ByteBuffer bb = ByteBuffer.allocate(colorIds.size()*16);
 //		for(UUID uuid : colorIds) bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
