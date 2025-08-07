@@ -30,6 +30,8 @@ import net.evmodder.KeyBound.EventListeners.InventoryHighlightUpdater;
 import net.evmodder.KeyBound.EventListeners.ItemFrameHighlightUpdater;
 import net.evmodder.KeyBound.EventListeners.TooltipMapNameColor;
 import net.evmodder.KeyBound.EventListeners.MapHandRestock;
+import net.evmodder.KeyBound.EventListeners.MapStateInventoryCacher;
+import net.evmodder.KeyBound.EventListeners.SendOnServerJoin;
 import net.evmodder.KeyBound.EventListeners.TooltipRepairCost;
 import net.evmodder.KeyBound.Keybinds.*;
 import net.evmodder.KeyBound.Keybinds.KeybindsSimple;
@@ -205,6 +207,7 @@ public class Main implements ClientModInitializer{
 				case "totem_total_count": if(!value.equalsIgnoreCase("false")) totemShowTotalCount = !value.equalsIgnoreCase("false"); break;
 				case "repaircost_in_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipRepairCost::addRC); break;
 				case "repaircost_in_hotbarhud": rcHUD = !value.equalsIgnoreCase("false"); break;
+				case "map_state_cache": if(!value.equalsIgnoreCase("false")) new MapStateInventoryCacher(); break;
 				case "map_highlight_in_tooltip": mapHighlightTooltip = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_in_hotbarhud": mapHighlightHUD = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_in_itemframe": mapHighlightIFrame = !value.equalsIgnoreCase("false"); break;
@@ -230,9 +233,7 @@ public class Main implements ClientModInitializer{
 				case "mapart_placement_helper": mapPlaceHelper=!value.equalsIgnoreCase("false"); break;
 				case "mapart_placement_helper_use_name": mapPlaceHelperByName=!value.equalsIgnoreCase("false"); break;
 				case "mapart_placement_helper_use_image": mapPlaceHelperByImg=!value.equalsIgnoreCase("false"); break;
-				case "mapart_group_include_unlocked":
-					MapGroupUtils.INCLUDE_UNLOCKED = !value.equalsIgnoreCase("false");
-					break;
+				case "mapart_group_include_unlocked": MapGroupUtils.INCLUDE_UNLOCKED = !value.equalsIgnoreCase("false"); break;
 				case "mapart_group_command": new CommandMapArtGroup(); break;
 				case "mapart_generate_img_upscale_to": mapWallUpscale=Integer.parseInt(value); break;
 				case "mapart_generate_img_border": mapWallBorder=!value.equalsIgnoreCase("false"); break;

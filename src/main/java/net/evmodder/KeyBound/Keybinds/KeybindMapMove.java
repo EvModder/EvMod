@@ -119,7 +119,7 @@ public final class KeybindMapMove{
 				: (countsInShulk.size() == 2 && smallerSlotsAtStart && (cantMergeIntoInv == 0 || numInInv == 0)));
 //		Main.LOGGER.info("MapMove: selectiveMove: "+selectiveMove);
 		client.player.sendMessage(Text.literal("MapMove: selectiveMove="+selectiveMove+", toShulk="+moveToShulk), true);
-		client.player.sendMessage(Text.literal("MapMove: selectiveMove="+selectiveMove+", toShulk="+moveToShulk), false);
+//		client.player.sendMessage(Text.literal("MapMove: selectiveMove="+selectiveMove+", toShulk="+moveToShulk), false);
 
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		IdentityHashMap<ClickEvent, Integer> reserveClicks = new IdentityHashMap<>();

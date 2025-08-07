@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.EventListeners;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -14,7 +14,7 @@ public class SendOnServerJoin{
 	private final boolean WAIT_FOR_MOVEMENT = true;
 	public static final int HASHCODE_2B2T = -437714968;//"2b2t.org".hashCode()
 
-	SendOnServerJoin(String[] messages){
+	public SendOnServerJoin(String[] messages){
 		ClientPlayConnectionEvents.JOIN.register(
 				//ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server
 				(_0, _1, _2) ->

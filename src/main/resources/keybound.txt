@@ -35,6 +35,8 @@ mapart_generate_img_border_color2: 3288370 # Gray
 mapart_database: false
 mapart_database_share_contact: true
 
+map_state_cache: false
+
 map_highlight_in_tooltip: true
 map_highlight_in_hotbarhud: true
 map_highlight_in_itemframe: true
