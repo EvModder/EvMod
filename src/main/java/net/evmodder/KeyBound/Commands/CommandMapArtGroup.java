@@ -176,22 +176,24 @@ public class CommandMapArtGroup{
 		return 1;
 	}
 
-	private CompletableFuture<Suggestions> getGroupNameSuggestions(CommandContext<?> ctx, SuggestionsBuilder builder){
-		String lastArg = "";
-		try{lastArg = ctx.getArgument("group2", String.class);} catch(IllegalArgumentException e){}
-		if(lastArg.isEmpty()){
-			try{lastArg = ctx.getArgument("group", String.class);} catch(IllegalArgumentException e){}
+	private CompletableFuture<Suggestions> getGroupNameSuggestions(CommandContext<?> ctx, SuggestionsBuilder builder) {
+		String wipGroupArg = "";
+		try{wipGroupArg = ctx.getArgument("group2", String.class);} catch(IllegalArgumentException e){}
+		if(wipGroupArg.isEmpty()){
+			try{wipGroupArg = ctx.getArgument("group", String.class);} catch(IllegalArgumentException e){}
 		}
 		if(ctx.getArgument("command", String.class).equalsIgnoreCase("create") || !new File(FileIO.DIR+FILE_PATH).exists()){
-			builder.suggest(lastArg.isEmpty() ? "test" : lastArg);
+			builder.suggest(wipGroupArg.isEmpty() ? "test" : wipGroupArg);
 			return builder.buildFuture();
 		}
-		int i = lastArg.lastIndexOf(',');
-		final String lastArgLastPart = i == -1 ? lastArg : lastArg.substring(i+1);
-		final String lastArgFirstPart = i == -1 ? "" : lastArg.substring(0, i+1);
-		final String lastArgWithCommasAround = ","+lastArg+",";
+		int i = wipGroupArg.lastIndexOf(',');
+		final String lastArgLastPart = i == -1 ? wipGroupArg : wipGroupArg.substring(i+1);
+		final String lastArgFirstPart = i == -1 ? "" : wipGroupArg.substring(0, i+1);
+		final String lastArgWithCommasAround = ","+wipGroupArg+",";
 		try{
-			Files.list(Paths.get(FileIO.DIR+FILE_PATH)).map(path -> path.getFileName().toString())
+			Files.list(Paths.get(FileIO.DIR+FILE_PATH))
+			.filter(p -> {File f = p.toFile(); return f.isFile() && !f.isHidden();})
+			.map(path -> path.getFileName().toString())
 			.filter(name -> name.startsWith(lastArgLastPart))
 			.filter(name -> !lastArgWithCommasAround.contains(","+name+","))
 			.forEach(name -> builder.suggest(lastArgFirstPart+name));
@@ -224,20 +226,13 @@ public class CommandMapArtGroup{
 						return 1;
 					})
 					.then(
-						ClientCommandManager.argument("group", StringArgumentType.greedyString())
+						ClientCommandManager.argument("group", SepStringArgumentType.word(' '))
 						.suggests(this::getGroupNameSuggestions)
 						.executes(ctx->{
 							final String cmdStr = ctx.getArgument("command", String.class);
-							final String groupStr = ctx.getArgument("group", String.class);
-							int space = groupStr.indexOf(' ');
-							if(groupStr.indexOf(' ', space+1) != -1){
-								ctx.getSource().sendError(Text.literal("Too many arguments").copy().withColor(ERROR_COLOR));
-								return 1;
-							}
-							final String[] groups = (space == -1 ? groupStr : groupStr.substring(0, space)).split("[,+]");
-							final String[] groups2 = (space == -1 ? null : groupStr.substring(space+1).split("[,+]"));
+							final String[] groups = ctx.getArgument("group", String.class).split("[,+]");
 							try{
-								return runCommand(ctx.getSource(), Command.valueOf(cmdStr.toUpperCase()), groups, groups2);
+								return runCommand(ctx.getSource(), Command.valueOf(cmdStr.toUpperCase()), groups, /*groups2=*/null);
 							}
 							catch(IllegalArgumentException ex){
 								ctx.getSource().sendError(Text.literal("Invalid subcommand: "+cmdStr).copy().withColor(ERROR_COLOR));
@@ -261,16 +256,13 @@ public class CommandMapArtGroup{
 //							})
 //						)
 						.then(
-							ClientCommandManager.argument("group2", StringArgumentType.greedyString())
+							ClientCommandManager.argument("group2", SepStringArgumentType.word(' '))
 							.suggests((ctx, builder) -> {
-								final int i = ctx.getInput().indexOf(' '), j = ctx.getInput().lastIndexOf(' ');
-								if(i != j && ctx.getInput().substring(i+1, j).equalsIgnoreCase(Command.COMPARE.name())){
-									return getGroupNameSuggestions(ctx, builder);
-								}
-								else{
-									builder.suggest(CONFIRM);
-									return builder.buildFuture();
-								}
+								final String cmdStr = ctx.getArgument("command", String.class);
+								if(cmdStr.equalsIgnoreCase(Command.COMPARE.name())) return getGroupNameSuggestions(ctx, builder);
+								else if(cmdStr.equalsIgnoreCase(Command.CREATE.name())
+										&& new File(FileIO.DIR+FILE_PATH+ctx.getArgument("group", String.class)).exists()) builder.suggest(CONFIRM);
+								return builder.buildFuture();
 							})
 							.executes(ctx->{
 								final String cmdStr = ctx.getArgument("command", String.class);
