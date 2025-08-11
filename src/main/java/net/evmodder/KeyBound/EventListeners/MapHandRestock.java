@@ -217,9 +217,12 @@ public final class MapHandRestock{
 				Main.LOGGER.info("MapRestock: Trail ended on pos: "+prevPosStr);
 				return new Pair<>(trailLength, scoreSum);
 			}
-			final byte[] prevColors = FilledMapItem.getMapState(slots[prevSlot], world).colors;
-			final byte[] colors = FilledMapItem.getMapState(slots[i], world).colors;
-			scoreSum += MapRelationUtils.adjacentEdgeScore(prevColors, colors, /*leftRight=*/true);//TODO: detect when up/down vs left/right
+			MapState prevState = FilledMapItem.getMapState(slots[prevSlot], world);
+			MapState currState = FilledMapItem.getMapState(slots[i], world);
+			if(prevState != null && currState != null){
+				//TODO: detect when up/down vs left/right
+				scoreSum += MapRelationUtils.adjacentEdgeScore(prevState.colors, currState.colors, /*leftRight=*/true);
+			}
 			copiedData.slots().remove(Integer.valueOf(prevSlot));
 			prevSlot = i;
 			++trailLength;
@@ -302,13 +305,15 @@ public final class MapHandRestock{
 	//1=map with same count
 	//2=map with same count & locked state
 	//2=map with same count & locked state, has name
-	//3=map with same count & locked state, is multi-map group
-	//4=map with same count & locked state, is multi-map group, start index
-	private final int getNextSlotAny(final ItemStack[] slots, final int prevSlot, final World world){
+	//3=map with same count & locked state, has name, matches multi-map group
+	//4=map with same count & locked state, has name, matches multi-map group, is start index
+	private final int getNextSlotFirstMap(final ItemStack[] slots, final int prevSlot, final World world){
 		final int prevCount = slots[prevSlot].getCount();
 		final MapState prevState = FilledMapItem.getMapState(slots[prevSlot], world);
 		assert prevState != null;
 		final boolean prevLocked = prevState.locked;
+		final String prevName = slots[prevSlot].getCustomName() == null ? null : slots[prevSlot].getCustomName().getLiteralString();
+		final boolean prevWas1x1 = MapRelationUtils.getRelatedMapsByName(slots, prevName, prevCount, prevLocked, world).slots().size() < 2;
 
 		int bestSlot = -1, bestScore = 0;
 		String bestPosStr = null;
@@ -333,12 +338,14 @@ public final class MapHandRestock{
 			if(name == null) continue;
 			if(bestScore < 3){bestScore = 3; bestSlot = i;} // It's a named map
 			final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, name, prevCount, prevLocked, world);
-			if(data.slots().size() < 2) continue;
+			if(data.slots().size() < 2 != prevWas1x1) continue;
+			if(bestScore < 4){bestScore = 4; bestSlot = i;} // It's a named map with matching 1x1 status
 			String posStr = data.prefixLen() == -1 ? name : MapRelationUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
-			if(bestPosStr == null || posStr.compareTo(bestPosStr) < 0){bestPosStr = posStr; bestScore=4; bestSlot = i;} // In a map group, possible starter
+			if(bestPosStr == null || posStr.compareTo(bestPosStr) < 0){bestPosStr = posStr; bestScore=5; bestSlot = i;} // In a map group, possible starter
 		}
-		if(bestScore == 4) Main.LOGGER.info("MapRestock: findAny() found potential TL named map");
-		if(bestScore == 3) Main.LOGGER.info("MapRestock: findAny() found same count/locked named map");
+		if(bestScore == 5) Main.LOGGER.info("MapRestock: findAny() found same count/locked/hasName/is1x1, potential TL map");
+		if(bestScore == 4) Main.LOGGER.info("MapRestock: findAny() found same count/locked/hasName/is1x1");
+		if(bestScore == 3) Main.LOGGER.info("MapRestock: findAny() found same count/locked/hasName");
 		if(bestScore == 2) Main.LOGGER.info("MapRestock: findAny() found same count/locked");
 		if(bestScore == 1) Main.LOGGER.info("MapRestock: findAny() found same count");
 		return bestSlot;
@@ -393,7 +400,7 @@ public final class MapHandRestock{
 		}
 		if(JUST_PICK_A_MAP && restockFromSlot == -1){
 			Main.LOGGER.info("MapRestock: finding next map by ANY (count->locked->named->related)");
-			restockFromSlot = getNextSlotAny(ogSlots, prevSlot, player.getWorld());
+			restockFromSlot = getNextSlotFirstMap(ogSlots, prevSlot, player.getWorld());
 		}
 		if(restockFromSlot == -1){Main.LOGGER.info("MapRestock: unable to find next map"); return;}
 

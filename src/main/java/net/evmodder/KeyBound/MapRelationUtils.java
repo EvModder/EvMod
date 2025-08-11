@@ -105,6 +105,7 @@ public abstract class MapRelationUtils{
 		final MapState state = world.getMapState(mapId);
 		return state != null && state.locked != locked;
 	}
+	// Output inclues input map
 	public static final RelatedMapsData getRelatedMapsByName(final ItemStack[] slots, final String sourceName,
 			final int count, final Boolean locked, final World world){
 		List<Integer> relatedMapSlots = new ArrayList<>();
@@ -156,8 +157,10 @@ public abstract class MapRelationUtils{
 			}
 		}
 		if(prefixLen == -1){
-			//TODO: empty, or size==1?
-			if(relatedMapSlots.isEmpty()) Main.LOGGER.info("MapAdjUtil: no shared prefix/suffix named maps found for name: "+sourceName);
+			// error:
+			if(relatedMapSlots.isEmpty()) Main.LOGGER.warn("MapAdjUtil: no shared prefix/suffix named maps found for name: "+sourceName);
+			// 1x1:
+//			if(relatedMapSlots.size() == 1) Main.LOGGER.warn("MapAdjUtil: only one shared prefix/suffix named maps found for name: "+sourceName);
 			return new RelatedMapsData(prefixLen, suffixLen, relatedMapSlots);
 		}
 		//Main.LOGGER.info("MapAdjUtil: prefixLen="+prefixLen+", suffixLen="+suffixLen);
