@@ -83,6 +83,75 @@ public class CommandMapArtGroup{
 		if(!in1Not2.isEmpty()){
 			final ByteBuffer bb1 = ByteBuffer.allocate(in1Not2.size()*16);
 			for(UUID uuid : in1Not2) bb1.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
+			final String in1Not2Name = "in_"+groupName1+"_NOT_IN_"+groupName2;//TODO: comment out this line unless arg for write-to-file
+			FileIO.saveFileBytes(FILE_PATH+in1Not2Name, bb1.array());
+			if(in2Not1.isEmpty()){
+				colorIds1.removeIf(in1Not2::contains);
+				MapGroupUtils.setCurrentGroup(activeGroup = colorIds1);
+				activeGroupName = "in_"+groupName1+"_AND_IN_"+groupName2;
+				source.sendFeedback(Text.literal("Created group '"+activeGroupName
+						+"' and set as active (ids: "+colorIds1.size()+")").copy().withColor(CREATE_COLOR));
+				return 1;
+			}
+		}
+		if(!in2Not1.isEmpty()){
+			final ByteBuffer bb2 = ByteBuffer.allocate(in2Not1.size()*16);
+			for(UUID uuid : in2Not1) bb2.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
+			final String in2Not1Name = "in_"+groupName2+"_NOT_IN_"+groupName1;//TODO: comment out this line unless arg for write-to-file
+			FileIO.saveFileBytes(FILE_PATH+in2Not1Name, bb2.array());
+//			if(in1Not2.isEmpty()){
+				colorIds2.removeIf(in2Not1::contains);
+//				MapGroupUtils.setCurrentGroup(activeGroup = new HashSet<>(in2Not1));
+//				activeGroupName = in2Not1Name;
+//				source.sendFeedback(Text.literal("Created group '"+in2Not1Name+"' and set as active (ids: "+in2Not1.size()+")").copy().withColor(CREATE_COLOR));
+				MapGroupUtils.setCurrentGroup(activeGroup = colorIds2);
+				if(in1Not2.isEmpty()){
+					activeGroupName = "in_"+groupName2+"_AND_IN_"+groupName1;
+					source.sendFeedback(Text.literal("Created group '"+activeGroupName
+							+"' and set as active (ids: "+colorIds2.size()+")").copy().withColor(CREATE_COLOR));
+				}
+				else{
+					activeGroupName = "intersection_"+groupName1+"_and_"+groupName2; // Set intersection
+					source.sendFeedback(Text.literal("Using set-intersection as active group "
+							+"(ids: ("+colorIds1.size()+"-"+in1Not2.size()+")+("+(colorIds2.size()+in2Not1.size())+"-"+in2Not1.size()+")="
+							+colorIds2.size()+")").copy().withColor(CREATE_COLOR));
+				}
+				return 1;
+//			}
+		}
+//		HashSet<UUID> merged = new HashSet<UUID>(in1Not2.size()+in2Not1.size());
+//		merged.addAll(in1Not2);
+//		merged.addAll(in2Not1);
+//		assert merged.size() == in1Not2.size() + in2Not1.size();
+//		MapGroupUtils.setCurrentGroup(activeGroup = merged);
+//		activeGroupName = "sym_diff_"+groupName1+"_and_"+groupName2; // Symmetric Difference
+//		source.sendFeedback(Text.literal("Using Symmetric-Difference as active group "
+//				+ "(ids: "+in1Not2.size()+"+"+in2Not1.size()+"="+merged.size()+")").copy().withColor(CREATE_COLOR));
+		return 1;
+	}
+	/*private int runCompareCommand(final FabricClientCommandSource source, final String[] group1, final String[] group2){
+		if(group2 == null || group2.length == 0){
+			source.sendError(Text.literal("Specify a 2nd group to compare against").copy().withColor(ERROR_COLOR));
+			return 1;
+		}
+		HashSet<UUID> colorIds1 = getGroupIdsOrSendError(source, group1);
+		if(colorIds1 == null) return 1;
+		HashSet<UUID> colorIds2 = getGroupIdsOrSendError(source, group2);
+		if(colorIds2 == null) return 1;
+
+		List<UUID> in1Not2 = colorIds1.stream().filter(Predicate.not(colorIds2::contains)).toList();
+		List<UUID> in2Not1 = colorIds2.stream().filter(Predicate.not(colorIds1::contains)).toList();
+
+		String groupName1 = Arrays.stream(group1).collect(Collectors.joining(","));
+		String groupName2 = Arrays.stream(group2).collect(Collectors.joining(","));
+
+		if(in1Not2.isEmpty() && in2Not1.isEmpty()){
+			source.sendFeedback(Text.literal("MapArtGroups "+groupName1+" and "+groupName2+" are identical").copy().withColor(DONE_COLOR));
+			return 1;
+		}
+		if(!in1Not2.isEmpty()){
+			final ByteBuffer bb1 = ByteBuffer.allocate(in1Not2.size()*16);
+			for(UUID uuid : in1Not2) bb1.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
 			final String in1Not2Name = "in_"+groupName1+"_NOT_IN_"+groupName2;
 			FileIO.saveFileBytes(FILE_PATH+in1Not2Name, bb1.array());
 			if(in2Not1.isEmpty()){
@@ -113,7 +182,7 @@ public class CommandMapArtGroup{
 		source.sendFeedback(Text.literal("Using Symmetric-Difference as active group "
 				+ "(ids: "+in1Not2.size()+"+"+in2Not1.size()+"="+merged.size()+")").copy().withColor(CREATE_COLOR));
 		return 1;
-	}
+	}*/
 	private int runCommand(final FabricClientCommandSource source, final Command cmd, final String[] groups, final String[] groups2){
 		assert groups.length > 0;
 		if(cmd == Command.COMPARE) return runCompareCommand(source, groups, groups2);
