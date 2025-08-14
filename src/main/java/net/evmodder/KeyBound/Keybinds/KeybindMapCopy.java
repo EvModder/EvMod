@@ -160,14 +160,14 @@ public final class KeybindMapCopy{
 		int emptyBundles = bundles.length - SRC_BUNDLES;
 
 		HashMap<Integer, List<Integer>> bundlesToCopy = new HashMap<>(); // source bundle -> destination bundles
-		int storageBundles = 0;
+//		int storageBundles = 0;
 		int emptyMapsNeeded = 0;
 //		boolean multiMapCopy = false;
 		for(int i=0; i<slotsWithBundles.length; ++i){
 			final int s1 = slotsWithBundles[i];
 			if(bundles[s1].isEmpty()) continue;
 			ArrayList<Integer> copyDests = new ArrayList<>();
-			++storageBundles;
+//			++storageBundles;
 			final String name1 = slots[s1].getCustomName() == null ? null : slots[s1].getCustomName().getString();
 //			Main.LOGGER.info("looking for dest bundles for "+slots[s1].getName().getString()+" in slot "+s1);
 			for(int j=0; j<slotsWithBundles.length && emptyBundles>1; ++j){
@@ -190,7 +190,7 @@ public final class KeybindMapCopy{
 				else Main.LOGGER.warn("MapCopyBundle: Could not determine destination bundles");
 				return;
 			}
-			storageBundles += copyDests.size();
+//			storageBundles += copyDests.size();
 			bundlesToCopy.put(s1, copyDests);
 			emptyMapsNeeded += getNumStored(bundles[s1].getOccupancy())*copyDests.size();
 //			multiMapCopy |= contents.stream().anyMatch(s -> s.getCount() > 1);
