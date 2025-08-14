@@ -48,6 +48,8 @@ import net.minecraft.client.MinecraftClient;
 public class Main implements ClientModInitializer{
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
+	// Handrestock: wait until placed map is detected in itemframe to get next
+	// AutoMapPlacer (for LVotU)
 	// ignorelist sync, /seen
 	// Ultimate KeyBind mod: Buff MaLiLib mod menu with dropdown option for all vanilla (and mod) categories + allow duplicates
 	// auto-replenish from opened containers (and maybe even auto-open containers)
