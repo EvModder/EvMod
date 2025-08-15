@@ -41,4 +41,5 @@ replay_*.log
 
 ########## Other
 *.png
+tmp_workstuff/
 hashcode_*

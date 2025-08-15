@@ -433,8 +433,8 @@ public final class MapHandRestock{
 				Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlot+" -> hb="+player.getInventory().selectedSlot);
 			}
 			else if(isHotbarSlot){
-				player.getInventory().selectedSlot = restockFromSlot - 36; // TODO: why is this bugging me?
-				client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(player.getInventory().selectedSlot));
+				client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(restockFromSlot - 36));
+				player.getInventory().selectedSlot = restockFromSlot - 36;
 				Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().selectedSlot);
 			}
 			else{
