@@ -36,6 +36,7 @@ mapart_database: false
 mapart_database_share_contact: true
 
 map_state_cache: false
+invis_itemframes_with_maps: true
 
 map_highlight_in_tooltip: true
 map_highlight_in_hotbarhud: true
