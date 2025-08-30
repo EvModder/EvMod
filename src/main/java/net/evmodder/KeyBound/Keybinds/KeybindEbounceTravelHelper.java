@@ -32,12 +32,12 @@ import net.minecraft.block.TrapdoorBlock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
-import net.minecraft.item.PickaxeItem;
+import net.minecraft.item.Items;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
@@ -132,14 +132,14 @@ public final class KeybindEbounceTravelHelper{
 		int i=0;
 		for(; i<9; ++i){
 			Item item = client.player.getInventory().getStack(i).getItem();
-			if(client.player.getInventory().selectedSlot == i || item instanceof BlockItem == false) continue;
+			if(client.player.getInventory().getSelectedSlot() == i || item instanceof BlockItem == false) continue;
 			if(path == null || Registries.ITEM.getId(item).getPath().equals(path)) break;
 		}
 		if(i == 9){
 			client.player.sendMessage(Text.literal("(!) No blocks in hotbar"), true);
 			return false;
 		}
-		client.player.getInventory().selectedSlot = i;
+		client.player.getInventory().setSelectedSlot(i);
 		client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(i));
 		client.player.sendMessage(Text.literal("Selected hotbar blocks"), true);
 //		Main.LOGGER.info("Selected hotbar blocks");
@@ -257,16 +257,24 @@ public final class KeybindEbounceTravelHelper{
 		return side;
 	}
 
-	private boolean selectPickaxeInHotbar(){
-		if(client.player.getMainHandStack().getItem() instanceof PickaxeItem) return false;
-		int i=0;
-		for(; i<9 && client.player.getInventory().getStack(i).getItem() instanceof PickaxeItem == false; ++i);
-		if(i == 9){
-			client.player.sendMessage(Text.literal("(!) No pickaxe in hotbar"), true);
+	private boolean selectPickaxeInHotbar(BlockState bs){
+//		if(client.player.getMainHandStack().getItem() instanceof PickaxeItem) return false;
+		int bestI=client.player.getInventory().getSelectedSlot();
+		float bestSpeed=0;
+		for(int i=0; i<9; ++i){
+			float speed = client.player.getInventory().getStack(i).getMiningSpeedMultiplier(bs);
+			if(speed > bestSpeed){bestSpeed=speed; bestI=i;}
+		}
+		if(bestSpeed == 0){
+			client.player.sendMessage(Text.literal("(!) No matching tool in hotbar"), true);
 			return false;
 		}
-		client.player.getInventory().selectedSlot = i;
-		client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(i));
+		if(bestI == client.player.getInventory().getSelectedSlot()){
+			client.player.sendMessage(Text.literal("Best tool in hotbar already selected"), true);
+			return false;
+		}
+		client.player.getInventory().setSelectedSlot(bestI);
+		client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(bestI));
 		client.player.sendMessage(Text.literal("Selected hotbar pickaxe"), true);
 //		Main.LOGGER.info("Selected hotbar pickaxe");
 		return true;
@@ -289,7 +297,7 @@ public final class KeybindEbounceTravelHelper{
 			}
 		}
 		// Don't try to mine blocks if the player isn't stuck
-		if(client.player.prevX != client.player.getX() || client.player.prevZ != client.player.getZ()) return false;
+		if(client.player.lastX != client.player.getX() || client.player.lastZ != client.player.getZ()) return false;
 
 		ArrayList<BlockPos> mineSpots = new ArrayList<>();
 		Vec3d pos = client.player.getPos();
@@ -325,7 +333,7 @@ public final class KeybindEbounceTravelHelper{
 //				bpDig = bpDig.add(0, 1, 0);
 //			if(i == 3) continue;
 
-			if(selectPickaxeInHotbar()) return true;
+			if(selectPickaxeInHotbar(bs)) return true;
 			if(isMining == 0) isMining = 4;
 			//if(client.player.getMainHandStack().getItem() instanceof PickaxeItem) return false;
 			client.interactionManager.updateBlockBreakingProgress(bpDig, getBlockBreakingSide(bpDig));
@@ -394,9 +402,7 @@ public final class KeybindEbounceTravelHelper{
 				}
 			}
 			if(!isEnabled) return;
-			Item chestItem = client.player.getInventory().getArmorStack(2).getItem();
-			Identifier chestItemId = Registries.ITEM.getId(chestItem);
-			if(chestItemId == null || !chestItemId.getPath().equals("elytra")){
+			if(client.player.getEquippedStack(EquipmentSlot.CHEST).getItem() != Items.ELYTRA){
 				client.player.sendMessage(Text.literal("Not wearing elytra"), true);
 				return;
 			}

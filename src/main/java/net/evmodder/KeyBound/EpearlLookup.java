@@ -13,12 +13,12 @@ import net.evmodder.EvLib.LoadingCache;
 import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.EvLib.PearlDataClient;
 import net.evmodder.EvLib.TextUtils;
-import net.evmodder.KeyBound.mixin.AccessorProjectileEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.projectile.ProjectileEntity;
 
 public final class EpearlLookup{
 	public record XYZ(int x, int y, int z){}
@@ -206,7 +206,7 @@ public final class EpearlLookup{
 
 	public String getOwnerName(Entity epearl){
 		//if(epearl.getType() != EntityType.ENDER_PEARL) throw IllegalArgumentException();
-		UUID ownerUUID = ((AccessorProjectileEntity)epearl).getOwnerUUID();
+		UUID ownerUUID = ((ProjectileEntity)epearl).getOwner().getUuid();
 		String ownerName = getDynamicUsername(ownerUUID, epearl.getUuid());
 		if((!USE_DB_UUID && !USE_DB_XZ) || epearl.getVelocity().x != 0d || epearl.getVelocity().z != 0d) return getDynamicUsername(ownerUUID, epearl.getUuid());
 		final String address = client != null && client.getCurrentServerEntry() != null ? client.getCurrentServerEntry().address : null;
