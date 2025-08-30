@@ -155,7 +155,7 @@ once arrangement is found
 		boolean mapMoveIgnoreAirPockets=true;
 		boolean mapPlaceHelper=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false, mapHighlightTooltip=false;
 		boolean mapMetadataTooltip=false, mapMdStaircase=false, mapMdMaterial=false, mapMdNumColors=false, mapMdTransparency=false, mapMdNoobline=false,
-				mapMdPercentCarpet=false;
+				mapMdPercentCarpet=false, mapMdPercentStaircase=false;
 		boolean mapWallCmd=false, mapWallBorder=false;
 		boolean keybindEbounceTravelHelper=false, keybindRestock=false, inventoryRestockAuto=false;
 		boolean uploadIgnoreList=false;
@@ -223,6 +223,7 @@ once arrangement is found
 				case "map_metadata_in_tooltip.staircase": mapMdStaircase = !value.equalsIgnoreCase("false"); break;
 				case "map_metadata_in_tooltip.material": mapMdMaterial = !value.equalsIgnoreCase("false"); break;
 				case "map_metadata_in_tooltip.percent_carpet": mapMdPercentCarpet = !value.equalsIgnoreCase("false"); break;
+				case "map_metadata_in_tooltip.percent_staircase": mapMdPercentStaircase = !value.equalsIgnoreCase("false"); break;
 				case "map_metadata_in_tooltip.num_colors": mapMdNumColors = !value.equalsIgnoreCase("false"); break;
 				case "map_metadata_in_tooltip.transparency": mapMdTransparency = !value.equalsIgnoreCase("false"); break;
 				case "map_metadata_in_tooltip.noobline": mapMdNoobline = !value.equalsIgnoreCase("false"); break;
@@ -313,7 +314,7 @@ once arrangement is found
 		}
 
 		if(mapMetadataTooltip){
-			new TooltipMapLoreMetadata(mapMdStaircase, mapMdMaterial, mapMdPercentCarpet, mapMdNumColors, mapMdTransparency, mapMdNoobline);
+			new TooltipMapLoreMetadata(mapMdStaircase, mapMdMaterial, mapMdNumColors, mapMdTransparency, mapMdNoobline, mapMdPercentCarpet, mapMdPercentStaircase);
 		}
 
 		final String username = MinecraftClient.getInstance().getSession().getUsername();

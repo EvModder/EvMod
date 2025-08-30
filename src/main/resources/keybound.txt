@@ -46,6 +46,7 @@ map_metadata_in_tooltip.num_colors: true
 map_metadata_in_tooltip.transparency: true
 map_metadata_in_tooltip.noobline: true
 map_metadata_in_tooltip.percent_carpet: true
+map_metadata_in_tooltip.percent_staircase: true
 
 map_highlight_in_tooltip: true
 map_highlight_in_hotbarhud: true

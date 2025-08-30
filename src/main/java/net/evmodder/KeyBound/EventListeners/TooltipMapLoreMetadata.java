@@ -16,21 +16,24 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 public final class TooltipMapLoreMetadata{
-	private final boolean showStaircased, showMaterial, showPercentCarpet, showNumColors, showTransparency, showNoobline;
-	public TooltipMapLoreMetadata(boolean showStaircased, boolean showMaterial, boolean showPercentCarpet, boolean showNumColors,
-			boolean showTransparency, boolean showNoobline)
+	private final boolean showStaircased, showMaterial, showNumColors, showTransparency, showNoobline, showPercentCarpet, showPercentStaircased;
+	public TooltipMapLoreMetadata(boolean showStaircased, boolean showMaterial, boolean showNumColors, boolean showTransparency, boolean showNoobline,
+			boolean showPercentCarpet, boolean showPercentStaircased)
 	{
 		this.showStaircased = showStaircased;
 		this.showMaterial = showMaterial;
-		this.showPercentCarpet = showPercentCarpet;
 		this.showNumColors = showNumColors;
 		this.showTransparency = showTransparency;
 		this.showNoobline = showNoobline;
+		this.showPercentCarpet = showPercentCarpet;
+		this.showPercentStaircased = showPercentStaircased;
 		ItemTooltipCallback.EVENT.register(this::tooltipMetadata);
 	}
 
 	private final String paletteSymbol(MapColorUtils.Palette palette){
-		return palette.name().toLowerCase();
+		return //StringUtils.capitalize(
+				palette.name().toLowerCase().replace('_', '-');
+				//);
 //		switch(palette){
 //			case CARPET:
 //				return "carpet";
@@ -56,17 +59,26 @@ public final class TooltipMapLoreMetadata{
 		if(state == null) return;
 
 		final MapColorData data = MapColorUtils.getColorData(state.colors);
-		final String layers = data.height() == 0 ? "–" : data.height() == 1 ? "=" : data.height() == 2 ? "☰" : data.height()+"\u1f4f6";
+		final Text staircased = Text.literal(
+					data.height() == 0 ? "_" : data.height() == 1 ? "=" : data.height() == 2 ? "☰" : data.height()+"\uD83D\uDCF6"
+				).formatted(Formatting.GREEN);
 
-		if(showStaircased) lines.add(Text.literal("\n")
-				.append(Text.translatable("advMode.type").formatted(Formatting.GRAY))
-				.append(": ").append(Text.literal(layers).formatted(Formatting.GREEN)));
-		if(showMaterial) lines.add(Text.literal("\n"+paletteSymbol(data.palette())).formatted(Formatting.GRAY));
-		if(showMaterial && showPercentCarpet) lines.add(Text.literal(" ("+data.percentCarpet()+"%)"));
-		if(showNumColors) lines.add(Text.literal("\n")
-				.append(Text.translatable("options.chat.color").formatted(Formatting.GRAY))
-				.append(": "+data.uniqueColors()));
-		if(showTransparency && data.transparency()) lines.add(Text.literal("\nTransparency").formatted(Formatting.AQUA));
-		if(showNoobline && data.noobline()) lines.add(Text.literal("\nNoobline").formatted(Formatting.RED));
+		if(showStaircased){
+			lines.add(Text.translatable("advMode.type").formatted(Formatting.GRAY).append(": ").append(staircased));
+		}
+		if(showStaircased && showPercentStaircased && data.height()>0) lines.add(lines.removeLast().copy().append(" ("+data.percentStaircase()+"%)"));
+		if(showMaterial){
+			if(showStaircased) lines.add(lines.removeLast().copy().append((showPercentStaircased?", ":" ")+paletteSymbol(data.palette())));
+			else lines.add(Text.translatable("advMode.type").formatted(Formatting.GRAY).append(": "+paletteSymbol(data.palette())));
+		}
+		if(showMaterial && showPercentCarpet && data.percentCarpet() < 100) lines.add(lines.removeLast().copy().append(" ("+data.percentCarpet()+"% carpet)"));
+//		if(showStaircased){// If material 1st then staircased, on same line
+//			if(showMaterial) lines.add(lines.removeLast().copy().append(" ").append(staircased));
+//			else lines.add(Text.translatable("advMode.type").formatted(Formatting.GRAY).append(": ").append(staircased));
+//		}
+//		if(showStaircased && showPercentStaircased && data.height()>0) lines.add(lines.removeLast().copy().append(" ("+data.percentStaircase()+"%)"));
+		if(showNumColors) lines.add(Text.translatable("options.chat.color").formatted(Formatting.GRAY).append(": "+data.uniqueColors()));
+		if(showTransparency && data.transparency()) lines.add(Text.literal("Transparency").formatted(Formatting.AQUA));
+		if(showNoobline && data.noobline()) lines.add(Text.literal("Noobline").formatted(Formatting.RED));
 	}
 }

@@ -143,8 +143,8 @@ public class MapIdsFromImg{
 
 	public static void main(String... args) throws IOException{
 //		calculateMapColors();
-		String imgName = "1x1s_generic.png";
-		String grpName = "hashcode_1x1s_ev";
+		String imgName = "tmp_workstuff/1x1s_generic.png";
+		String grpName = "tmp_workstuff/hashcode_1x1s_ev";
 		BufferedImage img = ImageIO.read(new File(imgName));
 		HashSet<UUID> compareColorIds = loadColorIds(grpName);
 

@@ -8,7 +8,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapColorUtils;
 import net.evmodder.KeyBound.MapGroupUtils;
-import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.EventListeners.ItemFrameHighlightUpdater;
 import net.evmodder.KeyBound.EventListeners.ItemFrameHighlightUpdater.Highlight;
 import net.minecraft.client.MinecraftClient;
