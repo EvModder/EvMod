@@ -1,0 +1,21 @@
+package net.evmodder.KeyBound.mixin;
+
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.BundleContentsComponent;
+import net.minecraft.item.ItemStack;
+
+@Mixin(GuiGraphics.class)
+public abstract class MixinGuiGraphics{
+	@Redirect(method = "renderItemCount", at=@At(value="INVOKE", target="Lnet/minecraft/world/item/ItemStack;getCount()I"))
+	private int getCount(ItemStack stack){
+//		if(!Main.shouldRenderOnItem) return instance.getCount();
+		if(stack.getCount() != 1) return stack.getCount();
+
+		BundleContentsComponent contents = stack.get(DataComponentTypes.BUNDLE_CONTENTS);
+		if(contents == null) return stack.getCount();
+		return Math.max(1, contents.size());
+	}
+}

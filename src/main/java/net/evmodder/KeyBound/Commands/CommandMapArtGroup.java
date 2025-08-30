@@ -223,13 +223,13 @@ public class CommandMapArtGroup{
 			for(UUID uuid : mapsInGroup) bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
 			if(FILE_PATH.endsWith("/") && !new File(FileIO.DIR+FILE_PATH).exists()) new File(FileIO.DIR+FILE_PATH).mkdir();
 			FileIO.saveFileBytes(FILE_PATH+groups[0], bb.array());
-			source.sendFeedback(Text.literal((cmd == Command.CREATE ? "Created " : "Expanded") + " group '"+groups[0]
+			source.sendFeedback(Text.literal((cmd == Command.CREATE ? "Created group" : "Expanded") + " '"+groups[0]
 					+"' (ids: "+ (oldSize==0 ? "" : oldSize+"\u2192") + mapsInGroup.size()+") and set as active.")
 					.copy().withColor(CREATE_COLOR));
 		}
 		else if(newActiveGroup.equals(activeGroupName)){
 			if(activeGroup.equals(mapsInGroup)){
-				source.sendError(Text.literal("Group '"+activeGroupName+"' is already active (ids: "+activeGroup.size()+")").copy().withColor(DONE_COLOR));
+				source.sendError(Text.literal("Group '"+activeGroupName+"' already active (ids: "+activeGroup.size()+")").copy().withColor(DONE_COLOR));
 				return 1;
 			}
 			else{

@@ -51,9 +51,13 @@ public final class KeybindMapLoad{
 //		return hb;
 //	}
 
+	private boolean isUsable(ItemStack stack){
+		return !isShulkerBox(stack) && stack.get(DataComponentTypes.BUNDLE_CONTENTS) == null;
+	}
+
 	private int[] getUsableHotbarButtons(MinecraftClient client){
 		if(client.currentScreen instanceof ShulkerBoxScreen == false) IntStream.range(0, 9).toArray();
-		return IntStream.range(0, 9).filter(hb -> !isShulkerBox(client.player.getInventory().getStack(hb))).toArray();
+		return IntStream.range(0, 9).filter(hb -> isUsable(client.player.getInventory().getStack(hb))).toArray();
 	}
 
 	private final long WAIT_FOR_STATE_UPDATE = 71; // 50 = 1 tick
@@ -181,7 +185,11 @@ public final class KeybindMapLoad{
 				}
 				if((clickIndex/hbButtons.length)%2 == 0 && clickIndex < extraPutBackIndex){++clickIndex; return true;} // Moving TO hotbar
 				ItemStack item = client.player.getInventory().getStack(c.button());
-				if(!isLoadedMapArt(client.world, item)) return false;
+				//if(!isLoadedMapArt(client.world, item)){ // Weird issue rn with non-maps getting moved around? (bundles?)
+				if(isUnloadedMapArt(client.world, item)){
+					Main.LOGGER.info("still waiting for map state to load from hotbar slot: "+c.button());
+					return false;
+				}
 				else if(stateWaitStart == 0){stateWaitStart = System.currentTimeMillis(); return false;}
 				else if(System.currentTimeMillis() - stateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
 				Main.LOGGER.info("map state load finished");

@@ -458,7 +458,7 @@ public final class KeybindMapCopy{
 				// Don't start individual copy operation unless we can fully knock it out (unless impossible to do in 1 go)
 				final Integer clicksNeeded = reserveClicks.get(c);
 				if(clicksNeeded == null || clicksNeeded <= Main.clickUtils.MAX_CLICKS - Main.clickUtils.addClick(null)) return true;
-				client.player.sendMessage(Text.literal("MapCopy: Waiting for clicks... ("+clicks.size()+")").withColor(WAITING_FOR_CLICKS_COLOR), true);
+				client.player.sendMessage(Text.literal("MapCopy: Waiting for available clicks... ("+clicks.size()+")").withColor(WAITING_FOR_CLICKS_COLOR), true);
 				return false;
 			},
 			()->{

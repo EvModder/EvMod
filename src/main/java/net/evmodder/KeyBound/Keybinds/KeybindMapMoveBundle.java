@@ -8,6 +8,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.math.Fraction;
 import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.MapColorUtils;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.Keybinds.ClickUtils.ClickEvent;
 import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
@@ -36,7 +37,7 @@ public final class KeybindMapMoveBundle{
 	private final boolean isFillerMap(ItemStack[] slots, ItemStack stack, World world){
 		if(!Main.skipTransparentMaps) return false;
 		final MapState state = FilledMapItem.getMapState(stack, world);
-		if(state == null || !MapRelationUtils.isTransparentOrStone(state.colors)) return false;
+		if(state == null || !MapColorUtils.isTransparentOrStone(state.colors)) return false;
 		if(stack.getCustomName() == null) return true;
 		final String name = stack.getCustomName().getLiteralString();
 		if(name == null) return true;

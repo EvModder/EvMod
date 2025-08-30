@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 import net.minecraft.item.Item.TooltipContext;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.MapColorUtils;
 import net.evmodder.KeyBound.MapGroupUtils;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.minecraft.component.DataComponentTypes;
@@ -77,7 +78,7 @@ public final class TooltipMapNameColor{
 			return;
 		}
 		final boolean nameColor = !(asterisks.get(0) == Main.MAP_COLOR_UNNAMED
-				|| (asterisks.get(0) == Main.MAP_COLOR_MULTI_INV && Main.skipMonoColorMaps && MapRelationUtils.isMonoColor(state.colors)));
+				|| (asterisks.get(0) == Main.MAP_COLOR_MULTI_INV && Main.skipMonoColorMaps && MapColorUtils.isMonoColor(state.colors)));
 
 		asterisks = asterisks.stream().distinct().toList(); // TODO: this line only exists in case of configurations where 2+ meanings share 1 color
 		MutableText text = lines.removeFirst().copy();

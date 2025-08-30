@@ -37,6 +37,15 @@ mapart_database_share_contact: true
 
 map_state_cache: false
 invis_itemframes_with_maps: true
+invis_itemframes_with_maps.semi_transparent_only: false
+
+map_metadata_in_tooltip: true
+map_metadata_in_tooltip.staircase: true
+map_metadata_in_tooltip.material: true
+map_metadata_in_tooltip.num_colors: true
+map_metadata_in_tooltip.transparency: true
+map_metadata_in_tooltip.noobline: true
+map_metadata_in_tooltip.percent_carpet: true
 
 map_highlight_in_tooltip: true
 map_highlight_in_hotbarhud: true

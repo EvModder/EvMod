@@ -22,10 +22,6 @@ mapart_placement_helper: true #TODO: also support placing sequential shulker box
 mapart_placement_helper_use_name: true
 mapart_placement_helper_use_image: true
 
-# W.I.P. feature for caching map preview in shulker/bundles in inv/echest
-map_state_cache: false
-invis_itemframes_with_maps: true
-
 #========== Commands ==========#
 mapart_group_command: true
 mapart_group_include_unlocked: true
@@ -37,6 +33,16 @@ mapart_generate_img_border_color2: 3288370 # Gray
 
 
 #========== Visuals ==========#
+# W.I.P. feature for caching map preview in shulker/bundles in inv/echest
+map_state_cache: false
+invis_itemframes_with_maps: true
+
+map_metadata_in_tooltip: true
+map_metadata_in_tooltip.staircase: true
+map_metadata_in_tooltip.material: true
+map_metadata_in_tooltip.transparency: true
+map_metadata_in_tooltip.noobline: true
+
 map_highlight_in_tooltip: true
 map_highlight_in_hotbarhud: true
 map_highlight_in_itemframe: true

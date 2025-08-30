@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
@@ -38,7 +39,7 @@ public final class MapHandRestock{
 
 	// For 2D maps, figure out the largest A2/B2 (2nd pos) in the available collection
 	private PosData2D getPosData2D(final List<String> posStrs, final boolean isSideways){
-		assert posStrs.size() >= 2;
+		assert posStrs.size() >= 2 : "PosData2D requires at least 2 related maps";
 		final boolean hasSpace = posStrs.stream().anyMatch(n -> n.indexOf(' ') != -1);
 		final boolean cutMid = !hasSpace && posStrs.stream().allMatch(n -> n.length() == 2); // TODO: A9->A10 support
 		final boolean someSpace = hasSpace && posStrs.stream().anyMatch(n -> n.indexOf(' ') == -1);
@@ -249,6 +250,7 @@ public final class MapHandRestock{
 		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, prevName, prevCount, locked, world);
 		data.slots().remove(Integer.valueOf(prevSlot));
 		if(data.slots().isEmpty()) return -1;
+//		Main.LOGGER.info("prevSlot: "+prevSlot+", related slots: "+data.slots());
 
 		// Offhand, hotbar ascending, inv ascending
 		data.slots().sort((i, j) -> i==45 ? -999 : (i - j) - (i>=36 ? 99 : 0));
@@ -261,7 +263,10 @@ public final class MapHandRestock{
 		PosData2D posData2d = posData2dForName.get(prevName);
 		Main.LOGGER.info("MapRestock: findByName() called, hb="+(prevSlot-36)+", prevPos="+prevPosStr+", numMaps="+data.slots().size());
 		if(posData2d == null){
-			final List<String> mapNames = data.slots().stream().map(i -> slots[i].getCustomName().getLiteralString()).toList();
+			final List<String> mapNames = Stream.concat(Stream.of(prevSlot), data.slots().stream())
+					.map(i -> slots[i].getCustomName().getLiteralString()).toList();
+			final String nonPosName = prevName.substring(0, data.prefixLen()) + "[XY]" + prevName.substring(prevName.length()-data.suffixLen());
+			Main.LOGGER.info("MapRestock: determining posData2d for map '"+nonPosName+"', related names: "+mapNames);
 			final List<String> mapPosStrs = mapNames.stream().map(name -> getPosStrFromName(name, data)).toList();
 			final PosData2D sidewaysPos2dData = getPosData2D(mapPosStrs, true);
 			final PosData2D regularPos2dData = getPosData2D(mapPosStrs, false);

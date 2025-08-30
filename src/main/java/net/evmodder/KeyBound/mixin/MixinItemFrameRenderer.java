@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.MapColorUtils;
 import net.evmodder.KeyBound.MapGroupUtils;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.EventListeners.ItemFrameHighlightUpdater;
@@ -49,7 +50,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(state == null) return;
 		Highlight hl = ItemFrameHighlightUpdater.iFrameGetHighlight(itemFrameEntity.getId());
 		if(hl == null) return;
-		if(hl == Highlight.MULTI_HUNG && Main.skipMonoColorMaps && MapRelationUtils.isMonoColor(state.colors)) return; // Don't do boosted hasLabel()
+		if(hl == Highlight.MULTI_HUNG && Main.skipMonoColorMaps && MapColorUtils.isMonoColor(state.colors)) return; // Don't do boosted hasLabel()
 
 		if(hl == Highlight.INV_OR_NESTED_INV){cir.setReturnValue(true); return;} // Show this label even if not looking in general direction
 		if(!isLookngInGeneralDirection(itemFrameEntity)) return;
@@ -85,15 +86,24 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		else if(!state.locked) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_UNLOCKED));
 		else if(stack.getCustomName() == null) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_UNNAMED));
 		else if(hl == Highlight.MULTI_HUNG){
-			if(Main.skipMonoColorMaps && MapRelationUtils.isMonoColor(state.colors)){
+			if(Main.skipMonoColorMaps && MapColorUtils.isMonoColor(state.colors)){
 				cir.setReturnValue(stack.getName().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_MULTI_IFRAME)));
 			}
 			else cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_MULTI_IFRAME));
 		}
 	}
 
+	private boolean isSemiTransparent(ItemFrameEntityRenderState ifers){
+		MapState state = client.world.getMapState(ifers.mapId);
+		if(state == null || state.colors == null) return false;
+		boolean has0 = false, hasColor = false;
+		for(byte b : state.colors){has0 |= (b==0); hasColor |= (b!=0);}
+		return has0 && hasColor;
+	}
+
 	@Inject(method="render", at=@At("HEAD"))
 	private void disableItemFrameFrameRenderingWhenHoldingMaps(ItemFrameEntityRenderState ifers, MatrixStack _0, VertexConsumerProvider _1, int _2, CallbackInfo _3) {
-		ifers.invisible |= (Main.invisItemFramesWithMaps && ifers.mapId != null);
+		ifers.invisible |= (Main.invisItemFramesWithMaps && ifers.mapId != null
+				&& (!Main.invisItemFramesWithMapsSemiTransparentOnly || isSemiTransparent(ifers)));
 	}
 }

@@ -22,17 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.Commands.*;
-import net.evmodder.KeyBound.EventListeners.AutoPearlActivator;
-import net.evmodder.KeyBound.EventListeners.ContainerHighlightUpdater;
-import net.evmodder.KeyBound.EventListeners.ContainerOpenListener;
-import net.evmodder.KeyBound.EventListeners.IgnoreListSync2b2t;
-import net.evmodder.KeyBound.EventListeners.InventoryHighlightUpdater;
-import net.evmodder.KeyBound.EventListeners.ItemFrameHighlightUpdater;
-import net.evmodder.KeyBound.EventListeners.TooltipMapNameColor;
-import net.evmodder.KeyBound.EventListeners.MapHandRestock;
-import net.evmodder.KeyBound.EventListeners.MapStateInventoryCacher;
-import net.evmodder.KeyBound.EventListeners.SendOnServerJoin;
-import net.evmodder.KeyBound.EventListeners.TooltipRepairCost;
+import net.evmodder.KeyBound.EventListeners.*;
 import net.evmodder.KeyBound.Keybinds.*;
 import net.evmodder.KeyBound.Keybinds.KeybindsSimple;
 import net.fabricmc.api.ClientModInitializer;
@@ -48,7 +38,6 @@ import net.minecraft.client.MinecraftClient;
 public class Main implements ClientModInitializer{
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
-	// Handrestock: wait until placed map is detected in itemframe to get next
 	// AutoMapPlacer (for LVotU)
 	// ignorelist sync, /seen and other misc stats cmds for DB mode
 	// Ultimate KeyBind mod: Buff MaLiLib mod menu with dropdown option for all vanilla (and mod) categories + allow duplicates
@@ -71,7 +60,6 @@ public class Main implements ClientModInitializer{
 	// change render order of certain villager trades (in particular: make cleric redstone always above rotten flesh)
 	// totem in offhand - render itemcount for sum of totems in inv (instead of itemcount 1) - IMO nicer than the RH/meteor/etc UI overlay
 	// Maps - make item count font smaller, cuz it kinda covers img in slot
-	// Map - next hand autorestock, consider all maps in inv (later: look at all edges) and stick to RowByCol or ColByRow for whole map
 	// ^DONE: but rn it's greedy, need make it DFS+DP (same for img stitching)
 	// cont.: save LastMapCommonSubstr and LastMapRowByCol
 	// yoink activated spawner highlight from trouser-streak? seems cool
@@ -109,7 +97,8 @@ once arrangement is found
 	public static ClickUtils clickUtils;
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
-	public static boolean rcHUD, mapHighlightHUD, mapHighlightIFrame, mapHighlightHandledScreen, invisItemFramesWithMaps=true;
+	public static boolean rcHUD, mapHighlightHUD, mapHighlightIFrame, mapHighlightHandledScreen;
+	public static boolean invisItemFramesWithMaps=true, invisItemFramesWithMapsSemiTransparentOnly=false;
 	public static boolean mapartDb, mapartDbContact, totemShowTotalCount, skipTransparentMaps, skipMonoColorMaps;
 	public static long joinedServerTimestamp;
 
@@ -165,6 +154,8 @@ once arrangement is found
 				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false, keybindMapArtBundleStow=false, keybindMapArtBundleStowReverse=false;
 		boolean mapMoveIgnoreAirPockets=true;
 		boolean mapPlaceHelper=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false, mapHighlightTooltip=false;
+		boolean mapMetadataTooltip=false, mapMdStaircase=false, mapMdMaterial=false, mapMdNumColors=false, mapMdTransparency=false, mapMdNoobline=false,
+				mapMdPercentCarpet=false;
 		boolean mapWallCmd=false, mapWallBorder=false;
 		boolean keybindEbounceTravelHelper=false, keybindRestock=false, inventoryRestockAuto=false;
 		boolean uploadIgnoreList=false;
@@ -227,6 +218,14 @@ once arrangement is found
 				case "repaircost_in_hotbarhud": rcHUD = !value.equalsIgnoreCase("false"); break;
 				case "map_state_cache": if(!value.equalsIgnoreCase("false")) new MapStateInventoryCacher(); break;
 				case "invis_itemframes_with_maps": invisItemFramesWithMaps = !value.equalsIgnoreCase("false"); break;
+				case "invis_itemframes_with_maps.semi_transparent_only": invisItemFramesWithMapsSemiTransparentOnly = !value.equalsIgnoreCase("false"); break;
+				case "map_metadata_in_tooltip": mapMetadataTooltip = !value.equalsIgnoreCase("false"); break;
+				case "map_metadata_in_tooltip.staircase": mapMdStaircase = !value.equalsIgnoreCase("false"); break;
+				case "map_metadata_in_tooltip.material": mapMdMaterial = !value.equalsIgnoreCase("false"); break;
+				case "map_metadata_in_tooltip.percent_carpet": mapMdPercentCarpet = !value.equalsIgnoreCase("false"); break;
+				case "map_metadata_in_tooltip.num_colors": mapMdNumColors = !value.equalsIgnoreCase("false"); break;
+				case "map_metadata_in_tooltip.transparency": mapMdTransparency = !value.equalsIgnoreCase("false"); break;
+				case "map_metadata_in_tooltip.noobline": mapMdNoobline = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_in_tooltip": mapHighlightTooltip = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_in_hotbarhud": mapHighlightHUD = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_in_itemframe": mapHighlightIFrame = !value.equalsIgnoreCase("false"); break;
@@ -311,6 +310,10 @@ once arrangement is found
 				ItemFrameHighlightUpdater.onUpdateTick(client);
 				if(mapHighlightHandledScreen/* || mapHighlightTooltip*/) ContainerHighlightUpdater.onUpdateTick(client);
 			});
+		}
+
+		if(mapMetadataTooltip){
+			new TooltipMapLoreMetadata(mapMdStaircase, mapMdMaterial, mapMdPercentCarpet, mapMdNumColors, mapMdTransparency, mapMdNoobline);
 		}
 
 		final String username = MinecraftClient.getInstance().getSession().getUsername();

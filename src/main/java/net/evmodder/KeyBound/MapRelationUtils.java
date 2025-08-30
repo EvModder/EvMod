@@ -14,18 +14,6 @@ import net.minecraft.item.map.MapState;
 import net.minecraft.world.World;
 
 public abstract class MapRelationUtils{
-	public static final boolean isTransparentOrStone(final byte[] colors){//TODO: Move to a generic MapUtils.class
-		// This is faster apparently (less branching beats short-circuit)
-		byte anyColor = 0;
-		for(byte b : colors) anyColor |= b;
-		return anyColor == 0 || anyColor == 45;//11*4+1 = flat stone
-		
-	}
-	public static final boolean isMonoColor(final byte[] colors){//TODO: Move to a generic MapUtils.class
-		for(int i=1; i<colors.length; ++i) if(colors[i] != colors[i-1]) return false;
-		return true;
-	}
-
 	public static final Stream<ItemStack> getAllNestedItems(Stream<ItemStack> items){//TODO: Move to a generic MapUtils.class
 		return items.flatMap(s -> {
 			BundleContentsComponent contents = s.get(DataComponentTypes.BUNDLE_CONTENTS);
@@ -52,6 +40,7 @@ public abstract class MapRelationUtils{
 		pos = pos.replace("TOP", "T").replace("BOTTOM", "B").replace("LEFT", "L").replace("RIGHT", "R").replace("MIDDLE", "M");
 		pos = pos.replace("UP", "T").replace("DOWN", "B");
 		pos = pos.replace("FIRST", "0").replace("SECOND", "1").replace("ONE", "0").replace("TWO", "1");
+		pos = pos.replace("[^a-zA-Z0-9](?:by|By|BY) [a-zA-Z0-9_]+[^a-zA-Z0-9 ]?", "").trim(); // Author attribution
 		while(pos.matches(".*[^0-9 ][^0-9 ].*")) pos = pos.replaceAll("([^0-9 ])([^0-9 ])", "$1 $2");
 		return pos;
 	}
@@ -139,6 +128,7 @@ public abstract class MapRelationUtils{
 			if(posStr.isBlank()) Main.LOGGER.info("Empty posStr for name: "+name+", prefix/suffix: "+a+"/"+b);
 			final boolean validMatchingPosStrs = isValidPosStr(posStr) && isValidPosStr(sourcePosStr) && 
 					(posStr.indexOf(' ') != -1) == (sourcePosStr.indexOf(' ') != -1);
+//			Main.LOGGER.info("slot: "+i+ ", posStr: "+posStr+", sourcePosStr: "+sourcePosStr+", bothValid: "+validMatchingPosStrs);
 			if(prefixLen == -1 && suffixLen == -1){ // Prefix/suffix not yet determined
 				if(validMatchingPosStrs){prefixLen = a; suffixLen = b;}
 				else if(a != 0 || b != 0)
@@ -193,5 +183,47 @@ public abstract class MapRelationUtils{
 			relatedMapSlots.add(i);
 		}
 		return new RelatedMapsData(prefixLen, suffixLen, relatedMapSlots);
+	}
+/*
+	record PosData2D(boolean isSideways, String minPos2, String maxPos2){}
+	record Pos2DPair(String posA1, String posA2, String posB1, String posB2){}
+
+	// For 2D maps, figure out the largest A2/B2 (2nd pos) in the available collection
+	private PosData2D getPosData2D(final List<String> posStrs, final boolean isSideways){
+		assert posStrs.size() >= 2;
+		final boolean hasSpace = posStrs.stream().anyMatch(n -> n.indexOf(' ') != -1);
+		final boolean cutMid = !hasSpace && posStrs.stream().allMatch(n -> n.length() == 2); // TODO: A9->A10 support
+		final boolean someSpace = hasSpace && posStrs.stream().anyMatch(n -> n.indexOf(' ') == -1);
+		final List<String> pos2s;
+		if(cutMid){
+			if(isSideways) pos2s = posStrs.stream().map(n -> n.substring(0, 1)).toList();
+			else pos2s = posStrs.stream().map(n -> n.substring(1)).toList();
+		}
+		else if(someSpace){
+			final int spaceIdx = !someSpace ? -1 : posStrs.stream().filter(n -> n.indexOf(' ') != -1).findAny().get().indexOf(' ');
+			if(posStrs.stream().map(n -> n.indexOf(' ')).anyMatch(i -> i != -1 && i != spaceIdx)){
+				Main.LOGGER.warn("MapRestock: getMaxPos2() detected mismatched pos2d spacing");
+			}
+			if(isSideways) pos2s = posStrs.stream().map(n -> n.substring(0, spaceIdx)).toList();
+			else pos2s = posStrs.stream().map(n -> n.substring(spaceIdx + (n.indexOf(' ') == spaceIdx ? 1 : 0))).toList();
+		}
+		else if(hasSpace){
+			if(isSideways) pos2s = posStrs.stream().map(n -> n.substring(0, n.indexOf(' '))).toList();
+			else pos2s = posStrs.stream().map(n -> n.substring(n.indexOf(' ')+1)).toList();
+		}
+		else{
+			//Main.LOGGER.warn("MapRestock: getMaxPos2() does not recognize pos '"+posStrs.getFirst()+"' as 2D");
+			//pos2s = posStrs.stream();
+			return new PosData2D(isSideways, null, null);
+		}
+		Comparator<String> c = (a, b) -> StringUtils.isNumeric(a) && StringUtils.isNumeric(b) ? Integer.parseInt(a)-Integer.parseInt(b) : a.compareTo(b);
+		String min = pos2s.stream().min(c).get();
+		String max = pos2s.stream().max(c).get();
+		if(min.length() == 1 && !min.matches("[A01TL]")) min = null;
+		return new PosData2D(isSideways, min, max);
+	}*/
+
+	public static final RelatedMapsData orderRelatedMaps(RelatedMapsData data){
+		return data;
 	}
 }

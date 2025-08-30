@@ -5,6 +5,7 @@ import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Function;
+import net.evmodder.EvLib.TextUtils;
 import net.evmodder.KeyBound.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.screen.slot.SlotActionType;
@@ -95,6 +96,8 @@ public class ClickUtils{
 				//final int availableClicks = MAX_CLICKS - addClick(null);
 				//for(int i=0; i<availableClicks; ++i){
 				client.executeSync(()->{
+//					double clicksPerTick = ((double)MAX_CLICKS)/tickDurationArr.length;
+//					double secondsleft = (clicks.size()/clicksPerTick)/20;
 					while(addClick(null) < MAX_CLICKS){
 						if(!canProceed.apply(clicks.peek())){waitedForClicks = true; return;}
 						ClickEvent click = clicks.remove();
@@ -112,7 +115,10 @@ public class ClickUtils{
 						}
 					}
 					waitedForClicks = true;
-					client.player.sendMessage(Text.literal("Waiting for available clicks... ("+clicks.size()+")").withColor(OUTTA_CLICKS_COLOR), true);
+					final int msLeft = tickDurationArr == null ? 0 : (int)(tickDurationArr.length
+							+ clicks.size()/(((double)MAX_CLICKS)/tickDurationArr.length))*50;
+					client.player.sendMessage(Text.literal("Waiting for available clicks... ("+clicks.size()//+"c"
+							+(msLeft > 5000 ? ", ~"+TextUtils.formatTime(msLeft) : "")+")").withColor(OUTTA_CLICKS_COLOR), true);
 				});
 			}
 		}, 1l, 27l/*51l*/);

@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Predicate;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.MapColorUtils;
 import net.evmodder.KeyBound.MapGroupUtils;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.minecraft.client.MinecraftClient;
@@ -64,9 +65,9 @@ public class ContainerHighlightUpdater{
 		if(items.isEmpty()) return;
 		final List<MapState> states = items.stream().map(i -> FilledMapItem.getMapState(i, client.world)).filter(Objects::nonNull).toList();
 		final List<UUID> nonTransparentIds = (!Main.skipTransparentMaps ? states.stream() :
-			states.stream().filter(s -> !MapRelationUtils.isTransparentOrStone(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
+			states.stream().filter(s -> !MapColorUtils.isTransparentOrStone(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
 		final List<UUID> nonMonoColorIds = (!Main.skipMonoColorMaps ? states.stream() :
-			states.stream().filter(s -> !MapRelationUtils.isMonoColor(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
+			states.stream().filter(s -> !MapColorUtils.isMonoColor(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
 
 		asterisks.clear();
 		nonTransparentIds.stream().filter(InventoryHighlightUpdater::isInInventory).forEach(inContainerAndInInv::add);
