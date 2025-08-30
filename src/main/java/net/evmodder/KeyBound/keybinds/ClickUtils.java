@@ -99,7 +99,7 @@ public class ClickUtils{
 //					double clicksPerTick = ((double)MAX_CLICKS)/tickDurationArr.length;
 //					double secondsleft = (clicks.size()/clicksPerTick)/20;
 					while(addClick(null) < MAX_CLICKS){
-						if(!canProceed.apply(clicks.peek())){waitedForClicks = true; return;}
+						if(!canProceed.apply(clicks.peek())) break;//{waitedForClicks = true; return;}
 						ClickEvent click = clicks.remove();
 						try{
 							//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);

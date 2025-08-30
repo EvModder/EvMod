@@ -180,8 +180,7 @@ public final class KeybindMapMove{
 					// Don't start cursor-pickup move operation if we can't complete it in 1 go
 					final Integer clicksNeeded = reserveClicks.get(c);
 					if(clicksNeeded == null || clicksNeeded <= Main.clickUtils.MAX_CLICKS - Main.clickUtils.addClick(null)) return true;
-					client.player.sendMessage(Text.literal("MapMove: Waiting for clicks...").withColor(KeybindMapCopy.WAITING_FOR_CLICKS_COLOR), true);
-					return false;
+					return false; // Wait for clicks
 				},
 				()->Main.LOGGER.info("MapMove: DONE!")
 		);

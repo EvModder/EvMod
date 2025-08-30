@@ -32,7 +32,6 @@ public final class KeybindMapCopy{
 	private final long copyCooldown = 250l;
 	private final boolean PRESERVE_EXACT_POS = true;
 	private final ItemStack EMPTY_ITEM = new ItemStack(Items.AIR);
-	final static int WAITING_FOR_CLICKS_COLOR = 15764490;
 
 	// Shift-click results:
 	// Shift-click in crafting input -> TL of inv
@@ -458,8 +457,7 @@ public final class KeybindMapCopy{
 				// Don't start individual copy operation unless we can fully knock it out (unless impossible to do in 1 go)
 				final Integer clicksNeeded = reserveClicks.get(c);
 				if(clicksNeeded == null || clicksNeeded <= Main.clickUtils.MAX_CLICKS - Main.clickUtils.addClick(null)) return true;
-				client.player.sendMessage(Text.literal("MapCopy: Waiting for available clicks... ("+clicks.size()+")").withColor(WAITING_FOR_CLICKS_COLOR), true);
-				return false;
+				return false; // Wait for clicks
 			},
 			()->{
 				Main.LOGGER.info("MapCopy: DONE");
