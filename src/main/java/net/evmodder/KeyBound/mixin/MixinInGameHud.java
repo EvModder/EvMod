@@ -2,7 +2,7 @@ package net.evmodder.KeyBound.mixin;
 
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
-import net.evmodder.KeyBound.EventListeners.ItemFrameHighlightUpdater;
+import net.evmodder.KeyBound.events.ItemFrameHighlightUpdater;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.component.DataComponentTypes;

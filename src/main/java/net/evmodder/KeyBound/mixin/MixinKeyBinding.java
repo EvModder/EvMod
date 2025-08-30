@@ -1,6 +1,6 @@
 package net.evmodder.KeyBound.mixin;
 
-import net.evmodder.KeyBound.Keybinds.Keybind;
+import net.evmodder.KeyBound.keybinds.Keybind;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import org.spongepowered.asm.mixin.Final;

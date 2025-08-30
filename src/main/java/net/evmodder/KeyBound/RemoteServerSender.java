@@ -11,7 +11,7 @@ import java.util.UUID;
 import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.EvLib.PacketHelper.MessageReceiver;
-import net.evmodder.KeyBound.Keybinds.Keybind;
+import net.evmodder.KeyBound.keybinds.Keybind;
 import net.minecraft.client.MinecraftClient;
 
 public final class RemoteServerSender{

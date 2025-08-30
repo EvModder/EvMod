@@ -1,7 +1,7 @@
 package net.evmodder.KeyBound.mixin;
 
-import net.evmodder.KeyBound.EventListeners.ContainerHighlightUpdater;
-import net.evmodder.KeyBound.Keybinds.Keybind;
+import net.evmodder.KeyBound.events.ContainerHighlightUpdater;
+import net.evmodder.KeyBound.keybinds.Keybind;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
