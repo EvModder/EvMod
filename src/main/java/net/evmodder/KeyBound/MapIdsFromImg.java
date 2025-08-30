@@ -16,6 +16,7 @@ import java.util.UUID;
 import javax.imageio.ImageIO;
 import net.evmodder.EvLib.FileIO;
 import net.minecraft.block.MapColor;
+import net.minecraft.block.MapColor.Brightness;
 
 public class MapIdsFromImg{
 	/*static int getIntFromARGB(int a, int r, int g, int b){return (a<<24) | (r<<16) | (g<<8) | b;}
@@ -88,6 +89,11 @@ public class MapIdsFromImg{
 				}
 			}
 			MAP_COLORS_REVERSE.put(0xff000000, (byte)0);
+			// Use same byte for all transparent brightnesses
+			MAP_COLORS_REVERSE.put(1, (byte)0); MAP_COLORS_REVERSE.put(2, (byte)0); MAP_COLORS_REVERSE.put(3, (byte)0);
+//			for(MapColor.Brightness brightness : MapColor.Brightness.values()){
+//				MAP_COLORS_REVERSE.put(MAP_COLORS[0].getRenderColor(brightness), MAP_COLORS[0].getRenderColorByte(Brightness.LOW));
+//			}
 		}
 		catch(NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e){
 			e.printStackTrace();

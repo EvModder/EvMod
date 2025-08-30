@@ -116,8 +116,8 @@ public abstract class MapColorUtils{
 			int h = 0;
 			for(int y=0; y<128; ++y){
 				final byte color = colors[x + y*128];
-				uniqueColors.add(color);
 				final boolean isTransparent = transparentColors.contains(color);
+				uniqueColors.add(isTransparent ? 0 : color);
 				switch(palette){
 					case EMPTY:
 						if(isTransparent){transparency = true; break;}
