@@ -17,11 +17,11 @@ import net.minecraft.text.Text;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.OptionalInt;
+import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.math.Fraction;
@@ -144,6 +144,10 @@ public final class KeybindMapCopy{
 		assert 64 % fraction.getDenominator() == 0;
 		return (64/fraction.getDenominator())*fraction.getNumerator();
 	}
+	private final String getCustomNameOrNull(ItemStack stack){
+		return stack.getCustomName() == null ? null : stack.getCustomName().getString();
+	}
+
 	private void copyMapArtInBundles(final ArrayDeque<ClickEvent> clicks, final ItemStack[] slots, final boolean isCrafter,
 			int numEmptyMapsInGrid, final int totalEmptyMaps){
 		final int INPUT_START = 1/*, INPUT_END = isCrafter ? 10 : 5*/;
@@ -157,8 +161,10 @@ public final class KeybindMapCopy{
 				.mapToObj(i -> slots[i].get(DataComponentTypes.BUNDLE_CONTENTS)).toArray(BundleContentsComponent[]::new);
 		final int SRC_BUNDLES = (int)Arrays.stream(bundles).filter(Predicate.not(BundleContentsComponent::isEmpty)).count();
 		int emptyBundles = bundles.length - SRC_BUNDLES;
+		final int DESTS_PER_SRC = SRC_BUNDLES >= emptyBundles ? 999 : (emptyBundles-1)/SRC_BUNDLES;
+		Main.LOGGER.warn("MapCopyBundle: source bundles: "+SRC_BUNDLES+", empty bundles: "+emptyBundles+", dest-per-src: "+DESTS_PER_SRC);
 
-		HashMap<Integer, List<Integer>> bundlesToCopy = new HashMap<>(); // source bundle -> destination bundles (slotsWithBundles)
+		TreeMap<Integer, List<Integer>> bundlesToCopy = new TreeMap<>(); // source bundle -> destination bundles (slotsWithBundles)
 //		int storageBundles = 0;
 		int emptyMapsNeeded = 0;
 //		boolean multiMapCopy = false;
@@ -167,20 +173,17 @@ public final class KeybindMapCopy{
 			if(bundles[i].isEmpty()) continue;
 			ArrayList<Integer> copyDests = new ArrayList<>();
 //			++storageBundles;
-			final String name1 = slots[s1].getCustomName() == null ? null : slots[s1].getCustomName().getString();
+			final String name1 = getCustomNameOrNull(slots[s1]);
 //			Main.LOGGER.info("looking for dest bundles for "+slots[s1].getName().getString()+" in slot "+s1);
-			for(int j=0; j<slotsWithBundles.length && emptyBundles>1; ++j){
+			for(int j=0; j<slotsWithBundles.length && emptyBundles>1 && copyDests.size()<DESTS_PER_SRC; ++j){
 				final int s2 = slotsWithBundles[j];
 				if(!bundles[j].isEmpty()) continue;
-//				Main.LOGGER.info("empty bundle in slot "+s2);
-				if(name1 != null){
-					final String name2 = slots[s2].getCustomName() == null ? null : slots[s2].getCustomName().getString();
-					if(name1.equals(name2));// copyDests.add(s2);--emptyBundles;
-					else continue;
-				}
-				else if(slots[s1].getItem() == slots[s2].getItem());// copyDests.add(s2);--emptyBundles;
-				else if(SRC_BUNDLES == 1);// copyDests.add(s2);--emptyBundles;
+				Main.LOGGER.info("MapCopyBundle: empty bundle in slot "+s2);
+				if(SRC_BUNDLES == 1); // If only 1 bundle to copy from, we don't care about name or color: Valid copy destination!
+				else if(name1 != null && name1.equals(getCustomNameOrNull(slots[s2]))); // Matching Name: Valid copy destination!
+				else if(slots[s1].getItem() == slots[s2].getItem()); // Matching Color: Valid copy destination!
 				else continue;
+				Main.LOGGER.info("MapCopyBundle: valid copy dest "+s1+"->"+s2);
 				copyDests.add(j);
 				--emptyBundles;
 			}

@@ -31,6 +31,7 @@ public class ContainerHighlightUpdater{
 
 	// These actually need to be at this scope
 	public static MutableText customTitle;
+	public static int mapsInContainerHash;
 	private static final HashSet<UUID> duplicatesInContainer = new HashSet<>(), inContainerAndInInv = new HashSet<>();
 
 	public static boolean hasDuplicateInContainer(UUID colorsId){
@@ -52,22 +53,37 @@ public class ContainerHighlightUpdater{
 //		return nonFillerIds.stream().map(ItemFrameHighlightUpdater::isInItemFrame).distinct().count() > 1;
 	}
 
+	private static int lastHash;
+
 	public static final void onUpdateTick(MinecraftClient client){
-		customTitle = null;
-		inContainerAndInInv.clear();
-		if(client.player == null || client.world == null || !client.player.isAlive()) return;
-		if(client.currentScreen == null || !(client.currentScreen instanceof HandledScreen hs)) return;
-		if(client.currentScreen instanceof AnvilScreen ||
+		if(client.player == null || client.world == null || !client.player.isAlive() ||
+			client.currentScreen == null || !(client.currentScreen instanceof HandledScreen hs) ||
+			client.currentScreen instanceof AnvilScreen || // These get false-flagged for "duplicate map in container" with i/o slots
 			client.currentScreen instanceof CraftingScreen ||
-			client.currentScreen instanceof CartographyTableScreen) return; // These get false-flagged for "duplicate map in container" with i/o slots
+			client.currentScreen instanceof CartographyTableScreen)
+		{
+			customTitle = null;
+			mapsInContainerHash = 0;
+			inContainerAndInInv.clear();
+			return;
+		}
 
 		final List<ItemStack> items = getAllMapItemsInContainer(hs.getScreenHandler().slots);
+
+		mapsInContainerHash = hs.getScreenHandler().syncId + items.hashCode();
+		int currHash = InventoryHighlightUpdater.mapsInInvHash + mapsInContainerHash;
+		if(lastHash == currHash) return;
+
 		if(items.isEmpty()) return;
 		final List<MapState> states = items.stream().map(i -> FilledMapItem.getMapState(i, client.world)).filter(Objects::nonNull).toList();
 		final List<UUID> nonTransparentIds = (!Main.skipTransparentMaps ? states.stream() :
 			states.stream().filter(s -> !MapColorUtils.isTransparentOrStone(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
 		final List<UUID> nonMonoColorIds = (!Main.skipMonoColorMaps ? states.stream() :
 			states.stream().filter(s -> !MapColorUtils.isMonoColor(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
+
+//		mapsInContainerHash = hs.getScreenHandler().syncId + nonTransparentIds.hashCode() + nonMonoColorIds.hashCode();
+//		int currHash = InventoryHighlightUpdater.mapsInInvHash + mapsInContainerHash;
+//		if(lastHash == currHash) return;
 
 		asterisks.clear();
 		nonTransparentIds.stream().filter(InventoryHighlightUpdater::isInInventory).forEach(inContainerAndInInv::add);
@@ -88,5 +104,6 @@ public class ContainerHighlightUpdater{
 			asterisks.stream().distinct() // TODO: the "distinct" only exists in case of configurations where 2+ settings share 1 color
 				.forEach(color -> customTitle.append(Text.literal("*").withColor(color).formatted(Formatting.BOLD)));
 		}
+		mapsInContainerHash = nonTransparentIds.hashCode() + nonMonoColorIds.hashCode();
 	}
 }

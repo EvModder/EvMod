@@ -180,10 +180,13 @@ public final class KeybindMapLoad{
 				if(Main.clickUtils.MAX_CLICKS-Main.clickUtils.addClick(null) < MAX_BATCH_SIZE) return false; // Wait for clicks
 
 				if((clickIndex/hbButtons.length)%2 == 0 && clickIndex < extraPutBackIndex){++clickIndex; return true;} // Moving TO hotbar
-				ItemStack item = client.player.getInventory().getStack(c.button());
+//				ItemStack item = client.player.getInventory().getStack(c.button());
 				//if(!isLoadedMapArt(client.world, item)){ // Weird issue rn with non-maps getting moved around? (bundles?)
-				if(isUnloadedMapArt(client.world, item)){
-					Main.LOGGER.info("still waiting for map state to load from hotbar slot: "+c.button());
+				//if(isUnloadedMapArt(client.world, s){
+				// Ugh just wait if any unloaded map in hotbar(or inv)
+				if(client.player.getInventory().main.stream().anyMatch(s -> isUnloadedMapArt(client.world, s))){
+					Main.LOGGER.info("MapLoad: still waiting for map state to load");
+//					Main.LOGGER.info("MapLoad: still waiting for map state to load from hotbar slot: "+c.button());
 					return false;
 				}
 				else if(stateWaitStart == 0){stateWaitStart = System.currentTimeMillis(); return false;}

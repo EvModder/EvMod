@@ -1,6 +1,7 @@
 package net.evmodder.KeyBound.events;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -29,7 +30,15 @@ public final class TooltipMapNameColor{
 //		return nonFillerIds.stream().map(ItemFrameHighlightUpdater::isInItemFrame).distinct().count() > 1;
 	}
 
+	private static final HashMap<ItemStack, List<Text>> tooltipCache = new HashMap<>();
+	private static int lastHash;
+
 	public static final void tooltipColors(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
+		int currHash = InventoryHighlightUpdater.mapsInInvHash + ContainerHighlightUpdater.mapsInContainerHash;
+		if(lastHash != currHash){lastHash = currHash; tooltipCache.clear();}
+		List<Text> cachedLines = tooltipCache.get(item);
+		if(cachedLines != null){lines.clear(); lines.addAll(cachedLines); return;}
+
 		ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
 		if(container != null){
 			List<ItemStack> items = MapRelationUtils.getAllNestedItems(container.streamNonEmpty()).filter(i -> i.getItem() == Items.FILLED_MAP).toList();
@@ -57,6 +66,7 @@ public final class TooltipMapNameColor{
 				asterisks.forEach(color -> text.append(Text.literal("*").withColor(color).formatted(Formatting.BOLD)));
 				lines.addFirst(text);
 			}
+			tooltipCache.put(item, lines);
 			return;
 		}
 		if(item.getItem() != Items.FILLED_MAP) return;
@@ -64,6 +74,7 @@ public final class TooltipMapNameColor{
 		MapState state = id == null ? null : context.getMapState(id);
 		if(state == null){
 			if(item.getCustomName() == null) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNNAMED));
+			tooltipCache.put(item, lines);
 			return;
 		}
 		UUID colordsId = MapGroupUtils.getIdForMapState(state);
@@ -75,6 +86,7 @@ public final class TooltipMapNameColor{
 		if(ContainerHighlightUpdater.hasDuplicateInContainer(colordsId)) asterisks.add(Main.MAP_COLOR_MULTI_INV);
 		if(asterisks.isEmpty()){
 			if(item.getCustomName() == null) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNNAMED));
+			tooltipCache.put(item, lines);
 			return;
 		}
 		final boolean nameColor = !(asterisks.get(0) == Main.MAP_COLOR_UNNAMED
@@ -85,5 +97,6 @@ public final class TooltipMapNameColor{
 		if(nameColor) text.withColor(asterisks.get(0));
 		for(int i=nameColor?1:0; i<asterisks.size(); ++i) text.append(Text.literal("*").withColor(asterisks.get(i)));
 		lines.addFirst(text);
+		tooltipCache.put(item, lines);
 	}
 }

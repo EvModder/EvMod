@@ -16,7 +16,6 @@ import java.util.UUID;
 import javax.imageio.ImageIO;
 import net.evmodder.EvLib.FileIO;
 import net.minecraft.block.MapColor;
-import net.minecraft.block.MapColor.Brightness;
 
 public class MapIdsFromImg{
 	/*static int getIntFromARGB(int a, int r, int g, int b){return (a<<24) | (r<<16) | (g<<8) | b;}

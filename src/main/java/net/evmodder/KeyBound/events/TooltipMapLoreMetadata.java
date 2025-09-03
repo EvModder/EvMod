@@ -1,12 +1,12 @@
 package net.evmodder.KeyBound.events;
 
+import java.util.HashMap;
 import java.util.List;
 import net.minecraft.item.Item.TooltipContext;
 import net.evmodder.KeyBound.MapColorUtils;
 import net.evmodder.KeyBound.MapColorUtils.MapColorData;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -48,15 +48,23 @@ public final class TooltipMapLoreMetadata{
 //		}
 	}
 
+	private static final HashMap<ItemStack, List<Text>> tooltipCache = new HashMap<>();
+	private static int lastHash;
+
 	public final void tooltipMetadata(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
-		final ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
-		if(container != null){} // TODO: aggregate map data for nested shulker/bundle
+		int currHash = InventoryHighlightUpdater.mapsInInvHash + ContainerHighlightUpdater.mapsInContainerHash;
+		if(lastHash != currHash){lastHash = currHash; tooltipCache.clear();}
+		List<Text> cachedLines = tooltipCache.get(item);
+		if(cachedLines != null){lines.clear(); lines.addAll(cachedLines); return;}
+
+//		final ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
+//		if(container != null){} // TODO: aggregate map data for nested shulker/bundle
 
 		if(item.getItem() != Items.FILLED_MAP) return;
 		final MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
-		if(id == null) return;
+		if(id == null){tooltipCache.put(item, lines); return;}
 		final MapState state = context.getMapState(id);
-		if(state == null) return;
+		if(state == null){tooltipCache.put(item, lines); return;}
 
 		final MapColorData data = MapColorUtils.getColorData(state.colors);
 		final Text staircased = Text.literal(
@@ -66,9 +74,10 @@ public final class TooltipMapLoreMetadata{
 		if(showStaircased){
 			lines.add(Text.translatable("advMode.type").formatted(Formatting.GRAY).append(": ").append(staircased));
 		}
-		if(showStaircased && showPercentStaircased && data.height()>0) lines.add(lines.removeLast().copy().append(" ("+data.percentStaircase()+"%)"));
+		if(showStaircased && showPercentStaircased && data.height()>0) lines.add(
+				lines.removeLast().copy().append(" ("+data.percentStaircase()+"%)"+(showMaterial?",":"")));
 		if(showMaterial){
-			if(showStaircased) lines.add(lines.removeLast().copy().append((showPercentStaircased?", ":" ")+paletteSymbol(data.palette())));
+			if(showStaircased) lines.add(lines.removeLast().copy().append(" "+paletteSymbol(data.palette())));
 			else lines.add(Text.translatable("advMode.type").formatted(Formatting.GRAY).append(": "+paletteSymbol(data.palette())));
 		}
 		if(showMaterial && showPercentCarpet && data.percentCarpet() < 100) lines.add(lines.removeLast().copy().append(" ("+data.percentCarpet()+"% carpet)"));
@@ -80,5 +89,6 @@ public final class TooltipMapLoreMetadata{
 		if(showNumColors) lines.add(Text.translatable("options.chat.color").formatted(Formatting.GRAY).append(": "+data.uniqueColors()));
 		if(showTransparency && data.transparency()) lines.add(Text.literal("Transparency").formatted(Formatting.AQUA));
 		if(showNoobline && data.noobline()) lines.add(Text.literal("Noobline").formatted(Formatting.RED));
+		tooltipCache.put(item, lines);
 	}
 }

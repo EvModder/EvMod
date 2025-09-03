@@ -98,7 +98,7 @@ public class ClickUtils{
 				client.executeSync(()->{
 //					double clicksPerTick = ((double)MAX_CLICKS)/tickDurationArr.length;
 //					double secondsleft = (clicks.size()/clicksPerTick)/20;
-					while(addClick(null) < MAX_CLICKS){
+					while(addClick(null) < MAX_CLICKS && !clicks.isEmpty()){
 						if(!canProceed.apply(clicks.peek())) break;//{waitedForClicks = true; return;}
 						ClickEvent click = clicks.remove();
 						try{
@@ -109,10 +109,15 @@ public class ClickUtils{
 							Main.LOGGER.error("executeClicks() failed due to null client. Clicks left: "+clicks.size()+", sumClicksInDuration: "+sumClicksInDuration);
 							clicks.clear();
 						}
-						if(clicks.isEmpty()){
+					}
+					if(clicks.isEmpty()){
+						cancel();
+						if(clickOpOngoing){
+							clickOpOngoing=false;
 							if(waitedForClicks) client.player.sendMessage(Text.literal("Clicks done!"), true);
-							cancel(); clickOpOngoing=false; onComplete.run(); return;
+							onComplete.run();
 						}
+						return;
 					}
 					waitedForClicks = true;
 					final int msLeft = tickDurationArr == null ? 0 : (int)(tickDurationArr.length

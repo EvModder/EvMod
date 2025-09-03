@@ -17,7 +17,9 @@ public final class MapGroupUtils{
 		UUID uuid;
 		if(state.locked && (uuid=stateToIdCache.get(state)) != null) return uuid;
 
-		for(int i=0; i<state.colors.length; ++i) if(state.colors[i] < 4) state.colors[i] = 0; // Normalize all CLEAR/transparent colors
+		// Normalize all CLEAR/transparent colors
+		for(int i=0; i<state.colors.length; ++i) if(state.colors[i] == 1 || state.colors[i] == 2) state.colors[i] = 0; 
+
 		uuid = UUID.nameUUIDFromBytes(state.colors);
 		// set 1st bit = state.locked
 		uuid = new UUID((uuid.getMostSignificantBits() & ~1l) | (state.locked ? 1l : 0l), uuid.getLeastSignificantBits());

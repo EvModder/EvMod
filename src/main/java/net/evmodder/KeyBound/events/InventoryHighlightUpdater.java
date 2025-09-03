@@ -16,6 +16,7 @@ public class InventoryHighlightUpdater{
 //	private static int invHash;
 	private static HashSet<UUID> inventoryMapGroup = new HashSet<>(), nestedInventoryMapGroup = new HashSet<>();
 	public static UUID currentlyBeingPlacedIntoItemFrame;
+	public static int mapsInInvHash;
 
 	public static final boolean isInInventory(/*final int id, */final UUID colorsUUID){
 		return inventoryMapGroup.contains(colorsUUID);
@@ -60,5 +61,6 @@ public class InventoryHighlightUpdater{
 //			invHash = newInvHash;
 //			ItemFrameHighlightUpdater.highlightedIFrames.clear();
 //		}
+		mapsInInvHash = inventoryMapGroup.hashCode() + nestedInventoryMapGroup.hashCode();
 	}
 }
