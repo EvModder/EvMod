@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
@@ -431,21 +433,24 @@ public final class MapHandRestock{
 				Main.LOGGER.warn("MapRestock: Won't swap with inventory since prevMap count > 2");
 				return;
 			}
-			if(ogSlots[restockFromSlot].get(DataComponentTypes.BUNDLE_CONTENTS) != null){
-				client.interactionManager.clickSlot(0, restockFromSlot, 0, SlotActionType.PICKUP, player); // Pickup bundle
-				client.interactionManager.clickSlot(0, 36+player.getInventory().selectedSlot, 1, SlotActionType.PICKUP, player); // Place in active hb slot
-				client.interactionManager.clickSlot(0, restockFromSlot, 0, SlotActionType.PICKUP, player); // Putback bundle
-				Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlot+" -> hb="+player.getInventory().selectedSlot);
-			}
-			else if(isHotbarSlot){
-				client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(restockFromSlot - 36));
-				player.getInventory().selectedSlot = restockFromSlot - 36;
-				Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().selectedSlot);
-			}
-			else{
-				client.interactionManager.clickSlot(0, restockFromSlot, player.getInventory().selectedSlot, SlotActionType.SWAP, player);
-				Main.LOGGER.info("MapRestock: Swapped inv.selectedSlot to nextMap: s="+restockFromSlot);
-			}
+			final int restockFromSlotFinal = restockFromSlot;
+			new Timer().schedule(new TimerTask(){@Override public void run(){
+				if(ogSlots[restockFromSlotFinal].get(DataComponentTypes.BUNDLE_CONTENTS) != null){
+					client.interactionManager.clickSlot(0, restockFromSlotFinal, 0, SlotActionType.PICKUP, player); // Pickup bundle
+					client.interactionManager.clickSlot(0, 36+player.getInventory().selectedSlot, 1, SlotActionType.PICKUP, player); // Place in active hb slot
+					client.interactionManager.clickSlot(0, restockFromSlotFinal, 0, SlotActionType.PICKUP, player); // Putback bundle
+					Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlotFinal+" -> hb="+player.getInventory().selectedSlot);
+				}
+				else if(isHotbarSlot){
+					client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(restockFromSlotFinal - 36));
+					player.getInventory().selectedSlot = restockFromSlotFinal - 36;
+					Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().selectedSlot);
+				}
+				else{
+					client.interactionManager.clickSlot(0, restockFromSlotFinal, player.getInventory().selectedSlot, SlotActionType.SWAP, player);
+					Main.LOGGER.info("MapRestock: Swapped inv.selectedSlot to nextMap: s="+restockFromSlotFinal);
+				}
+			}}, 50l); // 50ms = 1tick
 		}}.start();
 	}
 
