@@ -1,9 +1,12 @@
 package net.evmodder.KeyBound;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.stream.IntStream;
 import net.minecraft.block.MapColor;
 import net.minecraft.block.MapColor.Brightness;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.Text;
 
 public abstract class MapColorUtils{
 	public static final boolean isTransparentOrStone(final byte[] colors){
@@ -39,7 +42,10 @@ public abstract class MapColorUtils{
 //			default:
 //				return false;
 //		}
-		return (color.id >= 15 && color.id <= 29) || color.id == 8 || color.id == 0; // Also include transparency hmm
+		return (color.id >= 15 && color.id <= 29)
+				|| color.id == 8 // Snow/white wool/carpet
+				|| color.id == 0 // Also include transparency hmm
+		;
 	}
 	private static final boolean isPistonClearableColor(MapColor color){
 		switch(color.id){
@@ -73,25 +79,29 @@ public abstract class MapColorUtils{
 	private static final HashSet<Byte>
 			transparentColors = new HashSet<>(),
 			carpetColors = new HashSet<>(),
-			pistonColors = new HashSet<>(),
+			pistonColors = new HashSet<>(), pistonNooblineColors = new HashSet<>(),
 			northLower = new HashSet<>(),
 			northHigher = new HashSet<>();
 	static{
 		for(int i=0; i<64; ++i){
 			MapColor color = MapColor.get(i);
-			if(color.id == 0){
+			if(color.id == /*0*/MapColor.CLEAR.id){
 				transparentColors.add(color.getRenderColorByte(Brightness.LOW));
 				transparentColors.add(color.getRenderColorByte(Brightness.NORMAL));
 				transparentColors.add(color.getRenderColorByte(Brightness.HIGH));
 			}
-			if(isCarpetColor(color)){
+			if(color.id == /*12*/MapColor.WATER_BLUE.id){
+				pistonColors.add(color.getRenderColorByte(Brightness.HIGH));
+				continue;
+			}
+			if(isCarpetColor(color)){ // Includes transparent colors
 				carpetColors.add(color.getRenderColorByte(Brightness.LOW)); // Staircased carpet
 				carpetColors.add(color.getRenderColorByte(Brightness.NORMAL));
 				carpetColors.add(color.getRenderColorByte(Brightness.HIGH)); // Staircased carpet (or noobline)
 			}
-			if(isPistonClearableColor(color)){
+			if(isPistonClearableColor(color)){ // Includes carpet and transparent colors
 				pistonColors.add(color.getRenderColorByte(Brightness.NORMAL));
-				pistonColors.add(color.getRenderColorByte(Brightness.HIGH)); // Noobline
+				pistonNooblineColors.add(color.getRenderColorByte(Brightness.HIGH));
 			}
 			northLower.add(color.getRenderColorByte(Brightness.HIGH));
 			northHigher.add(color.getRenderColorByte(Brightness.LOW));
@@ -111,6 +121,7 @@ public abstract class MapColorUtils{
 		Palette palette = Palette.EMPTY;
 		boolean transparency = false;
 		boolean staircaseBelowTopRow = false;
+//		int staircasedX=0, staircasedY=0;
 		HashSet<Byte> uniqueColors = new HashSet<>();
 		for(int x=0; x<128; ++x){
 			int h = 0;
@@ -126,7 +137,7 @@ public abstract class MapColorUtils{
 						if(carpetColors.contains(color)) break;
 						palette = Palette.PISTON_CLEAR;
 					case PISTON_CLEAR:
-						if(pistonColors.contains(color)) break;
+						if(pistonColors.contains(color) || (y==0 && pistonNooblineColors.contains(color))) break;
 						palette = Palette.FULLBLOCK;
 					case FULLBLOCK:
 				}
@@ -139,6 +150,7 @@ public abstract class MapColorUtils{
 //					Main.LOGGER.info("found staircased pixel at "+x+","+y);
 //				}
 				staircaseBelowTopRow |= (y!=0);
+//				if(staircasedX == 0){staircasedX = x; staircasedY = y;}
 			}
 		}
 //		Main.LOGGER.info("maxH: "+maxDiffH);
@@ -156,9 +168,18 @@ public abstract class MapColorUtils{
 		int numCarpet = (int)IntStream.range(0, colors.length).filter(i -> carpetColors.contains(colors[i])).count()-numTransparent;
 		int percentCarpet = (int)Math.ceil((numCarpet*100d)/(colors.length-numTransparent));
 
-		int numShaded = (int)IntStream.range(0, colors.length).filter(i -> (northLower.contains(colors[i]) || northHigher.contains(colors[i]))
-				&& !transparentColors.contains(colors[i])).count();
+		final int[] staircasedPixels = IntStream.range(0, colors.length)
+				.filter(i -> (northLower.contains(colors[i]) || northHigher.contains(colors[i])) && !transparentColors.contains(colors[i])).toArray();
+		int numShaded = staircasedPixels.length;
 		int percentStaircase = (int)Math.ceil((numShaded*100d)/(colors.length-numTransparent));
+		if(percentStaircase <= 2 && percentStaircase > 0){
+			Main.LOGGER.info("numShaded: "+numShaded+", numTransparent: "+numTransparent+", percentStaircase: "+percentStaircase);
+			int j = staircasedPixels[0];
+			int x = j%128, y = j/128;
+			MinecraftClient.getInstance().player.sendMessage(Text.literal("First staircased pixel: "+x+","+y+"  (id:"+colors[j]/4+")"), true);
+			double numShadedAtTop = Arrays.stream(staircasedPixels).filter(i -> i<128).count();
+			if(numShadedAtTop/numShaded > .8) noobline = true; // If 80%+ of the shading is only the top row, consider it a noobline
+		}
 
 		return new MapColorData(palette, maxDiffH, uniqueColors.size(), noobline, transparency, percentCarpet, percentStaircase);
 	}
