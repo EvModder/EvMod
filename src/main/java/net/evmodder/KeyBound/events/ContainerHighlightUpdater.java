@@ -73,6 +73,7 @@ public class ContainerHighlightUpdater{
 		mapsInContainerHash = hs.getScreenHandler().syncId + items.hashCode();
 		int currHash = InventoryHighlightUpdater.mapsInInvHash + mapsInContainerHash;
 		if(lastHash == currHash) return;
+		lastHash = currHash;
 
 		if(items.isEmpty()) return;
 		final List<MapState> states = items.stream().map(i -> FilledMapItem.getMapState(i, client.world)).filter(Objects::nonNull).toList();

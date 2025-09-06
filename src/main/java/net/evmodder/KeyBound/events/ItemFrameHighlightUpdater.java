@@ -11,11 +11,15 @@ import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.map.MapState;
+import net.minecraft.text.Text;
 
 public class ItemFrameHighlightUpdater{
 	private record XYZD(int x, int y, int z, int d){}
 	private static final HashMap<XYZD, UUID> hangLocsReverse = new HashMap<>();
 	private static final HashMap<UUID, HashSet<XYZD>> iFrameMapGroup = new HashMap<>();
+
+	public static final HashMap<ItemFrameEntity, Boolean> hasLabelCache = new HashMap<>(); // TODO: remove? private?
+	public static final HashMap<ItemFrameEntity, Text> displayNameCache = new HashMap<>(); // TODO: remove? private?
 
 	public enum Highlight{INV_OR_NESTED_INV, NOT_IN_CURR_GROUP, MULTI_HUNG, UNLOCKED_OR_UNNAMED};
 	private static final HashMap<Integer, Highlight> highlightedIFrames = new HashMap<>();
@@ -78,6 +82,10 @@ public class ItemFrameHighlightUpdater{
 			highlightedIFrames.remove(ife.getId());
 	}
 	public static final void onUpdateTick(MinecraftClient client){
-		if(client.world != null) client.world.getEntities().forEach(e -> {if(e instanceof ItemFrameEntity ife) updateItemFrameEntity(client, ife);});
+		if(client.world != null){
+			hasLabelCache.clear();
+			displayNameCache.clear();
+			client.world.getEntities().forEach(e -> {if(e instanceof ItemFrameEntity ife) updateItemFrameEntity(client, ife);});
+		}
 	}
 }

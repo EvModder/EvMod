@@ -49,13 +49,34 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(state == null) return;
 		Highlight hl = ItemFrameHighlightUpdater.iFrameGetHighlight(itemFrameEntity.getId());
 		if(hl == null) return;
-		if(hl == Highlight.MULTI_HUNG && Main.skipMonoColorMaps && MapColorUtils.isMonoColor(state.colors)) return; // Don't do boosted hasLabel()
 
-		if(hl == Highlight.INV_OR_NESTED_INV){cir.setReturnValue(true); return;} // Show this label even if not looking in general direction
-		if(!isLookngInGeneralDirection(itemFrameEntity)) return;
-		if(hl == Highlight.NOT_IN_CURR_GROUP){cir.setReturnValue(true); return;} // Show this label even if no LOS and > 20 blocks away
-		if(squaredDistanceToCamera > 20*20 || !client.player.canSee(itemFrameEntity)) return;
-		cir.setReturnValue(true); // Show all other labels only if LOS and <= 20
+		Boolean hasLabel = ItemFrameHighlightUpdater.hasLabelCache.get(itemFrameEntity);
+		if(hasLabel != null){cir.setReturnValue(hasLabel); return;}
+
+		if(hl == Highlight.MULTI_HUNG && Main.skipMonoColorMaps && MapColorUtils.isMonoColor(state.colors)){
+			ItemFrameHighlightUpdater.hasLabelCache.put(itemFrameEntity, false);
+			return; // Don't do boosted hasLabel()
+		}
+
+		if(hl == Highlight.INV_OR_NESTED_INV){ // Show this label even if not looking in general direction
+			cir.setReturnValue(true);
+			ItemFrameHighlightUpdater.hasLabelCache.put(itemFrameEntity, true);
+			return;
+		}
+		if(!isLookngInGeneralDirection(itemFrameEntity)){
+			ItemFrameHighlightUpdater.hasLabelCache.put(itemFrameEntity, false);
+			return;
+		}
+		if(hl == Highlight.NOT_IN_CURR_GROUP){ // Show this label even if no LOS and > 20 blocks away
+			cir.setReturnValue(true);
+			ItemFrameHighlightUpdater.hasLabelCache.put(itemFrameEntity, true);
+			return;
+		}
+		if(squaredDistanceToCamera <= 20*20 && client.player.canSee(itemFrameEntity)){ // Show all other labels only if LOS and <= 20
+			cir.setReturnValue(true);
+			ItemFrameHighlightUpdater.hasLabelCache.put(itemFrameEntity, true);
+			return;
+		}
 	}
 
 
@@ -69,27 +90,34 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		Highlight hl = ItemFrameHighlightUpdater.iFrameGetHighlight(itemFrameEntity.getId());
 		if(hl == null) return;
 
+		Text cachedName = ItemFrameHighlightUpdater.displayNameCache.get(itemFrameEntity);
+		if(cachedName != null){cir.setReturnValue(cachedName); return;}
+
+		MutableText name = stack.getName().copy();
 		if(hl == Highlight.INV_OR_NESTED_INV){
 			final boolean notInCurrGroup = MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
-			MutableText coloredName = stack.getName().copy().withColor(Main.MAP_COLOR_IN_INV);
-			if(notInCurrGroup) coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_NOT_IN_GROUP));
-			if(!state.locked) coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
+			name.withColor(Main.MAP_COLOR_IN_INV);
+			if(notInCurrGroup) name.append(Text.literal("*").withColor(Main.MAP_COLOR_NOT_IN_GROUP));
+			if(!state.locked) name.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
 			if(ItemFrameHighlightUpdater.isHungMultiplePlaces(MapGroupUtils.getIdForMapState(state)))
-				coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_MULTI_IFRAME));
-			cir.setReturnValue(coloredName);
+				name.append(Text.literal("*").withColor(Main.MAP_COLOR_MULTI_IFRAME));
 		}
 		else if(hl == Highlight.NOT_IN_CURR_GROUP){
-			final MutableText coloredName = stack.getName().copy().withColor(Main.MAP_COLOR_NOT_IN_GROUP);
-			cir.setReturnValue(state.locked ? coloredName : coloredName.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED)));
+			name.withColor(Main.MAP_COLOR_NOT_IN_GROUP);
+			if(!state.locked) name.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
 		}
-		else if(!state.locked) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_UNLOCKED));
-		else if(stack.getCustomName() == null) cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_UNNAMED));
+		else if(!state.locked) name.withColor(Main.MAP_COLOR_UNLOCKED);
+		else if(stack.getCustomName() == null) name.withColor(Main.MAP_COLOR_UNNAMED);
 		else if(hl == Highlight.MULTI_HUNG){
-			if(Main.skipMonoColorMaps && MapColorUtils.isMonoColor(state.colors)){
-				cir.setReturnValue(stack.getName().copy().append(Text.literal("*").withColor(Main.MAP_COLOR_MULTI_IFRAME)));
-			}
-			else cir.setReturnValue(stack.getName().copy().withColor(Main.MAP_COLOR_MULTI_IFRAME));
+			if(Main.skipMonoColorMaps && MapColorUtils.isMonoColor(state.colors)) name.append(Text.literal("*").withColor(Main.MAP_COLOR_MULTI_IFRAME));
+			else name.withColor(Main.MAP_COLOR_MULTI_IFRAME);
 		}
+		else{
+			ItemFrameHighlightUpdater.displayNameCache.put(itemFrameEntity, stack.getName());
+			return;
+		}
+		ItemFrameHighlightUpdater.displayNameCache.put(itemFrameEntity, name);
+		cir.setReturnValue(name);
 	}
 
 	private boolean isSemiTransparent(ItemFrameEntityRenderState ifers){
