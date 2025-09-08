@@ -127,7 +127,7 @@ public class ItemFrameHighlightUpdater{
 		if(!anyHangLocUpdate && lastInvHash == InventoryHighlightUpdater.mapsInInvHash) return;
 		lastInvHash = InventoryHighlightUpdater.mapsInInvHash;
 
-//		Main.LOGGER.info("IframeHighlighter: Recomputing highlight cache");
+//		Main.LOGGER.info("IframeHighlighter: Recomputing highlight cache, due to "+(anyHangLocUpdate?"hung iframe update":"inv update"));
 
 		final boolean anyHighlightUpdate = updateIframeHighlights(ifes);
 		if(!anyHighlightUpdate) return;

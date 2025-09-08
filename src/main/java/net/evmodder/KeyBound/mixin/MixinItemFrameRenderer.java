@@ -30,7 +30,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 
 	private boolean isLookingInGeneralDirection(Entity entity){
 		Vec3d vec3d2 = new Vec3d(entity.getX() - client.player.getX(), entity.getEyeY() - client.player.getEyeY(), entity.getZ() - client.player.getZ());
-		double d = vec3d2.length();
+		double d = vec3d2.length(); // Calls Math.sqrt()
 		vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d);//normalize
 		double e = ItemFrameHighlightUpdater.clientRotationNormalized.dotProduct(vec3d2);
 		final double asdf = client.player.squaredDistanceTo(entity) > 5*5 ? 0.3d : 0.1d;

@@ -19,6 +19,8 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.MapRelationUtils;
+import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -188,10 +190,23 @@ public class CommandExportMapImg{
 			img = upscaledImg;
 		}
 
-		final Text nameText = ifeLookup.get(mapWall.get(0)).getHeldItemStack().getCustomName();
+		final ItemStack tlMapItemStack = ifeLookup.get(mapWall.getFirst()).getHeldItemStack();
+		final Text nameText = tlMapItemStack.getCustomName();
 		final String nameStr = nameText == null ? null : nameText.getLiteralString();
-		final String imgName = nameStr == null ? ifeLookup.get(mapWall.get(0)).getHeldItemStack().get(DataComponentTypes.MAP_ID).asString()
-				: nameStr.replaceAll("[.\\\\/]+", "_");
+		String imgName;
+		if(mapWall.size() == 1 || nameStr == null){
+			imgName = nameStr == null ? tlMapItemStack.get(DataComponentTypes.MAP_ID).asString() : nameStr;
+		}
+		else{
+			ItemStack[] sampleStacks = new ItemStack[]{
+				tlMapItemStack,
+				ifeLookup.get(mapWall.getLast()).getHeldItemStack()
+			};
+			RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(sampleStacks, source.getWorld());
+			if(data.slots().size() != 2) imgName = nameStr;
+			else imgName = nameStr.substring(0, data.prefixLen()) + nameStr.substring(nameStr.length()-data.suffixLen());
+		}
+		imgName = imgName.replaceAll("[.\\\\/]+", "_");
 
 		//16755200
 		if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdir();

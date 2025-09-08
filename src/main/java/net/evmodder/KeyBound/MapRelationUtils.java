@@ -8,6 +8,7 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.BundleContentsComponent;
 import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.component.type.MapIdComponent;
+import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
@@ -164,7 +165,7 @@ public abstract class MapRelationUtils{
 			if(!isMapArtWithCount(item, count) || item.getCustomName() == null) continue;
 			if(differentLockedState(locked, item, world)) continue;
 
-			final String name = item.getCustomName().getLiteralString();
+			final String name = item.getCustomName().getString();
 			if(name == null) continue;
 			if(name.length() < prefixLen+suffixLen+1 || name.equals(sourceName)) continue;
 			if(!sourceName.regionMatches(0, name, 0, prefixLen) || !sourceName.regionMatches(
@@ -183,6 +184,15 @@ public abstract class MapRelationUtils{
 			relatedMapSlots.add(i);
 		}
 		return new RelatedMapsData(prefixLen, suffixLen, relatedMapSlots);
+	}
+
+	public static final RelatedMapsData getRelatedMapsByName0(final ItemStack[] slots, final World world){
+		assert slots != null && slots.length != 0;
+		final String name = slots[0].getCustomName() == null ? null : slots[0].getCustomName().getString();
+		if(name == null) return new RelatedMapsData(-1, -1, new ArrayList<>());
+		final MapState state = FilledMapItem.getMapState(slots[0], world);
+		final Boolean locked = state == null ? null : state.locked;
+		return getRelatedMapsByName(slots, name, slots[0].getCount(), locked, world);
 	}
 /*
 	record PosData2D(boolean isSideways, String minPos2, String maxPos2){}
