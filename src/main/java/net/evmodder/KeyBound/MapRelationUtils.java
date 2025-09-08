@@ -103,7 +103,7 @@ public abstract class MapRelationUtils{
 //		sourceName = removeByArtist(sourceName);//TODO
 
 		int prefixLen = -1, suffixLen = -1;
-		//Main.LOGGER.info("MapAdjUtil: getRelatedMapsByName() called");
+//		Main.LOGGER.info("MapAdjUtil: getRelatedMapsByName() called for name: "+sourceName);
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
 //			final int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
 		for(int i=0; i<slots.length; ++i){
@@ -126,7 +126,7 @@ public abstract class MapRelationUtils{
 			//Main.LOGGER.info("MapRestock: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
 			final String posStr = simplifyPosStr(name.substring(a, name.length()-b));
 			final String sourcePosStr = simplifyPosStr(sourceName.substring(a, sourceName.length()-b));
-			if(posStr.isBlank()) Main.LOGGER.info("Empty posStr for name: "+name+", prefix/suffix: "+a+"/"+b);
+			if(posStr.isBlank()) Main.LOGGER.info("Empty posStr for name in slot "+i+": "+name+", prefix/suffix: "+a+"/"+b);
 			final boolean validMatchingPosStrs = isValidPosStr(posStr) && isValidPosStr(sourcePosStr) && 
 					(posStr.indexOf(' ') != -1) == (sourcePosStr.indexOf(' ') != -1);
 //			Main.LOGGER.info("slot: "+i+ ", posStr: "+posStr+", sourcePosStr: "+sourcePosStr+", bothValid: "+validMatchingPosStrs);

@@ -230,7 +230,7 @@ public class CommandMapArtGroup{
 		}
 		else if(newActiveGroup.equals(activeGroupName)){
 			if(activeGroup.equals(mapsInGroup)){
-				source.sendError(Text.literal("Current active group: '"+activeGroupName+"' (ids: "+activeGroup.size()+")").copy().withColor(DONE_COLOR));
+				source.sendError(Text.literal("Active group: '"+activeGroupName+"' (ids: "+activeGroup.size()+")").copy().withColor(DONE_COLOR));
 				return 1;
 			}
 			else{

@@ -152,7 +152,7 @@ once arrangement is found
 		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false,
 				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false, keybindMapArtBundleStow=false, keybindMapArtBundleStowReverse=false;
 		boolean mapMoveIgnoreAirPockets=true;
-		boolean mapPlaceHelper=false, mapPlaceHelperAuto=false, mapPlaceHelperByName=false, mapPlaceHelperByImg=false, mapHighlightTooltip=false;
+		boolean mapPlaceHelper=false, mapPlaceHelperAuto=false, mapPlaceHelperByName=true, mapPlaceHelperByImg=true, mapHighlightTooltip=false;
 		boolean mapMetadataTooltip=false, mapMdStaircase=false, mapMdMaterial=false, mapMdNumColors=false, mapMdTransparency=false, mapMdNoobline=false,
 				mapMdPercentCarpet=false, mapMdPercentStaircase=false;
 		boolean mapWallCmd=false, mapWallBorder=false;

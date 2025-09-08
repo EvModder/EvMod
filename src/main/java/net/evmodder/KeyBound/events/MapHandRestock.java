@@ -252,19 +252,20 @@ public final class MapHandRestock{
 		final Boolean locked = state == null ? null : state.locked;
 		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, prevName, prevCount, locked, world);
 		data.slots().remove(Integer.valueOf(prevSlot));
-		if(data.slots().isEmpty()) return -1;
+		if(data.slots().isEmpty()) return -999;
+		if(data.prefixLen() == -1) return -999; // Indicates all related map slots have identical item names
+
 //		Main.LOGGER.info("prevSlot: "+prevSlot+", related slots: "+data.slots());
 
 		// Offhand, hotbar ascending, inv ascending
 		data.slots().sort((i, j) -> i==45 ? -999 : (i - j) - (i>=36 ? 99 : 0));
 
-		assert (data.prefixLen() == -1) == (data.suffixLen() == -1);
+//		assert (data.prefixLen() == -1) == (data.suffixLen() == -1); // Unreachable. But yes, should always be true
 		assert data.prefixLen() < prevName.length() && data.suffixLen() < prevName.length();
 
 		final String prevPosStr = getPosStrFromName(prevName, data);
 
 		PosData2D posData2d = posData2dForName.get(prevName);
-		Main.LOGGER.info("MapRestock: findByName() called, hb="+(prevSlot-36)+", prevPos="+prevPosStr+", numMaps="+data.slots().size());
 		if(posData2d == null){
 			final List<String> mapNames = Stream.concat(Stream.of(prevSlot), data.slots().stream())
 					.map(i -> slots[i].getCustomName().getLiteralString()).toList();
@@ -281,7 +282,8 @@ public final class MapHandRestock{
 			for(String name : mapNames) posData2dForName.put(name, posData2d);
 			Main.LOGGER.info("MapRestock: Determined sideways="+posData2d.isSideways+" (trail len "+sidewaysTrail.a+" vs "+regularTrail.a+")");
 		}
-		Main.LOGGER.info("MapRestock: findByName() minPos2="+posData2d.minPos2+", maxPos2="+posData2d.maxPos2+", sideways="+posData2d.isSideways);
+		Main.LOGGER.info("MapRestock: findByName() called, hb="+(prevSlot-36)+", prevPos="+prevPosStr+", numMaps="+data.slots().size()
+				+", minPos2="+posData2d.minPos2+", maxPos2="+posData2d.maxPos2+", sideways="+posData2d.isSideways+", name: "+prevName);
 
 		final int i = getNextSlotByName(slots, data, prevPosStr, posData2d, /*infoLogs=*/true);//TODO: set to true for debugging
 		if(i != -999){ //TODO: remove horrible hack
@@ -479,12 +481,13 @@ public final class MapHandRestock{
 			if(player.getMainHandStack().getItem() != Items.FILLED_MAP) return ActionResult.PASS;
 			if(player.getMainHandStack().getCount() > 2) return ActionResult.PASS;
 			//Main.LOGGER.info("item in hand is filled_map [1or2]");
-//			Main.LOGGER.info("Single mapart placed");
+			Main.LOGGER.info("Single mapart placed");
+
 			if(MapAutoplacer.canAutoplace(lastIfe2, lastIfe, ife, player.getMainHandStack())){
-				Main.LOGGER.info("MapAutoPlace enabled (last 3 placed maps are all related)");
+//				Main.LOGGER.info("MapAutoPlace enabled (last 3 placed maps are all related)");
 			}
 //			else{
-				Main.LOGGER.info("MapAutoPlace unavailable, using regular hand-restock");
+//				Main.LOGGER.info("MapAutoPlace unavailable, using regular hand-restock");
 				tryToStockNextMap(player);
 //			}
 			lastIfe2 = lastIfe; lastIfe = ife;
