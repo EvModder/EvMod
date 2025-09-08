@@ -20,7 +20,7 @@ public final class MapGroupUtils{
 		if(uuid != null && (state.locked || rand.nextFloat() < 0.99)) return uuid; // 1% chance of cache eviction for unlocked states
 
 		// Normalize all CLEAR/transparent colors
-		for(int i=0; i<state.colors.length; ++i) if(state.colors[i] < 3) state.colors[i] = 0;
+		for(int i=0; i<state.colors.length; ++i) if(state.colors[i] == 1 || state.colors[i] == 2) state.colors[i] = 0;
 
 		uuid = UUID.nameUUIDFromBytes(state.colors);
 		// set 1st bit = state.locked
