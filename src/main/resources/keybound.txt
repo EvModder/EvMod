@@ -21,8 +21,9 @@ keybind.mapart.move.3x9: true
 keybind.mapart.move.3x9.ignore_air_pockets: false
 
 mapart_placement_helper: true #TODO: also support placing sequential shulker boxes
-mapart_placement_helper_use_name: true
-mapart_placement_helper_use_image: true
+mapart_placement_helper.use_name: true
+mapart_placement_helper.use_image: true
+mapart_placement_helper.autoplace: true # After placing 3 parts of a map, starts autoplace
 
 mapart_group_command: true
 mapart_group_include_unlocked: true

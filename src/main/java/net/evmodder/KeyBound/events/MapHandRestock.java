@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
@@ -14,6 +12,7 @@ import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
 import net.evmodder.EvLib.Pair;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
@@ -98,9 +97,11 @@ public final class MapHandRestock{
 			if(infoLogs) Main.LOGGER.info("MapRestock: confidence=4. i->i+1");
 			return 4; // 4->5, 9->10
 		}
-		if(infoLogs) Main.LOGGER.info("MapRestock: confidence=0. A:"+posA+", B:"+posB);
+//		if(infoLogs) Main.LOGGER.info("MapRestock: confidence=0. A:"+posA+", B:"+posB);
 		return 0;
 	}
+
+	// Negative number implies end of row -> beginning of next row (terrible hack)
 	private final int checkComesAfter2d(final Pos2DPair posStrs, final PosData2D posData2d, boolean infoLogs){
 		final String posA1, posA2, posB1, posB2;
 		if(!posData2d.isSideways){posA1=posStrs.posA1; posA2=posStrs.posA2; posB1=posStrs.posB1; posB2=posStrs.posB2;}
@@ -283,7 +284,9 @@ public final class MapHandRestock{
 		Main.LOGGER.info("MapRestock: findByName() minPos2="+posData2d.minPos2+", maxPos2="+posData2d.maxPos2+", sideways="+posData2d.isSideways);
 
 		final int i = getNextSlotByName(slots, data, prevPosStr, posData2d, /*infoLogs=*/true);//TODO: set to true for debugging
-		if(i != -999) Main.LOGGER.info("MapRestock: findByName() succeeded, slot="+i);//TODO: remove horrible hack
+		if(i != -999){ //TODO: remove horrible hack
+			Main.LOGGER.info("MapRestock: findByName() succeeded, slot="+i+", name="+slots[Math.abs(i)].getCustomName().getString());
+		}
 //		else Main.LOGGER.info("MapRestock: findByName() failed");
 		return i;//i != -1 ? i : getNextSlotAny(slots, prevSlot, world);
 	}
@@ -377,7 +380,7 @@ public final class MapHandRestock{
 		assert slots[prevSlot] == mapInHand;
 		final String prevName = mapInHand.getCustomName() == null ? null : mapInHand.getCustomName().getLiteralString();
 
-		final ItemStack[] ogSlots = slots.clone();
+		final ItemStack[] ogSlots = slots.clone();//= null
 		for(int i=0; i<slots.length; ++i){
 			BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
 			if(contents == null || contents.isEmpty()) continue;
@@ -391,8 +394,11 @@ public final class MapHandRestock{
 			if(ItemStack.areItemsAndComponentsEqual(mapInHand, contents.get(0))) continue; // TODO: something smarter,
 			//^ like (detect if fully hung, and if so skip matches in bundle, or skip nextByName altogether
 
+//			if(ogSlots == null) ogSlots = slots.clone(); // Only clone slots[]->ogSlots[] if we end up changing contents of slots[]
 			slots[i] = contents.get(0);
 		}
+//		if(ogSlots == null) ogSlots = slots;
+
 		final MapState state = FilledMapItem.getMapState(mapInHand, player.getWorld());
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(state != null && mapInHand.getCount() == 1 &&
@@ -403,77 +409,87 @@ public final class MapHandRestock{
 			InventoryHighlightUpdater.onUpdateTick(client);
 		}
 
+		int restockFromSlot = -1;
+		if(USE_NAME && restockFromSlot == -1){
+			if(prevName != null){
+				Main.LOGGER.info("MapRestock: finding next map by name: "+prevName);
+				restockFromSlot = getNextSlotByName(slots, prevSlot, player.getWorld());
+				if(restockFromSlot == -999) restockFromSlot = -1;
+				else if(restockFromSlot < 0) restockFromSlot *= -1;//TODO: remove horrible hack
+			}
+		}
+		if(USE_IMG && restockFromSlot == -1 && !posData2dForName.containsKey(prevName)){
+			if(state != null){
+				Main.LOGGER.info("MapRestock: finding next map by img-edge");
+				restockFromSlot = getNextSlotByImage(prevName == null ? slots : ogSlots, prevSlot, player.getWorld());
+			}
+		}
+		if(JUST_PICK_A_MAP && restockFromSlot == -1){
+			Main.LOGGER.info("MapRestock: finding next map by ANY (count->locked->named->related)");
+			restockFromSlot = getNextSlotFirstMap(ogSlots, prevSlot, player.getWorld());
+		}
+		if(restockFromSlot == -1){Main.LOGGER.info("MapRestock: unable to find next map"); return;}
+
+		//PlayerScreenHandler.HOTBAR_START=36
+		final boolean isHotbarSlot = restockFromSlot >= 36 && restockFromSlot < 45;
+		if(mapInHand.getCount() > 2 && !isHotbarSlot){
+			Main.LOGGER.warn("MapRestock: Won't swap with inventory since prevMap count > 2");
+			return;
+		}
+
 		// Wait for hand to be free
+		final int restockFromSlotFinal = restockFromSlot;
 		new Thread(){@Override public void run(){
 			while(InventoryHighlightUpdater.currentlyBeingPlacedIntoItemFrame != null) Thread.yield();
-			int restockFromSlot = -1;
-			if(USE_NAME && restockFromSlot == -1){
-				if(prevName != null){
-					Main.LOGGER.info("MapRestock: finding next map by name: "+prevName);
-					restockFromSlot = getNextSlotByName(slots, prevSlot, player.getWorld());
-					if(restockFromSlot == -999) restockFromSlot = -1;
-					else if(restockFromSlot < 0) restockFromSlot *= -1;//TODO: remove horrible hack
-				}
-			}
-			if(USE_IMG && restockFromSlot == -1 && !posData2dForName.containsKey(prevName)){
-				if(state != null){
-					Main.LOGGER.info("MapRestock: finding next map by img-edge");
-					restockFromSlot = getNextSlotByImage(prevName == null ? slots : ogSlots, prevSlot, player.getWorld());
-				}
-			}
-			if(JUST_PICK_A_MAP && restockFromSlot == -1){
-				Main.LOGGER.info("MapRestock: finding next map by ANY (count->locked->named->related)");
-				restockFromSlot = getNextSlotFirstMap(ogSlots, prevSlot, player.getWorld());
-			}
-			if(restockFromSlot == -1){Main.LOGGER.info("MapRestock: unable to find next map"); return;}
+			try{sleep(50l);}catch(InterruptedException e){e.printStackTrace();} // 50ms = 1tick
 
-			//PlayerScreenHandler.HOTBAR_START=36
-			final boolean isHotbarSlot = restockFromSlot >= 36 && restockFromSlot < 45;
-			if(mapInHand.getCount() > 2 && !isHotbarSlot){
-				Main.LOGGER.warn("MapRestock: Won't swap with inventory since prevMap count > 2");
-				return;
+			if(ogSlots[restockFromSlotFinal].get(DataComponentTypes.BUNDLE_CONTENTS) != null){
+				client.interactionManager.clickSlot(0, restockFromSlotFinal, 0, SlotActionType.PICKUP, player); // Pickup bundle
+				client.interactionManager.clickSlot(0, 36+player.getInventory().selectedSlot, 1, SlotActionType.PICKUP, player); // Place in active hb slot
+				client.interactionManager.clickSlot(0, restockFromSlotFinal, 0, SlotActionType.PICKUP, player); // Putback bundle
+				Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlotFinal+" -> hb="+player.getInventory().selectedSlot);
 			}
-			final int restockFromSlotFinal = restockFromSlot;
-			new Timer().schedule(new TimerTask(){@Override public void run(){
-				if(ogSlots[restockFromSlotFinal].get(DataComponentTypes.BUNDLE_CONTENTS) != null){
-					client.interactionManager.clickSlot(0, restockFromSlotFinal, 0, SlotActionType.PICKUP, player); // Pickup bundle
-					client.interactionManager.clickSlot(0, 36+player.getInventory().selectedSlot, 1, SlotActionType.PICKUP, player); // Place in active hb slot
-					client.interactionManager.clickSlot(0, restockFromSlotFinal, 0, SlotActionType.PICKUP, player); // Putback bundle
-					Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlotFinal+" -> hb="+player.getInventory().selectedSlot);
-				}
-				else if(isHotbarSlot){
-					client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(restockFromSlotFinal - 36));
-					player.getInventory().selectedSlot = restockFromSlotFinal - 36;
-					Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().selectedSlot);
-				}
-				else{
-					client.interactionManager.clickSlot(0, restockFromSlotFinal, player.getInventory().selectedSlot, SlotActionType.SWAP, player);
-					Main.LOGGER.info("MapRestock: Swapped inv.selectedSlot to nextMap: s="+restockFromSlotFinal);
-				}
-			}}, 50l); // 50ms = 1tick
+			else if(isHotbarSlot){
+				client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(restockFromSlotFinal - 36));
+				player.getInventory().selectedSlot = restockFromSlotFinal - 36;
+				Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().selectedSlot);
+			}
+			else{
+				client.interactionManager.clickSlot(0, restockFromSlotFinal, player.getInventory().selectedSlot, SlotActionType.SWAP, player);
+				Main.LOGGER.info("MapRestock: Swapped inv.selectedSlot to nextMap: s="+restockFromSlotFinal);
+			}
 		}}.start();
 	}
 
-	public MapHandRestock(boolean useName, boolean useImg){
+	private ItemFrameEntity lastIfe, lastIfe2;
+	public MapHandRestock(boolean useName, boolean useImg, boolean autoPlace){
 		USE_NAME = useName;
 		USE_IMG = useImg;
 		posData2dForName = USE_NAME ? new HashMap<>() : null;
 		UseEntityCallback.EVENT.register((player, _0, hand, entity, _1) -> {
-			if(!(entity instanceof ItemFrameEntity itemFrame)) return ActionResult.PASS;
+			if(!(entity instanceof ItemFrameEntity ife)) return ActionResult.PASS;
 			//Main.LOGGER.info("clicked item frame");
 			if(hand != Hand.MAIN_HAND){
-				Main.LOGGER.info("not main hand");
-				return ActionResult.FAIL;
+				Main.LOGGER.info("not main hand: "+hand.name());
+//				return ActionResult.FAIL;
 			}
 			//Main.LOGGER.info("placed item from offhand");
-			if(!itemFrame.getHeldItemStack().isEmpty()) return ActionResult.PASS;
+			if(!ife.getHeldItemStack().isEmpty()) return ActionResult.PASS;
 			//Main.LOGGER.info("item frame is empty");
 			if(player.getMainHandStack().getItem() != Items.FILLED_MAP) return ActionResult.PASS;
 			if(player.getMainHandStack().getCount() > 2) return ActionResult.PASS;
 			//Main.LOGGER.info("item in hand is filled_map [1or2]");
-			Main.LOGGER.info("Single mapart placed, looking for restock map...");
-			tryToStockNextMap(player);
+//			Main.LOGGER.info("Single mapart placed");
+			if(MapAutoplacer.canAutoplace(lastIfe2, lastIfe, ife, player.getMainHandStack())){
+				Main.LOGGER.info("MapAutoPlace enabled (last 3 placed maps are all related)");
+			}
+//			else{
+				Main.LOGGER.info("MapAutoPlace unavailable, using regular hand-restock");
+				tryToStockNextMap(player);
+//			}
+			lastIfe2 = lastIfe; lastIfe = ife;
 			return ActionResult.PASS;
 		});
+		if(autoPlace) ClientTickEvents.START_CLIENT_TICK.register(client -> MapAutoplacer.placeNearestMap());
 	}
 }
