@@ -152,34 +152,8 @@ public class CommandExportMapImg{
 		return numShulksSaved;
 	}
 
-	private boolean genImgForMapsInItemFrames(FabricClientCommandSource source,
-			final HashMap<Vec3i, ItemFrameEntity> ifeLookup, final List<ItemFrameEntity> ifes){
-		Direction facing = ifes.getFirst().getFacing();
-		int minX = facing.getAxis() == Axis.X ? ifes.getFirst().getBlockX() : ifes.stream().mapToInt(ItemFrameEntity::getBlockX).min().getAsInt();
-		int maxX = facing.getAxis() == Axis.X ? ifes.getFirst().getBlockX() : ifes.stream().mapToInt(ItemFrameEntity::getBlockX).max().getAsInt();
-		int minY = facing.getAxis() == Axis.Y ? ifes.getFirst().getBlockY() : ifes.stream().mapToInt(ItemFrameEntity::getBlockY).min().getAsInt();
-		int maxY = facing.getAxis() == Axis.Y ? ifes.getFirst().getBlockY() : ifes.stream().mapToInt(ItemFrameEntity::getBlockY).max().getAsInt();
-		int minZ = facing.getAxis() == Axis.Z ? ifes.getFirst().getBlockZ() : ifes.stream().mapToInt(ItemFrameEntity::getBlockZ).min().getAsInt();
-		int maxZ = facing.getAxis() == Axis.Z ? ifes.getFirst().getBlockZ() : ifes.stream().mapToInt(ItemFrameEntity::getBlockZ).max().getAsInt();
-
-		ArrayList<Vec3i> mapWall = new ArrayList<>();//((1+maxX-minX)*(1+maxY-minY)*(1+maxZ-minZ));
-		final int w;
-		switch(facing){
-			case UP: w=1+maxX-minX; for(int z=minZ; z<=maxZ; ++z) for(int x=minX; x<=maxX; ++x) mapWall.add(new Vec3i(x, minY, z)); break;
-			case DOWN: w=1+maxX-minX; for(int z=maxZ; z>=minZ; --z) for(int x=minX; x<=maxX; ++x) mapWall.add(new Vec3i(x, minY, z)); break;
-			case NORTH: w=1+maxX-minX; for(int y=maxY; y>=minY; --y) for(int x=maxX; x>=minX; --x) mapWall.add(new Vec3i(x, y, minZ)); break;
-			case SOUTH: w=1+maxX-minX; for(int y=maxY; y>=minY; --y) for(int x=minX; x<=maxX; ++x) mapWall.add(new Vec3i(x, y, minZ)); break;
-			case EAST: w=1+maxZ-minZ; for(int y=maxY; y>=minY; --y) for(int z=maxZ; z>=minZ; --z) mapWall.add(new Vec3i(minX, y, z)); break;
-			case WEST: w=1+maxZ-minZ; for(int y=maxY; y>=minY; --y) for(int z=minZ; z<=maxZ; ++z) mapWall.add(new Vec3i(minX, y, z)); break;
-			default:
-				// UNREACHABLE
-				source.sendError(Text.literal("Invalid attached block distance"));
-				return false;
-		}
-		final int h = mapWall.size()/w;
-		Main.LOGGER.info("ExportMapImg: Map wall size: "+w+"x"+h+" ("+mapWall.size()+")");
-		source.sendFeedback(Text.literal("Map wall size: "+w+"x"+h+" ("+mapWall.size()+")"));
-
+	private void buildMapImgFile(final FabricClientCommandSource source, final HashMap<Vec3i, ItemFrameEntity> ifeLookup,
+			final ArrayList<Vec3i> mapWall, final int w, final int h){
 		final int border = BLOCK_BORDER ? 8 : 0;
 		BufferedImage img = new BufferedImage(128*w+border*2, 128*h+border*2, BufferedImage.TYPE_INT_ARGB);
 		if(BLOCK_BORDER) drawBorder(img);
@@ -214,9 +188,9 @@ public class CommandExportMapImg{
 			img = upscaledImg;
 		}
 
-		final Text nameText = ifes.getFirst().getHeldItemStack().getCustomName();
+		final Text nameText = ifeLookup.get(mapWall.get(0)).getHeldItemStack().getCustomName();
 		final String nameStr = nameText == null ? null : nameText.getLiteralString();
-		final String imgName = nameStr == null ? ifes.getFirst().getHeldItemStack().get(DataComponentTypes.MAP_ID).asString()
+		final String imgName = nameStr == null ? ifeLookup.get(mapWall.get(0)).getHeldItemStack().get(DataComponentTypes.MAP_ID).asString()
 				: nameStr.replaceAll("[.\\\\/]+", "_");
 
 		//16755200
@@ -231,6 +205,44 @@ public class CommandExportMapImg{
 				.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, imgFile.getAbsolutePath())))
 		);
 		source.sendFeedback(text);
+	}
+
+//	private boolean ongoingExport;
+	private boolean genImgForMapsInItemFrames(FabricClientCommandSource source,
+			final HashMap<Vec3i, ItemFrameEntity> ifeLookup, final List<ItemFrameEntity> ifes){
+		Direction facing = ifes.getFirst().getFacing();
+		int minX = facing.getAxis() == Axis.X ? ifes.getFirst().getBlockX() : ifes.stream().mapToInt(ItemFrameEntity::getBlockX).min().getAsInt();
+		int maxX = facing.getAxis() == Axis.X ? ifes.getFirst().getBlockX() : ifes.stream().mapToInt(ItemFrameEntity::getBlockX).max().getAsInt();
+		int minY = facing.getAxis() == Axis.Y ? ifes.getFirst().getBlockY() : ifes.stream().mapToInt(ItemFrameEntity::getBlockY).min().getAsInt();
+		int maxY = facing.getAxis() == Axis.Y ? ifes.getFirst().getBlockY() : ifes.stream().mapToInt(ItemFrameEntity::getBlockY).max().getAsInt();
+		int minZ = facing.getAxis() == Axis.Z ? ifes.getFirst().getBlockZ() : ifes.stream().mapToInt(ItemFrameEntity::getBlockZ).min().getAsInt();
+		int maxZ = facing.getAxis() == Axis.Z ? ifes.getFirst().getBlockZ() : ifes.stream().mapToInt(ItemFrameEntity::getBlockZ).max().getAsInt();
+
+		ArrayList<Vec3i> mapWall = new ArrayList<>();//((1+maxX-minX)*(1+maxY-minY)*(1+maxZ-minZ));
+		final int w;
+		switch(facing){
+			case UP: w=1+maxX-minX; for(int z=minZ; z<=maxZ; ++z) for(int x=minX; x<=maxX; ++x) mapWall.add(new Vec3i(x, minY, z)); break;
+			case DOWN: w=1+maxX-minX; for(int z=maxZ; z>=minZ; --z) for(int x=minX; x<=maxX; ++x) mapWall.add(new Vec3i(x, minY, z)); break;
+			case NORTH: w=1+maxX-minX; for(int y=maxY; y>=minY; --y) for(int x=maxX; x>=minX; --x) mapWall.add(new Vec3i(x, y, minZ)); break;
+			case SOUTH: w=1+maxX-minX; for(int y=maxY; y>=minY; --y) for(int x=minX; x<=maxX; ++x) mapWall.add(new Vec3i(x, y, minZ)); break;
+			case EAST: w=1+maxZ-minZ; for(int y=maxY; y>=minY; --y) for(int z=maxZ; z>=minZ; --z) mapWall.add(new Vec3i(minX, y, z)); break;
+			case WEST: w=1+maxZ-minZ; for(int y=maxY; y>=minY; --y) for(int z=minZ; z<=maxZ; ++z) mapWall.add(new Vec3i(minX, y, z)); break;
+			default:
+				// UNREACHABLE
+				source.sendError(Text.literal("Invalid attached block distance"));
+				return false;
+		}
+		final int h = mapWall.size()/w;
+		Main.LOGGER.info("ExportMapImg: Map wall size: "+w+"x"+h+" ("+mapWall.size()+")");
+		source.sendFeedback(Text.literal("Map wall size: "+w+"x"+h+" ("+mapWall.size()+")"));
+
+		if(w*h > 400){
+			source.sendFeedback(Text.literal("Large image detected, may take a moment..."));
+//			if(ongoingExport) return false;
+//			ongoingExport = true;
+			new Thread(){@Override public void run(){buildMapImgFile(source, ifeLookup, mapWall, w, h);/* ongoingExport = false;*/}}.run();
+		}
+		else buildMapImgFile(source, ifeLookup, mapWall, w, h);
 		return true;
 	}
 
