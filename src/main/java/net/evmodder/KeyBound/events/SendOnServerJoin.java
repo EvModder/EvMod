@@ -19,6 +19,7 @@ public class SendOnServerJoin{
 				//ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server
 				(_0, _1, _2) ->
 		{
+			if(_0.getServerInfo() == null) return; // Single-player
 			if(_0.getServerInfo().address.hashCode() != HASHCODE_2B2T) return; // TODO: customize per-server
 			if(timerTask != null) timerTask.cancel(); // Restart timer
 
