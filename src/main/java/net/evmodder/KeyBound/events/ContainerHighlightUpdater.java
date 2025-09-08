@@ -74,6 +74,7 @@ public class ContainerHighlightUpdater{
 		int currHash = InventoryHighlightUpdater.mapsInInvHash + mapsInContainerHash;
 		if(lastHash == currHash) return;
 		lastHash = currHash;
+//		Main.LOGGER.info("ContainerHighlighter: Clearing cache");
 
 		if(items.isEmpty()) return;
 		final List<MapState> states = items.stream().map(i -> FilledMapItem.getMapState(i, client.world)).filter(Objects::nonNull).toList();

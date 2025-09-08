@@ -28,17 +28,16 @@ import net.minecraft.util.math.Vec3d;
 public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 	private final MinecraftClient client = MinecraftClient.getInstance();
 
-	private boolean isLookngInGeneralDirection(Entity entity){
-		Vec3d vec3d = client.player.getRotationVec(1.0F).normalize();
+	private boolean isLookingInGeneralDirection(Entity entity){
 		Vec3d vec3d2 = new Vec3d(entity.getX() - client.player.getX(), entity.getEyeY() - client.player.getEyeY(), entity.getZ() - client.player.getZ());
 		double d = vec3d2.length();
 		vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d);//normalize
-		double e = vec3d.dotProduct(vec3d2);
+		double e = ItemFrameHighlightUpdater.clientRotationNormalized.dotProduct(vec3d2);
 		final double asdf = client.player.squaredDistanceTo(entity) > 5*5 ? 0.3d : 0.1d;
 		return e > 1.0d - asdf / d;
 	}
 
-	@Inject(method = "hasLabel", at = @At("HEAD"), cancellable = true)
+	@Inject(method="hasLabel", at=@At("HEAD"), cancellable=true)
 	public void hasLabel_Mixin(T itemFrameEntity, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
 		if(!Main.mapHighlightIFrame) return; // Feature is disabled
 		if(!MinecraftClient.isHudEnabled()) return;
@@ -63,7 +62,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 			ItemFrameHighlightUpdater.hasLabelCache.put(itemFrameEntity, true);
 			return;
 		}
-		if(!isLookngInGeneralDirection(itemFrameEntity)){
+		if(!isLookingInGeneralDirection(itemFrameEntity)){
 			ItemFrameHighlightUpdater.hasLabelCache.put(itemFrameEntity, false);
 			return;
 		}
@@ -80,7 +79,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 	}
 
 
-	@Inject(method = "getDisplayName", at = @At("INVOKE"), cancellable = true)
+	@Inject(method="getDisplayName", at=@At("INVOKE"), cancellable = true)
 	public void getDisplayName_Mixin(T itemFrameEntity, CallbackInfoReturnable<Text> cir){
 		if(!Main.mapHighlightIFrame) return; // Feature is disabled
 		final ItemStack stack = itemFrameEntity.getHeldItemStack();

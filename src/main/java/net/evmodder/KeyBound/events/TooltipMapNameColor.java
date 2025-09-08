@@ -35,7 +35,11 @@ public final class TooltipMapNameColor{
 
 	public static final void tooltipColors(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
 		int currHash = InventoryHighlightUpdater.mapsInInvHash + ContainerHighlightUpdater.mapsInContainerHash;
-		if(lastHash != currHash){lastHash = currHash; tooltipCache.clear();}
+		if(lastHash != currHash){
+			lastHash = currHash;
+			tooltipCache.clear();
+//			Main.LOGGER.info("TooltipMapNameColor: Clearing cache");
+		}
 		List<Text> cachedLines = tooltipCache.get(item);
 		if(cachedLines != null){lines.clear(); lines.addAll(cachedLines); return;}
 

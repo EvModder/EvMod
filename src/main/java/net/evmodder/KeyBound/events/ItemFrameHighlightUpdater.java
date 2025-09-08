@@ -6,20 +6,23 @@ import java.util.List;
 import java.util.UUID;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
+import net.evmodder.KeyBound.MiscUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.map.MapState;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.Vec3d;
 
 public class ItemFrameHighlightUpdater{
 	private record XYZD(int x, int y, int z, int d){}
-	private static final HashMap<XYZD, UUID> hangLocsReverse = new HashMap<>();
-	private static final HashMap<UUID, HashSet<XYZD>> iFrameMapGroup = new HashMap<>();
+	private static final HashMap<XYZD, UUID> hangLocsReverse = new HashMap<>(); // XYZD -> colorsId
+	private static final HashMap<UUID, HashSet<XYZD>> iFrameMapGroup = new HashMap<>(); // colorsId -> {HangLocs}
 
 	public static final HashMap<ItemFrameEntity, Boolean> hasLabelCache = new HashMap<>(); // TODO: remove? private?
 	public static final HashMap<ItemFrameEntity, Text> displayNameCache = new HashMap<>(); // TODO: remove? private?
+	public static Vec3d clientRotationNormalized; // TODO: remove? private?
 
 	public enum Highlight{INV_OR_NESTED_INV, NOT_IN_CURR_GROUP, MULTI_HUNG, UNLOCKED_OR_UNNAMED};
 	private static final HashMap<Integer, Highlight> highlightedIFrames = new HashMap<>();
@@ -46,46 +49,91 @@ public class ItemFrameHighlightUpdater{
 		return highlightedIFrames.get(entityId);
 	}
 
-	private static final void updateItemFrameEntity(final MinecraftClient client, final ItemFrameEntity ife){
-		//==================== Compute some stuff ====================//
-		final ItemStack stack = ife.getHeldItemStack();
-		final MapState state = stack == null || stack.isEmpty() ? null : FilledMapItem.getMapState(stack, ife.getWorld());
-		final UUID colorsId = state == null ? null : MapGroupUtils.getIdForMapState(state);
-		final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal());
-		final UUID oldColorsIdForXYZ = colorsId != null ? hangLocsReverse.put(xyzd, colorsId) : hangLocsReverse.remove(xyzd);
-		if(oldColorsIdForXYZ == null){
-//			Main.LOGGER.info("IFHU: Added map at xyzd");
+	private static final boolean updateItemFrameEntities(final List<ItemFrameEntity> ifes){
+		boolean anyHangLocUpdate = false;
+		for(ItemFrameEntity ife : ifes){
+			final ItemStack stack = ife.getHeldItemStack();
+			final MapState state = stack == null || stack.isEmpty() ? null : FilledMapItem.getMapState(stack, ife.getWorld());
+			final UUID colorsId = state == null ? null : MapGroupUtils.getIdForMapState(state);
+			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal());
+			final UUID oldColorsIdForXYZ = colorsId != null ? hangLocsReverse.put(xyzd, colorsId) : hangLocsReverse.remove(xyzd);
+			if(oldColorsIdForXYZ == null){
+				if(colorsId != null){
+					anyHangLocUpdate = true;
+//					Main.LOGGER.info("IFHU: Added map at xyzd");
+				}
+			}
+			else if(!oldColorsIdForXYZ.equals(colorsId)){
+//				Main.LOGGER.info("IFHU: "+(colorsId == null ? "Removed" : "Replaced")+" map at xyzd");
+				anyHangLocUpdate = true;
+				final HashSet<XYZD> oldLocs = iFrameMapGroup.get(oldColorsIdForXYZ);
+				if(oldLocs != null && oldLocs.remove(xyzd) && oldLocs.isEmpty()) iFrameMapGroup.remove(oldColorsIdForXYZ);
+				if(colorsId == null){
+					highlightedIFrames.remove(ife.getId());
+//					Main.LOGGER.info("IFHU: Removed map at xyzd");
+				}
+//				else Main.LOGGER.info("IFHU: Replaced map at xyzd");
+			}
 		}
-		else if(oldColorsIdForXYZ != null && !oldColorsIdForXYZ.equals(colorsId)){
-//			Main.LOGGER.info("IFHU: "+(colorsId == null ? "Removed" : "Replaced")+" map xyzd");
-			final HashSet<XYZD> oldLocs = iFrameMapGroup.get(oldColorsIdForXYZ);
-			if(oldLocs != null && oldLocs.remove(xyzd) && oldLocs.isEmpty()) iFrameMapGroup.remove(oldColorsIdForXYZ);
-		}
-		if(colorsId == null) return; // Equivalent to state==null
-
-//		if(!highlightedIFrames.contains(ife.getId())) return; // Short-circuit that relied on InvHL and GroupHL clearing highlightedIFrames for us
-
-		final HashSet<XYZD> locs = iFrameMapGroup.get(colorsId);
-		final boolean isMultiHung;
-		if(locs == null){iFrameMapGroup.put(colorsId, new HashSet<>(List.of(xyzd))); isMultiHung = false;}
-		else{locs.add(xyzd); isMultiHung = locs.size() > 1;}
-
-		if(InventoryHighlightUpdater.isInInventory(colorsId) || InventoryHighlightUpdater.isNestedInInventory(colorsId))
-			highlightedIFrames.put(ife.getId(), Highlight.INV_OR_NESTED_INV);
-		else if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state))
-			highlightedIFrames.put(ife.getId(), Highlight.NOT_IN_CURR_GROUP);
-		else if(isMultiHung)
-			highlightedIFrames.put(ife.getId(), Highlight.MULTI_HUNG);
-		else if(!state.locked || stack.getCustomName() == null)
-			highlightedIFrames.put(ife.getId(), Highlight.UNLOCKED_OR_UNNAMED);
-		else
-			highlightedIFrames.remove(ife.getId());
+		return anyHangLocUpdate;
 	}
-	public static final void onUpdateTick(MinecraftClient client){
-		if(client.world != null){
-			hasLabelCache.clear();
-			displayNameCache.clear();
-			client.world.getEntities().forEach(e -> {if(e instanceof ItemFrameEntity ife) updateItemFrameEntity(client, ife);});
+	private static final boolean updateIframeHighlights(final List<ItemFrameEntity> ifes){
+		boolean anyHighlightUpdate = false;
+		for(ItemFrameEntity ife : ifes){
+			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal());
+			UUID colorsId = hangLocsReverse.get(xyzd);
+			if(colorsId == null) continue;
+
+			final HashSet<XYZD> locs = iFrameMapGroup.get(colorsId);
+			final boolean isMultiHung;
+			if(locs == null){iFrameMapGroup.put(colorsId, new HashSet<>(List.of(xyzd))); isMultiHung = false;}
+			else{locs.add(xyzd); isMultiHung = locs.size() > 1;}
+
+			final ItemStack stack = ife.getHeldItemStack();
+			final MapState state = FilledMapItem.getMapState(ife.getHeldItemStack(), ife.getWorld());
+
+			final Highlight highlight;
+			if(InventoryHighlightUpdater.isInInventory(colorsId) || InventoryHighlightUpdater.isNestedInInventory(colorsId)) highlight = Highlight.INV_OR_NESTED_INV;
+			else if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)) highlight = Highlight.NOT_IN_CURR_GROUP;
+			else if(isMultiHung) highlight = Highlight.MULTI_HUNG;
+			else if(!state.locked || stack.getCustomName() == null) highlight = Highlight.UNLOCKED_OR_UNNAMED;
+			else{
+				anyHighlightUpdate |= (highlightedIFrames.remove(ife.getId()) != null);
+				continue;
+			}
+			anyHighlightUpdate |= (highlightedIFrames.put(ife.getId(), highlight) != highlight);
 		}
+		return anyHighlightUpdate;
+	}
+	private static int lastInvHash;
+	public static final void onUpdateTick(MinecraftClient client){
+		if(client.world == null) return;
+		Vec3d newClientRot = client.player.getRotationVec(1.0F).normalize();
+		if(!newClientRot.equals(clientRotationNormalized) || MiscUtils.hasMoved(client.player)){
+			clientRotationNormalized = newClientRot;
+			hasLabelCache.clear(); // Depends on client looking direction
+		}
+
+//		final boolean anyHangLocUpdate = client.world.getEntitiesByClass(ItemFrameEntity.class,
+//			client.player.getBoundingBox().expand(200, 200, 200), _0->true).stream().anyMatch(ife -> updateItemFrameEntity(client, ife));
+
+//		client.world.getEntities().forEach(e -> {if(e instanceof ItemFrameEntity ife) updateItemFrameEntity(client, ife);});
+//		client.world.getEntitiesByClass(ItemFrameEntity.class, client.player.getBoundingBox().expand(200, 200, 200), _0->true)
+//					.forEach(ife -> updateItemFrameEntity(client, ife));
+
+		List<ItemFrameEntity> ifes = client.world.getEntitiesByClass(ItemFrameEntity.class, client.player.getBoundingBox().expand(200, 200, 200), _0->true);
+
+		final boolean anyHangLocUpdate = updateItemFrameEntities(ifes);
+		if(!anyHangLocUpdate && lastInvHash == InventoryHighlightUpdater.mapsInInvHash) return;
+		lastInvHash = InventoryHighlightUpdater.mapsInInvHash;
+
+//		Main.LOGGER.info("IframeHighlighter: Recomputing highlight cache");
+
+		final boolean anyHighlightUpdate = updateIframeHighlights(ifes);
+		if(!anyHighlightUpdate) return;
+
+//		Main.LOGGER.info("IframeHighlighter: Recomputing hasLabel/getDisplayName cache");
+		hasLabelCache.clear();
+		displayNameCache.clear();
 	}
 }
