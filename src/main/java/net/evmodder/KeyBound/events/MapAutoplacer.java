@@ -34,6 +34,8 @@ public class MapAutoplacer{
 	public static final void placeNearestMap(){
 		if(!isActive) return;
 
-		// Use
+		//Step1: Check available maps in inventory and move 1st applicable result (within printing range) to mainhand
+		//Step2: Face the target block face
+		//Step3: Right click packet
 	}
 }
