@@ -279,7 +279,8 @@ public final class FileIO{
 			final long o1 = bbIn.getLong(), o2 = bbIn.getLong();//16
 			final int x = bbIn.getInt(), y = bbIn.getInt(), z = bbIn.getInt();//4+4+4
 
-			final double distSq = (playerX-x)*(playerX-x) + (playerY-y)*(playerY-y) + (playerZ-z)*(playerZ-z);
+			final double diffX = playerX-x, diffY = playerY-y, diffZ = playerZ-z; // Intentional use of double (to avoid overflow)
+			final double distSq = diffX*diffX + diffY*diffY + diffZ*diffZ;
 			if(distSq < affectedDistSq){
 				final UUID key = new UUID(k1, k2);
 				if(!keep.contains(key)){deletedKeys.add(key); continue;}

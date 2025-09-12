@@ -14,6 +14,7 @@ import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.EvLib.PearlDataClient;
 import net.evmodder.EvLib.TextUtils;
 import net.evmodder.KeyBound.mixin.AccessorProjectileEntity;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.PlayerListEntry;
@@ -93,34 +94,46 @@ public final class EpearlLookup{
 	}
 	private final RSLoadingCache cacheByUUID, cacheByXZ;
 
+	private boolean recentChunkLoad = true;
 	private void runEpearlRemovalChecker(){
+//		ClientChunkEvents.CHUNK_LOAD.register((world, chunk) -> {});
+		ClientChunkEvents.CHUNK_LOAD.register((_0, _1) -> recentChunkLoad=true);//TODO: will epearl entities be loaded at this stage?
+
+		//TODO: also do removal for pearl landing event?
 		if(removalChecker != null) return;
 		removalChecker = new Timer(/*isDaemon=*/true);
-		removalChecker.scheduleAtFixedRate(new TimerTask(){//TODO: change to onChunkLoadEvent?
+		removalChecker.scheduleAtFixedRate(new TimerTask(){
 			@Override public void run(){
-				if(client.player == null) return;
+				if(client.player == null || client.world == null) return;
+				if(recentChunkLoad){recentChunkLoad=false; return;}
+
 				HashSet<UUID> pearlsSeen1 = new HashSet<>(), pearlsSeen2 = new HashSet<>();
-				double maxDistSq = 32*32; // Min render distance is 2 chunks
+				double maxDistSq = 30*30; // Min render distance is 2 chunks
 				final int playerX = client.player.getBlockX(), playerY = client.player.getBlockY(), playerZ = client.player.getBlockZ();
-				for(Entity e : client.player.clientWorld.getEntities()){
-					if(e.getType() != EntityType.ENDER_PEARL) continue;
+//				for(Entity e : client.world.getEntities()){
+				for(Entity e : client.world.getEntitiesByType(EntityType.ENDER_PEARL, client.player.getBoundingBox().expand(64, 128, 64), _0->true)){
+//					if(e.getType() != EntityType.ENDER_PEARL) continue;
 					if(USE_DB_UUID) pearlsSeen1.add(e.getUuid());
 					if(USE_DB_XZ) pearlsSeen2.add(new UUID(Double.doubleToRawLongBits(e.getX()), Double.doubleToRawLongBits(e.getZ())));
-					final double dx = e.getBlockX()-playerX, dz = e.getBlockZ()-playerZ;
-					final double distSq = dx*dx + dz*dz; // ommission of Y intentional
-					if(distSq > maxDistSq) maxDistSq = distSq;
+//					final double dx = e.getBlockX()-playerX, dz = e.getBlockZ()-playerZ;
+//					final double distSq = dx*dx + dz*dz; // ommission of Y intentional
+//					if(distSq > maxDistSq) maxDistSq = distSq;
 				}
 				synchronized(idToPos){ // Really this is just here to synchonize access to FileDBs
 					if(USE_DB_UUID){
 						HashSet<UUID> deletedKeys = FileIO.removeMissingFromClientFile(DB_FILENAME_UUID, playerX, playerY, playerZ, maxDistSq, pearlsSeen1);
 						if(deletedKeys == null) Main.LOGGER.error("!! Delete failed because FileDB is null: "+DB_FILENAME_UUID);
-						else for(UUID deletedKey : deletedKeys){
-							cacheByUUID.remove(deletedKey);
-							Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(deletedKey), msg->{
-								if(msg != null && msg.length > 0 && msg[0] != 0) Main.LOGGER.info("Removed pearl UUID from remote DB!");
-								else Main.LOGGER.info("Failed to remove pearl UUID from remote DB!");
-							});
-							Main.LOGGER.info("Deleted ePearl owner stored for UUID: "+deletedKey);
+						else if(!deletedKeys.isEmpty()){
+							Main.LOGGER.error("Num ePearls deleted from FileDB: "+deletedKeys.size()+" (current seen: "+pearlsSeen1+")");
+							for(UUID deletedKey : deletedKeys){
+								cacheByUUID.remove(deletedKey);
+								Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(deletedKey),
+								msg->{
+									if(msg != null && msg.length > 0 && msg[0] != 0) Main.LOGGER.info("Removed pearl UUID from remote DB!");
+									else Main.LOGGER.info("Failed to remove pearl UUID from remote DB!");
+								});
+								Main.LOGGER.info("Deleted ePearl owner stored for UUID: "+deletedKey);
+							}
 						}
 					}
 					if(USE_DB_XZ){
@@ -139,7 +152,7 @@ public final class EpearlLookup{
 					}
 				}
 			}
-		}, 1L, 15_000L); // Runs every 15s
+		}, 1L, 10_000L); // Runs every 10s
 	}
 
 	EpearlLookup(boolean uuidDb, boolean coordsDb){
@@ -223,7 +236,7 @@ public final class EpearlLookup{
 					Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, ownerUUID), msg->{
 						if(msg != null && msg.length == 1){
 							if(msg[0] != 0) Main.LOGGER.info("Added pearl UUID to remote DB!");
-							else Main.LOGGER.info("Remote DB already contains pearl UUID (or rejected it for other reasons)");
+							else Main.LOGGER.info("Remote DB already contains pearl UUID");
 							FileIO.appendToClientFile(DB_FILENAME_UUID, key, pdc);
 						}
 						else Main.LOGGER.info("Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_UUID: "+msg);
