@@ -151,6 +151,7 @@ once arrangement is found
 		int clicksInDuration = 78, durationTicks = 90;
 		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false,
 				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false, keybindMapArtBundleStow=false, keybindMapArtBundleStowReverse=false;
+		int keybindMapArtBundleStowMax = 64;
 		boolean mapMoveIgnoreAirPockets=true;
 		boolean mapPlaceHelper=false, mapPlaceHelperAuto=false, mapPlaceHelperByName=true, mapPlaceHelperByImg=true, mapHighlightTooltip=false;
 		boolean iFramePlacer=false, iFramePlacerMatchBlock=true, iFramePlacerMustConnect=true;
@@ -247,6 +248,7 @@ once arrangement is found
 				case "keybind.mapart.load": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.move.bundle": keybindMapArtBundleStow = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.move.bundle.reverse": keybindMapArtBundleStowReverse = !value.equalsIgnoreCase("false"); break;
+				case "keybind.mapart.move.bundle.max": keybindMapArtBundleStowMax = Integer.parseInt(value); break;
 				case "keybind.mapart.move.3x9": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
 				case "keybind.mapart.move_3x9.ignore_air_pockets": mapMoveIgnoreAirPockets = !value.equalsIgnoreCase("false"); break;
 				case "mapart_placement_helper": mapPlaceHelper=!value.equalsIgnoreCase("false"); break;
@@ -297,7 +299,8 @@ once arrangement is found
 		if(keybindMapArtLoad) new KeybindMapLoad();
 		if(keybindMapArtCopy) new KeybindMapCopy();
 		if(keybindMapArtMove) new KeybindMapMove(mapMoveIgnoreAirPockets);
-		if(keybindMapArtBundleStow || keybindMapArtBundleStowReverse) new KeybindMapMoveBundle(keybindMapArtBundleStow, keybindMapArtBundleStowReverse);
+		if(keybindMapArtBundleStow || keybindMapArtBundleStowReverse)
+			new KeybindMapMoveBundle(keybindMapArtBundleStow, keybindMapArtBundleStowReverse, keybindMapArtBundleStowMax);
 		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg, mapPlaceHelperAuto);
 		if(iFramePlacer) new ItemFrameAutoPlacer(iFramePlacerMatchBlock, iFramePlacerMustConnect);
 		if(keybindEbounceTravelHelper) new KeybindEbounceTravelHelper(ejectJunk);

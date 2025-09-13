@@ -31,6 +31,7 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.world.World;
 
 public final class KeybindMapMoveBundle{
+	private final int MOVE_LIMIT;
 	//final int WITHDRAW_MAX = 27;
 	//enum BundleSelectionMode{FIRST, LAST, MOST_FULL_butNOT_FULL, MOST_EMPTY_butNOT_EMPTY};
 
@@ -72,7 +73,7 @@ public final class KeybindMapMoveBundle{
 				hs.getScreenHandler() instanceof GenericContainerScreenHandler gcsh ? gcsh.getRows()*9 :
 				hs instanceof CraftingScreen ? 46 :
 				hs instanceof ShulkerBoxScreen ? 27 : 0/*unreachable?*/;
-		final int WITHDRAW_MAX = hs instanceof InventoryScreen ? 27 : SLOT_END;
+		assert SLOT_END != 0;
 		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		final int[] slotsWithMapArt = IntStream.range(SLOT_START, SLOT_END)
 				.filter(i -> slots[i].getItem() == Items.FILLED_MAP && !isFillerMap(slots, slots[i], client.world))
@@ -145,7 +146,7 @@ public final class KeybindMapMoveBundle{
 			Main.LOGGER.info("MapBundleOp: stored "+suckedUp+" maps in bundle");
 		}
 		else{
-			final int stored = Math.min(WITHDRAW_MAX, getNumStored(occupancy));
+			final int stored = Math.min(MOVE_LIMIT, getNumStored(occupancy));
 			int withdrawn = 0;
 			if(reverse){
 				for(int i=SLOT_START; i<SLOT_END && withdrawn < stored; ++i){
@@ -172,7 +173,8 @@ public final class KeybindMapMoveBundle{
 		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("MapBundleOp: DONE!"));
 	}
 
-	public KeybindMapMoveBundle(boolean regular, boolean reverse){
+	public KeybindMapMoveBundle(boolean regular, boolean reverse, int moveLimit){
+		MOVE_LIMIT = moveLimit;
 		Function<Screen, Boolean> allowInScreen =
 				//InventoryScreen.class::isInstance
 				s->s instanceof InventoryScreen || s instanceof GenericContainerScreen || s instanceof ShulkerBoxScreen || s instanceof CraftingScreen;
