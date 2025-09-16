@@ -29,6 +29,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
+
 // gradle genSources/eclipse/cleanloom/--stop
 //MC source will be in ~/.gradle/caches/fabric-loom or ./.gradle/loom-cache
 // gradle build --refresh-dependencies
@@ -88,8 +89,6 @@ once arrangement is found
 	//public static final String MOD_NAME = "KeyBound";
 	//public static final String MOD_VERSION = "@MOD_VERSION@";
 	public static final String KEYBIND_CATEGORY = "key.categories."+MOD_ID;
-
-
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	private static HashMap<String, String> config;
 
@@ -255,9 +254,9 @@ once arrangement is found
 				case "mapart_placement_helper.use_name": mapPlaceHelperByName=!value.equalsIgnoreCase("false"); break;
 				case "mapart_placement_helper.use_image": mapPlaceHelperByImg=!value.equalsIgnoreCase("false"); break;
 				case "mapart_placement_helper.autoplace": mapPlaceHelperAuto=!value.equalsIgnoreCase("false"); break;
-				case "iframe_placement_helper": iFramePlacer = !value.equalsIgnoreCase("false"); break;
-				case "iframe_placement_helper.must_match_block": iFramePlacerMatchBlock = !value.equalsIgnoreCase("false"); break;
-				case "iframe_placement_helper.must_connect": iFramePlacerMustConnect = !value.equalsIgnoreCase("false"); break;
+				case "itemframe_placement_helper": iFramePlacer = !value.equalsIgnoreCase("false"); break;
+				case "itemframe_placement_helper.must_match_block": iFramePlacerMatchBlock = !value.equalsIgnoreCase("false"); break;
+				case "itemframe_placement_helper.must_connect": iFramePlacerMustConnect = !value.equalsIgnoreCase("false"); break;
 				case "mapart_group_include_unlocked": MapGroupUtils.INCLUDE_UNLOCKED = !value.equalsIgnoreCase("false"); break;
 				case "mapart_group_command": new CommandMapArtGroup(); break;
 				case "mapart_generate_img_upscale_to": mapWallUpscale=Integer.parseInt(value); break;

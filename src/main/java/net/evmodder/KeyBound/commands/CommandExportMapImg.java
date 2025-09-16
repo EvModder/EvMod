@@ -190,7 +190,7 @@ public class CommandExportMapImg{
 			img = upscaledImg;
 		}
 
-		final ItemStack tlMapItemStack = ifeLookup.get(mapWall.getFirst()).getHeldItemStack();
+		final ItemStack tlMapItemStack = ifeLookup.get(mapWall.stream().filter(ifeLookup::containsKey).findFirst().get()).getHeldItemStack();
 		final Text nameText = tlMapItemStack.getCustomName();
 		final String nameStr = nameText == null ? null : nameText.getLiteralString();
 		String imgName;
@@ -200,7 +200,7 @@ public class CommandExportMapImg{
 		else{
 			ItemStack[] sampleStacks = new ItemStack[]{
 				tlMapItemStack,
-				ifeLookup.get(mapWall.getLast()).getHeldItemStack()
+				ifeLookup.get(mapWall.reversed().stream().filter(ifeLookup::containsKey).findFirst().get()).getHeldItemStack()
 			};
 			RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(sampleStacks, source.getWorld());
 			if(data.slots().size() != 2) imgName = nameStr;
