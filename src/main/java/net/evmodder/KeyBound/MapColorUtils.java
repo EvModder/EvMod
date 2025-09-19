@@ -148,7 +148,7 @@ public abstract class MapColorUtils{
 					case FULLBLOCK:
 				}
 				if(isTransparent){h=0; continue;}
-				else if(northLower.contains(color) && !transparentColors.contains(colors[x+(y-1)*128])){h = h<0 ? 1 : ++h;}
+				else if(northLower.contains(color) && (y==0 || !transparentColors.contains(colors[x+(y-1)*128]))){h = h<0 ? 1 : ++h;}
 				else if(northHigher.contains(color)){h = h>0 ? -1 : --h;}
 				else continue;
 				maxDiffH = Math.max(maxDiffH, Math.abs(h));

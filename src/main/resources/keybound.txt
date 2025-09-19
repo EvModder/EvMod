@@ -21,7 +21,7 @@ keybind.mapart.move.bundle.max: 64
 keybind.mapart.move.3x9: true
 keybind.mapart.move.3x9.ignore_air_pockets: false
 
-itemframe_placement_helper: true
+itemframe_placement_helper: false
 itemframe_placement_helper.must_match_block: true
 itemframe_placement_helper.must_connect: false
 mapart_placement_helper: true #TODO: also support placing sequential shulker boxes
