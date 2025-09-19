@@ -89,9 +89,9 @@ public final class TooltipMapLoreMetadata{
 //		if(showStaircased && showPercentStaircased && data.height()>0) lines.add(lines.removeLast().copy().append(" ("+data.percentStaircase()+"%)"));
 		if(showNumColors){
 			lines.add(Text.translatable("options.chat.color").formatted(Formatting.GRAY).append(": ")
-					.append(Text.literal(""+data.uniqueColors()).formatted(Formatting.BLUE)));
-			if(showNumColorIds && data.uniqueColorIds() > data.uniqueColors()){
-				lines.add(lines.removeLast().copy().append(" ("+data.uniqueColorIds()+" ").append(Text.translatable("soundCategory.block")).append(")"));
+					.append(Text.literal(""+data.uniqueColors()).formatted(Formatting.GREEN)));
+			if(showNumColorIds && data.uniqueColors() > data.uniqueColorIds()){
+				lines.add(lines.removeLast().copy().append(" (").append(Text.translatable("soundCategory.block")).append(": "+data.uniqueColorIds()+")"));
 			}
 		}
 		if(showTransparency && data.transparency()) lines.add(Text.literal("Transparency").formatted(Formatting.AQUA));
