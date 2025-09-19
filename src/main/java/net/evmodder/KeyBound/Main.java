@@ -154,8 +154,8 @@ once arrangement is found
 		boolean mapMoveIgnoreAirPockets=true;
 		boolean mapPlaceHelper=false, mapPlaceHelperAuto=false, mapPlaceHelperByName=true, mapPlaceHelperByImg=true, mapHighlightTooltip=false;
 		boolean iFramePlacer=false, iFramePlacerMatchBlock=true, iFramePlacerMustConnect=true;
-		boolean mapMetadataTooltip=false, mapMdStaircase=false, mapMdMaterial=false, mapMdNumColors=false, mapMdTransparency=false, mapMdNoobline=false,
-				mapMdPercentCarpet=false, mapMdPercentStaircase=false;
+		boolean mapMetadataTooltip=false, mapMdStaircase=false, mapMdMaterial=false, mapMdNumColors=false, mapMdNumColorIds=true,
+				mapMdTransparency=false, mapMdNoobline=false, mapMdPercentCarpet=false, mapMdPercentStaircase=false;
 		boolean mapWallCmd=false, mapWallBorder=false;
 		boolean keybindEbounceTravelHelper=false, keybindRestock=false, inventoryRestockAuto=false;
 		boolean uploadIgnoreList=false;
@@ -225,6 +225,7 @@ once arrangement is found
 				case "map_metadata_in_tooltip.percent_carpet": mapMdPercentCarpet = !value.equalsIgnoreCase("false"); break;
 				case "map_metadata_in_tooltip.percent_staircase": mapMdPercentStaircase = !value.equalsIgnoreCase("false"); break;
 				case "map_metadata_in_tooltip.num_colors": mapMdNumColors = !value.equalsIgnoreCase("false"); break;
+				case "map_metadata_in_tooltip.num_color_ids": mapMdNumColorIds = !value.equalsIgnoreCase("false"); break;
 				case "map_metadata_in_tooltip.transparency": mapMdTransparency = !value.equalsIgnoreCase("false"); break;
 				case "map_metadata_in_tooltip.noobline": mapMdNoobline = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_in_tooltip": mapHighlightTooltip = !value.equalsIgnoreCase("false"); break;
@@ -321,7 +322,7 @@ once arrangement is found
 		}
 
 		if(mapMetadataTooltip){
-			new TooltipMapLoreMetadata(mapMdStaircase, mapMdMaterial, mapMdNumColors, mapMdTransparency, mapMdNoobline, mapMdPercentCarpet, mapMdPercentStaircase);
+			new TooltipMapLoreMetadata(mapMdStaircase, mapMdMaterial, mapMdNumColors, mapMdNumColorIds, mapMdTransparency, mapMdNoobline, mapMdPercentCarpet, mapMdPercentStaircase);
 		}
 
 		final String username = MinecraftClient.getInstance().getSession().getUsername();

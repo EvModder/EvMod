@@ -16,13 +16,14 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 public final class TooltipMapLoreMetadata{
-	private final boolean showStaircased, showMaterial, showNumColors, showTransparency, showNoobline, showPercentCarpet, showPercentStaircased;
-	public TooltipMapLoreMetadata(boolean showStaircased, boolean showMaterial, boolean showNumColors, boolean showTransparency, boolean showNoobline,
-			boolean showPercentCarpet, boolean showPercentStaircased)
+	private final boolean showStaircased, showMaterial, showNumColors, showNumColorIds, showTransparency, showNoobline, showPercentCarpet, showPercentStaircased;
+	public TooltipMapLoreMetadata(boolean showStaircased, boolean showMaterial, boolean showNumColors, boolean showNumColorIds,
+			boolean showTransparency, boolean showNoobline, boolean showPercentCarpet, boolean showPercentStaircased)
 	{
 		this.showStaircased = showStaircased;
 		this.showMaterial = showMaterial;
 		this.showNumColors = showNumColors;
+		this.showNumColorIds = showNumColorIds;
 		this.showTransparency = showTransparency;
 		this.showNoobline = showNoobline;
 		this.showPercentCarpet = showPercentCarpet;
@@ -86,7 +87,13 @@ public final class TooltipMapLoreMetadata{
 //			else lines.add(Text.translatable("advMode.type").formatted(Formatting.GRAY).append(": ").append(staircased));
 //		}
 //		if(showStaircased && showPercentStaircased && data.height()>0) lines.add(lines.removeLast().copy().append(" ("+data.percentStaircase()+"%)"));
-		if(showNumColors) lines.add(Text.translatable("options.chat.color").formatted(Formatting.GRAY).append(": "+data.uniqueColors()));
+		if(showNumColors){
+			lines.add(Text.translatable("options.chat.color").formatted(Formatting.GRAY).append(": ")
+					.append(Text.literal(""+data.uniqueColors()).formatted(Formatting.BLUE)));
+			if(showNumColorIds && data.uniqueColorIds() > data.uniqueColors()){
+				lines.add(lines.removeLast().copy().append(" ("+data.uniqueColorIds()+" ").append(Text.translatable("soundCategory.block")).append(")"));
+			}
+		}
 		if(showTransparency && data.transparency()) lines.add(Text.literal("Transparency").formatted(Formatting.AQUA));
 		if(showNoobline && data.noobline()) lines.add(Text.literal("Noobline").formatted(Formatting.RED));
 		tooltipCache.put(item, lines);

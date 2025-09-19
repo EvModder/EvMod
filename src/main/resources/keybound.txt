@@ -48,6 +48,7 @@ map_metadata_in_tooltip: true
 map_metadata_in_tooltip.staircase: true
 map_metadata_in_tooltip.material: true
 map_metadata_in_tooltip.num_colors: true
+map_metadata_in_tooltip.num_color_ids: true
 map_metadata_in_tooltip.transparency: true
 map_metadata_in_tooltip.noobline: true
 map_metadata_in_tooltip.percent_carpet: true
@@ -114,7 +115,7 @@ publish_my_ignore_list: true
 add_other_ignore_lists: [34471e8d-d0c5-47b9-b8e1-b5b9472affa4, 0e314b60-29c7-4e35-bef3-3c652c8fb467]
 
 #Presses the nearest button if someone sends you this in /msg and you are next to their pearl
-msg_for_pearl_trigger: p
+msg_for_pearl_trigger: (?:p|epearl)
 
 
 #========== Chat/commands ==========#
