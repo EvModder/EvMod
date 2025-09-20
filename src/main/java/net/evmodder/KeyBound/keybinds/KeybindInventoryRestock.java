@@ -25,7 +25,7 @@ import net.minecraft.util.Identifier;
 //TODO: Shift-click (only 2 clicks intead of 3) when possible
 
 public final class KeybindInventoryRestock{
-	private final boolean LEAVE_1 = true;
+	public static final boolean LEAVE_1 = true;
 	private final boolean IS_WHITELIST;
 	private final Set<Item> itemList;
 
@@ -55,7 +55,8 @@ public final class KeybindInventoryRestock{
 		final boolean[] doneSlots = new boolean[slots.length];
 //		final boolean[] plannedSlots = new boolean[slots.length];
 		if(organizationLayouts == null || organizationLayouts.length == 0) Arrays.fill(doneSlots, true);
-		else for(KeybindInventoryOrganize kio : organizationLayouts)/* orEqualsArray(plannedSlots, */kio.checkDoneSlots(slots, doneSlots)/*)*/;
+		else for(KeybindInventoryOrganize kio : organizationLayouts)
+			/* orEqualsArray(plannedSlots, */kio.checkDoneSlots(slots, doneSlots, /*isInvScreen=*/false)/*)*/;
 
 		for(int i=slots.length-36; i<slots.length; ++i){
 			if(slots[i].isEmpty() || !doneSlots[i]) continue;
@@ -100,17 +101,14 @@ public final class KeybindInventoryRestock{
 			}
 			supply.put(slots[i].getItem(), totalInContainer);
 		}
-		Main.LOGGER.info("InvRestock clicks: "+clicks.size()+", layouts: "+organizationLayouts);
-		if(clicks.isEmpty()){
-			if(organizationLayouts != null) for(KeybindInventoryOrganize kio : organizationLayouts) kio.organizeInventory(/*RESTOCK_MODE=*/true);
-			return;
-		}
+
+//		if(organizationLayouts != null) for(KeybindInventoryOrganize kio : organizationLayouts) kio.organizeInventory(/*RESTOCK_ONLY=*/true);
+//		Main.LOGGER.info("InvRestock: clicks="+clicks.size()+", layouts="+(organizationLayouts==null ? 0 : organizationLayouts.length));
+
+		if(clicks.isEmpty()) return;
 
 		Main.LOGGER.info("InvRestock: Scheduled with "+clicks.size()+" clicks");
-		Main.clickUtils.executeClicks(clicks, _0->true, ()->{
-			Main.LOGGER.info("InvRestock: DONE!");
-			if(organizationLayouts != null) for(KeybindInventoryOrganize kio : organizationLayouts) kio.organizeInventory(/*RESTOCK_MODE=*/true);
-		});
+		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("InvRestock: DONE!"));
 	}
 
 	public List<Item> parseItemList(String[] list){

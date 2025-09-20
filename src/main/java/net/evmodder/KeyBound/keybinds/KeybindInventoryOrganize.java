@@ -2,6 +2,7 @@ package net.evmodder.KeyBound.keybinds;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import org.lwjgl.glfw.GLFW;
 import net.evmodder.EvLib.Pair;
@@ -10,6 +11,7 @@ import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
@@ -26,8 +28,8 @@ public final class KeybindInventoryOrganize{
 	}
 	private int findSlotWithItem(ItemStack[] slots, String itemName, boolean[] skipSlots){
 //		for(int slot=1; slot<=45; ++slot){
-		for(int slot=0; slot<slots.length; ++slot){
-			if(itemName.equals(getName(slots[slot])) && !skipSlots[slot]) return slot;
+		for(int slot=slots.length-1; slot>=0; --slot){
+			if(!skipSlots[slot] && itemName.equals(getName(slots[slot]))) return slot;
 		}
 		return -1;
 	}
@@ -68,13 +70,17 @@ public final class KeybindInventoryOrganize{
 		return stackToMove.getCount();
 	}
 
-	public boolean[] checkDoneSlots(ItemStack[] slots, boolean[] doneSlots){
+	public boolean[] checkDoneSlots(ItemStack[] slots, boolean[] doneSlots, boolean isInvScreen){
 		//HashSet<Integer> plannedSlots = new HashSet<>();
 		boolean[] plannedSlots = Arrays.copyOf(doneSlots, doneSlots.length);
 		for(Pair<Integer, Identifier> p : layoutMap){
-			final int dstSlot = p.a == -106 ? 45 : p.a;
+			if(!isInvScreen && (p.a == -106 || p.a == 45)) continue;
+			final int dstSlot = p.a == -106 ? 45 : p.a + (isInvScreen ? 0 : slots.length-45);
 			if(plannedSlots[dstSlot]) continue;
-			final String dstName = getName(slots[dstSlot]);
+			final String dstName;
+			if(isInvScreen || dstSlot >= slots.length-36) dstName = getName(slots[dstSlot]);
+			else if(dstSlot < slots.length-40){Main.LOGGER.warn("InvOrganize: Unable to restock Container->CraftingGrid");continue;}
+			else dstName = getName(MinecraftClient.getInstance().player.getInventory().getArmorStack(p.a-5));
 			if(p.b.getPath().equals(dstName)){
 				plannedSlots[dstSlot] = true;
 				doneSlots[dstSlot] = true;
@@ -91,7 +97,7 @@ public final class KeybindInventoryOrganize{
 	}
 
 	private int depth; // TODO: instead of running up to 3 times, just sort things properly the first time
-	void organizeInventory(final boolean RESTOCK_MODE){
+	public void organizeInventory(final boolean RESTOCK_ONLY, Runnable onComplete){
 		//Main.LOGGER.info("InvOrganize: keybind pressed");
 		if(Main.clickUtils.hasOngoingClicks()) return;
 
@@ -112,10 +118,23 @@ public final class KeybindInventoryOrganize{
 		final int HOTBAR_START = isInvScreen ? 36 : simSlots.length-9;
 		final int MAIN_INV_START = isInvScreen ? 9 : simSlots.length-36;
 
+		// In restock mode, don't bother sorting anything in the player's inventory
+//		if(RESTOCK_MODE) for(int i=MAIN_INV_START; i<simSlots.length; ++i) doneSlots[i] = true;
+		final HashMap<Item, Integer> occurances;
+		if(!isInvScreen && KeybindInventoryRestock.LEAVE_1){
+			// Reserve 1 slot of each unique item type
+			occurances = new HashMap<>();
+			for(int i=0; i<MAIN_INV_START; ++i){
+				Integer occ = occurances.get(simSlots[i].getItem());
+				occurances.put(simSlots[i].getItem(), occ == null ? 1 : occ+1);
+			}
+		}
+		else occurances = null;
+
 //		Main.LOGGER.info("InvOrganize: isInvScreen: "+isInvScreen+", numSlots: "+simSlots.length+", hotbarStart: "+HOTBAR_START+", invStart: "+MAIN_INV_START);
 
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
-		checkDoneSlots(simSlots, doneSlots);
+		checkDoneSlots(simSlots, doneSlots, isInvScreen);
 		boolean[] plannedSlots;
 		if(isInvScreen){
 			plannedSlots = Arrays.copyOf(doneSlots, doneSlots.length);
@@ -150,16 +169,16 @@ public final class KeybindInventoryOrganize{
 				doneSlots[dstSlot] = true;
 				plannedSlots[srcSlot] = false;
 			}
-			checkDoneSlots(simSlots, doneSlots);
+			checkDoneSlots(simSlots, doneSlots, isInvScreen);
 		}
 
-		if(!RESTOCK_MODE){
+		if(!RESTOCK_ONLY){
 			// Sort items which are starting FROM the hotbar
 			plannedSlots = Arrays.copyOf(doneSlots, doneSlots.length);
 			for(Pair<Integer, Identifier> p : layoutMap){
 				if(!isInvScreen && (p.a == -106 || p.a == 45)) continue;
 				final int dstSlot = p.a == -106 ? 45 : p.a + MAIN_INV_START-9;
-	//			if(dstSlot >= 36) usedHotbarAndOffhandSlots[dstSlot-36] = true;
+//				if(dstSlot >= 36) usedHotbarAndOffhandSlots[dstSlot-36] = true;
 				if(plannedSlots[dstSlot]) continue;
 				if(p.b.getPath().equals(getName(simSlots[dstSlot]))){
 					plannedSlots[dstSlot] = doneSlots[dstSlot] = true;
@@ -182,7 +201,7 @@ public final class KeybindInventoryOrganize{
 				doneSlots[dstSlot] = true;
 				plannedSlots[srcSlot] = false;
 			}
-			checkDoneSlots(simSlots, doneSlots);
+			checkDoneSlots(simSlots, doneSlots, isInvScreen);
 		}
 
 		// Remove junk from hotbar slots
@@ -194,7 +213,7 @@ public final class KeybindInventoryOrganize{
 					clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
 				}
 			}
-			checkDoneSlots(simSlots, doneSlots);
+			checkDoneSlots(simSlots, doneSlots, isInvScreen);
 		}
 
 		// Sort upper-inventory items
@@ -205,6 +224,7 @@ public final class KeybindInventoryOrganize{
 			if(!isInvScreen && (p.a == -106 || p.a == 45)) continue;
 			final int dstSlot = p.a == -106 ? 45 : p.a + MAIN_INV_START-9;
 			if(plannedSlots[dstSlot]) continue;
+			if(RESTOCK_ONLY && !simSlots[dstSlot].isEmpty()) continue;
 			if(p.b.getPath().equals(getName(simSlots[dstSlot]))){
 				plannedSlots[dstSlot] = doneSlots[dstSlot] = true;
 				continue;
@@ -221,8 +241,23 @@ public final class KeybindInventoryOrganize{
 				continue;
 			}
 			final int srcSlot = findSlotWithItem(simSlots, p.b.getPath(), doneSlots);
-			if(srcSlot == -1 || (RESTOCK_MODE && srcSlot >= MAIN_INV_START)) continue;
-
+			if(srcSlot == -1) continue;
+			if(RESTOCK_ONLY && srcSlot >= MAIN_INV_START) continue;
+			if(srcSlot < MAIN_INV_START && occurances != null){ // Avoid taking 100% of any item type from src container
+				Integer occ = occurances.get(simSlots[srcSlot].getItem());
+				assert occ != null && occ > 0;
+				if(occ > 1) occurances.put(simSlots[srcSlot].getItem(), occ-1);
+				else{
+					final int count = simSlots[srcSlot].getCount();
+					if(count < 2) continue;
+					clicks.add(new ClickEvent(srcSlot, count <= 3 ? 1 : 0, SlotActionType.PICKUP));
+					if(count > 3) clicks.add(new ClickEvent(srcSlot, 1, SlotActionType.PICKUP));
+					clicks.add(new ClickEvent(dstSlot, 0, SlotActionType.PICKUP));
+					simSlots[srcSlot].setCount(count/2);
+					doneSlots[dstSlot] = true;
+					continue;
+				}
+			}
 //			client.player.sendMessage(Text.literal("Click: "+srcSlot+"->"+dstSlot+" UpperInv->Hotbar->UpperInv"), false);
 			clicks.add(new ClickEvent(srcSlot, hb, SlotActionType.SWAP));
 			clicks.add(new ClickEvent(dstSlot, hb, SlotActionType.SWAP));
@@ -235,20 +270,36 @@ public final class KeybindInventoryOrganize{
 			doneSlots[dstSlot] = true;
 			plannedSlots[srcSlot] = false;
 		}
-		checkDoneSlots(simSlots, doneSlots);
 
 		// Fill hotbar slots
 		for(Pair<Integer, Identifier> p : layoutMap){
 			if(!isInvScreen && (p.a == -106 || p.a == 45)) continue;
 			final int dstSlot = p.a == -106 ? 45 : p.a + MAIN_INV_START-9;
 			if(doneSlots[dstSlot]) continue;
+			if(RESTOCK_ONLY && !simSlots[dstSlot].isEmpty()) continue;
 			//if(needEarlier.contains(p.b.getPath())) continue;
 			if(p.b.getPath().equals(getName(simSlots[dstSlot]))){doneSlots[dstSlot]=true; continue;}
 			//needEarlier.add(p.b.getPath());
 
 			if(dstSlot < HOTBAR_START) continue; // items going INTO hotbar/offhand
 			final int srcSlot = findSlotWithItem(simSlots, p.b.getPath(), doneSlots);
-			if(srcSlot == -1 || (RESTOCK_MODE && srcSlot >= MAIN_INV_START)) continue;
+			if(srcSlot == -1) continue;
+			if(RESTOCK_ONLY && srcSlot >= MAIN_INV_START) continue;
+			if(srcSlot < MAIN_INV_START && occurances != null){ // Avoid taking 100% of any item type from src container
+				Integer occ = occurances.get(simSlots[srcSlot].getItem());
+				assert occ != null && occ > 0;
+				if(occ > 1) occurances.put(simSlots[srcSlot].getItem(), occ-1);
+				else{
+					final int count = simSlots[srcSlot].getCount();
+					if(count < 2) continue;
+					clicks.add(new ClickEvent(srcSlot, count <= 3 ? 1 : 0, SlotActionType.PICKUP));
+					if(count > 3) clicks.add(new ClickEvent(srcSlot, 1, SlotActionType.PICKUP));
+					clicks.add(new ClickEvent(dstSlot, 0, SlotActionType.PICKUP));
+					simSlots[srcSlot].setCount(count/2);
+					doneSlots[dstSlot] = true;
+					continue;
+				}
+			}
 //			client.player.sendMessage(Text.literal("Click: "+srcSlot+"->"+dstSlot+" UpperInv->Hotbar"), false);
 			if(isInvScreen && dstSlot == 45) clicks.add(new ClickEvent(srcSlot, 40, SlotActionType.SWAP));
 			else clicks.add(new ClickEvent(srcSlot, dstSlot-HOTBAR_START, SlotActionType.SWAP));
@@ -261,9 +312,25 @@ public final class KeybindInventoryOrganize{
 		if(!isInvScreen) for(Pair<Integer, Identifier> p : layoutMap){
 			if(p.a == -106 || p.a == 45) continue;
 			final int dstSlot = p.a + MAIN_INV_START-9;
+			if(doneSlots[dstSlot]) continue;
 			if(dstSlot >= MAIN_INV_START) continue;
 			final int srcSlot = findSlotWithItem(simSlots, p.b.getPath(), doneSlots);
 			if(srcSlot == -1 || srcSlot >= MAIN_INV_START) continue;
+			if(srcSlot < MAIN_INV_START && occurances != null){ // Avoid taking 100% of any item type from src container
+				Integer occ = occurances.get(simSlots[srcSlot].getItem());
+				assert occ != null && occ > 0;
+				if(occ > 1) occurances.put(simSlots[srcSlot].getItem(), occ-1);
+				else{
+					final int count = simSlots[srcSlot].getCount();
+					if(count < 2) continue;
+					clicks.add(new ClickEvent(srcSlot, count <= 3 ? 1 : 0, SlotActionType.PICKUP));
+					if(count > 3) clicks.add(new ClickEvent(srcSlot, 1, SlotActionType.PICKUP));
+					clicks.add(new ClickEvent(dstSlot, 0, SlotActionType.PICKUP));
+					simSlots[srcSlot].setCount(count/2);
+					doneSlots[dstSlot] = true;
+					continue;
+				}
+			}
 //			client.player.sendMessage(Text.literal("Click: "+srcSlot+" Container->Inventory (armor slot unavailable)"), false);
 			clicks.add(new ClickEvent(srcSlot, 0, SlotActionType.QUICK_MOVE));
 		}
@@ -272,19 +339,23 @@ public final class KeybindInventoryOrganize{
 		if(numClicks == 0){
 			depth = 0;
 //			Main.LOGGER.info("InvOrganize: no clicks required");
+			if(onComplete != null) onComplete.run();
 			return;
 		}
 		Main.clickUtils.executeClicks(clicks,
-				//_->true,
-				_0->{
-					//client.player.sendMessage(Text.literal("click "+c.slotId()+" "+c.button()+" "+c.actionType()), false);
-					return true;
-				},
+				_0->true,
+//				_0->{
+//					//client.player.sendMessage(Text.literal("click "+c.slotId()+" "+c.button()+" "+c.actionType()), false);
+//					return true;
+//				},
 				()->{
-					//client.player.sendMessage(Text.literal("InvOrganize: done! clicks required: "+numClicks), false);
-					Main.LOGGER.info("InvOrganize"+(RESTOCK_MODE?"(Restock)":"")+": done! clicks required: "+numClicks);
-					if(++depth == 3 || RESTOCK_MODE){depth = 0; return;} // Run at most 3 times
-					organizeInventory(false); // Try running again in case of straggler items
+					client.player.sendMessage(Text.literal("InvOrganize: done! clicks required: "+numClicks), false);
+					Main.LOGGER.info("InvOrganize: done! clicks required: "+numClicks);
+					if(++depth <= 3 && !RESTOCK_ONLY) organizeInventory(false, onComplete); // Try running again in case of straggler items
+					else{
+						depth = 0;
+						if(onComplete != null) onComplete.run();
+					}
 				});
 	}
 
@@ -304,6 +375,6 @@ public final class KeybindInventoryOrganize{
 		)
 		.filter(p -> p != null)
 		.toList();
-		new Keybind(keybind_name, ()->organizeInventory(false), HandledScreen.class::isInstance, GLFW.GLFW_KEY_E);
+		new Keybind(keybind_name, ()->organizeInventory(false, null), HandledScreen.class::isInstance, GLFW.GLFW_KEY_E);
 	}
 }

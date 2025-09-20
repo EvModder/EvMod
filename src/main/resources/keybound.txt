@@ -137,7 +137,7 @@ keybind.aie_travel_helper: true
 
 keybind.inventory_restock: true
 keybind.inventory_restock.auto: true
-keybind.inventory_restock.auto.matching_inventory: [EvInv]
+keybind.inventory_restock.auto.matching_inventory: [EvInvSimple]
 #keybind.inventory_restock.blacklist: [ender_chest, filled_map]
 keybind.inventory_restock.whitelist: [
   firework_rocket, end_crystal, respawn_anchor, obsidian, ender_pearl, chorus_fruit, wind_charge, experience_bottle,
@@ -176,4 +176,22 @@ keybind.inventory_organize.EvInv: [
 
   # Fill extra hotbar slots with crystals
   36:end_crystal, 37:end_crystal, 38:end_crystal, 39:end_crystal, 40:end_crystal, 41:end_crystal, 42:end_crystal
+]
+keybind.inventory_organize.EvInvSimple: [
+  # Armor
+  5:carved_pumpkin,
+  6:elytra,
+  5:netherite_helmet, 6:netherite_chestplate, 7:netherite_leggings, 8:netherite_boots,
+  5:diamond_helmet, 6:diamond_chestplate, 7:diamond_leggings, 8:diamond_boots,
+
+  # Offhand
+  45:totem_of_undying,
+
+  # Hotbar LHS
+  36:netherite_sword, 36:diamond_sword, 36:netherite_axe, 36:diamond_axe,
+  37:netherite_pickaxe, 37:diamond_pickaxe,
+  38:netherite_axe, 38:diamond_axe, 38:netherite_shovel, 38:diamond_shovel, 38:firework_rocket,
+
+  # Hotbar RHS
+  44:golden_carrot, 44:cooked_beef, 44:enchanted_golden_apple,
 ]
