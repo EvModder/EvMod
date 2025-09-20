@@ -29,7 +29,12 @@ public final class KeybindInventoryRestock{
 	private final boolean IS_WHITELIST;
 	private final Set<Item> itemList;
 
-	public final void doRestock(){
+//	private final void orEqualsArray(boolean[] source, boolean[] input){
+//		assert source.length == input.length;
+//		for(int i=0; i<source.length; ++i) source[i] |= input[i];
+//	}
+
+	public final void doRestock(KeybindInventoryOrganize[] organizationLayouts){
 		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("InvRestock cancelled: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -41,12 +46,19 @@ public final class KeybindInventoryRestock{
 
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		HashMap<Item, Integer> supply = new HashMap<>();
+
+		// TODO: hardcoded assumption that slots < len-36 are from the currently viewed container
 		for(int i=slots.length-37; i>=0; --i){
 			if(slots[i].getMaxCount() > 1) supply.put(slots[i].getItem(), supply.getOrDefault(slots[i].getItem(), 0)+slots[i].getCount());
 		}
 
+		final boolean[] doneSlots = new boolean[slots.length];
+//		final boolean[] plannedSlots = new boolean[slots.length];
+		if(organizationLayouts == null || organizationLayouts.length == 0) Arrays.fill(doneSlots, true);
+		else for(KeybindInventoryOrganize kio : organizationLayouts)/* orEqualsArray(plannedSlots, */kio.checkDoneSlots(slots, doneSlots)/*)*/;
+
 		for(int i=slots.length-36; i<slots.length; ++i){
-			if(slots[i].isEmpty()) continue;
+			if(slots[i].isEmpty() || !doneSlots[i]) continue;
 			final int maxCount = slots[i].getMaxCount();
 			if(slots[i].getCount() >= maxCount) continue;
 			if(IS_WHITELIST != itemList.contains(slots[i].getItem())) continue;
@@ -56,10 +68,19 @@ public final class KeybindInventoryRestock{
 			for(int j=slots.length-37; j>=0; --j){
 				if(!ItemStack.areItemsAndComponentsEqual(slots[i], slots[j])) continue;
 //				Main.LOGGER.info("Adding clicks to restock "+slots[i].getItem().getName().getString()+" from slot "+j+" -> "+i);
-				clicks.add(new ClickEvent(j, 0, SlotActionType.PICKUP)); // Pickup all
 
 				int combinedCount = slots[i].getCount() + slots[j].getCount();
-				if(combinedCount <= maxCount && (totalInContainer -= slots[j].getCount()) == 0 && LEAVE_1){
+				final boolean needToLeave1 = combinedCount <= maxCount && (totalInContainer -= slots[j].getCount()) == 0 && LEAVE_1;
+
+				if(needToLeave1 || combinedCount != maxCount) clicks.add(new ClickEvent(j, 0, SlotActionType.PICKUP)); // Pickup all
+				else{
+					clicks.add(new ClickEvent(j, 0, SlotActionType.QUICK_MOVE)); // Shift-click
+					totalInContainer -= slots[j].getCount();
+					slots[i].setCount(maxCount);
+					slots[j] = ItemStack.EMPTY;
+					break;
+				}
+				if(needToLeave1){
 					clicks.add(new ClickEvent(j, 1, SlotActionType.PICKUP)); // Leave 1
 					--combinedCount;
 				}
@@ -79,10 +100,17 @@ public final class KeybindInventoryRestock{
 			}
 			supply.put(slots[i].getItem(), totalInContainer);
 		}
-		if(clicks.isEmpty()) return;
+		Main.LOGGER.info("InvRestock clicks: "+clicks.size()+", layouts: "+organizationLayouts);
+		if(clicks.isEmpty()){
+			if(organizationLayouts != null) for(KeybindInventoryOrganize kio : organizationLayouts) kio.organizeInventory(/*RESTOCK_MODE=*/true);
+			return;
+		}
 
 		Main.LOGGER.info("InvRestock: Scheduled with "+clicks.size()+" clicks");
-		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("InvRestock: DONE!"));
+		Main.clickUtils.executeClicks(clicks, _0->true, ()->{
+			Main.LOGGER.info("InvRestock: DONE!");
+			if(organizationLayouts != null) for(KeybindInventoryOrganize kio : organizationLayouts) kio.organizeInventory(/*RESTOCK_MODE=*/true);
+		});
 	}
 
 	public List<Item> parseItemList(String[] list){
@@ -108,6 +136,6 @@ public final class KeybindInventoryRestock{
 				Main.LOGGER.warn("InvRestock: BOTH whitelist/blacklist were defined in the config");
 			}
 		}
-		new Keybind("inventory_restock", this::doRestock, s->s instanceof HandledScreen && s instanceof InventoryScreen == false, GLFW.GLFW_KEY_R);
+		new Keybind("inventory_restock", ()->doRestock(null), s->s instanceof HandledScreen && s instanceof InventoryScreen == false, GLFW.GLFW_KEY_R);
 	}
 }

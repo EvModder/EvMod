@@ -137,6 +137,7 @@ keybind.aie_travel_helper: true
 
 keybind.inventory_restock: true
 keybind.inventory_restock.auto: true
+keybind.inventory_restock.auto.matching_inventory: [EvInv]
 #keybind.inventory_restock.blacklist: [ender_chest, filled_map]
 keybind.inventory_restock.whitelist: [
   firework_rocket, end_crystal, respawn_anchor, obsidian, ender_pearl, chorus_fruit, wind_charge, experience_bottle,

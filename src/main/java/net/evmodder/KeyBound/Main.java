@@ -17,6 +17,7 @@ strictfp
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -161,7 +162,8 @@ once arrangement is found
 		boolean uploadIgnoreList=false;
 		int mapWallBorderColor1=-14236, mapWallBorderColor2=-8555656, mapWallUpscale=128;
 		String[] downloadIgnoreLists=null;
-		String[] restockBlacklist=null, restockWhitelist=null;
+		String[] restockBlacklist=null, restockWhitelist=null, restockAutoInvSchemes=null;
+		HashMap<String, KeybindInventoryOrganize> inventoryOrganizationSchemes = new HashMap<>();
 
 		String[] temp_evt_msgs=null; long temp_evt_ts=0; String evt_account="";
 		KeybindEjectJunk ejectJunk = null;
@@ -173,7 +175,8 @@ once arrangement is found
 			if(key.startsWith("keybind.chat_msg.")) KeybindsSimple.registerChatKeybind(key.substring(8), value);
 			else if(key.startsWith("keybind.remote_msg.")) remoteMessages.put(key.substring(8), value);
 			else if(key.startsWith("keybind.snap_angle.")) KeybindsSimple.registerSnapAngleKeybind(key.substring(8), value);
-			else if(key.startsWith("keybind.inventory_organize.")) new KeybindInventoryOrganize(key.substring(8), value.replaceAll("\\s",""));
+			else if(key.startsWith("keybind.inventory_organize."))
+				inventoryOrganizationSchemes.put(key.substring(27), new KeybindInventoryOrganize(key.substring(8), value.replaceAll("\\s","")));
 			else switch(key){
 				// Database
 				case "client_id": clientId = Integer.parseInt(value); break;
@@ -270,11 +273,13 @@ once arrangement is found
 				case "keybind.toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
 //				case "keybind.smart_inventory_craft": if(!value.equalsIgnoreCase("false")) new KeybindSmartInvCraft(); break;
 				case "keybind.inventory_restock": keybindRestock=!value.equalsIgnoreCase("false"); break;
-				case "keybind.inventory_restock.blacklist": if(value.startsWith("[")) restockBlacklist
-						= value.substring(1, value.length()-1).split("\\s*,\\s*"); break;
-				case "keybind.inventory_restock.whitelist": if(value.startsWith("[")) restockWhitelist
-						= value.substring(1, value.length()-1).split("\\s*,\\s*"); break;
+				case "keybind.inventory_restock.blacklist":
+					if(value.startsWith("[")) restockBlacklist = value.substring(1, value.length()-1).split("\\s*,\\s*"); break;
+				case "keybind.inventory_restock.whitelist":
+					if(value.startsWith("[")) restockWhitelist = value.substring(1, value.length()-1).split("\\s*,\\s*"); break;
 				case "keybind.inventory_restock.auto": inventoryRestockAuto=!value.equalsIgnoreCase("false"); break;
+				case "keybind.inventory_restock.auto.matching_inventory":
+					if(value.startsWith("[")) restockAutoInvSchemes = value.substring(1, value.length()-1).split("\\s*,\\s*"); break;
 				case "keybind.ebounce_travel_helper": keybindEbounceTravelHelper = !value.equalsIgnoreCase("false"); break;
 				case "keybind.aie_travel_helper": if(!value.equalsIgnoreCase("false")) new KeybindAIETravelHelper(); break;
 				case "scroll_order": {
@@ -306,7 +311,11 @@ once arrangement is found
 		if(keybindEbounceTravelHelper) new KeybindEbounceTravelHelper(ejectJunk);
 		if(keybindRestock){
 			inventoryRestock = new KeybindInventoryRestock(restockBlacklist, restockWhitelist);
-			if(inventoryRestockAuto) ClientTickEvents.END_CLIENT_TICK.register(new ContainerOpenListener(inventoryRestock)::onUpdateTick);
+			if(inventoryRestockAuto){
+				final KeybindInventoryOrganize[] selectedInvOrganizations = restockAutoInvSchemes == null ? null :
+					Arrays.stream(restockAutoInvSchemes).map(inventoryOrganizationSchemes::get).filter(Objects::nonNull).toArray(KeybindInventoryOrganize[]::new);
+				ClientTickEvents.END_CLIENT_TICK.register(new ContainerOpenListener(inventoryRestock, selectedInvOrganizations)::onUpdateTick);
+			}
 		}
 		//new KeybindSpamclick();
 
