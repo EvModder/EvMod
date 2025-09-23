@@ -16,7 +16,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
 import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
 public final class KeybindInventoryOrganize{
@@ -104,6 +103,10 @@ public final class KeybindInventoryOrganize{
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof HandledScreen hs)){
 			Main.LOGGER.warn("InvOrganize: not in InventoryScreen");
+			return;
+		}
+		if(hs.getScreenHandler().slots.size() < 46){
+			Main.LOGGER.warn("InvOrganize: Inventory too small to restock from (due to limitations in current code");
 			return;
 		}
 		final boolean isInvScreen = client.currentScreen instanceof InventoryScreen;
@@ -236,7 +239,7 @@ public final class KeybindInventoryOrganize{
 			}
 
 			if(dstSlot >= HOTBAR_START) continue; // Sort items going INTO hotbar/offhand last
-			if(dstSlot < MAIN_INV_START){ // Armor slot that got missed during armor sort section! Likely not an invScreen
+			if(dstSlot < MAIN_INV_START){ // Armor slot that got missed during armor sort section! Likely not in an invScreen
 				assert !isInvScreen;
 				continue;
 			}
@@ -248,13 +251,13 @@ public final class KeybindInventoryOrganize{
 				assert occ != null && occ > 0;
 				if(occ > 1) occurances.put(simSlots[srcSlot].getItem(), occ-1);
 				else{
-					final int count = simSlots[srcSlot].getCount();
-					if(count < 2) continue;
-					clicks.add(new ClickEvent(srcSlot, count <= 3 ? 1 : 0, SlotActionType.PICKUP));
-					if(count > 3) clicks.add(new ClickEvent(srcSlot, 1, SlotActionType.PICKUP));
-					clicks.add(new ClickEvent(dstSlot, 0, SlotActionType.PICKUP));
-					simSlots[srcSlot].setCount(count/2);
-					doneSlots[dstSlot] = true;
+//					final int count = simSlots[srcSlot].getCount();
+//					if(count < 2) continue;
+//					clicks.add(new ClickEvent(srcSlot, count <= 3 ? 1 : 0, SlotActionType.PICKUP));
+//					if(count > 3) clicks.add(new ClickEvent(srcSlot, 1, SlotActionType.PICKUP));
+//					clicks.add(new ClickEvent(dstSlot, 0, SlotActionType.PICKUP));
+//					simSlots[srcSlot].setCount(count/2);
+//					doneSlots[dstSlot] = true;
 					continue;
 				}
 			}
@@ -290,13 +293,13 @@ public final class KeybindInventoryOrganize{
 				assert occ != null && occ > 0;
 				if(occ > 1) occurances.put(simSlots[srcSlot].getItem(), occ-1);
 				else{
-					final int count = simSlots[srcSlot].getCount();
-					if(count < 2) continue;
-					clicks.add(new ClickEvent(srcSlot, count <= 3 ? 1 : 0, SlotActionType.PICKUP));
-					if(count > 3) clicks.add(new ClickEvent(srcSlot, 1, SlotActionType.PICKUP));
-					clicks.add(new ClickEvent(dstSlot, 0, SlotActionType.PICKUP));
-					simSlots[srcSlot].setCount(count/2);
-					doneSlots[dstSlot] = true;
+//					final int count = simSlots[srcSlot].getCount();
+//					if(count < 2) continue;
+//					clicks.add(new ClickEvent(srcSlot, count <= 3 ? 1 : 0, SlotActionType.PICKUP));
+//					if(count > 3) clicks.add(new ClickEvent(srcSlot, 1, SlotActionType.PICKUP));
+//					clicks.add(new ClickEvent(dstSlot, 0, SlotActionType.PICKUP));
+//					simSlots[srcSlot].setCount(count/2);
+//					doneSlots[dstSlot] = true;
 					continue;
 				}
 			}
@@ -311,9 +314,8 @@ public final class KeybindInventoryOrganize{
 		// Handle leftover armor for container -> inventory
 		if(!isInvScreen) for(Pair<Integer, Identifier> p : layoutMap){
 			if(p.a == -106 || p.a == 45) continue;
-			final int dstSlot = p.a + MAIN_INV_START-9;
-			if(doneSlots[dstSlot]) continue;
-			if(dstSlot >= MAIN_INV_START) continue;
+			if(p.a > 8) continue;
+			if(!client.player.getInventory().getArmorStack(3 - (p.a - 5)).isEmpty()) continue; // -5 to get armor index, 3-x to reverse order
 			final int srcSlot = findSlotWithItem(simSlots, p.b.getPath(), doneSlots);
 			if(srcSlot == -1 || srcSlot >= MAIN_INV_START) continue;
 			if(srcSlot < MAIN_INV_START && occurances != null){ // Avoid taking 100% of any item type from src container
@@ -321,13 +323,15 @@ public final class KeybindInventoryOrganize{
 				assert occ != null && occ > 0;
 				if(occ > 1) occurances.put(simSlots[srcSlot].getItem(), occ-1);
 				else{
-					final int count = simSlots[srcSlot].getCount();
-					if(count < 2) continue;
-					clicks.add(new ClickEvent(srcSlot, count <= 3 ? 1 : 0, SlotActionType.PICKUP));
-					if(count > 3) clicks.add(new ClickEvent(srcSlot, 1, SlotActionType.PICKUP));
-					clicks.add(new ClickEvent(dstSlot, 0, SlotActionType.PICKUP));
-					simSlots[srcSlot].setCount(count/2);
-					doneSlots[dstSlot] = true;
+//					final int count = simSlots[srcSlot].getCount();
+//					if(count < 2) continue; // Most armor is unstackable and will continue here, but carved_pumpkins can be handled below
+//					if(count <= 3) clicks.add(new ClickEvent(srcSlot, 1, SlotActionType.PICKUP)); // Pickup half (leaving one)
+//					else{
+//						clicks.add(new ClickEvent(srcSlot, 0, SlotActionType.PICKUP)); // Pickup all
+//						clicks.add(new ClickEvent(srcSlot, 1, SlotActionType.PICKUP)); // Put back one
+//					}
+//					clicks.add(new ClickEvent(srcSlot, 0, SlotActionType.QUICK_MOVE)); // Shift-click the one
+//					clicks.add(new ClickEvent(srcSlot, 0, SlotActionType.PICKUP)); // Put back rest
 					continue;
 				}
 			}
@@ -349,7 +353,7 @@ public final class KeybindInventoryOrganize{
 //					return true;
 //				},
 				()->{
-					client.player.sendMessage(Text.literal("InvOrganize: done! clicks required: "+numClicks), false);
+//					client.player.sendMessage(Text.literal("InvOrganize: done! clicks required: "+numClicks), false);
 					Main.LOGGER.info("InvOrganize: done! clicks required: "+numClicks);
 					if(++depth <= 3 && !RESTOCK_ONLY) organizeInventory(false, onComplete); // Try running again in case of straggler items
 					else{
