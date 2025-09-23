@@ -459,7 +459,7 @@ public final class KeybindMapCopy{
 			c->{
 				// Don't start individual copy operation unless we can fully knock it out (unless impossible to do in 1 go)
 				final Integer clicksNeeded = reserveClicks.get(c);
-				if(clicksNeeded == null || clicksNeeded <= Main.clickUtils.MAX_CLICKS - Main.clickUtils.addClick(null)) return true;
+				if(clicksNeeded == null || clicksNeeded <= Main.clickUtils.calcAvailableClicks()) return true;
 				return false; // Wait for clicks
 			},
 			()->{

@@ -22,24 +22,29 @@ public class ClickUtils{
 	private int tickDurIndex, sumClicksInDuration;
 	private long lastTick;
 	public final int OUTTA_CLICKS_COLOR = 15764490, SYNC_ID_CHANGED_COLOR = 16733525;
+	private final double C_PER_T;
 
 	public ClickUtils(final int MAX_CLICKS, int FOR_TICKS){
-		if(MAX_CLICKS > 100_000){
-			Main.LOGGER.error("InventoryUtils() initialized with insanely-large click-limit: "+MAX_CLICKS+", treating it as limitless");
+		if(MAX_CLICKS > 100_000 || MAX_CLICKS <= 0){
+			if(MAX_CLICKS != 0) Main.LOGGER.error("InventoryUtils() initialized with "
+					+(MAX_CLICKS < 0 ? "invalid" : "insanely-large")+" click-limit: "+MAX_CLICKS+", treating it as limitless");
 			this.MAX_CLICKS = Integer.MAX_VALUE;
+			C_PER_T = Double.MAX_VALUE;
 			tickDurationArr = null;
 			return;
 		}
+		assert FOR_TICKS > 0;
 		if(FOR_TICKS > 72_000){//1hr irl
 			Main.LOGGER.error("InventoryUtils() initialized with insanely-large tick-limiter duration: "+FOR_TICKS+", ignoring and using 72k instead");
 			FOR_TICKS = 72_000;
 		}
 		this.MAX_CLICKS = MAX_CLICKS;
+		C_PER_T = (double)MAX_CLICKS/(double)FOR_TICKS;
 		tickDurationArr = new int[FOR_TICKS];
 		lastTick = System.currentTimeMillis()/50l;
 	}
 
-	public int addClick(SlotActionType type){
+	public int calcAvailableClicks(){
 		if(tickDurationArr == null) return 0;
 		final long curTick = System.currentTimeMillis()/50l;
 		if(curTick - lastTick >= tickDurationArr.length){
@@ -53,11 +58,26 @@ public class ClickUtils{
 			tickDurationArr[tickDurIndex] = 0;
 			++lastTick;
 		}
-		if(type != null && sumClicksInDuration < MAX_CLICKS){ // null is a special flag to update/remove old clicks without adding a new click
-			++tickDurationArr[tickDurIndex];
-			++sumClicksInDuration;
+		return MAX_CLICKS - sumClicksInDuration;
+	}
+	public void addClick(SlotActionType type){
+		assert type != null; //TODO: type is unused
+		if(tickDurationArr == null) return;
+//		calcAvailableClicks(); // TODO: anywhere addClick() is called, calcAvailableClicks() MUST be called immediately before
+		++tickDurationArr[tickDurIndex];
+		++sumClicksInDuration;
+	}
+
+	private int calcRemainingTicks(int clicksToExecute){
+		int ticksLeft = 0;
+		int simTickDurIndex = tickDurIndex;
+		for(int i=0; i<tickDurationArr.length && clicksToExecute > 0; ++i){ // Do 1 loop around the array
+			if(++simTickDurIndex == tickDurationArr.length) simTickDurIndex = 0;
+			clicksToExecute -= tickDurationArr[simTickDurIndex];
+			++ticksLeft;
 		}
-		return sumClicksInDuration;
+		ticksLeft += Math.ceil(clicksToExecute/C_PER_T);
+		return ticksLeft;
 	}
 
 	private boolean waitedForClicks, clickOpOngoing;
@@ -77,56 +97,54 @@ public class ClickUtils{
 		}
 		waitedForClicks = false;
 		clickOpOngoing = true;
-		new Timer().schedule(new TimerTask(){
-			@Override public void run(){
-				final MinecraftClient client = MinecraftClient.getInstance();
-				if(client.player == null){
-					Main.LOGGER.error("executeClicks() failed due to null player! num clicks in arr: "+sumClicksInDuration);
-					cancel(); clickOpOngoing=false; onComplete.run(); return;
-				}
-				if(client.player.currentScreenHandler.syncId != syncId){
-					Main.LOGGER.error("executeClicks() failed due to syncId changing mid-operation ("+syncId+" -> "+client.player.currentScreenHandler.syncId+")");
-					client.player.sendMessage(Text.literal("Clicks cancelled: container ID changed").withColor(SYNC_ID_CHANGED_COLOR), true);
-					cancel(); clickOpOngoing=false; onComplete.run(); return;
+		new Timer().schedule(new TimerTask(){@Override public void run(){
+			final MinecraftClient client = MinecraftClient.getInstance();
+			if(client.player == null){
+				Main.LOGGER.error("executeClicks() failed due to null player! num clicks in arr: "+sumClicksInDuration);
+				cancel(); clickOpOngoing=false; onComplete.run(); return;
+			}
+			if(client.player.currentScreenHandler.syncId != syncId){
+				Main.LOGGER.error("executeClicks() failed due to syncId changing mid-operation ("+syncId+" -> "+client.player.currentScreenHandler.syncId+")");
+				client.player.sendMessage(Text.literal("Clicks cancelled: container ID changed").withColor(SYNC_ID_CHANGED_COLOR), true);
+				cancel(); clickOpOngoing=false; onComplete.run(); return;
+			}
+			if(clicks.isEmpty()){
+				if(waitedForClicks) client.player.sendMessage(Text.literal("Clicks finished early!"), true);
+				cancel(); clickOpOngoing=false; onComplete.run(); return;
+			}
+			//final int availableClicks = MAX_CLICKS - addClick(null);
+			//for(int i=0; i<availableClicks; ++i){
+			client.executeSync(()->{
+//				double clicksPerTick = ((double)MAX_CLICKS)/tickDurationArr.length;
+//				double secondsleft = (clicks.size()/clicksPerTick)/20;
+				while(calcAvailableClicks() > 0 && !clicks.isEmpty()){
+					if(!canProceed.apply(clicks.peek())) break;//{waitedForClicks = true; return;}
+					ClickEvent click = clicks.remove();
+					try{
+						//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
+						client.interactionManager.clickSlot(syncId, click.slotId, click.button, click.actionType, client.player);
+					}
+					catch(NullPointerException e){
+						Main.LOGGER.error("executeClicks() failed due to null client. Clicks left: "+clicks.size()+", sumClicksInDuration: "+sumClicksInDuration);
+						clicks.clear();
+					}
 				}
 				if(clicks.isEmpty()){
-					if(waitedForClicks) client.player.sendMessage(Text.literal("Clicks finished early!"), true);
-					cancel(); clickOpOngoing=false; onComplete.run(); return;
+					cancel();
+					if(clickOpOngoing){
+						clickOpOngoing=false;
+						if(waitedForClicks) client.player.sendMessage(Text.literal("Clicks done!"), true);
+						onComplete.run();
+					}
+					return;
 				}
-				//final int availableClicks = MAX_CLICKS - addClick(null);
-				//for(int i=0; i<availableClicks; ++i){
-				client.executeSync(()->{
-//					double clicksPerTick = ((double)MAX_CLICKS)/tickDurationArr.length;
-//					double secondsleft = (clicks.size()/clicksPerTick)/20;
-					while(addClick(null) < MAX_CLICKS && !clicks.isEmpty()){
-						if(!canProceed.apply(clicks.peek())) break;//{waitedForClicks = true; return;}
-						ClickEvent click = clicks.remove();
-						try{
-							//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
-							client.interactionManager.clickSlot(syncId, click.slotId, click.button, click.actionType, client.player);
-						}
-						catch(NullPointerException e){
-							Main.LOGGER.error("executeClicks() failed due to null client. Clicks left: "+clicks.size()+", sumClicksInDuration: "+sumClicksInDuration);
-							clicks.clear();
-						}
-					}
-					if(clicks.isEmpty()){
-						cancel();
-						if(clickOpOngoing){
-							clickOpOngoing=false;
-							if(waitedForClicks) client.player.sendMessage(Text.literal("Clicks done!"), true);
-							onComplete.run();
-						}
-						return;
-					}
-					waitedForClicks = true;
-					final int msLeft = tickDurationArr == null ? 0 : (int)(tickDurationArr.length
-							+ clicks.size()/(((double)MAX_CLICKS)/tickDurationArr.length))*50;
-					client.player.sendMessage(Text.literal("Waiting for available clicks... ("+clicks.size()//+"c"
-							+(msLeft > 5000 ? ", ~"+TextUtils.formatTime(msLeft) : "")+")").withColor(OUTTA_CLICKS_COLOR), true);
-				});
-			}
-		}, 1l, 27l/*51l*/);
+				assert tickDurationArr != null;
+				waitedForClicks = true;
+				final int msLeft = calcRemainingTicks(clicks.size())*50;
+				client.player.sendMessage(Text.literal("Waiting for available clicks... ("+clicks.size()//+"c"
+						+(msLeft > 5000 ? ", ~"+TextUtils.formatTime(msLeft) : "")+")").withColor(OUTTA_CLICKS_COLOR), true);
+			});
+		}}, 1l, 27l/*51l*/);
 	}
 
 

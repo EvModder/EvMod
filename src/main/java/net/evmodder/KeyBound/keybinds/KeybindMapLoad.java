@@ -177,7 +177,7 @@ public final class KeybindMapLoad{
 				if(client.player == null || client.world == null) return true;
 //				if(isUnloadedMapArt(/*client.player.clientWorld*/client.world, item)) return false;
 				if(clickIndex % hbButtons.length != 0 && clickIndex != extraPutBackIndex){++clickIndex; return true;}
-				if(Main.clickUtils.MAX_CLICKS-Main.clickUtils.addClick(null) < MAX_BATCH_SIZE) return false; // Wait for clicks
+				if(Main.clickUtils.calcAvailableClicks() < MAX_BATCH_SIZE) return false; // Wait for clicks
 
 				if((clickIndex/hbButtons.length)%2 == 0 && clickIndex < extraPutBackIndex){++clickIndex; return true;} // Moving TO hotbar
 //				ItemStack item = client.player.getInventory().getStack(c.button());

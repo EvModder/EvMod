@@ -179,7 +179,7 @@ public final class KeybindMapMove{
 		Main.clickUtils.executeClicks(clicks, c->{
 					// Don't start cursor-pickup move operation if we can't complete it in 1 go
 					final Integer clicksNeeded = reserveClicks.get(c);
-					if(clicksNeeded == null || clicksNeeded <= Main.clickUtils.MAX_CLICKS - Main.clickUtils.addClick(null)) return true;
+					if(clicksNeeded == null || clicksNeeded <= Main.clickUtils.calcAvailableClicks()) return true;
 					return false; // Wait for clicks
 				},
 				()->Main.LOGGER.info("MapMove: DONE!")

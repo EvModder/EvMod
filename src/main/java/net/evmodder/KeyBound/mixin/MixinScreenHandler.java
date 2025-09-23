@@ -15,11 +15,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ScreenHandler.class)
 abstract class MixinScreenHandler{
 
+//	// Also handled in MixinClientPlayerInteractionManager
 //	@Inject(method = "internalOnSlotClick", at = @At("HEAD"), cancellable = true)
 //	private void avoid_sending_too_many_clicks(int slot, int button, SlotActionType action, PlayerEntity player, CallbackInfo ci){
-//		if(Main.inventoryUtils.addClick(action) > Main.inventoryUtils.MAX_CLICKS){
+//		if(Main.clickUtils.addClick(action) > Main.clickUtils.MAX_CLICKS){
 //			ci.cancel(); // Throw out clicks that exceed the limit!!
-//			Main.LOGGER.error("Discarding click in internalOnSlotClick() due to exceeding MAX_CLICKS limit!"
+//			Main.LOGGER.error("MixinScreenHandler: Discarding click in internalOnSlotClick() due to exceeding MAX_CLICKS limit!"
 //					+ " slot:"+slot+",button:"+button+",action:"+action.name()+",isShiftClick:"+Screen.hasShiftDown());
 //			MinecraftClient.getInstance().player.sendMessage(Text.literal("Discarding unsafe clicks!! > LIMIT").copy().withColor(/*&c=*/16733525), false);
 //		}
