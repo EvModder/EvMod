@@ -244,7 +244,7 @@ public final class KeybindInventoryOrganize{
 				continue;
 			}
 			final int srcSlot = findSlotWithItem(simSlots, p.b.getPath(), doneSlots);
-			if(srcSlot == -1) continue;
+			if(srcSlot == -1 || doneSlots[srcSlot]) continue;
 			if(RESTOCK_ONLY && srcSlot >= MAIN_INV_START) continue;
 			if(srcSlot < MAIN_INV_START && occurances != null){ // Avoid taking 100% of any item type from src container
 				Integer occ = occurances.get(simSlots[srcSlot].getItem());
@@ -286,7 +286,7 @@ public final class KeybindInventoryOrganize{
 
 			if(dstSlot < HOTBAR_START) continue; // items going INTO hotbar/offhand
 			final int srcSlot = findSlotWithItem(simSlots, p.b.getPath(), doneSlots);
-			if(srcSlot == -1) continue;
+			if(srcSlot == -1 || doneSlots[srcSlot]) continue;
 			if(RESTOCK_ONLY && srcSlot >= MAIN_INV_START) continue;
 			if(srcSlot < MAIN_INV_START && occurances != null){ // Avoid taking 100% of any item type from src container
 				Integer occ = occurances.get(simSlots[srcSlot].getItem());

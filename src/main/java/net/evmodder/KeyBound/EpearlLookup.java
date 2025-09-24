@@ -58,6 +58,7 @@ public final class EpearlLookup{
 			}
 
 			//Request UUID of epearl for <Server>,<ePearlPosEncrypted>
+			requestStartTimes.put(key, System.currentTimeMillis());
 			Main.remoteSender.sendBotMessage(DB_FETCH_COMMAND, /*udp=*/true, FETCH_TIMEOUT, PacketHelper.toByteArray(key),
 				msg->{
 					final XYZ xyz = idToPos.get(key);
@@ -88,7 +89,6 @@ public final class EpearlLookup{
 					requestStartTimes.remove(key);
 				}
 			);
-			requestStartTimes.put(key, System.currentTimeMillis());
 			return PD_LOADING;
 		}
 	}
