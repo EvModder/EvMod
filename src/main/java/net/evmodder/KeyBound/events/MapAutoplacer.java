@@ -1,5 +1,6 @@
 package net.evmodder.KeyBound.events;
 
+import java.util.ArrayList;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
 import net.minecraft.entity.decoration.ItemFrameEntity;
@@ -8,16 +9,16 @@ import net.minecraft.item.Items;
 
 public class MapAutoplacer{
 	private static boolean isActive;
-	private static ItemStack[] slots = new ItemStack[3];
+	private static ArrayList<ItemStack> slots = new ArrayList<>(3);
 	private static RelatedMapsData data;
 
 	public static final boolean canAutoplace(ItemFrameEntity lastIfe2, ItemFrameEntity lastIfe, ItemFrameEntity currIfe, ItemStack currStack){
 		assert currIfe != null && currStack != null && currStack.getItem() == Items.FILLED_MAP; // All should be verified by caller
 		if(lastIfe == null || lastIfe2 == null) return isActive=false;
 		if(currStack.getCount() != 1) return isActive=false;
-		slots[0] = currStack;
-		slots[1] = lastIfe.getHeldItemStack();
-		slots[2] = lastIfe2.getHeldItemStack();
+		slots.set(0, currStack);
+		slots.set(1, lastIfe.getHeldItemStack());
+		slots.set(2, lastIfe2.getHeldItemStack());
 
 //		final MapState state = FilledMapItem.getMapState(currStack, currIfe.getWorld());
 //		final String name = currStack.getCustomName().getString();

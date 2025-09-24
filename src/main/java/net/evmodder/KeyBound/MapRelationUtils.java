@@ -2,6 +2,7 @@ package net.evmodder.KeyBound;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 import net.minecraft.component.DataComponentTypes;
@@ -96,7 +97,7 @@ public abstract class MapRelationUtils{
 		return state != null && state.locked != locked;
 	}
 	// Output inclues input map
-	public static final RelatedMapsData getRelatedMapsByName(final ItemStack[] slots, final String sourceName,
+	public static final RelatedMapsData getRelatedMapsByName(final List<ItemStack> slots, final String sourceName,
 			final int count, final Boolean locked, final World world){
 		List<Integer> relatedMapSlots = new ArrayList<>();
 		if(sourceName == null) return new RelatedMapsData(-1, -1, relatedMapSlots);
@@ -106,8 +107,9 @@ public abstract class MapRelationUtils{
 //		Main.LOGGER.info("MapAdjUtil: getRelatedMapsByName() called for name: "+sourceName);
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
 //			final int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
-		for(int i=0; i<slots.length; ++i){
-			final ItemStack item = slots[i];
+		Iterator<ItemStack> it = slots.iterator();
+		for(int i=0; i<slots.size(); ++i){
+			final ItemStack item = it.next();
 			if(item.getCustomName() == null || !isMapArtWithCount(item, count)) continue;
 			if(differentLockedState(locked, item, world)) continue;
 
@@ -160,8 +162,9 @@ public abstract class MapRelationUtils{
 		//Main.LOGGER.info("AdjacentMapUtils:sourcePosStr: "+sourcePosStr);
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
 //			final int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
-		for(int i=0; i<slots.length; ++i){
-			ItemStack item = slots[i];
+		it = slots.iterator();
+		for(int i=0; i<slots.size(); ++i){
+			ItemStack item = it.next();
 			if(!isMapArtWithCount(item, count) || item.getCustomName() == null) continue;
 			if(differentLockedState(locked, item, world)) continue;
 
@@ -186,13 +189,13 @@ public abstract class MapRelationUtils{
 		return new RelatedMapsData(prefixLen, suffixLen, relatedMapSlots);
 	}
 
-	public static final RelatedMapsData getRelatedMapsByName0(final ItemStack[] slots, final World world){
-		assert slots != null && slots.length != 0;
-		final String name = slots[0].getCustomName() == null ? null : slots[0].getCustomName().getString();
+	public static final RelatedMapsData getRelatedMapsByName0(final List<ItemStack> slots, final World world){
+		assert slots != null && !slots.isEmpty();
+		final String name = slots.getFirst().getCustomName() == null ? null : slots.getFirst().getCustomName().getString();
 		if(name == null) return new RelatedMapsData(-1, -1, new ArrayList<>());
-		final MapState state = FilledMapItem.getMapState(slots[0], world);
+		final MapState state = FilledMapItem.getMapState(slots.getFirst(), world);
 		final Boolean locked = state == null ? null : state.locked;
-		return getRelatedMapsByName(slots, name, slots[0].getCount(), locked, world);
+		return getRelatedMapsByName(slots, name, slots.getFirst().getCount(), locked, world);
 	}
 /*
 	record PosData2D(boolean isSideways, String minPos2, String maxPos2){}

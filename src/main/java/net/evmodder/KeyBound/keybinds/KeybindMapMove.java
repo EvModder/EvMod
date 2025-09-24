@@ -1,6 +1,7 @@
 package net.evmodder.KeyBound.keybinds;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.TreeSet;
@@ -33,7 +34,7 @@ public final class KeybindMapMove{
 		final MapState state = FilledMapItem.getMapState(stack, world);
 		if(state == null || !MapColorUtils.isTransparentOrStone(state.colors)) return false;
 		if(stack.getCustomName() == null) return true;
-		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, stack.getCustomName().getString(), stack.getCount(), state.locked, world);
+		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(Arrays.asList(slots), stack.getCustomName().getString(), stack.getCount(), state.locked, world);
 		return data.slots().stream().map(i -> slots[i].getCustomName().getLiteralString()).distinct().count() <= 1;
 	}
 

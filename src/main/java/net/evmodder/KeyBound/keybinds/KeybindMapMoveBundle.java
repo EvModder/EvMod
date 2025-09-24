@@ -42,7 +42,7 @@ public final class KeybindMapMoveBundle{
 		if(stack.getCustomName() == null) return true;
 		final String name = stack.getCustomName().getLiteralString();
 		if(name == null) return true;
-		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, name, stack.getCount(), state.locked, world);
+		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(Arrays.asList(slots), name, stack.getCount(), state.locked, world);
 		return data.slots().stream().map(i -> slots[i].getCustomName().getLiteralString()).distinct().count() <= 1;
 	}
 

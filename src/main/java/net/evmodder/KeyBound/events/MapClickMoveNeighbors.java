@@ -1,6 +1,7 @@
 package net.evmodder.KeyBound.events;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
 import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
@@ -40,7 +41,7 @@ public abstract class MapClickMoveNeighbors{
 		final MapState state = mapId == null ? null : player.getWorld().getMapState(mapId);
 		final Boolean locked = state == null ? null : state.locked;
 		//Main.LOGGER.info("MapMoveClick: locked="+locked);
-		final RelatedMapsData data =  MapRelationUtils.getRelatedMapsByName(slots, movedName, mapMoved.getCount(), locked, player.getWorld());
+		final RelatedMapsData data =  MapRelationUtils.getRelatedMapsByName(Arrays.asList(slots), movedName, mapMoved.getCount(), locked, player.getWorld());
 		if(data.prefixLen() == -1){
 			Main.LOGGER.info("MapMoveClick: related-name maps not found");
 			return;

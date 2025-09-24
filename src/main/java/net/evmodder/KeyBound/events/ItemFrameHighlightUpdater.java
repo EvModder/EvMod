@@ -23,6 +23,7 @@ public class ItemFrameHighlightUpdater{
 	public static final HashMap<ItemFrameEntity, Boolean> hasLabelCache = new HashMap<>(); // TODO: remove? private?
 	public static final HashMap<ItemFrameEntity, Text> displayNameCache = new HashMap<>(); // TODO: remove? private?
 	public static Vec3d clientRotationNormalized; // TODO: remove? private?
+	public static boolean anyHangLocUpdate; // TODO: private?!
 
 	public enum Highlight{INV_OR_NESTED_INV, NOT_IN_CURR_GROUP, MULTI_HUNG, UNLOCKED_OR_UNNAMED};
 	private static final HashMap<Integer, Highlight> highlightedIFrames = new HashMap<>();
@@ -123,7 +124,7 @@ public class ItemFrameHighlightUpdater{
 
 		List<ItemFrameEntity> ifes = client.world.getEntitiesByClass(ItemFrameEntity.class, client.player.getBoundingBox().expand(200, 200, 200), _0->true);
 
-		final boolean anyHangLocUpdate = updateItemFrameEntities(ifes);
+		anyHangLocUpdate = updateItemFrameEntities(ifes);
 		if(!anyHangLocUpdate && lastInvHash == InventoryHighlightUpdater.mapsInInvHash) return;
 		lastInvHash = InventoryHighlightUpdater.mapsInInvHash;
 

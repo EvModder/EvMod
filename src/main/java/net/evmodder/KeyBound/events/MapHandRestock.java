@@ -199,12 +199,12 @@ public final class MapHandRestock{
 	private String getPosStrFromName(final String name, final RelatedMapsData data){
 		return data.prefixLen() == -1 ? name : MapRelationUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
 	}
-	private int getNextSlotByName(final ItemStack[] slots, final RelatedMapsData data,
+	private int getNextSlotByName(final List<ItemStack> slots, final RelatedMapsData data,
 			final String prevPosStr, final PosData2D posData2d, final boolean infoLogs){
 		int bestSlot = -999, bestConfidence=0;//bestConfidence = -1;
 		//String bestName = prevName;
 		for(int i : data.slots()){
-			final String posStr = getPosStrFromName(slots[i].getCustomName().getLiteralString(), data);
+			final String posStr = getPosStrFromName(slots.get(i).getCustomName().getLiteralString(), data);
 			//if(infoLogs) Main.LOGGER.info("MapRestock: checkComesAfter for name: "+name);
 			final int confidence = checkComesAfterAnyOrder(prevPosStr, posStr, posData2d, infoLogs);
 			if(Math.abs(confidence) > Math.abs(bestConfidence)/* || (confidence==bestConfidence && name.compareTo(bestName) < 0)*/){
@@ -218,13 +218,13 @@ public final class MapHandRestock{
 		}
 		return bestSlot * (bestConfidence < 0 ? -1 : 1);
 	}
-	private Pair<Integer, Long> getTrailLengthAndScore(final ItemStack[] slots, final RelatedMapsData data, int prevSlot,
+	private Pair<Integer, Long> getTrailLengthAndScore(final List<ItemStack> slots, final RelatedMapsData data, int prevSlot,
 			final PosData2D posData2d, final World world){
 		int trailLength = 0;
 		long scoreSum = 0;
 		final RelatedMapsData copiedData = new RelatedMapsData(data.prefixLen(), data.suffixLen(), new ArrayList<>(data.slots()));
 		while(/*prevSlot != -1*/true){
-			final String prevName = slots[prevSlot].getCustomName().getLiteralString();
+			final String prevName = slots.get(prevSlot).getCustomName().getLiteralString();
 			final String prevPosStr = getPosStrFromName(prevName, data);
 			final int i = getNextSlotByName(slots, copiedData, prevPosStr, posData2d, /*infoLogs=*/false);
 			if(i == -999){
@@ -232,8 +232,8 @@ public final class MapHandRestock{
 				return new Pair<>(trailLength, scoreSum);
 			}
 			final int currSlot = Math.abs(i);
-			MapState prevState = FilledMapItem.getMapState(slots[prevSlot], world);
-			MapState currState = FilledMapItem.getMapState(slots[currSlot], world);
+			MapState prevState = FilledMapItem.getMapState(slots.get(prevSlot), world);
+			MapState currState = FilledMapItem.getMapState(slots.get(currSlot), world);
 			if(prevState != null && currState != null && i > 0){
 				//TODO: for up/down, need to look further back in the trail (last leftmost map)
 				//TODO: might as well check up/down for every map in inv once we have the arrangement finder
@@ -245,10 +245,10 @@ public final class MapHandRestock{
 		}
 		//return new Pair<>(trailLength, scoreSum);
 	}
-	private final int getNextSlotByName(final ItemStack[] slots, final int prevSlot, final World world){
-		final String prevName = slots[prevSlot].getCustomName().getLiteralString();
-		final int prevCount = slots[prevSlot].getCount();
-		final MapState state = FilledMapItem.getMapState(slots[prevSlot], world);
+	private final int getNextSlotByName(final List<ItemStack> slots, final int prevSlot, final World world){
+		final String prevName = slots.get(prevSlot).getCustomName().getLiteralString();
+		final int prevCount = slots.get(prevSlot).getCount();
+		final MapState state = FilledMapItem.getMapState(slots.get(prevSlot), world);
 		final Boolean locked = state == null ? null : state.locked;
 		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, prevName, prevCount, locked, world);
 		data.slots().remove(Integer.valueOf(prevSlot));
@@ -268,7 +268,7 @@ public final class MapHandRestock{
 		PosData2D posData2d = posData2dForName.get(prevName);
 		if(posData2d == null){
 			final List<String> mapNames = Stream.concat(Stream.of(prevSlot), data.slots().stream())
-					.map(i -> slots[i].getCustomName().getLiteralString()).toList();
+					.map(i -> slots.get(i).getCustomName().getLiteralString()).toList();
 			final String nonPosName = prevName.substring(0, data.prefixLen()) + "[XY]" + prevName.substring(prevName.length()-data.suffixLen());
 			Main.LOGGER.info("MapRestock: determining posData2d for map '"+nonPosName+"', related names: "+mapNames);
 			final List<String> mapPosStrs = mapNames.stream().map(name -> getPosStrFromName(name, data)).toList();
@@ -287,16 +287,16 @@ public final class MapHandRestock{
 
 		final int i = getNextSlotByName(slots, data, prevPosStr, posData2d, /*infoLogs=*/true);//TODO: set to true for debugging
 		if(i != -999){ //TODO: remove horrible hack
-			Main.LOGGER.info("MapRestock: findByName() succeeded, slot="+i+", name="+slots[Math.abs(i)].getCustomName().getString());
+			Main.LOGGER.info("MapRestock: findByName() succeeded, slot="+i+", name="+slots.get(Math.abs(i)).getCustomName().getString());
 		}
 //		else Main.LOGGER.info("MapRestock: findByName() failed");
 		return i;//i != -1 ? i : getNextSlotAny(slots, prevSlot, world);
 	}
 
-	private final int getNextSlotByImage(final ItemStack[] slots, final int prevSlot, final World world){
-		final String prevName = slots[prevSlot].getCustomName() == null ? null : slots[prevSlot].getCustomName().getLiteralString();
-		final int prevCount = slots[prevSlot].getCount();
-		final MapState prevState = FilledMapItem.getMapState(slots[prevSlot], world);
+	private final int getNextSlotByImage(final List<ItemStack> slots, final int prevSlot, final World world){
+		final String prevName = slots.get(prevSlot).getCustomName() == null ? null : slots.get(prevSlot).getCustomName().getLiteralString();
+		final int prevCount = slots.get(prevSlot).getCount();
+		final MapState prevState = FilledMapItem.getMapState(slots.get(prevSlot), world);
 		assert prevState != null;
 
 		final List<Integer> relatedSlots = MapRelationUtils.getRelatedMapsByName(slots, prevName, prevCount, prevState.locked, world).slots();
@@ -304,11 +304,11 @@ public final class MapHandRestock{
 
 		int bestSlot = -1, bestScore = 50;//TODO: magic number
 		//for(int i : usedSlots){
-		for(int i=0; i<slots.length; ++i){
-			if(!MapRelationUtils.isMapArtWithCount(slots[i], prevCount) || i == prevSlot) continue;
-			final MapState state = FilledMapItem.getMapState(slots[i], world);
+		for(int i=0; i<slots.size(); ++i){
+			if(!MapRelationUtils.isMapArtWithCount(slots.get(i), prevCount) || i == prevSlot) continue;
+			final MapState state = FilledMapItem.getMapState(slots.get(i), world);
 			if(state == null) continue;
-			final String name = slots[i].getCustomName() == null ? null : slots[i].getCustomName().getLiteralString();
+			final String name = slots.get(i).getCustomName() == null ? null : slots.get(i).getCustomName().getLiteralString();
 			if(!simpleCanComeAfter(prevName, name)) continue;
 
 			//TODO: up/down & sideways hint
@@ -331,12 +331,12 @@ public final class MapHandRestock{
 	//2=map with same count & locked state, has name
 	//3=map with same count & locked state, has name, matches multi-map group
 	//4=map with same count & locked state, has name, matches multi-map group, is start index
-	private final int getNextSlotFirstMap(final ItemStack[] slots, final int prevSlot, final World world){
-		final int prevCount = slots[prevSlot].getCount();
-		final MapState prevState = FilledMapItem.getMapState(slots[prevSlot], world);
+	private final int getNextSlotFirstMap(final List<ItemStack> slots, final int prevSlot, final World world){
+		final int prevCount = slots.get(prevSlot).getCount();
+		final MapState prevState = FilledMapItem.getMapState(slots.get(prevSlot), world);
 		assert prevState != null;
 		final boolean prevLocked = prevState.locked;
-		final String prevName = slots[prevSlot].getCustomName() == null ? null : slots[prevSlot].getCustomName().getLiteralString();
+		final String prevName = slots.get(prevSlot).getCustomName() == null ? null : slots.get(prevSlot).getCustomName().getLiteralString();
 		final boolean prevWas1x1 = MapRelationUtils.getRelatedMapsByName(slots, prevName, prevCount, prevLocked, world).slots().size() < 2;
 
 		int bestSlot = -1, bestScore = 0;
@@ -351,14 +351,14 @@ public final class MapHandRestock{
 			IntStream.of(PlayerScreenHandler.OFFHAND_ID)
 		).toArray();
 		for(int i : slotScanOrder){
-			if(!MapRelationUtils.isMapArtWithCount(slots[i], prevCount) || i == prevSlot) continue;
+			if(!MapRelationUtils.isMapArtWithCount(slots.get(i), prevCount) || i == prevSlot) continue;
 			if(bestScore < 1){bestScore = 1; bestSlot = i;} // It's a map with the same count
-			final MapState state = FilledMapItem.getMapState(slots[i], world);
+			final MapState state = FilledMapItem.getMapState(slots.get(i), world);
 			assert state != null;
 			if(state.locked != prevLocked) continue;
 			if(bestScore < 2){bestScore = 2; bestSlot = i;} // It's a map with the same locked state
-			if(slots[i].getCustomName() == null) continue;
-			final String name = slots[i].getCustomName().getLiteralString();
+			if(slots.get(i).getCustomName() == null) continue;
+			final String name = slots.get(i).getCustomName().getLiteralString();
 			if(name == null) continue;
 			if(bestScore < 3){bestScore = 3; bestSlot = i;} // It's a named map
 			final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, name, prevCount, prevLocked, world);
@@ -378,13 +378,13 @@ public final class MapHandRestock{
 	private final void tryToStockNextMap(PlayerEntity player){
 		final int prevSlot = player.getInventory().selectedSlot+36;
 		final ItemStack mapInHand = player.getMainHandStack();
-		final ItemStack[] slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
-		assert slots[prevSlot] == mapInHand;
+		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).toList();
+		assert slots.get(prevSlot) == mapInHand;
 		final String prevName = mapInHand.getCustomName() == null ? null : mapInHand.getCustomName().getLiteralString();
 
-		final ItemStack[] ogSlots = slots.clone();//= null
-		for(int i=0; i<slots.length; ++i){
-			BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
+		final List<ItemStack> ogSlots = new ArrayList<>(slots);//= null
+		for(int i=0; i<slots.size(); ++i){
+			BundleContentsComponent contents = slots.get(i).get(DataComponentTypes.BUNDLE_CONTENTS);
 			if(contents == null || contents.isEmpty()) continue;
 //			Main.LOGGER.info("Restock 1st bundle item: "+contents.iterate().iterator().next().getName().getString());
 //			Main.LOGGER.info("Restock 1st bundle item: "+contents.get(0).getName().getString());
@@ -397,7 +397,7 @@ public final class MapHandRestock{
 			//^ like (detect if fully hung, and if so skip matches in bundle, or skip nextByName altogether
 
 //			if(ogSlots == null) ogSlots = slots.clone(); // Only clone slots[]->ogSlots[] if we end up changing contents of slots[]
-			slots[i] = contents.get(0);
+			slots.set(i, contents.get(0));
 		}
 //		if(ogSlots == null) ogSlots = slots;
 
@@ -445,7 +445,7 @@ public final class MapHandRestock{
 			while(InventoryHighlightUpdater.currentlyBeingPlacedIntoItemFrame != null) Thread.yield();
 			try{sleep(50l);}catch(InterruptedException e){e.printStackTrace();} // 50ms = 1tick
 
-			if(ogSlots[restockFromSlotFinal].get(DataComponentTypes.BUNDLE_CONTENTS) != null){
+			if(ogSlots.get(restockFromSlotFinal).get(DataComponentTypes.BUNDLE_CONTENTS) != null){
 				client.interactionManager.clickSlot(0, restockFromSlotFinal, 0, SlotActionType.PICKUP, player); // Pickup bundle
 				client.interactionManager.clickSlot(0, 36+player.getInventory().selectedSlot, 1, SlotActionType.PICKUP, player); // Place in active hb slot
 				client.interactionManager.clickSlot(0, restockFromSlotFinal, 0, SlotActionType.PICKUP, player); // Putback bundle
