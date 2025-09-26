@@ -30,8 +30,9 @@
 	"key.keybound.snap_angle.c": "Snap angle: C",
 
 	"key.keybound.inventory_restock": "Restock from container",
-	"key.keybound.inventory_organize.EvInv": "OrganizeInv: Ev's Preset",
-	"key.keybound.inventory_organize.CarpetMapart": "OrganizeInv: Carpet Map ",
+	"key.keybound.inventory_organize.EvInv": "InvOrganize: Ev's preset",
+	"key.keybound.inventory_organize.EvInvSimple": "InvOrganize: Ev's preset (simple)",
+	"key.keybound.inventory_organize.CarpetMapart": "InvOrganize: Carpet Map",
 
 	"key.categories.keybound.misc": "Misc",
 	"key.keybound.eject_junk_items": "AutoEject",

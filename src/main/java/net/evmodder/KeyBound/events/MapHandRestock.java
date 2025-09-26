@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
@@ -378,7 +379,7 @@ public final class MapHandRestock{
 	private final void tryToStockNextMap(PlayerEntity player){
 		final int prevSlot = player.getInventory().selectedSlot+36;
 		final ItemStack mapInHand = player.getMainHandStack();
-		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).toList();
+		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).collect(Collectors.toList());
 		assert slots.get(prevSlot) == mapInHand;
 		final String prevName = mapInHand.getCustomName() == null ? null : mapInHand.getCustomName().getLiteralString();
 

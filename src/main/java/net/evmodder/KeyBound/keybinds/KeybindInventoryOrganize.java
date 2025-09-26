@@ -21,6 +21,7 @@ import net.minecraft.util.Identifier;
 public final class KeybindInventoryOrganize{
 	final boolean CLEAN_UNUSED_HOTBAR_SLOTS = true;
 	final List<Pair<Integer, Identifier>> layoutMap;
+	private static boolean isFirstRegistered = true;
 
 	private String getName(ItemStack stack){
 		return stack == null || stack.isEmpty() || stack.getCount() == 0 ? null : Registries.ITEM.getId(stack.getItem()).getPath();
@@ -71,24 +72,28 @@ public final class KeybindInventoryOrganize{
 
 	public boolean[] checkDoneSlots(ItemStack[] slots, boolean[] doneSlots, boolean isInvScreen){
 		//HashSet<Integer> plannedSlots = new HashSet<>();
-		boolean[] plannedSlots = Arrays.copyOf(doneSlots, doneSlots.length);
+		final boolean[] plannedSlots = Arrays.copyOf(doneSlots, doneSlots.length);
 		for(Pair<Integer, Identifier> p : layoutMap){
 			if(!isInvScreen && (p.a == -106 || p.a == 45)) continue;
 			final int dstSlot = p.a == -106 ? 45 : p.a + (isInvScreen ? 0 : slots.length-45);
+//			Main.LOGGER.info("checkDoneSlots(): checking dstSlot: "+dstSlot+" (item: "+p.b.getPath()+")");
 			if(plannedSlots[dstSlot]) continue;
 			final String dstName;
 			if(isInvScreen || dstSlot >= slots.length-36) dstName = getName(slots[dstSlot]);
 			else if(dstSlot < slots.length-40){Main.LOGGER.warn("InvOrganize: Unable to restock Container->CraftingGrid");continue;}
 			else dstName = getName(MinecraftClient.getInstance().player.getInventory().getArmorStack(p.a-5));
 			if(p.b.getPath().equals(dstName)){
-				plannedSlots[dstSlot] = true;
-				doneSlots[dstSlot] = true;
+				plannedSlots[dstSlot] = doneSlots[dstSlot] = true;
+				Main.LOGGER.info("checkDoneSlots(): done slot: "+dstSlot+" (item: "+p.b.getPath()+")");
 			}
 			else{
 				final int srcSlot = findSlotWithItem(slots, p.b.getPath(), plannedSlots);
-				if(srcSlot == -1) continue;
-				plannedSlots[dstSlot] = true;
-				plannedSlots[srcSlot] = true;
+				if(srcSlot == -1){
+//					Main.LOGGER.info("checkDoneSlots(): cant find "+p.b.getPath()+" for slot "+dstSlot);
+					continue;
+				}
+				plannedSlots[dstSlot] = plannedSlots[srcSlot] = true;
+				Main.LOGGER.info("checkDoneSlots(): planned slots: "+srcSlot+"->"+dstSlot+" (item: "+p.b.getPath()+")");
 				//fakeSwapSlots(srcSlot, dstSlot);
 			}
 		}
@@ -134,7 +139,8 @@ public final class KeybindInventoryOrganize{
 		}
 		else occurances = null;
 
-//		Main.LOGGER.info("InvOrganize: isInvScreen: "+isInvScreen+", numSlots: "+simSlots.length+", hotbarStart: "+HOTBAR_START+", invStart: "+MAIN_INV_START);
+		Main.LOGGER.info("InvOrganize: "+layoutMap.size()+" mappings, isInvScreen: "+isInvScreen+", numSlots: "+simSlots.length
+				+", hotbarStart: "+HOTBAR_START+", invStart: "+MAIN_INV_START);
 
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		checkDoneSlots(simSlots, doneSlots, isInvScreen);
@@ -212,7 +218,7 @@ public final class KeybindInventoryOrganize{
 			for(int i=HOTBAR_START; i<simSlots.length; ++i) if(!doneSlots[i] && !emptySlots[i]/* && !usedHotbarAndOffhandSlots[i-HOTBAR_START]*/){
 				final int originalCount = simSlots[i].getCount();
 				if(simulateShiftClick(simSlots, emptySlots, /*fromArmor=*/false, i) < originalCount){
-					//client.player.sendMessage(Text.literal("Click: "+i+" Hotbar->UpperInv (cleaning)"), false);
+//					client.player.sendMessage(Text.literal("Click: "+i+" Hotbar->UpperInv (cleaning)"), false);
 					clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
 				}
 			}
@@ -379,6 +385,7 @@ public final class KeybindInventoryOrganize{
 		)
 		.filter(p -> p != null)
 		.toList();
-		new Keybind(keybind_name, ()->organizeInventory(false, null), HandledScreen.class::isInstance, GLFW.GLFW_KEY_E);
+		new Keybind(keybind_name, ()->organizeInventory(false, null), HandledScreen.class::isInstance, isFirstRegistered ? GLFW.GLFW_KEY_E : -1);
+		isFirstRegistered = false;
 	}
 }

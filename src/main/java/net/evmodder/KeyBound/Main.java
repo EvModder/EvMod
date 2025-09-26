@@ -42,10 +42,9 @@ public class Main implements ClientModInitializer{
 	// AutoMapPlacer (for LVotU)
 	// ignorelist sync, /seen and other misc stats cmds for DB mode
 	// Ultimate KeyBind mod: Buff MaLiLib mod menu with dropdown option for all vanilla (and mod) categories + allow duplicates
-	// auto-replenish from opened containers (and maybe even auto-open containers)
+
 	// keybind to sort maps in inventory (rly good request from FartRipper), 2 modes: incr by slot index vs make a rectangle in inv
 
-	// Mixin onEntityTick_iFrame instead of hasLabel_iFrame <--- better compatibility with mods, etc. also reduced call count
 	// see if possible to pre-load MapStates when joining a server (due 2 rdm ids on 2b2t, can only work for maps in inv/ec)
 	// ^ note1: includes maps nested in shulks/bundles/shulks, so potentially can cache a LOT of states (~100k)
 	// ^ note2: maybe also option to cache states for chests etc, but potential issues if another player rearranges them
@@ -56,13 +55,10 @@ public class Main implements ClientModInitializer{
 	// timeOfDay >= 2000 && timeOfDay < 9000 
 
 	// Feature Ideas:
-	// setting to make InvRestockFromContainer automatic (no keybind press needed, maybe auto-open-container even) <<< DONE- needs testing
-	// multiple itemframes nearby (100? 1k? 10k?) with the same map -> purple name/color/asterisk <<< DONE - but need to adjust dist setting & clear setting
 	// change render order of certain villager trades (in particular: make cleric redstone always above rotten flesh)
 	// totem in offhand - render itemcount for sum of totems in inv (instead of itemcount 1) - IMO nicer than the RH/meteor/etc UI overlay
 	// Maps - make item count font smaller, cuz it kinda covers img in slot
-	// ^DONE: but rn it's greedy, need make it DFS+DP (same for img stitching)
-	// cont.: save LastMapCommonSubstr and LastMapRowByCol
+	// better job predict next map / assembling into grid (rn it's greedy, need make it DFS+DP (same for img stitching))
 	// yoink activated spawner highlight from trouser-streak? seems cool
 	// /msgas EvDoc <target> <msg> - send msgs as another acc (TODO: also make as a zenithproxy plugin)
 	// add time left on 2b (8h-time online) infoline to miniHUD settings

@@ -1,6 +1,7 @@
 package net.evmodder.KeyBound.events;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
 import net.minecraft.entity.decoration.ItemFrameEntity;
@@ -9,7 +10,7 @@ import net.minecraft.item.Items;
 
 public class MapAutoplacer{
 	private static boolean isActive;
-	private static ArrayList<ItemStack> slots = new ArrayList<>(3);
+	private static ArrayList<ItemStack> slots = new ArrayList<>(Arrays.asList(null, null, null));
 	private static RelatedMapsData data;
 
 	public static final boolean canAutoplace(ItemFrameEntity lastIfe2, ItemFrameEntity lastIfe, ItemFrameEntity currIfe, ItemStack currStack){
