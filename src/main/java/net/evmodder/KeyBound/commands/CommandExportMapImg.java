@@ -5,6 +5,7 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -471,7 +472,47 @@ public class CommandExportMapImg{
 		return genImgForMapsInItemFrames(ctx.getSource(), iFrames) ? 0 : 1;
 	}
 
-	private final boolean SHOW_ONLY_IF_HAS_AZ = true;
+	private final boolean isReflectedChar(char l, char r){
+		switch(l){
+			case '[': return r == ']';
+			case '(': return r == ')';
+			case '{': return r == '}';
+			case '<': return r == '>';
+			case '-': return r == '-';
+			default:
+				return Character.isWhitespace(l) && Character.isWhitespace(r);
+		}
+	}
+	private final String getCleanedName(String itemName0, RelatedMapsData data){
+		if(data.prefixLen() == -1) return itemName0.trim();
+		else{
+			String prefixStr = itemName0.substring(0, data.prefixLen());
+			String suffixStr = itemName0.substring(itemName0.length() - data.suffixLen());
+			if(REMOVE_MAX_CNT){
+				final String szCntStr = ""+data.slots().size();
+				final int idx = suffixStr.indexOf(szCntStr);
+				if(idx != -1 && Normalizer.normalize(suffixStr.substring(0, idx), Normalizer.Form.NFKD).toLowerCase().matches("\\s*(of|/)\\s*")){
+					suffixStr = suffixStr.substring(idx + szCntStr.length());
+				}
+			}
+			if(REMOVE_BRACKET_SYMBOLS){
+				int a=prefixStr.length()-1, b=0;
+				while(true){
+					while(a >= 0 && Character.isWhitespace(prefixStr.charAt(a))) --a;
+					while(b < suffixStr.length() && Character.isWhitespace(suffixStr.charAt(b))) ++b;
+					if(a == -1 || b == suffixStr.length() || !isReflectedChar(prefixStr.charAt(a), suffixStr.charAt(b))) break;
+					--a; ++b;
+				}
+				prefixStr = prefixStr.substring(0, a+1);
+				suffixStr = suffixStr.substring(b);
+			}
+			if(prefixStr.length() < (prefixStr=prefixStr.stripTrailing()).length() || suffixStr.length() < (suffixStr=suffixStr.stripLeading()).length()){
+				prefixStr += " ";
+			}
+			return (prefixStr + suffixStr).trim();
+		}
+	}
+	private final boolean SHOW_ONLY_IF_HAS_AZ = true, REMOVE_MAX_CNT = true, REMOVE_BRACKET_SYMBOLS = true;
 	HashMap<String, String> cmdMapNames = new HashMap<>();
 	private Set<String> getNearbyMapNames(ClientPlayerEntity player){
 		if(!cmdMapNames.isEmpty() && !ItemFrameHighlightUpdater.anyHangLocUpdate) return cmdMapNames.keySet();
@@ -492,18 +533,16 @@ public class CommandExportMapImg{
 				final MapState state = FilledMapItem.getMapState(mapItems.getFirst(), player.getWorld());
 				final Boolean locked = state == null ? null : state.locked;
 				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(mapItems, name, 1, locked, player.getWorld());
-				final String nameKey;
-				if(data.prefixLen() == -1) nameKey = name.trim();
-				else nameKey = (name.substring(0, data.prefixLen()) + name.substring(name.length() - data.suffixLen())).trim();
+				final String nameKey = getCleanedName(name, data);
 				if(!SHOW_ONLY_IF_HAS_AZ || nameKey.matches(".*[a-zA-Z].*")) cmdMapNames.put(nameKey, name);
 //				assert data.slots().size() > 0; // Can be size=0 for mismatched pos data
 				if(data.slots().size() <= 1) mapItems.removeFirst();
 				else{
 					Iterator<ItemStack> it = mapItems.iterator();
-					Main.LOGGER.info("cleaning up, need to remove "+data.slots().size()+" related mapItems for name: "+name);
+//					Main.LOGGER.info("cleaning up, need to remove "+data.slots().size()+" related mapItems for name: "+name);
 					for(int i=0, j=0; i<data.slots().size(); ++i){
 						while(j <= data.slots().get(i)){it.next(); ++j;}
-						Main.LOGGER.info("removing mapItem @ index "+data.slots().get(i)+"/"+mapItems.size());
+//						Main.LOGGER.info("removing mapItem @ index "+data.slots().get(i)+"/"+mapItems.size());
 						it.remove();
 					}
 				}
