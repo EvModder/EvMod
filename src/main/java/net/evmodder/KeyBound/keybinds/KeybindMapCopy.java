@@ -160,50 +160,41 @@ public final class KeybindMapCopy{
 		final BundleContentsComponent[] bundles = Arrays.stream(slotsWithBundles)
 				.mapToObj(i -> slots[i].get(DataComponentTypes.BUNDLE_CONTENTS)).toArray(BundleContentsComponent[]::new);
 		final int SRC_BUNDLES = (int)Arrays.stream(bundles).filter(Predicate.not(BundleContentsComponent::isEmpty)).count();
-		int emptyBundles = bundles.length - SRC_BUNDLES;
+		final int emptyBundles = bundles.length - SRC_BUNDLES;
+		if(emptyBundles == 1){Main.LOGGER.warn("MapCopyBundle: Could not find an auxiliary bundle"); return;}
 		final int DESTS_PER_SRC = SRC_BUNDLES >= emptyBundles ? 999 : (emptyBundles-1)/SRC_BUNDLES;
 		Main.LOGGER.warn("MapCopyBundle: source bundles: "+SRC_BUNDLES+", empty bundles: "+emptyBundles+", dest-per-src: "+DESTS_PER_SRC);
 
 		TreeMap<Integer, List<Integer>> bundlesToCopy = new TreeMap<>(); // source bundle -> destination bundles (slotsWithBundles)
-//		int storageBundles = 0;
-		int emptyMapsNeeded = 0;
-//		boolean multiMapCopy = false;
+		HashSet<Integer> usedDests = new HashSet<>();
 		for(int i=0; i<slotsWithBundles.length; ++i){
 			final int s1 = slotsWithBundles[i];
 			if(bundles[i].isEmpty()) continue;
 			ArrayList<Integer> copyDests = new ArrayList<>();
-//			++storageBundles;
 			final String name1 = getCustomNameOrNull(slots[s1]);
 //			Main.LOGGER.info("looking for dest bundles for "+slots[s1].getName().getString()+" in slot "+s1);
-			for(int j=0; j<slotsWithBundles.length && emptyBundles>1 && copyDests.size()<DESTS_PER_SRC; ++j){
+			for(int j=0; j<slotsWithBundles.length && usedDests.size()+1<emptyBundles && copyDests.size()<DESTS_PER_SRC; ++j){
 				final int s2 = slotsWithBundles[j];
 				if(!bundles[j].isEmpty()) continue;
 				Main.LOGGER.info("MapCopyBundle: empty bundle in slot "+s2);
-				if(SRC_BUNDLES == 1); // If only 1 bundle to copy from, we don't care about name or color: Valid copy destination!
-				else if(name1 != null && name1.equals(getCustomNameOrNull(slots[s2]))); // Matching Name: Valid copy destination!
-				else if(slots[s1].getItem() == slots[s2].getItem()); // Matching Color: Valid copy destination!
-				else continue;
+				if(SRC_BUNDLES == 1); // If only 1 bundle to copy from, we don't care about name or color.
+				else if(name1 == null){if(slots[s1].getItem() != slots[s2].getItem()) continue;} // Matching Color: Safe to copy!
+				else if(!name1.equals(getCustomNameOrNull(slots[s2]))) continue; // Non-matching Name: Don't copy!
+				else if(!usedDests.add(j)) continue;
 				Main.LOGGER.info("MapCopyBundle: valid copy dest "+s1+"->"+s2);
 				copyDests.add(j);
-				--emptyBundles;
 			}
-			if(copyDests.isEmpty()){
-				if(emptyBundles == 1) Main.LOGGER.warn("MapCopyBundle: Could not find an auxiliary bundle");
-				else Main.LOGGER.warn("MapCopyBundle: Could not determine destination bundles");
-				return;
-			}
-//			storageBundles += copyDests.size();
+			if(copyDests.isEmpty()){Main.LOGGER.warn("MapCopyBundle: Could not determine destination bundles"); return;}
 			bundlesToCopy.put(i, copyDests);
-			emptyMapsNeeded += getNumStored(bundles[i].getOccupancy())*copyDests.size();
-//			multiMapCopy |= contents.stream().anyMatch(s -> s.getCount() > 1);
 		}
+		final int emptyMapsNeeded = bundlesToCopy.entrySet().stream().mapToInt(
+				e -> getNumStored(bundles[e.getKey()].getOccupancy())*e.getValue().size()).sum();
 		if(totalEmptyMaps < emptyMapsNeeded){
 			MinecraftClient.getInstance().player.sendMessage(Text.of("Insufficient empty maps"), true);
 			Main.LOGGER.warn("MapCopyBundle: Insufficient empty maps");
 			return;
 		}
 		if(bundlesToCopy.isEmpty()){Main.LOGGER.warn("MapCopyBundle: No bundles found to copy"); return;}
-//		if(storageBundles == slotsWithBundles.length){Main.LOGGER.warn("MapCopyBundle: Could not find an auxiliary bundle"); return;}
 
 		HashSet<Integer> unusedBundles = new HashSet<Integer>(slotsWithBundles.length);
 		for(int i=0; i<slotsWithBundles.length; ++i) unusedBundles.add(i);
@@ -232,7 +223,7 @@ public final class KeybindMapCopy{
 				for(int d : entry.getValue()){
 					if(numEmptyMapsInGrid < count){
 //						Main.LOGGER.info("restocking empty maps at least: "+count+" (curr: "+numEmptyMapsInGrid+")");
-						numEmptyMapsInGrid = getEmptyMapsIntoInput(clicks, slots, isCrafter, count, numEmptyMapsInGrid, HOTBAR_END);
+						numEmptyMapsInGrid = getEmptyMapsIntoInput(clicks, slots, isCrafter, count, numEmptyMapsInGrid, /*dontLeaveEmptySlotsAfterThisSlot=*/99);
 //						Main.LOGGER.info("numEmptyMapsInGrid after restock: "+numEmptyMapsInGrid);
 					}
 					numEmptyMapsInGrid -= count;
@@ -262,6 +253,11 @@ public final class KeybindMapCopy{
 
 		//Main.LOGGER.info("MapCopyBundle: STARTED");
 		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("MapCopyBundle: DONE"));
+	}
+
+	private boolean isMapArtBundle(ItemStack stack){
+		BundleContentsComponent contents = stack.get(DataComponentTypes.BUNDLE_CONTENTS);
+		return contents != null && !contents.isEmpty() && contents.stream().allMatch(s -> s.getItem() == Items.FILLED_MAP);
 	}
 
 	@SuppressWarnings("unused")
@@ -356,7 +352,7 @@ public final class KeybindMapCopy{
 		}
 
 		if(minMapCount >= 64){
-			if(minMapCount == 65 && Arrays.stream(slots).anyMatch(s -> s.get(DataComponentTypes.BUNDLE_CONTENTS) != null)){
+			if(minMapCount == 65 && Arrays.stream(slots).anyMatch(this::isMapArtBundle)){
 				copyMapArtInBundles(clicks, slots, isCrafter, numEmptyMapsInGrid, totalEmptyMaps);
 				return;
 			}

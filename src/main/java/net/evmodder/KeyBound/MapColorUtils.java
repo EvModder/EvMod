@@ -5,8 +5,6 @@ import java.util.HashSet;
 import java.util.stream.IntStream;
 import net.minecraft.block.MapColor;
 import net.minecraft.block.MapColor.Brightness;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
 
 public abstract class MapColorUtils{
 	public static final boolean isTransparentOrStone(final byte[] colors){
@@ -143,7 +141,7 @@ public abstract class MapColorUtils{
 					case PISTON_CLEAR:
 						if(pistonColors.contains(color)
 							|| (pistonNooblineColors.contains(color) && (y==0 || transparentColors.contains(colors[x+(y-1)*128])))) break;
-						MinecraftClient.getInstance().player.sendMessage(Text.literal("First non-piston-clear color: "+x+","+y+"  (id:"+(color&0xFF)/4+")"), true);
+//						MinecraftClient.getInstance().player.sendMessage(Text.literal("First non-piston-clear color: "+x+","+y+"  (id:"+(color&0xFF)/4+")"), true);
 						palette = Palette.FULLBLOCK;
 					case FULLBLOCK:
 				}
@@ -180,9 +178,9 @@ public abstract class MapColorUtils{
 		int percentStaircase = (int)Math.ceil((numShaded*100d)/(colors.length-numTransparent));
 		if(percentStaircase <= 2 && percentStaircase > 0){
 			Main.LOGGER.info("numShaded: "+numShaded+", numTransparent: "+numTransparent+", percentStaircase: "+percentStaircase);
-			int j = staircasedPixels[0];
-			int x = j%128, y = j/128;
-			MinecraftClient.getInstance().player.sendMessage(Text.literal("First staircased pixel: "+x+","+y+"  (id:"+(colors[j]&0xFF)/4+")"), true);
+//			int j = staircasedPixels[0];
+//			int x = j%128, y = j/128;
+//			MinecraftClient.getInstance().player.sendMessage(Text.literal("First staircased pixel: "+x+","+y+"  (id:"+(colors[j]&0xFF)/4+")"), true);
 			double numShadedAtTop = Arrays.stream(staircasedPixels).filter(i -> i<128).count();
 			if(numShadedAtTop/numShaded > .8) noobline = true; // If 80%+ of the shading is only the top row, consider it a noobline
 		}
