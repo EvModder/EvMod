@@ -22,7 +22,7 @@ abstract class MixinInGameHud{
 	private MutableText showRepairCostNextToItemName(MutableText originalText){
 		if(Main.rcHUD == false && Main.mapHighlightHUD == false) return originalText;
 		MinecraftClient client = MinecraftClient.getInstance();
-		ItemStack currentStack = client.player.getInventory().getMainHandStack();
+		ItemStack currentStack = client.player.getMainHandStack();
 		MutableText text = originalText;
 		if(Main.mapHighlightHUD){
 			MapIdComponent id = currentStack.get(DataComponentTypes.MAP_ID);

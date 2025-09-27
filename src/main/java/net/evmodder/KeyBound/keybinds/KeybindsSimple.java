@@ -3,6 +3,7 @@ package net.evmodder.KeyBound.keybinds;
 import java.util.Arrays;
 import net.evmodder.KeyBound.Main;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerModelPart;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
@@ -18,7 +19,7 @@ public final class KeybindsSimple{
 			//Main.LOGGER.info("skin toggle pressed for part: "+part.name());
 			final MinecraftClient client = MinecraftClient.getInstance();
 			if(SYNC_CAPE_WITH_ELYTRA && part == PlayerModelPart.CAPE && client.player != null && client.options.isPlayerModelPartEnabled(part)){
-				ItemStack chestItem = client.player.getInventory().getArmorStack(2);
+				ItemStack chestItem = client.player.getEquippedStack(EquipmentSlot.CHEST);
 				// Don't disable cape if we just switched to an elytra
 				if(Registries.ITEM.getId(chestItem.getItem()).getPath().equals("elytra")) return;
 			}

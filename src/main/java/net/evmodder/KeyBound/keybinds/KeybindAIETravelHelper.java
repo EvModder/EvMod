@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.screen.slot.SlotActionType;
@@ -53,7 +54,7 @@ public final class KeybindAIETravelHelper{
 			if(!isEnabled) return;
 			if(client.player == null || client.world == null){isEnabled = false; return;}
 
-			ItemStack chestStack = client.player.getInventory().getArmorStack(2);
+			ItemStack chestStack = client.player.getEquippedStack(EquipmentSlot.CHEST);
 //			//Identifier chestItemId = Registries.ITEM.getId(chestStack.getItem()); // Not really needed thanks to 
 //			if(chestStack.getItem() != Items.ELYTRA){
 //				client.player.sendMessage(Text.literal("Not wearing elytra"), true);

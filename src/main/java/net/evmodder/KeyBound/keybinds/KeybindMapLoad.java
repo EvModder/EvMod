@@ -184,7 +184,7 @@ public final class KeybindMapLoad{
 				//if(!isLoadedMapArt(client.world, item)){ // Weird issue rn with non-maps getting moved around? (bundles?)
 				//if(isUnloadedMapArt(client.world, s){
 				// Ugh just wait if any unloaded map in hotbar(or inv)
-				if(client.player.getInventory().main.stream().anyMatch(s -> isUnloadedMapArt(client.world, s))){
+				if(client.player.getInventory().getMainStacks().stream().anyMatch(s -> isUnloadedMapArt(client.world, s))){
 					Main.LOGGER.info("MapLoad: still waiting for map state to load");
 //					Main.LOGGER.info("MapLoad: still waiting for map state to load from hotbar slot: "+c.button());
 					return false;

@@ -11,6 +11,7 @@ import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -81,7 +82,8 @@ public final class KeybindInventoryOrganize{
 			final String dstName;
 			if(isInvScreen || dstSlot >= slots.length-36) dstName = getName(slots[dstSlot]);
 			else if(dstSlot < slots.length-40){Main.LOGGER.warn("InvOrganize: Unable to restock Container->CraftingGrid");continue;}
-			else dstName = getName(MinecraftClient.getInstance().player.getInventory().getArmorStack(p.a-5));
+			else dstName = getName(
+					MinecraftClient.getInstance().player.getEquippedStack(PlayerInventory.EQUIPMENT_SLOTS.get(p.a - 5)));
 			if(p.b.getPath().equals(dstName)){
 				plannedSlots[dstSlot] = doneSlots[dstSlot] = true;
 				Main.LOGGER.info("checkDoneSlots(): done slot: "+dstSlot+" (item: "+p.b.getPath()+")");
@@ -321,7 +323,7 @@ public final class KeybindInventoryOrganize{
 		if(!isInvScreen) for(Pair<Integer, Identifier> p : layoutMap){
 			if(p.a == -106 || p.a == 45) continue;
 			if(p.a > 8) continue;
-			if(!client.player.getInventory().getArmorStack(3 - (p.a - 5)).isEmpty()) continue; // -5 to get armor index, 3-x to reverse order
+			if(!client.player.getEquippedStack(PlayerInventory.EQUIPMENT_SLOTS.get(3 - (p.a - 5))).isEmpty()) continue; // -5 to get armor index, 3-x to reverse order
 			final int srcSlot = findSlotWithItem(simSlots, p.b.getPath(), doneSlots);
 			if(srcSlot == -1 || srcSlot >= MAIN_INV_START) continue;
 			if(srcSlot < MAIN_INV_START && occurances != null){ // Avoid taking 100% of any item type from src container

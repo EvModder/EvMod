@@ -377,7 +377,7 @@ public final class MapHandRestock{
 	}
 
 	private final void tryToStockNextMap(PlayerEntity player){
-		final int prevSlot = player.getInventory().selectedSlot+36;
+		final int prevSlot = player.getInventory().getSelectedSlot()+36;
 		final ItemStack mapInHand = player.getMainHandStack();
 		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).collect(Collectors.toList());
 		assert slots.get(prevSlot) == mapInHand;
@@ -405,7 +405,7 @@ public final class MapHandRestock{
 		final MapState state = FilledMapItem.getMapState(mapInHand, player.getWorld());
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(state != null && mapInHand.getCount() == 1 &&
-				IntStream.range(0, 41).noneMatch(i -> i != player.getInventory().selectedSlot &&
+				IntStream.range(0, 41).noneMatch(i -> i != player.getInventory().getSelectedSlot() &&
 				FilledMapItem.getMapState(player.getInventory().getStack(i), player.getWorld()) == state)){
 //			InventoryHighlightUpdater.currentlyBeingPlacedIntoItemFrameSlot = player.getInventory().selectedSlot;
 			InventoryHighlightUpdater.currentlyBeingPlacedIntoItemFrame = MapGroupUtils.getIdForMapState(state);
@@ -448,17 +448,17 @@ public final class MapHandRestock{
 
 			if(ogSlots.get(restockFromSlotFinal).get(DataComponentTypes.BUNDLE_CONTENTS) != null){
 				client.interactionManager.clickSlot(0, restockFromSlotFinal, 0, SlotActionType.PICKUP, player); // Pickup bundle
-				client.interactionManager.clickSlot(0, 36+player.getInventory().selectedSlot, 1, SlotActionType.PICKUP, player); // Place in active hb slot
+				client.interactionManager.clickSlot(0, 36+player.getInventory().getSelectedSlot(), 1, SlotActionType.PICKUP, player); // Place in active hb slot
 				client.interactionManager.clickSlot(0, restockFromSlotFinal, 0, SlotActionType.PICKUP, player); // Putback bundle
-				Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlotFinal+" -> hb="+player.getInventory().selectedSlot);
+				Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlotFinal+" -> hb="+player.getInventory().getSelectedSlot());
 			}
 			else if(isHotbarSlot){
 				client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(restockFromSlotFinal - 36));
-				player.getInventory().selectedSlot = restockFromSlotFinal - 36;
-				Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().selectedSlot);
+				player.getInventory().setSelectedSlot(restockFromSlotFinal - 36);
+				Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().getSelectedSlot());
 			}
 			else{
-				client.interactionManager.clickSlot(0, restockFromSlotFinal, player.getInventory().selectedSlot, SlotActionType.SWAP, player);
+				client.interactionManager.clickSlot(0, restockFromSlotFinal, player.getInventory().getSelectedSlot(), SlotActionType.SWAP, player);
 				Main.LOGGER.info("MapRestock: Swapped inv.selectedSlot to nextMap: s="+restockFromSlotFinal);
 			}
 		}}.start();

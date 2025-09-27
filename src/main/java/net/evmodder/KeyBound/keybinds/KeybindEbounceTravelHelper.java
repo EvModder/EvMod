@@ -132,7 +132,7 @@ public final class KeybindEbounceTravelHelper{
 		int i=0;
 		for(; i<9; ++i){
 			Item item = client.player.getInventory().getStack(i).getItem();
-			if(client.player.getInventory().selectedSlot == i || item instanceof BlockItem == false) continue;
+			if(client.player.getInventory().getSelectedSlot() == i || item instanceof BlockItem == false) continue;
 			if(path == null || Registries.ITEM.getId(item).getPath().equals(path)) break;
 		}
 		if(i == 9){
@@ -259,7 +259,7 @@ public final class KeybindEbounceTravelHelper{
 
 	private boolean selectPickaxeInHotbar(BlockState bs){
 //		if(client.player.getMainHandStack().getItem() instanceof PickaxeItem) return false;
-		int bestI=client.player.getInventory().selectedSlot;
+		int bestI=client.player.getInventory().getSelectedSlot();
 		float bestSpeed=0;
 		for(int i=0; i<9; ++i){
 			float speed = client.player.getInventory().getStack(i).getMiningSpeedMultiplier(bs);
@@ -269,7 +269,7 @@ public final class KeybindEbounceTravelHelper{
 			client.player.sendMessage(Text.literal("(!) No matching tool in hotbar"), true);
 			return false;
 		}
-		if(bestI == client.player.getInventory().selectedSlot){
+		if(bestI == client.player.getInventory().getSelectedSlot()){
 			client.player.sendMessage(Text.literal("Best tool in hotbar already selected"), true);
 			return false;
 		}
@@ -297,7 +297,7 @@ public final class KeybindEbounceTravelHelper{
 			}
 		}
 		// Don't try to mine blocks if the player isn't stuck
-		if(client.player.prevX != client.player.getX() || client.player.prevZ != client.player.getZ()) return false;
+		if(client.player.lastX != client.player.getX() || client.player.lastZ != client.player.getZ()) return false;
 
 		ArrayList<BlockPos> mineSpots = new ArrayList<>();
 		Vec3d pos = client.player.getPos();
