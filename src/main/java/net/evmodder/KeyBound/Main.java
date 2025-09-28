@@ -40,6 +40,7 @@ public class Main implements ClientModInitializer{
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
 	// AutoMapPlacer (for LVotU)
+	// Noteblock ping sound when receiving DM
 	// ignorelist sync, /seen and other misc stats cmds for DB mode
 	// Ultimate KeyBind mod: Buff MaLiLib mod menu with dropdown option for all vanilla (and mod) categories + allow duplicates
 
