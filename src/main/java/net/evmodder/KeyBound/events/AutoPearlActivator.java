@@ -1,6 +1,7 @@
 package net.evmodder.KeyBound.events;
 
 import java.util.Arrays;
+import java.util.Objects;
 import com.google.common.collect.Streams;
 import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
@@ -8,6 +9,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.ButtonBlock;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.projectile.thrown.EnderPearlEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -21,7 +23,8 @@ import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.RaycastContext;
 
 public class AutoPearlActivator{
-	final int reach = 10;
+	final int REACH = 10;
+	final String MSG_MATCH_END = "";//"( .*)?"
 
 	public static boolean hasLineOfSight(MinecraftClient client, Vec3d from, Vec3d to){
 		return client.world.raycast(
@@ -35,8 +38,7 @@ public class AutoPearlActivator{
 	 * squared distance to that hit vector, and whether or not there is line of
 	 * sight to that hit vector.
 	 */
-	public static BlockHitResult getHitResult(MinecraftClient client, BlockPos pos)
-	{
+	public static BlockHitResult getHitResult(MinecraftClient client, BlockPos pos){
 		Vec3d eyes = client.player.getEyePos();
 		Direction[] sides = Direction.values();
 
@@ -71,43 +73,63 @@ public class AutoPearlActivator{
 		return new BlockHitResult(hitVecs[bestSide], sides[bestSide], pos, /*insideBlock=*/false);
 	}
 
+	private BlockPos findNearestPearlWithOwnerName(MinecraftClient client, String name){
+		final Vec3d playerPos = client.player.getPos();
+		double closestDistSq = Double.MAX_VALUE;
+		Vec3d closestPos = null;
+		for(EnderPearlEntity pearl : client.world.getEntitiesByClass(EnderPearlEntity.class,
+				client.player.getBoundingBox().expand(REACH, REACH, REACH),
+				pearl->name.equalsIgnoreCase(Main.epearlLookup.getOwnerName(pearl)))
+		){
+			final double distSq = pearl.getPos().squaredDistanceTo(playerPos);
+			if(distSq < closestDistSq){closestDistSq = distSq; closestPos = pearl.getPos();}
+		}
+		return BlockPos.ofFloored(closestPos);
+	}
+	private BlockPos findSignWithName(MinecraftClient client, String name){
+		final BlockPos playerPos = client.player.getBlockPos();
+		for(BlockPos pos : BlockPos.iterateOutwards(playerPos, REACH, REACH, REACH)){
+			if(client.world.getBlockEntity(pos) instanceof SignBlockEntity sbe &&
+					Streams.concat(Arrays.stream(sbe.getFrontText().getMessages(/*filtered=*/false)), Arrays.stream(sbe.getBackText().getMessages(false))
+					).map(Text::getLiteralString)
+					.filter(Objects::nonNull)
+					.map(s -> s.replaceAll("[^a-zA-Z0-9_]+", ""))
+					.anyMatch(s -> s.equalsIgnoreCase(name)))
+				{
+					return pos;
+				}
+		}
+		return null;
+	}
+	private BlockPos findNearestButton/*OrNoteblock*/(MinecraftClient client, BlockPos startPos){
+		double closestDistSq = Double.MAX_VALUE;
+		BlockPos buttonPos = null;
+		for(BlockPos pos : BlockPos.iterateOutwards(startPos, REACH, REACH, REACH)){
+			if(client.world.getBlockState(pos).getBlock() instanceof ButtonBlock){
+				final double distSq = pos.getSquaredDistance(startPos);
+				if(distSq < closestDistSq){closestDistSq = distSq; buttonPos = pos;}
+			}
+		}
+		return buttonPos;
+	}
+
 	public AutoPearlActivator(final String trigger){
 		ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {
 			if(overlay) return;
 			//Main.LOGGER.info("GAME Message: "+msg.getString());
 			final String literal = msg.getString();
-			if(literal == null || !literal.matches("\\w+ whispers: "+trigger+"( .*)?")) return;
-			Main.LOGGER.info("AutoPearlActivator: got whisper");
-
+			if(literal == null || !literal.matches("\\w+ whispers: "+trigger+MSG_MATCH_END)) return;
 			final String name = literal.substring(0, literal.indexOf(' '));
-			MinecraftClient client = MinecraftClient.getInstance();
-			final BlockPos playerPos = client.player.getBlockPos();
-			BlockPos signPos = null;
-			for(int i=-reach; i<=reach; ++i) for(int j=-reach; j<=reach; ++j) for(int k=-reach; k<=reach; ++k){
-				if(client.world.getBlockEntity(playerPos.add(i, j, k)) instanceof SignBlockEntity sbe &&
-					Streams.concat(
-						Arrays.stream(sbe.getFrontText().getMessages(/*filtered=*/false)),
-						Arrays.stream(sbe.getBackText().getMessages(false))
-					).map(Text::getLiteralString).filter(s -> s != null)
-					.anyMatch(s -> s.equalsIgnoreCase(name)))
-				{
-					signPos = playerPos.add(i, j, k);
-					break;
-				}
-			}
-			if(signPos == null) return;
-			Main.LOGGER.info("AutoPearlActivator: found sign");
+			Main.LOGGER.info("AutoPearlActivator: got whisper for "+name);
 
-			BlockPos buttonPos = null;
-			double closestButtonSq = Double.MAX_VALUE;
-			for(int i=-reach; i<=reach; ++i) for(int j=-reach; j<=reach; ++j) for(int k=-reach; k<=reach; ++k){
-				if(client.world.getBlockState(playerPos.add(i, j, k)).getBlock() instanceof ButtonBlock){
-					final double distSq = i*i + j*j + k*k;
-					if(distSq < closestButtonSq){closestButtonSq = distSq; buttonPos = playerPos.add(i, j, k);}
-				}
-			}
+			MinecraftClient client = MinecraftClient.getInstance();
+			BlockPos signPos = findSignWithName(client, name);
+			if(signPos == null && (signPos=findNearestPearlWithOwnerName(client, name)) == null) return;
+			Main.LOGGER.info("AutoPearlActivator: found sign/pearl at "+signPos.toShortString());
+
+			BlockPos buttonPos = findNearestButton(client, signPos);
 			if(buttonPos == null) return;
-			Main.LOGGER.info("AutoPearlActivator: found button");
+			Main.LOGGER.info("AutoPearlActivator: found button at "+buttonPos.toShortString());
 
 			client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, getHitResult(client, buttonPos));
 			Main.LOGGER.info("AutoPearlActivator: button pressed!");

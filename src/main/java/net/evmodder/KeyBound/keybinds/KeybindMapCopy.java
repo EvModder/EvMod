@@ -176,7 +176,7 @@ public final class KeybindMapCopy{
 			for(int j=0; j<slotsWithBundles.length && usedDests.size()+1<emptyBundles && copyDests.size()<DESTS_PER_SRC; ++j){
 				final int s2 = slotsWithBundles[j];
 				if(!bundles[j].isEmpty()) continue;
-				Main.LOGGER.info("MapCopyBundle: empty bundle in slot "+s2);
+//				Main.LOGGER.info("MapCopyBundle: empty bundle in slot "+s2);
 				if(SRC_BUNDLES == 1); // If only 1 bundle to copy from, we don't care about name or color.
 				else if(name1 == null){if(slots[s1].getItem() != slots[s2].getItem()) continue;} // Matching Color: Safe to copy!
 				else if(!name1.equals(getCustomNameOrNull(slots[s2]))) continue; // Non-matching Name: Don't copy!
