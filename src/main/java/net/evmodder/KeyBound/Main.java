@@ -23,8 +23,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.commands.*;
-import net.evmodder.KeyBound.events.*;
 import net.evmodder.KeyBound.keybinds.*;
+import net.evmodder.KeyBound.listeners.*;
+import net.evmodder.KeyBound.onTick.AutoPlaceItemFrames;
+import net.evmodder.KeyBound.onTick.TooltipMapLoreMetadata;
+import net.evmodder.KeyBound.onTick.TooltipMapNameColor;
+import net.evmodder.KeyBound.onTick.TooltipRepairCost;
+import net.evmodder.KeyBound.onTick.UpdateContainerHighlights;
+import net.evmodder.KeyBound.onTick.UpdateInventoryHighlights;
+import net.evmodder.KeyBound.onTick.UpdateItemFrameHighlights;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
@@ -200,7 +207,8 @@ once arrangement is found
 				case "publish_my_ignore_list": uploadIgnoreList = !value.equalsIgnoreCase("false"); break;
 				case "add_other_ignore_lists": if(value.startsWith("[")) downloadIgnoreLists = value.substring(1, value.length()-1).split("\\s&,\\s&"); break;
 
-				case "msg_for_pearl_trigger": new AutoPearlActivator(value); break;
+				case "whispers.playsound": new WhisperPlaySound(value); break;
+				case "whispers.pearl_trigger": new WhisperPearlPull(value); break;
 
 				case "limiter_clicks_in_duration": clicksInDuration = Integer.parseInt(value); break;
 				case "limiter_duration_ticks": durationTicks = Integer.parseInt(value); break;
@@ -304,7 +312,7 @@ once arrangement is found
 		if(keybindMapArtBundleStow || keybindMapArtBundleStowReverse)
 			new KeybindMapMoveBundle(keybindMapArtBundleStow, keybindMapArtBundleStowReverse, keybindMapArtBundleStowMax);
 		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg, mapPlaceHelperAuto);
-		if(iFramePlacer) new ItemFrameAutoPlacer(iFramePlacerMatchBlock, iFramePlacerMustConnect);
+		if(iFramePlacer) new AutoPlaceItemFrames(iFramePlacerMatchBlock, iFramePlacerMustConnect);
 		if(keybindEbounceTravelHelper) new KeybindEbounceTravelHelper(ejectJunk);
 		if(keybindRestock){
 			inventoryRestock = new KeybindInventoryRestock(restockBlacklist, restockWhitelist);
@@ -321,9 +329,9 @@ once arrangement is found
 		if(mapHighlightTooltip) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors);
 		if(mapHighlightTooltip || mapHighlightHUD || mapHighlightIFrame || mapHighlightHandledScreen){
 			ClientTickEvents.START_CLIENT_TICK.register(client -> {
-				InventoryHighlightUpdater.onUpdateTick(client);
-				ItemFrameHighlightUpdater.onUpdateTick(client);
-				if(mapHighlightHandledScreen/* || mapHighlightTooltip*/) ContainerHighlightUpdater.onUpdateTick(client);
+				UpdateInventoryHighlights.onUpdateTick(client);
+				UpdateItemFrameHighlights.onUpdateTick(client);
+				if(mapHighlightHandledScreen/* || mapHighlightTooltip*/) UpdateContainerHighlights.onUpdateTick(client);
 			});
 		}
 
