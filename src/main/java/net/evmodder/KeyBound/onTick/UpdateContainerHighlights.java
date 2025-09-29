@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound.events;
+package net.evmodder.KeyBound.onTick;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,7 +24,7 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
-public class ContainerHighlightUpdater{
+public class UpdateContainerHighlights{
 	// These are only at this scope to avoid calls to "new"
 	private static final HashSet<UUID> uniqueMapIds = new HashSet<>();
 	private static ArrayList<Integer> asterisks = new ArrayList<>(7);
@@ -47,8 +47,8 @@ public class ContainerHighlightUpdater{
 		return MapRelationUtils.getAllNestedItems(containerSlots.stream().map(Slot::getStack)).filter(s -> s.getItem() == Items.FILLED_MAP).toList();
 	}
 	private static final boolean mixedOnDisplayAndNotOnDisplay(List<UUID> nonFillerIds){
-		return nonFillerIds.stream().anyMatch(ItemFrameHighlightUpdater::isInItemFrame)
-				&& nonFillerIds.stream().anyMatch(Predicate.not(ItemFrameHighlightUpdater::isInItemFrame));
+		return nonFillerIds.stream().anyMatch(UpdateItemFrameHighlights::isInItemFrame)
+				&& nonFillerIds.stream().anyMatch(Predicate.not(UpdateItemFrameHighlights::isInItemFrame));
 		//Equivalent to:
 //		return nonFillerIds.stream().map(ItemFrameHighlightUpdater::isInItemFrame).distinct().count() > 1;
 	}
@@ -71,7 +71,7 @@ public class ContainerHighlightUpdater{
 		final List<ItemStack> items = getAllMapItemsInContainer(hs.getScreenHandler().slots);
 
 		mapsInContainerHash = hs.getScreenHandler().syncId + items.hashCode();
-		int currHash = InventoryHighlightUpdater.mapsInInvHash + mapsInContainerHash;
+		int currHash = UpdateInventoryHighlights.mapsInInvHash + mapsInContainerHash;
 		if(lastHash == currHash) return;
 		lastHash = currHash;
 //		Main.LOGGER.info("ContainerHighlighter: Clearing cache");
@@ -88,7 +88,7 @@ public class ContainerHighlightUpdater{
 //		if(lastHash == currHash) return;
 
 		asterisks.clear();
-		nonTransparentIds.stream().filter(InventoryHighlightUpdater::isInInventory).forEach(inContainerAndInInv::add);
+		nonTransparentIds.stream().filter(UpdateInventoryHighlights::isInInventory).forEach(inContainerAndInInv::add);
 		if(!inContainerAndInInv.isEmpty()) asterisks.add(Main.MAP_COLOR_IN_INV);
 		if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(Main.MAP_COLOR_NOT_IN_GROUP);
 		if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(Main.MAP_COLOR_UNLOCKED);

@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound.events;
+package net.evmodder.KeyBound.onTick;
 
 import java.util.HashMap;
 import java.util.List;
@@ -53,7 +53,7 @@ public final class TooltipMapLoreMetadata{
 	private static int lastHash;
 
 	public final void tooltipMetadata(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
-		int currHash = InventoryHighlightUpdater.mapsInInvHash + ContainerHighlightUpdater.mapsInContainerHash;
+		int currHash = UpdateInventoryHighlights.mapsInInvHash + UpdateContainerHighlights.mapsInContainerHash;
 		if(lastHash != currHash){lastHash = currHash; tooltipCache.clear();}
 		List<Text> cachedLines = tooltipCache.get(item);
 		if(cachedLines != null){lines.clear(); lines.addAll(cachedLines); return;}

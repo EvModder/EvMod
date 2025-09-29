@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound.events;
+package net.evmodder.KeyBound.onTick;
 
 import java.util.List;
 import net.minecraft.item.Item.TooltipContext;

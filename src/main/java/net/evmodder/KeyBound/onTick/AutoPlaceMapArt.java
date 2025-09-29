@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound.events;
+package net.evmodder.KeyBound.onTick;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,7 +8,7 @@ import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 
-public class MapAutoplacer{
+public class AutoPlaceMapArt{
 	private static boolean isActive;
 	private static ArrayList<ItemStack> slots = new ArrayList<>(Arrays.asList(null, null, null));
 	private static RelatedMapsData data;

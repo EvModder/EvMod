@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound.events;
+package net.evmodder.KeyBound.onTick;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,8 +24,8 @@ import net.minecraft.util.Formatting;
 
 public final class TooltipMapNameColor{
 	private static final boolean mixedOnDisplayAndNotOnDisplay(List<UUID> nonFillerIds){
-		return nonFillerIds.stream().anyMatch(ItemFrameHighlightUpdater::isInItemFrame)
-				&& nonFillerIds.stream().anyMatch(Predicate.not(ItemFrameHighlightUpdater::isInItemFrame));
+		return nonFillerIds.stream().anyMatch(UpdateItemFrameHighlights::isInItemFrame)
+				&& nonFillerIds.stream().anyMatch(Predicate.not(UpdateItemFrameHighlights::isInItemFrame));
 		//Equivalent to:
 //		return nonFillerIds.stream().map(ItemFrameHighlightUpdater::isInItemFrame).distinct().count() > 1;
 	}
@@ -34,7 +34,7 @@ public final class TooltipMapNameColor{
 	private static int lastHash;
 
 	public static final void tooltipColors(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
-		int currHash = InventoryHighlightUpdater.mapsInInvHash + ContainerHighlightUpdater.mapsInContainerHash;
+		int currHash = UpdateInventoryHighlights.mapsInInvHash + UpdateContainerHighlights.mapsInContainerHash;
 		if(lastHash != currHash){
 			lastHash = currHash;
 			tooltipCache.clear();
@@ -56,10 +56,10 @@ public final class TooltipMapNameColor{
 //				states.stream().filter(s -> !MapRelationUtils.isMonoColor(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
 
 			List<Integer> asterisks = new ArrayList<>(4);
-			if(colorIds.stream().anyMatch(InventoryHighlightUpdater::isInInventory)) asterisks.add(Main.MAP_COLOR_IN_INV);
+			if(colorIds.stream().anyMatch(UpdateInventoryHighlights::isInInventory)) asterisks.add(Main.MAP_COLOR_IN_INV);
 			if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(Main.MAP_COLOR_NOT_IN_GROUP);
 			if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(Main.MAP_COLOR_UNLOCKED);
-			if(colorIds.stream().anyMatch(ContainerHighlightUpdater::hasDuplicateInContainer)) asterisks.add(Main.MAP_COLOR_MULTI_INV);
+			if(colorIds.stream().anyMatch(UpdateContainerHighlights::hasDuplicateInContainer)) asterisks.add(Main.MAP_COLOR_MULTI_INV);
 			if(items.size() > states.size()) asterisks.add(Main.MAP_COLOR_UNLOADED);
 			else if(mixedOnDisplayAndNotOnDisplay(colorIds)) asterisks.add(Main.MAP_COLOR_IN_IFRAME);
 			if(items.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(Main.MAP_COLOR_UNNAMED);
@@ -83,11 +83,11 @@ public final class TooltipMapNameColor{
 		}
 		UUID colordsId = MapGroupUtils.getIdForMapState(state);
 		List<Integer> asterisks = new ArrayList<>();
-		if(ContainerHighlightUpdater.isInInvAndContainer(colordsId)) asterisks.add(Main.MAP_COLOR_IN_INV);
+		if(UpdateContainerHighlights.isInInvAndContainer(colordsId)) asterisks.add(Main.MAP_COLOR_IN_INV);
 		if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)) asterisks.add(Main.MAP_COLOR_NOT_IN_GROUP);
 		if(!state.locked) asterisks.add(Main.MAP_COLOR_UNLOCKED);
-		if(ItemFrameHighlightUpdater.isInItemFrame(colordsId)) asterisks.add(Main.MAP_COLOR_IN_IFRAME);
-		if(ContainerHighlightUpdater.hasDuplicateInContainer(colordsId)) asterisks.add(Main.MAP_COLOR_MULTI_INV);
+		if(UpdateItemFrameHighlights.isInItemFrame(colordsId)) asterisks.add(Main.MAP_COLOR_IN_IFRAME);
+		if(UpdateContainerHighlights.hasDuplicateInContainer(colordsId)) asterisks.add(Main.MAP_COLOR_MULTI_INV);
 		if(asterisks.isEmpty()){
 			if(item.getCustomName() == null) lines.addFirst(lines.removeFirst().copy().withColor(Main.MAP_COLOR_UNNAMED));
 			tooltipCache.put(item, lines);

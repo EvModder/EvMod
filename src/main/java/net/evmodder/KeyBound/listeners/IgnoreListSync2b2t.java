@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound.events;
+package net.evmodder.KeyBound.listeners;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

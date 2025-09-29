@@ -1,7 +1,7 @@
 package net.evmodder.KeyBound.mixin;
 
-import net.evmodder.KeyBound.events.ContainerHighlightUpdater;
 import net.evmodder.KeyBound.keybinds.Keybind;
+import net.evmodder.KeyBound.onTick.UpdateContainerHighlights;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -49,7 +49,7 @@ abstract class MixinHandledScreen<T> extends Screen{
 
 	@Inject(method="drawForeground", at=@At("TAIL"))
 	public void mixinFor_drawForeground_overwriteInvTitle(DrawContext context, int mouseX, int mouseY, CallbackInfo ci){
-		if(ContainerHighlightUpdater.customTitle == null) return;
-		context.drawText(this.textRenderer, ContainerHighlightUpdater.customTitle, titleX, titleY, 4210752, false);
+		if(UpdateContainerHighlights.customTitle == null) return;
+		context.drawText(this.textRenderer, UpdateContainerHighlights.customTitle, titleX, titleY, 4210752, false);
 	}
 }

@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound.events;
+package net.evmodder.KeyBound.listeners;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -22,7 +22,7 @@ import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.RaycastContext;
 
-public class AutoPearlActivator{
+public class WhisperPearlPull{
 	final int REACH = 10;
 	final String MSG_MATCH_END = "";//"( .*)?"
 
@@ -113,7 +113,7 @@ public class AutoPearlActivator{
 		return buttonPos;
 	}
 
-	public AutoPearlActivator(final String trigger){
+	public WhisperPearlPull(final String trigger){
 		Main.LOGGER.info("AutoPearlActivator trigger: '"+trigger+"'");
 		ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {
 			if(overlay) return;

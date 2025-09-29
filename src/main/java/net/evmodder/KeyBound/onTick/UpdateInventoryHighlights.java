@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound.events;
+package net.evmodder.KeyBound.onTick;
 
 import java.util.HashSet;
 import java.util.List;
@@ -13,7 +13,7 @@ import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.map.MapState;
 
-public class InventoryHighlightUpdater{
+public class UpdateInventoryHighlights{
 //	private static int invHash;
 	private static HashSet<UUID> inventoryMapGroup = new HashSet<>(), nestedInventoryMapGroup = new HashSet<>();
 	public static UUID currentlyBeingPlacedIntoItemFrame;

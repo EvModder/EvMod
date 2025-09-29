@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound.events;
+package net.evmodder.KeyBound.listeners;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -10,6 +10,8 @@ import java.util.stream.Stream;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
+import net.evmodder.KeyBound.onTick.AutoPlaceMapArt;
+import net.evmodder.KeyBound.onTick.UpdateInventoryHighlights;
 import net.evmodder.EvLib.Pair;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
@@ -408,8 +410,8 @@ public final class MapHandRestock{
 				IntStream.range(0, 41).noneMatch(i -> i != player.getInventory().selectedSlot &&
 				FilledMapItem.getMapState(player.getInventory().getStack(i), player.getWorld()) == state)){
 //			InventoryHighlightUpdater.currentlyBeingPlacedIntoItemFrameSlot = player.getInventory().selectedSlot;
-			InventoryHighlightUpdater.currentlyBeingPlacedIntoItemFrame = MapGroupUtils.getIdForMapState(state);
-			InventoryHighlightUpdater.onUpdateTick(client);
+			UpdateInventoryHighlights.currentlyBeingPlacedIntoItemFrame = MapGroupUtils.getIdForMapState(state);
+			UpdateInventoryHighlights.onUpdateTick(client);
 		}
 
 		int restockFromSlot = -1;
@@ -443,7 +445,7 @@ public final class MapHandRestock{
 		// Wait for hand to be free
 		final int restockFromSlotFinal = restockFromSlot;
 		new Thread(){@Override public void run(){
-			while(InventoryHighlightUpdater.currentlyBeingPlacedIntoItemFrame != null) Thread.yield();
+			while(UpdateInventoryHighlights.currentlyBeingPlacedIntoItemFrame != null) Thread.yield();
 			try{sleep(50l);}catch(InterruptedException e){e.printStackTrace();} // 50ms = 1tick
 
 			if(ogSlots.get(restockFromSlotFinal).get(DataComponentTypes.BUNDLE_CONTENTS) != null){
@@ -484,7 +486,7 @@ public final class MapHandRestock{
 			//Main.LOGGER.info("item in hand is filled_map [1or2]");
 			Main.LOGGER.info("Single mapart placed");
 
-			if(MapAutoplacer.canAutoplace(lastIfe2, lastIfe, ife, player.getMainHandStack())){
+			if(AutoPlaceMapArt.canAutoplace(lastIfe2, lastIfe, ife, player.getMainHandStack())){
 //				Main.LOGGER.info("MapAutoPlace enabled (last 3 placed maps are all related)");
 			}
 //			else{
@@ -494,6 +496,6 @@ public final class MapHandRestock{
 			lastIfe2 = lastIfe; lastIfe = ife;
 			return ActionResult.PASS;
 		});
-		if(autoPlace) ClientTickEvents.START_CLIENT_TICK.register(client -> MapAutoplacer.placeNearestMap());
+		if(autoPlace) ClientTickEvents.START_CLIENT_TICK.register(client -> AutoPlaceMapArt.placeNearestMap());
 	}
 }

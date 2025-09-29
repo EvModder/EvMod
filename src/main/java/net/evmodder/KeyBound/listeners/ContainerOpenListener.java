@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound.events;
+package net.evmodder.KeyBound.listeners;
 
 import net.evmodder.KeyBound.keybinds.KeybindInventoryOrganize;
 import net.evmodder.KeyBound.keybinds.KeybindInventoryRestock;

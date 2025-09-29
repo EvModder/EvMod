@@ -8,8 +8,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapColorUtils;
 import net.evmodder.KeyBound.MapGroupUtils;
-import net.evmodder.KeyBound.events.ItemFrameHighlightUpdater;
-import net.evmodder.KeyBound.events.ItemFrameHighlightUpdater.Highlight;
+import net.evmodder.KeyBound.onTick.UpdateItemFrameHighlights;
+import net.evmodder.KeyBound.onTick.UpdateItemFrameHighlights.Highlight;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.ItemFrameEntityRenderer;
@@ -32,7 +32,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		Vec3d vec3d2 = new Vec3d(entity.getX() - client.player.getX(), entity.getEyeY() - client.player.getEyeY(), entity.getZ() - client.player.getZ());
 		double d = vec3d2.length(); // Calls Math.sqrt()
 		vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d);//normalize
-		double e = ItemFrameHighlightUpdater.clientRotationNormalized.dotProduct(vec3d2);
+		double e = UpdateItemFrameHighlights.clientRotationNormalized.dotProduct(vec3d2);
 		final double asdf = client.player.squaredDistanceTo(entity) > 5*5 ? 0.3d : 0.1d;
 		return e > 1.0d - asdf / d;
 	}
@@ -46,34 +46,34 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(stack.isEmpty()) return;
 		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
 		if(state == null) return;
-		Highlight hl = ItemFrameHighlightUpdater.iFrameGetHighlight(itemFrameEntity.getId());
+		Highlight hl = UpdateItemFrameHighlights.iFrameGetHighlight(itemFrameEntity.getId());
 		if(hl == null) return;
 
-		Boolean hasLabel = ItemFrameHighlightUpdater.hasLabelCache.get(itemFrameEntity);
+		Boolean hasLabel = UpdateItemFrameHighlights.hasLabelCache.get(itemFrameEntity);
 		if(hasLabel != null){cir.setReturnValue(hasLabel); return;}
 
 		if(hl == Highlight.MULTI_HUNG && Main.skipMonoColorMaps && MapColorUtils.isMonoColor(state.colors)){
-			ItemFrameHighlightUpdater.hasLabelCache.put(itemFrameEntity, false);
+			UpdateItemFrameHighlights.hasLabelCache.put(itemFrameEntity, false);
 			return; // Don't do boosted hasLabel()
 		}
 
 		if(hl == Highlight.INV_OR_NESTED_INV){ // Show this label even if not looking in general direction
 			cir.setReturnValue(true);
-			ItemFrameHighlightUpdater.hasLabelCache.put(itemFrameEntity, true);
+			UpdateItemFrameHighlights.hasLabelCache.put(itemFrameEntity, true);
 			return;
 		}
 		if(!isLookingInGeneralDirection(itemFrameEntity)){
-			ItemFrameHighlightUpdater.hasLabelCache.put(itemFrameEntity, false);
+			UpdateItemFrameHighlights.hasLabelCache.put(itemFrameEntity, false);
 			return;
 		}
 		if(hl == Highlight.NOT_IN_CURR_GROUP){ // Show this label even if no LOS and > 20 blocks away
 			cir.setReturnValue(true);
-			ItemFrameHighlightUpdater.hasLabelCache.put(itemFrameEntity, true);
+			UpdateItemFrameHighlights.hasLabelCache.put(itemFrameEntity, true);
 			return;
 		}
 		if(squaredDistanceToCamera <= 20*20 && client.player.canSee(itemFrameEntity)){ // Show all other labels only if LOS and <= 20
 			cir.setReturnValue(true);
-			ItemFrameHighlightUpdater.hasLabelCache.put(itemFrameEntity, true);
+			UpdateItemFrameHighlights.hasLabelCache.put(itemFrameEntity, true);
 			return;
 		}
 	}
@@ -86,10 +86,10 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(stack == null || stack.isEmpty());
 		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
 		if(FilledMapItem.getMapState(stack, itemFrameEntity.getWorld()) == null) return;
-		Highlight hl = ItemFrameHighlightUpdater.iFrameGetHighlight(itemFrameEntity.getId());
+		Highlight hl = UpdateItemFrameHighlights.iFrameGetHighlight(itemFrameEntity.getId());
 		if(hl == null) return;
 
-		Text cachedName = ItemFrameHighlightUpdater.displayNameCache.get(itemFrameEntity);
+		Text cachedName = UpdateItemFrameHighlights.displayNameCache.get(itemFrameEntity);
 		if(cachedName != null){cir.setReturnValue(cachedName); return;}
 
 		MutableText name = stack.getName().copy();
@@ -98,7 +98,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 			name.withColor(Main.MAP_COLOR_IN_INV);
 			if(notInCurrGroup) name.append(Text.literal("*").withColor(Main.MAP_COLOR_NOT_IN_GROUP));
 			if(!state.locked) name.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
-			if(ItemFrameHighlightUpdater.isHungMultiplePlaces(MapGroupUtils.getIdForMapState(state)))
+			if(UpdateItemFrameHighlights.isHungMultiplePlaces(MapGroupUtils.getIdForMapState(state)))
 				name.append(Text.literal("*").withColor(Main.MAP_COLOR_MULTI_IFRAME));
 		}
 		else if(hl == Highlight.NOT_IN_CURR_GROUP){
@@ -112,10 +112,10 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 			else name.withColor(Main.MAP_COLOR_MULTI_IFRAME);
 		}
 		else{
-			ItemFrameHighlightUpdater.displayNameCache.put(itemFrameEntity, stack.getName());
+			UpdateItemFrameHighlights.displayNameCache.put(itemFrameEntity, stack.getName());
 			return;
 		}
-		ItemFrameHighlightUpdater.displayNameCache.put(itemFrameEntity, name);
+		UpdateItemFrameHighlights.displayNameCache.put(itemFrameEntity, name);
 		cir.setReturnValue(name);
 	}
 

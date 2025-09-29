@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound.events;
+package net.evmodder.KeyBound.onTick;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,7 +22,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
-public class ItemFrameAutoPlacer{
+public class AutoPlaceItemFrames{
 //	public static boolean isActive; // Using dir!=null instead
 	private Block placeAgainstBlock;
 	private Item iFrameItem;
@@ -76,7 +76,7 @@ public class ItemFrameAutoPlacer{
 	}
 
 	private int tick;
-	public ItemFrameAutoPlacer(final boolean mustMatchBlockType, final boolean mustBeConnected){
+	public AutoPlaceItemFrames(final boolean mustMatchBlockType, final boolean mustBeConnected){
 		mustConnect = mustBeConnected;
 		EndTick etl = (client) -> {
 			if(dir == null/* || iFrameItem == null*/) return; // iFramePlacer is not currently active

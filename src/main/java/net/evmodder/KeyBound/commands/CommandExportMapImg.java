@@ -25,7 +25,7 @@ import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
-import net.evmodder.KeyBound.events.ItemFrameHighlightUpdater;
+import net.evmodder.KeyBound.onTick.UpdateItemFrameHighlights;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -515,7 +515,7 @@ public class CommandExportMapImg{
 	private final boolean SHOW_ONLY_IF_HAS_AZ = true, REMOVE_MAX_CNT = true, REMOVE_BRACKET_SYMBOLS = true;
 	HashMap<String, String> cmdMapNames = new HashMap<>();
 	private Set<String> getNearbyMapNames(ClientPlayerEntity player){
-		if(!cmdMapNames.isEmpty() && !ItemFrameHighlightUpdater.anyHangLocUpdate) return cmdMapNames.keySet();
+		if(!cmdMapNames.isEmpty() && !UpdateItemFrameHighlights.anyHangLocUpdate) return cmdMapNames.keySet();
 		cmdMapNames.clear();
 
 		final HashSet<String> seen = new HashSet<>();

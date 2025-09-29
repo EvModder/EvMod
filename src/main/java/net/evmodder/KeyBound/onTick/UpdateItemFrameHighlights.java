@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound.events;
+package net.evmodder.KeyBound.onTick;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,7 +15,7 @@ import net.minecraft.item.map.MapState;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 
-public class ItemFrameHighlightUpdater{
+public class UpdateItemFrameHighlights{
 	private record XYZD(int x, int y, int z, int d){}
 	private static final HashMap<XYZD, UUID> hangLocsReverse = new HashMap<>(); // XYZD -> colorsId
 	private static final HashMap<UUID, HashSet<XYZD>> iFrameMapGroup = new HashMap<>(); // colorsId -> {HangLocs}
@@ -94,7 +94,7 @@ public class ItemFrameHighlightUpdater{
 			final MapState state = FilledMapItem.getMapState(ife.getHeldItemStack(), ife.getWorld());
 
 			final Highlight highlight;
-			if(InventoryHighlightUpdater.isInInventory(colorsId) || InventoryHighlightUpdater.isNestedInInventory(colorsId)) highlight = Highlight.INV_OR_NESTED_INV;
+			if(UpdateInventoryHighlights.isInInventory(colorsId) || UpdateInventoryHighlights.isNestedInInventory(colorsId)) highlight = Highlight.INV_OR_NESTED_INV;
 			else if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)) highlight = Highlight.NOT_IN_CURR_GROUP;
 			else if(isMultiHung) highlight = Highlight.MULTI_HUNG;
 			else if(!state.locked || stack.getCustomName() == null) highlight = Highlight.UNLOCKED_OR_UNNAMED;
@@ -125,8 +125,8 @@ public class ItemFrameHighlightUpdater{
 		List<ItemFrameEntity> ifes = client.world.getEntitiesByClass(ItemFrameEntity.class, client.player.getBoundingBox().expand(200, 200, 200), _0->true);
 
 		anyHangLocUpdate = updateItemFrameEntities(ifes);
-		if(!anyHangLocUpdate && lastInvHash == InventoryHighlightUpdater.mapsInInvHash) return;
-		lastInvHash = InventoryHighlightUpdater.mapsInInvHash;
+		if(!anyHangLocUpdate && lastInvHash == UpdateInventoryHighlights.mapsInInvHash) return;
+		lastInvHash = UpdateInventoryHighlights.mapsInInvHash;
 
 //		Main.LOGGER.info("IframeHighlighter: Recomputing highlight cache, due to "+(anyHangLocUpdate?"hung iframe update":"inv update"));
 
