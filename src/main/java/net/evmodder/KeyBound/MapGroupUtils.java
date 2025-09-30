@@ -9,6 +9,7 @@ import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.map.MapState;
 
 public final class MapGroupUtils{
+	public static int mapsInGroupHash; // TODO: private
 	private static HashSet<UUID> currentMapGroup;
 	static boolean INCLUDE_UNLOCKED;
 	private static boolean ENFORCE_MATCHES_LOCKEDNESS = true; // TODO: config setting
@@ -41,7 +42,7 @@ public final class MapGroupUtils{
 	}
 	public static final void setCurrentGroup(HashSet<UUID> newGroup){
 		currentMapGroup = newGroup;
-//		ItemFrameHighlightUpdater.highlightedIFrames.clear();
+		mapsInGroupHash = newGroup == null ? 0 : newGroup.hashCode();
 	}
 	public static final boolean isMapNotInCurrentGroup(final UUID colorsUUID){
 		return currentMapGroup != null && !currentMapGroup.contains(colorsUUID);

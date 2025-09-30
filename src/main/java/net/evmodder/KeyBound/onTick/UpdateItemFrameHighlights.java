@@ -106,7 +106,7 @@ public class UpdateItemFrameHighlights{
 		}
 		return anyHighlightUpdate;
 	}
-	private static int lastInvHash;
+	private static int lastGroupInvHash;
 	public static final void onUpdateTick(MinecraftClient client){
 		if(client.world == null) return;
 		Vec3d newClientRot = client.player.getRotationVec(1.0F).normalize();
@@ -125,8 +125,9 @@ public class UpdateItemFrameHighlights{
 		List<ItemFrameEntity> ifes = client.world.getEntitiesByClass(ItemFrameEntity.class, client.player.getBoundingBox().expand(200, 200, 200), _0->true);
 
 		anyHangLocUpdate = updateItemFrameEntities(ifes);
-		if(!anyHangLocUpdate && lastInvHash == UpdateInventoryHighlights.mapsInInvHash) return;
-		lastInvHash = UpdateInventoryHighlights.mapsInInvHash;
+		final int currGroupInvHash = MapGroupUtils.mapsInGroupHash * UpdateInventoryHighlights.mapsInInvHash;
+		if(!anyHangLocUpdate && lastGroupInvHash == currGroupInvHash) return;
+		lastGroupInvHash = currGroupInvHash;
 
 //		Main.LOGGER.info("IframeHighlighter: Recomputing highlight cache, due to "+(anyHangLocUpdate?"hung iframe update":"inv update"));
 
