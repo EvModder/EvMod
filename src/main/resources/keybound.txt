@@ -123,6 +123,7 @@ whispers.pearl_trigger: (?:e?p|e?pearl|r(ea)?dy)
 
 #========== Chat/commands ==========#
 join_messages: [/mapartgroup set end_misc+end_big+end_square]
+log_xyz_on_quit: true
 #keybind.chat_msg.meow: meow :3
 keybind.chat_msg.rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost
 

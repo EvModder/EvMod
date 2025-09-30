@@ -35,7 +35,6 @@ import net.evmodder.KeyBound.onTick.UpdateItemFrameHighlights;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
 
 // gradle genSources/eclipse/cleanloom/--stop
@@ -103,7 +102,6 @@ once arrangement is found
 	public static boolean rcHUD, mapHighlightHUD, mapHighlightIFrame, mapHighlightHandledScreen;
 	public static boolean invisItemFramesWithMaps=true, invisItemFramesWithMapsSemiTransparentOnly=false;
 	public static boolean mapartDb, mapartDbContact, totemShowTotalCount, skipTransparentMaps, skipMonoColorMaps;
-	public static long joinedServerTimestamp;
 
 	public static int MAP_COLOR_UNLOADED = 13150930;
 	public static int MAP_COLOR_UNLOCKED = 14692709;
@@ -199,11 +197,8 @@ once arrangement is found
 				case "seen_database": if(!value.equalsIgnoreCase("false")) new CommandSeen(); break;//TODO
 				case "mapart_database": mapartDb = !value.equalsIgnoreCase("false"); break;
 				case "mapart_database_share_contact": mapartDbContact = !value.equalsIgnoreCase("false"); break;
-				case "track_time_online": if(!value.equalsIgnoreCase("false")){
-					ServerPlayConnectionEvents.JOIN.register((_0, _1, _2)->joinedServerTimestamp=System.currentTimeMillis());
-					new CommandTimeOnline();
-					break;
-				}
+				case "track_time_online": if(!value.equalsIgnoreCase("false")) new CommandTimeOnline(); break;
+				case "log_xyz_on_quit": if(!value.equalsIgnoreCase("false")) new LogCoordsOnServerDisconnect(); break;
 				case "publish_my_ignore_list": uploadIgnoreList = !value.equalsIgnoreCase("false"); break;
 				case "add_other_ignore_lists": if(value.startsWith("[")) downloadIgnoreLists = value.substring(1, value.length()-1).split("\\s&,\\s&"); break;
 
