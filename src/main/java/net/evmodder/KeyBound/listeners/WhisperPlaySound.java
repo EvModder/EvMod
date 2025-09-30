@@ -1,5 +1,6 @@
 package net.evmodder.KeyBound.listeners;
 
+import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.sound.SoundCategory;
@@ -9,12 +10,15 @@ import net.minecraft.util.Identifier;
 public class WhisperPlaySound{
 	//WhisperPlaySound(SoundEvent sound, SoundCategory category, float volume, float pitch){
 	public WhisperPlaySound(final String soundData){
-		if(soundData.lastIndexOf('{') != 0 || soundData.indexOf('}') != soundData.length()-1) return;
-		final String[] parts = soundData.split(",");
-		if(parts.length == 0 || parts.length > 4) return;
+		if(soundData.lastIndexOf('{') != 0 || soundData.indexOf('}') != soundData.length()-1){
+			Main.LOGGER.warn("Unrecognized sound format: "+soundData+" (not wrapped in {})");
+			return;
+		}
+		final String[] parts = soundData.substring(1, soundData.length()-1).split(",");
+		if(parts.length == 0 || parts.length > 4){Main.LOGGER.warn("Unrecognized sound format"); return;}
 		int idx;
 		final String soundName =
-				((idx=parts[1].indexOf(':')) == -1 ? parts[0] : parts[0].substring(idx+1)).trim();
+				((idx=parts[0].indexOf(':')) == -1 ? parts[0] : parts[0].substring(idx+1)).trim();
 		final String categoryName = parts.length < 2 ? SoundCategory.PLAYERS.name() :
 				((idx=parts[1].indexOf(':')) == -1 ? parts[1] : parts[1].substring(idx+1)).trim();
 		final float volume = parts.length < 3 ? 1 : Float.parseFloat(
