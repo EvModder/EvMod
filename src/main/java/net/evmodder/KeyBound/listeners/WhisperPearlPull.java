@@ -23,8 +23,11 @@ import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.RaycastContext;
 
 public class WhisperPearlPull{
-	final int REACH = 10;
-	final String MSG_MATCH_END = "";//"( .*)?"
+	private final int REACH = 10;
+	private final String MSG_MATCH_END = "";//"( .*)?"
+	private final boolean msgFailureFeedback = true;
+	private final long msgCooldown = 1000*5;
+	private long lastMsgTs;
 
 	public static boolean hasLineOfSight(MinecraftClient client, Vec3d from, Vec3d to){
 		return client.world.raycast(
@@ -113,29 +116,45 @@ public class WhisperPearlPull{
 		return buttonPos;
 	}
 
+	private void sendFeedback(MinecraftClient client, final String who, final String msg){
+		if(!msgFailureFeedback) return;
+		if(msgCooldown > 0){
+			final long currTs = System.currentTimeMillis();
+			if(currTs-lastMsgTs < msgCooldown) return;
+			lastMsgTs = currTs;
+		}
+		client.getNetworkHandler().sendChatCommand("/w "+who+" "+msg);
+	}
+
 	public WhisperPearlPull(final String trigger){
 		Main.LOGGER.info("AutoPearlActivator trigger: '"+trigger+"'");
 		ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {
 			if(overlay) return;
-			Main.LOGGER.info("GAME Message: "+msg.getString());
+//			Main.LOGGER.info("GAME Message: "+msg.getString());
 			final String literal = msg.getString();
 			if(literal == null || !literal.matches("\\w+ whispers: "+trigger+MSG_MATCH_END)) return;
 			final String name = literal.substring(0, literal.indexOf(' '));
-			Main.LOGGER.info("AutoPearlActivator: got whisper for "+name);
+//			Main.LOGGER.info("AutoPearlActivator: got whisper for "+name);
 
 			MinecraftClient client = MinecraftClient.getInstance();
 			BlockPos signPos = findSignWithName(client, name);
-			if(signPos == null && (signPos=findNearestPearlWithOwnerName(client, name)) == null) return;
-			Main.LOGGER.info("AutoPearlActivator: found sign/pearl");// at "+signPos.toShortString());
+			if(signPos == null && (signPos=findNearestPearlWithOwnerName(client, name)) == null){
+				sendFeedback(client, name, "[automated response] I do not recognize any pearl of yours nearby");
+				return;
+			}
+//			Main.LOGGER.info("AutoPearlActivator: found sign/pearl");// at "+signPos.toShortString());
 
 			BlockPos buttonPos = findNearestButton(client, signPos);
-			if(buttonPos == null) return;
-			Main.LOGGER.info("AutoPearlActivator: found button at "+buttonPos.toShortString());
+			if(buttonPos == null){
+//				sendFeedback(client, name, "[automated response] I see your pearl, but not how to activate it");
+				return;
+			}
+//			Main.LOGGER.info("AutoPearlActivator: found button at "+buttonPos.toShortString());
 
-			BlockHitResult hitResult = getHitResult(client, buttonPos);
-			if(hitResult == null) return;
-			client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, hitResult);
-			Main.LOGGER.info("AutoPearlActivator: button pressed!");
+//			assert hitResult != null;
+//			if(hitResult == null) return;
+			client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, getHitResult(client, buttonPos));
+//			Main.LOGGER.info("AutoPearlActivator: button pressed!");
 		});
 	}
 }
