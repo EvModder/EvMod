@@ -495,6 +495,13 @@ public class CommandExportMapImg{
 					suffixStr = suffixStr.substring(idx + szCntStr.length());
 				}
 			}
+			// Trim leading/trailing whitespace
+			final String prefixStrTrimmed = prefixStr.stripTrailing();
+			final String suffixStrTrimmed =  suffixStr.stripLeading();
+			final boolean hadSpace = prefixStrTrimmed.length() < prefixStr.length() || suffixStrTrimmed.length() < suffixStr.length();
+			prefixStr = prefixStrTrimmed + (hadSpace ? " " : "");
+			suffixStr = suffixStrTrimmed;
+
 			if(REMOVE_BRACKET_SYMBOLS){
 				int a=prefixStr.length()-1, b=0;
 				while(true){
@@ -503,11 +510,8 @@ public class CommandExportMapImg{
 					if(a == -1 || b == suffixStr.length() || !isReflectedChar(prefixStr.charAt(a), suffixStr.charAt(b))) break;
 					--a; ++b;
 				}
-				prefixStr = prefixStr.substring(0, a+1);
+				prefixStr = prefixStr.substring(0, a+1) + (hadSpace ? " " : "");
 				suffixStr = suffixStr.substring(b);
-			}
-			if(prefixStr.length() < (prefixStr=prefixStr.stripTrailing()).length() || suffixStr.length() < (suffixStr=suffixStr.stripLeading()).length()){
-				prefixStr += " ";
 			}
 			return (prefixStr + suffixStr).trim();
 		}

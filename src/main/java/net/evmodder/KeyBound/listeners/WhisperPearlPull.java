@@ -104,7 +104,7 @@ public class WhisperPearlPull{
 		}
 		return null;
 	}
-	private BlockPos findNearestButton/*OrNoteblock*/(MinecraftClient client, BlockPos startPos){
+	private BlockPos findNearestButton/*OrNoteblock*/(MinecraftClient client, BlockPos startPos){ // TODO: trapdoor, noteblock
 		double closestDistSq = Double.MAX_VALUE;
 		BlockPos buttonPos = null;
 		for(BlockPos pos : BlockPos.iterateOutwards(startPos, REACH, REACH, REACH)){

@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 public class ClientBlockPosArgumentType implements ArgumentType<BlockPos>{
+	private boolean SHOW_CROSSHAIR_TARGET = false;
 	private static final Collection<String> EXAMPLES = Arrays.asList("0 0 0", "~ ~ ~");
 
 	public static ClientBlockPosArgumentType blockPos(){
@@ -77,7 +78,7 @@ public class ClientBlockPosArgumentType implements ArgumentType<BlockPos>{
 		}
 
 		var hitResult = MinecraftClient.getInstance().crosshairTarget;
-		if(hitResult != null && hitResult.getType() == HitResult.Type.BLOCK){
+		if(SHOW_CROSSHAIR_TARGET && hitResult != null && hitResult.getType() == HitResult.Type.BLOCK){
 			var blockHitResult = (BlockHitResult)hitResult;
 			var blockPos = blockHitResult.getBlockPos();
 			if(xString == null && yString == null && zString == null){
