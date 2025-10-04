@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 public class ClientBlockPosArgumentType implements ArgumentType<BlockPos>{
-	private boolean SHOW_CROSSHAIR_TARGET = false;
 	private static final Collection<String> EXAMPLES = Arrays.asList("0 0 0", "~ ~ ~");
 
 	public static ClientBlockPosArgumentType blockPos(){
@@ -78,15 +77,15 @@ public class ClientBlockPosArgumentType implements ArgumentType<BlockPos>{
 		}
 
 		var hitResult = MinecraftClient.getInstance().crosshairTarget;
-		if(SHOW_CROSSHAIR_TARGET && hitResult != null && hitResult.getType() == HitResult.Type.BLOCK){
+		if(hitResult != null && hitResult.getType() == HitResult.Type.BLOCK){
 			var blockHitResult = (BlockHitResult)hitResult;
 			var blockPos = blockHitResult.getBlockPos();
-			if(xString == null && yString == null && zString == null){
-				builder.suggest(blockPos.getX());
-				builder.suggest(String.format("%s %s", blockPos.getX(), blockPos.getY()));
-				builder.suggest(String.format("%s %s %s", blockPos.getX(), blockPos.getY(), blockPos.getZ()));
-			}
-			if(xString != null && yString == null && zString == null){
+//			if(xString == null && yString == null && zString == null){
+//				builder.suggest(blockPos.getX());
+//				builder.suggest(String.format("%s %s", blockPos.getX(), blockPos.getY()));
+//				builder.suggest(String.format("%s %s %s", blockPos.getX(), blockPos.getY(), blockPos.getZ()));
+//			}
+			if(xString != null && !xString.equals("~") && yString == null && zString == null){
 				builder.suggest(String.format("%s %s", xString, blockPos.getY()));
 				builder.suggest(String.format("%s %s %s", xString, blockPos.getY(), blockPos.getZ()));
 			}

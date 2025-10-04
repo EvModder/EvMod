@@ -34,7 +34,8 @@ abstract class MixinClientWorld{
 		mapsSaved = new HashMap<>();
 		mapsInTransit = new HashSet<>();
 		mapsToSave = new HashSet<>();
-		Arrays.stream(FileIO.loadFile(DB_FILENAME, "").split("\\r?\\n")).forEach(s -> {
+		final String data = FileIO.loadFile(DB_FILENAME, (String)null);
+		if(data != null) Arrays.stream(data.split("\\r?\\n")).forEach(s -> {
 			String[] parts = s.split(":");
 			if(parts.length != 2) return;
 			String[] uuidStrs = parts[1].split(",");
