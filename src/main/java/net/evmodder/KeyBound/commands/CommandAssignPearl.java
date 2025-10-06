@@ -56,7 +56,7 @@ public class CommandAssignPearl{
 //			ctx.getSource().sendFeedback(Text.literal("Sending DB update for epearl: "+key+" -> "+uuid));
 			Main.remoteSender.sendBotMessage(cmd, /*udp=*/false, /*timeout=*/3000, PacketHelper.toByteArray(key, uuid), (reply)->{
 				if(reply != null && reply.length == 1){
-					if(reply[0] == 255) ctx.getSource().sendFeedback(Text.literal("Added pearl owner to remote DB!"));
+					if(reply[0] == -1/*aka (byte)255*/) ctx.getSource().sendFeedback(Text.literal("Added pearl owner to remote DB!"));
 					else ctx.getSource().sendError(Text.literal("Remote DB already contains pearl owner"));
 
 //					final PearlDataClient pdc = new PearlDataClient(key, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
