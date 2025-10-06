@@ -84,7 +84,7 @@ public final class KeybindInventoryOrganize{
 			else dstName = getName(MinecraftClient.getInstance().player.getInventory().getArmorStack(p.a-5));
 			if(p.b.getPath().equals(dstName)){
 				plannedSlots[dstSlot] = doneSlots[dstSlot] = true;
-				Main.LOGGER.info("checkDoneSlots(): done slot: "+dstSlot+" (item: "+p.b.getPath()+")");
+//				Main.LOGGER.info("checkDoneSlots(): done slot: "+dstSlot+" (item: "+p.b.getPath()+")");
 			}
 			else{
 				final int srcSlot = findSlotWithItem(slots, p.b.getPath(), plannedSlots);
@@ -93,7 +93,7 @@ public final class KeybindInventoryOrganize{
 					continue;
 				}
 				plannedSlots[dstSlot] = plannedSlots[srcSlot] = true;
-				Main.LOGGER.info("checkDoneSlots(): planned slots: "+srcSlot+"->"+dstSlot+" (item: "+p.b.getPath()+")");
+//				Main.LOGGER.info("checkDoneSlots(): planned slots: "+srcSlot+"->"+dstSlot+" (item: "+p.b.getPath()+")");
 				//fakeSwapSlots(srcSlot, dstSlot);
 			}
 		}

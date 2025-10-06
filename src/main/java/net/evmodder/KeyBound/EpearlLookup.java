@@ -49,7 +49,7 @@ public final class EpearlLookup{
 		@Override public PearlDataClient load(UUID key){
 			Main.LOGGER.debug("fetch ownerUUID called for pearlUUID: "+key+" at "+idToPos.get(key));
 			if(Main.remoteSender == null){
-				Main.LOGGER.info("Remote server offline. Returning "+MojangProfileLookup.NAME_U_404);
+				Main.LOGGER.info("EpearLookup(Fetch): Remote server offline. Returning "+MojangProfileLookup.NAME_U_404);
 				return PD_404;
 			}
 
@@ -60,11 +60,11 @@ public final class EpearlLookup{
 					final XYZ xyz = idToPos.get(key);
 					final PearlDataClient pdc;
 					if(msg == null || msg.length != 16){
-						if(msg == null) Main.LOGGER.warn("ePearlOwnerFetch: Timed out");
+						if(msg == null) Main.LOGGER.warn("EpearLookup(Fetch): Timed out");
 						else if(msg.length == 1 && msg[0] == 0){
-							Main.LOGGER.info("ePearlOwnerFetch: Server does not know ownerUUID for pearlUUID: "+key+(xyz==null ? "" : " at "+xyz));
+							Main.LOGGER.info("EpearLookup(Fetch): Server does not know ownerUUID for pearlUUID: "+key+(xyz==null ? "" : " at "+xyz));
 						}
-						else Main.LOGGER.error("ePearlOwnerFetch: Invalid server response: "+new String(msg)+" ["+msg.length+"]");
+						else Main.LOGGER.error("EpearLookup(Fetch): Invalid server response: "+new String(msg)+" ["+msg.length+"]");
 						pdc = PD_404;
 					}
 					else{
@@ -72,11 +72,11 @@ public final class EpearlLookup{
 						final UUID fetchedUUID = new UUID(bb.getLong(), bb.getLong());
 						assert !fetchedUUID.equals(MojangProfileLookup.UUID_404);
 						if(xyz == null){
-							Main.LOGGER.warn("ePearlOwnerFetch: Unable to find XZ of epearl for given key!: "+key);
+							Main.LOGGER.warn("EpearLookup(Fetch): Unable to find XZ of epearl for given key!: "+key);
 							pdc = new PearlDataClient(fetchedUUID, 0, 0, 0);
 						}
 						else{
-							Main.LOGGER.info("ePearlOwnerFetch: Got ownerUUID for pearlUUID: "+key+" at "+xyz+", appending to clientFile");
+							Main.LOGGER.info("EpearLookup(Fetch): Got ownerUUID for pearlUUID: "+key+" at "+xyz+", appending to clientFile");
 							pdc = new PearlDataClient(fetchedUUID, xyz.x(), xyz.x(), xyz.z());
 							FileIO.appendToClientFile(DB_FILENAME, key, pdc);
 						}
@@ -89,6 +89,13 @@ public final class EpearlLookup{
 		}
 	}
 	private final RSLoadingCache cacheByUUID, cacheByXZ;
+
+	public final void assignPearlOwner_FriendCommandAssignPearl(UUID key, PearlDataClient pdc, Command cmd){ // TODO: actual 'friend' enforcement
+		assert cmd == Command.DB_PEARL_STORE_BY_UUID || cmd == Command.DB_PEARL_STORE_BY_XZ;
+		final String DB_FILENAME = cmd == Command.DB_PEARL_STORE_BY_UUID ? DB_FILENAME_UUID : DB_FILENAME_XZ;
+		final RSLoadingCache cache = cmd == Command.DB_PEARL_STORE_BY_UUID ? cacheByUUID : cacheByXZ;
+		if(cache.putIfAbsent(key, pdc)) FileIO.appendToClientFile(DB_FILENAME, key, pdc);
+	}
 
 	private boolean recentChunkLoad = true;
 	private void runEpearlRemovalChecker(){
@@ -202,14 +209,14 @@ public final class EpearlLookup{
 			if(ownerUUID != null){
 				final PearlDataClient pdc = new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
 				if(cacheByUUID.putIfAbsent(key, pdc)){
-					Main.LOGGER.info("Sending STORE_OWNER '"+ownerName+"' for pearl at "+epearl.getBlockX()+","+epearl.getBlockZ());
+					Main.LOGGER.debug("EpearlLookup: Sending STORE_OWNER(uuid) '"+ownerName+"' for pearl at "+epearl.getBlockX()+","+epearl.getBlockZ());
 					Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, ownerUUID), msg->{
 						if(msg != null && msg.length == 1){
-							if(msg[0] != 0) Main.LOGGER.info("Added pearl UUID to remote DB!");
-							else Main.LOGGER.info("Remote DB already contains pearl UUID");
+							if(msg[0] != 0) Main.LOGGER.info("EpearlLookup: Added pearl UUID to remote DB!");
+							else Main.LOGGER.info("EpearlLookup: Remote DB already contains pearl UUID");
 							FileIO.appendToClientFile(DB_FILENAME_UUID, key, pdc);
 						}
-						else Main.LOGGER.info("Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_UUID: "+msg);
+						else Main.LOGGER.info("EpearlLookup: Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_UUID: "+msg);
 					});
 				}
 			}
@@ -238,13 +245,14 @@ public final class EpearlLookup{
 				if(oldKey == null){
 					final PearlDataClient pdc = new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
 					if(cacheByXZ.putIfAbsent(key, pdc)){
+						Main.LOGGER.debug("EpearlLookup: Sending STORE_OWNER(XZ) '"+ownerName+"' for pearl at "+epearl.getBlockX()+","+epearl.getBlockZ());
 						Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_XZ, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, ownerUUID), msg->{
 							if(msg != null && msg.length == 1){
-								if(msg[0] != 0) Main.LOGGER.info("Added pearl XZ to remote DB!");
-								else Main.LOGGER.info("Remote DB already contains pearl XZ (or rejected it for other reasons)");
+								if(msg[0] != 0) Main.LOGGER.info("EpearlLookup: Added pearl XZ to remote DB!");
+								else Main.LOGGER.info("EpearlLookup: Remote DB already contains pearl XZ (or rejected it for other reasons)");
 								FileIO.appendToClientFile(DB_FILENAME_XZ, key, pdc);
 							}
-							else Main.LOGGER.info("Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_XZ: "+msg);
+							else Main.LOGGER.info("EpearlLookup: Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_XZ: "+msg);
 						});
 					}
 				}
@@ -254,8 +262,8 @@ public final class EpearlLookup{
 					if(currentTime - lastUpdateXZ < 7000l) return getDynamicUsername(ownerUUID, key);
 					lastUpdateXZ = currentTime;
 					Main.remoteSender.sendBotMessage(Command.DB_PEARL_XZ_KEY_UPDATE, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(oldKey, key), msg->{
-						if(msg != null && msg.length > 0 && msg[0] != 0) Main.LOGGER.info("Updated pearl XZ in remote DB!");
-						else Main.LOGGER.info("Failed to update pearl XZ in remote DB!");
+						if(msg != null && msg.length > 0 && msg[0] != 0) Main.LOGGER.info("EpearlLookup: Updated pearl XZ in remote DB!");
+						else Main.LOGGER.info("EpearlLookup: Failed to update pearl XZ in remote DB!");
 					});
 				}
 				updateKeyXZ.put(epearl.getId(), key);

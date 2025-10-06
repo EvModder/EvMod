@@ -164,7 +164,10 @@ public final class PacketHelper{
 				final DatagramPacket packet = new DatagramPacket(replyUDP, MAX_PACKET_SIZE_RECV);
 				try{socketUDP.receive(packet);}
 				catch(IOException e){
-					if(e instanceof SocketTimeoutException) LOGGER.warning("Waiting for UDP response timed out");
+					if(e instanceof SocketTimeoutException){
+						LOGGER.warning("Waiting for UDP response timed out");
+						callback.receiveMessage(null);
+					}
 					else e.printStackTrace();
 					return;
 				}

@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.PacketHelper;
+import net.evmodder.EvLib.PearlDataClient;
 import java.util.List;
 import java.util.UUID;
 import net.evmodder.KeyBound.Main;
@@ -29,6 +30,7 @@ public class CommandAssignPearl{
 	}
 
 	private int assignPearl(CommandContext<FabricClientCommandSource> ctx, Command cmd){
+		assert cmd == Command.DB_PEARL_STORE_BY_UUID || cmd == Command.DB_PEARL_STORE_BY_XZ;
 		final Entity player = ctx.getSource().getPlayer();
 		final Box box = player.getBoundingBox().expand(8, 6, 8);
 		List<EnderPearlEntity> epearls =  player.getWorld().getEntitiesByType(EntityType.ENDER_PEARL, box, e->{
@@ -41,10 +43,9 @@ public class CommandAssignPearl{
 		if(epearls.size() > 1){
 			ctx.getSource().sendError(Text.literal("Warning: Command does not currently work with multiple (stacked) epearls"));
 		}
-		final UUID key;
-		assert cmd == Command.DB_PEARL_STORE_BY_UUID || cmd == Command.DB_PEARL_STORE_BY_XZ;
-		if(cmd == Command.DB_PEARL_STORE_BY_UUID) key = epearls.getFirst().getUuid();
-		else key = new UUID(Double.doubleToRawLongBits(epearls.getFirst().getX()), Double.doubleToRawLongBits(epearls.getFirst().getZ()));
+		final Entity epearl = epearls.getFirst();
+		final UUID key = cmd == Command.DB_PEARL_STORE_BY_UUID ? epearl.getUuid()
+				: new UUID(Double.doubleToRawLongBits(epearl.getX()), Double.doubleToRawLongBits(epearl.getZ()));
 
 		final String name = ctx.getArgument("name", String.class);
 //		ctx.getSource().sendFeedback(Text.literal("Fetching UUID for name: "+name+"..."));
@@ -59,9 +60,8 @@ public class CommandAssignPearl{
 					if(reply[0] == -1/*aka (byte)255*/) ctx.getSource().sendFeedback(Text.literal("Added pearl owner to remote DB!"));
 					else ctx.getSource().sendError(Text.literal("Remote DB already contains pearl owner"));
 
-//					final PearlDataClient pdc = new PearlDataClient(key, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
-//					Main.epearlLookup.cacheByUUID.putIfAbsent(key, pdc);
-//					FileIO.appendToClientFile(EpearlLookup.DB_FILENAME_UUID, key, pdc);
+					final PearlDataClient pdc = new PearlDataClient(uuid, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
+					Main.epearlLookup.assignPearlOwner_FriendCommandAssignPearl(key, pdc, cmd);
 				}
 				else ctx.getSource().sendError(Text.literal("Unexpected/Invalid response from RMS for "+cmd+": "+reply));
 			});
