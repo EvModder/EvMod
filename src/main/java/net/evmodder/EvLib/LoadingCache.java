@@ -1,6 +1,7 @@
 package net.evmodder.EvLib;
 
 import java.util.HashMap;
+import java.util.function.Consumer;
 
 public abstract class LoadingCache<K, V>{
 	private final HashMap<K, V> cache;
@@ -28,8 +29,9 @@ public abstract class LoadingCache<K, V>{
 		return true;
 	}
 //	public final boolean containsKey(final K k){return cache.containsKey(k);}
-	public final V get(final K k){
+	public final V get(final K k, final Consumer<V> callback){
 		if(cache.containsKey(k)){
+			if(callback != null) callback.accept(cache.get(k));
 			return cache.get(k);
 //			final V v = cache.get(k);
 //			if(v == null) assert V_NOT_FOUND == null;
@@ -40,6 +42,7 @@ public abstract class LoadingCache<K, V>{
 			if(v != null){
 				assert v != V_LOADING : "loadSyncOrNull() failed to do what its name implies (didn't load, yet didn't return null";
 				cache.put(k, v);
+				if(callback != null) callback.accept(v);
 				return v;
 			}
 		}
@@ -53,6 +56,7 @@ public abstract class LoadingCache<K, V>{
 					}
 					synchronized(cache){cache.put(k, v);}
 					synchronized(loading){loading.remove(k);}
+					if(callback != null) callback.accept(v);
 				});
 				loading.put(k, t);
 				t.start();

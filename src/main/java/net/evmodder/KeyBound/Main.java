@@ -151,7 +151,7 @@ once arrangement is found
 		String remoteAddr=null; int remotePort=0;
 		//int clicksInDuration = 190, durationTicks = 75;
 		int clicksInDuration = 78, durationTicks = 90;
-		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false,
+		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false, epearlAssignCmd=false,
 				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false, keybindMapArtBundleStow=false, keybindMapArtBundleStowReverse=false;
 		int keybindMapArtBundleStowMax = 64;
 		boolean mapMoveIgnoreAirPockets=true;
@@ -194,6 +194,7 @@ once arrangement is found
 				case "enderpearl_owners": epearlOwners = !value.equalsIgnoreCase("false"); break;
 				case "enderpearl_database_by_uuid": epearlOwnersDbUUID = !value.equalsIgnoreCase("false"); break;
 				case "enderpearl_database_by_coords": epearlOwnersDbXZ = !value.equalsIgnoreCase("false"); break;
+				case "command.assignpearl": epearlAssignCmd = !value.equalsIgnoreCase("false"); break;
 				case "seen_database": if(!value.equalsIgnoreCase("false")) new CommandSeen(); break;//TODO
 				case "mapart_database": mapartDb = !value.equalsIgnoreCase("false"); break;
 				case "mapart_database_share_contact": mapartDbContact = !value.equalsIgnoreCase("false"); break;
@@ -298,7 +299,10 @@ once arrangement is found
 				|| uploadIgnoreList || downloadIgnoreLists != null;
 		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && anyDbFeaturesEnabled){
 			remoteSender = new RemoteServerSender(remoteAddr, remotePort, clientId, clientKey, remoteMessages);
-			if(epearlOwners) epearlLookup = new EpearlLookup(epearlOwnersDbUUID, epearlOwnersDbXZ);
+			if(epearlOwners){
+				epearlLookup = new EpearlLookup(epearlOwnersDbUUID, epearlOwnersDbXZ);
+				if(epearlAssignCmd) new CommandAssignPearl();
+			}
 			if(uploadIgnoreList || downloadIgnoreLists != null) new IgnoreListSync2b2t(uploadIgnoreList, downloadIgnoreLists);
 		}
 		if(keybindMapArtLoad) new KeybindMapLoad();

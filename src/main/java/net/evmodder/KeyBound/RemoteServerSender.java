@@ -11,6 +11,7 @@ import java.util.UUID;
 import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.EvLib.PacketHelper.MessageReceiver;
+import net.evmodder.EvLib.TextUtils;
 import net.evmodder.KeyBound.keybinds.Keybind;
 import net.minecraft.client.MinecraftClient;
 
@@ -62,8 +63,8 @@ public final class RemoteServerSender{
 			PacketHelper.sendPacket(addrResolved, PORT, udp, timeout, /*waitForReply=*/recv != null, packet, reply->{
 				final long latency = System.currentTimeMillis()-startTs;
 				if(latency >= timeout && reply == null) Main.LOGGER.info("RemoteServerSender "+(udp?"UDP":"TCP")+" request timed out");
-//				else Main.LOGGER.info("RemoteServerSender got "+(udp?"UDP":"TCP")+" reply (in "+TextUtils.formatTime(latency)+
-//						") from RS: "+(reply == null ? "null" : new String(reply)+" ["+reply.length+"]"));
+				else Main.LOGGER.info("RMS: got "+(udp?"UDP":"TCP")+" reply (in "+TextUtils.formatTime(latency)+
+						") from RS: "+(reply == null ? "null" : new String(reply)+" ["+reply.length+"]"));
 				if(recv != null) recv.receiveMessage(reply);
 				synchronized(packetList){
 					packetList.remove();

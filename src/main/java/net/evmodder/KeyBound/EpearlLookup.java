@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
-import com.mojang.authlib.yggdrasil.ProfileResult;
 import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.EvLib.LoadingCache;
@@ -16,8 +15,6 @@ import net.evmodder.EvLib.TextUtils;
 import net.evmodder.KeyBound.mixin.AccessorProjectileEntity;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 
@@ -26,9 +23,8 @@ public final class EpearlLookup{
 
 	private static final MinecraftClient client = MinecraftClient.getInstance();
 
-	private static final String NAME_404 = "n[404]", NAME_U_404 = "u[404]", NAME_LOADING = "Loading name...", NAME_U_LOADING = "Loading UUID...";
-	private static final UUID UUID_404 = null, UUID_LOADING = new UUID(114141414, 282828282);
-	private static final PearlDataClient PD_404 = new PearlDataClient(UUID_404, 0, 0, 0), PD_LOADING = new PearlDataClient(UUID_LOADING, 0, 0, 0);
+	private static final PearlDataClient PD_404 = new PearlDataClient(MojangProfileLookup.UUID_404, 0, 0, 0);
+	private static final PearlDataClient PD_LOADING = new PearlDataClient(MojangProfileLookup.UUID_LOADING, 0, 0, 0);
 	//private static final boolean ONLY_FOR_2b2t = true;
 	private static final String DB_FILENAME_UUID = "epearl_cache_uuid";
 	private static final String DB_FILENAME_XZ = "epearl_cache_xz";
@@ -53,7 +49,7 @@ public final class EpearlLookup{
 		@Override public PearlDataClient load(UUID key){
 			Main.LOGGER.debug("fetch ownerUUID called for pearlUUID: "+key+" at "+idToPos.get(key));
 			if(Main.remoteSender == null){
-				Main.LOGGER.info("Remote server offline. Returning "+NAME_U_404);
+				Main.LOGGER.info("Remote server offline. Returning "+MojangProfileLookup.NAME_U_404);
 				return PD_404;
 			}
 
@@ -74,7 +70,7 @@ public final class EpearlLookup{
 					else{
 						final ByteBuffer bb = ByteBuffer.wrap(msg);
 						final UUID fetchedUUID = new UUID(bb.getLong(), bb.getLong());
-						assert !fetchedUUID.equals(UUID_404);
+						assert !fetchedUUID.equals(MojangProfileLookup.UUID_404);
 						if(xyz == null){
 							Main.LOGGER.warn("ePearlOwnerFetch: Unable to find XZ of epearl for given key!: "+key);
 							pdc = new PearlDataClient(fetchedUUID, 0, 0, 0);
@@ -176,45 +172,19 @@ public final class EpearlLookup{
 		}
 	}
 
-	private static final LoadingCache<UUID, String> usernameCacheMojang = new LoadingCache<>(NAME_404, NAME_LOADING){
-		@Override public String loadSyncOrNull(UUID key){
-			//KeyBound.LOGGER.info("fetch name called for uuid: "+key);
-			ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
-			if(networkHandler != null){
-				PlayerListEntry entry = networkHandler.getPlayerListEntry(key);
-				if(entry != null){
-					//KeyBound.LOGGER.info("ez, player list :D");
-					return entry.getProfile().getName();
-				}
-			}
-			return null;
-		}
-		@Override public String load(UUID key){
-			//KeyBound.LOGGER.info("oof, web request D:");
-			ProfileResult pr = client.getSessionService().fetchProfile(key, /*requireSecure=*/false);
-			if(pr == null || pr.profile() == null || pr.profile().getName() == null){
-				Main.LOGGER.error("Unable to find name for player UUID: "+key.toString());
-				return NAME_404;
-			}
-			else return pr.profile().getName();
-		}
-	};
-	static{//TODO: this block can be commented out now :)
-		usernameCacheMojang.putIfAbsent(UUID_404, NAME_U_404);
-		usernameCacheMojang.putIfAbsent(UUID_LOADING, NAME_U_LOADING);
-	}
 	private final String getDynamicUsername(UUID owner, UUID key){
-		if(owner == null ? UUID_404 == null : owner.equals(UUID_404)) return NAME_U_404;
-		if(owner == null ? UUID_LOADING == null : owner.equals(UUID_LOADING)){
+		if(owner == null ? MojangProfileLookup.UUID_404 == null : owner.equals(MojangProfileLookup.UUID_404)) return MojangProfileLookup.NAME_U_404;
+		if(owner == null ? MojangProfileLookup.UUID_LOADING == null : owner.equals(MojangProfileLookup.UUID_LOADING)){
 			Long startTs = requestStartTimes.get(key);
-			if(startTs == null) return NAME_U_LOADING+" ERROR";
-			return NAME_U_LOADING+" "+TextUtils.formatTime(System.currentTimeMillis()-startTs);
+			if(startTs == null) return MojangProfileLookup.NAME_U_LOADING+" ERROR";
+			return MojangProfileLookup.NAME_U_LOADING+" "+TextUtils.formatTime(System.currentTimeMillis()-startTs);
 		}
-		return usernameCacheMojang.get(owner);
+		return MojangProfileLookup.nameLookup.get(owner, /*callback=*/null);
 	}
 
-	private final boolean isLoadedOwnerName(String ownerName){
-		return !ownerName.equals(NAME_404) && !ownerName.equals(NAME_U_404) && !ownerName.startsWith(NAME_LOADING) && !ownerName.startsWith(NAME_U_LOADING);
+	public final boolean isLoadedOwnerName(String ownerName){ // TODO: make private (only called by CommandAssignPearl)
+		return !ownerName.equals(MojangProfileLookup.NAME_404) && !ownerName.equals(MojangProfileLookup.NAME_U_404)
+			&& !ownerName.startsWith(MojangProfileLookup.NAME_LOADING) && !ownerName.startsWith(MojangProfileLookup.NAME_U_LOADING);
 	}
 
 	public String getOwnerName(Entity epearl){
@@ -244,7 +214,7 @@ public final class EpearlLookup{
 				}
 			}
 			else{
-				PearlDataClient pd = cacheByUUID.get(key);
+				PearlDataClient pd = cacheByUUID.get(key, /*callback=*/null);
 				if(pd != null){
 					ownerUUID = pd.owner();
 					ownerName = getDynamicUsername(ownerUUID, key);
@@ -256,8 +226,8 @@ public final class EpearlLookup{
 //			ByteBuffer bb = ByteBuffer.allocate(bytes.length + 16).put(bytes).putDouble(epearl.getX()).putDouble(epearl.getZ());
 //			final UUID key = UUID.nameUUIDFromBytes(bb.array());
 			final UUID key = new UUID(Double.doubleToRawLongBits(epearl.getX()), Double.doubleToRawLongBits(epearl.getZ()));
-			if(ownerUUID == null || ownerUUID.equals(UUID_404) || ownerUUID.equals(UUID_LOADING)){
-				PearlDataClient pd = cacheByXZ.get(key);
+			if(ownerUUID == null || ownerUUID.equals(MojangProfileLookup.UUID_404) || ownerUUID.equals(MojangProfileLookup.UUID_LOADING)){
+				PearlDataClient pd = cacheByXZ.get(key, /*callback=*/null);
 				if(pd != null){
 					ownerUUID = pd.owner();
 					ownerName = getDynamicUsername(ownerUUID, key);
