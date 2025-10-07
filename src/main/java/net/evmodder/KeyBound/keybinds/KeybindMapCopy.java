@@ -152,7 +152,7 @@ public final class KeybindMapCopy{
 			int numEmptyMapsInGrid, final int totalEmptyMaps){
 		final int INPUT_START = 1/*, INPUT_END = isCrafter ? 10 : 5*/;
 		final int INV_START = isCrafter ? 10 : 9;
-		final int /*HOTBAR_START = isCrafter ? 37 : 36, */HOTBAR_END = isCrafter ? 46 : 45;
+		final int /*HOTBAR_START = isCrafter ? 37 : 36, */HOTBAR_END = isCrafter ? 46 : 45, HOTBAR_START = HOTBAR_END-9;
 		final int[] slotsWithBundles = IntStream.range(INV_START, HOTBAR_END).filter(i -> {
 			BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
 			return contents != null && contents.stream().allMatch(s -> s.getItem() == Items.FILLED_MAP);
@@ -162,6 +162,11 @@ public final class KeybindMapCopy{
 		final int SRC_BUNDLES = (int)Arrays.stream(bundles).filter(Predicate.not(BundleContentsComponent::isEmpty)).count();
 		final int emptyBundles = bundles.length - SRC_BUNDLES;
 		if(emptyBundles == 1){Main.LOGGER.warn("MapCopyBundle: Could not find an auxiliary bundle"); return;}
+		final int LAST_EMPTY_SLOT = lastEmptySlot(slots, HOTBAR_END, INV_START);
+		if(LAST_EMPTY_SLOT == -1 && Arrays.stream(bundles).anyMatch(b -> b.stream().anyMatch(s -> s.getCount() > 1))){
+			Main.LOGGER.warn("MapCopyBundle: Unable to copy bundles containing maps with stackSize>1 without an empty inv slot");
+			return;
+		}
 		final int DESTS_PER_SRC = SRC_BUNDLES >= emptyBundles ? 999 : (emptyBundles-1)/SRC_BUNDLES;
 		Main.LOGGER.warn("MapCopyBundle: source bundles: "+SRC_BUNDLES+", empty bundles: "+emptyBundles+", dest-per-src: "+DESTS_PER_SRC);
 
@@ -212,13 +217,14 @@ public final class KeybindMapCopy{
 			}
 //			Main.LOGGER.info("MapCopyBundle: Move to intermediary bundle complete, beginning copy");
 
+			//2+4+2 vs 2+3+2
 			//bundles[k].stream().mapToInt(stack -> stack.getCount()).forEach(count -> {
 			for(int i=0; i<bundles[entry.getKey()].size(); ++i){
 				final int count = bundles[entry.getKey()].get(i).getCount();
 
 				clicks.add(new ClickEvent(tempBundleSlot, 1, SlotActionType.PICKUP)); // Take last map from temp bundle
 				clicks.add(new ClickEvent(INPUT_START+1, 0, SlotActionType.PICKUP)); // Place in crafter
-				int leftoverMapSlot = INPUT_START+1;
+				boolean didShiftCraft = false;
 				//Main.LOGGER.info("MapCopyBundle: Coping map item into "+bundlesToCopy.get(k).size()+" dest bundles");
 				for(int d : entry.getValue()){
 					if(numEmptyMapsInGrid < count){
@@ -227,17 +233,23 @@ public final class KeybindMapCopy{
 //						Main.LOGGER.info("numEmptyMapsInGrid after restock: "+numEmptyMapsInGrid);
 					}
 					numEmptyMapsInGrid -= count;
-					if(count > 1){
-						if(leftoverMapSlot != INPUT_START+1){
-							clicks.add(new ClickEvent(leftoverMapSlot, 0, SlotActionType.PICKUP)); // Pickup all
+					if(didShiftCraft){
+						if(LAST_EMPTY_SLOT >= HOTBAR_START){
+							clicks.add(new ClickEvent(INPUT_START+1, LAST_EMPTY_SLOT-HOTBAR_START, SlotActionType.SWAP)); // Swap into crafter
+						}
+						else{
+							clicks.add(new ClickEvent(LAST_EMPTY_SLOT, 0, SlotActionType.PICKUP)); // Pickup all
 							clicks.add(new ClickEvent(INPUT_START+1, 0, SlotActionType.PICKUP)); // Place in crafter
 						}
-						leftoverMapSlot = lastEmptySlot(slots, HOTBAR_END, INV_START);
+					}
+					if(LAST_EMPTY_SLOT != -1 && (count > 1 || d == entry.getValue().getLast())){
+						didShiftCraft = true;
 						clicks.add(new ClickEvent(0, 0, SlotActionType.QUICK_MOVE)); // Move all from crafters
-						clicks.add(new ClickEvent(leftoverMapSlot, 1, SlotActionType.PICKUP)); // Pickup half
+						clicks.add(new ClickEvent(LAST_EMPTY_SLOT, 1, SlotActionType.PICKUP)); // Pickup half
 						clicks.add(new ClickEvent(slotsWithBundles[d], 0, SlotActionType.PICKUP)); // Put half in dest bundle
 					}
 					else{
+						didShiftCraft = false;
 						clicks.add(new ClickEvent(0, 0, SlotActionType.PICKUP)); // Take from crafter output
 						clicks.add(new ClickEvent(INPUT_START+1, 0, SlotActionType.PICKUP)); // Place back in crafter input
 						clicks.add(new ClickEvent(INPUT_START+1, 1, SlotActionType.PICKUP)); // Pickup half
@@ -245,7 +257,7 @@ public final class KeybindMapCopy{
 					}
 				}//for(dest bundles)
 				//Main.LOGGER.info("MapCopyBundle: Putting map item back into src bundle");
-				clicks.add(new ClickEvent(leftoverMapSlot, 0, SlotActionType.PICKUP)); // Pickup all
+				clicks.add(new ClickEvent(didShiftCraft ? LAST_EMPTY_SLOT : INPUT_START+1, 0, SlotActionType.PICKUP)); // Pickup all
 				clicks.add(new ClickEvent(slotsWithBundles[entry.getKey()], 0, SlotActionType.PICKUP)); // Place back in src bundle
 			}//for(item in src bundle)
 		}//for(src bundle)
