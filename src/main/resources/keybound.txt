@@ -10,8 +10,8 @@ temp_event_timestamp: 1738990800 # Fri, Feb7, 2025, 11pm CST
 # 2b2t will kick you for sending 200+ clicks in 70 ticks (Updated: 2025-04-27)
 # 2b2t will kick you for sending 80+ clicks in 80 ticks (Updated: 2025-05-15, ty IceTank)
 # Note: I recommend setting it to 90 ticks (if u have ping issues like me)
-limiter_clicks_in_duration: 78
-limiter_duration_ticks: 90
+limiter_clicks_in_duration: 79
+limiter_duration_ticks: 99
 
 keybind.mapart.copy: true
 keybind.mapart.load: true

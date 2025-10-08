@@ -168,7 +168,8 @@ public final class KeybindMapCopy{
 			return;
 		}
 		final int DESTS_PER_SRC = SRC_BUNDLES >= emptyBundles ? 999 : (emptyBundles-1)/SRC_BUNDLES;
-		Main.LOGGER.warn("MapCopyBundle: source bundles: "+SRC_BUNDLES+", empty bundles: "+emptyBundles+", dest-per-src: "+DESTS_PER_SRC);
+		Main.LOGGER.warn("MapCopyBundle: source bundles: "+SRC_BUNDLES+", empty bundles: "+emptyBundles
+				+", dest-per-src: "+DESTS_PER_SRC+", last-empty-slot: "+LAST_EMPTY_SLOT);
 
 		TreeMap<Integer, List<Integer>> bundlesToCopy = new TreeMap<>(); // source bundle -> destination bundles (slotsWithBundles)
 		HashSet<Integer> usedDests = new HashSet<>();
@@ -178,14 +179,33 @@ public final class KeybindMapCopy{
 			ArrayList<Integer> copyDests = new ArrayList<>();
 			final String name1 = getCustomNameOrNull(slots[s1]);
 //			Main.LOGGER.info("looking for dest bundles for "+slots[s1].getName().getString()+" in slot "+s1);
-			for(int j=0; j<slotsWithBundles.length && usedDests.size()+1<emptyBundles && copyDests.size()<DESTS_PER_SRC; ++j){
+
+			if(name1 != null){ // Match by name (1st priority)
+				for(int j=0; j<slotsWithBundles.length && usedDests.size()+1<emptyBundles && copyDests.size()<DESTS_PER_SRC; ++j){
+					if(bundles[j].isEmpty() && name1.equals(getCustomNameOrNull(slots[slotsWithBundles[j]])) && usedDests.add(j))
+					{
+						Main.LOGGER.info("MapCopyBundle: matching-name copy dest "+s1+"->"+slotsWithBundles[j]);
+						copyDests.add(j);
+					}
+				}
+			}
+			if(copyDests.isEmpty() && slots[s1].getItem() != Items.BUNDLE){ // Match by non-default color (2nd priority)
+				for(int j=0; j<slotsWithBundles.length && usedDests.size()+1<emptyBundles && copyDests.size()<DESTS_PER_SRC; ++j){
+					if(bundles[j].isEmpty() && slots[s1].getItem() == slots[slotsWithBundles[j]].getItem()
+						&& (name1 == null || getCustomNameOrNull(slots[slotsWithBundles[j]]) == null) && usedDests.add(j))
+					{
+						Main.LOGGER.info("MapCopyBundle: matching-color copy dest "+s1+"->"+slotsWithBundles[j]);
+						copyDests.add(j);
+					}
+				}
+			}
+			// If the above methods failed, loosen the src-bundle requirements a bit
+			if(copyDests.isEmpty()) for(int j=0; j<slotsWithBundles.length && usedDests.size()+1<emptyBundles && copyDests.size()<DESTS_PER_SRC; ++j){
 				final int s2 = slotsWithBundles[j];
 				if(!bundles[j].isEmpty()) continue;
-//				Main.LOGGER.info("MapCopyBundle: empty bundle in slot "+s2);
-				if(SRC_BUNDLES == 1); // If only 1 bundle to copy from, we don't care about name or color.
-				else if(name1 == null){if(slots[s1].getItem() != slots[s2].getItem()) continue;} // Matching Color: Safe to copy!
-				else if(!name1.equals(getCustomNameOrNull(slots[s2]))) continue; // Non-matching Name: Don't copy!
-				else if(!usedDests.add(j)) continue;
+				if(name1 != null && getCustomNameOrNull(slots[s2]) != null && !name1.equals(getCustomNameOrNull(slots[s2]))) continue;
+				if(SRC_BUNDLES > 1 && slots[s1].getItem() != slots[s2].getItem()) continue; // Enforce at least matching color for N->M where N>1
+				if(!usedDests.add(j)) continue;
 				Main.LOGGER.info("MapCopyBundle: valid copy dest "+s1+"->"+s2);
 				copyDests.add(j);
 			}
@@ -235,6 +255,7 @@ public final class KeybindMapCopy{
 					numEmptyMapsInGrid -= count;
 					if(didShiftCraft){
 						if(LAST_EMPTY_SLOT >= HOTBAR_START){
+//							Main.LOGGER.info("swap into crafter: "+LAST_EMPTY_SLOT+"->"+(INPUT_START+1));
 							clicks.add(new ClickEvent(INPUT_START+1, LAST_EMPTY_SLOT-HOTBAR_START, SlotActionType.SWAP)); // Swap into crafter
 						}
 						else{
@@ -244,19 +265,22 @@ public final class KeybindMapCopy{
 					}
 					if(LAST_EMPTY_SLOT != -1 && (count > 1 || d == entry.getValue().getLast())){
 						didShiftCraft = true;
+						Main.LOGGER.info("MapCopyBundle: shift-craft into last-empty-slot: "+LAST_EMPTY_SLOT);
 						clicks.add(new ClickEvent(0, 0, SlotActionType.QUICK_MOVE)); // Move all from crafters
 						clicks.add(new ClickEvent(LAST_EMPTY_SLOT, 1, SlotActionType.PICKUP)); // Pickup half
 						clicks.add(new ClickEvent(slotsWithBundles[d], 0, SlotActionType.PICKUP)); // Put half in dest bundle
 					}
 					else{
 						didShiftCraft = false;
+						Main.LOGGER.info("MapCopyBundle: normal-craft");
 						clicks.add(new ClickEvent(0, 0, SlotActionType.PICKUP)); // Take from crafter output
 						clicks.add(new ClickEvent(INPUT_START+1, 0, SlotActionType.PICKUP)); // Place back in crafter input
 						clicks.add(new ClickEvent(INPUT_START+1, 1, SlotActionType.PICKUP)); // Pickup half
 						clicks.add(new ClickEvent(slotsWithBundles[d], 0, SlotActionType.PICKUP)); // Put half in dest bundle
 					}
 				}//for(dest bundles)
-				//Main.LOGGER.info("MapCopyBundle: Putting map item back into src bundle");
+				final int fromSlot = didShiftCraft ? LAST_EMPTY_SLOT : INPUT_START+1;
+				Main.LOGGER.info("MapCopyBundle: Putting map item back into src bundle ("+fromSlot+"->"+slotsWithBundles[entry.getKey()]+")");
 				clicks.add(new ClickEvent(didShiftCraft ? LAST_EMPTY_SLOT : INPUT_START+1, 0, SlotActionType.PICKUP)); // Pickup all
 				clicks.add(new ClickEvent(slotsWithBundles[entry.getKey()], 0, SlotActionType.PICKUP)); // Place back in src bundle
 			}//for(item in src bundle)

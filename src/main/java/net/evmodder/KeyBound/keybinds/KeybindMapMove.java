@@ -34,7 +34,8 @@ public final class KeybindMapMove{
 		final MapState state = FilledMapItem.getMapState(stack, world);
 		if(state == null || !MapColorUtils.isTransparentOrStone(state.colors)) return false;
 		if(stack.getCustomName() == null) return true;
-		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(Arrays.asList(slots), stack.getCustomName().getString(), stack.getCount(), state.locked, world);
+		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(
+				Arrays.asList(slots), stack.getCustomName().getString(), stack.getCount(), state.locked, world);
 		return data.slots().stream().map(i -> slots[i].getCustomName().getLiteralString()).distinct().count() <= 1;
 	}
 
@@ -116,12 +117,12 @@ public final class KeybindMapMove{
 
 		final boolean moveToShulk = numInShulk == 0 || cantMergeIntoInv > emptySlotsInv || (numInInv == numInShulk && cantMergeIntoShulk == 0);
 		final boolean isShiftClick = Screen.hasShiftDown();
-		boolean selectiveMove = !isShiftClick && (moveToShulk
+		final boolean selectiveMove = !isShiftClick && (moveToShulk
 				? (countsInInv.size() == 2 && cantMergeIntoShulk == 0)
 				: (countsInShulk.size() == 2 && smallerSlotsAtStart && (cantMergeIntoInv == 0 || numInInv == 0)));
-//		Main.LOGGER.info("MapMove: selectiveMove: "+selectiveMove);
-//		client.player.sendMessage(Text.literal("MapMove: selectiveMove="+selectiveMove+", toShulk="+moveToShulk), true);
-//		client.player.sendMessage(Text.literal("MapMove: selectiveMove="+selectiveMove+", toShulk="+moveToShulk), false);
+
+		Main.LOGGER.info("MapMove: moveToShulk="+moveToShulk+", isShiftClick="+isShiftClick+", selectiveMove="+selectiveMove);
+//		client.player.sendMessage(Text.literal("MapMove: moveToShulk="+moveToShulk+", isShiftClick="+isShiftClick+", selectiveMove="+selectiveMove), false);
 
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		IdentityHashMap<ClickEvent, Integer> reserveClicks = new IdentityHashMap<>();

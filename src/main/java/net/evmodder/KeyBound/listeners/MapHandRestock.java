@@ -36,6 +36,7 @@ import net.minecraft.world.World;
 
 public final class MapHandRestock{
 	final boolean USE_NAME, USE_IMG, JUST_PICK_A_MAP = true;
+	private final PosData2D POS_DATA_404 = new PosData2D(false, null, null);
 
 	record PosData2D(boolean isSideways, String minPos2, String maxPos2){}
 	record Pos2DPair(String posA1, String posA2, String posB1, String posB2){}
@@ -161,6 +162,8 @@ public final class MapHandRestock{
 		if(posA.equals("T R") && posB.equals("B L")) return 4;
 		if(posA.matches("[A-Z]9") && posB.matches("[A-Z]10") && posA.charAt(0) == posB.charAt(0)) return 5;
 
+		if(posData2d == null) return checkComesAfter1d(posA, posB, infoLogs);
+
 		if(posData2d.maxPos2 == null){
 			int check1d = checkComesAfter1d(posA, posB, infoLogs);
 			if(check1d != 0) return check1d;
@@ -268,22 +271,31 @@ public final class MapHandRestock{
 
 		final String prevPosStr = getPosStrFromName(prevName, data);
 
-		PosData2D posData2d = posData2dForName.get(prevName);
-		if(posData2d == null){
+		PosData2D posData2d = posData2dForName.getOrDefault(prevName, POS_DATA_404);
+		if(posData2d == POS_DATA_404){
 			final List<String> mapNames = Stream.concat(Stream.of(prevSlot), data.slots().stream())
 					.map(i -> slots.get(i).getCustomName().getLiteralString()).toList();
-			final String nonPosName = prevName.substring(0, data.prefixLen()) + "[XY]" + prevName.substring(prevName.length()-data.suffixLen());
+			final String prefixStr = prevName.substring(0, data.prefixLen());
+			final String suffixStr = prevName.substring(prevName.length()-data.suffixLen());
+			final String nonPosName = prefixStr + "[XY]" + suffixStr;
 			Main.LOGGER.info("MapRestock: determining posData2d for map '"+nonPosName+"', related names: "+mapNames);
-			final List<String> mapPosStrs = mapNames.stream().map(name -> getPosStrFromName(name, data)).toList();
-			final PosData2D sidewaysPos2dData = getPosData2D(mapPosStrs, true);
-			final PosData2D regularPos2dData = getPosData2D(mapPosStrs, false);
-			final Pair<Integer, Long> sidewaysTrail = getTrailLengthAndScore(slots, data, prevSlot, sidewaysPos2dData, world);
-			final Pair<Integer, Long> regularTrail = getTrailLengthAndScore(slots, data, prevSlot, regularPos2dData, world);
-			final boolean isSideways = sidewaysTrail.a > regularTrail.a || (sidewaysTrail.a == regularTrail.a && sidewaysTrail.b > regularTrail.b);
-			posData2d = isSideways ? sidewaysPos2dData : regularPos2dData;
-			//TODO: if sidewaysLen == regularLen, determine which has better ImgEdgeStitching sum
+			final boolean hasSizeInName = suffixStr.matches("\\s*(of|/)\\s*\\d+.*");
+			if(hasSizeInName){
+				posData2d = null;
+				Main.LOGGER.info("MapRestock: Detected 'X/SIZE' posStr format, treating map as 1d");
+			}
+			else{
+				final List<String> mapPosStrs = mapNames.stream().map(name -> getPosStrFromName(name, data)).toList();
+				final PosData2D sidewaysPos2dData = getPosData2D(mapPosStrs, true);
+				final PosData2D regularPos2dData = getPosData2D(mapPosStrs, false);
+				final Pair<Integer, Long> sidewaysTrail = getTrailLengthAndScore(slots, data, prevSlot, sidewaysPos2dData, world);
+				final Pair<Integer, Long> regularTrail = getTrailLengthAndScore(slots, data, prevSlot, regularPos2dData, world);
+				final boolean isSideways = sidewaysTrail.a > regularTrail.a || (sidewaysTrail.a == regularTrail.a && sidewaysTrail.b > regularTrail.b);
+				posData2d = isSideways ? sidewaysPos2dData : regularPos2dData;
+				//TODO: if sidewaysLen == regularLen, determine which has better ImgEdgeStitching sum
+				Main.LOGGER.info("MapRestock: Determined sideways="+posData2d.isSideways+" (trail len "+sidewaysTrail.a+" vs "+regularTrail.a+")");
+			}
 			for(String name : mapNames) posData2dForName.put(name, posData2d);
-			Main.LOGGER.info("MapRestock: Determined sideways="+posData2d.isSideways+" (trail len "+sidewaysTrail.a+" vs "+regularTrail.a+")");
 		}
 		Main.LOGGER.info("MapRestock: findByName() called, hb="+(prevSlot-36)+", prevPos="+prevPosStr+", numMaps="+data.slots().size()
 				+", minPos2="+posData2d.minPos2+", maxPos2="+posData2d.maxPos2+", sideways="+posData2d.isSideways+", name: "+prevName);
