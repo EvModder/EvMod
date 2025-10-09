@@ -30,6 +30,11 @@ abstract class MixinHandledScreen<T> extends Screen{
 		boolean hadKeyPress = false;
 		for(Keybind kb : Keybind.inventoryKeybinds){
 			if(kb.internalKeyBinding.matchesKey(keyCode, scanCode) && kb.allowInScreen.apply(this)){
+				if(kb.internalKeyBinding.isPressed() == isPressed){
+//					Main.LOGGER.info("MixinHandledScreen: kb stuff is SUPER JANK");
+					isPressed = !isPressed;
+				}
+//				Main.LOGGER.info("evKb pressed:"+isPressed);
 				kb.setPresssed(isPressed);
 				kb.internalKeyBinding.setPressed(isPressed);
 				hadKeyPress = true;

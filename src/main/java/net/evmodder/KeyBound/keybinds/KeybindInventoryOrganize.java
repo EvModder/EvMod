@@ -3,6 +3,7 @@ package net.evmodder.KeyBound.keybinds;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import org.lwjgl.glfw.GLFW;
 import net.evmodder.EvLib.Pair;
@@ -19,12 +20,12 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Identifier;
 
 public final class KeybindInventoryOrganize{
-	final boolean CLEAN_UNUSED_HOTBAR_SLOTS = true;
+	final boolean CLEAN_UNUSED_HOTBAR_SLOTS = true, RESTOCK_ONLY_1_SLOT_PER_TYPE = true;
 	final List<Pair<Integer, Identifier>> layoutMap;
 	private static boolean isFirstRegistered = true;
 
 	private String getName(ItemStack stack){
-		return stack == null || stack.isEmpty() || stack.getCount() == 0 ? null : Registries.ITEM.getId(stack.getItem()).getPath();
+		return stack == null || stack.isEmpty() ? null : Registries.ITEM.getId(stack.getItem()).getPath();
 	}
 	private int findSlotWithItem(ItemStack[] slots, String itemName, boolean[] skipSlots){
 //		for(int slot=1; slot<=45; ++slot){
@@ -128,6 +129,7 @@ public final class KeybindInventoryOrganize{
 
 		// In restock mode, don't bother sorting anything in the player's inventory
 //		if(RESTOCK_MODE) for(int i=MAIN_INV_START; i<simSlots.length; ++i) doneSlots[i] = true;
+
 		final HashMap<Item, Integer> occurances;
 		if(!isInvScreen && KeybindInventoryRestock.LEAVE_1){
 			// Reserve 1 slot of each unique item type
@@ -139,8 +141,8 @@ public final class KeybindInventoryOrganize{
 		}
 		else occurances = null;
 
-		Main.LOGGER.info("InvOrganize: "+layoutMap.size()+" mappings, isInvScreen: "+isInvScreen+", numSlots: "+simSlots.length
-				+", hotbarStart: "+HOTBAR_START+", invStart: "+MAIN_INV_START);
+		Main.LOGGER.info("InvOrganize: "+layoutMap.size()+" mappings, isInvScreen="+isInvScreen+", numSlots="+simSlots.length
+				+", hotbarStart="+HOTBAR_START+", invStart="+MAIN_INV_START);
 
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		checkDoneSlots(simSlots, doneSlots, isInvScreen);
@@ -225,6 +227,13 @@ public final class KeybindInventoryOrganize{
 			checkDoneSlots(simSlots, doneSlots, isInvScreen);
 		}
 
+		HashSet<Item> doneItems = new HashSet<>(); // Used if RESTOCK_ONLY_1_SLOT_PER_TYPE==true
+		if(RESTOCK_ONLY_1_SLOT_PER_TYPE && !isInvScreen) for(Pair<Integer, Identifier> p : layoutMap){
+			if(p.a == -106 || p.a == 45 || p.a < 9) continue;
+			final ItemStack stack = simSlots[p.a + simSlots.length-45];
+			if(p.b.getPath().equals(getName(stack))) doneItems.add(stack.getItem());
+		}
+
 		// Sort upper-inventory items
 		plannedSlots = Arrays.copyOf(doneSlots, doneSlots.length);
 		int hb = -1; for(int i=0; i<9; ++i) if(emptySlots[i+HOTBAR_START]){hb = i; break;} // Find usable hb slot
@@ -252,6 +261,7 @@ public final class KeybindInventoryOrganize{
 			final int srcSlot = findSlotWithItem(simSlots, p.b.getPath(), doneSlots);
 			if(srcSlot == -1 || doneSlots[srcSlot]) continue;
 			if(RESTOCK_ONLY && srcSlot >= MAIN_INV_START) continue;
+			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && srcSlot < MAIN_INV_START && doneItems.contains(simSlots[srcSlot].getItem())) continue;
 			if(srcSlot < MAIN_INV_START && occurances != null){ // Avoid taking 100% of any item type from src container
 				Integer occ = occurances.get(simSlots[srcSlot].getItem());
 				assert occ != null && occ > 0;
@@ -276,6 +286,7 @@ public final class KeybindInventoryOrganize{
 				clicks.add(new ClickEvent(srcSlot, hb, SlotActionType.SWAP));
 			}
 			swapSlots(simSlots, emptySlots, srcSlot, dstSlot);
+			doneItems.add(simSlots[dstSlot].getItem());
 			doneSlots[dstSlot] = true;
 			plannedSlots[srcSlot] = false;
 		}
@@ -294,6 +305,7 @@ public final class KeybindInventoryOrganize{
 			final int srcSlot = findSlotWithItem(simSlots, p.b.getPath(), doneSlots);
 			if(srcSlot == -1 || doneSlots[srcSlot]) continue;
 			if(RESTOCK_ONLY && srcSlot >= MAIN_INV_START) continue;
+			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && srcSlot < MAIN_INV_START && doneItems.contains(simSlots[srcSlot].getItem())) continue;
 			if(srcSlot < MAIN_INV_START && occurances != null){ // Avoid taking 100% of any item type from src container
 				Integer occ = occurances.get(simSlots[srcSlot].getItem());
 				assert occ != null && occ > 0;
@@ -314,9 +326,11 @@ public final class KeybindInventoryOrganize{
 			else clicks.add(new ClickEvent(srcSlot, dstSlot-HOTBAR_START, SlotActionType.SWAP));
 
 			swapSlots(simSlots, emptySlots, srcSlot, dstSlot);
+			doneItems.add(simSlots[dstSlot].getItem());
 			doneSlots[dstSlot] = true;
 			//needEarlier.remove(p.b.getPath());
 		}
+
 		// Handle leftover armor for container -> inventory
 		if(!isInvScreen) for(Pair<Integer, Identifier> p : layoutMap){
 			if(p.a == -106 || p.a == 45) continue;
@@ -348,7 +362,7 @@ public final class KeybindInventoryOrganize{
 		final int numClicks = clicks.size();
 		if(numClicks == 0){
 			depth = 0;
-//			Main.LOGGER.info("InvOrganize: no clicks required");
+			Main.LOGGER.info("InvOrganize: no clicks required");
 			if(onComplete != null) onComplete.run();
 			return;
 		}

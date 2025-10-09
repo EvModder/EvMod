@@ -163,7 +163,7 @@ keybind.inventory_organize.EvInv: [
   # Hotbar LHS
   36:netherite_sword, 36:diamond_sword, 36:netherite_axe, 36:diamond_axe,
   37:netherite_pickaxe, 37:diamond_pickaxe,
-  38:netherite_axe, 38:diamond_axe, 38:netherite_shovel, 38:diamond_shovel, 38:firework_rocket, 39:end_crystal
+  38:netherite_axe, 38:diamond_axe, 38:netherite_shovel, 38:diamond_shovel, 38:firework_rocket, 38:end_crystal,
   39:end_crystal, 39:netherite_shovel, 39:diamond_shovel, 39:firework_rocket, 39:fishing_rod,
   40:fishing_rod,
 
@@ -197,6 +197,7 @@ keybind.inventory_organize.EvInvSimple: [
   36:netherite_sword, 36:diamond_sword, 36:netherite_axe, 36:diamond_axe,
   37:netherite_pickaxe, 37:diamond_pickaxe,
   38:netherite_axe, 38:diamond_axe, 38:netherite_shovel, 38:diamond_shovel, 38:firework_rocket,
+  39:firework_rocket,
 
   # Hotbar RHS
   44:golden_carrot, 44:cooked_beef, 44:enchanted_golden_apple,
