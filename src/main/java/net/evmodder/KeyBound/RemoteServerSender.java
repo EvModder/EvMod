@@ -4,23 +4,22 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.UUID;
+import java.util.function.Supplier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.EvLib.PacketHelper.MessageReceiver;
 import net.evmodder.EvLib.TextUtils;
-import net.evmodder.KeyBound.keybinds.Keybind;
-import net.minecraft.client.MinecraftClient;
 
 public final class RemoteServerSender{
 	//private static final String REMOTE_MSG_CATEGORY = "key.categories."+KeyBound.MOD_ID+".remote_messages";
+	private final Logger LOGGER;
 
-	private static final MinecraftClient client = MinecraftClient.getInstance();
-
-	private final String ADDR;
+	private final String REMOTE_ADDR;
+	private final Supplier<Integer> CURR_SERVER_ADDR_HASHCODE;
 	private final int PORT;
 	private InetAddress addrResolved;
 
@@ -28,8 +27,8 @@ public final class RemoteServerSender{
 	private final String CLIENT_KEY;
 
 	private void resolveAddress(){
-		try{addrResolved = InetAddress.getByName(ADDR);}
-		catch(UnknownHostException e){Main.LOGGER.warn("Server not found: "+ADDR);}
+		try{addrResolved = InetAddress.getByName(REMOTE_ADDR);}
+		catch(UnknownHostException e){LOGGER.warn("Server not found: "+REMOTE_ADDR);}
 	}
 
 	// Returns a `4+message.length+16`-byte packet
@@ -37,7 +36,7 @@ public final class RemoteServerSender{
 		ByteBuffer bb1 = ByteBuffer.allocate(16+message.length);
 		bb1.putInt(CLIENT_ID);
 		bb1.putInt(command.ordinal());
-		int addressCode = (client == null || client.getCurrentServerEntry() == null) ? 0 : client.getCurrentServerEntry().address.hashCode();
+		final int addressCode = CURR_SERVER_ADDR_HASHCODE.get();
 		bb1.putInt(addressCode);
 		bb1.putInt((int)System.currentTimeMillis());//Truncate, since we assume ping < Integer.MAX anyway
 		bb1.put(message);
@@ -59,11 +58,11 @@ public final class RemoteServerSender{
 			final byte[] packet = packetList.peek();
 			final MessageReceiver recv = recvList.peek();
 			//Main.LOGGER.info("calling sendPacket with waitForReply="+(recv!=null));
-			Main.LOGGER.warn("RMS: sendingPacket with len="+packet.length);
+			LOGGER.warn("RMS: sendingPacket with len="+packet.length);
 			PacketHelper.sendPacket(addrResolved, PORT, udp, timeout, /*waitForReply=*/recv != null, packet, reply->{
 				final long latency = System.currentTimeMillis()-startTs;
-				if(latency >= timeout && reply == null) Main.LOGGER.info("RemoteServerSender "+(udp?"UDP":"TCP")+" request timed out");
-				else Main.LOGGER.info("RMS: got "+(udp?"UDP":"TCP")+" reply (in "+TextUtils.formatTime(latency)+
+				if(latency >= timeout && reply == null) LOGGER.info("RemoteServerSender "+(udp?"UDP":"TCP")+" request timed out");
+				else LOGGER.info("RMS: got "+(udp?"UDP":"TCP")+" reply (in "+TextUtils.formatTime(latency)+
 						") from RS: "+(reply == null ? "null" : new String(reply)+" ["+reply.length+"]"));
 				if(recv != null) recv.receiveMessage(reply);
 				synchronized(packetList){
@@ -77,9 +76,9 @@ public final class RemoteServerSender{
 	public void sendBotMessage(final Command command, final boolean udp, final long timeout, final byte[] message, final MessageReceiver recv){
 		final byte[] packet = packageAndEncryptMessage(command, message);
 		if(addrResolved == null) resolveAddress();
-		if(addrResolved == null) Main.LOGGER.warn("RemoteSender address could not be resolved!: "+ADDR);
+		if(addrResolved == null) LOGGER.warn("RemoteSender address could not be resolved!: "+REMOTE_ADDR);
 		else{
-			Main.LOGGER.warn("RMS: queuingPacket for cmd: "+command);
+			LOGGER.warn("RMS: queuingPacket for cmd: "+command);
 			final LinkedList<byte[]> packetList = (udp ? udpPackets : tcpPackets);
 			final LinkedList<MessageReceiver> recvList = (udp ? udpReceivers : tcpReceivers);
 			synchronized(packetList){
@@ -91,15 +90,11 @@ public final class RemoteServerSender{
 		}
 	}
 
-	private Command parseCommand(String str){
-		try{return Command.valueOf(str);}
-		catch(IllegalArgumentException e){}
-		return null;
-	}
-
-	RemoteServerSender(String addr, int port, int clientId, String clientKey, HashMap<String, String> messages){
-		ADDR = addr;
+	RemoteServerSender(Logger logger, String addr, int port, int clientId, String clientKey, Supplier<Integer> serverAddrGetter){
+		LOGGER = logger;
+		REMOTE_ADDR = addr;
 		PORT = port;
+		CURR_SERVER_ADDR_HASHCODE = serverAddrGetter;
 		resolveAddress();
 
 		tcpPackets = new LinkedList<>();
@@ -110,20 +105,8 @@ public final class RemoteServerSender{
 		CLIENT_ID = clientId;
 		CLIENT_KEY = clientKey;
 
-		if(messages != null) messages.forEach((key, message) -> {
-			String[] arr = message.split(",");
-			Command command = parseCommand(arr[0].toUpperCase());
-			if(command == null){
-				Main.LOGGER.error("Undefined command in config keybound.txt: "+arr[0]);
-			}
-			else{
-				final byte[] byteMsg = PacketHelper.toByteArray(Arrays.stream(Arrays.copyOfRange(arr, 1, arr.length)).map(UUID::fromString).toArray(UUID[]::new));
-				new Keybind(key, ()->sendBotMessage(command, /*udp=*/true, /*timeout=*/5000, byteMsg, /*recv=*/null));
-			}
-		});
-
 		sendBotMessage(Command.PING, /*udp=*/false, /*timeout=*/5000, /*msg=*/new byte[0], msg->{
-			Main.LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg)));
+			LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg)));
 		});
 	}
 
@@ -132,7 +115,7 @@ public final class RemoteServerSender{
 		UUID ownerUUID = UUID.fromString("34471e8d-d0c5-47b9-b8e1-b5b9472affa4");
 //		UUID loc = new UUID(Double.doubleToRawLongBits(x), Double.doubleToRawLongBits(z));
 
-		RemoteServerSender rss = new RemoteServerSender("localhost", 14441, 1, "some_unique_key", /*botMsgKeybinds=*/null);
+		RemoteServerSender rss = new RemoteServerSender(LoggerFactory.getLogger("RMS"), "localhost", 14441, 1, "some_unique_key", ()->0);
 
 		byte[] storePearlOwnerMsg = ByteBuffer.allocate(32)
 				.putLong(pearlUUID.getMostSignificantBits()).putLong(pearlUUID.getLeastSignificantBits())

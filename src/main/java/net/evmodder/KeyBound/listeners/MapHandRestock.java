@@ -298,7 +298,8 @@ public final class MapHandRestock{
 			for(String name : mapNames) posData2dForName.put(name, posData2d);
 		}
 		Main.LOGGER.info("MapRestock: findByName() called, hb="+(prevSlot-36)+", prevPos="+prevPosStr+", numMaps="+data.slots().size()
-				+", minPos2="+posData2d.minPos2+", maxPos2="+posData2d.maxPos2+", sideways="+posData2d.isSideways+", name: "+prevName);
+				+(posData2d == null ? ", posData2d=null" : ", minPos2="+posData2d.minPos2+", maxPos2="+posData2d.maxPos2+", sideways="+posData2d.isSideways)
+				+", name: "+prevName);
 
 		final int i = getNextSlotByName(slots, data, prevPosStr, posData2d, /*infoLogs=*/true);//TODO: set to true for debugging
 		if(i != -999){ //TODO: remove horrible hack

@@ -24,6 +24,7 @@ keybind.mapart.move.3x9.ignore_air_pockets: false
 itemframe_placement_helper: false
 itemframe_placement_helper.must_match_block: true
 itemframe_placement_helper.must_connect: false
+
 mapart_placement_helper: true #TODO: also support placing sequential shulker boxes
 mapart_placement_helper.use_name: true
 mapart_placement_helper.use_image: true

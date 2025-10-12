@@ -38,6 +38,7 @@ abstract class MixinEntityRenderer{
 		return e > 1.0D - 0.03D / d ? /*client.player.canSee(entity)*/true : false;
 	}
 
+	// TODO: mixin onTick instead of hasLabel, or setName somehow
 	@Inject(method = "hasLabel", at = @At("HEAD"), cancellable = true)
 	public void test(Entity e, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
 		if(Main.epearlLookup == null) return; // Feature is disabled

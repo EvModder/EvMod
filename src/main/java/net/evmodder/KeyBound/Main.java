@@ -299,7 +299,8 @@ once arrangement is found
 		final boolean anyDbFeaturesEnabled = !remoteMessages.isEmpty() || epearlOwnersDbUUID || epearlOwnersDbXZ || mapartDb
 				|| uploadIgnoreList || downloadIgnoreLists != null;
 		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && anyDbFeaturesEnabled){
-			remoteSender = new RemoteServerSender(remoteAddr, remotePort, clientId, clientKey, remoteMessages);
+			remoteSender = new RemoteServerSender(LOGGER, remoteAddr, remotePort, clientId, clientKey, MiscUtils::getCurrentServerAddressHashCode);
+			MiscUtils.registerRemoteMsgKeybinds(remoteMessages);
 			if(epearlOwners){
 				epearlLookup = new EpearlLookup(epearlOwnersDbUUID, epearlOwnersDbXZ);
 				if(epearlAssignCmd) new CommandAssignPearl();

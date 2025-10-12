@@ -7,6 +7,7 @@ keybind.mapart.copy: true
 keybind.mapart.load: true
 keybind.mapart.move.bundle: true
 keybind.mapart.move.bundle.reverse: false
+keybind.mapart.move.bundle.max: 64
 keybind.mapart.move.3x9: true
 keybind.mapart.move.3x9.ignore_air_pockets: false
 
@@ -15,8 +16,12 @@ keybind.mapart.move.3x9.ignore_air_pockets: false
 # 2b2t will kick you for sending 200+ clicks in 70 ticks (Updated: 2025-04-27)
 # 2b2t will kick you for sending 80+ clicks in 80 ticks (Updated: 2025-05-15, ty IceTank)
 # Note: I recommend setting it to 90 ticks (if u have ping issues like me)
-limiter_clicks_in_duration: 78
-limiter_duration_ticks: 90
+limiter_clicks_in_duration: 79
+limiter_duration_ticks: 99
+
+itemframe_placement_helper: false
+itemframe_placement_helper.must_match_block: true
+itemframe_placement_helper.must_connect: false
 
 mapart_placement_helper: true #TODO: also support placing sequential shulker boxes
 mapart_placement_helper.use_name: true
