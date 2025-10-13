@@ -24,7 +24,6 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import jdk.net.ExtendedSocketOptions;
-import net.evmodder.KeyBound.Main;
 
 public final class PacketHelper{
 	private static final int MAX_PACKET_SIZE_SEND = 4+16+128*128; //=16384. 2nd biggest: 4 + [4+4+8+16+16]
@@ -186,7 +185,8 @@ public final class PacketHelper{
 					socketTCP = new Socket();
 					socketTCP.setPerformancePreferences(2, 1, 0);//TODO: Java standard library has not implemented this yet???
 					socketTCP.setTrafficClass(/*IPTOS_LOWDELAY=*/0x10);
-					socketTCP.setTcpNoDelay(true);
+//					socketTCP.setTcpNoDelay(true);
+
 					//socketTCP.setOption(ExtendedSocketOptions.IP_DONTFRAGMENT, true);//java.lang.UnsupportedOperationException
 //					socketTCP.setSendBufferSize(64);   //TODO: find a way to resize BEFORE connect, not after, without having it overridden by server socket
 //					socketTCP.setReceiveBufferSize(64);//TODO: find a way to resize BEFORE connect, not after, without having it overridden by server socket
@@ -202,7 +202,6 @@ public final class PacketHelper{
 
 			new Thread(()->{
 				final long stopWaitingTs = timeout == 0 ? Long.MAX_VALUE : System.currentTimeMillis() + timeout;
-				Main.LOGGER.info("tcp timeout= "+timeout);
 				if(socketTCP.isClosed() || !socketTCP.isConnected() || lastPortTCP != port || socketTCP.isOutputShutdown()){
 					lastPortTCP = port;
 					try{socketTCP.connect(new InetSocketAddress(addr, port), (int)timeout);}

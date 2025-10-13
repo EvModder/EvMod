@@ -1,5 +1,7 @@
 package net.evmodder.KeyBound;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
@@ -26,6 +28,15 @@ public class MiscUtils{
 			case "104.128.56.167:14445": // EvModder
 				return "2b2t.org";
 			default:
+				final int i = address.lastIndexOf(':');
+				try{
+					final InetAddress addr = InetAddress.getByName(i == -1 ? address : address.substring(0, i));
+					// Use canonical host name if available, otherwise use input hostname (I think it will be the same as `address`, but not sure)
+					return addr.getCanonicalHostName().equals(addr.getHostAddress()) ? addr.getHostName() : addr.getCanonicalHostName();
+				}
+				catch(UnknownHostException e){
+					Main.LOGGER.warn("Server not found: "+address);
+				}
 				return address;
 		}
 	}
@@ -34,7 +45,7 @@ public class MiscUtils{
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(client == null || client.getCurrentServerEntry() == null) return 0;
 		// TODO: if connected to a proxy, figure out the server IP
-		return getRealServerAddress(client.getCurrentServerEntry().address).hashCode();
+		return getRealServerAddress(client.getCurrentServerEntry().address.toLowerCase()).hashCode();
 	}
 
 	private static Command parseCommand(String str){
