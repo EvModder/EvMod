@@ -225,7 +225,7 @@ public class CommandMapArtGroup{
 			FileIO.saveFileBytes(FILE_PATH+groups[0], bb.array());
 			source.sendFeedback(Text.literal((cmd == Command.CREATE ? "Created group" : "Expanded") + " '"+groups[0]
 					+"' (ids: "+ (oldSize==0 ? "" : oldSize+"\u2192") + mapsInGroup.size()+")"
-					+(activeGroupName.equals(newActiveGroup) ? "" : " and set as active.")
+					+(newActiveGroup.equals(activeGroupName) ? "" : " and set as active.")
 					).copy().withColor(CREATE_COLOR));
 		}
 		else if(newActiveGroup.equals(activeGroupName)){
