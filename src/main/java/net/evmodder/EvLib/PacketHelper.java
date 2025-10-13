@@ -24,6 +24,7 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.SecretKeySpec;
 import jdk.net.ExtendedSocketOptions;
+import net.evmodder.KeyBound.Main;
 
 public final class PacketHelper{
 	private static final int MAX_PACKET_SIZE_SEND = 4+16+128*128; //=16384. 2nd biggest: 4 + [4+4+8+16+16]
@@ -200,7 +201,8 @@ public final class PacketHelper{
 			}
 
 			new Thread(()->{
-				final long startTime = timeout == 0 ? 0 : System.currentTimeMillis();
+				final long stopWaitingTs = timeout == 0 ? Long.MAX_VALUE : System.currentTimeMillis() + timeout;
+				Main.LOGGER.info("tcp timeout= "+timeout);
 				if(socketTCP.isClosed() || !socketTCP.isConnected() || lastPortTCP != port || socketTCP.isOutputShutdown()){
 					lastPortTCP = port;
 					try{socketTCP.connect(new InetSocketAddress(addr, port), (int)timeout);}
@@ -222,8 +224,8 @@ public final class PacketHelper{
 					out.flush();
 				}
 				catch(IOException e){
-					try{socketTCP.close();}catch(IOException e1){} socketTCP = null; // Reset socket
 					e.printStackTrace();
+					try{socketTCP.close();}catch(IOException e1){e1.printStackTrace();} socketTCP = null; // Reset socket
 					return;
 				}
 
@@ -233,11 +235,15 @@ public final class PacketHelper{
 				byte[] reply = null;
 				try{
 					final InputStream is = socketTCP.getInputStream();
-					while(!socketTCP.isClosed() && is.available() < 2 && !Thread.currentThread().isInterrupted() &&
-							(timeout == 0 || System.currentTimeMillis() - startTime < timeout))/*...wait...*/;//Thread.yield();
+					while(!socketTCP.isClosed() && is.available() < 2 && !Thread.currentThread().isInterrupted() && System.currentTimeMillis() < stopWaitingTs)
+						/*...wait...*/;//Thread.yield();
 					if(is.available() < 2){
-						LOGGER.warning("Waiting for TCP response timed out (or socket closed) BEFORE receiving response len");
+						if(System.currentTimeMillis() > stopWaitingTs) LOGGER.warning("Waiting for TCP response timed out (BEFORE receiving response len)");
+						else if(socketTCP.isClosed()) LOGGER.warning("Socket closed while waiting for TCP response (BEFORE receiving response len)");
+						else LOGGER.warning("Socket read interrupted while waiting for TCP response (BEFORE receiving response len)");
 						callback.receiveMessage(null);
+						if(!socketTCP.isClosed()) socketTCP.close();
+						socketTCP = null;
 						return;
 					}
 					final short len = readShort(is);
@@ -250,8 +256,8 @@ public final class PacketHelper{
 						LOGGER.warning("Length of incoming response is too big, adjusting buffer size");
 						socketTCP.setReceiveBufferSize(len);
 					}
-					while(!socketTCP.isClosed() && is.available() < len && !Thread.currentThread().isInterrupted() &&
-							(timeout == 0 || System.currentTimeMillis() - startTime < timeout))/*...wait...*/;//Thread.yield();
+					while(!socketTCP.isClosed() && is.available() < len && !Thread.currentThread().isInterrupted() && System.currentTimeMillis() < stopWaitingTs)
+						/*...wait...*/;//Thread.yield();
 					if(is.available() >= len){
 						if(is.available() > len){LOGGER.severe("TCP response is too long! Expected:"+len+", Got:"+is.available());}
 						//is.read(replyTCP, /*off=*/0, len);
@@ -259,7 +265,11 @@ public final class PacketHelper{
 					}
 				}
 				catch(IOException e){e.printStackTrace(); return;}
-				if(reply == null) LOGGER.warning("Waiting for TCP response timed out (or socket closed) AFTER receiving response len");
+				if(reply == null){
+					if(System.currentTimeMillis() > stopWaitingTs) LOGGER.warning("Waiting for TCP response timed out (AFTER receiving response len)");
+					else if(socketTCP.isClosed()) LOGGER.warning("Socket closed while waiting for TCP response (AFTER receiving response len)");
+					else LOGGER.warning("Socket read interrupted while waiting for TCP response (AFTER receiving response len)");
+				}
 				//else LOGGER.info("Got TCP reply: "+new String(reply)+", len="+reply.length+", in "+TextUtils.formatTime(System.currentTimeMillis()-startTime));
 				callback.receiveMessage(reply);
 			}).start();

@@ -14,9 +14,27 @@ public class MiscUtils{
 		return entity.prevX != entity.getX() || entity.prevY != entity.getY() || entity.prevZ != entity.getZ();
 	}
 
+	private static final String getRealServerAddress(String address){
+		switch(address){ // TODO: remove all this hacky BS
+			case "2b2t.org":
+			case "connect.2b2t.org":
+			case "152.228.212.15:25572": // 0crit
+			case "152.228.212.15:25566": // Minuscul
+			case "152.228.212.15:25567": // JalvaBot
+			case "152.228.212.15:25565": // Jalvaviel
+			case "209.44.205.3:14445": // EvMD
+			case "104.128.56.167:14445": // EvModder
+				return "2b2t.org";
+			default:
+				return address;
+		}
+	}
+
 	public static final int getCurrentServerAddressHashCode(){
 		MinecraftClient client = MinecraftClient.getInstance();
-		return client == null || client.getCurrentServerEntry() == null ? 0 : client.getCurrentServerEntry().address.hashCode();
+		if(client == null || client.getCurrentServerEntry() == null) return 0;
+		// TODO: if connected to a proxy, figure out the server IP
+		return getRealServerAddress(client.getCurrentServerEntry().address).hashCode();
 	}
 
 	private static Command parseCommand(String str){

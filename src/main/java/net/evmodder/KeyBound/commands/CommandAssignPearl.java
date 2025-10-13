@@ -55,15 +55,15 @@ public class CommandAssignPearl{
 				return;
 			}
 //			ctx.getSource().sendFeedback(Text.literal("Sending DB update for epearl: "+key+" -> "+uuid));
-			Main.remoteSender.sendBotMessage(cmd, /*udp=*/false, /*timeout=*/3000, PacketHelper.toByteArray(key, uuid), (reply)->{
+			Main.remoteSender.sendBotMessage(cmd, /*udp=*/true, /*timeout=*/3000, PacketHelper.toByteArray(key, uuid), (reply)->{
 				if(reply != null && reply.length == 1){
-					if(reply[0] == -1/*aka (byte)255*/) ctx.getSource().sendFeedback(Text.literal("Added pearl owner to remote DB!"));
-					else ctx.getSource().sendError(Text.literal("Remote DB already contains pearl owner"));
+					if(reply[0] == -1/*aka (byte)255*/) ctx.getSource().sendFeedback(Text.literal("Added pearl owner to remote DB!").withColor(16755200));
+					else ctx.getSource().sendError(Text.literal("Remote DB already contains pearl owner").withColor(16755200));
 
 					final PearlDataClient pdc = new PearlDataClient(uuid, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
 					Main.epearlLookup.assignPearlOwner_FriendCommandAssignPearl(key, pdc, cmd);
 				}
-				else ctx.getSource().sendError(Text.literal("Unexpected/Invalid response from RMS for "+cmd+": "+reply));
+				else ctx.getSource().sendError(Text.literal("Unexpected response from RMS for "+cmd+": "+reply).withColor(16733525));
 			});
 		});
 		return 1;
@@ -74,7 +74,7 @@ public class CommandAssignPearl{
 			(dispatcher, _0) -> dispatcher.register(
 				ClientCommandManager.literal("assignpearl").then(
 					ClientCommandManager.literal("by_uuid") // TODO: only register if DB_UUID is enabled?
-					.then(ClientCommandManager.argument("name", StringArgumentType.word())
+					.then(ClientCommandManager.argument("name", StringArgumentType.word()) // TODO: tab-complete suggest online names
 							.executes(ctx->assignPearl(ctx, Command.DB_PEARL_STORE_BY_UUID)))
 				)
 				.then(

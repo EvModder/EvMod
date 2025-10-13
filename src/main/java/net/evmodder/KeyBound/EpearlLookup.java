@@ -92,7 +92,7 @@ public final class EpearlLookup{
 
 	public final void assignPearlOwner_FriendCommandAssignPearl(UUID key, PearlDataClient pdc, Command cmd){ // TODO: actual 'friend' enforcement
 //		assert MojangProfileLookup.nameLookup.get(pdc.owner(), null) != MojangProfileLookup.NAME_LOADING;
-		Main.LOGGER.info("EpearLookup: assignPearlOwner() called, owner: "+MojangProfileLookup.nameLookup.get(pdc.owner(), null));
+//		Main.LOGGER.info("EpearLookup: assignPearlOwner() called, owner: "+MojangProfileLookup.nameLookup.get(pdc.owner(), null));
 		assert cmd == Command.DB_PEARL_STORE_BY_UUID || cmd == Command.DB_PEARL_STORE_BY_XZ;
 		final String DB_FILENAME = cmd == Command.DB_PEARL_STORE_BY_UUID ? DB_FILENAME_UUID : DB_FILENAME_XZ;
 		final RSLoadingCache cache = cmd == Command.DB_PEARL_STORE_BY_UUID ? cacheByUUID : cacheByXZ;

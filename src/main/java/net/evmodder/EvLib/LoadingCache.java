@@ -7,7 +7,6 @@ public abstract class LoadingCache<K, V>{
 	private final HashMap<K, V> cache;
 	//TODO: loading duration tracking?
 	private final HashMap<K, Thread> loading = new HashMap<>();
-	@SuppressWarnings("unused")
 	private final V V_NOT_FOUND, V_LOADING;
 	public LoadingCache(final HashMap<K, V> initMap, final V notFound, final V loading){cache = initMap; V_NOT_FOUND = notFound; V_LOADING = loading;}
 	public LoadingCache(final V notFound, final V loading){this(new HashMap<>(), notFound, loading);}
@@ -20,7 +19,7 @@ public abstract class LoadingCache<K, V>{
 
 	public final boolean putIfAbsent(final K k, final V v){
 		synchronized(cache){
-			if(cache.containsKey(k)) return false;
+			if(cache.containsKey(k) && cache.get(k) != V_NOT_FOUND) return false;
 			cache.put(k, v);
 		}
 		final Thread t;

@@ -337,7 +337,8 @@ once arrangement is found
 		}
 
 		if(mapMetadataTooltip){
-			new TooltipMapLoreMetadata(mapMdStaircase, mapMdMaterial, mapMdNumColors, mapMdNumColorIds, mapMdTransparency, mapMdNoobline, mapMdPercentCarpet, mapMdPercentStaircase);
+			new TooltipMapLoreMetadata(mapMdStaircase, mapMdMaterial, mapMdNumColors, mapMdNumColorIds, mapMdTransparency, mapMdNoobline,
+					mapMdPercentCarpet, mapMdPercentStaircase);
 		}
 
 		final String username = MinecraftClient.getInstance().getSession().getUsername();
