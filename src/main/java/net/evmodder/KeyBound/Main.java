@@ -201,8 +201,8 @@ once arrangement is found
 				case "mapart_database_share_contact": mapartDbContact = !value.equalsIgnoreCase("false"); break;
 				case "track_time_online": if(!value.equalsIgnoreCase("false")) new CommandTimeOnline(); break;
 				case "log_xyz_on_quit": if(!value.equalsIgnoreCase("false")) new LogCoordsOnServerDisconnect(); break;
-				case "publish_my_ignore_list": uploadIgnoreList = !value.equalsIgnoreCase("false"); break;
-				case "add_other_ignore_lists": if(value.startsWith("[")) downloadIgnoreLists = value.substring(1, value.length()-1).split("\\s&,\\s&"); break;
+				case "database.ignorelist.share": uploadIgnoreList = !value.equalsIgnoreCase("false"); break;
+				case "database.ignorelist.borrow": if(value.startsWith("[")) downloadIgnoreLists = value.substring(1, value.length()-1).split("\\s&,\\s&"); break;
 
 				case "whispers.playsound": new WhisperPlaySound(value); break;
 				case "whispers.pearl_trigger": new WhisperPearlPull(value); break;

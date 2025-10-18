@@ -114,8 +114,8 @@ remote_address: evmodder.net:14441
 command.assignpearl: true
 
 # Note: this currently won't work outside of 2b2t.
-publish_my_ignore_list: true
-add_other_ignore_lists: [34471e8d-d0c5-47b9-b8e1-b5b9472affa4, 0e314b60-29c7-4e35-bef3-3c652c8fb467]
+database.ignorelist.share: true
+database.ignorelist.borrow: [34471e8d-d0c5-47b9-b8e1-b5b9472affa4, 0e314b60-29c7-4e35-bef3-3c652c8fb467]
 
 # Play a sound when someone /w you on 2b2t
 whispers.playsound: {sound:block.note_block.bass, category:PLAYERS, volume:.7, pitch:2}

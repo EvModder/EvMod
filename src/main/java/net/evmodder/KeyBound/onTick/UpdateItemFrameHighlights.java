@@ -125,7 +125,7 @@ public class UpdateItemFrameHighlights{
 		List<ItemFrameEntity> ifes = client.world.getEntitiesByClass(ItemFrameEntity.class, client.player.getBoundingBox().expand(200, 200, 200), _0->true);
 
 		anyHangLocUpdate = updateItemFrameEntities(ifes);
-		final int currGroupInvHash = MapGroupUtils.mapsInGroupHash * UpdateInventoryHighlights.mapsInInvHash;
+		final int currGroupInvHash = MapGroupUtils.mapsInGroupHash + UpdateInventoryHighlights.mapsInInvHash;
 		if(!anyHangLocUpdate && lastGroupInvHash == currGroupInvHash) return;
 		lastGroupInvHash = currGroupInvHash;
 
