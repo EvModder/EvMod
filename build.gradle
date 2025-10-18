@@ -1,23 +1,18 @@
-/*buildscript {
-	repositories {
-		mavenCentral()
-	}
-	dependencies {
-		classpath 'com.guardsquare:proguard-gradle:7.7.0'
-	}
-}*/
-
 plugins {
-	id 'fabric-loom' version '1.11-SNAPSHOT'
+	id 'fabric-loom'
 	id 'maven-publish'
 }
+
+/*loom {
+	accessWidenerPath = file("src/main/resources/keybound.accesswidener")
+}*/
 
 version = project.mod_version
 group = project.maven_group
 compileJava.options.encoding = 'UTF-8'
 
 base {
-	archivesName = project.archives_base_name + '-' + project.minecraft_version
+	archivesName = project.mod_id + '-' + project.minecraft_version
 }
 
 repositories {
@@ -26,6 +21,15 @@ repositories {
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
 	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
 	// for more information about repositories.
+	maven {
+		url 'https://jitpack.io' // New home of MaLiLib apparently
+	}
+	// maven {
+	// 	url = "https://masa.dy.fi/maven"
+	// }
+	// maven {
+	// 	url 'https://www.cursemaven.com'
+	// }
 }
 
 dependencies {
@@ -35,17 +39,24 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.4.1")))
+
+	//modImplementation "fi.dy.masa.malilib:malilib-fabric-${project.minecraft_version_out}:${project.malilib_version}"
+	modImplementation "com.github.sakura-ryoko:malilib:${project.malilib_version}"
 }
 
+// These get passed to src/main/java/resources/fabric.mod.json
 processResources {
-	inputs.property "version", project.version
-	//inputs.property "minecraft_version", project.minecraft_version
-	inputs.property "loader_version", project.loader_version
-
 	filesMatching("fabric.mod.json") {
-		expand "version": project.version/*, "minecraft_version": project.minecraft_version*/, "loader_version": project.loader_version
+		def valueMap = [
+			"mod_id"			: project.mod_id,
+			"mod_name"			: project.mod_name,
+			"mod_version"		: project.mod_version,
+			"loader_version"	: project.loader_version,
+			"minecraft_version" : project.minecraft_version,
+		]
+		expand valueMap
 	}
 }
 
@@ -74,7 +85,7 @@ jar {
 publishing {
 	publications {
 		create("mavenJava", MavenPublication) {
-			artifactId = project.archives_base_name
+			artifactId = project.base.archivesName
 			from components.java
 		}
 	}
@@ -87,38 +98,3 @@ publishing {
 		// retrieving dependencies.
 	}
 }
-
-/*task unmappedJar(type: Jar) {
-	archiveClassifier = "unmapped"
-	from sourceSets.main.output
-}
-def compiler = javaToolchains.compilerFor {
-	languageVersion = JavaLanguageVersion.of(21)
-}
-// TODO depends on loom implementation details I don't understand
-task ('proguard', type: proguard.gradle.ProGuardTask) {
-	dependsOn "unmappedJar"
-	configuration 'proguard.conf'
-	ignorewarnings
-	verbose
-	target "21"
-
-	// Workaround for ProGuard seemingly not recognising when the output .jar file doesn't exist
-	//outputs.upToDateWhen { false }
-
-	//injars "build/libs/" + project.archives_base_name + "-" + version + "-unmapped.jar"
-	//outjars "build/libs/" + project.archives_base_name + "-" + version + "-dev" + ".jar"
-
-	// Get the Java standard library from the provided toolchain.
-	libraryjars compiler.get().metadata.installationPath.asFile.absolutePath + "/jmods/java.base.jmod", jarfilter: '!**.jar', filter: '!module-info.class'
-
-	// Add relevant Minecraft libraries to ProGuard's list of libraries to obfuscate against. TODO this is very janky
-	libraryjars project.configurations.compileClasspath
-}
-
-//artifacts.add('archives', file(proguard.outputs.files.singleFile)) {
-//	type='jar'
-//	builtBy(proguard)
-//}
-
-remapJar.finalizedBy proguard*/

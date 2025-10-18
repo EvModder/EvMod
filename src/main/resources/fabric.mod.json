@@ -1,25 +1,25 @@
 {
 	"schemaVersion": 1,
-	"id": "keybound",
-	"version": "${version}",
-	"name": "KeyBound",
+	"id": "${mod_id}",
+	"version": "${mod_version}",
+	"name": "${mod_name}",
 	"description": "Keybinds and stuff",
 	"authors": [ "EvModder" ],
 	"contact": {
-		"homepage": "https://legacy.curseforge.com/minecraft/mc-mods/keybound",
-		"sources": "https://github.com/EvModder/KeyBound",
-		"issues": "https://github.com/EvModder/KeyBound/issues"
+		"homepage": "https://legacy.curseforge.com/minecraft/mc-mods/${mod_id}",
+		"sources": "https://github.com/EvModder/${mod_name}",
+		"issues": "https://github.com/EvModder/${mod_name}/issues"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/keybound/icon.png",
+	"icon": "assets/${mod_id}/icon.png",
 	"environment": "*",
 	"entrypoints": {
-		"client": [ "net.evmodder.KeyBound.Main" ]
+		"client": [ "net.evmodder.${mod_name}.Main" ]
 	},
-	"mixins": [ "keybound.mixins.json" ],
+	"mixins": [ "${mod_id}.mixins.json" ],
 	"depends": {
 		"fabricloader": ">=${loader_version}",
-		"minecraft": "~1.21",
+		"minecraft": "~#{minecraft_version}",
 		"fabric-api": "*",
 		"fabric-key-binding-api-v1": "*"
 	},
