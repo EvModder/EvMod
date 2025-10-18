@@ -1,7 +1,19 @@
 {
-	"key.categories.keybound": "KeyBound",
+	"keybound.gui.title": "KeyBound Configs - %s",
+	"keybound.gui.button.keybinds": "Keybinds",
+	"keybound.gui.button.visuals": "Visuals",
+	"keybound.gui.button.database": "Database",
+	"keybound.gui.button.miscellaneous": "Misc.",
+	"keybound.config.keybinds.ejectJunkItems": "Eject Junk Items",
 
+	"key.categories.keybound": "KeyBound",
 	"key.categories.keybound.skin_toggles": "Skin outer layer toggles",
+	"key.categories.keybound.color_scroll": "Hotbar color scrolling",
+	"key.categories.keybound.remote_messages": "Send messages to the bot server",
+	"key.categories.keybound.chat_messages": "Send messages in chat",
+	"key.categories.keybound.snap_angles": "Snap yaw & pitch to specific values",
+	"key.categories.keybound.misc": "Misc",
+
 	"key.keybound.skin_toggle.cape": "Toggle cape",
 	"key.keybound.skin_toggle.hat": "Toggle hat",
 	"key.keybound.skin_toggle.jacket": "Toggle jacket",
@@ -10,21 +22,17 @@
 	"key.keybound.skin_toggle.left_sleeve": "Toggle left sleeve",
 	"key.keybound.skin_toggle.right_sleeve": "Toggle right sleeve",
 
-	"key.categories.keybound.color_scroll": "Hotbar color scrolling",
 	"key.keybound.color_scroll.up": "Next color",
 	"key.keybound.color_scroll.down": "Last color",
 
-	"key.categories.keybound.remote_messages": "Send messages to the bot server",
 	"key.keybound.remote_msg.mainbase": "Main base stasis pearl",
 	"key.keybound.remote_msg.a": "BotMsg: A",
 	"key.keybound.remote_msg.b": "BotMsg: B",
 	"key.keybound.remote_msg.c": "BotMsg: C",
 
-	"key.categories.keybound.chat_messages": "Send messages in chat",
 	"key.keybound.chat_msg.meow": "Chat: Meow :3",
 	"key.keybound.chat_msg.rc": "Cmd: Check RC",
 
-	"key.categories.keybound.snap_angles": "Snap yaw & pitch to specific values",
 	"key.keybound.snap_angle.a": "Snap angle: A",
 	"key.keybound.snap_angle.b": "Snap angle: B",
 	"key.keybound.snap_angle.c": "Snap angle: C",
@@ -34,7 +42,6 @@
 	"key.keybound.inventory_organize.EvInvSimple": "InvOrganize: Ev's preset (simple)",
 	"key.keybound.inventory_organize.CarpetMapart": "InvOrganize: Carpet Map",
 
-	"key.categories.keybound.misc": "Misc",
 	"key.keybound.eject_junk_items": "AutoEject",
 	"key.keybound.mapart_copy": "MapArt Copy",
 	"key.keybound.mapart_copy_bulk": "MapArt Copy-Bulk",

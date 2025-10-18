@@ -21,8 +21,13 @@ import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import fi.dy.masa.malilib.config.ConfigManager;
+import fi.dy.masa.malilib.registry.Registry;
+import fi.dy.masa.malilib.util.data.ModInfo;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.commands.*;
+import net.evmodder.KeyBound.config.ConfigGui;
+import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.keybinds.*;
 import net.evmodder.KeyBound.listeners.*;
 import net.evmodder.KeyBound.onTick.AutoPlaceItemFrames;
@@ -89,7 +94,7 @@ findArrangement(maps[]): tries to find optimal layout rectangle (N*N complexity,
 once arrangement is found
 */
 	// Reference variables
-	public static final String MOD_ID = "keybound";
+	public static final String MOD_ID = "keybound"; // TODO: pull from fabric/gradle?
 	public static final String configFilename = MOD_ID+".txt";
 	//public static final String MOD_NAME = "KeyBound";
 	//public static final String MOD_VERSION = "@MOD_VERSION@";
@@ -145,6 +150,9 @@ once arrangement is found
 	}
 
 	@Override public void onInitializeClient(){
+		ConfigManager.getInstance().registerConfigHandler(MOD_ID, new Configs());
+		Registry.CONFIG_SCREEN.registerConfigScreenFactory(new ModInfo(MOD_ID, "KeyBound", ConfigGui::new));
+
 		loadConfig();
 		//=================================== Loading config features
 		HashMap<String, String> remoteMessages = new HashMap<>();
