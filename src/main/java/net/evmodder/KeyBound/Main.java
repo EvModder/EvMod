@@ -165,7 +165,7 @@ once arrangement is found
 		int keybindMapArtBundleStowMax = 64;
 		boolean mapMoveIgnoreAirPockets=true;
 		boolean mapPlaceHelper=false, mapPlaceHelperAuto=false, mapPlaceHelperByName=true, mapPlaceHelperByImg=true, mapHighlightTooltip=false;
-		boolean iFramePlacer=false, iFramePlacerMatchBlock=true, iFramePlacerMustConnect=true;
+		boolean iFramePlacer=false/*, iFramePlacerMatchBlock=true, iFramePlacerMustConnect=true*/;
 		boolean mapMetadataTooltip=false, mapMdStaircase=false, mapMdMaterial=false, mapMdNumColors=false, mapMdNumColorIds=true,
 				mapMdTransparency=false, mapMdNoobline=false, mapMdPercentCarpet=false, mapMdPercentStaircase=false;
 		boolean mapWallCmd=false, mapWallBorder=false;
@@ -269,8 +269,8 @@ once arrangement is found
 				case "mapart_placement_helper.use_image": mapPlaceHelperByImg=!value.equalsIgnoreCase("false"); break;
 				case "mapart_placement_helper.autoplace": mapPlaceHelperAuto=!value.equalsIgnoreCase("false"); break;
 				case "itemframe_placement_helper": iFramePlacer = !value.equalsIgnoreCase("false"); break;
-				case "itemframe_placement_helper.must_match_block": iFramePlacerMatchBlock = !value.equalsIgnoreCase("false"); break;
-				case "itemframe_placement_helper.must_connect": iFramePlacerMustConnect = !value.equalsIgnoreCase("false"); break;
+//				case "itemframe_placement_helper.must_match_block": iFramePlacerMatchBlock = !value.equalsIgnoreCase("false"); break;
+//				case "itemframe_placement_helper.must_connect": iFramePlacerMustConnect = !value.equalsIgnoreCase("false"); break;
 				case "mapart_group_include_unlocked": MapGroupUtils.INCLUDE_UNLOCKED = !value.equalsIgnoreCase("false"); break;
 				case "mapart_group_command": new CommandMapArtGroup(); break;
 				case "mapart_generate_img_upscale_to": mapWallUpscale=Integer.parseInt(value); break;
@@ -321,7 +321,7 @@ once arrangement is found
 		if(keybindMapArtBundleStow || keybindMapArtBundleStowReverse)
 			new KeybindMapMoveBundle(keybindMapArtBundleStow, keybindMapArtBundleStowReverse, keybindMapArtBundleStowMax);
 		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg, mapPlaceHelperAuto);
-		if(iFramePlacer) new AutoPlaceItemFrames(iFramePlacerMatchBlock, iFramePlacerMustConnect);
+		if(iFramePlacer) new AutoPlaceItemFrames(/*iFramePlacerMatchBlock, iFramePlacerMustConnect*/);
 		if(keybindEbounceTravelHelper) new KeybindEbounceTravelHelper(ejectJunk);
 		if(keybindRestock){
 			inventoryRestock = new KeybindInventoryRestock(restockBlacklist, restockWhitelist);

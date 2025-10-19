@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.config.Configs;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.EndTick;
@@ -29,7 +30,7 @@ public class AutoPlaceItemFrames{
 	private Direction dir;
 	private int axis;
 	private final int MAX_REACH = 4;
-	private final boolean mustConnect;
+//	private final boolean MUST_CONNECT, MUST_MATCH_BLOCK;
 
 	private double distFromPlane(BlockPos bp){
 		switch(dir){
@@ -59,7 +60,7 @@ public class AutoPlaceItemFrames{
 		if(distFromPlane(bp) != 0) return false;
 //		Main.LOGGER.info("iFramePlacer: wall block is on the plane");
 		BlockState bs = world.getBlockState(bp);
-		if(placeAgainstBlock != null && bs.getBlock() != placeAgainstBlock) return false;
+		if(Configs.Misc.IFRAME_PLACEMENT_HELPER_MUST_MATCH_BLOCK.getBooleanValue() && bs.getBlock() != placeAgainstBlock) return false;
 //		Main.LOGGER.info("iFramePlacer: wall block matches placeAgainstBlock");
 
 		BlockPos ifeBp = bp.offset(dir);
@@ -70,18 +71,18 @@ public class AutoPlaceItemFrames{
 
 		if(existingIfes.stream().anyMatch(ife -> ife.getBlockPos().equals(ifeBp))) return false; // Already iFrame here
 //		Main.LOGGER.info("iFramePlacer: ife spot is available");
-		if(mustConnect && existingIfes.stream().noneMatch(ife -> ife.getBlockPos().getManhattanDistance(ifeBp) == 1)) return false; // No iFrame neighbor
+		if(Configs.Misc.IFRAME_PLACEMENT_HELPER_MUST_CONNECT.getBooleanValue()
+				&& existingIfes.stream().noneMatch(ife -> ife.getBlockPos().getManhattanDistance(ifeBp) == 1)) return false; // No iFrame neighbor
 //		Main.LOGGER.info("iFramePlacer: ife spot has neighboring iframe");
 		return true;
 	}
 
 	private int tick;
-	public AutoPlaceItemFrames(final boolean mustMatchBlockType, final boolean mustBeConnected){
-		mustConnect = mustBeConnected;
+	public AutoPlaceItemFrames(/*final boolean mustMatchBlockType, final boolean mustBeConnected*/){
+//		MUST_CONNECT = mustBeConnected;
 		EndTick etl = (client) -> {
-			if(dir == null/* || iFrameItem == null*/) return; // iFramePlacer is not currently active
+			if(dir == null) return; // iFramePlacer is not currently active
 			if((++tick)/5 == 1) tick = 0; else return; // TODO: Only run ever 5th tick, since there is some iframe placement speed limit (idk what it is yet)
-			assert iFrameItem != null;
 
 			if(client.player == null || client.world == null){ // Player offline, cancel iFramePlacer
 				Main.LOGGER.info("iFramePlacer: Disabling due to player offline");
@@ -138,7 +139,7 @@ public class AutoPlaceItemFrames{
 
 			BlockPos bp = hitResult.getBlockPos();
 			BlockState bs = world.getBlockState(bp);
-			if(mustMatchBlockType) placeAgainstBlock = bs.getBlock();
+			placeAgainstBlock = bs.getBlock();
 			iFrameItem = heldItem;
 			dir = hitResult.getSide();
 			switch(dir){

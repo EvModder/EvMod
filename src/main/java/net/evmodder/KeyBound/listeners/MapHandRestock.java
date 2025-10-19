@@ -370,7 +370,8 @@ public final class MapHandRestock{
 			if(!MapRelationUtils.isMapArtWithCount(slots.get(i), prevCount) || i == prevSlot) continue;
 			if(bestScore < 1){bestScore = 1; bestSlot = i;} // It's a map with the same count
 			final MapState state = FilledMapItem.getMapState(slots.get(i), world);
-			assert state != null;
+//			assert state != null;
+			if(state == null) continue; // Only possible if map IDs get corrupted (or a player in creative spawns an id that doesn't exist yet)
 			if(state.locked != prevLocked) continue;
 			if(bestScore < 2){bestScore = 2; bestSlot = i;} // It's a map with the same locked state
 			if(slots.get(i).getCustomName() == null) continue;

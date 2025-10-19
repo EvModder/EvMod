@@ -4,7 +4,12 @@
 	"keybound.gui.button.visuals": "Visuals",
 	"keybound.gui.button.database": "Database",
 	"keybound.gui.button.miscellaneous": "Misc.",
-	"keybound.config.keybinds.ejectJunkItems": "Eject Junk Items",
+	"keybound.config.miscellaneous.name.iFramePlacementHelper": "iFramePlacementHelper",
+	"keybound.config.miscellaneous.name.iFramePlacementHelperMustConnect": "iFramePlacementHelperMustConnect",
+	"keybound.config.miscellaneous.name.iFramePlacementHelperMustMatchBlock": "iFramePlacementHelperMustMatchBlock",
+	"keybound.config.miscellaneous.prettyName.iFramePlacementHelper": "iFrame Helper",
+	"keybound.config.miscellaneous.prettyName.iFramePlacementHelperMustConnect": "iFrame Helper - Only place connecting iFrames",
+	"keybound.config.miscellaneous.prettyName.iFramePlacementHelperMustMatchBlock": "iFrame Helper - Only place on matching blocks",
 
 	"key.categories.keybound": "KeyBound",
 	"key.categories.keybound.skin_toggles": "Skin outer layer toggles",
