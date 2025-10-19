@@ -1,10 +1,8 @@
-package net.evmodder.KeyBound.listeners;
+package net.evmodder.KeyBound;
 
 import java.util.Arrays;
 import java.util.Objects;
 import com.google.common.collect.Streams;
-import net.evmodder.KeyBound.Main;
-import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ButtonBlock;
 import net.minecraft.block.entity.SignBlockEntity;
@@ -22,14 +20,13 @@ import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.RaycastContext;
 
-public class WhisperPearlPull{
+public class EpearlActivator{
 	private final int REACH = 10;
-	private final String MSG_MATCH_END = "";//"( .*)?"
 	private final boolean msgFailureFeedback = true;
 	private final long msgCooldown = 1000*5;
 	private long lastMsgTs;
 
-	public static boolean hasLineOfSight(MinecraftClient client, Vec3d from, Vec3d to){
+	public boolean hasLineOfSight(MinecraftClient client, Vec3d from, Vec3d to){
 		return client.world.raycast(
 				new RaycastContext(from, to, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, client.player))
 				.getType() == HitResult.Type.MISS;
@@ -41,7 +38,7 @@ public class WhisperPearlPull{
 	 * squared distance to that hit vector, and whether or not there is line of
 	 * sight to that hit vector.
 	 */
-	public static BlockHitResult getHitResult(MinecraftClient client, BlockPos pos){
+	public BlockHitResult getHitResult(MinecraftClient client, BlockPos pos){
 		Vec3d eyes = client.player.getEyePos();
 		Direction[] sides = Direction.values();
 
@@ -126,35 +123,25 @@ public class WhisperPearlPull{
 		client.getNetworkHandler().sendChatCommand("/w "+who+" "+msg);
 	}
 
-	public WhisperPearlPull(final String trigger){
-		Main.LOGGER.info("AutoPearlActivator trigger: '"+trigger+"'");
-		ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {
-			if(overlay) return;
-//			Main.LOGGER.info("GAME Message: "+msg.getString());
-			final String literal = msg.getString();
-			if(literal == null || !literal.matches("\\w+ whispers: "+trigger+MSG_MATCH_END)) return;
-			final String name = literal.substring(0, literal.indexOf(' '));
-//			Main.LOGGER.info("AutoPearlActivator: got whisper for "+name);
+	public void triggerPearl(final String who){
+		MinecraftClient client = MinecraftClient.getInstance();
+		BlockPos signPos = findSignWithName(client, who);
+		if(signPos == null && (signPos=findNearestPearlWithOwnerName(client, who)) == null){
+			sendFeedback(client, who, "[automated response] I do not recognize any pearl of yours nearby");
+			return;
+		}
+//		Main.LOGGER.info("AutoPearlActivator: found sign/pearl");// at "+signPos.toShortString());
 
-			MinecraftClient client = MinecraftClient.getInstance();
-			BlockPos signPos = findSignWithName(client, name);
-			if(signPos == null && (signPos=findNearestPearlWithOwnerName(client, name)) == null){
-				sendFeedback(client, name, "[automated response] I do not recognize any pearl of yours nearby");
-				return;
-			}
-//			Main.LOGGER.info("AutoPearlActivator: found sign/pearl");// at "+signPos.toShortString());
+		BlockPos buttonPos = findNearestButton(client, signPos);
+		if(buttonPos == null){
+//			sendFeedback(client, name, "[automated response] I see your pearl, but not how to activate it");
+			return;
+		}
+//		Main.LOGGER.info("AutoPearlActivator: found button at "+buttonPos.toShortString());
 
-			BlockPos buttonPos = findNearestButton(client, signPos);
-			if(buttonPos == null){
-//				sendFeedback(client, name, "[automated response] I see your pearl, but not how to activate it");
-				return;
-			}
-//			Main.LOGGER.info("AutoPearlActivator: found button at "+buttonPos.toShortString());
-
-//			assert hitResult != null;
-//			if(hitResult == null) return;
-			client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, getHitResult(client, buttonPos));
-//			Main.LOGGER.info("AutoPearlActivator: button pressed!");
-		});
+//		assert hitResult != null;
+//		if(hitResult == null) return;
+		client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, getHitResult(client, buttonPos));
+//		Main.LOGGER.info("AutoPearlActivator: button pressed!");
 	}
 }

@@ -25,6 +25,7 @@ import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
+import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.onTick.UpdateItemFrameHighlights;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -50,8 +51,8 @@ import net.minecraft.util.math.Direction.Axis;
 
 public class CommandExportMapImg{
 	final int RENDER_DIST = 10*16;
-	final boolean BLOCK_BORDER;
-	final int BORDER_1, BORDER_2, UPSCALE_TO;
+//	final boolean BLOCK_BORDER;
+//	final int BORDER_1, BORDER_2, UPSCALE_TO;
 	final String MAP_EXPORT_DIR = "mapart_exports/";
 
 	// Matrix math from the internet:
@@ -92,6 +93,8 @@ public class CommandExportMapImg{
 
 	private void drawBorder(BufferedImage img){
 		final int border = 8;
+		final int BORDER_1 = Configs.Visuals.EXPORT_MAP_IMG_BORDER_COLOR1.getIntegerValue();
+		final int BORDER_2 = Configs.Visuals.EXPORT_MAP_IMG_BORDER_COLOR1.getIntegerValue();
 		int MAGIC = 128-border;
 		int w = (img.getWidth()-border*2)/128;
 		int h = (img.getHeight()-border*2)/128;
@@ -116,7 +119,7 @@ public class CommandExportMapImg{
 			if(!container.streamNonEmpty().anyMatch(s -> FilledMapItem.getMapState(s, source.getWorld()) != null)) continue;
 			final int size = (int)container.stream().count();
 			if(size % 9 != 0){source.sendError(Text.literal("Unsupported container size: "+size)); continue;}
-			final int border = BLOCK_BORDER ? 8 : 0;
+			final int border = Configs.Visuals.EXPORT_MAP_IMG_BORDER.getBooleanValue() ? 8 : 0;
 			BufferedImage img = new BufferedImage(128*9+border*2, 128*(size/9)+border*2, BufferedImage.TYPE_INT_ARGB);
 			if(border > 0) drawBorder(img);
 
@@ -159,6 +162,7 @@ public class CommandExportMapImg{
 
 	private void buildMapImgFile(final FabricClientCommandSource source, final Map<Vec3i, ItemFrameEntity> ifeLookup,
 			final ArrayList<Vec3i> mapWall, final int w, final int h){
+		final boolean BLOCK_BORDER = Configs.Visuals.EXPORT_MAP_IMG_BORDER.getBooleanValue();
 		final int border = BLOCK_BORDER ? 8 : 0;
 		BufferedImage img = new BufferedImage(128*w+border*2, 128*h+border*2, BufferedImage.TYPE_INT_ARGB);
 		if(BLOCK_BORDER) drawBorder(img);
@@ -182,6 +186,7 @@ public class CommandExportMapImg{
 			final int xo = j*128+border, yo = i*128+border;
 			for(int x=0; x<128; ++x) for(int y=0; y<128; ++y) img.setRGB(xo+x, yo+y, MapColor.getRenderColor(colors[x + y*128]));
 		}
+		final int UPSCALE_TO = Configs.Visuals.EXPORT_MAP_IMG_UPSCALE.getIntegerValue();
 		if(128*w < UPSCALE_TO || 128*h < UPSCALE_TO){
 			int s = 2; while(128*w*s < UPSCALE_TO || 128*h*s < UPSCALE_TO) ++s;
 			source.sendFeedback(Text.literal("Upscaling img: x"+s));
@@ -555,11 +560,7 @@ public class CommandExportMapImg{
 		return cmdMapNames.keySet();
 	}
 
-	public CommandExportMapImg(final int upscaleTo, final boolean border, final int border1, final int border2){
-		UPSCALE_TO = upscaleTo;
-		BLOCK_BORDER = border;
-		BORDER_1 = border1;
-		BORDER_2 = border2;
+	public CommandExportMapImg(){
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, _0) -> {
 			dispatcher.register(
 				ClientCommandManager.literal(getClass().getSimpleName().substring(7).toLowerCase()/*"mapwallimg"*/)

@@ -11,6 +11,7 @@ import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapColorUtils;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
+import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
@@ -27,8 +28,6 @@ import net.minecraft.world.World;
 //TODO: Maybe preserve relative position of maps (eg., in a 3x3, keep them in a 3x3 in result GUI)?
 
 public final class KeybindMapMove{
-	private final boolean ALLOW_AIR_POCKETS;
-
 	private final boolean isFillerMap(ItemStack[] slots, ItemStack stack, World world){
 		if(!Main.skipTransparentMaps) return false;
 		final MapState state = FilledMapItem.getMapState(stack, world);
@@ -74,6 +73,7 @@ public final class KeybindMapMove{
 		TreeSet<Integer> countsInShulk = new TreeSet<>();
 		HashMap<ItemStack, Integer> shulkCapacity = new HashMap<>();
 		boolean smallerSlotsAtStart = true;
+		final boolean ALLOW_AIR_POCKETS = Configs.Misc.KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS.getBooleanValue();
 		for(int i=0; i<27; ++i){
 			ItemStack stack = slots[i];
 			if(stack.isEmpty()) ++emptySlotsShulk;
@@ -188,8 +188,7 @@ public final class KeybindMapMove{
 		);
 	}
 
-	public KeybindMapMove(final boolean mapMoveIgnoreAirPockets){
-		ALLOW_AIR_POCKETS = mapMoveIgnoreAirPockets;
+	public KeybindMapMove(){
 		new Keybind("mapart_move", ()->moveMapArtToFromShulker(), s->s instanceof HandledScreen && s instanceof InventoryScreen == false, GLFW.GLFW_KEY_T);
 	}
 }

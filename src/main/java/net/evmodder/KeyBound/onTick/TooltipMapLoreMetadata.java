@@ -5,6 +5,7 @@ import java.util.List;
 import net.minecraft.item.Item.TooltipContext;
 import net.evmodder.KeyBound.MapColorUtils;
 import net.evmodder.KeyBound.MapColorUtils.MapColorData;
+import net.evmodder.KeyBound.config.Configs;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
@@ -16,18 +17,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 public final class TooltipMapLoreMetadata{
-	private final boolean showStaircased, showMaterial, showNumColors, showNumColorIds, showTransparency, showNoobline, showPercentCarpet, showPercentStaircased;
-	public TooltipMapLoreMetadata(boolean showStaircased, boolean showMaterial, boolean showNumColors, boolean showNumColorIds,
-			boolean showTransparency, boolean showNoobline, boolean showPercentCarpet, boolean showPercentStaircased)
-	{
-		this.showStaircased = showStaircased;
-		this.showMaterial = showMaterial;
-		this.showNumColors = showNumColors;
-		this.showNumColorIds = showNumColorIds;
-		this.showTransparency = showTransparency;
-		this.showNoobline = showNoobline;
-		this.showPercentCarpet = showPercentCarpet;
-		this.showPercentStaircased = showPercentStaircased;
+	public TooltipMapLoreMetadata(){
 		ItemTooltipCallback.EVENT.register(this::tooltipMetadata);
 	}
 
@@ -71,6 +61,15 @@ public final class TooltipMapLoreMetadata{
 		final Text staircased = Text.literal(
 					data.height() == 0 ? "_" : data.height() == 1 ? "=" : data.height() == 2 ? "☰" : data.height()+"\uD83D\uDCF6"
 				).formatted(Formatting.GREEN);
+
+		final boolean showStaircased = Configs.Visuals.MAP_METADATA_TOOLTIP_STAIRCASE.getBooleanValue();
+		final boolean showMaterial = Configs.Visuals.MAP_METADATA_TOOLTIP_MATERIAL.getBooleanValue();
+		final boolean showPercentStaircased = Configs.Visuals.MAP_METADATA_TOOLTIP_PERCENT_STAIRCASE.getBooleanValue();
+		final boolean showPercentCarpet = Configs.Visuals.MAP_METADATA_TOOLTIP_PERCENT_CARPET.getBooleanValue();
+		final boolean showNumColors = Configs.Visuals.MAP_METADATA_TOOLTIP_NUM_COLORS.getBooleanValue();
+		final boolean showNumColorIds = Configs.Visuals.MAP_METADATA_TOOLTIP_NUM_COLOR_IDS.getBooleanValue();
+		final boolean showTransparency = Configs.Visuals.MAP_METADATA_TOOLTIP_TRANSPARENCY.getBooleanValue();
+		final boolean showNoobline = Configs.Visuals.MAP_METADATA_TOOLTIP_NOOBLINE.getBooleanValue();
 
 		if(showStaircased){
 			lines.add(Text.translatable("advMode.type").formatted(Formatting.GRAY).append(": ").append(staircased));

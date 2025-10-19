@@ -2,6 +2,7 @@ package net.evmodder.KeyBound.mixin;
 
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapGroupUtils;
+import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.onTick.UpdateItemFrameHighlights;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.InGameHud;
@@ -29,13 +30,13 @@ abstract class MixinInGameHud{
 			if(id != null){
 				MapState state = client.world.getMapState(id);
 				if(state != null && MapGroupUtils.shouldHighlightNotInCurrentGroup(state)){
-					text = text.withColor(Main.MAP_COLOR_NOT_IN_GROUP);
-					if(!state.locked) text = text.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
+					text = text.withColor(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue());
+					if(!state.locked) text = text.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue()));
 				}
-				else if(state != null && !state.locked) text = text.withColor(Main.MAP_COLOR_UNLOCKED);
+				else if(state != null && !state.locked) text = text.withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue());
 				else if(state != null && UpdateItemFrameHighlights.isInItemFrame(MapGroupUtils.getIdForMapState(state)))
-					text = text.withColor(Main.MAP_COLOR_IN_IFRAME);
-				else if(currentStack.getCustomName() == null) text = text.withColor(Main.MAP_COLOR_UNNAMED);
+					text = text.withColor(Configs.Visuals.MAP_COLOR_IN_IFRAME.getIntegerValue());
+				else if(currentStack.getCustomName() == null) text = text.withColor(Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue());
 			}
 		}
 		if(Main.rcHUD && currentStack.contains(DataComponentTypes.REPAIR_COST)){

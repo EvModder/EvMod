@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
+import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.onTick.AutoPlaceMapArt;
 import net.evmodder.KeyBound.onTick.UpdateInventoryHighlights;
 import net.evmodder.EvLib.Pair;
@@ -35,12 +36,12 @@ import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 
 public final class MapHandRestock{
-	final boolean USE_NAME, USE_IMG, JUST_PICK_A_MAP = true;
+	final boolean JUST_PICK_A_MAP = true;
 	private final PosData2D POS_DATA_404 = new PosData2D(false, null, null);
 
 	record PosData2D(boolean isSideways, String minPos2, String maxPos2){}
 	record Pos2DPair(String posA1, String posA2, String posB1, String posB2){}
-	private final HashMap<String, PosData2D> posData2dForName;
+	private final HashMap<String, PosData2D> posData2dForName = new HashMap<>(0);
 
 	// For 2D maps, figure out the largest A2/B2 (2nd pos) in the available collection
 	private PosData2D getPosData2D(final List<String> posStrs, final boolean isSideways){
@@ -429,7 +430,7 @@ public final class MapHandRestock{
 		}
 
 		int restockFromSlot = -1;
-		if(USE_NAME && restockFromSlot == -1){
+		if(Configs.Misc.PLACEMENT_HELPER_MAPART_USE_NAMES.getBooleanValue() && restockFromSlot == -1){
 			if(prevName != null){
 				Main.LOGGER.info("MapRestock: finding next map by name: "+prevName);
 				restockFromSlot = getNextSlotByName(slots, prevSlot, player.getWorld());
@@ -437,7 +438,7 @@ public final class MapHandRestock{
 				else if(restockFromSlot < 0) restockFromSlot *= -1;//TODO: remove horrible hack
 			}
 		}
-		if(USE_IMG && restockFromSlot == -1 && !posData2dForName.containsKey(prevName)){
+		if(Configs.Misc.PLACEMENT_HELPER_MAPART_USE_IMAGE.getBooleanValue() && restockFromSlot == -1 && !posData2dForName.containsKey(prevName)){
 			if(state != null){
 				Main.LOGGER.info("MapRestock: finding next map by img-edge");
 				restockFromSlot = getNextSlotByImage(prevName == null ? slots : ogSlots, prevSlot, player.getWorld());
@@ -481,10 +482,7 @@ public final class MapHandRestock{
 	}
 
 	private ItemFrameEntity lastIfe, lastIfe2;
-	public MapHandRestock(boolean useName, boolean useImg, boolean autoPlace){
-		USE_NAME = useName;
-		USE_IMG = useImg;
-		posData2dForName = USE_NAME ? new HashMap<>() : null;
+	public MapHandRestock(){
 		UseEntityCallback.EVENT.register((player, _0, hand, entity, _1) -> {
 			if(!(entity instanceof ItemFrameEntity ife)) return ActionResult.PASS;
 			//Main.LOGGER.info("clicked item frame");
@@ -510,6 +508,6 @@ public final class MapHandRestock{
 			lastIfe2 = lastIfe; lastIfe = ife;
 			return ActionResult.PASS;
 		});
-		if(autoPlace) ClientTickEvents.START_CLIENT_TICK.register(client -> AutoPlaceMapArt.placeNearestMap());
+		if(Main.placementHelperMapArtAuto) ClientTickEvents.START_CLIENT_TICK.register(client -> AutoPlaceMapArt.placeNearestMap());
 	}
 }

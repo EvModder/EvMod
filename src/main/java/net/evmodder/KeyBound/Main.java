@@ -40,7 +40,6 @@ import net.evmodder.KeyBound.onTick.UpdateItemFrameHighlights;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
-import net.minecraft.client.MinecraftClient;
 
 // gradle genSources/eclipse/cleanloom/--stop
 //MC source will be in ~/.gradle/caches/fabric-loom or ./.gradle/loom-cache
@@ -95,28 +94,22 @@ once arrangement is found
 */
 	// Reference variables
 	public static final String MOD_ID = "keybound"; // TODO: pull from fabric/gradle?
-	public static final String configFilename = MOD_ID+".txt";
+	public static final String configFilename = "enabled_features.txt";
 	//public static final String MOD_NAME = "KeyBound";
 	//public static final String MOD_VERSION = "@MOD_VERSION@";
 	public static final String KEYBIND_CATEGORY = "key.categories."+MOD_ID;
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
 	private static HashMap<String, String> config;
 
 	public static ClickUtils clickUtils;
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
+
+	public static boolean database, placementHelperIframe, placementHelperMapArt, placementHelperMapArtAuto, whisperListener, broadcaster;
+	public static boolean cmdExportMapImg, cmdMapArtGroup, keybindMapArtMove, keybindBundleStowOrReverseStow;
 	public static boolean rcHUD, mapHighlightHUD, mapHighlightIFrame, mapHighlightHandledScreen;
-	public static boolean invisItemFramesWithMaps=true, invisItemFramesWithMapsSemiTransparentOnly=false;
 	public static boolean mapartDb, mapartDbContact, totemShowTotalCount, skipTransparentMaps, skipMonoColorMaps;
-
-	public static int MAP_COLOR_UNLOADED = 13150930;
-	public static int MAP_COLOR_UNLOCKED = 14692709;
-	public static int MAP_COLOR_UNNAMED = 15652823;
-	public static int MAP_COLOR_NOT_IN_GROUP = 706660;
-	public static int MAP_COLOR_IN_INV = 11862015, MAP_COLOR_IN_IFRAME = 5614310;//TODO: MAP_COLOR_IN_CONTAINER=11862015
-	public static int MAP_COLOR_MULTI_IFRAME = 11817190, MAP_COLOR_MULTI_INV = 11817190;
-
-	public static double MAX_IFRAME_TRACKING_DIST_SQ;
 
 	private void loadConfig(){
 		//=================================== Parsing config into a map
@@ -150,33 +143,23 @@ once arrangement is found
 	}
 
 	@Override public void onInitializeClient(){
-		ConfigManager.getInstance().registerConfigHandler(MOD_ID, new Configs());
-		Registry.CONFIG_SCREEN.registerConfigScreenFactory(new ModInfo(MOD_ID, "KeyBound", ConfigGui::new));
-
 		loadConfig();
 		//=================================== Loading config features
 		HashMap<String, String> remoteMessages = new HashMap<>();
-		int clientId=0; String clientKey=null;
-		String remoteAddr=null; int remotePort=0;
-		//int clicksInDuration = 190, durationTicks = 75;
-		int clicksInDuration = 78, durationTicks = 90;
-		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false, epearlAssignCmd=false,
-				keybindMapArtLoad=false, keybindMapArtCopy=false, keybindMapArtMove=false, keybindMapArtBundleStow=false, keybindMapArtBundleStowReverse=false;
-		int keybindMapArtBundleStowMax = 64;
-		boolean mapMoveIgnoreAirPockets=true;
-		boolean mapPlaceHelper=false, mapPlaceHelperAuto=false, mapPlaceHelperByName=true, mapPlaceHelperByImg=true, mapHighlightTooltip=false;
-		boolean iFramePlacer=false/*, iFramePlacerMatchBlock=true, iFramePlacerMustConnect=true*/;
-		boolean mapMetadataTooltip=false, mapMdStaircase=false, mapMdMaterial=false, mapMdNumColors=false, mapMdNumColorIds=true,
-				mapMdTransparency=false, mapMdNoobline=false, mapMdPercentCarpet=false, mapMdPercentStaircase=false;
-		boolean mapWallCmd=false, mapWallBorder=false;
-		boolean keybindEbounceTravelHelper=false, keybindRestock=false, inventoryRestockAuto=false;
-		boolean uploadIgnoreList=false;
-		int mapWallBorderColor1=-14236, mapWallBorderColor2=-8555656, mapWallUpscale=128;
-		String[] downloadIgnoreLists=null;
+		boolean cmdAssignPearl=false,/* cmdExportMapImg=false,*//* cmdMapArtGroup=false,*/ cmdSeen=false, cmdSendAs=false, cmdTimeOnline=false;
+		boolean keybindEbounceTravelHelper=false, keybindRestock=false, inventoryRestockAuto=false,
+				keybindMapArtLoad=false, keybindMapArtCopy=false, /*keybindMapArtMove=false,*/ keybindMapArtBundleStow=false, keybindMapArtBundleStowReverse=false;
+
+		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false;
+		boolean mapHighlightTooltip=false;
+		boolean mapMetadataTooltip=false;
+
 		String[] restockBlacklist=null, restockWhitelist=null, restockAutoInvSchemes=null;
 		HashMap<String, KeybindInventoryOrganize> inventoryOrganizationSchemes = new HashMap<>();
 
-		String[] temp_evt_msgs=null; long temp_evt_ts=0; String evt_account="";
+		boolean uploadIgnoreList=false;
+		String[] downloadIgnoreLists=null;
+
 		KeybindEjectJunk ejectJunk = null;
 		KeybindInventoryRestock inventoryRestock = null;
 
@@ -189,22 +172,40 @@ once arrangement is found
 			else if(key.startsWith("keybind.inventory_organize."))
 				inventoryOrganizationSchemes.put(key.substring(27), new KeybindInventoryOrganize(key.substring(8), value.replaceAll("\\s","")));
 			else switch(key){
-				// Database
-				case "client_id": clientId = Integer.parseInt(value); break;
-				case "client_key": clientKey = value; break;
-				case "remote_address":{
-					final int sep = value.indexOf(':');
-					if(sep == -1){LOGGER.warn("Invalid server address (RemoteDB): "+value); break;}
-					remoteAddr = value.substring(0, sep).trim();
-					remotePort = Integer.parseInt(value.substring(sep+1).trim());
-					break;
-				}
-				case "remote_port": remotePort = Integer.parseInt(value); break;
+				case "database": database = !value.equalsIgnoreCase("false"); break;
+				case "placement_helper.iframes": placementHelperIframe = !value.equalsIgnoreCase("false"); break;
+				case "placement_helper.maparts": placementHelperMapArt = !value.equalsIgnoreCase("false"); break;
+				case "placement_helper.maparts.auto": placementHelperMapArtAuto = !value.equalsIgnoreCase("false"); break;
+				case "whisper_listener": whisperListener = !value.equalsIgnoreCase("false"); break;
+				case "broadcaster": broadcaster = !value.equalsIgnoreCase("false"); break;
 				case "enderpearl_owners": epearlOwners = !value.equalsIgnoreCase("false"); break;
+
+				case "command.assignpearl": cmdAssignPearl = !value.equalsIgnoreCase("false"); break;
+				case "command.exportmapimg": cmdExportMapImg = !value.equalsIgnoreCase("false"); break;
+				case "command.mapartgroup": cmdMapArtGroup = !value.equalsIgnoreCase("false"); break;
+				case "command.seen": cmdSeen = !value.equalsIgnoreCase("false"); break;
+				case "command.sendas": cmdSendAs = !value.equalsIgnoreCase("false"); break;
+				case "command.timeonline": cmdTimeOnline = !value.equalsIgnoreCase("false"); break;
+
+				case "keybind.mapart.copy": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
+				case "keybind.mapart.load": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
+				case "keybind.mapart.move.bundle": keybindMapArtBundleStow = !value.equalsIgnoreCase("false"); break;
+				case "keybind.mapart.move.bundle.reverse": keybindMapArtBundleStowReverse = !value.equalsIgnoreCase("false"); break;
+				case "keybind.mapart.move.3x9": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
+				case "keybind.eject_junk_items": if(!value.equalsIgnoreCase("false")) ejectJunk = new KeybindEjectJunk(); break;
+				case "keybind.toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
+//				case "keybind.smart_inventory_craft": if(!value.equalsIgnoreCase("false")) new KeybindSmartInvCraft(); break;
+				case "keybind.inventory_restock": keybindRestock=!value.equalsIgnoreCase("false"); break;
+				case "keybind.inventory_restock.blacklist": if(value.startsWith("[")) restockBlacklist = value.substring(1, value.length()-1).split("\\s*,\\s*"); break;
+				case "keybind.inventory_restock.whitelist": if(value.startsWith("[")) restockWhitelist = value.substring(1, value.length()-1).split("\\s*,\\s*"); break;
+				case "keybind.inventory_restock.auto": inventoryRestockAuto=!value.equalsIgnoreCase("false"); break;
+				case "keybind.inventory_restock.auto.matching_inventory": if(value.startsWith("[")) restockAutoInvSchemes = value.substring(1, value.length()-1).split("\\s*,\\s*"); break;
+				case "keybind.ebounce_travel_helper": keybindEbounceTravelHelper = !value.equalsIgnoreCase("false"); break;
+				case "keybind.aie_travel_helper": if(!value.equalsIgnoreCase("false")) new KeybindAIETravelHelper(); break;
+
 				case "enderpearl_database_by_uuid": epearlOwnersDbUUID = !value.equalsIgnoreCase("false"); break;
 				case "enderpearl_database_by_coords": epearlOwnersDbXZ = !value.equalsIgnoreCase("false"); break;
-				case "command.assignpearl": epearlAssignCmd = !value.equalsIgnoreCase("false"); break;
-				case "seen_database": if(!value.equalsIgnoreCase("false")) new CommandSeen(); break;//TODO
+
 				case "mapart_database": mapartDb = !value.equalsIgnoreCase("false"); break;
 				case "mapart_database_share_contact": mapartDbContact = !value.equalsIgnoreCase("false"); break;
 				case "track_time_online": if(!value.equalsIgnoreCase("false")) new CommandTimeOnline(); break;
@@ -212,90 +213,24 @@ once arrangement is found
 				case "database.ignorelist.share": uploadIgnoreList = !value.equalsIgnoreCase("false"); break;
 				case "database.ignorelist.borrow": if(value.startsWith("[")) downloadIgnoreLists = value.substring(1, value.length()-1).split("\\s&,\\s&"); break;
 
-				case "whispers.playsound": new WhisperPlaySound(value); break;
-				case "whispers.pearl_trigger": new WhisperPearlPull(value); break;
-
-				case "limiter_clicks_in_duration": clicksInDuration = Integer.parseInt(value); break;
-				case "limiter_duration_ticks": durationTicks = Integer.parseInt(value); break;
-//				case "max_clicks_per_tick": clicks_per_gt = Integer.parseInt(value); break;
-//				case "millis_between_clicks": millis_between_clicks = Integer.parseInt(value); break;
-
 				case "join_messages": if(value.startsWith("[")) new SendOnServerJoin(value.substring(1, value.length()-1).split(",")); break;
-				case "temp_event_broadcast": if(value.startsWith("[")) temp_evt_msgs = value.substring(1, value.length()-1).split(","); break;
-				case "temp_event_timestamp": temp_evt_ts = Long.parseLong(value); break;
-				case "temp_event_account": evt_account = value; break;
 
 //				case "spawner_highlight": if(!value.equalsIgnoreCase("false")) new SpawnerHighlighter(); break;
 				case "totem_total_count": if(!value.equalsIgnoreCase("false")) totemShowTotalCount = !value.equalsIgnoreCase("false"); break;
 				case "repaircost_in_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipRepairCost::addRC); break;
 				case "repaircost_in_hotbarhud": rcHUD = !value.equalsIgnoreCase("false"); break;
 				case "map_state_cache": if(!value.equalsIgnoreCase("false")) new MapStateInventoryCacher(); break;
-				case "invis_itemframes_with_maps": invisItemFramesWithMaps = !value.equalsIgnoreCase("false"); break;
-				case "invis_itemframes_with_maps.semi_transparent_only": invisItemFramesWithMapsSemiTransparentOnly = !value.equalsIgnoreCase("false"); break;
 				case "map_metadata_in_tooltip": mapMetadataTooltip = !value.equalsIgnoreCase("false"); break;
-				case "map_metadata_in_tooltip.staircase": mapMdStaircase = !value.equalsIgnoreCase("false"); break;
-				case "map_metadata_in_tooltip.material": mapMdMaterial = !value.equalsIgnoreCase("false"); break;
-				case "map_metadata_in_tooltip.percent_carpet": mapMdPercentCarpet = !value.equalsIgnoreCase("false"); break;
-				case "map_metadata_in_tooltip.percent_staircase": mapMdPercentStaircase = !value.equalsIgnoreCase("false"); break;
-				case "map_metadata_in_tooltip.num_colors": mapMdNumColors = !value.equalsIgnoreCase("false"); break;
-				case "map_metadata_in_tooltip.num_color_ids": mapMdNumColorIds = !value.equalsIgnoreCase("false"); break;
-				case "map_metadata_in_tooltip.transparency": mapMdTransparency = !value.equalsIgnoreCase("false"); break;
-				case "map_metadata_in_tooltip.noobline": mapMdNoobline = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_in_tooltip": mapHighlightTooltip = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_in_hotbarhud": mapHighlightHUD = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_in_itemframe": mapHighlightIFrame = !value.equalsIgnoreCase("false"); break;
 				case "map_highlight_in_container_name": mapHighlightHandledScreen = !value.equalsIgnoreCase("false"); break;
-				case "map_highlight_color_unloaded": MAP_COLOR_UNLOADED = Integer.parseInt(value); break;
-				case "map_highlight_color_unlocked": MAP_COLOR_UNLOCKED = Integer.parseInt(value); break;
-				case "map_highlight_color_unnamed": MAP_COLOR_UNNAMED = Integer.parseInt(value); break;
-				case "map_highlight_color_ungrouped": MAP_COLOR_NOT_IN_GROUP = Integer.parseInt(value); break;
-				case "map_highlight_color_matches_inventory": MAP_COLOR_IN_INV = Integer.parseInt(value); break;
-				case "map_highlight_color_matches_itemframe": MAP_COLOR_IN_IFRAME = Integer.parseInt(value); break;
-				case "map_highlight_color_multi_itemframe": MAP_COLOR_MULTI_IFRAME = Integer.parseInt(value); break;
-				case "map_highlight_color_multi_inventory": MAP_COLOR_MULTI_INV = Integer.parseInt(value); break;
 				case "fully_transparent_map_is_filler_item": skipTransparentMaps = !value.equalsIgnoreCase("false"); break;
 				case "highlight_duplicate_monocolor_maps": skipMonoColorMaps = value.equalsIgnoreCase("false"); break;
-				case "itemframe_tracking_distance": MAX_IFRAME_TRACKING_DIST_SQ = Double.parseDouble(value)*Double.parseDouble(value); break;
 				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
-				case "keybind.mapart.copy": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
-				case "keybind.mapart.load": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
-				case "keybind.mapart.move.bundle": keybindMapArtBundleStow = !value.equalsIgnoreCase("false"); break;
-				case "keybind.mapart.move.bundle.reverse": keybindMapArtBundleStowReverse = !value.equalsIgnoreCase("false"); break;
-				case "keybind.mapart.move.bundle.max": keybindMapArtBundleStowMax = Integer.parseInt(value); break;
-				case "keybind.mapart.move.3x9": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
-				case "keybind.mapart.move_3x9.ignore_air_pockets": mapMoveIgnoreAirPockets = !value.equalsIgnoreCase("false"); break;
-				case "mapart_placement_helper": mapPlaceHelper=!value.equalsIgnoreCase("false"); break;
-				case "mapart_placement_helper.use_name": mapPlaceHelperByName=!value.equalsIgnoreCase("false"); break;
-				case "mapart_placement_helper.use_image": mapPlaceHelperByImg=!value.equalsIgnoreCase("false"); break;
-				case "mapart_placement_helper.autoplace": mapPlaceHelperAuto=!value.equalsIgnoreCase("false"); break;
-				case "itemframe_placement_helper": iFramePlacer = !value.equalsIgnoreCase("false"); break;
-//				case "itemframe_placement_helper.must_match_block": iFramePlacerMatchBlock = !value.equalsIgnoreCase("false"); break;
-//				case "itemframe_placement_helper.must_connect": iFramePlacerMustConnect = !value.equalsIgnoreCase("false"); break;
-				case "mapart_group_include_unlocked": MapGroupUtils.INCLUDE_UNLOCKED = !value.equalsIgnoreCase("false"); break;
-				case "mapart_group_command": new CommandMapArtGroup(); break;
-				case "mapart_generate_img_upscale_to": mapWallUpscale=Integer.parseInt(value); break;
-				case "mapart_generate_img_border": mapWallBorder=!value.equalsIgnoreCase("false"); break;
-				case "mapart_generate_img_command": mapWallCmd=!value.equalsIgnoreCase("false"); break;
-				case "mapart_generate_img_border_color1": mapWallBorderColor1=Integer.parseInt(value); break;
-				case "mapart_generate_img_border_color2": mapWallBorderColor2=Integer.parseInt(value); break;
-
-				case "keybind.eject_junk_items": if(!value.equalsIgnoreCase("false")) ejectJunk = new KeybindEjectJunk(); break;
-				case "keybind.toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
-//				case "keybind.smart_inventory_craft": if(!value.equalsIgnoreCase("false")) new KeybindSmartInvCraft(); break;
-				case "keybind.inventory_restock": keybindRestock=!value.equalsIgnoreCase("false"); break;
-				case "keybind.inventory_restock.blacklist":
-					if(value.startsWith("[")) restockBlacklist = value.substring(1, value.length()-1).split("\\s*,\\s*"); break;
-				case "keybind.inventory_restock.whitelist":
-					if(value.startsWith("[")) restockWhitelist = value.substring(1, value.length()-1).split("\\s*,\\s*"); break;
-				case "keybind.inventory_restock.auto": inventoryRestockAuto=!value.equalsIgnoreCase("false"); break;
-				case "keybind.inventory_restock.auto.matching_inventory":
-					if(value.startsWith("[")) restockAutoInvSchemes = value.substring(1, value.length()-1).split("\\s*,\\s*"); break;
-				case "keybind.ebounce_travel_helper": keybindEbounceTravelHelper = !value.equalsIgnoreCase("false"); break;
-				case "keybind.aie_travel_helper": if(!value.equalsIgnoreCase("false")) new KeybindAIETravelHelper(); break;
 				case "scroll_order": {
-					final String listOfListsStr = value.replaceAll("\\s","");
-					List<String[]> colorLists = Arrays.stream(
-							listOfListsStr.substring(2, listOfListsStr.length()-2).split("\\],\\[")).map(s->s.split(",")).toList();
+					final String listOfLists = value.replaceAll("\\s","");
+					List<String[]> colorLists = Arrays.stream(listOfLists.substring(2, listOfLists.length()-2).split("\\],\\[")).map(s->s.split(",")).toList();
 					new KeybindHotbarTypeScroller(colorLists);
 					break;
 				}
@@ -303,25 +238,44 @@ once arrangement is found
 					LOGGER.warn("Unrecognized config setting: "+key);
 			}
 		}
-		clickUtils = new ClickUtils(clicksInDuration, durationTicks);
-		final boolean anyDbFeaturesEnabled = !remoteMessages.isEmpty() || epearlOwnersDbUUID || epearlOwnersDbXZ || mapartDb
-				|| uploadIgnoreList || downloadIgnoreLists != null;
-		if(clientId != 0 && clientKey != null && remoteAddr != null && remotePort != 0 && anyDbFeaturesEnabled){
-			remoteSender = new RemoteServerSender(LOGGER, remoteAddr, remotePort, clientId, clientKey, MiscUtils::getCurrentServerAddressHashCode);
+		ConfigManager.getInstance().registerConfigHandler(MOD_ID, new Configs());
+		Registry.CONFIG_SCREEN.registerConfigScreenFactory(new ModInfo(MOD_ID, "KeyBound", ConfigGui::new));
+
+		clickUtils = new ClickUtils(Configs.Misc.CLICK_LIMIT_COUNT.getIntegerValue(), Configs.Misc.CLICK_LIMIT_DURATION.getIntegerValue());
+		if(database){
+			String fullAddress = Configs.Database.ADDRESS.getStringValue();
+			final int sep = fullAddress.indexOf(':');
+			final String addr;
+			final int port;
+			if(sep == -1){addr = fullAddress; port = RemoteServerSender.DEFAULT_PORT;}
+			else{addr = fullAddress.substring(0, sep).trim(); port = Integer.parseInt(fullAddress.substring(sep+1).trim());}
+			remoteSender = new RemoteServerSender(LOGGER, addr, port,
+					Configs.Database.CLIENT_ID.getIntegerValue(), Configs.Database.CLIENT_KEY.getStringValue(),
+					MiscUtils::getCurrentServerAddressHashCode);
 			MiscUtils.registerRemoteMsgKeybinds(remoteMessages);
 			if(epearlOwners){
 				epearlLookup = new EpearlLookup(epearlOwnersDbUUID, epearlOwnersDbXZ);
-				if(epearlAssignCmd) new CommandAssignPearl();
+				if(cmdAssignPearl) new CommandAssignPearl();
 			}
 			if(uploadIgnoreList || downloadIgnoreLists != null) new IgnoreListSync2b2t(uploadIgnoreList, downloadIgnoreLists);
 		}
+		if(whisperListener) new WhisperListener();
+		if(placementHelperIframe) new AutoPlaceItemFrames();
+		if(placementHelperMapArt) new MapHandRestock();
+		if(broadcaster) ChatBroadcaster.refreshBroadcast();
+
+		if(cmdAssignPearl) new CommandAssignPearl();
+		if(cmdExportMapImg) new CommandExportMapImg();
+		if(cmdMapArtGroup) new CommandMapArtGroup();
+		if(cmdSeen) new CommandSeen();
+		if(cmdSendAs) new CommandSendAs();
+		if(cmdTimeOnline) new CommandTimeOnline();
+
 		if(keybindMapArtLoad) new KeybindMapLoad();
 		if(keybindMapArtCopy) new KeybindMapCopy();
-		if(keybindMapArtMove) new KeybindMapMove(mapMoveIgnoreAirPockets);
-		if(keybindMapArtBundleStow || keybindMapArtBundleStowReverse)
-			new KeybindMapMoveBundle(keybindMapArtBundleStow, keybindMapArtBundleStowReverse, keybindMapArtBundleStowMax);
-		if(mapPlaceHelper) new MapHandRestock(mapPlaceHelperByName, mapPlaceHelperByImg, mapPlaceHelperAuto);
-		if(iFramePlacer) new AutoPlaceItemFrames(/*iFramePlacerMatchBlock, iFramePlacerMustConnect*/);
+		if(keybindMapArtMove) new KeybindMapMove();
+		keybindBundleStowOrReverseStow = keybindMapArtBundleStow || keybindMapArtBundleStowReverse;
+		if(keybindBundleStowOrReverseStow) new KeybindMapMoveBundle(keybindMapArtBundleStow, keybindMapArtBundleStowReverse);
 		if(keybindEbounceTravelHelper) new KeybindEbounceTravelHelper(ejectJunk);
 		if(keybindRestock){
 			inventoryRestock = new KeybindInventoryRestock(restockBlacklist, restockWhitelist);
@@ -333,8 +287,6 @@ once arrangement is found
 		}
 		//new KeybindSpamclick();
 
-		if(mapWallCmd) new CommandExportMapImg(mapWallUpscale, mapWallBorder, mapWallBorderColor1, mapWallBorderColor2);
-
 		if(mapHighlightTooltip) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors);
 		if(mapHighlightTooltip || mapHighlightHUD || mapHighlightIFrame || mapHighlightHandledScreen){
 			ClientTickEvents.START_CLIENT_TICK.register(client -> {
@@ -343,14 +295,6 @@ once arrangement is found
 				if(mapHighlightHandledScreen/* || mapHighlightTooltip*/) UpdateContainerHighlights.onUpdateTick(client);
 			});
 		}
-
-		if(mapMetadataTooltip){
-			new TooltipMapLoreMetadata(mapMdStaircase, mapMdMaterial, mapMdNumColors, mapMdNumColorIds, mapMdTransparency, mapMdNoobline,
-					mapMdPercentCarpet, mapMdPercentStaircase);
-		}
-
-		final String username = MinecraftClient.getInstance().getSession().getUsername();
-		if(temp_evt_ts*1000L > System.currentTimeMillis() && temp_evt_msgs != null && username.equals(evt_account))
-			new ChatBroadcaster(temp_evt_ts, temp_evt_msgs);
+		if(mapMetadataTooltip) new TooltipMapLoreMetadata();
 	}
 }

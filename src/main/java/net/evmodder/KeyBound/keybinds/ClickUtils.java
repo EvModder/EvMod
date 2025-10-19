@@ -13,19 +13,17 @@ import net.minecraft.text.Text;
 
 public class ClickUtils{
 	public record ClickEvent(int slotId, int button, SlotActionType actionType){}
-//	public record ClickEvent(int syncId, int slotId, int button, SlotActionType actionType){
-//		ClickEvent(int slotId, int button, SlotActionType actionType){this(0, slotId, button, actionType);}
-//	}
 
 	public final int MAX_CLICKS;
 	private final int[] tickDurationArr;
 	private int tickDurIndex, sumClicksInDuration;
 	private long lastTick;
-	public final int OUTTA_CLICKS_COLOR = 15764490, SYNC_ID_CHANGED_COLOR = 16733525;
+	private final int OUTTA_CLICKS_COLOR = 15764490, SYNC_ID_CHANGED_COLOR = 16733525;
 	private final double C_PER_T;
+	public static final long TICK_DURATION = 51l; // LOL!! TODO: estimate base off TPS/ping
 
 	public ClickUtils(final int MAX_CLICKS, int FOR_TICKS){
-		if(MAX_CLICKS > 100_000 || MAX_CLICKS <= 0){
+		if(MAX_CLICKS >= 100_000 || MAX_CLICKS <= 0){
 			if(MAX_CLICKS != 0) Main.LOGGER.error("InventoryUtils() initialized with "
 					+(MAX_CLICKS < 0 ? "invalid" : "insanely-large")+" click-limit: "+MAX_CLICKS+", treating it as limitless");
 			this.MAX_CLICKS = Integer.MAX_VALUE;
@@ -41,12 +39,12 @@ public class ClickUtils{
 		this.MAX_CLICKS = MAX_CLICKS;
 		C_PER_T = (double)MAX_CLICKS/(double)FOR_TICKS;
 		tickDurationArr = new int[FOR_TICKS];
-		lastTick = System.currentTimeMillis()/50l;
+		lastTick = System.currentTimeMillis()/TICK_DURATION;
 	}
 
 	public int calcAvailableClicks(){
 		if(tickDurationArr == null) return 0;
-		final long curTick = System.currentTimeMillis()/50l;
+		final long curTick = System.currentTimeMillis()/TICK_DURATION;
 		if(curTick - lastTick >= tickDurationArr.length){
 			lastTick = curTick;
 			Arrays.fill(tickDurationArr, 0);
@@ -112,11 +110,7 @@ public class ClickUtils{
 				if(waitedForClicks) client.player.sendMessage(Text.literal("Clicks finished early!"), true);
 				cancel(); clickOpOngoing=false; onComplete.run(); return;
 			}
-			//final int availableClicks = MAX_CLICKS - addClick(null);
-			//for(int i=0; i<availableClicks; ++i){
 			client.executeSync(()->{
-//				double clicksPerTick = ((double)MAX_CLICKS)/tickDurationArr.length;
-//				double secondsleft = (clicks.size()/clicksPerTick)/20;
 				while(calcAvailableClicks() > 0 && !clicks.isEmpty()){
 					if(!canProceed.apply(clicks.peek())) break;//{waitedForClicks = true; return;}
 					ClickEvent click = clicks.remove();
@@ -140,11 +134,11 @@ public class ClickUtils{
 				}
 				assert tickDurationArr != null;
 				waitedForClicks = true;
-				final int msLeft = calcRemainingTicks(clicks.size())*50;
+				final int msLeft = calcRemainingTicks(clicks.size())*(int)TICK_DURATION;
 				client.player.sendMessage(Text.literal("Waiting for available clicks... ("+clicks.size()//+"c"
-						+(msLeft > 5000 ? ", ~"+TextUtils.formatTime(msLeft) : "")+")").withColor(OUTTA_CLICKS_COLOR), true);
+						+(msLeft > 1000 ? ", ~"+TextUtils.formatTime(msLeft) : "")+")").withColor(OUTTA_CLICKS_COLOR), true);
 			});
-		}}, 1l, 27l/*51l*/);
+		}}, 1l, 23l);//51l = just over a tick
 	}
 
 

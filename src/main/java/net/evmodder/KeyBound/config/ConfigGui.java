@@ -27,7 +27,7 @@ public class ConfigGui extends GuiConfigsBase{
 
 		x += this.createButton(x, y, -1, ConfigGuiTab.KEYBINDS);
 		x += this.createButton(x, y, -1, ConfigGuiTab.VISUALS);
-//		x += this.createButton(x, y, -1, ConfigGuiTab.DATABASE);
+		if(Main.database) x += this.createButton(x, y, -1, ConfigGuiTab.DATABASE);
 		x += this.createButton(x, y, -1, ConfigGuiTab.MISC);
 		// x += this.createButton(x, y, -1, ConfigGuiTab.TEST);
 	}
@@ -48,9 +48,9 @@ public class ConfigGui extends GuiConfigsBase{
 		List<? extends IConfigBase> configs;
 		configs = switch(tab) {
 			case KEYBINDS -> Configs.Hotkeys.HOTKEY_LIST;
-			case VISUALS -> Configs.Visuals.OPTIONS;
-//			case DATABASE -> Configs.Database.OPTIONS;
-			case MISC -> Configs.Misc.OPTIONS;
+			case VISUALS -> Configs.Visuals.getOptions();
+			case DATABASE -> Configs.Database.OPTIONS;
+			case MISC -> Configs.Misc.getOptions();
 //			case RENDER_LAYERS -> Collections.emptyList();
 		};
 		return ConfigOptionWrapper.createFor(configs);
@@ -73,7 +73,7 @@ public class ConfigGui extends GuiConfigsBase{
 	public enum ConfigGuiTab {
 		KEYBINDS("keybound.gui.button.keybinds"),
 		VISUALS("keybound.gui.button.visuals"),
-//		DATABASE("keybound.gui.button.database"),
+		DATABASE("keybound.gui.button.database"),
 		MISC("keybound.gui.button.miscellaneous");
 
 		private final String translationKey;

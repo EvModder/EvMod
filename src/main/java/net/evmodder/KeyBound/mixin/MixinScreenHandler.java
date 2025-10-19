@@ -1,6 +1,7 @@
 package net.evmodder.KeyBound.mixin;
 
 import net.evmodder.KeyBound.MapClickMoveNeighbors;
+import net.evmodder.KeyBound.config.Configs;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -30,6 +31,7 @@ abstract class MixinScreenHandler{
 	private void click_move_neighbors_caller(int slotIndex, int button, SlotActionType actionType, PlayerEntity player, CallbackInfo ci){
 		if(button != 0 || actionType != SlotActionType.PICKUP) return;
 		if(!Screen.hasShiftDown() && !Screen.hasControlDown() && !Screen.hasAltDown()) return;
+		if(!Configs.Misc.MAP_CLICK_MOVE_NEIGHBORS.getBooleanValue()) return;
 		if(!player.currentScreenHandler.getCursorStack().isEmpty()) return;
 		if(slotIndex < 0 || slotIndex >= player.currentScreenHandler.slots.size()) return;
 		final ItemStack itemPlaced = player.currentScreenHandler.getSlot(slotIndex).getStack();

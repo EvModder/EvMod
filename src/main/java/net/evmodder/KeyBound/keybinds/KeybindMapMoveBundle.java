@@ -11,6 +11,7 @@ import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapColorUtils;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
+import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
@@ -31,7 +32,6 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.world.World;
 
 public final class KeybindMapMoveBundle{
-	private final int MOVE_LIMIT;
 	//final int WITHDRAW_MAX = 27;
 	//enum BundleSelectionMode{FIRST, LAST, MOST_FULL_butNOT_FULL, MOST_EMPTY_butNOT_EMPTY};
 
@@ -146,6 +146,7 @@ public final class KeybindMapMoveBundle{
 			Main.LOGGER.info("MapBundleOp: stored "+suckedUp+" maps in bundle");
 		}
 		else{
+			final int MOVE_LIMIT = Configs.Misc.KEYBIND_BUNDLE_REMOVE_MAX.getIntegerValue();
 			final int stored = Math.min(MOVE_LIMIT, getNumStored(occupancy));
 			int withdrawn = 0;
 			if(reverse){
@@ -173,8 +174,7 @@ public final class KeybindMapMoveBundle{
 		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("MapBundleOp: DONE!"));
 	}
 
-	public KeybindMapMoveBundle(boolean regular, boolean reverse, int moveLimit){
-		MOVE_LIMIT = moveLimit;
+	public KeybindMapMoveBundle(boolean regular, boolean reverse){
 		Function<Screen, Boolean> allowInScreen =
 				//InventoryScreen.class::isInstance
 				s->s instanceof InventoryScreen || s instanceof GenericContainerScreen || s instanceof ShulkerBoxScreen || s instanceof CraftingScreen;

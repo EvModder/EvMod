@@ -24,13 +24,11 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public class AutoPlaceItemFrames{
-//	public static boolean isActive; // Using dir!=null instead
 	private Block placeAgainstBlock;
 	private Item iFrameItem;
 	private Direction dir;
 	private int axis;
 	private final int MAX_REACH = 4;
-//	private final boolean MUST_CONNECT, MUST_MATCH_BLOCK;
 
 	private double distFromPlane(BlockPos bp){
 		switch(dir){
@@ -60,7 +58,7 @@ public class AutoPlaceItemFrames{
 		if(distFromPlane(bp) != 0) return false;
 //		Main.LOGGER.info("iFramePlacer: wall block is on the plane");
 		BlockState bs = world.getBlockState(bp);
-		if(Configs.Misc.IFRAME_PLACEMENT_HELPER_MUST_MATCH_BLOCK.getBooleanValue() && bs.getBlock() != placeAgainstBlock) return false;
+		if(Configs.Misc.PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK.getBooleanValue() && bs.getBlock() != placeAgainstBlock) return false;
 //		Main.LOGGER.info("iFramePlacer: wall block matches placeAgainstBlock");
 
 		BlockPos ifeBp = bp.offset(dir);
@@ -71,18 +69,22 @@ public class AutoPlaceItemFrames{
 
 		if(existingIfes.stream().anyMatch(ife -> ife.getBlockPos().equals(ifeBp))) return false; // Already iFrame here
 //		Main.LOGGER.info("iFramePlacer: ife spot is available");
-		if(Configs.Misc.IFRAME_PLACEMENT_HELPER_MUST_CONNECT.getBooleanValue()
+		if(Configs.Misc.PLACEMENT_HELPER_IFRAME_MUST_CONNECT.getBooleanValue()
 				&& existingIfes.stream().noneMatch(ife -> ife.getBlockPos().getManhattanDistance(ifeBp) == 1)) return false; // No iFrame neighbor
 //		Main.LOGGER.info("iFramePlacer: ife spot has neighboring iframe");
 		return true;
 	}
 
 	private int tick;
-	public AutoPlaceItemFrames(/*final boolean mustMatchBlockType, final boolean mustBeConnected*/){
-//		MUST_CONNECT = mustBeConnected;
+	public AutoPlaceItemFrames(){
 		EndTick etl = (client) -> {
 			if(dir == null) return; // iFramePlacer is not currently active
-			if((++tick)/5 == 1) tick = 0; else return; // TODO: Only run ever 5th tick, since there is some iframe placement speed limit (idk what it is yet)
+			if(!Configs.Misc.PLACEMENT_HELPER_IFRAME.getBooleanValue()){
+				dir = null; iFrameItem = null; placeAgainstBlock = null;
+				return;
+			}
+			// Only run ever 5th tick, since there is some iframe placement speed limit (TODO: idk what it is yet)
+			if((++tick)/5 == 1) tick = 0; else return;
 
 			if(client.player == null || client.world == null){ // Player offline, cancel iFramePlacer
 				Main.LOGGER.info("iFramePlacer: Disabling due to player offline");
@@ -93,43 +95,31 @@ public class AutoPlaceItemFrames{
 			final int SCAN_DIST = MAX_REACH+2;
 
 			BlockPos clientBp = client.player.getBlockPos();
-			if(distFromPlane(clientBp) > SCAN_DIST){
-//				Main.LOGGER.info("iFramePlacer: out of range of wall");
-				return; // Player out of range of iFrame wall
-			}
+			if(distFromPlane(clientBp) > SCAN_DIST) return; // Player out of range of iFrame wall
 
 			Box box = client.player.getBoundingBox().expand(SCAN_DIST, SCAN_DIST, SCAN_DIST);
 			Predicate<ItemFrameEntity> filter = ife -> ife.getFacing() == dir && distFromPlane(ife.getBlockPos().offset(dir.getOpposite())) == 0;
 			List<ItemFrameEntity> ifes = client.world.getEntitiesByClass(ItemFrameEntity.class, box, filter);
-//			Main.LOGGER.info("iFramePlacer: num ifes in reach dist: "+ifes.size());
 
-//			Main.LOGGER.info("iFramePlacer: num blocks in reach dist: "+BlockPos.streamOutwards(clientBp, SCAN_DIST, SCAN_DIST, SCAN_DIST).count());
 			Vec3d eyePos = client.player.getEyePos();
 			Optional<BlockPos> closestValidPlacement = BlockPos.streamOutwards(clientBp, SCAN_DIST, SCAN_DIST, SCAN_DIST)
 				.filter(bp -> isValidIframePlacement(bp, client.world, ifes))
 				.filter(bp -> getPlaceAgainstSurface(bp).squaredDistanceTo(eyePos) <= MAX_REACH*MAX_REACH)
 				.findFirst();
-			if(closestValidPlacement.isEmpty()){
-//				Main.LOGGER.info("iFramePlacer: no spot to place an iframe");
-				return; // No valid spot in range to place an iFrame
-			}
+			if(closestValidPlacement.isEmpty()) return; // No valid spot in range to place an iFrame
 
 			Hand hand = Hand.MAIN_HAND;
 			if(client.player.getOffHandStack().getItem() == iFrameItem) hand = Hand.OFF_HAND;
 			else if(client.player.getMainHandStack().getItem() != iFrameItem){
 				// TODO: swap iFrame item into main hand (or switch to hb slot)
-//				Main.LOGGER.info("iFramePlacer: iframe not in hand");
 				return;
 			}
 
 			// Do the clicky-clicky
 			BlockPos bp = closestValidPlacement.get();
-//			BlockState bs = client.world.getBlockState(bp);
 			Vec3d blockHit = getPlaceAgainstSurface(bp);
-//			Vec3d lookDirection = blockHit.subtract(client.player.getEyePos()).normalize();
 			BlockHitResult hitResult = new BlockHitResult(blockHit, dir, bp, /*insideBlock=*/false);
 			client.interactionManager.interactBlock(client.player, hand, hitResult);
-//			Main.LOGGER.info("iFramePlacer: Placed iFrame");
 		};
 		ClientTickEvents.END_CLIENT_TICK.register(etl);
 
@@ -147,8 +137,7 @@ public class AutoPlaceItemFrames{
 				case EAST: case WEST: axis = bp.getX(); break;
 				case NORTH: case SOUTH: axis = bp.getZ(); break;
 			}
-//			isActive = true;
-//			Main.LOGGER.info("iFramePlacer: dir="+dir.name()+", placeAgainstBlock="+(placeAgainstBlock==null?null:placeAgainstBlock));
+//			Main.LOGGER.info("iFramePlacer: dir="+dir.name()+", placeAgainstBlock="+placeAgainstBlock);
 			return ActionResult.PASS;
 		});
 		ClientEntityEvents.ENTITY_UNLOAD.register((entity, world) -> {

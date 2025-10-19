@@ -1,89 +1,62 @@
 # Config file for KeyBound
 
-#========== Chat Broadcast ==========#
-temp_event_account: Anuvin
-temp_event_broadcast: []
-temp_event_timestamp: 1738990800 # Fri, Feb7, 2025, 11pm CST
+database: true
+placement_helper.iframe: true
+placement_helper.mapart: true
+placement_helper.mapart.auto: true
+whisper_listener: true
+broadcaster: false
+enderpearl_owners: true
 
+# TODO: move to MaLiLib config
+#
+enderpearl_database_by_uuid: true
+enderpearl_database_by_coords: false
 
-#========== MapArt Tools ==========#
-# 2b2t will kick you for sending 200+ clicks in 70 ticks (Updated: 2025-04-27)
-# 2b2t will kick you for sending 80+ clicks in 80 ticks (Updated: 2025-05-15, ty IceTank)
-# Note: I recommend setting it to 90 ticks (if u have ping issues like me)
-limiter_clicks_in_duration: 79
-limiter_duration_ticks: 99
+database.ignorelist.share: true
+database.ignorelist.borrow: [34471e8d-d0c5-47b9-b8e1-b5b9472affa4, 0e314b60-29c7-4e35-bef3-3c652c8fb467]
+
+join_messages: [/mapartgroup set end_misc+end_big+end_square]
+
+command.assignpearl: true
+command.exportmapimg: true
+command.mapartgroup: true
+#command.seen: true # inherited from database:true
+#command.sendas: true
+command.timeonline: true
 
 keybind.mapart.copy: true
 keybind.mapart.load: true
 keybind.mapart.move.bundle: true
 keybind.mapart.move.bundle.reverse: false
-keybind.mapart.move.bundle.max: 64
 keybind.mapart.move.3x9: true
-keybind.mapart.move.3x9.ignore_air_pockets: false
 
-itemframe_placement_helper: false
-itemframe_placement_helper.must_match_block: true
-itemframe_placement_helper.must_connect: false
-
-mapart_placement_helper: true #TODO: also support placing sequential shulker boxes
-mapart_placement_helper.use_name: true
-mapart_placement_helper.use_image: true
-mapart_placement_helper.autoplace: true # After placing 3 parts of a map, starts autoplace
-
-mapart_group_command: true
-mapart_group_include_unlocked: true
-mapart_generate_img_command: true
-mapart_generate_img_upscale: true
-mapart_generate_img_border: false
-mapart_generate_img_border_color1: -14236 # Yellow
-mapart_generate_img_border_color2: 3288370 # Gray
+keybind.eject_junk_items: true
+keybind.toggle_skin_layers: true
+keybind.smart_inventory_craft: false #TODO: implement
+keybind.ebounce_travel_helper: true
+keybind.aie_travel_helper: true
 
 mapart_database: false
-mapart_database_share_contact: true
+mapart_database_share_contact: false
 
 map_state_cache: false
-invis_itemframes_with_maps: true
-invis_itemframes_with_maps.semi_transparent_only: true
 
 map_metadata_in_tooltip: true
-map_metadata_in_tooltip.staircase: true
-map_metadata_in_tooltip.material: true
-map_metadata_in_tooltip.num_colors: true
-map_metadata_in_tooltip.num_color_ids: true
-map_metadata_in_tooltip.transparency: true
-map_metadata_in_tooltip.noobline: true
-map_metadata_in_tooltip.percent_carpet: true
-map_metadata_in_tooltip.percent_staircase: true
 
 map_highlight_in_tooltip: true
 map_highlight_in_hotbarhud: true
 map_highlight_in_itemframe: true
 map_highlight_in_container_name: true
 
-map_highlight_color_unloaded: 13150930 # Light-Purple
-map_highlight_color_unlocked: 14692709 # Violet
-map_highlight_color_unnamed: 15652823 # Pink
-map_highlight_color_ungrouped: 706660 # Green
-map_highlight_color_matches_inventory: 11862015 # Light-Teal
-map_highlight_color_matches_itemframe: 5614310 # Light-blue
-map_highlight_color_multi_itemframe: 11817190 # Purple
-map_highlight_color_multi_inventory: 11817190 # Purple
-
 # Makes most features ignore fully-transparent maps (A really useful filler item)
 fully_transparent_map_is_filler_item: true
 highlight_duplicate_monocolor_maps: false
-
-# <= 0 for infinite dist (faster). Requires 'map_highlight_in_itemframe:true'
-itemframe_tracking_distance: 128
-
 
 #========== Added Visuals ==========#
 totem_total_count: true
 repaircost_in_tooltip: true
 repaircost_in_hotbarhud: false
-enderpearl_owners: true
-enderpearl_database_by_uuid: true
-enderpearl_database_by_coords: false
 seen_database: true
 track_time_online: true
 
@@ -98,30 +71,11 @@ scroll_order: [
 	[oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry, bamboo, crimson, warped]
 ]
 
-
-#========== Remote messaging ==========#
-# TODO: maybe rename as "my_id" and "my_token"?
-client_id: 1
-client_key: some_unique_key
-remote_address: evmodder.net:14441
-
 # List of remote messages
 #keybind.remote_msg.a: P2P_MSG,27aa6a20-4a0d-4779-bcd5-dce162dd7467
 #keybind.remote_msg.b: EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c
 #keybind.remote_msg.c: EPEARL_TRIGGER,690406c8-53eb-482c-8309-96789e98d07a
 #keybind.remote_msg.mainbase: EPEARL_TRIGGER,36b128f9-c502-4879-928e-0b9637dcd65e
-
-command.assignpearl: true
-
-# Note: this currently won't work outside of 2b2t.
-database.ignorelist.share: true
-database.ignorelist.borrow: [34471e8d-d0c5-47b9-b8e1-b5b9472affa4, 0e314b60-29c7-4e35-bef3-3c652c8fb467]
-
-# Play a sound when someone /w you on 2b2t
-whispers.playsound: {sound:block.note_block.bass, category:PLAYERS, volume:.7, pitch:2}
-
-# Presses the nearest button if someone sends you this in /w and you are near their pearl
-whispers.pearl_trigger: (?:e?p|e?pearl|r(ea)?dy)
 
 
 #========== Chat/commands ==========#
@@ -135,12 +89,6 @@ keybind.chat_msg.rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.co
 # Yaw[-180,180],Pitch[-90,90]
 keybind.snap_angle.a: 156.14,-45.89
 #keybind.snap_angle.b: -245.14,-54.23
-
-keybind.eject_junk_items: true
-keybind.toggle_skin_layers: true
-keybind.smart_inventory_craft: false #TODO: implement
-keybind.ebounce_travel_helper: true
-keybind.aie_travel_helper: true
 
 keybind.inventory_restock: true
 keybind.inventory_restock.auto: true

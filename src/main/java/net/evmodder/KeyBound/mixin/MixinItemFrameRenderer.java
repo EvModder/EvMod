@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.MapColorUtils;
 import net.evmodder.KeyBound.MapGroupUtils;
+import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.onTick.UpdateItemFrameHighlights;
 import net.evmodder.KeyBound.onTick.UpdateItemFrameHighlights.Highlight;
 import net.minecraft.client.MinecraftClient;
@@ -95,21 +96,22 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		MutableText name = stack.getName().copy();
 		if(hl == Highlight.INV_OR_NESTED_INV){
 			final boolean notInCurrGroup = MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
-			name.withColor(Main.MAP_COLOR_IN_INV);
-			if(notInCurrGroup) name.append(Text.literal("*").withColor(Main.MAP_COLOR_NOT_IN_GROUP));
-			if(!state.locked) name.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
+			name.withColor(Configs.Visuals.MAP_COLOR_IN_INV.getIntegerValue());
+			if(notInCurrGroup) name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue()));
+			if(!state.locked) name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue()));
 			if(UpdateItemFrameHighlights.isHungMultiplePlaces(MapGroupUtils.getIdForMapState(state)))
-				name.append(Text.literal("*").withColor(Main.MAP_COLOR_MULTI_IFRAME));
+				name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
 		}
 		else if(hl == Highlight.NOT_IN_CURR_GROUP){
-			name.withColor(Main.MAP_COLOR_NOT_IN_GROUP);
-			if(!state.locked) name.append(Text.literal("*").withColor(Main.MAP_COLOR_UNLOCKED));
+			name.withColor(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue());
+			if(!state.locked) name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue()));
 		}
-		else if(!state.locked) name.withColor(Main.MAP_COLOR_UNLOCKED);
-		else if(stack.getCustomName() == null) name.withColor(Main.MAP_COLOR_UNNAMED);
+		else if(!state.locked) name.withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue());
+		else if(stack.getCustomName() == null) name.withColor(Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue());
 		else if(hl == Highlight.MULTI_HUNG){
-			if(Main.skipMonoColorMaps && MapColorUtils.isMonoColor(state.colors)) name.append(Text.literal("*").withColor(Main.MAP_COLOR_MULTI_IFRAME));
-			else name.withColor(Main.MAP_COLOR_MULTI_IFRAME);
+			if(Main.skipMonoColorMaps && MapColorUtils.isMonoColor(state.colors))
+				name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
+			else name.withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue());
 		}
 		else{
 			UpdateItemFrameHighlights.displayNameCache.put(itemFrameEntity, stack.getName());
@@ -129,7 +131,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 
 	@Inject(method="render", at=@At("HEAD"))
 	private void disableItemFrameFrameRenderingWhenHoldingMaps(ItemFrameEntityRenderState ifers, MatrixStack _0, VertexConsumerProvider _1, int _2, CallbackInfo _3) {
-		ifers.invisible |= (Main.invisItemFramesWithMaps && ifers.mapId != null
-				&& (!Main.invisItemFramesWithMapsSemiTransparentOnly || isSemiTransparent(ifers)));
+		ifers.invisible |= (Configs.Visuals.INVIS_IFRAMES.getBooleanValue() && ifers.mapId != null
+				&& (!Configs.Visuals.INVIS_IFRAMES_SEMI_TRANSPARENT.getBooleanValue() || isSemiTransparent(ifers)));
 	}
 }

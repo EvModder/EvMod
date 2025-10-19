@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import net.evmodder.KeyBound.MapRelationUtils;
 import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
+import net.evmodder.KeyBound.config.Configs.Misc;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -15,6 +16,7 @@ public class AutoPlaceMapArt{
 
 	public static final boolean canAutoplace(ItemFrameEntity lastIfe2, ItemFrameEntity lastIfe, ItemFrameEntity currIfe, ItemStack currStack){
 		assert currIfe != null && currStack != null && currStack.getItem() == Items.FILLED_MAP; // All should be verified by caller
+		if(!Misc.PLACEMENT_HELPER_MAPART_AUTOPLACE.getBooleanValue()) return isActive=false;
 		if(lastIfe == null || lastIfe2 == null) return isActive=false;
 		if(currStack.getCount() != 1) return isActive=false;
 		slots.set(0, currStack);

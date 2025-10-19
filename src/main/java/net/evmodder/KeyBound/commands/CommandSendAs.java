@@ -8,7 +8,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.minecraft.text.Text;
 
 public class CommandSendAs{
-	CommandSendAs(){
+	public CommandSendAs(){
 		ClientCommandRegistrationCallback.EVENT.register(
 			(dispatcher, _0) -> dispatcher.register(
 				ClientCommandManager.literal("sendas")

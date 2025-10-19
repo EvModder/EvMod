@@ -15,7 +15,7 @@ import net.evmodder.EvLib.PacketHelper.MessageReceiver;
 import net.evmodder.EvLib.TextUtils;
 
 public final class RemoteServerSender{
-	//private static final String REMOTE_MSG_CATEGORY = "key.categories."+KeyBound.MOD_ID+".remote_messages";
+	public static final int DEFAULT_PORT = 14441;
 	private final Logger LOGGER;
 
 	private final String REMOTE_ADDR;
