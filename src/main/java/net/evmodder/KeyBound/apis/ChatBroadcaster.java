@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.apis;
 
 import java.time.Duration;
 import java.util.Calendar;
@@ -7,7 +7,8 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import net.evmodder.EvLib.FileIO;
-import net.evmodder.KeyBound.config.Configs;
+import net.evmodder.KeyBound.Configs;
+import net.evmodder.KeyBound.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 
@@ -17,10 +18,10 @@ public class ChatBroadcaster{
 
 	public final static void refreshBroadcast(){
 		if(timer != null) timer.cancel();
-		final long unix_evt_ts = Long.parseLong(Configs.Misc.TEMP_BROADCAST_TIMESTAMP.getStringValue());
-		List<String> evt_msgs = Configs.Misc.TEMP_BROADCAST_MSGS.getStrings();
+		final long unix_evt_ts = Long.parseLong(Configs.Generic.TEMP_BROADCAST_TIMESTAMP.getStringValue());
+		List<String> evt_msgs = Configs.Generic.TEMP_BROADCAST_MSGS.getStrings();
 		final String username = MinecraftClient.getInstance().getSession().getUsername();
-		if(unix_evt_ts*1000L > System.currentTimeMillis() && !evt_msgs.isEmpty() && username.equalsIgnoreCase(Configs.Misc.TEMP_BROADCAST_ACCOUNT.getStringValue())){
+		if(unix_evt_ts*1000L > System.currentTimeMillis() && !evt_msgs.isEmpty() && username.equalsIgnoreCase(Configs.Generic.TEMP_BROADCAST_ACCOUNT.getStringValue())){
 			final long evt_ts = unix_evt_ts*1000L;
 			Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("CST"));
 			cal.setTimeInMillis(evt_ts);

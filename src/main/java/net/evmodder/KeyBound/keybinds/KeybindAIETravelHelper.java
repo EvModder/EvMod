@@ -1,6 +1,5 @@
 package net.evmodder.KeyBound.keybinds;
 
-import org.lwjgl.glfw.GLFW;
 import net.evmodder.EvLib.TextUtils;
 import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -14,7 +13,7 @@ import net.minecraft.screen.slot.SlotActionType;
 public final class KeybindAIETravelHelper{
 	private boolean isEnabled;
 	private final MinecraftClient client;
-	private int unsafeDur = 20, kickDur = 5, unsafeYinEnd = 60, kickYinEnd = 40;
+	private int unsafeDur = 20, kickDur = 5, unsafeYinEnd = 60, kickYinEnd = 40; // TODO: put all these in config
 	private final long SAFE_KICK_DELAY = 10_000l;
 	private long enabledTs, stoppedFlyingTs;
 	private final boolean waitForSafePitch = true, kickIfStopsFlying = true;
@@ -24,6 +23,17 @@ public final class KeybindAIETravelHelper{
 
 	private final int getElytraDur(ItemStack stack){
 		return stack.getItem() == Items.ELYTRA ? stack.getMaxDamage() - stack.getDamage() : -1;
+	}
+
+	public void toggle(){
+		if(!isEnabled){
+			if(client.player == null || client.world == null) return;
+			if(!client.player.isGliding()){client.player.sendMessage(Text.literal("You need to be flying first"), true); return;}
+			enabledTs = System.currentTimeMillis();
+			lastY = client.player.getY();
+		}
+		isEnabled = !isEnabled;
+		client.player.sendMessage(Text.literal("AutomaticInfiniteElytra Travel Helper: "+(isEnabled ? "enabled" : "disabled")), true);
 	}
 
 	//242-170, 251-183, 267-195
@@ -36,18 +46,9 @@ public final class KeybindAIETravelHelper{
 		assert kickDur >= 0 && unsafeDur < 432;
 		assert kickYinEnd >= -64 && unsafeYinEnd < 256;
 		assert safePitchLower < setSafePitch && setSafePitch < safePitchUpper;
-
 		client = MinecraftClient.getInstance();
-		new Keybind("aie_travel_helper", ()->{
-			if(!isEnabled){
-				if(client.player == null || client.world == null) return;
-				if(!client.player.isGliding()){client.player.sendMessage(Text.literal("You need to be flying first"), true); return;}
-				enabledTs = System.currentTimeMillis();
-				lastY = client.player.getY();
-			}
-			isEnabled = !isEnabled;
-			client.player.sendMessage(Text.literal("AutomaticInfiniteElytra Travel Helper: "+(isEnabled ? "enabled" : "disabled")), true);
-		}, null, GLFW.GLFW_KEY_SEMICOLON);
+
+//		new Keybind("aie_travel_helper", this::toggle, null, GLFW.GLFW_KEY_SEMICOLON);
 
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
 			if(!isEnabled) return;

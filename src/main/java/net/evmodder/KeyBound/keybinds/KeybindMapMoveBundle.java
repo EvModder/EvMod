@@ -2,49 +2,29 @@ package net.evmodder.KeyBound.keybinds;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
-import java.util.function.Function;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.math.Fraction;
-import org.lwjgl.glfw.GLFW;
+import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
-import net.evmodder.KeyBound.MapColorUtils;
-import net.evmodder.KeyBound.MapRelationUtils;
-import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
-import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
-import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.BundleContentsComponent;
-import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.item.map.MapState;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.world.World;
 
 public final class KeybindMapMoveBundle{
 	//final int WITHDRAW_MAX = 27;
 	//enum BundleSelectionMode{FIRST, LAST, MOST_FULL_butNOT_FULL, MOST_EMPTY_butNOT_EMPTY};
-
-	private final boolean isFillerMap(ItemStack[] slots, ItemStack stack, World world){
-		if(!Main.skipTransparentMaps) return false;
-		final MapState state = FilledMapItem.getMapState(stack, world);
-		if(state == null || !MapColorUtils.isTransparentOrStone(state.colors)) return false;
-		if(stack.getCustomName() == null) return true;
-		final String name = stack.getCustomName().getLiteralString();
-		if(name == null) return true;
-		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(Arrays.asList(slots), name, stack.getCount(), state.locked, world);
-		return data.slots().stream().map(i -> slots[i].getCustomName().getLiteralString()).distinct().count() <= 1;
-	}
 
 	private final boolean isBundle(ItemStack stack){
 		return stack.get(DataComponentTypes.BUNDLE_CONTENTS) != null;
@@ -57,7 +37,7 @@ public final class KeybindMapMoveBundle{
 
 	private long lastBundleOp = 0;
 	private final long bundleOpCooldown = 250l;
-	private final void moveMapArtToFromBundle(final boolean reverse){
+	public final void moveMapArtToFromBundle(final boolean reverse){
 		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapBundleOp: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -76,7 +56,7 @@ public final class KeybindMapMoveBundle{
 		assert SLOT_END != 0;
 		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		final int[] slotsWithMapArt = IntStream.range(SLOT_START, SLOT_END)
-				.filter(i -> slots[i].getItem() == Items.FILLED_MAP && !isFillerMap(slots, slots[i], client.world))
+				.filter(i -> slots[i].getItem() == Items.FILLED_MAP && !KeybindMapMove.isFillerMap(slots, slots[i], client.world))
 				.toArray();
 		final boolean pickupHalf = slotsWithMapArt.length > 0
 				&& Arrays.stream(slotsWithMapArt).anyMatch(i -> slots[i].getCount() == 2)
@@ -146,7 +126,7 @@ public final class KeybindMapMoveBundle{
 			Main.LOGGER.info("MapBundleOp: stored "+suckedUp+" maps in bundle");
 		}
 		else{
-			final int MOVE_LIMIT = Configs.Misc.KEYBIND_BUNDLE_REMOVE_MAX.getIntegerValue();
+			final int MOVE_LIMIT = Configs.Generic.KEYBIND_BUNDLE_REMOVE_MAX.getIntegerValue();
 			final int stored = Math.min(MOVE_LIMIT, getNumStored(occupancy));
 			int withdrawn = 0;
 			if(reverse){
@@ -174,12 +154,12 @@ public final class KeybindMapMoveBundle{
 		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("MapBundleOp: DONE!"));
 	}
 
-	public KeybindMapMoveBundle(boolean regular, boolean reverse){
+	/*public KeybindMapMoveBundle(boolean regular, boolean reverse){
 		Function<Screen, Boolean> allowInScreen =
 				//InventoryScreen.class::isInstance
 				s->s instanceof InventoryScreen || s instanceof GenericContainerScreen || s instanceof ShulkerBoxScreen || s instanceof CraftingScreen;
 
 		if(regular) new Keybind("mapart_bundle", ()->moveMapArtToFromBundle(false), allowInScreen, GLFW.GLFW_KEY_D);
 		if(reverse) new Keybind("mapart_bundle_reverse", ()->moveMapArtToFromBundle(true), allowInScreen, regular ? -1 : GLFW.GLFW_KEY_D);
-	}
+	}*/
 }

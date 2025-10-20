@@ -1,7 +1,6 @@
 package net.evmodder.KeyBound.keybinds;
 
 import java.util.Set;
-import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
@@ -51,7 +50,7 @@ public final class KeybindEjectJunk{
 				allEnchs.stream().anyMatch(r -> !r.matchesKey(Enchantments.FEATHER_FALLING) && canGoOnArmor(r, EquipmentSlot.FEET))) return true;
 		return false;
 	}
-	enum JunkCategory{END_CITY, FISHING, RAID_FARM, NETHER}
+	private enum JunkCategory{END_CITY, FISHING, RAID_FARM, NETHER}
 	private JunkCategory junkType = null;
 	public boolean shouldEject(ItemStack stack){
 		if(stack == null || stack.isEmpty()) return false;
@@ -141,7 +140,7 @@ public final class KeybindEjectJunk{
 		return false;
 	}
 
-	private void ejectJunkItems(){
+	public void ejectJunkItems(){
 		MinecraftClient client = MinecraftClient.getInstance();
 		final int syncId = client.player.currentScreenHandler.syncId;
 
@@ -168,7 +167,7 @@ public final class KeybindEjectJunk{
 		//junkType = null;
 	}
 
-	public KeybindEjectJunk(){
+	/*public KeybindEjectJunk(){
 		new Keybind("eject_junk_items", this::ejectJunkItems, HandledScreen.class::isInstance, GLFW.GLFW_KEY_R);
-	}
+	}*/
 }

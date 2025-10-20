@@ -46,7 +46,7 @@ public final class KeybindHotbarTypeScroller{
 		});
 	}
 
-	private void scrollHotbarSlot(boolean upOrDown){
+	public void scrollHotbarSlot(boolean upOrDown){
 		final MinecraftClient client = MinecraftClient.getInstance();
 		PlayerInventory inventory = client.player.getInventory();
 		if(!PlayerInventory.isValidHotbarIndex(inventory.selectedSlot)) return;
@@ -104,17 +104,18 @@ public final class KeybindHotbarTypeScroller{
 		}
 	}
 
-	public KeybindHotbarTypeScroller(List<String[]> colorLists){
-		variantLists = new ArrayList<>();
-		scrollableItems = new HashMap<>();
-		for(String[] colors : colorLists) loadScrollableItems(colors);
+	public void refreshColorLists(List<String> colorLists){
+		if(variantLists == null){
+			variantLists = new ArrayList<>();
+			scrollableItems = new HashMap<>();
+		}
+		else{
+			variantLists.clear();
+			scrollableItems.clear();
+		}
+		for(String colors : colorLists) loadScrollableItems(colors.replaceAll("\\s", "").split(","));
 
 		Main.LOGGER.info("Defined scrollable variants: ["+String.join("], [", variantLists.stream().map(l -> String.join(",", l)).toList())+"]");
 		Main.LOGGER.debug("Found matching items: "+String.join(", ", scrollableItems.keySet()));
-
-		if(!scrollableItems.isEmpty()){
-			new Keybind("color_scroll.up", ()->scrollHotbarSlot(true));
-			new Keybind("color_scroll.down", ()->scrollHotbarSlot(false));
-		}
 	}
 }

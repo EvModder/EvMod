@@ -1,8 +1,7 @@
 package net.evmodder.KeyBound.mixin;
 
-import net.evmodder.KeyBound.Main;
-import net.evmodder.KeyBound.MapGroupUtils;
-import net.evmodder.KeyBound.config.Configs;
+import net.evmodder.KeyBound.Configs;
+import net.evmodder.KeyBound.apis.MapGroupUtils;
 import net.evmodder.KeyBound.onTick.UpdateItemFrameHighlights;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.InGameHud;
@@ -21,11 +20,14 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 abstract class MixinInGameHud{
 	@ModifyVariable(method = "renderHeldItemTooltip", at = @At("STORE"), ordinal = 0)
 	private MutableText showRepairCostNextToItemName(MutableText originalText){
-		if(Main.rcHUD == false && Main.mapHighlightHUD == false) return originalText;
+		final boolean rcHUD = Configs.Visuals.REPAIR_COST_HOTBAR_HUD.getBooleanValue();
+		final boolean mapHighlightHUD = Configs.Visuals.MAP_HIGHLIGHT_HOTBAR_HUD.getBooleanValue();
+
+		if(rcHUD == false && mapHighlightHUD == false) return originalText;
 		MinecraftClient client = MinecraftClient.getInstance();
 		ItemStack currentStack = client.player.getInventory().getMainHandStack();
 		MutableText text = originalText;
-		if(Main.mapHighlightHUD){
+		if(mapHighlightHUD){
 			MapIdComponent id = currentStack.get(DataComponentTypes.MAP_ID);
 			if(id != null){
 				MapState state = client.world.getMapState(id);
@@ -39,7 +41,7 @@ abstract class MixinInGameHud{
 				else if(currentStack.getCustomName() == null) text = text.withColor(Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue());
 			}
 		}
-		if(Main.rcHUD && currentStack.contains(DataComponentTypes.REPAIR_COST)){
+		if(rcHUD && currentStack.contains(DataComponentTypes.REPAIR_COST)){
 			int rc = currentStack.get(DataComponentTypes.REPAIR_COST);
 			if(rc != 0 || currentStack.hasEnchantments() || currentStack.contains(DataComponentTypes.STORED_ENCHANTMENTS)){
 				text = text.append(Text.literal(" \u02b3\u1d9c").formatted(Formatting.GRAY)).append(Text.literal(""+rc).formatted(Formatting.GOLD));

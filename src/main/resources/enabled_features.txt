@@ -1,153 +1,27 @@
-# Config file for KeyBound
+# Enable or disable mod features
 
-database: true
 placement_helper.iframe: true
 placement_helper.mapart: true
 placement_helper.mapart.auto: true
-whisper_listener: true
-broadcaster: false
-enderpearl_owners: true
-
-# TODO: move to MaLiLib config
-#
-enderpearl_database_by_uuid: true
-enderpearl_database_by_coords: false
-
-database.ignorelist.share: true
-database.ignorelist.borrow: [34471e8d-d0c5-47b9-b8e1-b5b9472affa4, 0e314b60-29c7-4e35-bef3-3c652c8fb467]
-
-join_messages: [/mapartgroup set end_misc+end_big+end_square]
+listener.server_join: true
+listener.server_quit: true
+listener.game_message: true
+listener.game_message.filter: true
+map_highlights: true
+map_highlights.in_gui: true
+tooltip.map_highlights: true
+tooltip.map_metadata: true
+tooltip.repair_cost: true
+inventory_restock.auto: true
+broadcaster: true
+database: true
+database.epearls: true
+database.epearls.by_uuid: true
+database.epearls.by_coords: false
 
 command.assignpearl: true
 command.exportmapimg: true
 command.mapartgroup: true
-#command.seen: true # inherited from database:true
-#command.sendas: true
+command.seen: true
+command.sendas: true
 command.timeonline: true
-
-keybind.mapart.copy: true
-keybind.mapart.load: true
-keybind.mapart.move.bundle: true
-keybind.mapart.move.bundle.reverse: false
-keybind.mapart.move.3x9: true
-
-keybind.eject_junk_items: true
-keybind.toggle_skin_layers: true
-keybind.smart_inventory_craft: false #TODO: implement
-keybind.ebounce_travel_helper: true
-keybind.aie_travel_helper: true
-
-mapart_database: false
-mapart_database_share_contact: false
-
-map_state_cache: false
-
-map_metadata_in_tooltip: true
-
-map_highlight_in_tooltip: true
-map_highlight_in_hotbarhud: true
-map_highlight_in_itemframe: true
-map_highlight_in_container_name: true
-
-# Makes most features ignore fully-transparent maps (A really useful filler item)
-fully_transparent_map_is_filler_item: true
-highlight_duplicate_monocolor_maps: false
-
-#========== Added Visuals ==========#
-totem_total_count: true
-repaircost_in_tooltip: true
-repaircost_in_hotbarhud: false
-seen_database: true
-track_time_online: true
-
-
-#========== Hotbar variant scrolling ==========#
-# Empty variants (if they exist) must come first in the list
-scroll_order: [
-	[white, light_gray, gray, black, brown, red, orange, yellow, lime, green, cyan, light_blue, blue, purple, magenta, pink],
-	[, exposed, weathered, oxidized],
-	[,powered,detector,activator],
-	[tube, brain, bubble, fire, horn],
-	[oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry, bamboo, crimson, warped]
-]
-
-# List of remote messages
-#keybind.remote_msg.a: P2P_MSG,27aa6a20-4a0d-4779-bcd5-dce162dd7467
-#keybind.remote_msg.b: EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c
-#keybind.remote_msg.c: EPEARL_TRIGGER,690406c8-53eb-482c-8309-96789e98d07a
-#keybind.remote_msg.mainbase: EPEARL_TRIGGER,36b128f9-c502-4879-928e-0b9637dcd65e
-
-
-#========== Chat/commands ==========#
-join_messages: [/mapartgroup set end_misc+end_big+end_square]
-log_xyz_on_quit: true
-#keybind.chat_msg.meow: meow :3
-keybind.chat_msg.rc: /cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost
-
-
-#========== Misc Keybinds ==========#
-# Yaw[-180,180],Pitch[-90,90]
-keybind.snap_angle.a: 156.14,-45.89
-#keybind.snap_angle.b: -245.14,-54.23
-
-keybind.inventory_restock: true
-keybind.inventory_restock.auto: true
-keybind.inventory_restock.auto.matching_inventory: [EvInvSimple]
-#keybind.inventory_restock.blacklist: [ender_chest, filled_map]
-keybind.inventory_restock.whitelist: [
-  firework_rocket, end_crystal, respawn_anchor, obsidian, ender_pearl, chorus_fruit, wind_charge, experience_bottle,
-  arrow, spectral_arrow, tipped_arrow, golden_carrot, enchanted_golden_apple, cooked_beef, cooked_porkchop, cooked_chicken
-]
-keybind.inventory_organize.EvInv: [
-  # Armor
-  5:carved_pumpkin,
-  6:elytra,
-  #8:gold_boots,
-  5:netherite_helmet, 6:netherite_chestplate, 7:netherite_leggings, 8:netherite_boots,
-  5:diamond_helmet, 6:diamond_chestplate, 7:diamond_leggings, 8:diamond_boots,
-
-  # Offhand
-  45:totem_of_undying, 45:enchanted_golden_apple, 45:golden_carrot, 45:cooked_beef,
-
-  # Hotbar LHS
-  36:netherite_sword, 36:diamond_sword, 36:netherite_axe, 36:diamond_axe,
-  37:netherite_pickaxe, 37:diamond_pickaxe,
-  38:netherite_axe, 38:diamond_axe, 38:netherite_shovel, 38:diamond_shovel, 38:firework_rocket, 38:end_crystal,
-  39:end_crystal, 39:netherite_shovel, 39:diamond_shovel, 39:firework_rocket, 39:fishing_rod,
-  40:fishing_rod,
-
-  # Hotbar RHS
-  44:golden_carrot, 44:cooked_beef, 44:enchanted_golden_apple,
-  43:enchanted_golden_apple,
-
-  # Inventory top LHS
-  9:netherite_chestplate, 9:diamond_chestplate, 9:elytra, 9:ender_chest, 9:totem_of_undying,
-  10:ender_chest, 10:totem_of_undying,
-  11:totem_of_undying, 12:totem_of_undying, 13:totem_of_undying,
-
-  # Extra rockets, food
-  30:firework_rocket, 21:firework_rocket,
-  35:enchanted_golden_apple, 35:golden_carrot, 35:cooked_beef, 35:cooked_porkchop, 35:pumpkin_pie,
-
-  # Fill extra hotbar slots with crystals
-  36:end_crystal, 37:end_crystal, 38:end_crystal, 39:end_crystal, 40:end_crystal, 41:end_crystal, 42:end_crystal
-]
-keybind.inventory_organize.EvInvSimple: [
-  # Armor
-  5:carved_pumpkin,
-  6:elytra,
-  5:netherite_helmet, 6:netherite_chestplate, 7:netherite_leggings, 8:netherite_boots,
-  5:diamond_helmet, 6:diamond_chestplate, 7:diamond_leggings, 8:diamond_boots,
-
-  # Offhand
-  45:totem_of_undying,
-
-  # Hotbar LHS
-  36:netherite_sword, 36:diamond_sword, 36:netherite_axe, 36:diamond_axe,
-  37:netherite_pickaxe, 37:diamond_pickaxe,
-  38:netherite_axe, 38:diamond_axe, 38:netherite_shovel, 38:diamond_shovel, 38:firework_rocket,
-  39:firework_rocket,
-
-  # Hotbar RHS
-  44:golden_carrot, 44:cooked_beef, 44:enchanted_golden_apple,
-]

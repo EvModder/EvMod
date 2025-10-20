@@ -28,22 +28,6 @@ public final class KeybindsSimple{
 		}));
 	}
 
-	public static final void registerChatKeybind(String keybind_name, String chat_message){
-		if(chat_message.charAt(0) == '/'){
-			final String command = chat_message.substring(1);
-			new Keybind(keybind_name, ()->{
-				MinecraftClient instance = MinecraftClient.getInstance();
-				instance.player.networkHandler.sendChatCommand(command);
-			});
-		}
-		else{
-			new Keybind(keybind_name, ()->{
-				MinecraftClient instance = MinecraftClient.getInstance();
-				instance.player.networkHandler.sendChatMessage(chat_message);
-			});
-		}
-	}
-
 	public static final void registerSnapAngleKeybind(String keybind_name, String yaw_pitch){
 		final int i = yaw_pitch.indexOf(',');
 		if(i == -1) Main.LOGGER.error("Invalid yaw,pitch for "+keybind_name+": "+yaw_pitch);

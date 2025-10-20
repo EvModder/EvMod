@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.apis;
 
 import java.awt.AlphaComposite;
 import java.awt.Color;

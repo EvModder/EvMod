@@ -25,7 +25,6 @@ import java.util.TreeMap;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.math.Fraction;
-import org.lwjgl.glfw.GLFW;
 
 public final class KeybindMapCopy{
 	private long lastCopy;
@@ -297,7 +296,7 @@ public final class KeybindMapCopy{
 	}
 
 	@SuppressWarnings("unused")
-	private void copyMapArtInInventory(){
+	public void copyMapArtInInventory(){
 		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapCopy: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -500,7 +499,7 @@ public final class KeybindMapCopy{
 		);
 	}
 
-	public KeybindMapCopy(){
-		new Keybind("mapart_copy", ()->copyMapArtInInventory(), s->s instanceof InventoryScreen || s instanceof CraftingScreen, GLFW.GLFW_KEY_T);
-	}
+//	public KeybindMapCopy(){
+//		new Keybind("mapart_copy", ()->copyMapArtInInventory(), s->s instanceof InventoryScreen || s instanceof CraftingScreen, GLFW.GLFW_KEY_T);
+//	}
 }

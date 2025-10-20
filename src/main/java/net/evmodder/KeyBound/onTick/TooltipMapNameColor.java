@@ -7,11 +7,10 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Predicate;
 import net.minecraft.item.Item.TooltipContext;
-import net.evmodder.KeyBound.Main;
-import net.evmodder.KeyBound.MapColorUtils;
-import net.evmodder.KeyBound.MapGroupUtils;
-import net.evmodder.KeyBound.MapRelationUtils;
-import net.evmodder.KeyBound.config.Configs;
+import net.evmodder.KeyBound.Configs;
+import net.evmodder.KeyBound.apis.MapColorUtils;
+import net.evmodder.KeyBound.apis.MapGroupUtils;
+import net.evmodder.KeyBound.apis.MapRelationUtils;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.component.type.MapIdComponent;
@@ -35,6 +34,7 @@ public final class TooltipMapNameColor{
 	private static int lastHash;
 
 	public static final void tooltipColors(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
+		if(!Configs.Visuals.MAP_HIGHLIGHT_TOOLTIP.getBooleanValue()) return;
 		final int MAP_COLOR_IN_INV = Configs.Visuals.MAP_COLOR_IN_INV.getIntegerValue();
 		final int MAP_COLOR_NOT_IN_GROUP = Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue();
 		final int MAP_COLOR_UNLOCKED = Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue();
@@ -103,7 +103,7 @@ public final class TooltipMapNameColor{
 			return;
 		}
 		final boolean nameColor = !(asterisks.get(0) == MAP_COLOR_UNNAMED
-				|| (asterisks.get(0) == MAP_COLOR_MULTI_INV && Main.skipMonoColorMaps && MapColorUtils.isMonoColor(state.colors)));
+				|| (asterisks.get(0) == MAP_COLOR_MULTI_INV && Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue() && MapColorUtils.isMonoColor(state.colors)));
 
 		asterisks = asterisks.stream().distinct().toList(); // TODO: this line only exists in case of configurations where 2+ meanings share 1 color
 		MutableText text = lines.removeFirst().copy();

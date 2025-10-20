@@ -13,7 +13,6 @@ public final class Keybind{
 	public final static HashSet<Keybind> allKeybinds = new HashSet<>();
 	public final Function<Screen, Boolean> allowInScreen;
 	public final KeyBinding internalKeyBinding;
-	//public AbstractKeybind(String translationKey, Type type, int code, String category){super(translationKey, type, code, category);}
 
 	final int ERROR_COLOR = 16733525, SUCCESS_COLOR = 5635925;
 

@@ -12,10 +12,11 @@ public abstract class LoadingCache<K, V>{
 	public LoadingCache(final V notFound, final V loading){this(new HashMap<>(), notFound, loading);}
 	public LoadingCache(){this(new HashMap<>(), null, null);}
 
-	public abstract V load(final K k);
-	public V loadSyncOrNull(final K k){return null;}
+	protected abstract V load(final K k);
+	protected V loadSyncOrNull(final K k){return null;}
 	public final V remove(final K k){return cache.remove(k);}
 	public final int size(){return cache.size();}
+	public final boolean contains(final K k){return cache.containsKey(k);}
 
 	public final boolean putIfAbsent(final K k, final V v){
 		synchronized(cache){

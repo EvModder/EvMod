@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.FileIO;
+import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
@@ -22,15 +23,15 @@ import net.minecraft.item.map.MapState;
 @Mixin(ClientWorld.class)
 abstract class MixinClientWorld{
 	private static final MinecraftClient client = MinecraftClient.getInstance();
-	private static final HashMap<String, HashSet<UUID>> mapsSaved;
-	private static final HashSet<UUID> mapsInTransit, mapsToSave;
 	private static final String DB_FILENAME = "seen_maps";
 	private static final long MAPART_STORE_TIMEOUT = 15*1000;
 	//private static final boolean preloadMapStates = true; // requires saving full byte[] 128x128 and not just the hash (UUID)
 
+	private static HashMap<String, HashSet<UUID>> mapsSaved;
+	private static HashSet<UUID> mapsInTransit, mapsToSave;
 	private static String saveAddr;
 
-	static{
+	private static void initMapDb(){
 		mapsSaved = new HashMap<>();
 		mapsInTransit = new HashSet<>();
 		mapsToSave = new HashSet<>();
@@ -47,11 +48,12 @@ abstract class MixinClientWorld{
 
 	@Inject(method="putClientsideMapState", at=@At("HEAD"))
 	private void e(MapIdComponent id, MapState state, CallbackInfo ci){
-		if(!Main.mapartDb) return;
+		if(!Configs.Generic.MAPART_DATABASE.getBooleanValue()) return;
 		if(!state.locked) return; // TODO: supporting unlocked maps could waste a LOT of disk with 1-pixel changes while building
 		final String addr = client != null && client.getCurrentServerEntry() != null ? client.getCurrentServerEntry().address : null;
 		if(addr == null) return;
 		if(saveAddr != null && !saveAddr.equals(addr)) return;
+		if(mapsSaved == null) initMapDb();
 		final UUID uuid = UUID.nameUUIDFromBytes(state.colors);
 		synchronized(mapsSaved){
 			HashSet<UUID> savedPerServer = mapsSaved.get(addr);

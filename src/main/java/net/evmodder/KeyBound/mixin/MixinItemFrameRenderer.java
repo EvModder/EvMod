@@ -5,10 +5,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import net.evmodder.KeyBound.Main;
-import net.evmodder.KeyBound.MapColorUtils;
-import net.evmodder.KeyBound.MapGroupUtils;
-import net.evmodder.KeyBound.config.Configs;
+import net.evmodder.KeyBound.Configs;
+import net.evmodder.KeyBound.apis.MapColorUtils;
+import net.evmodder.KeyBound.apis.MapGroupUtils;
 import net.evmodder.KeyBound.onTick.UpdateItemFrameHighlights;
 import net.evmodder.KeyBound.onTick.UpdateItemFrameHighlights.Highlight;
 import net.minecraft.client.MinecraftClient;
@@ -40,7 +39,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 
 	@Inject(method="hasLabel", at=@At("HEAD"), cancellable=true)
 	public void hasLabel_Mixin(T itemFrameEntity, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
-		if(!Main.mapHighlightIFrame) return; // Feature is disabled
+		if(!Configs.Visuals.MAP_HIGHLIGHT_IFRAME.getBooleanValue()) return; // Feature is disabled
 		if(!MinecraftClient.isHudEnabled()) return;
 
 		final ItemStack stack = itemFrameEntity.getHeldItemStack();
@@ -53,7 +52,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		Boolean hasLabel = UpdateItemFrameHighlights.hasLabelCache.get(itemFrameEntity);
 		if(hasLabel != null){cir.setReturnValue(hasLabel); return;}
 
-		if(hl == Highlight.MULTI_HUNG && Main.skipMonoColorMaps && MapColorUtils.isMonoColor(state.colors)){
+		if(hl == Highlight.MULTI_HUNG && Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue() && MapColorUtils.isMonoColor(state.colors)){
 			UpdateItemFrameHighlights.hasLabelCache.put(itemFrameEntity, false);
 			return; // Don't do boosted hasLabel()
 		}
@@ -82,7 +81,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 
 	@Inject(method="getDisplayName", at=@At("INVOKE"), cancellable = true)
 	public void getDisplayName_Mixin(T itemFrameEntity, CallbackInfoReturnable<Text> cir){
-		if(!Main.mapHighlightIFrame) return; // Feature is disabled
+		if(!Configs.Visuals.MAP_HIGHLIGHT_IFRAME.getBooleanValue()) return; // Feature is disabled
 		final ItemStack stack = itemFrameEntity.getHeldItemStack();
 		if(stack == null || stack.isEmpty());
 		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
@@ -109,7 +108,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		else if(!state.locked) name.withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue());
 		else if(stack.getCustomName() == null) name.withColor(Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue());
 		else if(hl == Highlight.MULTI_HUNG){
-			if(Main.skipMonoColorMaps && MapColorUtils.isMonoColor(state.colors))
+			if(Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue() && MapColorUtils.isMonoColor(state.colors))
 				name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
 			else name.withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue());
 		}

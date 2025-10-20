@@ -3,8 +3,8 @@ package net.evmodder.KeyBound.onTick;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
-import net.evmodder.KeyBound.config.Configs;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.EndTick;
@@ -58,7 +58,7 @@ public class AutoPlaceItemFrames{
 		if(distFromPlane(bp) != 0) return false;
 //		Main.LOGGER.info("iFramePlacer: wall block is on the plane");
 		BlockState bs = world.getBlockState(bp);
-		if(Configs.Misc.PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK.getBooleanValue() && bs.getBlock() != placeAgainstBlock) return false;
+		if(Configs.Generic.PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK.getBooleanValue() && bs.getBlock() != placeAgainstBlock) return false;
 //		Main.LOGGER.info("iFramePlacer: wall block matches placeAgainstBlock");
 
 		BlockPos ifeBp = bp.offset(dir);
@@ -69,7 +69,7 @@ public class AutoPlaceItemFrames{
 
 		if(existingIfes.stream().anyMatch(ife -> ife.getBlockPos().equals(ifeBp))) return false; // Already iFrame here
 //		Main.LOGGER.info("iFramePlacer: ife spot is available");
-		if(Configs.Misc.PLACEMENT_HELPER_IFRAME_MUST_CONNECT.getBooleanValue()
+		if(Configs.Generic.PLACEMENT_HELPER_IFRAME_MUST_CONNECT.getBooleanValue()
 				&& existingIfes.stream().noneMatch(ife -> ife.getBlockPos().getManhattanDistance(ifeBp) == 1)) return false; // No iFrame neighbor
 //		Main.LOGGER.info("iFramePlacer: ife spot has neighboring iframe");
 		return true;
@@ -79,7 +79,7 @@ public class AutoPlaceItemFrames{
 	public AutoPlaceItemFrames(){
 		EndTick etl = (client) -> {
 			if(dir == null) return; // iFramePlacer is not currently active
-			if(!Configs.Misc.PLACEMENT_HELPER_IFRAME.getBooleanValue()){
+			if(!Configs.Generic.PLACEMENT_HELPER_IFRAME.getBooleanValue()){
 				dir = null; iFrameItem = null; placeAgainstBlock = null;
 				return;
 			}

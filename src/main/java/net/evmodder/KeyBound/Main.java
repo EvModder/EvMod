@@ -13,21 +13,20 @@ native
 strictfp
 
 */
-
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import fi.dy.masa.malilib.config.ConfigManager;
+import fi.dy.masa.malilib.event.InputEventHandler;
 import fi.dy.masa.malilib.registry.Registry;
 import fi.dy.masa.malilib.util.data.ModInfo;
+import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.FileIO;
+import net.evmodder.KeyBound.apis.ChatBroadcaster;
+import net.evmodder.KeyBound.apis.EpearlLookup;
+import net.evmodder.KeyBound.apis.RemoteServerSender;
 import net.evmodder.KeyBound.commands.*;
-import net.evmodder.KeyBound.config.ConfigGui;
-import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.keybinds.*;
 import net.evmodder.KeyBound.listeners.*;
 import net.evmodder.KeyBound.onTick.AutoPlaceItemFrames;
@@ -40,6 +39,7 @@ import net.evmodder.KeyBound.onTick.UpdateItemFrameHighlights;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
+import net.minecraft.client.MinecraftClient;
 
 // gradle genSources/eclipse/cleanloom/--stop
 //MC source will be in ~/.gradle/caches/fabric-loom or ./.gradle/loom-cache
@@ -94,26 +94,31 @@ once arrangement is found
 */
 	// Reference variables
 	public static final String MOD_ID = "keybound"; // TODO: pull from fabric/gradle?
+	public static final String MOD_NAME = "KeyBound";
 	public static final String configFilename = "enabled_features.txt";
 	//public static final String MOD_NAME = "KeyBound";
 	//public static final String MOD_VERSION = "@MOD_VERSION@";
 	public static final String KEYBIND_CATEGORY = "key.categories."+MOD_ID;
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-
-	private static HashMap<String, String> config;
+	public static final int HASHCODE_2B2T = -437714968;//"2b2t.org".hashCode() // TODO: make mod more server-independent 
 
 	public static ClickUtils clickUtils;
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
+	public static GameMessageFilter gameMessageFilter;
+	public static KeybindInventoryRestock kbInvRestock;
+	public static ContainerOpenListener containerOpenListener;
 
-	public static boolean database, placementHelperIframe, placementHelperMapArt, placementHelperMapArtAuto, whisperListener, broadcaster;
-	public static boolean cmdExportMapImg, cmdMapArtGroup, keybindMapArtMove, keybindBundleStowOrReverseStow;
-	public static boolean rcHUD, mapHighlightHUD, mapHighlightIFrame, mapHighlightHandledScreen;
-	public static boolean mapartDb, mapartDbContact, totemShowTotalCount, skipTransparentMaps, skipMonoColorMaps;
+	public static boolean placementHelperIframe, placementHelperMapArt, placementHelperMapArtAuto, broadcaster;
+	public static boolean serverJoinListener, serverQuitListener, gameMessageListener;//, gameMessageFilter;
+	public static boolean cmdExportMapImg, cmdMapArtGroup;
+//	public static boolean keybindMapArtMove, keybindMapArtMoveBundle;
 
-	private void loadConfig(){
+	public static boolean mapHighlights, mapHighlightsInGUIs;
+
+	private HashMap<String, String> loadConfig(){
 		//=================================== Parsing config into a map
-		config = new HashMap<>();
+		HashMap<String, String> config = new HashMap<>();
 		final String configContents = FileIO.loadFile(configFilename, getClass().getResourceAsStream("/"+configFilename));
 		String listKey = null, listValue = null;
 		int listDepth = 0;
@@ -140,45 +145,42 @@ once arrangement is found
 			config.put(key, value);
 		}
 		if(listKey != null) LOGGER.error("Unterminated list in ./config/"+configFilename+"!\nkey: "+listKey);
+		return config;
 	}
 
 	@Override public void onInitializeClient(){
-		loadConfig();
-		//=================================== Loading config features
-		HashMap<String, String> remoteMessages = new HashMap<>();
+		HashMap<String, String> config = loadConfig();
+		// Load config enabled features
 		boolean cmdAssignPearl=false,/* cmdExportMapImg=false,*//* cmdMapArtGroup=false,*/ cmdSeen=false, cmdSendAs=false, cmdTimeOnline=false;
-		boolean keybindEbounceTravelHelper=false, keybindRestock=false, inventoryRestockAuto=false,
-				keybindMapArtLoad=false, keybindMapArtCopy=false, /*keybindMapArtMove=false,*/ keybindMapArtBundleStow=false, keybindMapArtBundleStowReverse=false;
-
-		boolean epearlOwners=false, epearlOwnersDbUUID=false, epearlOwnersDbXZ=false;
+		boolean database=false;
+		boolean epearlOwners=false, epearlOwnersByUUID=false, epearlOwnersByXZ=false;
 		boolean mapHighlightTooltip=false;
-		boolean mapMetadataTooltip=false;
-
-		String[] restockBlacklist=null, restockWhitelist=null, restockAutoInvSchemes=null;
-		HashMap<String, KeybindInventoryOrganize> inventoryOrganizationSchemes = new HashMap<>();
-
-		boolean uploadIgnoreList=false;
-		String[] downloadIgnoreLists=null;
-
-		KeybindEjectJunk ejectJunk = null;
-		KeybindInventoryRestock inventoryRestock = null;
+		boolean registerGameMessageFilter=false;
+		boolean inventoryRestockAuto=false;
 
 		//config.forEach((key, value) -> {
 		for(String key : config.keySet()){
-			String value = config.get(key);
-			if(key.startsWith("keybind.chat_msg.")) KeybindsSimple.registerChatKeybind(key.substring(8), value);
-			else if(key.startsWith("keybind.remote_msg.")) remoteMessages.put(key.substring(8), value);
-			else if(key.startsWith("keybind.snap_angle.")) KeybindsSimple.registerSnapAngleKeybind(key.substring(8), value);
-			else if(key.startsWith("keybind.inventory_organize."))
-				inventoryOrganizationSchemes.put(key.substring(27), new KeybindInventoryOrganize(key.substring(8), value.replaceAll("\\s","")));
-			else switch(key){
+			final String value = config.get(key);
+			switch(key){
 				case "database": database = !value.equalsIgnoreCase("false"); break;
-				case "placement_helper.iframes": placementHelperIframe = !value.equalsIgnoreCase("false"); break;
-				case "placement_helper.maparts": placementHelperMapArt = !value.equalsIgnoreCase("false"); break;
-				case "placement_helper.maparts.auto": placementHelperMapArtAuto = !value.equalsIgnoreCase("false"); break;
-				case "whisper_listener": whisperListener = !value.equalsIgnoreCase("false"); break;
+				case "database.epearls": epearlOwners = !value.equalsIgnoreCase("false"); break;
+				case "database.epearls.by_uuid": epearlOwnersByUUID = !value.equalsIgnoreCase("false"); break;
+				case "database.epearls.by_coords": epearlOwnersByXZ = !value.equalsIgnoreCase("false"); break;
+
 				case "broadcaster": broadcaster = !value.equalsIgnoreCase("false"); break;
-				case "enderpearl_owners": epearlOwners = !value.equalsIgnoreCase("false"); break;
+				case "placement_helper.iframe": placementHelperIframe = !value.equalsIgnoreCase("false"); break;
+				case "placement_helper.mapart": placementHelperMapArt = !value.equalsIgnoreCase("false"); break;
+				case "placement_helper.mapart.auto": placementHelperMapArtAuto = !value.equalsIgnoreCase("false"); break;
+				case "listener.server_join": serverJoinListener = !value.equalsIgnoreCase("false"); break;
+				case "listener.server_quit": serverQuitListener = !value.equalsIgnoreCase("false"); break;
+				case "listener.game_message": gameMessageListener = !value.equalsIgnoreCase("false"); break;
+				case "listener.game_message.filter": registerGameMessageFilter = !value.equalsIgnoreCase("false"); break;
+				case "map_highlights": mapHighlights = !value.equalsIgnoreCase("false"); break;
+				case "map_highlights.in_gui": mapHighlightsInGUIs = !value.equalsIgnoreCase("false"); break;
+				case "tooltip.map_highlights": mapHighlightTooltip = !value.equalsIgnoreCase("false"); break;
+				case "tooltip.map_metadata": new TooltipMapLoreMetadata();
+				case "tooltip.repair_cost": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipRepairCost::addRC); break;
+				case "inventory_restock.auto": inventoryRestockAuto = !value.equalsIgnoreCase("false"); break;
 
 				case "command.assignpearl": cmdAssignPearl = !value.equalsIgnoreCase("false"); break;
 				case "command.exportmapimg": cmdExportMapImg = !value.equalsIgnoreCase("false"); break;
@@ -187,79 +189,28 @@ once arrangement is found
 				case "command.sendas": cmdSendAs = !value.equalsIgnoreCase("false"); break;
 				case "command.timeonline": cmdTimeOnline = !value.equalsIgnoreCase("false"); break;
 
-				case "keybind.mapart.copy": keybindMapArtCopy = !value.equalsIgnoreCase("false"); break;
-				case "keybind.mapart.load": keybindMapArtLoad = !value.equalsIgnoreCase("false"); break;
-				case "keybind.mapart.move.bundle": keybindMapArtBundleStow = !value.equalsIgnoreCase("false"); break;
-				case "keybind.mapart.move.bundle.reverse": keybindMapArtBundleStowReverse = !value.equalsIgnoreCase("false"); break;
-				case "keybind.mapart.move.3x9": keybindMapArtMove = !value.equalsIgnoreCase("false"); break;
-				case "keybind.eject_junk_items": if(!value.equalsIgnoreCase("false")) ejectJunk = new KeybindEjectJunk(); break;
 				case "keybind.toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
-//				case "keybind.smart_inventory_craft": if(!value.equalsIgnoreCase("false")) new KeybindSmartInvCraft(); break;
-				case "keybind.inventory_restock": keybindRestock=!value.equalsIgnoreCase("false"); break;
-				case "keybind.inventory_restock.blacklist": if(value.startsWith("[")) restockBlacklist = value.substring(1, value.length()-1).split("\\s*,\\s*"); break;
-				case "keybind.inventory_restock.whitelist": if(value.startsWith("[")) restockWhitelist = value.substring(1, value.length()-1).split("\\s*,\\s*"); break;
-				case "keybind.inventory_restock.auto": inventoryRestockAuto=!value.equalsIgnoreCase("false"); break;
-				case "keybind.inventory_restock.auto.matching_inventory": if(value.startsWith("[")) restockAutoInvSchemes = value.substring(1, value.length()-1).split("\\s*,\\s*"); break;
-				case "keybind.ebounce_travel_helper": keybindEbounceTravelHelper = !value.equalsIgnoreCase("false"); break;
-				case "keybind.aie_travel_helper": if(!value.equalsIgnoreCase("false")) new KeybindAIETravelHelper(); break;
-
-				case "enderpearl_database_by_uuid": epearlOwnersDbUUID = !value.equalsIgnoreCase("false"); break;
-				case "enderpearl_database_by_coords": epearlOwnersDbXZ = !value.equalsIgnoreCase("false"); break;
-
-				case "mapart_database": mapartDb = !value.equalsIgnoreCase("false"); break;
-				case "mapart_database_share_contact": mapartDbContact = !value.equalsIgnoreCase("false"); break;
-				case "track_time_online": if(!value.equalsIgnoreCase("false")) new CommandTimeOnline(); break;
-				case "log_xyz_on_quit": if(!value.equalsIgnoreCase("false")) new LogCoordsOnServerDisconnect(); break;
-				case "database.ignorelist.share": uploadIgnoreList = !value.equalsIgnoreCase("false"); break;
-				case "database.ignorelist.borrow": if(value.startsWith("[")) downloadIgnoreLists = value.substring(1, value.length()-1).split("\\s&,\\s&"); break;
-
-				case "join_messages": if(value.startsWith("[")) new SendOnServerJoin(value.substring(1, value.length()-1).split(",")); break;
-
-//				case "spawner_highlight": if(!value.equalsIgnoreCase("false")) new SpawnerHighlighter(); break;
-				case "totem_total_count": if(!value.equalsIgnoreCase("false")) totemShowTotalCount = !value.equalsIgnoreCase("false"); break;
-				case "repaircost_in_tooltip": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipRepairCost::addRC); break;
-				case "repaircost_in_hotbarhud": rcHUD = !value.equalsIgnoreCase("false"); break;
-				case "map_state_cache": if(!value.equalsIgnoreCase("false")) new MapStateInventoryCacher(); break;
-				case "map_metadata_in_tooltip": mapMetadataTooltip = !value.equalsIgnoreCase("false"); break;
-				case "map_highlight_in_tooltip": mapHighlightTooltip = !value.equalsIgnoreCase("false"); break;
-				case "map_highlight_in_hotbarhud": mapHighlightHUD = !value.equalsIgnoreCase("false"); break;
-				case "map_highlight_in_itemframe": mapHighlightIFrame = !value.equalsIgnoreCase("false"); break;
-				case "map_highlight_in_container_name": mapHighlightHandledScreen = !value.equalsIgnoreCase("false"); break;
-				case "fully_transparent_map_is_filler_item": skipTransparentMaps = !value.equalsIgnoreCase("false"); break;
-				case "highlight_duplicate_monocolor_maps": skipMonoColorMaps = value.equalsIgnoreCase("false"); break;
 				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
-				case "scroll_order": {
-					final String listOfLists = value.replaceAll("\\s","");
-					List<String[]> colorLists = Arrays.stream(listOfLists.substring(2, listOfLists.length()-2).split("\\],\\[")).map(s->s.split(",")).toList();
-					new KeybindHotbarTypeScroller(colorLists);
-					break;
-				}
 				default:
 					LOGGER.warn("Unrecognized config setting: "+key);
 			}
 		}
-		ConfigManager.getInstance().registerConfigHandler(MOD_ID, new Configs());
-		Registry.CONFIG_SCREEN.registerConfigScreenFactory(new ModInfo(MOD_ID, "KeyBound", ConfigGui::new));
-
-		clickUtils = new ClickUtils(Configs.Misc.CLICK_LIMIT_COUNT.getIntegerValue(), Configs.Misc.CLICK_LIMIT_DURATION.getIntegerValue());
+		KeyCallbacks.remakeClickUtils(null);
 		if(database){
-			String fullAddress = Configs.Database.ADDRESS.getStringValue();
-			final int sep = fullAddress.indexOf(':');
-			final String addr;
-			final int port;
-			if(sep == -1){addr = fullAddress; port = RemoteServerSender.DEFAULT_PORT;}
-			else{addr = fullAddress.substring(0, sep).trim(); port = Integer.parseInt(fullAddress.substring(sep+1).trim());}
-			remoteSender = new RemoteServerSender(LOGGER, addr, port,
-					Configs.Database.CLIENT_ID.getIntegerValue(), Configs.Database.CLIENT_KEY.getStringValue(),
-					MiscUtils::getCurrentServerAddressHashCode);
-			MiscUtils.registerRemoteMsgKeybinds(remoteMessages);
+			KeyCallbacks.remakeRemoteServerSender(null);
+			remoteSender.sendBotMessage(Command.PING, /*udp=*/false, /*timeout=*/5000, /*msg=*/new byte[0],
+					msg->LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg))));
+
 			if(epearlOwners){
-				epearlLookup = new EpearlLookup(epearlOwnersDbUUID, epearlOwnersDbXZ);
+				epearlLookup = new EpearlLookup(epearlOwnersByUUID, epearlOwnersByXZ);
 				if(cmdAssignPearl) new CommandAssignPearl();
 			}
-			if(uploadIgnoreList || downloadIgnoreLists != null) new IgnoreListSync2b2t(uploadIgnoreList, downloadIgnoreLists);
 		}
-		if(whisperListener) new WhisperListener();
+		if(serverJoinListener) new ServerJoinListener();
+		if(serverQuitListener) new ServerQuitListener();
+		if(gameMessageListener) new GameMessageListener();
+
+		if(registerGameMessageFilter) gameMessageFilter = new GameMessageFilter();
 		if(placementHelperIframe) new AutoPlaceItemFrames();
 		if(placementHelperMapArt) new MapHandRestock();
 		if(broadcaster) ChatBroadcaster.refreshBroadcast();
@@ -271,30 +222,26 @@ once arrangement is found
 		if(cmdSendAs) new CommandSendAs();
 		if(cmdTimeOnline) new CommandTimeOnline();
 
-		if(keybindMapArtLoad) new KeybindMapLoad();
-		if(keybindMapArtCopy) new KeybindMapCopy();
-		if(keybindMapArtMove) new KeybindMapMove();
-		keybindBundleStowOrReverseStow = keybindMapArtBundleStow || keybindMapArtBundleStowReverse;
-		if(keybindBundleStowOrReverseStow) new KeybindMapMoveBundle(keybindMapArtBundleStow, keybindMapArtBundleStowReverse);
-		if(keybindEbounceTravelHelper) new KeybindEbounceTravelHelper(ejectJunk);
-		if(keybindRestock){
-			inventoryRestock = new KeybindInventoryRestock(restockBlacklist, restockWhitelist);
-			if(inventoryRestockAuto){
-				final KeybindInventoryOrganize[] selectedInvOrganizations = restockAutoInvSchemes == null ? null :
-					Arrays.stream(restockAutoInvSchemes).map(inventoryOrganizationSchemes::get).filter(Objects::nonNull).toArray(KeybindInventoryOrganize[]::new);
-				ClientTickEvents.END_CLIENT_TICK.register(new ContainerOpenListener(inventoryRestock, selectedInvOrganizations)::onUpdateTick);
-			}
+		kbInvRestock = new KeybindInventoryRestock();
+		if(inventoryRestockAuto){
+			containerOpenListener = new ContainerOpenListener();
+			ClientTickEvents.END_CLIENT_TICK.register(containerOpenListener::onUpdateTick);
 		}
 		//new KeybindSpamclick();
 
-		if(mapHighlightTooltip) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors);
-		if(mapHighlightTooltip || mapHighlightHUD || mapHighlightIFrame || mapHighlightHandledScreen){
+		if(mapHighlights){
+			if(mapHighlightTooltip) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors);
 			ClientTickEvents.START_CLIENT_TICK.register(client -> {
 				UpdateInventoryHighlights.onUpdateTick(client);
 				UpdateItemFrameHighlights.onUpdateTick(client);
-				if(mapHighlightHandledScreen/* || mapHighlightTooltip*/) UpdateContainerHighlights.onUpdateTick(client);
+				if(mapHighlightsInGUIs) UpdateContainerHighlights.onUpdateTick(client);
 			});
 		}
-		if(mapMetadataTooltip) new TooltipMapLoreMetadata();
+
+		ConfigManager.getInstance().registerConfigHandler(MOD_ID, new Configs());
+		Registry.CONFIG_SCREEN.registerConfigScreenFactory(new ModInfo(MOD_ID, "KeyBound", ConfigGui::new));
+
+		InputEventHandler.getKeybindManager().registerKeybindProvider(InputHandler.getInstance());
+		KeyCallbacks.init(MinecraftClient.getInstance());
 	}
 }

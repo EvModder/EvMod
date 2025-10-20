@@ -1,8 +1,9 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.apis;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
-import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
+import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.apis.MapRelationUtils.RelatedMapsData;
 import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;

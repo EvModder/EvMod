@@ -2,7 +2,6 @@ package net.evmodder.KeyBound.keybinds;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.AbstractFireBlock;
@@ -31,7 +30,6 @@ import net.minecraft.block.StonecutterBlock;
 import net.minecraft.block.TrapdoorBlock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
@@ -369,22 +367,24 @@ public final class KeybindEbounceTravelHelper{
 		return didBarf;
 	}
 
+	public void toggle(){
+		Main.LOGGER.info("ebounce_travel_helper key pressed");
+		final long ts = System.currentTimeMillis();
+		if(ts-lastPressTs < 200) return;
+		lastPressTs = ts;
+		if(isEnabled || enabledTs != 0 && ts-enabledTs > 200){
+			isEnabled = false;
+			enabledTs = 0;
+			client.player.sendMessage(Text.literal("eBounce Helper: disabled"), true);
+			client.player.sendMessage(Text.literal("eBounce Helper: disabled"), false);
+		}
+		else enabledTs = ts;
+	}
+
 	public KeybindEbounceTravelHelper(KeybindEjectJunk ejectJunk){
 		Main.LOGGER.info("ebounce_travel_helper registered");
 		client = MinecraftClient.getInstance();
-		new Keybind("ebounce_travel_helper", ()->{
-			Main.LOGGER.info("ebounce_travel_helper key pressed");
-			final long ts = System.currentTimeMillis();
-			if(ts-lastPressTs < 200) return;
-			lastPressTs = ts;
-			if(isEnabled || enabledTs != 0 && ts-enabledTs > 200){
-				isEnabled = false;
-				enabledTs = 0;
-				client.player.sendMessage(Text.literal("eBounce Helper: disabled"), true);
-				client.player.sendMessage(Text.literal("eBounce Helper: disabled"), false);
-			}
-			else enabledTs = ts;
-		}, InventoryScreen.class::isInstance, GLFW.GLFW_KEY_A);
+//		new Keybind("ebounce_travel_helper", this::toggle, null, GLFW.GLFW_KEY_A);
 
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
 			if(client.player == null || client.world == null){isEnabled = false; enabledTs = 0; return;}

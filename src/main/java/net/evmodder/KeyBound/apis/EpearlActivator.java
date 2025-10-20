@@ -1,8 +1,9 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.apis;
 
 import java.util.Arrays;
 import java.util.Objects;
 import com.google.common.collect.Streams;
+import net.evmodder.KeyBound.Main;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ButtonBlock;
 import net.minecraft.block.entity.SignBlockEntity;

@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import org.lwjgl.glfw.GLFW;
+import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
@@ -15,7 +15,6 @@ import net.minecraft.client.gui.screen.ingame.AnvilScreen;
 import net.minecraft.client.gui.screen.ingame.CartographyTableScreen;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
@@ -26,15 +25,15 @@ import net.minecraft.util.Identifier;
 
 public final class KeybindInventoryRestock{
 	public static final boolean LEAVE_1 = true;
-	private final boolean IS_WHITELIST;
-	private final Set<Item> itemList;
+	private boolean IS_WHITELIST;
+	private Set<Item> itemList;
 
 //	private final void orEqualsArray(boolean[] source, boolean[] input){
 //		assert source.length == input.length;
 //		for(int i=0; i<source.length; ++i) source[i] |= input[i];
 //	}
 
-	public final void doRestock(KeybindInventoryOrganize[] organizationLayouts){
+	public final void doRestock(List<KeybindInventoryOrganize> organizationLayouts){
 		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("InvRestock cancelled: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -54,7 +53,7 @@ public final class KeybindInventoryRestock{
 
 		final boolean[] doneSlots = new boolean[slots.length];
 //		final boolean[] plannedSlots = new boolean[slots.length];
-		if(organizationLayouts == null || organizationLayouts.length == 0) Arrays.fill(doneSlots, true);
+		if(organizationLayouts == null || organizationLayouts.isEmpty()) Arrays.fill(doneSlots, true);
 		else for(KeybindInventoryOrganize kio : organizationLayouts)
 			/* orEqualsArray(plannedSlots, */kio.checkDoneSlots(slots, doneSlots, /*isInvScreen=*/false)/*)*/;
 
@@ -111,8 +110,8 @@ public final class KeybindInventoryRestock{
 		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("InvRestock: DONE!"));
 	}
 
-	public List<Item> parseItemList(String[] list){
-		return Arrays.stream(list).map(
+	private List<Item> parseItemList(List<String> list){
+		return list.stream().map(
 //				s -> Registries.ITEM.get(Identifier.of(s))
 				s -> {
 					Identifier id = Identifier.of(s);
@@ -121,19 +120,24 @@ public final class KeybindInventoryRestock{
 				}
 		).toList();
 	}
-	public KeybindInventoryRestock(String[] blacklist, String[] whitelist){
-		if(whitelist == null){
+	public void refreshLists(){
+		List<String> blacklist = Configs.Hotkeys.INV_RESTOCK_BLACKLIST.getStrings();
+		List<String> whitelist = Configs.Hotkeys.INV_RESTOCK_BLACKLIST.getStrings();
+		if(whitelist == null || whitelist.isEmpty() || (whitelist.size() == 1 && whitelist.get(0).isBlank())){
 			IS_WHITELIST = false;
 			itemList = blacklist != null ? new HashSet<Item>(parseItemList(blacklist)) : Collections.emptySet();
 		}
 		else{
 			IS_WHITELIST = true;
 			itemList = new HashSet<Item>(parseItemList(whitelist));
-			if(blacklist != null){
+			if(blacklist != null && !blacklist.isEmpty() && !blacklist.get(0).isBlank()){
 				itemList.removeAll(parseItemList(blacklist));
 				Main.LOGGER.warn("InvRestock: BOTH whitelist/blacklist were defined in the config");
 			}
 		}
-		new Keybind("inventory_restock", ()->doRestock(null), s->s instanceof HandledScreen && s instanceof InventoryScreen == false, GLFW.GLFW_KEY_R);
+	}
+	public KeybindInventoryRestock(){
+		refreshLists();
+//		new Keybind("inventory_restock", ()->doRestock(null), s->s instanceof HandledScreen && s instanceof InventoryScreen == false, GLFW.GLFW_KEY_R);
 	}
 }

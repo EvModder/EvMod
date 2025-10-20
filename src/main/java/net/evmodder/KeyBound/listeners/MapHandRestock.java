@@ -8,14 +8,14 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
-import net.evmodder.KeyBound.MapRelationUtils;
-import net.evmodder.KeyBound.MapRelationUtils.RelatedMapsData;
-import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.onTick.AutoPlaceMapArt;
 import net.evmodder.KeyBound.onTick.UpdateInventoryHighlights;
 import net.evmodder.EvLib.Pair;
+import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
-import net.evmodder.KeyBound.MapGroupUtils;
+import net.evmodder.KeyBound.apis.MapGroupUtils;
+import net.evmodder.KeyBound.apis.MapRelationUtils;
+import net.evmodder.KeyBound.apis.MapRelationUtils.RelatedMapsData;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.client.MinecraftClient;
@@ -430,7 +430,7 @@ public final class MapHandRestock{
 		}
 
 		int restockFromSlot = -1;
-		if(Configs.Misc.PLACEMENT_HELPER_MAPART_USE_NAMES.getBooleanValue() && restockFromSlot == -1){
+		if(Configs.Generic.PLACEMENT_HELPER_MAPART_USE_NAMES.getBooleanValue() && restockFromSlot == -1){
 			if(prevName != null){
 				Main.LOGGER.info("MapRestock: finding next map by name: "+prevName);
 				restockFromSlot = getNextSlotByName(slots, prevSlot, player.getWorld());
@@ -438,7 +438,7 @@ public final class MapHandRestock{
 				else if(restockFromSlot < 0) restockFromSlot *= -1;//TODO: remove horrible hack
 			}
 		}
-		if(Configs.Misc.PLACEMENT_HELPER_MAPART_USE_IMAGE.getBooleanValue() && restockFromSlot == -1 && !posData2dForName.containsKey(prevName)){
+		if(Configs.Generic.PLACEMENT_HELPER_MAPART_USE_IMAGE.getBooleanValue() && restockFromSlot == -1 && !posData2dForName.containsKey(prevName)){
 			if(state != null){
 				Main.LOGGER.info("MapRestock: finding next map by img-edge");
 				restockFromSlot = getNextSlotByImage(prevName == null ? slots : ogSlots, prevSlot, player.getWorld());

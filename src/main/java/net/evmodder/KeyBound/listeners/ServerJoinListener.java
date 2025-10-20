@@ -2,25 +2,30 @@ package net.evmodder.KeyBound.listeners;
 
 import java.util.Timer;
 import java.util.TimerTask;
+import net.evmodder.KeyBound.Configs;
+import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.apis.MapStateInventoryCacher;
+import net.evmodder.KeyBound.apis.MiscUtils;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 
-public class SendOnServerJoin{
+public class ServerJoinListener{
 	private final long JOIN_DELAY = 2500l;
 	private long loadedAt/*, joinedAt*/;
 	private double loadedAtX, loadedAtZ;
 	private TimerTask timerTask;
 	private final boolean WAIT_FOR_MOVEMENT = true;
-	public static final int HASHCODE_2B2T = -437714968;//"2b2t.org".hashCode()
 
-	public SendOnServerJoin(String[] messages){
+	public ServerJoinListener(){
 		ClientPlayConnectionEvents.JOIN.register(
 				//ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server
-				(_0, _1, _2) ->
+				(handler, _1, _2) ->
 		{
-			if(_0.getServerInfo() == null) return; // Single-player
-			if(_0.getServerInfo().address.hashCode() != HASHCODE_2B2T) return; // TODO: customize per-server
+			if(MiscUtils.getServerAddressHashCode(handler.getServerInfo()) != Main.HASHCODE_2B2T) return;
+
+			if(Configs.Generic.MAP_STATE_CACHE.getBooleanValue()) MapStateInventoryCacher.loadMapStatesOnJoin();
+
 			if(timerTask != null) timerTask.cancel(); // Restart timer
 
 			//joinedAt = System.currentTimeMillis();
@@ -53,7 +58,7 @@ public class SendOnServerJoin{
 				//Main.LOGGER.info("JOIN_DELAY reached, triggering commands...");
 				//client.player.sendMessage(Text.literal("Sending "+messages.length+" msgs/cmds"), false);
 				ClientPlayNetworkHandler handler = client.getNetworkHandler();
-				for(String msg : messages){
+				for(String msg : Configs.Generic.SEND_ON_SERVER_JOIN.getStrings()){
 					msg = msg.trim();
 					//client.player.sendMessage(Text.literal("Sending "+(msg.startsWith("/")?"cmd":"msg")+": "+msg), false);
 					if(msg.startsWith("/")) handler.sendChatCommand(msg.substring(1));

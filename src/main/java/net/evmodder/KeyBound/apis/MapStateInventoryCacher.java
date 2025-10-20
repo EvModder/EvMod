@@ -1,10 +1,8 @@
-package net.evmodder.KeyBound.listeners;
+package net.evmodder.KeyBound.apis;
 
 import java.util.List;
 import java.util.stream.Stream;
 import net.evmodder.KeyBound.Main;
-import net.evmodder.KeyBound.MapRelationUtils;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
@@ -14,9 +12,9 @@ import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
 
 public class MapStateInventoryCacher{
+	private static List<MapState> mapStatesInInv = null;
 
-	List<MapState> mapStatesInInv = null;
-	private final void saveMapStates(){
+	public static final void saveMapStatesOnQuit(){
 		MinecraftClient client = MinecraftClient.getInstance();
 		mapStatesInInv = MapRelationUtils.getAllNestedItems(
 				Stream.concat(client.player.getInventory().main.stream(), client.player.getEnderChestInventory().heldStacks.stream())
@@ -24,7 +22,7 @@ public class MapStateInventoryCacher{
 			.filter(s -> s.getItem() == Items.FILLED_MAP).map(s -> FilledMapItem.getMapState(s, client.world)).toList();
 	}
 
-	private final boolean loadMapStates(){
+	public static final boolean loadMapStatesOnJoin(){
 		MinecraftClient client = MinecraftClient.getInstance();
 		List<ItemStack> mapItems = MapRelationUtils.getAllNestedItems(
 				Stream.concat(client.player.getInventory().main.stream(), client.player.getEnderChestInventory().heldStacks.stream())
@@ -45,16 +43,5 @@ public class MapStateInventoryCacher{
 			++statesLoaded;
 		}
 		return statesLoaded > 0;
-	}
-
-	public MapStateInventoryCacher(){
-		ClientPlayConnectionEvents.DISCONNECT.register(
-				//ClientPlayNetworkHandler handler, MinecraftClient client
-				(_0, _1) -> saveMapStates()
-			);
-		ClientPlayConnectionEvents.JOIN.register(
-			//ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server
-			(_0, _1, _2) -> loadMapStates()
-		);
 	}
 }

@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
-import net.evmodder.KeyBound.MapGroupUtils;
-import net.evmodder.KeyBound.MiscUtils;
-import net.evmodder.KeyBound.config.Configs;
+import net.evmodder.KeyBound.Configs;
+import net.evmodder.KeyBound.apis.MapGroupUtils;
+import net.evmodder.KeyBound.apis.MiscUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.FilledMapItem;
@@ -30,8 +30,8 @@ public class UpdateItemFrameHighlights{
 
 	public static final boolean isHungMultiplePlaces(UUID colorsId){
 		final var l = iFrameMapGroup.get(colorsId);
-		if(l != null && Configs.Misc.MAX_IFRAME_TRACKING_DIST_SQ > 0){
-			l.removeIf(xyzd -> MinecraftClient.getInstance().player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > Configs.Misc.MAX_IFRAME_TRACKING_DIST_SQ);
+		if(l != null && Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ > 0){
+			l.removeIf(xyzd -> MinecraftClient.getInstance().player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ);
 			if(l.size() == 0) iFrameMapGroup.remove(colorsId);
 		}
 		return l != null && l.size() > 1;
@@ -39,8 +39,8 @@ public class UpdateItemFrameHighlights{
 
 	public static final boolean isInItemFrame(final UUID colorsId){
 		final var l = iFrameMapGroup.get(colorsId);
-		if(l != null && Configs.Misc.MAX_IFRAME_TRACKING_DIST_SQ > 0){
-			l.removeIf(xyzd -> MinecraftClient.getInstance().player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > Configs.Misc.MAX_IFRAME_TRACKING_DIST_SQ);
+		if(l != null && Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ > 0){
+			l.removeIf(xyzd -> MinecraftClient.getInstance().player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ);
 			if(l.size() == 0) iFrameMapGroup.remove(colorsId);
 		}
 		return l != null && l.size() > 0;

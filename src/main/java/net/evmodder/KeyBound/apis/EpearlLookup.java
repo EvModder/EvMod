@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.apis;
 
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -12,6 +12,7 @@ import net.evmodder.EvLib.LoadingCache;
 import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.EvLib.PearlDataClient;
 import net.evmodder.EvLib.TextUtils;
+import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.mixin.AccessorProjectileEntity;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.minecraft.client.MinecraftClient;
@@ -46,7 +47,7 @@ public final class EpearlLookup{
 			DB_FILENAME = dbFilename;
 			DB_FETCH_COMMAND = fetchCommand;
 		}
-		@Override public PearlDataClient load(UUID key){
+		@Override protected PearlDataClient load(UUID key){
 			Main.LOGGER.debug("fetch ownerUUID called for pearlUUID: "+key+" at "+idToPos.get(key));
 			if(Main.remoteSender == null){
 				Main.LOGGER.info("EpearLookup(Fetch): Remote server offline. Returning "+MojangProfileLookup.NAME_U_404);
@@ -160,7 +161,7 @@ public final class EpearlLookup{
 		}, 1L, 10_000L); // Runs every 10s
 	}
 
-	EpearlLookup(boolean uuidDb, boolean coordsDb){
+	public EpearlLookup(boolean uuidDb, boolean coordsDb){
 		USE_DB_UUID = uuidDb; USE_DB_XZ = coordsDb;
 		updateKeyXZ = USE_DB_XZ ? new HashMap<>() : null;
 		if(!USE_DB_UUID && !USE_DB_XZ){idToPos = null; cacheByUUID = cacheByXZ = null; requestStartTimes = null;}

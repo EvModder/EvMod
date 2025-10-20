@@ -7,7 +7,6 @@ import java.util.IdentityHashMap;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
-import org.lwjgl.glfw.GLFW;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
@@ -135,7 +134,7 @@ public final class KeybindMapLoad{
 	private long lastLoad;
 	private final long loadCooldown = 500L;
 	private int clickIndex;
-	private final void loadMapArtFromContainer(){
+	public final void loadMapArtFromContainer(){
 		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapLoad cancelled: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -203,7 +202,7 @@ public final class KeybindMapLoad{
 		);
 	}
 
-	public KeybindMapLoad(){
-		new Keybind("mapart_load", ()->loadMapArtFromContainer(), _0->true, GLFW.GLFW_KEY_E);
-	}
+//	public KeybindMapLoad(){
+//		new Keybind("mapart_load", ()->loadMapArtFromContainer(), _0->true, GLFW.GLFW_KEY_E);
+//	}
 }

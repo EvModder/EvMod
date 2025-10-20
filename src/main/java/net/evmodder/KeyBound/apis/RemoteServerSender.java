@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.apis;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -90,7 +90,7 @@ public final class RemoteServerSender{
 		}
 	}
 
-	RemoteServerSender(Logger logger, String addr, int port, int clientId, String clientKey, Supplier<Integer> serverAddrGetter){
+	public RemoteServerSender(Logger logger, String addr, int port, int clientId, String clientKey, Supplier<Integer> serverAddrGetter){
 		LOGGER = logger;
 		REMOTE_ADDR = addr;
 		PORT = port;
@@ -104,10 +104,6 @@ public final class RemoteServerSender{
 
 		CLIENT_ID = clientId;
 		CLIENT_KEY = clientKey;
-
-		sendBotMessage(Command.PING, /*udp=*/false, /*timeout=*/5000, /*msg=*/new byte[0], msg->{
-			LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg)));
-		});
 	}
 
 	public static void main(String... args) throws IOException{

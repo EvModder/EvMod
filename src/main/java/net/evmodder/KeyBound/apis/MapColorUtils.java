@@ -1,8 +1,9 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.apis;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.stream.IntStream;
+import net.evmodder.KeyBound.Main;
 import net.minecraft.block.MapColor;
 import net.minecraft.block.MapColor.Brightness;
 

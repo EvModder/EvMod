@@ -6,11 +6,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Predicate;
-import net.evmodder.KeyBound.Main;
-import net.evmodder.KeyBound.MapColorUtils;
-import net.evmodder.KeyBound.MapGroupUtils;
-import net.evmodder.KeyBound.MapRelationUtils;
-import net.evmodder.KeyBound.config.Configs;
+import net.evmodder.KeyBound.Configs;
+import net.evmodder.KeyBound.apis.MapColorUtils;
+import net.evmodder.KeyBound.apis.MapGroupUtils;
+import net.evmodder.KeyBound.apis.MapRelationUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.AnvilScreen;
 import net.minecraft.client.gui.screen.ingame.CartographyTableScreen;
@@ -68,6 +67,7 @@ public class UpdateContainerHighlights{
 			inContainerAndInInv.clear();
 			return;
 		}
+		final boolean renderAsterisks = Configs.Visuals.MAP_HIGHLIGHT_CONTAINER_NAME.getBooleanValue();
 
 		final List<ItemStack> items = getAllMapItemsInContainer(hs.getScreenHandler().slots);
 
@@ -75,34 +75,34 @@ public class UpdateContainerHighlights{
 		int currHash = UpdateInventoryHighlights.mapsInInvHash + mapsInContainerHash;
 		if(lastHash == currHash) return;
 		lastHash = currHash;
-//		Main.LOGGER.info("ContainerHighlighter: Clearing cache");
+//		Main.LOGGER.info("ContainerHighlighter: Recomputing cache");
 
 		if(items.isEmpty()) return;
 		final List<MapState> states = items.stream().map(i -> FilledMapItem.getMapState(i, client.world)).filter(Objects::nonNull).toList();
-		final List<UUID> nonTransparentIds = (!Main.skipTransparentMaps ? states.stream() :
+		final List<UUID> nonTransparentIds = (!Configs.Generic.SKIP_TRANSPARENT_MAPS.getBooleanValue() ? states.stream() :
 			states.stream().filter(s -> !MapColorUtils.isTransparentOrStone(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
-		final List<UUID> nonMonoColorIds = (!Main.skipMonoColorMaps ? states.stream() :
+		final List<UUID> nonMonoColorIds = (!Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue() ? states.stream() :
 			states.stream().filter(s -> !MapColorUtils.isMonoColor(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
 
-//		mapsInContainerHash = hs.getScreenHandler().syncId + nonTransparentIds.hashCode() + nonMonoColorIds.hashCode();
-//		int currHash = InventoryHighlightUpdater.mapsInInvHash + mapsInContainerHash;
-//		if(lastHash == currHash) return;
-
-		asterisks.clear();
 		nonTransparentIds.stream().filter(UpdateInventoryHighlights::isInInventory).forEach(inContainerAndInInv::add);
-		if(!inContainerAndInInv.isEmpty()) asterisks.add(Configs.Visuals.MAP_COLOR_IN_INV.getIntegerValue());
-		if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue());
-		if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue());
-		if(items.size() > states.size()) asterisks.add(Configs.Visuals.MAP_COLOR_UNLOADED.getIntegerValue());
-		else if(mixedOnDisplayAndNotOnDisplay(nonTransparentIds)) asterisks.add(Configs.Visuals.MAP_COLOR_IN_IFRAME.getIntegerValue());
+		if(renderAsterisks){
+			asterisks.clear();
+			if(!inContainerAndInInv.isEmpty()) asterisks.add(Configs.Visuals.MAP_COLOR_IN_INV.getIntegerValue());
+			if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue());
+			if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue());
+			if(items.size() > states.size()) asterisks.add(Configs.Visuals.MAP_COLOR_UNLOADED.getIntegerValue());
+			else if(mixedOnDisplayAndNotOnDisplay(nonTransparentIds)) asterisks.add(Configs.Visuals.MAP_COLOR_IN_IFRAME.getIntegerValue());
+		}
 //		if(!nonFillerIds.stream().allMatch(new HashSet<>(nonFillerIds.size())::add)) asterisks.add(Main.MAP_COLOR_MULTI_INV); // Check duplicates within the container
 		duplicatesInContainer.clear();
 		uniqueMapIds.clear();
 		nonMonoColorIds.stream().filter(Predicate.not(uniqueMapIds::add)).forEach(duplicatesInContainer::add);
-		if(!duplicatesInContainer.isEmpty()) asterisks.add(Configs.Visuals.MAP_COLOR_MULTI_INV.getIntegerValue());
-		if(items.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue());
+		if(renderAsterisks){
+			if(!duplicatesInContainer.isEmpty()) asterisks.add(Configs.Visuals.MAP_COLOR_MULTI_INV.getIntegerValue());
+			if(items.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue());
+		}
 
-		if(!asterisks.isEmpty()){
+		if(renderAsterisks && !asterisks.isEmpty()){
 			customTitle = hs.getTitle().copy();
 			asterisks.stream().distinct() // TODO: the "distinct" only exists in case of configurations where 2+ settings share 1 color
 				.forEach(color -> customTitle.append(Text.literal("*").withColor(color).formatted(Formatting.BOLD)));

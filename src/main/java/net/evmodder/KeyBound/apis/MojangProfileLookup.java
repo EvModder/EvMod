@@ -1,9 +1,10 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.apis;
 
 import java.util.UUID;
 import com.mojang.authlib.yggdrasil.ProfileResult;
 import net.evmodder.EvLib.LoadingCache;
 import net.evmodder.EvLib.WebUtils;
+import net.evmodder.KeyBound.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.PlayerListEntry;
@@ -15,7 +16,7 @@ public class MojangProfileLookup{
 	private static final MinecraftClient client = MinecraftClient.getInstance();
 
 	public static final LoadingCache<UUID, String> nameLookup = new LoadingCache<>(NAME_404, NAME_LOADING){
-		@Override public String loadSyncOrNull(UUID key){
+		@Override protected String loadSyncOrNull(UUID key){
 			ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
 			if(networkHandler != null){
 				PlayerListEntry entry = networkHandler.getPlayerListEntry(key);
@@ -23,7 +24,7 @@ public class MojangProfileLookup{
 			}
 			return null;
 		}
-		@Override public String load(UUID key){
+		@Override protected String load(UUID key){
 			//KeyBound.LOGGER.info("oof, web request D:");
 			ProfileResult pr = client.getSessionService().fetchProfile(key, /*requireSecure=*/false);
 			if(pr == null || pr.profile() == null || pr.profile().getName() == null){
@@ -37,7 +38,7 @@ public class MojangProfileLookup{
 		}
 	};
 	public static final LoadingCache<String, UUID> uuidLookup = new LoadingCache<>(UUID_404, UUID_LOADING){
-		@Override public UUID loadSyncOrNull(String key){
+		@Override protected UUID loadSyncOrNull(String key){
 			//KeyBound.LOGGER.info("fetch name called for uuid: "+key);
 			ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
 			if(networkHandler != null){
@@ -47,7 +48,7 @@ public class MojangProfileLookup{
 			}
 			return null;
 		}
-		@Override public UUID load(String key){
+		@Override protected UUID load(String key){
 			String data = WebUtils.getReadURL("https://api.mojang.com/users/profiles/minecraft/"+key);
 			if(data == null) return UUID_404;
 			final int uuidStart = data.indexOf("\"id\":\"")+6;

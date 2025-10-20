@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import org.lwjgl.glfw.GLFW;
 import net.evmodder.EvLib.Pair;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
@@ -21,8 +20,7 @@ import net.minecraft.util.Identifier;
 
 public final class KeybindInventoryOrganize{
 	final boolean CLEAN_UNUSED_HOTBAR_SLOTS = true, RESTOCK_ONLY_1_SLOT_PER_TYPE = true;
-	final List<Pair<Integer, Identifier>> layoutMap;
-	private static boolean isFirstRegistered = true;
+	List<Pair<Integer, Identifier>> layoutMap;
 
 	private String getName(ItemStack stack){
 		return stack == null || stack.isEmpty() ? null : Registries.ITEM.getId(stack.getItem()).getPath();
@@ -383,23 +381,29 @@ public final class KeybindInventoryOrganize{
 				});
 	}
 
-	public KeybindInventoryOrganize(String keybind_name, String layout){
+	public void refreshLayout(List<String> strings){
 		layoutMap =
-		Arrays.stream(layout.substring(1, layout.length()-1).split(","))
+//		Arrays.stream(layout.substring(1, layout.length()-1).split(","))
+		strings.stream()
+		.map(s -> s.replaceAll("\\s", ""))
+		.filter(s -> !s.startsWith("#") && s.indexOf(':') != -1)
 		.map(s -> {
-				int idx = Integer.parseInt(s.substring(0, s.indexOf(':')));
-				String iname = s.substring(s.indexOf(':')+1);
-				Identifier id = Identifier.of(iname);
-				if(!Registries.ITEM.containsId(id)){
-					Main.LOGGER.error("InvOrganize: Unknown item: "+iname);
-					return null;
-				}
-				return new Pair<>(idx, id);
+			final int sep = s.indexOf(':');
+			int slot = Integer.parseInt(s.substring(0, sep));
+			Identifier id = Identifier.of(s.substring(sep+1));
+			if(!Registries.ITEM.containsId(id)){
+				Main.LOGGER.error("InvOrganize: Unknown item: "+s.substring(sep+1));
+				return null;
 			}
-		)
+			return new Pair<>(slot, id);
+		})
 		.filter(p -> p != null)
 		.toList();
-		new Keybind(keybind_name, ()->organizeInventory(false, null), HandledScreen.class::isInstance, isFirstRegistered ? GLFW.GLFW_KEY_E : -1);
-		isFirstRegistered = false;
+	}
+
+	public KeybindInventoryOrganize(List<String> strings){
+		refreshLayout(strings);
+//		new Keybind(keybind_name, ()->organizeInventory(false, null), HandledScreen.class::isInstance, isFirstRegistered ? GLFW.GLFW_KEY_E : -1);
+//		isFirstRegistered = false;
 	}
 }
