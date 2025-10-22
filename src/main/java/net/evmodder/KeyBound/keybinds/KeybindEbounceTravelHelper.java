@@ -33,6 +33,7 @@ import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
@@ -369,6 +370,8 @@ public final class KeybindEbounceTravelHelper{
 
 	public void toggle(){
 		Main.LOGGER.info("ebounce_travel_helper key pressed");
+		ItemStack chestStack = client.player.getInventory().getArmorStack(2);
+		if(chestStack.getItem() != Items.ELYTRA) return;
 		final long ts = System.currentTimeMillis();
 		if(ts-lastPressTs < 200) return;
 		lastPressTs = ts;

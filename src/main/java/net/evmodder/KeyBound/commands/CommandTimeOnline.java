@@ -14,7 +14,7 @@ public class CommandTimeOnline{
 
 		ClientCommandRegistrationCallback.EVENT.register(
 			(dispatcher, _0) -> dispatcher.register(
-				ClientCommandManager.literal("timeonline")
+				ClientCommandManager.literal("timeonline") // TODO: proxy time online?
 				.executes(ctx->{
 					if(joinedServerTimestamp == 0){
 						ctx.getSource().sendFeedback(Text.literal("Time online: -1 (???)"));

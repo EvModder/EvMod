@@ -40,7 +40,7 @@ public abstract class LoadingCache<K, V>{
 		{
 			final V v = loadSyncOrNull(k);
 			if(v != null){
-				assert v != V_LOADING : "loadSyncOrNull() failed to do what its name implies (didn't load, yet didn't return null";
+				assert v != V_LOADING : "loadSyncOrNull() failed to do what its name implies (didn't load, yet didn't return null)";
 				cache.put(k, v);
 				if(callback != null) callback.accept(v);
 				return v;
@@ -50,7 +50,7 @@ public abstract class LoadingCache<K, V>{
 			if(!loading.containsKey(k)){
 				final Thread t = new Thread(()->{
 					final V v = load(k);
-					if(v.equals(V_LOADING)){
+					if(v == null ? V_LOADING == null : v.equals(V_LOADING)){
 						synchronized(loading){if(loading.containsKey(k)) loading.put(k, null);} // null out this Thread so it can be garbage collected
 						return; // Assume the caller will call putIfAbsent() once a value is loaded
 					}

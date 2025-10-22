@@ -128,7 +128,9 @@ public final class EpearlLookup{
 				synchronized(idToPos){ // Really this is just here to synchonize access to FileDBs
 					if(USE_DB_UUID){
 						HashSet<UUID> deletedKeys = FileIO.removeMissingFromClientFile(DB_FILENAME_UUID, playerX, playerY, playerZ, maxDistSq, pearlsSeen1);
-						if(deletedKeys == null) Main.LOGGER.error("!! Delete failed because FileDB is null: "+DB_FILENAME_UUID);
+						if(deletedKeys == null){
+//							Main.LOGGER.error("!! Delete failed because FileDB is null: "+DB_FILENAME_UUID);
+						}
 						else if(!deletedKeys.isEmpty()){
 							Main.LOGGER.error("Num ePearls deleted from FileDB: "+deletedKeys.size()+" (current seen: "+pearlsSeen1+")");
 							for(UUID deletedKey : deletedKeys){
@@ -144,7 +146,9 @@ public final class EpearlLookup{
 					}
 					if(USE_DB_XZ){
 						HashSet<UUID> deletedKeys = FileIO.removeMissingFromClientFile(DB_FILENAME_XZ, playerX, playerY, playerZ, maxDistSq, pearlsSeen1);
-						if(deletedKeys == null) Main.LOGGER.error("!! Delete failed because FileDB is null: "+DB_FILENAME_XZ);
+						if(deletedKeys == null){
+//							Main.LOGGER.error("!! Delete failed because FileDB is null: "+DB_FILENAME_XZ);
+						}
 						else for(UUID deletedKey : deletedKeys){
 							cacheByXZ.remove(deletedKey);
 							Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_XZ, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(deletedKey), msg->{

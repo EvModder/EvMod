@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.EvLib.PacketHelper.MessageReceiver;
-import net.evmodder.EvLib.TextUtils;
 
 public final class RemoteServerSender{
 	public static final int DEFAULT_PORT = 14441;
@@ -50,6 +49,12 @@ public final class RemoteServerSender{
 
 	private final LinkedList<byte[]> tcpPackets, udpPackets;
 	private final LinkedList<MessageReceiver> tcpReceivers, udpReceivers;
+	private final String formatTimeMillis(long latency){
+		// Output: 2s734ms
+//		return TextUtils.formatTime(latency, false, "", 2, new long[]{1000, 1}, new char[]{'s', ' '}).stripTrailing()+"ms";
+		// Output: 2734ms
+		return latency+"ms";
+	}
 	private void sendPacketSequence(final boolean udp, final long timeout){
 		final LinkedList<byte[]> packetList = (udp ? udpPackets : tcpPackets);
 		final LinkedList<MessageReceiver> recvList = (udp ? udpReceivers : tcpReceivers);
@@ -62,8 +67,8 @@ public final class RemoteServerSender{
 			PacketHelper.sendPacket(addrResolved, PORT, udp, timeout, /*waitForReply=*/recv != null, packet, reply->{
 				final long latency = System.currentTimeMillis()-startTs;
 				if(latency >= timeout && reply == null) LOGGER.info("RemoteServerSender "+(udp?"UDP":"TCP")+" request timed out");
-				else LOGGER.info("RMS: got "+(udp?"UDP":"TCP")+" reply (in "+TextUtils.formatTime(latency)+
-						") from RS: "+(reply == null ? "null" : new String(reply)+" ["+reply.length+"]"));
+				else LOGGER.info("RMS: got "+(udp?"UDP":"TCP")+" reply (in "+formatTimeMillis(latency)
+								+") from RS: "+(reply == null ? "null" : new String(reply)+" ["+reply.length+"]"));
 				if(recv != null) recv.receiveMessage(reply);
 				synchronized(packetList){
 					packetList.remove();
