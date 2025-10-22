@@ -5,6 +5,10 @@
 	"keybound.gui.button.hotkeys": "Hotkeys",
 	"keybound.gui.button.database": "Database",
 
+	"keybound.gui.label.tooltip_display.off": "Off",
+	"keybound.gui.label.tooltip_display.on": "On",
+	"keybound.gui.label.tooltip_display.advanced": "Advanced tooltips",
+
 	"keybound.config.generic.name.clickLimitCount": "clickLimitCount",
 	"keybound.config.generic.comment.clickLimitCount": "2b2t will kick you for setning >80 clicks in <80 ticks (Last checked: 2025-10-15)",
 	"keybound.config.generic.name.clickLimitWindow": "clickLimitWindow",

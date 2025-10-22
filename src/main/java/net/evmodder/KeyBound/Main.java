@@ -157,7 +157,7 @@ once arrangement is found
 				case "map_highlights": mapHighlights = !value.equalsIgnoreCase("false"); break;
 				case "map_highlights.in_gui": mapHighlightsInGUIs = !value.equalsIgnoreCase("false"); break;
 				case "tooltip.map_highlights": mapHighlightTooltip = !value.equalsIgnoreCase("false"); break;
-				case "tooltip.map_metadata": new TooltipMapLoreMetadata();
+				case "tooltip.map_metadata": new TooltipMapLoreMetadata(); break;
 				case "tooltip.repair_cost": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipRepairCost::addRC); break;
 				case "inventory_restock.auto": inventoryRestockAuto = !value.equalsIgnoreCase("false"); break;
 

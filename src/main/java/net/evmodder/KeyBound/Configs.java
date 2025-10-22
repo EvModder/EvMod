@@ -108,6 +108,7 @@ public class Configs implements IConfigHandler{
 //		public static final ConfigBoolean DISPLAY_TOTEM_COUNT = new ConfigBoolean("displayTotemCount", true).apply(VISUALS_KEY);
 //		public static final ConfigBoolean SPAWNER_ACTIVATION_HIGHLIGHT = new ConfigBoolean("spawnerActivationHighlight", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean REPAIR_COST_HOTBAR_HUD = new ConfigBoolean("repairCostInHotbarHUD", false).apply(VISUALS_KEY);
+		public static final ConfigOptionList REPAIR_COST_TOOLTIP = new ConfigOptionList("repairCostInHotbarHUD", TooltipDisplayOption.ADVANCED_TOOLTIPS).apply(VISUALS_KEY);
 		public static final ConfigBoolean INVIS_IFRAMES = new ConfigBoolean("invisIFramesMapArt", true).apply(VISUALS_KEY);
 		//InvisIFrameOption {ANY_ITEM, MAPART, PARTIALLY_TRANSPARENT_MAPART}
 //		public static final ConfigOptionList INVIS_IFRAMES = new ConfigOptionList("invisIFrames", InvisIFrameOption.PARTIALLY_TRANSPARENT_MAPART}).apply(GENERIC_KEY);
@@ -146,6 +147,7 @@ public class Configs implements IConfigHandler{
 			List<IConfigBase> availableOptions = new ArrayList<>();
 			availableOptions.addAll(List.of(
 					REPAIR_COST_HOTBAR_HUD,
+					REPAIR_COST_TOOLTIP,
 					INVIS_IFRAMES, INVIS_IFRAMES_SEMI_TRANSPARENT,
 					MAP_HIGHLIGHT_IFRAME, MAP_HIGHLIGHT_TOOLTIP, MAP_HIGHLIGHT_HOTBAR_HUD, MAP_HIGHLIGHT_CONTAINER_NAME,
 

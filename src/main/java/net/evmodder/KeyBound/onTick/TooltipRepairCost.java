@@ -2,6 +2,8 @@ package net.evmodder.KeyBound.onTick;
 
 import java.util.List;
 import net.minecraft.item.Item.TooltipContext;
+import net.evmodder.KeyBound.Configs;
+import net.evmodder.KeyBound.TooltipDisplayOption;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
@@ -10,7 +12,11 @@ import net.minecraft.util.Formatting;
 
 public final class TooltipRepairCost{
 	public static final void addRC(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
-		if(type == TooltipType.BASIC) return;
+		switch((TooltipDisplayOption)Configs.Visuals.REPAIR_COST_TOOLTIP.getOptionListValue()){
+			case OFF: return;
+			case ADVANCED_TOOLTIPS: if(type == TooltipType.BASIC) return;
+			case ON: /*no op*/
+		}
 		final int rc = item.getComponents().get(DataComponentTypes.REPAIR_COST);
 		if(rc == 0 && !item.hasEnchantments() && !item.getComponents().contains(DataComponentTypes.STORED_ENCHANTMENTS)) return;
 		//lines.add(Text.literal("RepairCost: ").formatted(Formatting.GRAY).append(Text.literal(""+rc).formatted(Formatting.GOLD)));
