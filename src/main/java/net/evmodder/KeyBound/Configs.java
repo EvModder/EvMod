@@ -64,6 +64,7 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean LOG_COORDS_ON_SERVER_QUIT = new ConfigBoolean("logCoordsOnServerQuit", true).apply(GENERIC_KEY);
 
 		public static final ConfigBoolean INV_RESTOCK_AUTO = new ConfigBoolean("inventoryRestockAuto", true).apply(GENERIC_KEY);
+//		public static final ConfigOptionList INV_RESTOCK_AUTO_FOR_INV_ORGS = new ConfigOptionList("inventoryRestockAutoForOrganization", RestockAutoLayouts._2).apply(GENERIC_KEY);
 		public static final ConfigStringList INV_RESTOCK_AUTO_FOR_INV_ORGS = new ConfigStringList("inventoryRestockAutoForOrganization", ImmutableList.of("2")).apply(GENERIC_KEY);
 
 		public static final ConfigString TEMP_BROADCAST_ACCOUNT = new ConfigString("broadcastAccount", "AccountNameHere").apply(GENERIC_KEY);
@@ -106,15 +107,16 @@ public class Configs implements IConfigHandler{
 	public static class Visuals{
 //		public static final ConfigBoolean DISPLAY_TOTEM_COUNT = new ConfigBoolean("displayTotemCount", true).apply(VISUALS_KEY);
 //		public static final ConfigBoolean SPAWNER_ACTIVATION_HIGHLIGHT = new ConfigBoolean("spawnerActivationHighlight", true).apply(VISUALS_KEY);
-		public static final ConfigBoolean REPAIR_COST_HOTBAR_HUD = new ConfigBoolean("repairCostInHotbarHUD", true).apply(VISUALS_KEY);
+		public static final ConfigBoolean REPAIR_COST_HOTBAR_HUD = new ConfigBoolean("repairCostInHotbarHUD", false).apply(VISUALS_KEY);
 		public static final ConfigBoolean INVIS_IFRAMES = new ConfigBoolean("invisIFramesMapArt", true).apply(VISUALS_KEY);
+		//InvisIFrameOption {ANY_ITEM, MAPART, PARTIALLY_TRANSPARENT_MAPART}
+//		public static final ConfigOptionList INVIS_IFRAMES = new ConfigOptionList("invisIFrames", InvisIFrameOption.PARTIALLY_TRANSPARENT_MAPART}).apply(GENERIC_KEY);
 		public static final ConfigBoolean INVIS_IFRAMES_SEMI_TRANSPARENT = new ConfigBoolean("invisIFramesMapArtOnlyForSemiTransparent", true).apply(VISUALS_KEY);
 
 		public static final ConfigBoolean MAP_HIGHLIGHT_IFRAME = new ConfigBoolean("mapHighlightInIFrame", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_HIGHLIGHT_TOOLTIP = new ConfigBoolean("mapHighlightInTooltip", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_HIGHLIGHT_HOTBAR_HUD = new ConfigBoolean("mapHighlightInHotbarHUD", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_HIGHLIGHT_CONTAINER_NAME = new ConfigBoolean("mapHighlightInContainerName", true).apply(VISUALS_KEY);
-		// TODO: highlights
 
 		public static final ConfigColor MAP_COLOR_UNLOADED = new ConfigColor("highlightColorUnloaded", "#FFC8AAD2").apply(VISUALS_KEY); // 13150930 Peach
 		public static final ConfigColor MAP_COLOR_UNLOCKED = new ConfigColor("highlightColorUnlocked", "#FFE03165").apply(VISUALS_KEY); // 14692709 Redish
@@ -189,7 +191,7 @@ public class Configs implements IConfigHandler{
   "options.modelPart.right_sleeve": "Right Sleeve",
 		 */
 		public static final ConfigHotkey TOGGLE_CAPE = new ConfigHotkey("toggleCape", ",");
-		public static final ConfigBoolean SYNC_CAPE_WITH_ELYTRA = new ConfigBoolean("syncCapeWithElytra", false).apply(HOTKEYS_KEY);
+		public static final ConfigBoolean SYNC_CAPE_WITH_ELYTRA = new ConfigBoolean("syncCapeWithElytra", true).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TOGGLE_HAT = new ConfigHotkey("toggleHat", "");
 		public static final ConfigHotkey TOGGLE_JACKET = new ConfigHotkey("toggleJacket", "I");
 		public static final ConfigHotkey TOGGLE_SLEEVE_LEFT = new ConfigHotkey("toggleSleeveLeft", "I");

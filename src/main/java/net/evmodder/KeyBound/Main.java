@@ -14,7 +14,6 @@ strictfp
 
 */
 import java.util.HashMap;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import fi.dy.masa.malilib.config.ConfigManager;
@@ -117,45 +116,25 @@ once arrangement is found
 	public static boolean mapHighlights, mapHighlightsInGUIs;
 
 	private HashMap<String, String> loadConfig(){
-		//=================================== Parsing config into a map
 		HashMap<String, String> config = new HashMap<>();
 		final String configContents = FileIO.loadFile(configFilename, getClass().getResourceAsStream("/"+configFilename));
-		String listKey = null, listValue = null;
-		int listDepth = 0;
 		for(String line : configContents.split("\\r?\\n")){
-			if(listKey != null){
-				line = line.trim();
-				listValue += line;
-				listDepth += StringUtils.countMatches(line, '[') - StringUtils.countMatches(line, ']');
-				if(listDepth == 0 && line.charAt(line.length()-1) == ']'){
-					config.put(listKey, listValue);
-					listKey = null;
-				}
-				continue;
-			}
 			final int sep = line.indexOf(':');
 			if(sep == -1) continue;
 			final String key = line.substring(0, sep).trim();
 			final String value = line.substring(sep+1).trim();
 			if(key.isEmpty() || value.isEmpty()) continue;
-			if(value.charAt(0) == '[' && value.charAt(value.length()-1) != ']'){
-				listDepth = StringUtils.countMatches(value, '[') - StringUtils.countMatches(value, ']');
-				listKey = key; listValue = value;
-			}
 			config.put(key, value);
 		}
-		if(listKey != null) LOGGER.error("Unterminated list in ./config/"+configFilename+"!\nkey: "+listKey);
 		return config;
 	}
 
 	@Override public void onInitializeClient(){
 		HashMap<String, String> config = loadConfig();
-		// Load config enabled features
 		boolean cmdAssignPearl=false,/* cmdExportMapImg=false,*//* cmdMapArtGroup=false,*/ cmdSeen=false, cmdSendAs=false, cmdTimeOnline=false;
 		boolean database=false;
 		boolean epearlOwners=false, epearlOwnersByUUID=false, epearlOwnersByXZ=false;
 		boolean mapHighlightTooltip=false;
-		boolean registerGameMessageFilter=false;
 		boolean inventoryRestockAuto=false;
 
 		//config.forEach((key, value) -> {
@@ -173,8 +152,8 @@ once arrangement is found
 				case "placement_helper.mapart.auto": placementHelperMapArtAuto = !value.equalsIgnoreCase("false"); break;
 				case "listener.server_join": serverJoinListener = !value.equalsIgnoreCase("false"); break;
 				case "listener.server_quit": serverQuitListener = !value.equalsIgnoreCase("false"); break;
-				case "listener.game_message": gameMessageListener = !value.equalsIgnoreCase("false"); break;
-				case "listener.game_message.filter": registerGameMessageFilter = !value.equalsIgnoreCase("false"); break;
+				case "listener.game_message.read": if(gameMessageListener = !value.equalsIgnoreCase("false")); break;
+				case "listener.game_message.filter": if(!value.equalsIgnoreCase("false")) gameMessageFilter = new GameMessageFilter(); break;
 				case "map_highlights": mapHighlights = !value.equalsIgnoreCase("false"); break;
 				case "map_highlights.in_gui": mapHighlightsInGUIs = !value.equalsIgnoreCase("false"); break;
 				case "tooltip.map_highlights": mapHighlightTooltip = !value.equalsIgnoreCase("false"); break;
@@ -198,8 +177,8 @@ once arrangement is found
 		KeyCallbacks.remakeClickUtils(null);
 		if(database){
 			KeyCallbacks.remakeRemoteServerSender(null);
-			remoteSender.sendBotMessage(Command.PING, /*udp=*/false, /*timeout=*/5000, /*msg=*/new byte[0],
-					msg->LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg))));
+			remoteSender.sendBotMessage(Command.PING, /*udp=*/false, /*timeout=*/5000, /*msg=*/new byte[0], null);
+//			msg->LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg)))
 
 			if(epearlOwners){
 				epearlLookup = new EpearlLookup(epearlOwnersByUUID, epearlOwnersByXZ);
@@ -208,9 +187,9 @@ once arrangement is found
 		}
 		if(serverJoinListener) new ServerJoinListener();
 		if(serverQuitListener) new ServerQuitListener();
-		if(gameMessageListener) new GameMessageListener();
+//		if(gameMessageListener) new GameMessageListener();
+//		if(registerGameMessageFilter) gameMessageFilter = new GameMessageFilter();
 
-		if(registerGameMessageFilter) gameMessageFilter = new GameMessageFilter();
 		if(placementHelperIframe) new AutoPlaceItemFrames();
 		if(placementHelperMapArt) new MapHandRestock();
 		if(broadcaster) ChatBroadcaster.refreshBroadcast();

@@ -5,7 +5,7 @@ placement_helper.mapart: true
 placement_helper.mapart.auto: true
 listener.server_join: true
 listener.server_quit: true
-listener.game_message: true
+listener.game_message.read: true
 listener.game_message.filter: true
 map_highlights: true
 map_highlights.in_gui: true
