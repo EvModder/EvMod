@@ -3,9 +3,10 @@ package net.evmodder.KeyBound.apis;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.stream.IntStream;
-import net.evmodder.KeyBound.Main;
 import net.minecraft.block.MapColor;
 import net.minecraft.block.MapColor.Brightness;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.Text;
 
 public abstract class MapColorUtils{
 	public static final boolean isTransparentOrStone(final byte[] colors){
@@ -178,10 +179,10 @@ public abstract class MapColorUtils{
 		int numShaded = staircasedPixels.length;
 		int percentStaircase = (int)Math.ceil((numShaded*100d)/(colors.length-numTransparent));
 		if(percentStaircase <= 2 && percentStaircase > 0){
-			Main.LOGGER.info("numShaded: "+numShaded+", numTransparent: "+numTransparent+", percentStaircase: "+percentStaircase);
-//			int j = staircasedPixels[0];
-//			int x = j%128, y = j/128;
-//			MinecraftClient.getInstance().player.sendMessage(Text.literal("First staircased pixel: "+x+","+y+"  (id:"+(colors[j]&0xFF)/4+")"), true);
+//			Main.LOGGER.info("numShaded: "+numShaded+", numTransparent: "+numTransparent+", percentStaircase: "+percentStaircase);
+			int j = staircasedPixels[0];
+			int x = j%128, y = j/128;
+			MinecraftClient.getInstance().player.sendMessage(Text.literal("First staircased pixel: "+x+","+y+"  (id:"+(colors[j]&0xFF)/4+")"), true);
 			double numShadedAtTop = Arrays.stream(staircasedPixels).filter(i -> i<128).count();
 			if(numShadedAtTop/numShaded > .8) noobline = true; // If 80%+ of the shading is only the top row, consider it a noobline
 		}
