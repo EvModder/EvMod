@@ -11,12 +11,7 @@ import net.evmodder.EvLib.TextUtils;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.mixin.AccessorPlayerListHud;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.PlayerListHud;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.scoreboard.ScoreboardDisplaySlot;
-import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.server.ServerLinks.Entry;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
@@ -112,7 +107,7 @@ public class ClickUtils{
 		final Matcher matcher = tpsPattern.matcher(footer);
 		if(!matcher.find()) return TICK_DURATION;
 		final double tps = Double.parseDouble(matcher.group(1));
-		Main.LOGGER.info("ClickUtils: got TPS from playerListTab: "+tps);
+//		Main.LOGGER.info("ClickUtils: got TPS from playerListTab: "+tps);
 		final long msPerTick = (long)Math.ceil(1000d/tps);
 		return Math.max(50, msPerTick); // Even if TPS>20, let's play it safe since packet-limiters might use real-time
 	}

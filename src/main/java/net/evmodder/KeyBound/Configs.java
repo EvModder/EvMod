@@ -26,14 +26,15 @@ public class Configs implements IConfigHandler{
 		public static final ConfigInteger CLICK_LIMIT_DURATION = new ConfigInteger("clickLimitWindow", 96, 1, 72_000).apply(GENERIC_KEY);
 
 		public static final ConfigBoolean MAP_STATE_CACHE = new ConfigBoolean("mapStatePersistentCache", false).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAP_CLICK_MOVE_NEIGHBORS = new ConfigBoolean("mapClickMoveNeighbors", true).apply(GENERIC_KEY);
+		public static final ConfigBooleanHotkeyed MAP_CLICK_MOVE_NEIGHBORS = new ConfigBooleanHotkeyed(
+				"mapClickMoveNeighbors", true, "LEFT_ALT", KeybindSettings.MODIFIER_GUI).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAPART_DATABASE = new ConfigBoolean("sharedMapArtDatabase", true).apply(GENERIC_KEY);
 
 		public static final ConfigInteger MAX_IFRAME_TRACKING_DIST = new ConfigInteger("iFrameTrackingDist", 128, 0, 10_000_000);
 		public static double MAX_IFRAME_TRACKING_DIST_SQ;
 		static{MAX_IFRAME_TRACKING_DIST.setValueChangeCallback(d -> MAX_IFRAME_TRACKING_DIST_SQ=Math.pow(d.getIntegerValue(), 2));}
 
-		public static final ConfigBooleanHotkeyed PLACEMENT_HELPER_IFRAME = new ConfigBooleanHotkeyed("placementHelperIFrame", true, "").apply(GENERIC_KEY);
+		public static final ConfigBooleanHotkeyed PLACEMENT_HELPER_IFRAME = new ConfigBooleanHotkeyed("placementHelperIFrame", false, "").apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_IFRAME_MUST_CONNECT = new ConfigBoolean("placementHelperIFrameMustConnect", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK = new ConfigBoolean("placementHelperIFrameMustMatchBlock", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART = new ConfigBoolean("placementHelperMapArt", true).apply(GENERIC_KEY);
@@ -48,7 +49,7 @@ public class Configs implements IConfigHandler{
 
 		public static final ConfigInteger KEYBIND_BUNDLE_REMOVE_MAX = new ConfigInteger("keybindMapArtBundleRemoveMax", 64, 1, 64).apply(GENERIC_KEY);
 		public static final ConfigBoolean KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS = new ConfigBoolean("keybindMapArtMoveIgnoreAirPockets", false).apply(GENERIC_KEY);
-		public static final ConfigBoolean SKIP_TRANSPARENT_MAPS = new ConfigBoolean("skipTransparentMapsInKeybinds", false).apply(GENERIC_KEY);
+		public static final ConfigBoolean SKIP_TRANSPARENT_MAPS = new ConfigBoolean("skipTransparentMapsInKeybinds", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean SKIP_MONO_COLOR_MAPS = new ConfigBoolean("ignoreMonoColorMapsInHightlights", false).apply(GENERIC_KEY);
 
 		public static final ConfigStringList SCROLL_ORDER = new ConfigStringList("hotbarSlotItemTypeScrollOrder", ImmutableList.of(

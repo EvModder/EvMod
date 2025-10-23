@@ -77,7 +77,7 @@ public final class KeybindMapMove{
 			if(stack.isEmpty()) ++emptySlotsShulk;
 			else if(stack.getItem() == Items.FILLED_MAP){
 				if(isFillerMap(slots, stack, client.world)) continue;
-				if(numInShulk != 0 && !ALLOW_AIR_POCKETS){
+				if(emptySlotsShulk != 0 && !ALLOW_AIR_POCKETS){
 					client.player.sendMessage(Text.literal("MapMove: Air gap between items in shulker currently disabled"), true);
 					client.player.sendMessage(Text.literal("MapMove: Air gap between items in shulker currently disabled"), false);
 					return;
