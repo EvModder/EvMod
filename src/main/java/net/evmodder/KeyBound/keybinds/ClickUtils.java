@@ -5,10 +5,19 @@ import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import net.evmodder.EvLib.TextUtils;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.mixin.AccessorPlayerListHud;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.hud.PlayerListHud;
+import net.minecraft.scoreboard.Scoreboard;
+import net.minecraft.scoreboard.ScoreboardDisplaySlot;
+import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.server.ServerLinks.Entry;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
 public class ClickUtils{
@@ -20,7 +29,7 @@ public class ClickUtils{
 	private long lastTick;
 	private final int OUTTA_CLICKS_COLOR = 15764490, SYNC_ID_CHANGED_COLOR = 16733525;
 	private final double C_PER_T;
-	public static final long TICK_DURATION = 51l; // LOL!! TODO: estimate base off TPS/ping
+	public static long TICK_DURATION = 51l; // LOL!! TODO: estimate base off TPS/ping
 
 	public ClickUtils(final int MAX_CLICKS, int FOR_TICKS){
 		if(MAX_CLICKS >= 100_000 || MAX_CLICKS <= 0){
@@ -39,31 +48,47 @@ public class ClickUtils{
 		this.MAX_CLICKS = MAX_CLICKS;
 		C_PER_T = (double)MAX_CLICKS/(double)FOR_TICKS;
 		tickDurationArr = new int[FOR_TICKS];
-		lastTick = System.currentTimeMillis()/TICK_DURATION;
+//		lastTick = System.currentTimeMillis()/TICK_DURATION; // Get recomputed by calcAvailableClicks() anyway
 	}
+
+//	private long getPing(){
+//		ServerInfo serverInfo = MinecraftClient.getInstance().getCurrentServerEntry();
+//		return serverInfo == null ? 0 : serverInfo.ping; 
+//	}
 
 	public int calcAvailableClicks(){
 		if(tickDurationArr == null) return 0;
 		final long curTick = System.currentTimeMillis()/TICK_DURATION;
-		if(curTick - lastTick >= tickDurationArr.length){
-			lastTick = curTick;
-			Arrays.fill(tickDurationArr, 0);
-			sumClicksInDuration = 0;
-		}
-		while(lastTick != curTick){
-			if(++tickDurIndex == tickDurationArr.length) tickDurIndex = 0;
-			sumClicksInDuration -= tickDurationArr[tickDurIndex];
-			tickDurationArr[tickDurIndex] = 0;
-			++lastTick;
+		if(curTick != lastTick){
+//			final long pingTicks = (long)Math.ceil(getPing()/(double)TICK_DURATION);
+			if(curTick - lastTick >= tickDurationArr.length){
+				lastTick = curTick;
+				Arrays.fill(tickDurationArr, 0);
+				sumClicksInDuration = 0;
+			}
+			while(lastTick != curTick){
+				if(++tickDurIndex == tickDurationArr.length) tickDurIndex = 0;
+				sumClicksInDuration -= tickDurationArr[tickDurIndex];
+				tickDurationArr[tickDurIndex] = 0;
+				++lastTick;
+			}
 		}
 		return MAX_CLICKS - sumClicksInDuration;
 	}
-	public void addClick(SlotActionType type){
+	public void addClick(SlotActionType type){ // TODO: friend MixinClientPlayerInteractionManager?
 		assert type != null; //TODO: type is unused
 		if(tickDurationArr == null) return;
 //		calcAvailableClicks(); // TODO: anywhere addClick() is called, calcAvailableClicks() MUST be called immediately before
 		++tickDurationArr[tickDurIndex];
 		++sumClicksInDuration;
+	}
+
+	private void adjustTickRate(long msPerTick){
+		// If TPS is degrading, don't clear old tick data (TODO: this isn't a perfect solution by any means)
+		if(msPerTick > TICK_DURATION) lastTick = System.currentTimeMillis()/TICK_DURATION;
+		else calcAvailableClicks();
+		TICK_DURATION = msPerTick;
+		lastTick = System.currentTimeMillis()/TICK_DURATION;
 	}
 
 	private int calcRemainingTicks(int clicksToExecute){
@@ -78,25 +103,43 @@ public class ClickUtils{
 		return ticksLeft;
 	}
 
+	final Pattern tpsPattern = Pattern.compile("(\\d{1,2}(?:\\.\\d+))\\s?tps", Pattern.CASE_INSENSITIVE);
+	private long /*getTPS*/getMillisPerTick(MinecraftClient client){
+		final AccessorPlayerListHud playerListHudAccessor = (AccessorPlayerListHud)client.inGameHud.getPlayerListHud();
+		final MutableText text = Text.empty(); playerListHudAccessor.getFooter().withoutStyle().forEach(text::append);
+		final String footer = TextUtils.stripColorAndFormats(text.getString());
+		//§819.90 tps — 692 players online — 92 ping
+		final Matcher matcher = tpsPattern.matcher(footer);
+		if(!matcher.find()) return TICK_DURATION;
+		final double tps = Double.parseDouble(matcher.group(1));
+		Main.LOGGER.info("ClickUtils: got TPS from playerListTab: "+tps);
+		final long msPerTick = (long)Math.ceil(1000d/tps);
+		return Math.max(50, msPerTick); // Even if TPS>20, let's play it safe since packet-limiters might use real-time
+	}
+
 	private boolean waitedForClicks, clickOpOngoing;
 	public final boolean hasOngoingClicks(){return clickOpOngoing;}
 	public final void executeClicks(Queue<ClickEvent> clicks, Function<ClickEvent, Boolean> canProceed, Runnable onComplete){
+		final MinecraftClient client = MinecraftClient.getInstance();
 		if(clickOpOngoing){
 			Main.LOGGER.warn("executeClicks() already has an ongoing operation");
-			MinecraftClient.getInstance().player.sendMessage(Text.literal("Clicks cancelled: current operation needs to finish before starting a new one"), true);
+			client.player.sendMessage(Text.literal("Clicks cancelled: current operation needs to finish before starting a new one"), true);
 			onComplete.run();
 			return;
 		}
-		final int syncId = MinecraftClient.getInstance().player.currentScreenHandler.syncId;
+		final int syncId = client.player.currentScreenHandler.syncId;
 		if(clicks.isEmpty()){
 			Main.LOGGER.warn("executeClicks() called with an empty ClickEvent list");
 			onComplete.run();
 			return;
 		}
+
+		final long msPerTick = getMillisPerTick(client);
+		if(msPerTick != TICK_DURATION) adjustTickRate(msPerTick);
+
 		waitedForClicks = false;
 		clickOpOngoing = true;
 		new Timer().schedule(new TimerTask(){@Override public void run(){
-			final MinecraftClient client = MinecraftClient.getInstance();
 			if(client.player == null){
 				Main.LOGGER.error("executeClicks() failed due to null player! num clicks in arr: "+sumClicksInDuration);
 				cancel(); clickOpOngoing=false; onComplete.run(); return;
@@ -138,7 +181,7 @@ public class ClickUtils{
 				client.player.sendMessage(Text.literal("Waiting for available clicks... ("+clicks.size()//+"c"
 						+(msLeft > 1000 ? ", ~"+TextUtils.formatTime(msLeft) : "")+")").withColor(OUTTA_CLICKS_COLOR), true);
 			});
-		}}, 1l, 23l);//51l = just over a tick
+		}}, 1l, 23l);//51l = just over a tick, 23l=just under half a tick
 	}
 
 

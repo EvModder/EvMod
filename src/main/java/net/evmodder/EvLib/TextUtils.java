@@ -39,4 +39,18 @@ public class TextUtils{
 			.append(units[units.length-1]).toString();
 		else return builder.substring(0, builder.length()-sep.length()); // cut off trailing sep
 	}
+
+	private static final char COLOR_CHAR = '§';
+	public static String stripColorsOnly(String str, char altColorChar){
+		return str.replaceAll(altColorChar+"(?:(?:x(?:"+altColorChar+"[0-9a-fA-F]){6})|[0-9a-fA-FrR])", "");
+	}
+	public static String stripColorsOnly(String str){return stripColorsOnly(str, COLOR_CHAR);}
+	public static String stripFormatsOnly(String str, char altColorChar){
+		return str.replaceAll(altColorChar+"[k-oK-O]", "");
+	}
+	public static String stripFormatsOnly(String str){return stripFormatsOnly(str, COLOR_CHAR);}
+	public static String stripColorAndFormats(String str, char altColorChar){
+		return stripColorsOnly(stripFormatsOnly(str, altColorChar), altColorChar);
+	}
+	public static String stripColorAndFormats(String str){return stripColorAndFormats(str, COLOR_CHAR);}
 }
