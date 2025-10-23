@@ -211,22 +211,24 @@ public class CommandMapArtGroup{
 			final HashSet<UUID> loadedMaps = MapGroupUtils.getLoadedMaps(source.getWorld());
 			if(loadedMaps.isEmpty()){
 				source.sendError(Text.literal("No maps found").copy().withColor(ERROR_COLOR));
-				return 1;
+				if(cmd == Command.CREATE) return 1;
 			}
-			for(UUID uuid : loadedMaps) mapsInGroup.add(uuid);
-			if(mapsInGroup.size() == oldSize){
+			else if(!mapsInGroup.addAll(loadedMaps)/*mapsInGroup.size() == oldSize*/){
+				assert mapsInGroup.size() == oldSize;
 				source.sendError(Text.literal("No new maps found for group '"+newActiveGroup+"'").copy().withColor(DONE_COLOR));
-				return 1;
+				if(cmd == Command.CREATE) return 1;
 			}
-			for(UUID uuid : MapGroupUtils.getLoadedMaps(source.getWorld())) mapsInGroup.add(uuid);
-			final ByteBuffer bb = ByteBuffer.allocate(mapsInGroup.size()*16);
-			for(UUID uuid : mapsInGroup) bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
-			if(FILE_PATH.endsWith("/") && !new File(FileIO.DIR+FILE_PATH).exists()) new File(FileIO.DIR+FILE_PATH).mkdir();
-			FileIO.saveFileBytes(FILE_PATH+groups[0], bb.array());
-			source.sendFeedback(Text.literal((cmd == Command.CREATE ? "Created group" : "Expanded") + " '"+groups[0]
-					+"' (ids: "+ (oldSize==0 ? "" : oldSize+"\u2192") + mapsInGroup.size()+")"
-					+(newActiveGroup.equals(activeGroupName) ? "" : " and set as active.")
-					).copy().withColor(CREATE_COLOR));
+			else{
+				assert mapsInGroup.size() > oldSize;
+				final ByteBuffer bb = ByteBuffer.allocate(mapsInGroup.size()*16);
+				for(UUID uuid : mapsInGroup) bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
+				if(FILE_PATH.endsWith("/") && !new File(FileIO.DIR+FILE_PATH).exists()) new File(FileIO.DIR+FILE_PATH).mkdir();
+				FileIO.saveFileBytes(FILE_PATH+groups[0], bb.array());
+				source.sendFeedback(Text.literal((cmd == Command.CREATE ? "Created group" : "Expanded") + " '"+groups[0]
+						+"' (ids: "+ (oldSize==0 ? "" : oldSize+"\u2192") + mapsInGroup.size()+")"
+						+(newActiveGroup.equals(activeGroupName) ? "" : " and set as active.")
+						).copy().withColor(CREATE_COLOR));
+			}
 		}
 		else if(newActiveGroup.equals(activeGroupName)){
 			if(activeGroup.equals(mapsInGroup)){
