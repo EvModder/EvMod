@@ -14,6 +14,8 @@ import net.minecraft.block.BlockState;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
+import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -117,9 +119,21 @@ public class AutoPlaceItemFrames{
 
 			// Do the clicky-clicky
 			BlockPos bp = closestValidPlacement.get();
-			Vec3d blockHit = getPlaceAgainstSurface(bp);
-			BlockHitResult hitResult = new BlockHitResult(blockHit, dir, bp, /*insideBlock=*/false);
-			client.interactionManager.interactBlock(client.player, hand, hitResult);
+			if(Configs.Generic.PLACEMENT_HELPER_IFRAME_HIT_VECTOR.getBooleanValue()){
+				Vec3d blockHit = getPlaceAgainstSurface(bp);
+				BlockHitResult hitResult = new BlockHitResult(blockHit, dir, bp, /*insideBlock=*/false);
+				client.interactionManager.interactBlock(client.player, hand, hitResult);
+//				client.player.swingHand(Hand.MAIN_HAND, false);
+//				client.getNetworkHandler().sendPacket(new HandSwingC2SPacket(hand));
+			}
+			else{
+				BlockHitResult hitResult = new BlockHitResult(Vec3d.ofCenter(bp), Direction.DOWN, bp, /*insideBlock=*/true);
+				client.interactionManager.interactBlock(client.player, hand, hitResult);
+				// Airplace, basically
+				client.player.swingHand(Hand.MAIN_HAND, false);
+				client.getNetworkHandler().sendPacket(new HandSwingC2SPacket(hand));
+				client.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ORIGIN, Direction.DOWN));
+			}
 		};
 		ClientTickEvents.END_CLIENT_TICK.register(etl);
 

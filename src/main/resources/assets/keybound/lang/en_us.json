@@ -43,6 +43,7 @@
 	"keybound.config.generic.comment.ignoreMonoColorMapsInHightlights": "Ignore Monocolor maps in highlights (they are almost always highlighted as duplicates)",
 
 	"keybound.config.generic.name.placementHelperIFrame": "iFramePlacementHelper",
+	"keybound.config.generic.name.placementHelperRaycast": "iFramePlacementHelperRaycast",
 	"keybound.config.generic.name.placementHelperIFrameMustConnect": "iFramePlacementHelperMustConnect",
 	"keybound.config.generic.name.placementHelperIFrameMustMatchBlock": "iFramePlacementHelperMustMatchBlock",
 	"keybound.config.generic.name.placementHelperMapArt": "mapartPlacementHelper",
