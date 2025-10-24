@@ -108,6 +108,7 @@ once arrangement is found
 	public static KeybindInventoryRestock kbInvRestock;
 	public static ContainerOpenListener containerOpenListener;
 
+	public static boolean mapArtFeaturesOnly = true; ////////////////// TODO: ewww
 	public static boolean placementHelperIframe, placementHelperMapArt, placementHelperMapArtAuto, broadcaster;
 	public static boolean serverJoinListener, serverQuitListener, gameMessageListener;//, gameMessageFilter;
 	public static boolean cmdExportMapImg, cmdMapArtGroup;
@@ -143,6 +144,7 @@ once arrangement is found
 			switch(key){
 				case "database": database = !value.equalsIgnoreCase("false"); break;
 				case "epearl_owners": epearlOwners = !value.equalsIgnoreCase("false"); break;
+				case "mapart_features_only": mapArtFeaturesOnly = !value.equalsIgnoreCase("false"); break;///////////
 
 				case "broadcaster": broadcaster = !value.equalsIgnoreCase("false"); break;
 				case "placement_helper.iframe": placementHelperIframe = !value.equalsIgnoreCase("false"); break;

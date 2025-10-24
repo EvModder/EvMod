@@ -89,13 +89,13 @@ public class Configs implements IConfigHandler{
 //			if(Main.keybindMapArtMove)
 				availableOptions.add(KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS);
 
-			availableOptions.add(SCROLL_ORDER);
+			if(!Main.mapArtFeaturesOnly) availableOptions.add(SCROLL_ORDER);
 //			if(Main.keybindMapArtMove || Main.keybindMapArtMoveBundle)
 				availableOptions.add(SKIP_TRANSPARENT_MAPS);
 			if(Main.mapHighlights) availableOptions.add(SKIP_MONO_COLOR_MAPS);
 			if(Main.serverJoinListener) availableOptions.add(SEND_ON_SERVER_JOIN);
 			if(Main.serverQuitListener) availableOptions.add(LOG_COORDS_ON_SERVER_QUIT);
-			availableOptions.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
+			if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
 			if(Main.broadcaster) availableOptions.addAll(List.of(TEMP_BROADCAST_ACCOUNT, TEMP_BROADCAST_TIMESTAMP, TEMP_BROADCAST_MSGS));
 			return availableOptions;
 		}
@@ -109,7 +109,8 @@ public class Configs implements IConfigHandler{
 //		public static final ConfigBoolean DISPLAY_TOTEM_COUNT = new ConfigBoolean("displayTotemCount", true).apply(VISUALS_KEY);
 //		public static final ConfigBoolean SPAWNER_ACTIVATION_HIGHLIGHT = new ConfigBoolean("spawnerActivationHighlight", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean REPAIR_COST_HOTBAR_HUD = new ConfigBoolean("repairCostInHotbarHUD", false).apply(VISUALS_KEY);
-		public static final ConfigOptionList REPAIR_COST_TOOLTIP = new ConfigOptionList("repairCostInHotbarHUD", TooltipDisplayOption.ADVANCED_TOOLTIPS).apply(VISUALS_KEY);
+		public static final ConfigOptionList REPAIR_COST_TOOLTIP = new ConfigOptionList("repairCostTooltip",
+				Main.mapArtFeaturesOnly ? TooltipDisplayOption.OFF : TooltipDisplayOption.ADVANCED_TOOLTIPS).apply(VISUALS_KEY);
 		public static final ConfigBoolean INVIS_IFRAMES = new ConfigBoolean("invisIFramesMapArt", true).apply(VISUALS_KEY);
 		//InvisIFrameOption {ANY_ITEM, MAPART, PARTIALLY_TRANSPARENT_MAPART}
 //		public static final ConfigOptionList INVIS_IFRAMES = new ConfigOptionList("invisIFrames", InvisIFrameOption.PARTIALLY_TRANSPARENT_MAPART}).apply(GENERIC_KEY);
@@ -146,9 +147,8 @@ public class Configs implements IConfigHandler{
 
 		public static final List<IConfigBase> getOptions(){
 			List<IConfigBase> availableOptions = new ArrayList<>();
+			if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(REPAIR_COST_HOTBAR_HUD, REPAIR_COST_TOOLTIP));
 			availableOptions.addAll(List.of(
-					REPAIR_COST_HOTBAR_HUD,
-					REPAIR_COST_TOOLTIP,
 					INVIS_IFRAMES, INVIS_IFRAMES_SEMI_TRANSPARENT,
 					MAP_HIGHLIGHT_IFRAME, MAP_HIGHLIGHT_TOOLTIP, MAP_HIGHLIGHT_HOTBAR_HUD, MAP_HIGHLIGHT_CONTAINER_NAME,
 
@@ -193,24 +193,28 @@ public class Configs implements IConfigHandler{
   "options.modelPart.right_pants_leg": "Right Pants Leg",
   "options.modelPart.right_sleeve": "Right Sleeve",
 		 */
-		public static final ConfigHotkey TOGGLE_CAPE = new ConfigHotkey("toggleCape", ",");
+		public static final ConfigHotkey TOGGLE_CAPE = new ConfigHotkey("toggleCape", Main.mapArtFeaturesOnly ? "" : ",");
 		public static final ConfigBoolean SYNC_CAPE_WITH_ELYTRA = new ConfigBoolean("syncCapeWithElytra", true).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TOGGLE_HAT = new ConfigHotkey("toggleHat", "");
-		public static final ConfigHotkey TOGGLE_JACKET = new ConfigHotkey("toggleJacket", "I");
-		public static final ConfigHotkey TOGGLE_SLEEVE_LEFT = new ConfigHotkey("toggleSleeveLeft", "I");
-		public static final ConfigHotkey TOGGLE_SLEEVE_RIGHT = new ConfigHotkey("toggleSleeveRight", "I");
-		public static final ConfigHotkey TOGGLE_PANTS_LEG_LEFT = new ConfigHotkey("togglePantsLegLeft", "I");
-		public static final ConfigHotkey TOGGLE_PANTS_LEG_RIGHT = new ConfigHotkey("togglePantsLegRight", "I");
+		public static final ConfigHotkey TOGGLE_JACKET = new ConfigHotkey("toggleJacket", Main.mapArtFeaturesOnly ? "" : "I");
+		public static final ConfigHotkey TOGGLE_SLEEVE_LEFT = new ConfigHotkey("toggleSleeveLeft", Main.mapArtFeaturesOnly ? "" : "I");
+		public static final ConfigHotkey TOGGLE_SLEEVE_RIGHT = new ConfigHotkey("toggleSleeveRight", Main.mapArtFeaturesOnly ? "" : "I");
+		public static final ConfigHotkey TOGGLE_PANTS_LEG_LEFT = new ConfigHotkey("togglePantsLegLeft", Main.mapArtFeaturesOnly ? "" : "I");
+		public static final ConfigHotkey TOGGLE_PANTS_LEG_RIGHT = new ConfigHotkey("togglePantsLegRight",Main.mapArtFeaturesOnly ? "" : "I");
 
-		public static final ConfigBooleanHotkeyed AIE_TRAVEL_HELPER = new ConfigBooleanHotkeyed("automaticInfiniteElytraTravelHelper", false, ";", KeybindSettings.NOCANCEL).apply(HOTKEYS_KEY);
-		public static final ConfigBooleanHotkeyed EBOUNCE_TRAVEL_HELPER = new ConfigBooleanHotkeyed("eBounceTravelHelper", false, "a", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
-		public static final ConfigHotkey EJECT_JUNK_ITEMS = new ConfigHotkey("ejectJunkItems", "R", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
+		public static final ConfigBooleanHotkeyed AIE_TRAVEL_HELPER = new ConfigBooleanHotkeyed("automaticInfiniteElytraTravelHelper", false,
+				Main.mapArtFeaturesOnly ? "" : ";", KeybindSettings.NOCANCEL).apply(HOTKEYS_KEY);
+		public static final ConfigBooleanHotkeyed EBOUNCE_TRAVEL_HELPER = new ConfigBooleanHotkeyed("eBounceTravelHelper", false,
+				Main.mapArtFeaturesOnly ? "" : "a", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
+		public static final ConfigHotkey EJECT_JUNK_ITEMS = new ConfigHotkey("ejectJunkItems",
+				Main.mapArtFeaturesOnly ? "" : "R", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
 //		public static final ConfigHotkey SMART_SPACEBAR_CRAFTING = new ConfigHotkey("smartInventoryReCrafting", " ").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey HOTBAR_TYPE_INCR = new ConfigHotkey("hotbarSlotItemTypeIncrement", "").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey HOTBAR_TYPE_DECR = new ConfigHotkey("hotbarSlotItemTypeDecrement", "").apply(HOTKEYS_KEY);
 		//TODO: HOTBAR_TYPE_SCROLLER
 
-		public static final ConfigHotkey INV_RESTOCK = new ConfigHotkey("inventoryRestock", "R", KeybindSettings.GUI).apply(HOTKEYS_KEY);
+		public static final ConfigHotkey INV_RESTOCK = new ConfigHotkey("inventoryRestock",
+				Main.mapArtFeaturesOnly ? "" : "R", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigStringList INV_RESTOCK_BLACKLIST = new ConfigStringList("inventoryRestockBlacklist", ImmutableList.of(
 //				"ender_chest", "filled_map"
 		)).apply(HOTKEYS_KEY);
@@ -251,7 +255,8 @@ public class Configs implements IConfigHandler{
 				"# Fill extra hotbar slots with crystals",
 				"36:end_crystal", "37:end_crystal", "38:end_crystal", "39:end_crystal", "40:end_crystal", "41:end_crystal", "42:end_crystal"
 		)).apply(HOTKEYS_KEY);
-		public static final ConfigHotkey TRIGGER_INV_ORGANIZE_1 = new ConfigHotkey("triggerInventoryOrganize1", "E", KeybindSettings.GUI).apply(HOTKEYS_KEY);
+		public static final ConfigHotkey TRIGGER_INV_ORGANIZE_1 = new ConfigHotkey("triggerInventoryOrganize1",
+				Main.mapArtFeaturesOnly ? "" : "E", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigStringList INV_ORGANIZE_2 = new ConfigStringList("inventoryOrganize2", ImmutableList.of(
 				"# Armor",
 				"5:carved_pumpkin",
@@ -280,7 +285,8 @@ public class Configs implements IConfigHandler{
 		public static final ConfigString CHAT_MSG_2 = new ConfigString("chatMessage2", "/home").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TRIGGER_CHAT_MSG_2 = new ConfigHotkey("triggerChatMessage2", "").apply(HOTKEYS_KEY);
 		public static final ConfigString CHAT_MSG_3 = new ConfigString("chatMessage3", "/cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost").apply(HOTKEYS_KEY);
-		public static final ConfigHotkey TRIGGER_CHAT_MSG_3 = new ConfigHotkey("triggerChatMessage3", "Z").apply(HOTKEYS_KEY);
+		public static final ConfigHotkey TRIGGER_CHAT_MSG_3 = new ConfigHotkey("triggerChatMessage3",
+				Main.mapArtFeaturesOnly ? "" : "Z").apply(HOTKEYS_KEY);
 
 		public static final ConfigString REMOTE_MSG_1 = new ConfigString("remoteMessage1", "EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TRIGGER_REMOTE_MSG_1 = new ConfigHotkey("triggerRemoteMessage1", "").apply(HOTKEYS_KEY);
@@ -300,7 +306,9 @@ public class Configs implements IConfigHandler{
 			List<IConfigBase> availableOptions = new ArrayList<>();
 			availableOptions.addAll(List.of(
 					OPEN_CONFIG_GUI,
-					MAP_COPY, MAP_LOAD, MAP_MOVE, MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE,
+					MAP_COPY, MAP_LOAD, MAP_MOVE, MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE
+			));
+			if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(
 					TOGGLE_CAPE, SYNC_CAPE_WITH_ELYTRA,
 					TOGGLE_HAT, TOGGLE_JACKET, TOGGLE_SLEEVE_LEFT, TOGGLE_SLEEVE_RIGHT, TOGGLE_PANTS_LEG_LEFT, TOGGLE_PANTS_LEG_RIGHT,
 					AIE_TRAVEL_HELPER,
@@ -321,7 +329,7 @@ public class Configs implements IConfigHandler{
 					REMOTE_MSG_2, TRIGGER_REMOTE_MSG_2,
 					REMOTE_MSG_3, TRIGGER_REMOTE_MSG_3
 			));
-			availableOptions.addAll(List.of(
+			if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(
 					SNAP_ANGLE_YAW_1, SNAP_ANGLE_PITCH_1, TRIGGER_SNAP_ANGLE_1,
 					SNAP_ANGLE_YAW_2, SNAP_ANGLE_PITCH_2, TRIGGER_SNAP_ANGLE_2
 			));
@@ -335,9 +343,9 @@ public class Configs implements IConfigHandler{
 		public static final ConfigInteger CLIENT_ID = new ConfigInteger("clientId", 1, 0, 1000000).apply(DATABASE_KEY);
 		public static final ConfigString CLIENT_KEY = new ConfigString("clientKey", "some_unique_key").apply(DATABASE_KEY);
 		public static final ConfigString ADDRESS = new ConfigString("address", "evmodder.net:14441").apply(DATABASE_KEY);
-		public static final ConfigBoolean SHARE_MAPART = new ConfigBoolean("shareMapArt", true).apply(GENERIC_KEY); //TODO: implement
-		public static final ConfigBoolean EPEARL_OWNERS_BY_UUID = new ConfigBoolean("epearlDatabaseUUID", true).apply(GENERIC_KEY);
-		public static final ConfigBoolean EPEARL_OWNERS_BY_XZ = new ConfigBoolean("epearlDatabaseXZ", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean SHARE_MAPART = new ConfigBoolean("shareMapArt", Main.remoteSender != null).apply(DATABASE_KEY); //TODO: implement
+		public static final ConfigBoolean EPEARL_OWNERS_BY_UUID = new ConfigBoolean("epearlDatabaseUUID", Main.remoteSender != null).apply(DATABASE_KEY);
+		public static final ConfigBoolean EPEARL_OWNERS_BY_XZ = new ConfigBoolean("epearlDatabaseXZ", false).apply(DATABASE_KEY);
 		//public static final ConfigBoolean SHARE_EPEARL_OWNERS = new ConfigBoolean("shareMapArt", true).apply(GENERIC_KEY); //TODO: implement
 		public static final ConfigBoolean SHARE_IGNORES = new ConfigBoolean("shareIgnoreList", false).apply(DATABASE_KEY);
 		public static final ConfigStringList BORROW_IGNORES = new ConfigStringList("borrowIgnoreLists", ImmutableList.of(

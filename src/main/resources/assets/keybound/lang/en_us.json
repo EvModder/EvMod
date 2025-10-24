@@ -55,7 +55,7 @@
 	"keybound.config.generic.comment.placementHelperMapArt": "MapArt Placement Helper",
 	"keybound.config.generic.comment.placementHelperMapArtUseNames": "Predict-next-map using map name",
 	"keybound.config.generic.comment.placementHelperMapArtUseImage": "Predict-next-map using map image",
-	"keybound.config.generic.comment.placementHelperMapArtAutoPlace": "Predict-next-map using map image",
+	"keybound.config.generic.comment.placementHelperMapArtAutoPlace": "Auto-place ids for a mapart from your inventory",
 
 	"keybound.config.generic.name.hotbarSlotItemTypeScrollOrder": "hotbarSlotItemTypeScrollOrder",
 	"keybound.config.generic.name.broadcastAccount": "broadcastAccount",
@@ -64,6 +64,7 @@
 
 	"keybound.config.visuals.name.displayTotemCount": "displayTotemCount",
 	"keybound.config.visuals.name.repairCostInHotbarHUD": "repairCostInHotbarHUD",
+	"keybound.config.visuals.name.repairCostTooltip": "repairCostTooltip",
 	"keybound.config.visuals.name.invisIFramesMapArt": "invisIFramesMapArt",
 	"keybound.config.visuals.name.invisIFramesMapArtOnlyForSemiTransparent": "invisIFramesMapArtOnlyForSemiTransparent",
 	"keybound.config.visuals.name.mapHighlightInIFrame": "mapHighlightInIFrame",
@@ -162,5 +163,5 @@
 	"keybound.config.database.comment.epearlDatabaseUUID": "Participate in [Epearl.Id->Owner] database",
 	"keybound.config.database.comment.epearlDatabaseXZ": "Participate in [Epearl.X,Z->Owner] database",
 	"keybound.config.database.comment.shareIgnoreList": "Share your /ignorehard list with the database",
-	"keybound.config.database.comment.borrowIgnoreLists": "Apply /ignorehard lists from other players in the database (doesn't affect your own list)",
+	"keybound.config.database.comment.borrowIgnoreLists": "Apply /ignorehard lists from other players in the database (doesn't affect your own list)"
 }
