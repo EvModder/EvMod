@@ -1,6 +1,7 @@
 package net.evmodder.KeyBound.keybinds;
 
 import net.evmodder.EvLib.TextUtils;
+import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.text.Text;
@@ -11,8 +12,7 @@ import net.minecraft.item.Items;
 import net.minecraft.screen.slot.SlotActionType;
 
 public final class KeybindAIETravelHelper{
-	private boolean isEnabled;
-	private final MinecraftClient client;
+//	private boolean isEnabled;
 	private int unsafeDur = 20, kickDur = 5, unsafeYinEnd = 60, kickYinEnd = 40; // TODO: put all these in config
 	private final long SAFE_KICK_DELAY = 10_000l;
 	private long enabledTs, stoppedFlyingTs;
@@ -20,39 +20,17 @@ public final class KeybindAIETravelHelper{
 	private final float safePitchUpper = -1, safePitchLower = -10, setSafePitch = -5;
 	private float lastPitch;
 	private double lastY;
+	private MinecraftClient client;
 
 	private final int getElytraDur(ItemStack stack){
 		return stack.getItem() == Items.ELYTRA ? stack.getMaxDamage() - stack.getDamage() : -1;
 	}
 
-	public void toggle(){
-		if(!isEnabled){
-			if(client.player == null || client.world == null) return;
-			if(!client.player.isGliding()){client.player.sendMessage(Text.literal("You need to be flying first"), true); return;}
-			enabledTs = System.currentTimeMillis();
-			lastY = client.player.getY();
-		}
-		isEnabled = !isEnabled;
-		client.player.sendMessage(Text.literal("AutomaticInfiniteElytra Travel Helper: "+(isEnabled ? "enabled" : "disabled")), true);
-	}
-
-	//242-170, 251-183, 267-195
-	//72, 68, 72
-
 	@SuppressWarnings("unused")
-	public KeybindAIETravelHelper(){
-		assert kickYinEnd < unsafeYinEnd;
-		assert kickDur < unsafeDur;
-		assert kickDur >= 0 && unsafeDur < 432;
-		assert kickYinEnd >= -64 && unsafeYinEnd < 256;
-		assert safePitchLower < setSafePitch && setSafePitch < safePitchUpper;
-		client = MinecraftClient.getInstance();
-
-//		new Keybind("aie_travel_helper", this::toggle, null, GLFW.GLFW_KEY_SEMICOLON);
-
+	private void registerClientTickListener(){
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
-			if(!isEnabled) return;
-			if(client.player == null || client.world == null){isEnabled = false; return;}
+			if(!Configs.Hotkeys.AIE_TRAVEL_HELPER.getBooleanValue()) return;
+			if(client.player == null || client.world == null){Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false); return;}
 
 			ItemStack chestStack = client.player.getInventory().getArmorStack(2);
 //			//Identifier chestItemId = Registries.ITEM.getId(chestStack.getItem()); // Not really needed thanks to 
@@ -83,7 +61,7 @@ public final class KeybindAIETravelHelper{
 				}
 				Main.LOGGER.warn("Disconnecting player: "+(goingDownInEnd?"FALLING!":"no longer flying")+", y="+y+", dur="+dur);
 				client.world.disconnect();
-				isEnabled = false;
+//				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false); // Will be done automatically once client.world == null
 			}
 
 			if(atUnsafeY || tooLowDur){
@@ -116,10 +94,41 @@ public final class KeybindAIETravelHelper{
 				}
 				Main.LOGGER.warn("Disconnecting player: y="+y+", dur="+dur);
 				client.world.disconnect();
-				isEnabled = false;
+//				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false); // Will be done automatically once client.world == null
 			}
 			lastPitch = client.player.getPitch();
 			lastY = client.player.getY();
 		});
+	}
+
+	public void toggle(){
+//		Main.LOGGER.info("aie_travel_helper key pressed");
+		if(client == null){
+			Main.LOGGER.info("aie_travel_helper registered");
+			client = MinecraftClient.getInstance();
+			registerClientTickListener();
+		}
+		final boolean isEnabled = Configs.Hotkeys.AIE_TRAVEL_HELPER.getBooleanValue();
+		if(!isEnabled){
+			if(client.player == null || client.world == null) return;
+			if(!client.player.isGliding()){client.player.sendMessage(Text.literal("You need to be flying first"), true); return;}
+			enabledTs = System.currentTimeMillis();
+			lastY = client.player.getY();
+		}
+		Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(!isEnabled);
+		client.player.sendMessage(Text.literal("AutomaticInfiniteElytra Travel Helper: "+(isEnabled ? "disabled" : "enabled")), true);
+	}
+
+	//242-170, 251-183, 267-195
+	//72, 68, 72
+
+	public KeybindAIETravelHelper(){
+		assert kickYinEnd < unsafeYinEnd;
+		assert kickDur < unsafeDur;
+		assert kickDur >= 0 && unsafeDur < 432;
+		assert kickYinEnd >= -64 && unsafeYinEnd < 256;
+		assert safePitchLower < setSafePitch && setSafePitch < safePitchUpper;
+
+//		new Keybind("aie_travel_helper", this::toggle, null, GLFW.GLFW_KEY_SEMICOLON);
 	}
 }

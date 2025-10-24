@@ -89,6 +89,8 @@ public class KeyCallbacks{
 
 		keybindCallback(Configs.Hotkeys.AIE_TRAVEL_HELPER, null, kbAIE::toggle);
 		keybindCallback(Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER, null, kbEbounce::toggle);
+		Configs.Hotkeys.AIE_TRAVEL_HELPER.setValueChangeCallback(_0->kbAIE.toggle());
+		Configs.Hotkeys.AIE_TRAVEL_HELPER.setValueChangeCallback(_0->kbEbounce.toggle());
 		keybindCallback(Configs.Hotkeys.EJECT_JUNK_ITEMS, s->s==null || s instanceof HandledScreen, kbej::ejectJunkItems);
 		keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_INCR, null, ()->kbHbScroll.scrollHotbarSlot(true));
 		keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_DECR, null, ()->kbHbScroll.scrollHotbarSlot(false));

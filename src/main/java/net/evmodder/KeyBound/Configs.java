@@ -25,16 +25,17 @@ public class Configs implements IConfigHandler{
 		public static final ConfigInteger CLICK_LIMIT_COUNT = new ConfigInteger("clickLimitCount", 79, 0, 100_000).apply(GENERIC_KEY);
 		public static final ConfigInteger CLICK_LIMIT_DURATION = new ConfigInteger("clickLimitWindow", 96, 1, 72_000).apply(GENERIC_KEY);
 
-		public static final ConfigBoolean MAP_STATE_CACHE = new ConfigBoolean("mapStatePersistentCache", false).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAP_STATE_CACHE = new ConfigBoolean("mapStatePersistentCache", true).apply(GENERIC_KEY);
 		public static final ConfigBooleanHotkeyed MAP_CLICK_MOVE_NEIGHBORS = new ConfigBooleanHotkeyed(
 				"mapClickMoveNeighbors", true, "LEFT_ALT", KeybindSettings.MODIFIER_GUI).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAPART_DATABASE = new ConfigBoolean("sharedMapArtDatabase", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAPART_DATABASE = new ConfigBoolean("sharedMapArtDatabase", false).apply(GENERIC_KEY); //TODO: implement
 
 		public static final ConfigInteger MAX_IFRAME_TRACKING_DIST = new ConfigInteger("iFrameTrackingDist", 128, 0, 10_000_000);
 		public static double MAX_IFRAME_TRACKING_DIST_SQ;
 		static{MAX_IFRAME_TRACKING_DIST.setValueChangeCallback(d -> MAX_IFRAME_TRACKING_DIST_SQ=Math.pow(d.getIntegerValue(), 2));}
 
 		public static final ConfigBooleanHotkeyed PLACEMENT_HELPER_IFRAME = new ConfigBooleanHotkeyed("placementHelperIFrame", false, "").apply(GENERIC_KEY);
+		public static final ConfigBoolean PLACEMENT_HELPER_IFRAME_HIT_VECTOR = new ConfigBoolean("placementHelperIFrameRaycast", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_IFRAME_MUST_CONNECT = new ConfigBoolean("placementHelperIFrameMustConnect", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK = new ConfigBoolean("placementHelperIFrameMustMatchBlock", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART = new ConfigBoolean("placementHelperMapArt", true).apply(GENERIC_KEY);
@@ -202,8 +203,8 @@ public class Configs implements IConfigHandler{
 		public static final ConfigHotkey TOGGLE_PANTS_LEG_LEFT = new ConfigHotkey("togglePantsLegLeft", "I");
 		public static final ConfigHotkey TOGGLE_PANTS_LEG_RIGHT = new ConfigHotkey("togglePantsLegRight", "I");
 
-		public static final ConfigHotkey AIE_TRAVEL_HELPER = new ConfigHotkey("automaticInfiniteElytraTravelHelper", ";").apply(HOTKEYS_KEY);
-		public static final ConfigHotkey EBOUNCE_TRAVEL_HELPER = new ConfigHotkey("eBounceTravelHelper", "a", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
+		public static final ConfigBooleanHotkeyed AIE_TRAVEL_HELPER = new ConfigBooleanHotkeyed("automaticInfiniteElytraTravelHelper", false, ";", KeybindSettings.NOCANCEL).apply(HOTKEYS_KEY);
+		public static final ConfigBooleanHotkeyed EBOUNCE_TRAVEL_HELPER = new ConfigBooleanHotkeyed("eBounceTravelHelper", false, "a", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey EJECT_JUNK_ITEMS = new ConfigHotkey("ejectJunkItems", "R", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
 //		public static final ConfigHotkey SMART_SPACEBAR_CRAFTING = new ConfigHotkey("smartInventoryReCrafting", " ").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey HOTBAR_TYPE_INCR = new ConfigHotkey("hotbarSlotItemTypeIncrement", "").apply(HOTKEYS_KEY);

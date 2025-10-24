@@ -2,6 +2,7 @@ package net.evmodder.KeyBound.keybinds;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.AbstractFireBlock;
@@ -50,9 +51,10 @@ import net.minecraft.world.World;
 
 public final class KeybindEbounceTravelHelper{
 	private boolean isEnabled;
-	private final MinecraftClient client;
 	private long enabledTs, lastPressTs, targetY;
 	private final long ENABLE_DELAY = 1500l;
+	private MinecraftClient client;
+	private KeybindEjectJunk ejectJunk;
 
 	private boolean hasRightClickFunction(Block block) {
 		return block instanceof CraftingTableBlock
@@ -368,33 +370,14 @@ public final class KeybindEbounceTravelHelper{
 		return didBarf;
 	}
 
-	public void toggle(){
-		Main.LOGGER.info("ebounce_travel_helper key pressed");
-		ItemStack chestStack = client.player.getInventory().getArmorStack(2);
-		if(chestStack.getItem() != Items.ELYTRA) return;
-		final long ts = System.currentTimeMillis();
-		if(ts-lastPressTs < 200) return;
-		lastPressTs = ts;
-		if(isEnabled || enabledTs != 0 && ts-enabledTs > 200){
-			isEnabled = false;
-			enabledTs = 0;
-			client.player.sendMessage(Text.literal("eBounce Helper: disabled"), true);
-			client.player.sendMessage(Text.literal("eBounce Helper: disabled"), false);
-		}
-		else enabledTs = ts;
-	}
-
-	public KeybindEbounceTravelHelper(KeybindEjectJunk ejectJunk){
-		Main.LOGGER.info("ebounce_travel_helper registered");
-		client = MinecraftClient.getInstance();
-//		new Keybind("ebounce_travel_helper", this::toggle, null, GLFW.GLFW_KEY_A);
-
+	private void registerClientTickListener(){
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
 			if(client.player == null || client.world == null){isEnabled = false; enabledTs = 0; return;}
 			if(enabledTs != 0){
 				final long timeSinceEnabled = System.currentTimeMillis() - enabledTs;
 				if(timeSinceEnabled > ENABLE_DELAY){
 					isEnabled = true;
+					Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setBooleanValue(true); // May already be true
 					targetY = Long.MIN_VALUE;
 					enabledTs = 0;
 					client.player.sendMessage(Text.literal("eBounce Helper: enabled"), true);
@@ -433,5 +416,32 @@ public final class KeybindEbounceTravelHelper{
 //				Main.LOGGER.info("Tossed trash");
 			}
 		});
+	}
+
+	public void toggle(){
+//		Main.LOGGER.info("ebounce_travel_helper key pressed");
+		if(client == null){
+			Main.LOGGER.info("ebounce_travel_helper registered");
+			client = MinecraftClient.getInstance();
+			registerClientTickListener();
+		}
+		ItemStack chestStack = client.player.getInventory().getArmorStack(2);
+		if(chestStack.getItem() != Items.ELYTRA) return;
+		final long ts = System.currentTimeMillis();
+		if(ts-lastPressTs < 200) return;
+		lastPressTs = ts;
+		if(isEnabled || Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.getBooleanValue() || (enabledTs != 0 && ts-enabledTs > 200)){
+			Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setBooleanValue(false);
+			isEnabled = false;
+			enabledTs = 0;
+			client.player.sendMessage(Text.literal("eBounce Helper: disabled"), true);
+			client.player.sendMessage(Text.literal("eBounce Helper: disabled"), false);
+		}
+		else enabledTs = ts;
+	}
+
+	public KeybindEbounceTravelHelper(KeybindEjectJunk ejectJunk){
+		this.ejectJunk = ejectJunk;
+//		new Keybind("ebounce_travel_helper", this::toggle, null, GLFW.GLFW_KEY_A);
 	}
 }
