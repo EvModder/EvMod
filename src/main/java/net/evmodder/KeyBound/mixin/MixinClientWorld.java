@@ -48,7 +48,7 @@ abstract class MixinClientWorld{
 
 	@Inject(method="putClientsideMapState", at=@At("HEAD"))
 	private void e(MapIdComponent id, MapState state, CallbackInfo ci){
-		if(!Configs.Generic.MAPART_DATABASE.getBooleanValue()) return;
+		if(!Configs.Database.SHARE_MAPART.getBooleanValue()) return;
 		if(!state.locked) return; // TODO: supporting unlocked maps could waste a LOT of disk with 1-pixel changes while building
 		final String addr = client != null && client.getCurrentServerEntry() != null ? client.getCurrentServerEntry().address : null;
 		if(addr == null) return;

@@ -14,10 +14,8 @@ tooltip.map_metadata: true
 tooltip.repair_cost: true
 inventory_restock.auto: true
 broadcaster: true
+epearl_owners: true
 database: true
-database.epearls: true
-database.epearls.by_uuid: true
-database.epearls.by_coords: false
 
 command.assignpearl: true
 command.exportmapimg: true

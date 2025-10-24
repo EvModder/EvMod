@@ -15,16 +15,17 @@ public class ServerJoinListener{
 	private long loadedAt/*, joinedAt*/;
 	private double loadedAtX, loadedAtZ;
 	private TimerTask timerTask;
-	private final boolean WAIT_FOR_MOVEMENT = true;
+	private final boolean WAIT_FOR_MOVEMENT = true; // TODO: put these into config
 
 	public ServerJoinListener(){
 		ClientPlayConnectionEvents.JOIN.register(
 				//ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server
 				(handler, _1, _2) ->
 		{
-			if(MiscUtils.getServerAddressHashCode(handler.getServerInfo()) != Main.HASHCODE_2B2T) return;
+			final int currServerHashCode = MiscUtils.getServerAddressHashCode(handler.getServerInfo());
+			if(Configs.Generic.MAP_STATE_CACHE.getBooleanValue()) MapStateInventoryCacher.loadMapStatesOnJoin(currServerHashCode);
 
-			if(Configs.Generic.MAP_STATE_CACHE.getBooleanValue()) MapStateInventoryCacher.loadMapStatesOnJoin();
+			if(currServerHashCode != Main.HASHCODE_2B2T) return;
 
 			if(timerTask != null) timerTask.cancel(); // Restart timer
 
@@ -55,7 +56,7 @@ public class ServerJoinListener{
 				//Main.LOGGER.info("Player movement detected, checking JOIN_DELAY");
 				if(System.currentTimeMillis() - loadedAt < JOIN_DELAY) return;
 
-				//Main.LOGGER.info("JOIN_DELAY reached, triggering commands...");
+				Main.LOGGER.info("JOIN_DELAY reached, triggering commands... ("+Configs.Generic.SEND_ON_SERVER_JOIN.getStrings().size()+")");
 				//client.player.sendMessage(Text.literal("Sending "+messages.length+" msgs/cmds"), false);
 				ClientPlayNetworkHandler handler = client.getNetworkHandler();
 				for(String msg : Configs.Generic.SEND_ON_SERVER_JOIN.getStrings()){

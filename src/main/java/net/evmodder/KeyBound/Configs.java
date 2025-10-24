@@ -28,7 +28,6 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean MAP_STATE_CACHE = new ConfigBoolean("mapStatePersistentCache", true).apply(GENERIC_KEY);
 		public static final ConfigBooleanHotkeyed MAP_CLICK_MOVE_NEIGHBORS = new ConfigBooleanHotkeyed(
 				"mapClickMoveNeighbors", true, "LEFT_ALT", KeybindSettings.MODIFIER_GUI).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAPART_DATABASE = new ConfigBoolean("sharedMapArtDatabase", false).apply(GENERIC_KEY); //TODO: implement
 
 		public static final ConfigInteger MAX_IFRAME_TRACKING_DIST = new ConfigInteger("iFrameTrackingDist", 128, 0, 10_000_000);
 		public static double MAX_IFRAME_TRACKING_DIST_SQ;
@@ -76,7 +75,7 @@ public class Configs implements IConfigHandler{
 		public static final List<IConfigBase> getOptions(){
 			List<IConfigBase> availableOptions = new ArrayList<>();
 			availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, MAP_CLICK_MOVE_NEIGHBORS));
-			if(Main.remoteSender != null) availableOptions.add(MAPART_DATABASE);
+			if(Main.serverJoinListener && Main.serverQuitListener) availableOptions.add(MAP_STATE_CACHE);
 			if(Main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME,
 					PLACEMENT_HELPER_IFRAME_MUST_CONNECT, PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK));
 			if(Main.placementHelperMapArt){
@@ -336,6 +335,10 @@ public class Configs implements IConfigHandler{
 		public static final ConfigInteger CLIENT_ID = new ConfigInteger("clientId", 1, 0, 1000000).apply(DATABASE_KEY);
 		public static final ConfigString CLIENT_KEY = new ConfigString("clientKey", "some_unique_key").apply(DATABASE_KEY);
 		public static final ConfigString ADDRESS = new ConfigString("address", "evmodder.net:14441").apply(DATABASE_KEY);
+		public static final ConfigBoolean SHARE_MAPART = new ConfigBoolean("shareMapArt", true).apply(GENERIC_KEY); //TODO: implement
+		public static final ConfigBoolean EPEARL_OWNERS_BY_UUID = new ConfigBoolean("epearlDatabaseUUID", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean EPEARL_OWNERS_BY_XZ = new ConfigBoolean("epearlDatabaseXZ", true).apply(GENERIC_KEY);
+		//public static final ConfigBoolean SHARE_EPEARL_OWNERS = new ConfigBoolean("shareMapArt", true).apply(GENERIC_KEY); //TODO: implement
 		public static final ConfigBoolean SHARE_IGNORES = new ConfigBoolean("shareIgnoreList", false).apply(DATABASE_KEY);
 		public static final ConfigStringList BORROW_IGNORES = new ConfigStringList("borrowIgnoreLists", ImmutableList.of(
 				"34471e8d-d0c5-47b9-b8e1-b5b9472affa4",
@@ -344,7 +347,8 @@ public class Configs implements IConfigHandler{
 
 		public static final List<IConfigBase> getOptions(){
 			List<IConfigBase> availableOptions = new ArrayList<>();
-			availableOptions.addAll(List.of(CLIENT_ID, CLIENT_KEY, ADDRESS));
+			availableOptions.addAll(List.of(CLIENT_ID, CLIENT_KEY, ADDRESS, SHARE_MAPART));
+			if(Main.epearlLookup != null) availableOptions.addAll(List.of(EPEARL_OWNERS_BY_UUID, EPEARL_OWNERS_BY_XZ));
 			if(Main.gameMessageListener) availableOptions.add(SHARE_IGNORES);
 			if(Main.gameMessageFilter != null) availableOptions.add(BORROW_IGNORES);
 			return availableOptions;

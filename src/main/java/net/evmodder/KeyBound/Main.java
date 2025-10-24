@@ -133,7 +133,7 @@ once arrangement is found
 		HashMap<String, String> config = loadConfig();
 		boolean cmdAssignPearl=false,/* cmdExportMapImg=false,*//* cmdMapArtGroup=false,*/ cmdSeen=false, cmdSendAs=false, cmdTimeOnline=false;
 		boolean database=false;
-		boolean epearlOwners=false, epearlOwnersByUUID=false, epearlOwnersByXZ=false;
+		boolean epearlOwners=false;
 		boolean mapHighlightTooltip=false;
 		boolean inventoryRestockAuto=false;
 
@@ -142,9 +142,7 @@ once arrangement is found
 			final String value = config.get(key);
 			switch(key){
 				case "database": database = !value.equalsIgnoreCase("false"); break;
-				case "database.epearls": epearlOwners = !value.equalsIgnoreCase("false"); break;
-				case "database.epearls.by_uuid": epearlOwnersByUUID = !value.equalsIgnoreCase("false"); break;
-				case "database.epearls.by_coords": epearlOwnersByXZ = !value.equalsIgnoreCase("false"); break;
+				case "epearl_owners": epearlOwners = !value.equalsIgnoreCase("false"); break;
 
 				case "broadcaster": broadcaster = !value.equalsIgnoreCase("false"); break;
 				case "placement_helper.iframe": placementHelperIframe = !value.equalsIgnoreCase("false"); break;
@@ -179,11 +177,10 @@ once arrangement is found
 			KeyCallbacks.remakeRemoteServerSender(null);
 			remoteSender.sendBotMessage(Command.PING, /*udp=*/false, /*timeout=*/5000, /*msg=*/new byte[0], null);
 //			msg->LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg)))
-
-			if(epearlOwners){
-				epearlLookup = new EpearlLookup(epearlOwnersByUUID, epearlOwnersByXZ);
-				if(cmdAssignPearl) new CommandAssignPearl();
-			}
+		}
+		if(epearlOwners){
+			epearlLookup = new EpearlLookup(); // MUST be instantiated AFTER remoteSender
+			if(cmdAssignPearl) new CommandAssignPearl();
 		}
 		if(serverJoinListener) new ServerJoinListener();
 		if(serverQuitListener) new ServerQuitListener();

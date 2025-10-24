@@ -20,6 +20,9 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 
 public class CommandAssignPearl{
+	public static final class Friend{private Friend(){}}
+	private static final Friend friend = new Friend();
+
 	private boolean isLookingAt(Entity entity, Entity player){
 		Vec3d vec3d = player.getRotationVec(1.0F).normalize();
 		Vec3d vec3d2 = new Vec3d(entity.getX() - player.getX(), entity.getEyeY() - player.getEyeY(), entity.getZ() - player.getZ());
@@ -55,16 +58,19 @@ public class CommandAssignPearl{
 				return;
 			}
 //			ctx.getSource().sendFeedback(Text.literal("Sending DB update for epearl: "+key+" -> "+uuid));
-			Main.remoteSender.sendBotMessage(cmd, /*udp=*/true, /*timeout=*/3000, PacketHelper.toByteArray(key, uuid), (reply)->{
-				if(reply != null && reply.length == 1){
-					if(reply[0] == -1/*aka (byte)255*/) ctx.getSource().sendFeedback(Text.literal("Added pearl owner to remote DB!").withColor(16755200));
-					else ctx.getSource().sendError(Text.literal("Remote DB already contains pearl owner").withColor(16755200));
-
-					final PearlDataClient pdc = new PearlDataClient(uuid, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
-					Main.epearlLookup.assignPearlOwner_FriendCommandAssignPearl(key, pdc, cmd);
-				}
-				else ctx.getSource().sendError(Text.literal("Unexpected response from RMS for "+cmd+": "+reply).withColor(16733525));
-			});
+			final PearlDataClient pdc = new PearlDataClient(uuid, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
+			if(Main.remoteSender == null) Main.epearlLookup.assignPearlOwner(friend, key, pdc, cmd);
+			else{
+				Main.remoteSender.sendBotMessage(cmd, /*udp=*/true, /*timeout=*/3000, PacketHelper.toByteArray(key, uuid), (reply)->{
+					if(reply != null && reply.length == 1){
+						if(reply[0] == -1/*aka (byte)255*/) ctx.getSource().sendFeedback(Text.literal("Added pearl owner to remote DB!").withColor(16755200));
+						else ctx.getSource().sendError(Text.literal("Remote DB already contains pearl owner").withColor(16755200));
+	
+						Main.epearlLookup.assignPearlOwner(friend, key, pdc, cmd);
+					}
+					else ctx.getSource().sendError(Text.literal("Unexpected response from RMS for "+cmd+": "+reply).withColor(16733525));
+				});
+			}
 		});
 		return 1;
 	}

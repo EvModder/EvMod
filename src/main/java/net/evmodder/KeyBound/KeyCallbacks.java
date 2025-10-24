@@ -57,6 +57,8 @@ public class KeyCallbacks{
 		Configs.Database.CLIENT_ID.setValueChangeCallback(KeyCallbacks::remakeRemoteServerSender);
 		Configs.Database.CLIENT_KEY.setValueChangeCallback(KeyCallbacks::remakeRemoteServerSender);
 		Configs.Database.BORROW_IGNORES.setValueChangeCallback(_0 -> Main.gameMessageFilter.recomputeIgnoreLists());
+		Configs.Database.EPEARL_OWNERS_BY_UUID.setValueChangeCallback(newValue -> {if(newValue.getBooleanValue()) Main.epearlLookup.loadEpearlCacheUUID();});
+		Configs.Database.EPEARL_OWNERS_BY_XZ.setValueChangeCallback(newValue -> {if(newValue.getBooleanValue()) Main.epearlLookup.loadEpearlCacheXZ();});
 		Configs.Generic.TEMP_BROADCAST_ACCOUNT.setValueChangeCallback(_0 -> ChatBroadcaster.refreshBroadcast());
 		Configs.Generic.TEMP_BROADCAST_TIMESTAMP.setValueChangeCallback(_0 -> ChatBroadcaster.refreshBroadcast());
 		Configs.Generic.TEMP_BROADCAST_MSGS.setValueChangeCallback(_0 -> ChatBroadcaster.refreshBroadcast());
