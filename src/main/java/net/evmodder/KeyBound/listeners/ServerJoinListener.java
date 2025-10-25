@@ -3,7 +3,6 @@ package net.evmodder.KeyBound.listeners;
 import java.util.Timer;
 import java.util.TimerTask;
 import net.evmodder.EvLib.Command;
-import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.MapStateCacher;
 import net.evmodder.KeyBound.apis.MiscUtils;
@@ -49,7 +48,10 @@ public class ServerJoinListener{
 				else MapStateCacher.loadMapStates(client.player.getInventory().main, MapStateCacher.HolderType.PLAYER_INV);
 			}
 			if(Configs.Database.SHARE_JOIN_QUIT.getBooleanValue() && Main.remoteSender != null){
-				Main.remoteSender.sendBotMessage(Command.DB_PLAYER_STORE_JOIN_TS, /*udp=*/true, 5000, PacketHelper.toByteArray(client.player.getUuid()), /*recv=*/null);
+				final String sessionName = client.getSession().getUsername(), playerName = client.player.getGameProfile().getName();
+				if(!sessionName.equals(playerName)); // TODO: separate type of packet? Proxy-joined EvDoc->EvModder
+				else Main.remoteSender.sendBotMessage(Command.DB_PLAYER_STORE_JOIN_TS,
+						/*udp=*/true, 5000, MiscUtils.getCurrentServerAndPlayerData(), /*recv=*/null);
 			}
 
 			if(currServerHashCode != Main.HASHCODE_2B2T) return;

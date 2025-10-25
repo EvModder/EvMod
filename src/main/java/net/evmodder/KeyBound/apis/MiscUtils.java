@@ -2,6 +2,7 @@ package net.evmodder.KeyBound.apis;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.UUID;
 import net.evmodder.EvLib.Command;
@@ -54,6 +55,16 @@ public class MiscUtils{
 		if(client == null || client.getCurrentServerEntry() == null) return 0;
 		// TODO: if connected to a proxy, figure out the server IP
 		return getRealServerAddress(client.getCurrentServerEntry().address.toLowerCase()).hashCode();
+	}
+	public static byte[] getCurrentServerAndPlayerData(){
+		UUID playerUUID = MinecraftClient.getInstance().player.getUuid();
+		return PacketHelper.toByteArray(
+			UUID.nameUUIDFromBytes(
+				ByteBuffer.allocate(16 + Integer.BYTES)
+					.putLong(playerUUID.getMostSignificantBits()).putLong(playerUUID.getLeastSignificantBits())
+					.putInt(getCurrentServerAddressHashCode()).array()
+			)
+		);
 	}
 
 	public static final void sendChatMsg(String msg){

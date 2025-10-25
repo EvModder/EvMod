@@ -281,10 +281,7 @@ public final class PacketHelper{
 
 	public static byte[] toByteArray(UUID... uuids){
 		ByteBuffer bb = ByteBuffer.allocate(uuids.length*16);
-		for(UUID uuid : uuids){
-			bb.putLong(uuid.getMostSignificantBits());
-			bb.putLong(uuid.getLeastSignificantBits());
-		}
+		for(UUID uuid : uuids) bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
 		return bb.array();
 	}
 }

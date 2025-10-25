@@ -350,7 +350,7 @@ public class Configs implements IConfigHandler{
 				"34471e8d-d0c5-47b9-b8e1-b5b9472affa4",
 				"0e314b60-29c7-4e35-bef3-3c652c8fb467"
 		)).apply(DATABASE_KEY);
-		public static final ConfigBoolean SHARE_JOIN_QUIT = new ConfigBoolean("shareJoinQuit", false).apply(DATABASE_KEY);
+		public static final ConfigBoolean SHARE_JOIN_QUIT = new ConfigBoolean("shareJoinQuit", true).apply(DATABASE_KEY);
 
 		public static final List<IConfigBase> getOptions(){
 			List<IConfigBase> availableOptions = new ArrayList<>();
