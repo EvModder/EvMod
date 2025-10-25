@@ -12,7 +12,6 @@ import net.evmodder.KeyBound.apis.MapGroupUtils;
 import net.evmodder.KeyBound.apis.MapRelationUtils;
 import net.evmodder.KeyBound.config.Configs;
 import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -52,11 +51,10 @@ public final class TooltipMapNameColor{
 		List<Text> cachedLines = tooltipCache.get(item);
 		if(cachedLines != null){lines.clear(); lines.addAll(cachedLines); return;}
 
-		ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
-		if(container != null){
-			List<ItemStack> items = MapRelationUtils.getAllNestedItems(container.streamNonEmpty()).filter(i -> i.getItem() == Items.FILLED_MAP).toList();
-			if(items.isEmpty()) return;
-			final List<MapState> states = items.stream().map(i -> context.getMapState(i.get(DataComponentTypes.MAP_ID))).filter(Objects::nonNull).toList();
+		if(item.getItem() != Items.FILLED_MAP){
+			final List<ItemStack> mapItems = MapRelationUtils.getAllNestedItems(item).filter(i -> i.getItem() == Items.FILLED_MAP).toList();
+			if(mapItems.isEmpty()) return;
+			final List<MapState> states = mapItems.stream().map(i -> context.getMapState(i.get(DataComponentTypes.MAP_ID))).filter(Objects::nonNull).toList();
 //			final List<UUID> nonFillerIds = states.stream().filter(Predicate.not(MapRelationUtils::isFillerMap)).map(MapGroupUtils::getIdForMapState).toList();
 			final List<UUID> colorIds = states.stream().map(MapGroupUtils::getIdForMapState).toList();
 //			final List<UUID> nonTransparentIds = (!Main.skipTransparentMaps ? states.stream() :
@@ -69,9 +67,9 @@ public final class TooltipMapNameColor{
 			if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(MAP_COLOR_NOT_IN_GROUP);
 			if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(MAP_COLOR_UNLOCKED);
 			if(colorIds.stream().anyMatch(UpdateContainerHighlights::hasDuplicateInContainer)) asterisks.add(MAP_COLOR_MULTI_INV);
-			if(items.size() > states.size()) asterisks.add(MAP_COLOR_UNLOADED);
+			if(mapItems.size() > states.size()) asterisks.add(MAP_COLOR_UNLOADED);
 			else if(mixedOnDisplayAndNotOnDisplay(colorIds)) asterisks.add(MAP_COLOR_IN_IFRAME);
-			if(items.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(MAP_COLOR_UNNAMED);
+			if(mapItems.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(MAP_COLOR_UNNAMED);
 
 			if(!asterisks.isEmpty()){
 				asterisks = asterisks.stream().distinct().toList();
@@ -82,7 +80,6 @@ public final class TooltipMapNameColor{
 			tooltipCache.put(item, lines);
 			return;
 		}
-		if(item.getItem() != Items.FILLED_MAP) return;
 		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
 		MapState state = id == null ? null : context.getMapState(id);
 		if(state == null){
