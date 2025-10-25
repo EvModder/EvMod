@@ -2,8 +2,8 @@ package net.evmodder.KeyBound.onTick;
 
 import java.util.List;
 import net.minecraft.item.Item.TooltipContext;
-import net.evmodder.KeyBound.Configs;
-import net.evmodder.KeyBound.TooltipDisplayOption;
+import net.evmodder.KeyBound.config.Configs;
+import net.evmodder.KeyBound.config.TooltipDisplayOption;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;

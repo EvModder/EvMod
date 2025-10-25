@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.stream.Stream;
 import net.evmodder.KeyBound.apis.MapGroupUtils;
 import net.evmodder.KeyBound.apis.MapRelationUtils;
+import net.evmodder.KeyBound.config.Configs;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.FilledMapItem;
@@ -30,7 +31,10 @@ public class UpdateInventoryHighlights{
 		if(stack.isEmpty()) return false;
 		final MapState state = FilledMapItem.getMapState(stack, world);
 		if(state == null){
-			List<UUID> colorIds = MapRelationUtils.getAllNestedItems(Stream.of(stack))
+			List<UUID> colorIds = 
+					(Configs.Visuals.MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES.getBooleanValue()
+							? MapRelationUtils.getAllNestedItems(Stream.of(stack))
+							: MapRelationUtils.getAllNestedItemsExcludingBundles(Stream.of(stack)))
 					.map(s -> FilledMapItem.getMapState(s, world)).filter(Objects::nonNull)
 					.map(MapGroupUtils::getIdForMapState).toList();
 			if(!colorIds.isEmpty()){

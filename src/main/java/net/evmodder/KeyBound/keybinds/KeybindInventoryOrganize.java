@@ -139,8 +139,8 @@ public final class KeybindInventoryOrganize{
 		}
 		else occurances = null;
 
-		Main.LOGGER.info("InvOrganize: "+layoutMap.size()+" mappings, isInvScreen="+isInvScreen+", numSlots="+simSlots.length
-				+", hotbarStart="+HOTBAR_START+", invStart="+MAIN_INV_START);
+//		Main.LOGGER.info("InvOrganize: "+layoutMap.size()+" mappings, isInvScreen="+isInvScreen+", numSlots="+simSlots.length
+//				+", hotbarStart="+HOTBAR_START+", invStart="+MAIN_INV_START);
 
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
 		checkDoneSlots(simSlots, doneSlots, isInvScreen);
@@ -360,7 +360,7 @@ public final class KeybindInventoryOrganize{
 		final int numClicks = clicks.size();
 		if(numClicks == 0){
 			depth = 0;
-			Main.LOGGER.info("InvOrganize: no clicks required");
+//			Main.LOGGER.info("InvOrganize: no clicks required");
 			if(onComplete != null) onComplete.run();
 			return;
 		}

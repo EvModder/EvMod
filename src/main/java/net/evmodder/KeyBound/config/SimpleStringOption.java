@@ -1,0 +1,28 @@
+package net.evmodder.KeyBound.config;
+
+import fi.dy.masa.malilib.config.IConfigOptionListEntry;
+import fi.dy.masa.malilib.util.StringUtils;
+
+public class SimpleStringOption implements IConfigOptionListEntry {
+	final String translationPrefix;
+	final String[] options;
+	int i;
+
+	SimpleStringOption(String translationPrefix, String... options){
+		this.translationPrefix = translationPrefix;
+		this.options = options;
+	}
+
+	@Override public String getStringValue(){return options[i];}
+	@Override public String getDisplayName(){return StringUtils.translate(translationPrefix+options[i]);}
+
+	@Override public IConfigOptionListEntry cycle(boolean forward){
+		i = forward ? (++i >= options.length ? 0 : i) : (--i <= 0 ? options.length-1 : i);
+		return this;
+	}
+
+	@Override public IConfigOptionListEntry fromString(String name){
+		for(i=0; i<options.length; ++i) if(options[i].equalsIgnoreCase(name)) return this;
+		throw new IllegalArgumentException("SimpleStringOption: Invalid argument provided to fromString(): "+name);
+	}
+}

@@ -1,7 +1,7 @@
 package net.evmodder.KeyBound.mixin;
 
-import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.apis.MapClickMoveNeighbors;
+import net.evmodder.KeyBound.config.Configs;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;

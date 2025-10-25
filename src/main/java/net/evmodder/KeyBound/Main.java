@@ -26,6 +26,10 @@ import net.evmodder.KeyBound.apis.ChatBroadcaster;
 import net.evmodder.KeyBound.apis.EpearlLookup;
 import net.evmodder.KeyBound.apis.RemoteServerSender;
 import net.evmodder.KeyBound.commands.*;
+import net.evmodder.KeyBound.config.ConfigGui;
+import net.evmodder.KeyBound.config.Configs;
+import net.evmodder.KeyBound.config.InputHandler;
+import net.evmodder.KeyBound.config.KeyCallbacks;
 import net.evmodder.KeyBound.keybinds.*;
 import net.evmodder.KeyBound.listeners.*;
 import net.evmodder.KeyBound.onTick.AutoPlaceItemFrames;
@@ -106,10 +110,10 @@ once arrangement is found
 	public static EpearlLookup epearlLookup;
 	public static GameMessageFilter gameMessageFilter;
 	public static KeybindInventoryRestock kbInvRestock;
-	public static ContainerOpenListener containerOpenListener;
+	public static ContainerOpenCloseListener containerOpenCloseListener;
 
 	public static boolean mapArtFeaturesOnly = true; ////////////////// TODO: ewww
-	public static boolean placementHelperIframe, placementHelperMapArt, placementHelperMapArtAuto, broadcaster;
+	public static boolean inventoryRestockAuto, placementHelperIframe, placementHelperMapArt, placementHelperMapArtAuto, broadcaster;
 	public static boolean serverJoinListener, serverQuitListener, gameMessageListener;//, gameMessageFilter;
 	public static boolean cmdExportMapImg, cmdMapArtGroup;
 //	public static boolean keybindMapArtMove, keybindMapArtMoveBundle;
@@ -136,7 +140,6 @@ once arrangement is found
 		boolean database=false;
 		boolean epearlOwners=false;
 		boolean mapHighlightTooltip=false;
-		boolean inventoryRestockAuto=false;
 
 		//config.forEach((key, value) -> {
 		for(String key : config.keySet()){
@@ -154,6 +157,7 @@ once arrangement is found
 				case "listener.server_quit": serverQuitListener = !value.equalsIgnoreCase("false"); break;
 				case "listener.game_message.read": if(gameMessageListener = !value.equalsIgnoreCase("false")); break;
 				case "listener.game_message.filter": if(!value.equalsIgnoreCase("false")) gameMessageFilter = new GameMessageFilter(); break;
+				case "listener.container_open": if(!value.equalsIgnoreCase("false")) containerOpenCloseListener = new ContainerOpenCloseListener(); break;
 				case "map_highlights": mapHighlights = !value.equalsIgnoreCase("false"); break;
 				case "map_highlights.in_gui": mapHighlightsInGUIs = !value.equalsIgnoreCase("false"); break;
 				case "tooltip.map_highlights": mapHighlightTooltip = !value.equalsIgnoreCase("false"); break;
@@ -198,13 +202,10 @@ once arrangement is found
 		if(cmdMapArtGroup) new CommandMapArtGroup();
 		if(cmdSeen) new CommandSeen();
 		if(cmdSendAs) new CommandSendAs();
-		if(cmdTimeOnline) new CommandTimeOnline();
+		if(cmdTimeOnline/* && serverJoinListener*/) new CommandTimeOnline();
 
 		kbInvRestock = new KeybindInventoryRestock();
-		if(inventoryRestockAuto){
-			containerOpenListener = new ContainerOpenListener();
-			ClientTickEvents.END_CLIENT_TICK.register(containerOpenListener::onUpdateTick);
-		}
+		if(inventoryRestockAuto &= (containerOpenCloseListener!=null)) ClientTickEvents.END_CLIENT_TICK.register(containerOpenCloseListener::onUpdateTick);
 		//new KeybindSpamclick();
 
 		if(mapHighlights){

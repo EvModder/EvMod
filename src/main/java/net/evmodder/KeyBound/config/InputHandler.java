@@ -1,6 +1,7 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.config;
 
 import fi.dy.masa.malilib.hotkeys.*;
+import net.evmodder.KeyBound.Main;
 
 public class InputHandler implements IKeybindProvider {
 	private static final InputHandler INSTANCE = new InputHandler();

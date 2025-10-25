@@ -20,9 +20,16 @@ public abstract class MapRelationUtils{
 	public static final Stream<ItemStack> getAllNestedItems(Stream<ItemStack> items){//TODO: Move to a generic MapUtils.class
 		return items.flatMap(s -> {
 			BundleContentsComponent contents = s.get(DataComponentTypes.BUNDLE_CONTENTS);
-			if(contents != null) getAllNestedItems(contents.stream());
+			if(contents != null) return getAllNestedItems(contents.stream().sequential());
 			ContainerComponent container = s.get(DataComponentTypes.CONTAINER);
-			if(container != null) return getAllNestedItems(container.streamNonEmpty());
+			if(container != null) return getAllNestedItems(container.streamNonEmpty().sequential());
+			return Stream.of(s);
+		});
+	}
+	public static final Stream<ItemStack> getAllNestedItemsExcludingBundles(Stream<ItemStack> items){//TODO: Move to a generic MapUtils.class
+		return items.flatMap(s -> {
+			ContainerComponent container = s.get(DataComponentTypes.CONTAINER);
+			if(container != null) return getAllNestedItemsExcludingBundles(container.streamNonEmpty());
 			return Stream.of(s);
 		});
 	}

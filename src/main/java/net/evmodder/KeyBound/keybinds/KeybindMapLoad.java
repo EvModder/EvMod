@@ -61,12 +61,15 @@ public final class KeybindMapLoad{
 	private final long WAIT_FOR_STATE_UPDATE = 71; // 50 = 1 tick
 	private long stateWaitStart;
 	private final void loadMapArtFromBundles(){
-		Main.LOGGER.warn("MapLoadBundle: in InventoryScreen");
+//		Main.LOGGER.warn("MapLoadBundle: in InventoryScreen");
 		final MinecraftClient client = MinecraftClient.getInstance();
 		final InventoryScreen is = (InventoryScreen)client.currentScreen;
 		final ItemStack[] slots = is.getScreenHandler().slots.stream().map(s -> s.getStack()).toArray(ItemStack[]::new);
 		final int[] slotsWithBundles = IntStream.range(9, 45).filter(i -> slots[i].get(DataComponentTypes.BUNDLE_CONTENTS) != null).toArray();
-		if(slotsWithBundles.length == 0) return;
+		if(slotsWithBundles.length == 0){
+			Main.LOGGER.warn("MapLoadBundle: No bundles in inventory");
+			return;
+		}
 		final OptionalInt emptyBundleSlotOpt = Arrays.stream(slotsWithBundles)
 				.filter(i -> slots[i].get(DataComponentTypes.BUNDLE_CONTENTS).getOccupancy().getNumerator() == 0).findAny();
 		if(emptyBundleSlotOpt.isEmpty()){Main.LOGGER.warn("MapLoadBundle: Empty bundle not found"); return;}
@@ -100,7 +103,10 @@ public final class KeybindMapLoad{
 				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // Place map back in original bundle
 			}
 		}
-		if(clicks.isEmpty()) return; // No bundles with maps
+		if(clicks.isEmpty()){
+			Main.LOGGER.warn("MapLoadBundle: No bundles containing mapart in inventory");
+			return; // No bundles with maps
+		}
 //		client.player.sendMessage(Text.literal("Scheduling clicks: "+clicks.size()), true);
 		Main.LOGGER.info("MapLoadBundle: STARTED");
 		Main.clickUtils.executeClicks(clicks,
@@ -184,7 +190,6 @@ public final class KeybindMapLoad{
 				//if(isUnloadedMapArt(client.world, s){
 				// Ugh just wait if any unloaded map in hotbar(or inv)
 				if(client.player.getInventory().main.stream().anyMatch(s -> isUnloadedMapArt(client.world, s))){
-					Main.LOGGER.info("MapLoad: still waiting for map state to load");
 //					Main.LOGGER.info("MapLoad: still waiting for map state to load from hotbar slot: "+c.button());
 					return false;
 				}

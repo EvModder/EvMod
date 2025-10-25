@@ -2,8 +2,8 @@ package net.evmodder.KeyBound.keybinds;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.config.Configs;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.AbstractFireBlock;
 import net.minecraft.block.AbstractPressurePlateBlock;

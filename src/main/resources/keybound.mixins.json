@@ -8,6 +8,7 @@
 		"AccessorProjectileEntity",
 		"AccessorTimesPressed",
 		"MixinClientPlayerInteractionManager",
+		"MixinClientPlayNetworkHandler",
 		"MixinClientWorld",
 		"MixinEntityRenderer",
 		"MixinHandledScreen",

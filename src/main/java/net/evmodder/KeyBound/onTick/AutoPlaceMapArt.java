@@ -2,9 +2,9 @@ package net.evmodder.KeyBound.onTick;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import net.evmodder.KeyBound.Configs.Generic;
 import net.evmodder.KeyBound.apis.MapRelationUtils;
 import net.evmodder.KeyBound.apis.MapRelationUtils.RelatedMapsData;
+import net.evmodder.KeyBound.config.Configs.Generic;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;

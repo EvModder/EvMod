@@ -6,10 +6,10 @@ import java.util.HashSet;
 import java.util.UUID;
 import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.PacketHelper;
-import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.MiscUtils;
 import net.evmodder.KeyBound.apis.MojangProfileLookup;
+import net.evmodder.KeyBound.config.Configs;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.text.Text;
 

@@ -1,5 +1,6 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.config;
 
+import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.ChatBroadcaster;
 import net.evmodder.KeyBound.apis.MiscUtils;
 import net.evmodder.KeyBound.apis.RemoteServerSender;
@@ -20,10 +21,10 @@ import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.hotkeys.IHotkey;
 
 public class KeyCallbacks{
-	static void remakeClickUtils(IConfigBase _0){
+	public static final void remakeClickUtils(IConfigBase _0){
 		Main.clickUtils = new ClickUtils(Configs.Generic.CLICK_LIMIT_COUNT.getIntegerValue(), Configs.Generic.CLICK_LIMIT_DURATION.getIntegerValue());
 	}
-	static void remakeRemoteServerSender(IConfigBase _0){
+	public static final void remakeRemoteServerSender(IConfigBase _0){
 		String fullAddress = Configs.Database.ADDRESS.getStringValue();
 		final int sep = fullAddress.indexOf(':');
 		final String addr;
@@ -35,11 +36,18 @@ public class KeyCallbacks{
 				MiscUtils::getCurrentServerAddressHashCode);
 	}
 
-	public static KeybindInventoryOrganize kbInvOrg1 = new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_1.getStrings());
-	public static KeybindInventoryOrganize kbInvOrg2 = new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_2.getStrings());
-	public static KeybindInventoryOrganize kbInvOrg3 = new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_3.getStrings());
+	public static final KeybindInventoryOrganize kbInvOrg1 = new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_1.getStrings());
+	public static final KeybindInventoryOrganize kbInvOrg2 = new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_2.getStrings());
+	public static final KeybindInventoryOrganize kbInvOrg3 = new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_3.getStrings());
 
-	public static void init(MinecraftClient mc){
+	private static final void keybindCallback(IHotkey hotkey, Function<Screen, Boolean> allowInScreen, Runnable callback){
+		hotkey.getKeybind().setCallback((_0, _1) ->{
+			if(allowInScreen == null || allowInScreen.apply(MinecraftClient.getInstance().currentScreen)){callback.run(); return true;}
+			return false;
+		});
+	}
+
+	public static final void init(MinecraftClient mc){
 		KeybindAIETravelHelper kbAIE = new KeybindAIETravelHelper();
 		KeybindEjectJunk kbej = new KeybindEjectJunk();
 		KeybindEbounceTravelHelper kbEbounce = new KeybindEbounceTravelHelper(kbej);
@@ -68,7 +76,7 @@ public class KeyCallbacks{
 		Configs.Hotkeys.INV_ORGANIZE_3.setValueChangeCallback(newValue -> kbInvOrg3.refreshLayout(newValue.getStrings()));
 		Configs.Hotkeys.INV_RESTOCK_BLACKLIST.setValueChangeCallback(_0 -> Main.kbInvRestock.refreshLists());
 		Configs.Hotkeys.INV_RESTOCK_WHITELIST.setValueChangeCallback(_0 -> Main.kbInvRestock.refreshLists());
-		Configs.Generic.INV_RESTOCK_AUTO_FOR_INV_ORGS.setValueChangeCallback(newValue -> Main.containerOpenListener.refreshLayouts(newValue.getStrings()));
+		Configs.Generic.INV_RESTOCK_AUTO_FOR_INV_ORGS.setValueChangeCallback(newValue -> Main.containerOpenCloseListener.refreshLayouts(newValue.getStrings()));
 
 		keybindCallback(Configs.Hotkeys.OPEN_CONFIG_GUI, Objects::isNull, ()->GuiBase.openGui(new ConfigGui()));
 
@@ -114,12 +122,5 @@ public class KeyCallbacks{
 			.setAngles(Configs.Hotkeys.SNAP_ANGLE_YAW_1.getFloatValue(), Configs.Hotkeys.SNAP_ANGLE_PITCH_1.getFloatValue()));
 		keybindCallback(Configs.Hotkeys.TRIGGER_SNAP_ANGLE_2, null, ()->MinecraftClient.getInstance().player
 				.setAngles(Configs.Hotkeys.SNAP_ANGLE_YAW_2.getFloatValue(), Configs.Hotkeys.SNAP_ANGLE_PITCH_2.getFloatValue()));
-	}
-
-	public static void keybindCallback(IHotkey hotkey, Function<Screen, Boolean> allowInScreen, Runnable callback){
-		hotkey.getKeybind().setCallback((_0, _1) ->{
-			if(allowInScreen == null || allowInScreen.apply(MinecraftClient.getInstance().currentScreen)){callback.run(); return true;}
-			return false;
-		});
 	}
 }

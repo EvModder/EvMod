@@ -1,8 +1,8 @@
 package net.evmodder.KeyBound.keybinds;
 
 import net.evmodder.EvLib.TextUtils;
-import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.config.Configs;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;

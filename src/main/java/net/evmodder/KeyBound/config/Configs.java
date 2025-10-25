@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.config;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -16,6 +16,7 @@ import fi.dy.masa.malilib.hotkeys.KeybindSettings;
 import fi.dy.masa.malilib.hotkeys.KeybindSettings.Context;
 import fi.dy.masa.malilib.util.FileUtils;
 import fi.dy.masa.malilib.util.JsonUtils;
+import net.evmodder.KeyBound.Main;
 
 public class Configs implements IConfigHandler{
 	private static final String CONFIG_FILE_NAME = Main.MOD_ID+"/keybound.json";
@@ -25,7 +26,9 @@ public class Configs implements IConfigHandler{
 		public static final ConfigInteger CLICK_LIMIT_COUNT = new ConfigInteger("clickLimitCount", 79, 0, 100_000).apply(GENERIC_KEY);
 		public static final ConfigInteger CLICK_LIMIT_DURATION = new ConfigInteger("clickLimitWindow", 96, 1, 72_000).apply(GENERIC_KEY);
 
-		public static final ConfigBoolean MAP_STATE_CACHE = new ConfigBoolean("mapStatePersistentCache", true).apply(GENERIC_KEY);
+		public static final ConfigOptionList MAP_STATE_CACHE = new ConfigOptionList("mapStateCache",
+//				new SimpleStringOption("keybound.gui.label.cache_mapstate.", "a", "b", "c")).apply(GENERIC_KEY);
+				MapStateCacheOption.MEMORY_AND_DISK).apply(GENERIC_KEY);
 		public static final ConfigBooleanHotkeyed MAP_CLICK_MOVE_NEIGHBORS = new ConfigBooleanHotkeyed(
 				"mapClickMoveNeighbors", true, "LEFT_ALT", KeybindSettings.MODIFIER_GUI).apply(GENERIC_KEY);
 
@@ -40,7 +43,7 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART = new ConfigBoolean("placementHelperMapArt", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_NAMES = new ConfigBoolean("placementHelperMapArtUseNames", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_IMAGE = new ConfigBoolean("placementHelperMapArtUseImage", true).apply(GENERIC_KEY);
-		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_AUTOPLACE = new ConfigBoolean("placementHelperMapArtAutoPlace", true).apply(GENERIC_KEY);//TODO: unfinished
+		public static final ConfigBooleanHotkeyed PLACEMENT_HELPER_MAPART_AUTOPLACE = new ConfigBooleanHotkeyed("placementHelperMapArtAutoPlace", true, "").apply(GENERIC_KEY);
 
 		public static final ConfigString WHISPER_PLAY_SOUND = new ConfigString("whisperPlaySound", "{sound:block.note_block.bass, category:PLAYERS, volume:.7, pitch:2}").apply(GENERIC_KEY);
 		public static final ConfigString WHISPER_PEARL_PULL = new ConfigString("whisperPearlPull", "(?:e?p|e?pearl|([iI]'?m ?)?r(ea)?dy)").apply(GENERIC_KEY);
@@ -75,7 +78,7 @@ public class Configs implements IConfigHandler{
 		public static final List<IConfigBase> getOptions(){
 			List<IConfigBase> availableOptions = new ArrayList<>();
 			availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, MAP_CLICK_MOVE_NEIGHBORS));
-			if(Main.serverJoinListener && Main.serverQuitListener) availableOptions.add(MAP_STATE_CACHE);
+			if((Main.serverJoinListener && Main.serverQuitListener) || Main.containerOpenCloseListener != null) availableOptions.add(MAP_STATE_CACHE);
 			if(Main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME,
 					PLACEMENT_HELPER_IFRAME_MUST_CONNECT, PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK));
 			if(Main.placementHelperMapArt){
@@ -95,7 +98,7 @@ public class Configs implements IConfigHandler{
 			if(Main.mapHighlights) availableOptions.add(SKIP_MONO_COLOR_MAPS);
 			if(Main.serverJoinListener) availableOptions.add(SEND_ON_SERVER_JOIN);
 			if(Main.serverQuitListener) availableOptions.add(LOG_COORDS_ON_SERVER_QUIT);
-			if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
+			if(Main.inventoryRestockAuto) availableOptions.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
 			if(Main.broadcaster) availableOptions.addAll(List.of(TEMP_BROADCAST_ACCOUNT, TEMP_BROADCAST_TIMESTAMP, TEMP_BROADCAST_MSGS));
 			return availableOptions;
 		}
@@ -120,6 +123,8 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean MAP_HIGHLIGHT_TOOLTIP = new ConfigBoolean("mapHighlightInTooltip", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_HIGHLIGHT_HOTBAR_HUD = new ConfigBoolean("mapHighlightInHotbarHUD", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_HIGHLIGHT_CONTAINER_NAME = new ConfigBoolean("mapHighlightInContainerName", true).apply(VISUALS_KEY);
+	
+		public static final ConfigBoolean MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES = new ConfigBoolean("mapHighlightInInvIncludeBundles", true).apply(VISUALS_KEY);
 
 		public static final ConfigColor MAP_COLOR_UNLOADED = new ConfigColor("highlightColorUnloaded", "#FFC8AAD2").apply(VISUALS_KEY); // 13150930 Peach
 		public static final ConfigColor MAP_COLOR_UNLOCKED = new ConfigColor("highlightColorUnlocked", "#FFE03165").apply(VISUALS_KEY); // 14692709 Redish
@@ -151,6 +156,8 @@ public class Configs implements IConfigHandler{
 			availableOptions.addAll(List.of(
 					INVIS_IFRAMES, INVIS_IFRAMES_SEMI_TRANSPARENT,
 					MAP_HIGHLIGHT_IFRAME, MAP_HIGHLIGHT_TOOLTIP, MAP_HIGHLIGHT_HOTBAR_HUD, MAP_HIGHLIGHT_CONTAINER_NAME,
+
+					MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES,
 
 					MAP_COLOR_UNLOADED, MAP_COLOR_UNLOCKED, MAP_COLOR_UNNAMED, MAP_COLOR_NOT_IN_GROUP,
 					MAP_COLOR_IN_INV, MAP_COLOR_IN_IFRAME, MAP_COLOR_MULTI_IFRAME, MAP_COLOR_MULTI_INV,
@@ -184,15 +191,6 @@ public class Configs implements IConfigHandler{
 		public static final ConfigHotkey MAP_MOVE_BUNDLE = new ConfigHotkey("mapMoveBundle", "D", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_MOVE_BUNDLE_REVERSE = new ConfigHotkey("mapMoveBundleReverse", "", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 
-		/*
-  "options.modelPart.cape": "Cape",
-  "options.modelPart.hat": "Hat",
-  "options.modelPart.jacket": "Jacket",
-  "options.modelPart.left_pants_leg": "Left Pants Leg",
-  "options.modelPart.left_sleeve": "Left Sleeve",
-  "options.modelPart.right_pants_leg": "Right Pants Leg",
-  "options.modelPart.right_sleeve": "Right Sleeve",
-		 */
 		public static final ConfigHotkey TOGGLE_CAPE = new ConfigHotkey("toggleCape", Main.mapArtFeaturesOnly ? "" : ",");
 		public static final ConfigBoolean SYNC_CAPE_WITH_ELYTRA = new ConfigBoolean("syncCapeWithElytra", true).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TOGGLE_HAT = new ConfigHotkey("toggleHat", "");
@@ -203,9 +201,9 @@ public class Configs implements IConfigHandler{
 		public static final ConfigHotkey TOGGLE_PANTS_LEG_RIGHT = new ConfigHotkey("togglePantsLegRight",Main.mapArtFeaturesOnly ? "" : "I");
 
 		public static final ConfigBooleanHotkeyed AIE_TRAVEL_HELPER = new ConfigBooleanHotkeyed("automaticInfiniteElytraTravelHelper", false,
-				Main.mapArtFeaturesOnly ? "" : ";", KeybindSettings.NOCANCEL).apply(HOTKEYS_KEY);
+				Main.mapArtFeaturesOnly ? "" : "SEMICOLON", KeybindSettings.NOCANCEL).apply(HOTKEYS_KEY);
 		public static final ConfigBooleanHotkeyed EBOUNCE_TRAVEL_HELPER = new ConfigBooleanHotkeyed("eBounceTravelHelper", false,
-				Main.mapArtFeaturesOnly ? "" : "a", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
+				Main.mapArtFeaturesOnly ? "" : "A", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey EJECT_JUNK_ITEMS = new ConfigHotkey("ejectJunkItems",
 				Main.mapArtFeaturesOnly ? "" : "R", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
 //		public static final ConfigHotkey SMART_SPACEBAR_CRAFTING = new ConfigHotkey("smartInventoryReCrafting", " ").apply(HOTKEYS_KEY);
@@ -343,8 +341,8 @@ public class Configs implements IConfigHandler{
 		public static final ConfigInteger CLIENT_ID = new ConfigInteger("clientId", 1, 0, 1000000).apply(DATABASE_KEY);
 		public static final ConfigString CLIENT_KEY = new ConfigString("clientKey", "some_unique_key").apply(DATABASE_KEY);
 		public static final ConfigString ADDRESS = new ConfigString("address", "evmodder.net:14441").apply(DATABASE_KEY);
-		public static final ConfigBoolean SHARE_MAPART = new ConfigBoolean("shareMapArt", Main.remoteSender != null).apply(DATABASE_KEY); //TODO: implement
-		public static final ConfigBoolean EPEARL_OWNERS_BY_UUID = new ConfigBoolean("epearlDatabaseUUID", Main.remoteSender != null).apply(DATABASE_KEY);
+		public static final ConfigBoolean SHARE_MAPART = new ConfigBoolean("shareMapArt", true).apply(DATABASE_KEY); //TODO: implement
+		public static final ConfigBoolean EPEARL_OWNERS_BY_UUID = new ConfigBoolean("epearlDatabaseUUID", true).apply(DATABASE_KEY);
 		public static final ConfigBoolean EPEARL_OWNERS_BY_XZ = new ConfigBoolean("epearlDatabaseXZ", false).apply(DATABASE_KEY);
 		//public static final ConfigBoolean SHARE_EPEARL_OWNERS = new ConfigBoolean("shareMapArt", true).apply(GENERIC_KEY); //TODO: implement
 		public static final ConfigBoolean SHARE_IGNORES = new ConfigBoolean("shareIgnoreList", false).apply(DATABASE_KEY);
@@ -352,6 +350,7 @@ public class Configs implements IConfigHandler{
 				"34471e8d-d0c5-47b9-b8e1-b5b9472affa4",
 				"0e314b60-29c7-4e35-bef3-3c652c8fb467"
 		)).apply(DATABASE_KEY);
+		public static final ConfigBoolean SHARE_JOIN_QUIT = new ConfigBoolean("shareJoinQuit", false).apply(DATABASE_KEY);
 
 		public static final List<IConfigBase> getOptions(){
 			List<IConfigBase> availableOptions = new ArrayList<>();
@@ -359,6 +358,7 @@ public class Configs implements IConfigHandler{
 			if(Main.epearlLookup != null) availableOptions.addAll(List.of(EPEARL_OWNERS_BY_UUID, EPEARL_OWNERS_BY_XZ));
 			if(Main.gameMessageListener) availableOptions.add(SHARE_IGNORES);
 			if(Main.gameMessageFilter != null) availableOptions.add(BORROW_IGNORES);
+			if(Main.serverJoinListener || Main.serverQuitListener) availableOptions.add(SHARE_JOIN_QUIT);
 			return availableOptions;
 		}
 	}

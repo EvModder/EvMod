@@ -12,9 +12,9 @@ import net.evmodder.EvLib.LoadingCache;
 import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.EvLib.PearlDataClient;
 import net.evmodder.EvLib.TextUtils;
-import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.commands.CommandAssignPearl;
+import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.mixin.AccessorProjectileEntity;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.minecraft.client.MinecraftClient;
@@ -226,6 +226,7 @@ public final class EpearlLookup{
 		if(idToPos != null) idToPos.put(epearl.getUuid(), new XYZ(epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ()));
 
 		if(USE_DB_UUID){
+			assert cacheByUUID != null;
 			final UUID key = epearl.getUuid();
 			if(ownerUUID != null){
 				final PearlDataClient pdc = new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
@@ -253,6 +254,7 @@ public final class EpearlLookup{
 			}
 		}
 		if(USE_DB_XZ){
+			assert cacheByXZ != null;
 //			byte[] bytes = address.getBytes();
 //			ByteBuffer bb = ByteBuffer.allocate(bytes.length + 16).put(bytes).putDouble(epearl.getX()).putDouble(epearl.getZ());
 //			final UUID key = UUID.nameUUIDFromBytes(bb.array());

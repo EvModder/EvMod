@@ -1,17 +1,17 @@
-package net.evmodder.KeyBound;
+package net.evmodder.KeyBound.config;
 
 import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
 
-public enum TooltipDisplayOption implements IConfigOptionListEntry {
-	OFF("off", "keybound.gui.label.tooltip_display.off"),
-	ON("on", "keybound.gui.label.tooltip_display.on"),
-	ADVANCED_TOOLTIPS("advanced_tooltips", "keybound.gui.label.tooltip_display.advanced");
+public enum MapStateCacheOption implements IConfigOptionListEntry {
+	OFF("off", "keybound.gui.label.cache_mapstate.off"),
+	MEMORY("memory", "keybound.gui.label.cache_mapstate.memory"),
+	MEMORY_AND_DISK("memory_and_disk", "keybound.gui.label.cache_mapstate.memory_and_disk");
 
 	private final String configString;
 	private final String translationKey;
 
-	TooltipDisplayOption(String configString, String translationKey){
+	MapStateCacheOption(String configString, String translationKey){
 		this.configString = configString;
 		this.translationKey = translationKey;
 	}
@@ -27,6 +27,6 @@ public enum TooltipDisplayOption implements IConfigOptionListEntry {
 
 	@Override public IConfigOptionListEntry fromString(String name){
 		for(var v : values()) if(v.configString.equalsIgnoreCase(name)) return v;
-		throw new IllegalArgumentException("TooltipDisplayOption: Invalid argument provided to fromString(): "+name);
+		throw new IllegalArgumentException("MapStateCacheOption: Invalid argument provided to fromString(): "+name);
 	}
 }

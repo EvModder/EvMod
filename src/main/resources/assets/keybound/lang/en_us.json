@@ -9,13 +9,17 @@
 	"keybound.gui.label.tooltip_display.on": "On",
 	"keybound.gui.label.tooltip_display.advanced": "Advanced tooltips",
 
+	"keybound.gui.label.cache_mapstate.off": "Off",
+	"keybound.gui.label.cache_mapstate.memory": "Session-only",
+	"keybound.gui.label.cache_mapstate.memory_and_disk": "Persistent",
+
 	"keybound.config.generic.name.clickLimitCount": "clickLimitCount",
 	"keybound.config.generic.comment.clickLimitCount": "2b2t will kick you for setning >80 clicks in <80 ticks (Last checked: 2025-10-15)",
 	"keybound.config.generic.name.clickLimitWindow": "clickLimitWindow",
 	"keybound.config.generic.comment.clickLimitWindow": "2b2t will kick you for setning >80 clicks in <80 ticks (Last checked: 2025-10-15)",
 
-	"keybound.config.generic.name.mapStatePersistentCache": "mapStatePersistentCache",
-	"keybound.config.generic.comment.mapStatePersistentCache": "Preserves cached map previews in player's inventory or echest between sessions (since MapStates get unloaded when you log off 2b2t)",
+	"keybound.config.generic.name.mapStateCache": "mapStateCache",
+	"keybound.config.generic.comment.mapStateCache": "Preserves cached map previews in player's inventory or echest between sessions (since MapStates get unloaded when you log off 2b2t)",
 	"keybound.config.generic.name.mapClickMoveNeighbors": "mapClickMoveNeighbors",
 	"keybound.config.generic.name.whisperPlaySound": "whisperPlaySound",
 	"keybound.config.generic.name.whisperPearlPull": "whisperPearlPull",
@@ -71,6 +75,9 @@
 	"keybound.config.visuals.name.mapHighlightInTooltip": "mapHighlightInTooltip",
 	"keybound.config.visuals.name.mapHighlightInHotbarHUD": "mapHighlightInHotbarHUD",
 	"keybound.config.visuals.name.mapHighlightInContainerName": "mapHighlightInContainerName",
+
+	"keybound.config.visuals.name.mapHighlightInInvIncludeBundles": "mapHighlightInInvIncludeBundles",
+	"keybound.config.visuals.comment.mapHighlightInInvIncludeBundles": "Should bundles nested inside the player's inv be considered for the 'IsInInv' highlight color?",
 
 	"keybound.config.visuals.name.highlightColorUnloaded": "mapHighlightUnloaded",
 	"keybound.config.visuals.name.highlightColorUnlocked": "mapHighlightUnlocked",
@@ -158,10 +165,12 @@
 	"keybound.config.database.name.epearlDatabaseXZ": "epearlDatabaseXZ",
 	"keybound.config.database.name.shareIgnoreList": "shareIgnoreList",
 	"keybound.config.database.name.borrowIgnoreLists": "borrowIgnoreLists",
+	"keybound.config.database.name.shareJoinQuit": "shareJoinQuitMsgs",
 	"keybound.config.database.comment.clientKey": "Ask @EvModder for a unique key to guarantee ongoing database access. Best advised not to share your key, since it is how I track individual users and identify & ban bad actors (ddos, sending invalid data, etc.)",
 	"keybound.config.database.comment.shareMapArtHashCodes": "Participate in MapArt Unique Id database",
 	"keybound.config.database.comment.epearlDatabaseUUID": "Participate in [Epearl.Id->Owner] database",
 	"keybound.config.database.comment.epearlDatabaseXZ": "Participate in [Epearl.X,Z->Owner] database",
 	"keybound.config.database.comment.shareIgnoreList": "Share your /ignorehard list with the database",
-	"keybound.config.database.comment.borrowIgnoreLists": "Apply /ignorehard lists from other players in the database (doesn't affect your own list)"
+	"keybound.config.database.comment.borrowIgnoreLists": "Apply /ignorehard lists from other players in the database (doesn't affect your own list)",
+	"keybound.config.database.comment.shareJoinQuit": "Used to power /seen, /timeonline, etc."
 }

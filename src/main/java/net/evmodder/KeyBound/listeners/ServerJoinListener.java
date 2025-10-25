@@ -2,10 +2,13 @@ package net.evmodder.KeyBound.listeners;
 
 import java.util.Timer;
 import java.util.TimerTask;
-import net.evmodder.KeyBound.Configs;
+import net.evmodder.EvLib.Command;
+import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.KeyBound.Main;
-import net.evmodder.KeyBound.apis.MapStateInventoryCacher;
+import net.evmodder.KeyBound.apis.MapStateCacher;
 import net.evmodder.KeyBound.apis.MiscUtils;
+import net.evmodder.KeyBound.config.Configs;
+import net.evmodder.KeyBound.config.MapStateCacheOption;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
@@ -14,28 +17,52 @@ public class ServerJoinListener{
 	private final long JOIN_DELAY = 2500l;
 	private long loadedAt/*, joinedAt*/;
 	private double loadedAtX, loadedAtZ;
-	private TimerTask timerTask;
+	private Timer joinMsgTimer, invLoadTimer;
 	private final boolean WAIT_FOR_MOVEMENT = true; // TODO: put these into config
+
+	public static long lastJoinTs; // TODO: remove horrible public static eww
 
 	public ServerJoinListener(){
 		ClientPlayConnectionEvents.JOIN.register(
 				//ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server
 				(handler, _1, _2) ->
 		{
+			lastJoinTs = System.currentTimeMillis();
+
 			final int currServerHashCode = MiscUtils.getServerAddressHashCode(handler.getServerInfo());
-			if(Configs.Generic.MAP_STATE_CACHE.getBooleanValue()) MapStateInventoryCacher.loadMapStatesOnJoin(currServerHashCode);
+			assert currServerHashCode == MiscUtils.getCurrentServerAddressHashCode();
+
+			MinecraftClient client  = MinecraftClient.getInstance();
+
+			if(Configs.Generic.MAP_STATE_CACHE.getDefaultOptionListValue() != MapStateCacheOption.OFF){
+				if(invLoadTimer != null){invLoadTimer.cancel(); invLoadTimer = null;}
+				if(client.player.getInventory().isEmpty()){ // Inventory not loaded (can also mean still in queue)
+					invLoadTimer = new Timer();
+					invLoadTimer.schedule(new TimerTask(){@Override public void run(){
+						if(client.player == null){cancel(); invLoadTimer.cancel(); invLoadTimer = null;}
+						else if(!client.player.getInventory().isEmpty()){
+							cancel(); invLoadTimer.cancel(); invLoadTimer = null;
+							MapStateCacher.loadMapStates(client.player.getInventory().main, MapStateCacher.HolderType.PLAYER_INV);
+						}
+					}}, 1l, 50l); // check 20 times per second
+				}
+				else MapStateCacher.loadMapStates(client.player.getInventory().main, MapStateCacher.HolderType.PLAYER_INV);
+			}
+			if(Configs.Database.SHARE_JOIN_QUIT.getBooleanValue() && Main.remoteSender != null){
+				Main.remoteSender.sendBotMessage(Command.DB_PLAYER_STORE_JOIN_TS, /*udp=*/true, 5000, PacketHelper.toByteArray(client.player.getUuid()), /*recv=*/null);
+			}
 
 			if(currServerHashCode != Main.HASHCODE_2B2T) return;
 
-			if(timerTask != null) timerTask.cancel(); // Restart timer
+			if(joinMsgTimer != null) joinMsgTimer.cancel(); // Restart timer
 
 			//joinedAt = System.currentTimeMillis();
-			new Timer().schedule(timerTask = new TimerTask(){@Override public void run(){
+			joinMsgTimer = new Timer();
+			joinMsgTimer.schedule(new TimerTask(){@Override public void run(){
 				//final long now = System.currentTimeMillis();
 				//if(now - joinedAt > GIVE_UP_AFTER_MS) cancel();
 
 				//Main.LOGGER.info("Server join detected, checking if stuff is loaded");
-				MinecraftClient client  = MinecraftClient.getInstance();
 				if(!client.isFinishedLoading() || client.player == null || client.world == null || client.getNetworkHandler() == null || !client.player.isAlive()
 					|| !client.player.isLoaded() || client.player.isSpectator() || client.player.isRegionUnloaded() || client.player.isInvisible()) return;
 				if(loadedAt == 0){
@@ -67,6 +94,7 @@ public class ServerJoinListener{
 				}
 				loadedAt = 0;
 				cancel();
+				joinMsgTimer.cancel();
 			}}, 0l, 100l);
 		});
 	}

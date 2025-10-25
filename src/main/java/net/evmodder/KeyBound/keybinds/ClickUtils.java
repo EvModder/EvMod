@@ -100,6 +100,8 @@ public class ClickUtils{
 
 	final Pattern tpsPattern = Pattern.compile("(\\d{1,2}(?:\\.\\d+))\\s?tps", Pattern.CASE_INSENSITIVE);
 	private long /*getTPS*/getMillisPerTick(MinecraftClient client){
+		// Alternative: client.getNetworkHandler().onPlayerListHeader(PlayerListHeaderS2CPacket plhp)
+
 		final AccessorPlayerListHud playerListHudAccessor = (AccessorPlayerListHud)client.inGameHud.getPlayerListHud();
 		final MutableText text = Text.empty(); playerListHudAccessor.getFooter().withoutStyle().forEach(text::append);
 		final String footer = TextUtils.stripColorAndFormats(text.getString());

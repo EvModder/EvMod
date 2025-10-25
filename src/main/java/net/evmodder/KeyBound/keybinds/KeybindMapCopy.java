@@ -161,7 +161,7 @@ public final class KeybindMapCopy{
 		final int SRC_BUNDLES = (int)Arrays.stream(bundles).filter(Predicate.not(BundleContentsComponent::isEmpty)).count();
 		final int emptyBundles = bundles.length - SRC_BUNDLES;
 		if(emptyBundles == 1){Main.LOGGER.warn("MapCopyBundle: Could not find an auxiliary bundle"); return;}
-		final int LAST_EMPTY_SLOT = lastEmptySlot(slots, HOTBAR_END, INV_START);
+		int LAST_EMPTY_SLOT = lastEmptySlot(slots, HOTBAR_END, INV_START);
 		if(LAST_EMPTY_SLOT == -1 && Arrays.stream(bundles).anyMatch(b -> b.stream().anyMatch(s -> s.getCount() > 1))){
 			Main.LOGGER.warn("MapCopyBundle: Unable to copy bundles containing maps with stackSize>1 without an empty inv slot");
 			return;
@@ -225,7 +225,15 @@ public final class KeybindMapCopy{
 		for(var e : bundlesToCopy.entrySet()){unusedBundles.remove(e.getKey()); unusedBundles.removeAll(e.getValue());}
 		assert unusedBundles.size() >= 1;
 
-		final int tempBundleSlot = unusedBundles.stream().mapToInt(Integer::intValue).map(i -> slotsWithBundles[i]).min().getAsInt();
+		final int[] unusedBundleSlots = unusedBundles.stream().mapToInt(Integer::intValue).map(i -> slotsWithBundles[i]).toArray();
+		final int tempBundleSlot;
+		OptionalInt firstRawBundle = Arrays.stream(unusedBundleSlots).filter(i -> slots[i].getCustomName() == null && slots[i].getItem() == Items.BUNDLE).min();
+		if(firstRawBundle.isPresent()) tempBundleSlot = firstRawBundle.getAsInt();
+		else{
+			OptionalInt firstUnnamedBundle = Arrays.stream(unusedBundleSlots).filter(i -> slots[i].getCustomName() == null).min();
+			if(firstUnnamedBundle.isPresent()) tempBundleSlot = firstUnnamedBundle.getAsInt();
+			else tempBundleSlot = Arrays.stream(unusedBundleSlots).min().getAsInt();
+		}
 		Main.LOGGER.info("MapCopyBundle: Intermediary bundle slot "+tempBundleSlot+", "+slots[tempBundleSlot].getName().getString());
 
 		for(var entry : bundlesToCopy.entrySet()){
@@ -249,6 +257,7 @@ public final class KeybindMapCopy{
 					if(numEmptyMapsInGrid < count){
 //						Main.LOGGER.info("restocking empty maps at least: "+count+" (curr: "+numEmptyMapsInGrid+")");
 						numEmptyMapsInGrid = getEmptyMapsIntoInput(clicks, slots, isCrafter, count, numEmptyMapsInGrid, /*dontLeaveEmptySlotsAfterThisSlot=*/99);
+						LAST_EMPTY_SLOT = lastEmptySlot(slots, HOTBAR_END, INV_START);
 //						Main.LOGGER.info("numEmptyMapsInGrid after restock: "+numEmptyMapsInGrid);
 					}
 					numEmptyMapsInGrid -= count;
@@ -284,7 +293,7 @@ public final class KeybindMapCopy{
 				clicks.add(new ClickEvent(slotsWithBundles[entry.getKey()], 0, SlotActionType.PICKUP)); // Place back in src bundle
 			}//for(item in src bundle)
 		}//for(src bundle)
-		if(numEmptyMapsInGrid > 0) clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.QUICK_MOVE));
+//		if(numEmptyMapsInGrid > 0) clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.QUICK_MOVE));
 
 		//Main.LOGGER.info("MapCopyBundle: STARTED");
 		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("MapCopyBundle: DONE"));
@@ -433,6 +442,7 @@ public final class KeybindMapCopy{
 		// Execute copy operations
 		IdentityHashMap<ClickEvent, Integer> reserveClicks = new IdentityHashMap<>();
 		Main.LOGGER.info("MapCopy: Starting copy, item.count "+minMapCount+" -> "+secondMinMapCount+". leftover: "+leftoversInSlot);
+		boolean didHotbarSwapSoToClearInputGridIdkWhyItsWeird = false;
 		for(int i=HOTBAR_END-1; i>=INV_START; --i){
 			if(slots[i].getItem() != Items.FILLED_MAP) continue;
 			if(slots[i].getCount() != minMapCount) continue;
@@ -456,6 +466,7 @@ public final class KeybindMapCopy{
 
 			numEmptyMapsInGrid -= emptyMapsPerCopy; // Deduct empty maps
 
+			didHotbarSwapSoToClearInputGridIdkWhyItsWeird = false;
 			if(leftoversInSlot || (moveExactToCrafter && lastEmptySlot(slots, HOTBAR_END, INV_START) < i)){
 				Main.LOGGER.info("MapCopy: EzPz shift-click output");
 				clicks.add(new ClickEvent(0, 0, SlotActionType.QUICK_MOVE)); // Move ALL maps from crafter output
@@ -464,6 +475,7 @@ public final class KeybindMapCopy{
 				if(i >= HOTBAR_START){
 					Main.LOGGER.info("MapCopy: Swap 1 from output"+(minMapCount>1?", then shift-click":"")+" (hb:"+(i>=HOTBAR_START)+")");
 					clicks.add(new ClickEvent(0, i-HOTBAR_START, SlotActionType.SWAP)); // Swap 1 map from crafter output
+					if(minMapCount == 1) didHotbarSwapSoToClearInputGridIdkWhyItsWeird = true;
 				}
 				else{
 					Main.LOGGER.info("MapCopy: Pickup-place 1 from output"+(minMapCount>1?", then shift-click":""));
@@ -483,7 +495,7 @@ public final class KeybindMapCopy{
 			if(clicksUsed <= Main.clickUtils.MAX_CLICKS) reserveClicks.put(firstClick, clicksUsed);
 		}// copy maps
 
-		if(numEmptyMapsInGrid > 0) clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.QUICK_MOVE));
+		if(numEmptyMapsInGrid > 0 && didHotbarSwapSoToClearInputGridIdkWhyItsWeird) clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.QUICK_MOVE));
 
 		//Main.LOGGER.info("MapCopy: STARTED");
 		Main.clickUtils.executeClicks(clicks,
