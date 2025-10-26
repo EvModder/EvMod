@@ -19,7 +19,7 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Identifier;
 
 public final class KeybindInventoryOrganize{
-	final boolean CLEAN_UNUSED_HOTBAR_SLOTS = true, RESTOCK_ONLY_1_SLOT_PER_TYPE = true;
+	final boolean CLEAN_UNUSED_HOTBAR_SLOTS = true, RESTOCK_ONLY_1_SLOT_PER_TYPE = true, DONT_RESTOCK_IF_ALREADY_IN_INV = true;
 	List<Pair<Integer, Identifier>> layoutMap;
 
 	private String getName(ItemStack stack){
@@ -128,17 +128,6 @@ public final class KeybindInventoryOrganize{
 		// In restock mode, don't bother sorting anything in the player's inventory
 //		if(RESTOCK_MODE) for(int i=MAIN_INV_START; i<simSlots.length; ++i) doneSlots[i] = true;
 
-		final HashMap<Item, Integer> occurances;
-		if(!isInvScreen && KeybindInventoryRestock.LEAVE_1){
-			// Reserve 1 slot of each unique item type
-			occurances = new HashMap<>();
-			for(int i=0; i<MAIN_INV_START; ++i){
-				Integer occ = occurances.get(simSlots[i].getItem());
-				occurances.put(simSlots[i].getItem(), occ == null ? 1 : occ+1);
-			}
-		}
-		else occurances = null;
-
 //		Main.LOGGER.info("InvOrganize: "+layoutMap.size()+" mappings, isInvScreen="+isInvScreen+", numSlots="+simSlots.length
 //				+", hotbarStart="+HOTBAR_START+", invStart="+MAIN_INV_START);
 
@@ -225,11 +214,34 @@ public final class KeybindInventoryOrganize{
 			checkDoneSlots(simSlots, doneSlots, isInvScreen);
 		}
 
-		HashSet<Item> doneItems = new HashSet<>(); // Used if RESTOCK_ONLY_1_SLOT_PER_TYPE==true
-		if(RESTOCK_ONLY_1_SLOT_PER_TYPE && !isInvScreen) for(Pair<Integer, Identifier> p : layoutMap){
-			if(p.a == -106 || p.a == 45 || p.a < 9) continue;
-			final ItemStack stack = simSlots[p.a + simSlots.length-45];
-			if(p.b.getPath().equals(getName(stack))) doneItems.add(stack.getItem());
+		// Stuff for Container->Inventory restock logic:
+		final HashSet<Item> alreadyRestockedItems;
+		final HashMap<Item, Integer> countainerCounts;
+		final HashSet<Item> itemsInInv;
+		if(isInvScreen){alreadyRestockedItems = null; countainerCounts = null; itemsInInv = null;}
+		else{
+			if(!RESTOCK_ONLY_1_SLOT_PER_TYPE) alreadyRestockedItems = null;
+			else{
+				alreadyRestockedItems = new HashSet<>();
+				for(Pair<Integer, Identifier> p : layoutMap){
+					if(p.a == -106 || p.a == 45 || p.a < 9) continue;
+					final ItemStack stack = simSlots[p.a + simSlots.length-45];
+					if(p.b.getPath().equals(getName(stack))) alreadyRestockedItems.add(stack.getItem());
+				}
+			}
+			if(!KeybindInventoryRestock.LEAVE_1) countainerCounts = null;
+			else{
+				countainerCounts = new HashMap<>();
+				for(int i=0; i<MAIN_INV_START; ++i){
+					Integer occ = countainerCounts.get(simSlots[i].getItem());
+					countainerCounts.put(simSlots[i].getItem(), occ == null ? 1 : occ+1);
+				}
+			}
+			if(!DONT_RESTOCK_IF_ALREADY_IN_INV) itemsInInv = null;
+			else{
+				itemsInInv = new HashSet<>();
+				for(int i=MAIN_INV_START; i<simSlots.length; ++i) itemsInInv.add(simSlots[i].getItem());
+			}
 		}
 
 		// Sort upper-inventory items
@@ -259,11 +271,12 @@ public final class KeybindInventoryOrganize{
 			final int srcSlot = findSlotWithItem(simSlots, p.b.getPath(), doneSlots);
 			if(srcSlot == -1 || doneSlots[srcSlot]) continue;
 			if(RESTOCK_ONLY && srcSlot >= MAIN_INV_START) continue;
-			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && srcSlot < MAIN_INV_START && doneItems.contains(simSlots[srcSlot].getItem())) continue;
-			if(srcSlot < MAIN_INV_START && occurances != null){ // Avoid taking 100% of any item type from src container
-				Integer occ = occurances.get(simSlots[srcSlot].getItem());
+			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && srcSlot < MAIN_INV_START && alreadyRestockedItems.contains(simSlots[srcSlot].getItem())) continue;
+			if(DONT_RESTOCK_IF_ALREADY_IN_INV && srcSlot < MAIN_INV_START && itemsInInv.contains(simSlots[srcSlot].getItem())) continue;
+			if(srcSlot < MAIN_INV_START && countainerCounts != null){ // Avoid taking 100% of any item type from src container
+				Integer occ = countainerCounts.get(simSlots[srcSlot].getItem());
 				assert occ != null && occ > 0;
-				if(occ > 1) occurances.put(simSlots[srcSlot].getItem(), occ-1);
+				if(occ > 1) countainerCounts.put(simSlots[srcSlot].getItem(), occ-1);
 				else{
 //					final int count = simSlots[srcSlot].getCount();
 //					if(count < 2) continue;
@@ -284,7 +297,7 @@ public final class KeybindInventoryOrganize{
 				clicks.add(new ClickEvent(srcSlot, hb, SlotActionType.SWAP));
 			}
 			swapSlots(simSlots, emptySlots, srcSlot, dstSlot);
-			doneItems.add(simSlots[dstSlot].getItem());
+			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && !isInvScreen) alreadyRestockedItems.add(simSlots[dstSlot].getItem());
 			doneSlots[dstSlot] = true;
 			plannedSlots[srcSlot] = false;
 		}
@@ -303,11 +316,12 @@ public final class KeybindInventoryOrganize{
 			final int srcSlot = findSlotWithItem(simSlots, p.b.getPath(), doneSlots);
 			if(srcSlot == -1 || doneSlots[srcSlot]) continue;
 			if(RESTOCK_ONLY && srcSlot >= MAIN_INV_START) continue;
-			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && srcSlot < MAIN_INV_START && doneItems.contains(simSlots[srcSlot].getItem())) continue;
-			if(srcSlot < MAIN_INV_START && occurances != null){ // Avoid taking 100% of any item type from src container
-				Integer occ = occurances.get(simSlots[srcSlot].getItem());
+			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && srcSlot < MAIN_INV_START && alreadyRestockedItems.contains(simSlots[srcSlot].getItem())) continue;
+			if(DONT_RESTOCK_IF_ALREADY_IN_INV && srcSlot < MAIN_INV_START && itemsInInv.contains(simSlots[srcSlot].getItem())) continue;
+			if(srcSlot < MAIN_INV_START && countainerCounts != null){ // Avoid taking 100% of any item type from src container
+				Integer occ = countainerCounts.get(simSlots[srcSlot].getItem());
 				assert occ != null && occ > 0;
-				if(occ > 1) occurances.put(simSlots[srcSlot].getItem(), occ-1);
+				if(occ > 1) countainerCounts.put(simSlots[srcSlot].getItem(), occ-1);
 				else{
 //					final int count = simSlots[srcSlot].getCount();
 //					if(count < 2) continue;
@@ -324,7 +338,7 @@ public final class KeybindInventoryOrganize{
 			else clicks.add(new ClickEvent(srcSlot, dstSlot-HOTBAR_START, SlotActionType.SWAP));
 
 			swapSlots(simSlots, emptySlots, srcSlot, dstSlot);
-			doneItems.add(simSlots[dstSlot].getItem());
+			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && !isInvScreen) alreadyRestockedItems.add(simSlots[dstSlot].getItem());
 			doneSlots[dstSlot] = true;
 			//needEarlier.remove(p.b.getPath());
 		}
@@ -336,10 +350,10 @@ public final class KeybindInventoryOrganize{
 			if(!client.player.getInventory().getArmorStack(3 - (p.a - 5)).isEmpty()) continue; // -5 to get armor index, 3-x to reverse order
 			final int srcSlot = findSlotWithItem(simSlots, p.b.getPath(), doneSlots);
 			if(srcSlot == -1 || srcSlot >= MAIN_INV_START) continue;
-			if(srcSlot < MAIN_INV_START && occurances != null){ // Avoid taking 100% of any item type from src container
-				Integer occ = occurances.get(simSlots[srcSlot].getItem());
+			if(srcSlot < MAIN_INV_START && countainerCounts != null){ // Avoid taking 100% of any item type from src container
+				Integer occ = countainerCounts.get(simSlots[srcSlot].getItem());
 				assert occ != null && occ > 0;
-				if(occ > 1) occurances.put(simSlots[srcSlot].getItem(), occ-1);
+				if(occ > 1) countainerCounts.put(simSlots[srcSlot].getItem(), occ-1);
 				else{
 //					final int count = simSlots[srcSlot].getCount();
 //					if(count < 2) continue; // Most armor is unstackable and will continue here, but carved_pumpkins can be handled below

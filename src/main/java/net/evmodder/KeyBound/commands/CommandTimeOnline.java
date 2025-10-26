@@ -39,15 +39,6 @@ public class CommandTimeOnline{
 						return 1;
 					}
 
-					{
-//						MinecraftClient client = MinecraftClient.getInstance();
-						Main.LOGGER.info("Proxy toString: "+client.getNetworkProxy().toString());
-						Main.LOGGER.info("Proxy addr: "+client.getNetworkProxy().address());
-						Main.LOGGER.info("network profile name: "+client.getNetworkHandler().getProfile().getName());
-						Main.LOGGER.info("client profile name: "+client.player.getGameProfile().getName());
-						Main.LOGGER.info("session username: "+client.getSession().getUsername());
-						Main.LOGGER.info("network connection addr: "+client.getNetworkHandler().getConnection().getAddress());
-					}
 					if(Configs.Database.SHARE_JOIN_QUIT.getBooleanValue() && Main.remoteSender != null){
 						Main.remoteSender.sendBotMessage(Command.DB_PLAYER_FETCH_JOIN_TS, /*udp=*/true, 1000, MiscUtils.getCurrentServerAndPlayerData(), (msg)->{
 							if(msg.length != Long.BYTES){

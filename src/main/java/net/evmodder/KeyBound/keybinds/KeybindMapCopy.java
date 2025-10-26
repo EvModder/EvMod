@@ -442,7 +442,6 @@ public final class KeybindMapCopy{
 		// Execute copy operations
 		IdentityHashMap<ClickEvent, Integer> reserveClicks = new IdentityHashMap<>();
 		Main.LOGGER.info("MapCopy: Starting copy, item.count "+minMapCount+" -> "+secondMinMapCount+". leftover: "+leftoversInSlot);
-		boolean didHotbarSwapSoToClearInputGridIdkWhyItsWeird = false;
 		for(int i=HOTBAR_END-1; i>=INV_START; --i){
 			if(slots[i].getItem() != Items.FILLED_MAP) continue;
 			if(slots[i].getCount() != minMapCount) continue;
@@ -466,7 +465,6 @@ public final class KeybindMapCopy{
 
 			numEmptyMapsInGrid -= emptyMapsPerCopy; // Deduct empty maps
 
-			didHotbarSwapSoToClearInputGridIdkWhyItsWeird = false;
 			if(leftoversInSlot || (moveExactToCrafter && lastEmptySlot(slots, HOTBAR_END, INV_START) < i)){
 				Main.LOGGER.info("MapCopy: EzPz shift-click output");
 				clicks.add(new ClickEvent(0, 0, SlotActionType.QUICK_MOVE)); // Move ALL maps from crafter output
@@ -475,7 +473,6 @@ public final class KeybindMapCopy{
 				if(i >= HOTBAR_START){
 					Main.LOGGER.info("MapCopy: Swap 1 from output"+(minMapCount>1?", then shift-click":"")+" (hb:"+(i>=HOTBAR_START)+")");
 					clicks.add(new ClickEvent(0, i-HOTBAR_START, SlotActionType.SWAP)); // Swap 1 map from crafter output
-					if(minMapCount == 1) didHotbarSwapSoToClearInputGridIdkWhyItsWeird = true;
 				}
 				else{
 					Main.LOGGER.info("MapCopy: Pickup-place 1 from output"+(minMapCount>1?", then shift-click":""));
@@ -495,7 +492,8 @@ public final class KeybindMapCopy{
 			if(clicksUsed <= Main.clickUtils.MAX_CLICKS) reserveClicks.put(firstClick, clicksUsed);
 		}// copy maps
 
-		if(numEmptyMapsInGrid > 0 && didHotbarSwapSoToClearInputGridIdkWhyItsWeird) clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.QUICK_MOVE));
+		// Seems like copy followed by bundle stow causes all empty maps in inv to get tossed?? Well, adding this final click fixes it apparently
+		if(numEmptyMapsInGrid > 0) clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.QUICK_MOVE)); 
 
 		//Main.LOGGER.info("MapCopy: STARTED");
 		Main.clickUtils.executeClicks(clicks,
