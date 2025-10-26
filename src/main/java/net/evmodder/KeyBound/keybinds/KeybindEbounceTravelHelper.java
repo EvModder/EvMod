@@ -51,7 +51,7 @@ import net.minecraft.world.World;
 
 public final class KeybindEbounceTravelHelper{
 	private boolean isEnabled;
-	private long enabledTs, lastPressTs, targetY;
+	private long enabledTs, targetY;
 	private final long ENABLE_DELAY = 1500l;
 	private MinecraftClient client;
 	private KeybindEjectJunk ejectJunk;
@@ -377,7 +377,7 @@ public final class KeybindEbounceTravelHelper{
 				final long timeSinceEnabled = System.currentTimeMillis() - enabledTs;
 				if(timeSinceEnabled > ENABLE_DELAY){
 					isEnabled = true;
-					Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setBooleanValue(true); // May already be true
+//					Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setBooleanValue(true); // May already be true
 					targetY = Long.MIN_VALUE;
 					enabledTs = 0;
 					client.player.sendMessage(Text.literal("eBounce Helper: enabled"), true);
@@ -418,26 +418,36 @@ public final class KeybindEbounceTravelHelper{
 		});
 	}
 
-	public void toggle(){
+	public void toggle(boolean setEnabled){
 //		Main.LOGGER.info("ebounce_travel_helper key pressed");
 		if(client == null){
 			Main.LOGGER.info("ebounce_travel_helper registered");
 			client = MinecraftClient.getInstance();
 			registerClientTickListener();
 		}
-		ItemStack chestStack = client.player.getInventory().getArmorStack(2);
-		if(chestStack.getItem() != Items.ELYTRA) return;
-		final long ts = System.currentTimeMillis();
-		if(ts-lastPressTs < 200) return;
-		lastPressTs = ts;
-		if(isEnabled || Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.getBooleanValue() || (enabledTs != 0 && ts-enabledTs > 200)){
-			Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setBooleanValue(false);
+		if(setEnabled == isEnabled) return;
+		if(!setEnabled){
 			isEnabled = false;
 			enabledTs = 0;
-			client.player.sendMessage(Text.literal("eBounce Helper: disabled"), true);
-			client.player.sendMessage(Text.literal("eBounce Helper: disabled"), false);
+			client.player.sendMessage(Text.literal("eBounceHelper: disabled"), true);
+			return;
 		}
-		else enabledTs = ts;
+		ItemStack chestStack = client.player.getInventory().getArmorStack(2);
+		if(chestStack.getItem() != Items.ELYTRA){
+			client.player.sendMessage(Text.literal("eBounceHelper: Must be wearing elytra first"), true);
+			enabledTs = 0;
+			Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setBooleanValue(false);
+			return;
+		}
+		final long ts = System.currentTimeMillis();
+		if(enabledTs != 0){
+			client.player.sendMessage(Text.literal("eBounceHelper: ENABLE pressed again while in cooldown: "+(ts-enabledTs)), true);
+			Main.LOGGER.info("eBounceHelper: ENABLE pressed again while in enable countdown: "+(ts-enabledTs));
+			return;
+		}
+
+//		client.player.sendMessage(Text.literal("eBounce Helper: enabling..."), true);
+		enabledTs = ts;
 	}
 
 	public KeybindEbounceTravelHelper(KeybindEjectJunk ejectJunk){

@@ -10,7 +10,6 @@ import java.util.stream.Stream;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import net.evmodder.KeyBound.onTick.AutoPlaceMapArt;
 import net.evmodder.KeyBound.onTick.UpdateInventoryHighlights;
-import net.evmodder.EvLib.Pair;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.MapGroupUtils;
 import net.evmodder.KeyBound.apis.MapRelationUtils;
@@ -225,7 +224,8 @@ public final class MapHandRestock{
 		}
 		return bestSlot * (bestConfidence < 0 ? -1 : 1);
 	}
-	private Pair<Integer, Long> getTrailLengthAndScore(final List<ItemStack> slots, final RelatedMapsData data, int prevSlot,
+	private record TrailLenAndScore(int len, long score){}
+	private TrailLenAndScore getTrailLengthAndScore(final List<ItemStack> slots, final RelatedMapsData data, int prevSlot,
 			final PosData2D posData2d, final World world){
 		int trailLength = 0;
 		long scoreSum = 0;
@@ -236,7 +236,7 @@ public final class MapHandRestock{
 			final int i = getNextSlotByName(slots, copiedData, prevPosStr, posData2d, /*infoLogs=*/false);
 			if(i == -999){
 				Main.LOGGER.info("MapRestock: Trail ended on pos: "+prevPosStr);
-				return new Pair<>(trailLength, scoreSum);
+				return new TrailLenAndScore(trailLength, scoreSum);
 			}
 			final int currSlot = Math.abs(i);
 			MapState prevState = FilledMapItem.getMapState(slots.get(prevSlot), world);
@@ -289,12 +289,12 @@ public final class MapHandRestock{
 				final List<String> mapPosStrs = mapNames.stream().map(name -> getPosStrFromName(name, data)).toList();
 				final PosData2D sidewaysPos2dData = getPosData2D(mapPosStrs, true);
 				final PosData2D regularPos2dData = getPosData2D(mapPosStrs, false);
-				final Pair<Integer, Long> sidewaysTrail = getTrailLengthAndScore(slots, data, prevSlot, sidewaysPos2dData, world);
-				final Pair<Integer, Long> regularTrail = getTrailLengthAndScore(slots, data, prevSlot, regularPos2dData, world);
-				final boolean isSideways = sidewaysTrail.a > regularTrail.a || (sidewaysTrail.a == regularTrail.a && sidewaysTrail.b > regularTrail.b);
+				final TrailLenAndScore sidewaysTrail = getTrailLengthAndScore(slots, data, prevSlot, sidewaysPos2dData, world);
+				final TrailLenAndScore regularTrail = getTrailLengthAndScore(slots, data, prevSlot, regularPos2dData, world);
+				final boolean isSideways = sidewaysTrail.len > regularTrail.len || (sidewaysTrail.len == regularTrail.len && sidewaysTrail.score > regularTrail.score);
 				posData2d = isSideways ? sidewaysPos2dData : regularPos2dData;
 				//TODO: if sidewaysLen == regularLen, determine which has better ImgEdgeStitching sum
-				Main.LOGGER.info("MapRestock: Determined sideways="+posData2d.isSideways+" (trail len "+sidewaysTrail.a+" vs "+regularTrail.a+")");
+				Main.LOGGER.info("MapRestock: Determined sideways="+posData2d.isSideways+" (trail len "+sidewaysTrail.len+" vs "+regularTrail.len+")");
 			}
 			for(String name : mapNames) posData2dForName.put(name, posData2d);
 		}

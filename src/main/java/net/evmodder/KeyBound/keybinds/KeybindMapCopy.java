@@ -8,6 +8,7 @@ import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.BundleContentsComponent;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.screen.ScreenHandler;
@@ -17,6 +18,7 @@ import net.minecraft.text.Text;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -147,6 +149,9 @@ public final class KeybindMapCopy{
 		return stack.getCustomName() == null ? null : stack.getCustomName().getString();
 	}
 
+	private record PrioAndSlot(int p, int slot) implements Comparable<PrioAndSlot> {
+		@Override public int compareTo(PrioAndSlot o){return p != o.p ? p - o.p : slot - o.slot;}
+	};
 	private void copyMapArtInBundles(final ArrayDeque<ClickEvent> clicks, final ItemStack[] slots, final boolean isCrafter,
 			int numEmptyMapsInGrid, final int totalEmptyMaps){
 		final int INPUT_START = 1/*, INPUT_END = isCrafter ? 10 : 5*/;
@@ -172,9 +177,12 @@ public final class KeybindMapCopy{
 
 		TreeMap<Integer, List<Integer>> bundlesToCopy = new TreeMap<>(); // source bundle -> destination bundles (slotsWithBundles)
 		HashSet<Integer> usedDests = new HashSet<>();
+		HashSet<Item> srcBundleTypes = new HashSet<>();
+		HashSet<Item> dstBundleTypes = new HashSet<>();
 		for(int i=0; i<slotsWithBundles.length; ++i){
 			final int s1 = slotsWithBundles[i];
 			if(bundles[i].isEmpty()) continue;
+			srcBundleTypes.add(slots[s1].getItem()); // At this point, we already know we're copying this bundle
 			ArrayList<Integer> copyDests = new ArrayList<>();
 			final String name1 = getCustomNameOrNull(slots[s1]);
 //			Main.LOGGER.info("looking for dest bundles for "+slots[s1].getName().getString()+" in slot "+s1);
@@ -209,6 +217,7 @@ public final class KeybindMapCopy{
 				copyDests.add(j);
 			}
 			if(copyDests.isEmpty()){Main.LOGGER.warn("MapCopyBundle: Could not determine destination bundles"); return;}
+			for(int j : copyDests) dstBundleTypes.add(slots[slotsWithBundles[j]].getItem());
 			bundlesToCopy.put(i, copyDests);
 		}
 		final int emptyMapsNeeded = bundlesToCopy.entrySet().stream().mapToInt(
@@ -226,16 +235,17 @@ public final class KeybindMapCopy{
 		assert unusedBundles.size() >= 1;
 
 		final int[] unusedBundleSlots = unusedBundles.stream().mapToInt(Integer::intValue).map(i -> slotsWithBundles[i]).toArray();
-		final int tempBundleSlot;
-		OptionalInt firstRawBundle = Arrays.stream(unusedBundleSlots).filter(i -> slots[i].getCustomName() == null && slots[i].getItem() == Items.BUNDLE).min();
-		if(firstRawBundle.isPresent()) tempBundleSlot = firstRawBundle.getAsInt();
-		else{
-			OptionalInt firstUnnamedBundle = Arrays.stream(unusedBundleSlots).filter(i -> slots[i].getCustomName() == null).min();
-			if(firstUnnamedBundle.isPresent()) tempBundleSlot = firstUnnamedBundle.getAsInt();
-			else tempBundleSlot = Arrays.stream(unusedBundleSlots).min().getAsInt();
-		}
-		Main.LOGGER.info("MapCopyBundle: Intermediary bundle slot "+tempBundleSlot+", "+slots[tempBundleSlot].getName().getString());
+		final boolean anyUnnamedDst = bundlesToCopy.values().stream().anyMatch(d -> d.stream().anyMatch(i -> slots[slotsWithBundles[i]].getCustomName() == null));
+		final PrioAndSlot pas = Arrays.stream(unusedBundleSlots).mapToObj(i ->
+			// Lower score is better
+			new PrioAndSlot(
+					(!anyUnnamedDst && slots[i].getCustomName() != null ? 4 : 0)
+					+ (srcBundleTypes.contains(slots[i].getItem()) ? 2 : 0)
+					+ (dstBundleTypes.contains(slots[i].getItem()) ? 1 : 0), i)).min(Comparator.naturalOrder()).get();
+		Main.LOGGER.info("MapCopyBundle: Intermediary bundle: slot="+pas.slot+", isUnnamed="+((pas.p&4)!=0)
+				+", matchesSrc="+((pas.p&2)!=0)+", matchesDst="+((pas.p&1)!=0));
 
+		final int tempBundleSlot = pas.slot;
 		for(var entry : bundlesToCopy.entrySet()){
 //			Main.LOGGER.info("MapCopyBundle: Copying map bundle in slot "+k+", "+slots[k].getName().getString()+" to slots: "+bundlesToCopy.get(k));
 			for(int _0=0; _0<bundles[entry.getKey()].size(); ++_0){
@@ -293,7 +303,7 @@ public final class KeybindMapCopy{
 				clicks.add(new ClickEvent(slotsWithBundles[entry.getKey()], 0, SlotActionType.PICKUP)); // Place back in src bundle
 			}//for(item in src bundle)
 		}//for(src bundle)
-//		if(numEmptyMapsInGrid > 0) clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.QUICK_MOVE));
+		if(numEmptyMapsInGrid > 0) clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.QUICK_MOVE));
 
 		//Main.LOGGER.info("MapCopyBundle: STARTED");
 		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("MapCopyBundle: DONE"));

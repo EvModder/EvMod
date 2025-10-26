@@ -101,22 +101,23 @@ public final class KeybindAIETravelHelper{
 		});
 	}
 
-	public void toggle(){
+	public void toggle(final boolean setEnabled){
 //		Main.LOGGER.info("aie_travel_helper key pressed");
 		if(client == null){
 			Main.LOGGER.info("aie_travel_helper registered");
 			client = MinecraftClient.getInstance();
 			registerClientTickListener();
 		}
-		final boolean isEnabled = Configs.Hotkeys.AIE_TRAVEL_HELPER.getBooleanValue();
-		if(!isEnabled){
-			if(client.player == null || client.world == null) return;
-			if(!client.player.isGliding()){client.player.sendMessage(Text.literal("You need to be flying first"), true); return;}
+		if(setEnabled){
+			if(!client.player.isGliding()){
+				client.player.sendMessage(Text.literal("You need to be flying first"), true);
+				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
+				return;
+			}
 			enabledTs = System.currentTimeMillis();
 			lastY = client.player.getY();
 		}
-		Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(!isEnabled);
-		client.player.sendMessage(Text.literal("AutomaticInfiniteElytra Travel Helper: "+(isEnabled ? "disabled" : "enabled")), true);
+		client.player.sendMessage(Text.literal("AutomaticInfiniteElytra Travel Helper: "+(setEnabled ? "enabled" : "disabled")), true);
 	}
 
 	//242-170, 251-183, 267-195
