@@ -114,6 +114,7 @@
 
 	"keybound.config.hotkeys.name.toggleCape": "toggleCape",
 	"keybound.config.hotkeys.name.syncCapeWithElytra": "syncCapeWithElytra",
+	"keybound.config.hotkeys.comment.syncCapeWithElytra": "When toggling off elytra, also turn off cape",
 	"keybound.config.hotkeys.name.toggleHat": "toggleHat",
 	"keybound.config.hotkeys.name.toggleJacket": "toggleJacket",
 	"keybound.config.hotkeys.name.toggleSleeveLeft": "toggleSleeveLeft",

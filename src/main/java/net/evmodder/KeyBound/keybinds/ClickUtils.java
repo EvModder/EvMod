@@ -179,8 +179,8 @@ public class ClickUtils{
 					return;
 				}
 				if(tickDurationArr != null){
-					final int msLeft = calcRemainingTicks(clicks.size())*(int)TICK_DURATION;
-					if(msLeft < estimatedMsLeft) estimatedMsLeft = msLeft;
+					final int msLeft = Math.max(1000, calcRemainingTicks(clicks.size())*(int)TICK_DURATION);
+					estimatedMsLeft = Math.min(estimatedMsLeft, msLeft);
 					client.player.sendMessage(Text.literal(
 						"Waiting for available clicks... ("+clicks.size()+", ~"+TextUtils.formatTime(estimatedMsLeft)+")").withColor(OUTTA_CLICKS_COLOR), true);
 				}

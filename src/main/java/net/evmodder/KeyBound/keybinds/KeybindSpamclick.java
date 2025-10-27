@@ -25,7 +25,7 @@ public final class KeybindSpamclick{
 	public KeybindSpamclick(){
 		MinecraftClient client = MinecraftClient.getInstance();
 
-		KeyBindingHelper.registerKeyBinding(incrClicks=new KeyBinding("key."+Main.MOD_ID+".incr_clicks", Type.KEYSYM, -1, Main.KEYBIND_CATEGORY){
+		KeyBindingHelper.registerKeyBinding(incrClicks=new KeyBinding("key."+Main.MOD_ID+".incr_clicks", Type.KEYSYM, -1, "key_categories.misc"){
 			@Override public void setPressed(boolean setPressed){
 				if(setPressed && isPressed()){
 					//if(client.currentScreen instanceof InventoryScreen == false){Main.LOGGER.warn("SpamClickIncrClick: not in InventoryScreen"); return;}
@@ -35,7 +35,7 @@ public final class KeybindSpamclick{
 				super.setPressed(setPressed);
 			}
 		});
-		KeyBindingHelper.registerKeyBinding(incrTicks=new KeyBinding("key."+Main.MOD_ID+".incr_ticks", Type.KEYSYM, -1, Main.KEYBIND_CATEGORY){
+		KeyBindingHelper.registerKeyBinding(incrTicks=new KeyBinding("key."+Main.MOD_ID+".incr_ticks", Type.KEYSYM, -1, "key_categories.misc"){
 			@Override public void setPressed(boolean setPressed){
 				if(setPressed && isPressed()){
 					client.player.sendMessage(Text.literal("SpamClick: numClicks="+numClicks+" numTicks="+(numTicks+=(Screen.hasShiftDown() ? 20 : 1))), /*overlay=*/false);
@@ -45,7 +45,7 @@ public final class KeybindSpamclick{
 		});
 
 		// TODO: since EvKeybind is dead, this is using vanilla clicks now, which means it can't actually run in the InventoryScreen!!
-		KeyBindingHelper.registerKeyBinding(spamClick=new KeyBinding("key."+Main.MOD_ID+".spam_click", Type.KEYSYM, -1, Main.KEYBIND_CATEGORY){
+		KeyBindingHelper.registerKeyBinding(spamClick=new KeyBinding("key."+Main.MOD_ID+".spam_click", Type.KEYSYM, -1, "key_categories.misc"){
 			@Override public void setPressed(boolean setPressed){
 				if(setPressed && isPressed()){
 					if(ongoingSpamClick) return;

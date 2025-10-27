@@ -192,7 +192,7 @@ public class Configs implements IConfigHandler{
 		public static final ConfigHotkey MAP_MOVE_BUNDLE_REVERSE = new ConfigHotkey("mapMoveBundleReverse", "", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 
 		public static final ConfigHotkey TOGGLE_CAPE = new ConfigHotkey("toggleCape", Main.mapArtFeaturesOnly ? "" : ",");
-		public static final ConfigBoolean SYNC_CAPE_WITH_ELYTRA = new ConfigBoolean("syncCapeWithElytra", true).apply(HOTKEYS_KEY);
+		public static final ConfigBoolean SYNC_CAPE_WITH_ELYTRA = new ConfigBoolean("syncCapeWithElytra", false).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TOGGLE_HAT = new ConfigHotkey("toggleHat", "");
 		public static final ConfigHotkey TOGGLE_JACKET = new ConfigHotkey("toggleJacket", Main.mapArtFeaturesOnly ? "" : "I");
 		public static final ConfigHotkey TOGGLE_SLEEVE_LEFT = new ConfigHotkey("toggleSleeveLeft", Main.mapArtFeaturesOnly ? "" : "I");
