@@ -243,11 +243,13 @@ public final class KeybindInventoryOrganize{
 					Integer occ = countainerCounts.get(simSlots[i].getItem());
 					countainerCounts.put(simSlots[i].getItem(), occ == null ? 1 : occ+1);
 				}
+//				Main.LOGGER.info("InvOrganize: countainerCounts="+countainerCounts);
 			}
 			if(!DONT_RESTOCK_IF_ALREADY_IN_INV) itemsInInv = null;
 			else{
 				itemsInInv = new HashSet<>();
 				for(int i=MAIN_INV_START; i<simSlots.length; ++i) itemsInInv.add(simSlots[i].getItem());
+//				Main.LOGGER.info("InvOrganize: itemsInInv="+itemsInInv);
 			}
 		}
 

@@ -22,7 +22,7 @@ repositories {
 	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
 	// for more information about repositories.
 	maven {
-		url 'https://jitpack.io' // New home of MaLiLib apparently
+		url = 'https://jitpack.io' // New home of MaLiLib apparently
 	}
 	// maven {
 	// 	url = "https://masa.dy.fi/maven"

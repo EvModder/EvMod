@@ -52,7 +52,7 @@
 	"keybound.config.generic.name.placementHelperMapArt": "mapartPlacementHelper",
 	"keybound.config.generic.name.placementHelperMapArtUseNames": "mapartPlacementHelperUseItemName",
 	"keybound.config.generic.name.placementHelperMapArtUseImage": "mapartPlacementHelperUseMapImage",
-	"keybound.config.generic.name.placementHelperMapArtAutoPlace": "placementHelperMapArtAutoPlace",
+	"keybound.config.generic.name.placementHelperMapArtAutoPlace": "mapartPlacementHelperAutoPlace",
 	"keybound.config.generic.comment.placementHelperIFrame": "iFrame Placement Helper",
 	"keybound.config.generic.comment.placementHelperIFrameMustConnect": "iFrame Helper - Only place connecting iFrames",
 	"keybound.config.generic.comment.placementHelperIFrameMustMatchBlock": "iFrame Helper - Only place on matching blocks",

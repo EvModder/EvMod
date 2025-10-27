@@ -26,12 +26,8 @@ public class CommandTimeOnline{
 	public CommandTimeOnline(){
 		ClientCommandRegistrationCallback.EVENT.register(
 			(dispatcher, _0) -> dispatcher.register(
-				ClientCommandManager.literal("timeonline") // TODO: proxy time online?
+				ClientCommandManager.literal("timeonline")
 				.executes(ctx->{
-//					if(joinedServerTimestamp == 0){
-//						ctx.getSource().sendFeedback(Text.literal("Time online: -1 (???)"));
-//						return 1;
-//					}
 					MinecraftClient client = MinecraftClient.getInstance();
 					if(client.getCurrentServerEntry() == null){
 						if(client.getServer() != null) tellTimeOnline(ctx.getSource(), client.getServer().getTicks()*50);
@@ -41,12 +37,17 @@ public class CommandTimeOnline{
 
 					if(Configs.Database.SHARE_JOIN_QUIT.getBooleanValue() && Main.remoteSender != null){
 						Main.remoteSender.sendBotMessage(Command.DB_PLAYER_FETCH_JOIN_TS, /*udp=*/true, 1000, MiscUtils.getCurrentServerAndPlayerData(), (msg)->{
-							if(msg.length != Long.BYTES){
-								ctx.getSource().sendFeedback(Text.literal("CommandTimeOnline(Fetch): Invalid server response: "+new String(msg)+" ["+msg.length+"]"));
+							if(msg != null && msg.length == Long.BYTES){
+								tellTimeOnline(ctx.getSource(), ByteBuffer.wrap(msg).getLong());
 								return;
 							}
-							final long ts = ByteBuffer.wrap(msg).getLong();
-							tellTimeOnline(ctx.getSource(), ts);
+							if(msg == null || msg.length != 1 || msg[0] != 0){
+								ctx.getSource().sendFeedback(Text.literal("CommandTimeOnline(Fetch): Invalid server response: "+new String(msg)+" ["+msg.length+"]"));
+							}
+							else{
+								ctx.getSource().sendFeedback(Text.literal("CommandTimeOnline(Fetch): Server doesn't know our last join TS!"));
+							}
+							tellTimeOnline(ctx.getSource(), ServerJoinListener.lastJoinTs);
 						});
 					}
 					else tellTimeOnline(ctx.getSource(), ServerJoinListener.lastJoinTs);

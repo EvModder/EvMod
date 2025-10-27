@@ -242,8 +242,8 @@ public final class KeybindMapCopy{
 					(!anyUnnamedDst && slots[i].getCustomName() != null ? 4 : 0)
 					+ (srcBundleTypes.contains(slots[i].getItem()) ? 2 : 0)
 					+ (dstBundleTypes.contains(slots[i].getItem()) ? 1 : 0), i)).min(Comparator.naturalOrder()).get();
-		Main.LOGGER.info("MapCopyBundle: Intermediary bundle: slot="+pas.slot+", isUnnamed="+((pas.p&4)!=0)
-				+", matchesSrc="+((pas.p&2)!=0)+", matchesDst="+((pas.p&1)!=0));
+		Main.LOGGER.info("MapCopyBundle: Intermediary bundle: slot="+pas.slot+", uniquelyUnnamed="+((pas.p&4)==0)
+				+", uniqueFromSrcType="+((pas.p&2)==0)+", uniqueFromDstType="+((pas.p&1)==0));
 
 		final int tempBundleSlot = pas.slot;
 		for(var entry : bundlesToCopy.entrySet()){
@@ -283,14 +283,14 @@ public final class KeybindMapCopy{
 					}
 					if(LAST_EMPTY_SLOT != -1 && (count > 1 || d == entry.getValue().getLast())){
 						didShiftCraft = true;
-						Main.LOGGER.info("MapCopyBundle: shift-craft into last-empty-slot: "+LAST_EMPTY_SLOT);
+//						Main.LOGGER.info("MapCopyBundle: shift-craft into last-empty-slot: "+LAST_EMPTY_SLOT);
 						clicks.add(new ClickEvent(0, 0, SlotActionType.QUICK_MOVE)); // Move all from crafters
 						clicks.add(new ClickEvent(LAST_EMPTY_SLOT, 1, SlotActionType.PICKUP)); // Pickup half
 						clicks.add(new ClickEvent(slotsWithBundles[d], 0, SlotActionType.PICKUP)); // Put half in dest bundle
 					}
 					else{
 						didShiftCraft = false;
-						Main.LOGGER.info("MapCopyBundle: normal-craft");
+//						Main.LOGGER.info("MapCopyBundle: normal-craft");
 						clicks.add(new ClickEvent(0, 0, SlotActionType.PICKUP)); // Take from crafter output
 						clicks.add(new ClickEvent(INPUT_START+1, 0, SlotActionType.PICKUP)); // Place back in crafter input
 						clicks.add(new ClickEvent(INPUT_START+1, 1, SlotActionType.PICKUP)); // Pickup half
@@ -298,8 +298,8 @@ public final class KeybindMapCopy{
 					}
 				}//for(dest bundles)
 				final int fromSlot = didShiftCraft ? LAST_EMPTY_SLOT : INPUT_START+1;
-				Main.LOGGER.info("MapCopyBundle: Putting map item back into src bundle ("+fromSlot+"->"+slotsWithBundles[entry.getKey()]+")");
-				clicks.add(new ClickEvent(didShiftCraft ? LAST_EMPTY_SLOT : INPUT_START+1, 0, SlotActionType.PICKUP)); // Pickup all
+//				Main.LOGGER.info("MapCopyBundle: Putting map item back into src bundle ("+fromSlot+"->"+slotsWithBundles[entry.getKey()]+")");
+				clicks.add(new ClickEvent(fromSlot, 0, SlotActionType.PICKUP)); // Pickup all
 				clicks.add(new ClickEvent(slotsWithBundles[entry.getKey()], 0, SlotActionType.PICKUP)); // Place back in src bundle
 			}//for(item in src bundle)
 		}//for(src bundle)
