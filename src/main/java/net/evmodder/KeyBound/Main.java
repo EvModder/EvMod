@@ -97,11 +97,9 @@ once arrangement is found
 */
 	// Reference variables
 	public static final String MOD_ID = "keybound"; // TODO: pull from fabric/gradle?
-	public static final String MOD_NAME = "KeyBound";
-	public static final String configFilename = "enabled_features.txt";
-	//public static final String MOD_NAME = "KeyBound";
+	public static final String MOD_NAME = "KeyBound"; // TODO: pull from fabric/gradle?
 	//public static final String MOD_VERSION = "@MOD_VERSION@";
-	public static final String KEYBIND_CATEGORY = "key.categories."+MOD_ID;
+	private static final String CONFIG_NAME = "enabled_features.txt";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 	public static final int HASHCODE_2B2T = -437714968;//"2b2t.org".hashCode() // TODO: make mod more server-independent 
 
@@ -122,7 +120,7 @@ once arrangement is found
 
 	private HashMap<String, String> loadConfig(){
 		HashMap<String, String> config = new HashMap<>();
-		final String configContents = FileIO.loadFile(configFilename, getClass().getResourceAsStream("/"+configFilename));
+		final String configContents = FileIO.loadFile(CONFIG_NAME, getClass().getResourceAsStream("/"+CONFIG_NAME));
 		for(String line : configContents.split("\\r?\\n")){
 			final int sep = line.indexOf(':');
 			if(sep == -1) continue;
@@ -172,7 +170,6 @@ once arrangement is found
 				case "command.sendas": cmdSendAs = !value.equalsIgnoreCase("false"); break;
 				case "command.timeonline": cmdTimeOnline = !value.equalsIgnoreCase("false"); break;
 
-				case "keybind.toggle_skin_layers": if(!value.equalsIgnoreCase("false")) KeybindsSimple.registerSkinLayerKeybinds(); break;
 				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
 				default:
 					LOGGER.warn("Unrecognized config setting: "+key);
