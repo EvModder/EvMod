@@ -32,12 +32,12 @@ public final class MapGroupUtils{
 	}
 
 	private static final int MAX_MAPS_IN_INV_AND_ECHEST = 64*27*(36+27); // 108864
-	public static final HashSet<UUID> getLoadedMaps(final ClientWorld world){
+	public static final HashSet<UUID> getLegitLoadedMaps(final ClientWorld world){
 		final HashSet<UUID> loadedMaps = new HashSet<UUID>();
 		MapState state;
 		final boolean INCLUDE_UNLOCKED = Configs.Generic.MAPART_GROUP_INCLUDE_UNLOCKED.getBooleanValue();
 		for(int i=0; (state=world.getMapState(new MapIdComponent(i))) != null || i < MAX_MAPS_IN_INV_AND_ECHEST; ++i){
-			if(state != null && (INCLUDE_UNLOCKED || state.locked)) loadedMaps.add(getIdForMapState(state));
+			if(state != null && (INCLUDE_UNLOCKED || state.locked) && !MapStateCacher.hasCacheMarker(state)) loadedMaps.add(getIdForMapState(state));
 		}
 		return loadedMaps;
 	}

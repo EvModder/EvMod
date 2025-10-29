@@ -20,7 +20,7 @@ public class ConfigGui extends GuiConfigsBase{
 
 	@Override public void initGui(){
 		super.initGui();
-		this.clearOptions();
+		clearOptions();
 
 		int x = 10;
 		int y = 26;

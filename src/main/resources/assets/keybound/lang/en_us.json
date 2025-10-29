@@ -13,6 +13,10 @@
 	"keybound.gui.label.cache_mapstate.memory": "Session-only",
 	"keybound.gui.label.cache_mapstate.memory_and_disk": "Persistent",
 
+	"keybound.gui.label.cache_mapstate_type.by_id": "By MapId",
+	"keybound.gui.label.cache_mapstate_type.by_name": "By ItemName",
+	"keybound.gui.label.cache_mapstate_type.by_inv_pos": "By Inv/Echest Slot",
+
 	"keybound.config.generic.name.clickLimitCount": "clickLimitCount",
 	"keybound.config.generic.comment.clickLimitCount": "2b2t will kick you for setning >80 clicks in <80 ticks (Last checked: 2025-10-15)",
 	"keybound.config.generic.name.clickLimitWindow": "clickLimitWindow",

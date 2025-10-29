@@ -29,6 +29,8 @@ public class Configs implements IConfigHandler{
 		public static final ConfigOptionList MAP_STATE_CACHE = new ConfigOptionList("mapStateCache",
 //				new SimpleStringOption("keybound.gui.label.cache_mapstate.", "a", "b", "c")).apply(GENERIC_KEY);
 				MapStateCacheOption.MEMORY_AND_DISK).apply(GENERIC_KEY);
+//		public static final ConfigOptionList MAP_STATE_CACHE_TYPE = new ConfigOptionList("mapStateCacheType",
+//				MapStateCacheOptionType.BY_INV_POS).apply(GENERIC_KEY);
 		public static final ConfigBooleanHotkeyed MAP_CLICK_MOVE_NEIGHBORS = new ConfigBooleanHotkeyed(
 				"mapClickMoveNeighbors", true, "LEFT_ALT", KeybindSettings.MODIFIER_GUI).apply(GENERIC_KEY);
 
@@ -78,7 +80,10 @@ public class Configs implements IConfigHandler{
 		public static final List<IConfigBase> getOptions(){
 			List<IConfigBase> availableOptions = new ArrayList<>();
 			availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, MAP_CLICK_MOVE_NEIGHBORS));
-			if((Main.serverJoinListener && Main.serverQuitListener) || Main.containerOpenCloseListener != null) availableOptions.add(MAP_STATE_CACHE);
+			if((Main.serverJoinListener && Main.serverQuitListener) || Main.containerOpenCloseListener != null){
+				availableOptions.add(MAP_STATE_CACHE);
+//				if(MAP_STATE_CACHE.getOptionListValue() != MapStateCacheOption.OFF) availableOptions.add(MAP_STATE_CACHE_TYPE);
+			}
 			if(Main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME,
 					PLACEMENT_HELPER_IFRAME_MUST_CONNECT, PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK));
 			if(Main.placementHelperMapArt){

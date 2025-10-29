@@ -3,15 +3,15 @@ package net.evmodder.KeyBound.config;
 import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
 
-public enum MapStateCacheOption implements IConfigOptionListEntry {
-	OFF("off", "keybound.gui.label.cache_mapstate.off"),
-	MEMORY("memory", "keybound.gui.label.cache_mapstate.memory"),
-	MEMORY_AND_DISK("memory_and_disk", "keybound.gui.label.cache_mapstate.memory_and_disk");
+public enum MapStateCacheOptionType implements IConfigOptionListEntry {
+	BY_ID("by_id", "keybound.gui.label.cache_mapstate_type.by_id"),
+	BY_NAME("by_name", "keybound.gui.label.cache_mapstate_type.by_name"),
+	BY_INV_POS("by_inv_pos", "keybound.gui.label.cache_mapstate_type.by_inv_pos");
 
 	private final String configString;
 	private final String translationKey;
 
-	MapStateCacheOption(String configString, String translationKey){
+	MapStateCacheOptionType(String configString, String translationKey){
 		this.configString = configString;
 		this.translationKey = translationKey;
 	}

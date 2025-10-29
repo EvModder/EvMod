@@ -208,7 +208,7 @@ public class CommandMapArtGroup{
 		final String newActiveGroup = String.join(",", groups);
 		if(cmd == Command.CREATE || cmd == Command.APPEND){
 			final int oldSize = mapsInGroup.size();
-			final HashSet<UUID> loadedMaps = MapGroupUtils.getLoadedMaps(source.getWorld());
+			final HashSet<UUID> loadedMaps = MapGroupUtils.getLegitLoadedMaps(source.getWorld());
 			if(loadedMaps.isEmpty()){
 				source.sendError(Text.literal("No maps found").copy().withColor(ERROR_COLOR));
 				if(cmd == Command.CREATE) return 1;
