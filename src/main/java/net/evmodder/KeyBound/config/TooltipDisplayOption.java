@@ -4,9 +4,9 @@ import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
 
 public enum TooltipDisplayOption implements IConfigOptionListEntry {
-	OFF("off", "keybound.gui.label.tooltip_display.off"),
-	ON("on", "keybound.gui.label.tooltip_display.on"),
-	ADVANCED_TOOLTIPS("advanced_tooltips", "keybound.gui.label.tooltip_display.advanced");
+	OFF("off", "keybound.gui.label.tooltipDisplay.off"),
+	ON("on", "keybound.gui.label.tooltipDisplay.on"),
+	ADVANCED_TOOLTIPS("advancedTooltips", "keybound.gui.label.tooltipDisplay.advanced");
 
 	private final String configString;
 	private final String translationKey;
@@ -27,6 +27,6 @@ public enum TooltipDisplayOption implements IConfigOptionListEntry {
 
 	@Override public IConfigOptionListEntry fromString(String name){
 		for(var v : values()) if(v.configString.equalsIgnoreCase(name)) return v;
-		throw new IllegalArgumentException("TooltipDisplayOption: Invalid argument provided to fromString(): "+name);
+		throw new IllegalArgumentException(getClass().getName()+": Invalid argument provided to fromString(): "+name);
 	}
 }

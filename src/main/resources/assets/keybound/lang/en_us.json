@@ -1,26 +1,31 @@
 {
+	"keybound.clickutils.waitingForClicks": "Remaining clicks: %s, ~%s",
+	"keybound.clickutils.clicksDone": "Clicks done!",
+
 	"keybound.gui.title": "KeyBound Configs - %s",
 	"keybound.gui.button.generic": "Generic",
 	"keybound.gui.button.visuals": "Visuals",
 	"keybound.gui.button.hotkeys": "Hotkeys",
 	"keybound.gui.button.database": "Database",
 
-	"keybound.gui.label.tooltip_display.off": "Off",
-	"keybound.gui.label.tooltip_display.on": "On",
-	"keybound.gui.label.tooltip_display.advanced": "Advanced tooltips",
+	"keybound.gui.label.tooltipDisplay.off": "Off",
+	"keybound.gui.label.tooltipDisplay.on": "On",
+	"keybound.gui.label.tooltipDisplay.advanced": "Advanced tooltips",
 
-	"keybound.gui.label.cache_mapstate.off": "Off",
-	"keybound.gui.label.cache_mapstate.memory": "Session-only",
-	"keybound.gui.label.cache_mapstate.memory_and_disk": "Persistent",
+	"keybound.gui.label.cacheMapstate.off": "Off",
+	"keybound.gui.label.cacheMapstate.memory": "Session-only",
+	"keybound.gui.label.cacheMapstate.memoryAndDisk": "Persistent",
 
-	"keybound.gui.label.cache_mapstate_type.by_id": "By MapId",
-	"keybound.gui.label.cache_mapstate_type.by_name": "By ItemName",
-	"keybound.gui.label.cache_mapstate_type.by_inv_pos": "By Inv/Echest Slot",
+	"keybound.gui.label.cacheMapstateType.byId": "By MapId",
+	"keybound.gui.label.cacheMapstateType.byName": "By ItemName",
+	"keybound.gui.label.cacheMapstateType.byInvPos": "By Inv/Echest Slot",
 
 	"keybound.config.generic.name.clickLimitCount": "clickLimitCount",
 	"keybound.config.generic.comment.clickLimitCount": "2b2t will kick you for setning >80 clicks in <80 ticks (Last checked: 2025-10-15)",
 	"keybound.config.generic.name.clickLimitWindow": "clickLimitWindow",
 	"keybound.config.generic.comment.clickLimitWindow": "2b2t will kick you for setning >80 clicks in <80 ticks (Last checked: 2025-10-15)",
+	"keybound.config.generic.name.clickLimitUserInputs": "clickLimitAlsoApplyToUserInputs",
+	"keybound.config.generic.name.clickBlockUserInputsDuringOperation": "blockUserInputsDuringClickOperation",
 
 	"keybound.config.generic.name.mapStateCache": "mapStateCache",
 	"keybound.config.generic.comment.mapStateCache": "Preserves cached map previews in player's inventory or echest between sessions (since MapStates get unloaded when you log off 2b2t)",

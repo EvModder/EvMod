@@ -23,6 +23,6 @@ public class SimpleStringOption implements IConfigOptionListEntry {
 
 	@Override public IConfigOptionListEntry fromString(String name){
 		for(i=0; i<options.length; ++i) if(options[i].equalsIgnoreCase(name)) return this;
-		throw new IllegalArgumentException("SimpleStringOption: Invalid argument provided to fromString(): "+name);
+		throw new IllegalArgumentException(getClass().getName()+": Invalid argument provided to fromString(): "+name);
 	}
 }

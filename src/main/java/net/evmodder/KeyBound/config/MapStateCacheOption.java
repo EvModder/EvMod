@@ -4,9 +4,9 @@ import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
 
 public enum MapStateCacheOption implements IConfigOptionListEntry {
-	OFF("off", "keybound.gui.label.cache_mapstate.off"),
-	MEMORY("memory", "keybound.gui.label.cache_mapstate.memory"),
-	MEMORY_AND_DISK("memory_and_disk", "keybound.gui.label.cache_mapstate.memory_and_disk");
+	OFF("off", "keybound.gui.label.cacheMapstate.off"),
+	MEMORY("memory", "keybound.gui.label.cacheMapstate.memory"),
+	MEMORY_AND_DISK("memoryAndDisk", "keybound.gui.label.cacheMapstate.memoryAndDisk");
 
 	private final String configString;
 	private final String translationKey;

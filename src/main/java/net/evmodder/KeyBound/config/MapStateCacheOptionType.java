@@ -4,9 +4,9 @@ import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
 
 public enum MapStateCacheOptionType implements IConfigOptionListEntry {
-	BY_ID("by_id", "keybound.gui.label.cache_mapstate_type.by_id"),
-	BY_NAME("by_name", "keybound.gui.label.cache_mapstate_type.by_name"),
-	BY_INV_POS("by_inv_pos", "keybound.gui.label.cache_mapstate_type.by_inv_pos");
+	BY_ID("byId", "keybound.gui.label.cacheMapstateType.byId"),
+	BY_NAME("byName", "keybound.gui.label.cacheMapstateType.byName"),
+	BY_INV_POS("byInvPos", "keybound.gui.label.cacheMapstateType.byInvPos");
 
 	private final String configString;
 	private final String translationKey;

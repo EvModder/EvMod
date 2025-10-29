@@ -7,6 +7,7 @@ import java.util.TimerTask;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import fi.dy.masa.malilib.util.StringUtils;
 import net.evmodder.EvLib.TextUtils;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.mixin.AccessorPlayerListHud;
@@ -25,6 +26,9 @@ public class ClickUtils{
 	private final int OUTTA_CLICKS_COLOR = 15764490, SYNC_ID_CHANGED_COLOR = 16733525;
 //	private final double C_PER_T;
 	public static long TICK_DURATION = 51l; // LOL!! TODO: estimate base off TPS/ping
+
+	private boolean thisClickIsBotted;
+	public boolean isThisClickBotted(/*MixinClientPlayerInteractionManager.Friend friend*/){return thisClickIsBotted;}
 
 	public ClickUtils(final int MAX_CLICKS, int FOR_TICKS){
 		if(MAX_CLICKS >= 100_000 || MAX_CLICKS <= 0){
@@ -87,17 +91,22 @@ public class ClickUtils{
 	}
 
 	private int calcRemainingTicks(int clicksToExecute){
-		final int unusedCapacity = calcAvailableClicks();
-		final double C_PER_T = (double)(MAX_CLICKS-unusedCapacity)/(double)tickDurationArr.length;
-		int ticksLeft = 0;
-		int simTickDurIndex = tickDurIndex;
-		for(int i=0; i<tickDurationArr.length && clicksToExecute > 0; ++i){ // Do 1 loop around the array
-			if(++simTickDurIndex == tickDurationArr.length) simTickDurIndex = 0;
-			clicksToExecute -= tickDurationArr[simTickDurIndex];
-			++ticksLeft;
+//		final int unusedCapacity = calcAvailableClicks();
+//		final double C_PER_T = (double)(MAX_CLICKS-unusedCapacity)/(double)tickDurationArr.length;
+//		int ticksLeft = 0;
+//		int simTickDurIndex = tickDurIndex;
+//		for(int i=0; clicksToExecute > 0; ++i){ // Do 1 loop around the array
+//			if(++simTickDurIndex == tickDurationArr.length) simTickDurIndex = 0;
+//			clicksToExecute -= tickDurationArr[simTickDurIndex];
+//			++ticksLeft;
+//		}
+//		ticksLeft += Math.ceil(clicksToExecute/C_PER_T);
+//		return ticksLeft;
+		int ticksIntoFuture;
+		for(ticksIntoFuture = 1; clicksToExecute > 0; ++ticksIntoFuture){
+			clicksToExecute -= tickDurationArr[(tickDurIndex + ticksIntoFuture) % tickDurationArr.length];
 		}
-		ticksLeft += Math.ceil(clicksToExecute/C_PER_T);
-		return ticksLeft;
+		return ticksIntoFuture;
 	}
 
 	final Pattern tpsPattern = Pattern.compile("(\\d{1,2}(?:\\.\\d+))\\s?tps", Pattern.CASE_INSENSITIVE);
@@ -140,7 +149,7 @@ public class ClickUtils{
 			if(msPerTick != TICK_DURATION) adjustTickRate(msPerTick);
 		}
 
-		estimatedMsLeft = 0;
+		estimatedMsLeft = Integer.MAX_VALUE;
 		clickOpOngoing = true;
 		new Timer().schedule(new TimerTask(){@Override public void run(){
 			if(client.player == null){
@@ -153,7 +162,7 @@ public class ClickUtils{
 				cancel(); clickOpOngoing=false; onComplete.run(); return;
 			}
 			if(clicks.isEmpty()){
-				if(estimatedMsLeft > 0) client.player.sendMessage(Text.literal("Clicks finished early!"), true);
+				if(estimatedMsLeft != Integer.MAX_VALUE) client.player.sendMessage(Text.literal("Clicks finished early!"), true);
 				cancel(); clickOpOngoing=false; onComplete.run(); return;
 			}
 			client.executeSync(()->{
@@ -162,7 +171,9 @@ public class ClickUtils{
 					ClickEvent click = clicks.remove();
 					try{
 						//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
+						thisClickIsBotted = true;
 						client.interactionManager.clickSlot(syncId, click.slotId, click.button, click.actionType, client.player);
+						thisClickIsBotted = false;
 					}
 					catch(NullPointerException e){
 						Main.LOGGER.error("executeClicks() failed due to null client. Clicks left: "+clicks.size()+", sumClicksInDuration: "+sumClicksInDuration);
@@ -173,7 +184,7 @@ public class ClickUtils{
 					cancel();
 					if(clickOpOngoing){
 						clickOpOngoing=false;
-						if(estimatedMsLeft > 0) client.player.sendMessage(Text.literal("Clicks done!"), true);
+						if(estimatedMsLeft != Integer.MAX_VALUE) client.player.sendMessage(Text.translatable("keybound.clickutils.clicksDone"), true);
 						onComplete.run();
 					}
 					return;
@@ -181,13 +192,23 @@ public class ClickUtils{
 				if(tickDurationArr != null){
 					final int msLeft = Math.max(1000, calcRemainingTicks(clicks.size())*(int)TICK_DURATION);
 					estimatedMsLeft = Math.min(estimatedMsLeft, msLeft);
-					client.player.sendMessage(Text.literal(
-						"Waiting for available clicks... ("+clicks.size()+", ~"+TextUtils.formatTime(estimatedMsLeft)+")").withColor(OUTTA_CLICKS_COLOR), true);
+					StringUtils.translate("");
+					client.player.sendMessage(
+						Text.translatable(
+								"keybound.clickutils.waitingForClicks",
+								clicks.size(), TextUtils.formatTime(estimatedMsLeft)
+						).withColor(OUTTA_CLICKS_COLOR), true);
+//					client.player.sendMessage(
+//						Text.literal(
+////							"Waiting for available clicks... ("
+//							+clicks.size()+", ~"+TextUtils.formatTime(estimatedMsLeft)+") "
+//							+", ticksleft="+calcRemainingTicks(clicks.size())+",msLeft="+msLeft+", "
+//							+String.format("%02d", tickDurIndex)
+//						).withColor(OUTTA_CLICKS_COLOR), false);
 				}
 			});
 		}}, 1l, 23l);//51l = just over a tick, 23l=just under half a tick
 	}
-
 
 	public static void executeClicksLEGACY(
 			MinecraftClient client,
