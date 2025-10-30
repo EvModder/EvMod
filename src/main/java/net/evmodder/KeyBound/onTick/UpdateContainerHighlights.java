@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Predicate;
+import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.MapColorUtils;
 import net.evmodder.KeyBound.apis.MapGroupUtils;
 import net.evmodder.KeyBound.apis.MapRelationUtils;
@@ -72,10 +73,10 @@ public class UpdateContainerHighlights{
 		final List<ItemStack> items = getAllMapItemsInContainer(hs.getScreenHandler().slots);
 
 		mapsInContainerHash = hs.getScreenHandler().syncId + items.hashCode();
-		int currHash = UpdateInventoryHighlights.mapsInInvHash + mapsInContainerHash;
+		final int currHash = UpdateInventoryHighlights.mapsInInvHash + mapsInContainerHash;
 		if(lastHash == currHash) return;
 		lastHash = currHash;
-//		Main.LOGGER.info("ContainerHighlighter: Recomputing cache");
+		Main.LOGGER.info("ContainerHighlighter: Recomputing cache");
 
 		if(items.isEmpty()) return;
 		final List<MapState> states = items.stream().map(i -> FilledMapItem.getMapState(i, client.world)).filter(Objects::nonNull).toList();
@@ -103,10 +104,11 @@ public class UpdateContainerHighlights{
 		}
 
 		if(renderAsterisks && !asterisks.isEmpty()){
+			Main.LOGGER.info("ContainerHighlighter: colored title! asterisks.size()="+asterisks.size());
 			customTitle = hs.getTitle().copy();
 			asterisks.stream().distinct() // TODO: the "distinct" only exists in case of configurations where 2+ settings share 1 color
 				.forEach(color -> customTitle.append(Text.literal("*").withColor(color).formatted(Formatting.BOLD)));
 		}
-		mapsInContainerHash = nonTransparentIds.hashCode() + nonMonoColorIds.hashCode();
+//		mapsInContainerHash = nonTransparentIds.hashCode() + nonMonoColorIds.hashCode();
 	}
 }

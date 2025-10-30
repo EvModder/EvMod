@@ -9,6 +9,7 @@
 		"MixinClientPlayNetworkHandler",
 		"MixinClientWorld",
 		"MixinEntityRenderer",
+		"MixinHandledScreen",
 		"MixinInGameHud",
 		"MixinItemFrameRenderer",
 		//"MixinItemRenderer",
