@@ -210,7 +210,7 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBooleanHotkeyed AIE_TRAVEL_HELPER = new ConfigBooleanHotkeyed("automaticInfiniteElytraTravelHelper", false,
 				Main.mapArtFeaturesOnly ? "" : "SEMICOLON", KeybindSettings.NOCANCEL).apply(HOTKEYS_KEY);
 		public static final ConfigBooleanHotkeyed EBOUNCE_TRAVEL_HELPER = new ConfigBooleanHotkeyed("eBounceTravelHelper", false,
-				Main.mapArtFeaturesOnly ? "" : "A", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
+				Main.mapArtFeaturesOnly ? "" : "A", KeybindSettings.PRESS_ALLOWEXTRA).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey EJECT_JUNK_ITEMS = new ConfigHotkey("ejectJunkItems",
 				Main.mapArtFeaturesOnly ? "" : "R", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
 //		public static final ConfigHotkey SMART_SPACEBAR_CRAFTING = new ConfigHotkey("smartInventoryReCrafting", " ").apply(HOTKEYS_KEY);

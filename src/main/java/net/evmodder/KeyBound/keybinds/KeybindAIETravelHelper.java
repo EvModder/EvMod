@@ -30,7 +30,11 @@ public final class KeybindAIETravelHelper{
 	private void registerClientTickListener(){
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
 			if(!Configs.Hotkeys.AIE_TRAVEL_HELPER.getBooleanValue()) return;
-			if(client.player == null || client.world == null){Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false); return;}
+			if(client.player == null || client.world == null){
+				Main.LOGGER.info("AIE Helper: disabled due to client disconnect");
+				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
+				return;
+			}
 
 			ItemStack chestStack = client.player.getInventory().getArmorStack(2);
 //			//Identifier chestItemId = Registries.ITEM.getId(chestStack.getItem()); // Not really needed thanks to 
@@ -54,12 +58,13 @@ public final class KeybindAIETravelHelper{
 					if(stoppedFlyingTs == 0) stoppedFlyingTs = System.currentTimeMillis();
 					final long countDownToKick = SAFE_KICK_DELAY - (System.currentTimeMillis() - stoppedFlyingTs);
 					if(countDownToKick > 0){
-						client.player.sendMessage(Text.literal("AIE helper will disconnect due to not-flying in: " + TextUtils.formatTime(countDownToKick)), true);
+						client.player.sendMessage(Text.literal("AIE Helper: will disconnect due to not-flying in: " + TextUtils.formatTime(countDownToKick)), true);
 						return;
 					}
 					stoppedFlyingTs = 0;
 				}
 				Main.LOGGER.warn("Disconnecting player: "+(goingDownInEnd?"FALLING!":"no longer flying")+", y="+y+", dur="+dur);
+				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
 				client.world.disconnect();
 //				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false); // Will be done automatically once client.world == null
 			}
@@ -75,24 +80,25 @@ public final class KeybindAIETravelHelper{
 						}
 						else client.interactionManager.clickSlot(0, 6, i-36, SlotActionType.SWAP, client.player); // Swap with hotbar
 						if(!atKickY){
-							client.player.sendMessage(Text.literal("Swapped to fresh elytra"), true);
+							client.player.sendMessage(Text.literal("AIE Helper: Swapped to fresh elytra"), true);
 							return;
 						}
 					}
 					if(!atKickY && dur > kickDur && waitForSafePitch && (pitch < safePitchLower || pitch > safePitchUpper || pitch <= lastPitch)){
-						client.player.sendMessage(Text.literal("Current AIE helper settings will trigger disconnect due to too low dur"), true);
+						client.player.sendMessage(Text.literal("AIE Helper: will trigger disconnect due to too low dur"), true);
 						return;
 					}
 				}
 				if(!atKickY && dur > kickDur){
 					final long countDownToKick = SAFE_KICK_DELAY - (System.currentTimeMillis() - enabledTs);
 					if(countDownToKick > 0){
-						client.player.sendMessage(Text.literal("Current AIE helper settings will trigger disconnect due to too low "
+						client.player.sendMessage(Text.literal("AIE Helper: will trigger disconnect due to too low "
 								+(atUnsafeY?"Y":"dur")+" in: "+TextUtils.formatTime(countDownToKick)), true);
 						return;
 					}
 				}
 				Main.LOGGER.warn("Disconnecting player: y="+y+", dur="+dur);
+				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
 				client.world.disconnect();
 //				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false); // Will be done automatically once client.world == null
 			}
@@ -101,23 +107,24 @@ public final class KeybindAIETravelHelper{
 		});
 	}
 
-	public void toggle(final boolean setEnabled){
+	public void updateEnabled(final boolean setEnabled){
 //		Main.LOGGER.info("aie_travel_helper key pressed");
 		if(client == null){
-			Main.LOGGER.info("aie_travel_helper registered");
+			Main.LOGGER.info("AIE Helper: registered");
 			client = MinecraftClient.getInstance();
 			registerClientTickListener();
 		}
 		if(setEnabled){
 			if(!client.player.isGliding()){
-				client.player.sendMessage(Text.literal("You need to be flying first"), true);
+				client.player.sendMessage(Text.literal("AIE Helper: You need to be flying first"), true);
 				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
 				return;
 			}
 			enabledTs = System.currentTimeMillis();
 			lastY = client.player.getY();
 		}
-		client.player.sendMessage(Text.literal("AutomaticInfiniteElytra Travel Helper: "+(setEnabled ? "enabled" : "disabled")), true);
+		Main.LOGGER.info("AIE Helper: "+(setEnabled ? "enabled" : "disabled"));
+//		if(client.player != null) client.player.sendMessage(Text.literal("AIE Helper: "+(setEnabled ? "enabled" : "disabled")), true);
 	}
 
 	//242-170, 251-183, 267-195

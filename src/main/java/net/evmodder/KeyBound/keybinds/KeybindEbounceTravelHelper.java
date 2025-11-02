@@ -425,29 +425,35 @@ public final class KeybindEbounceTravelHelper{
 			client = MinecraftClient.getInstance();
 			registerClientTickListener();
 		}
+//		client.player.sendMessage(Text.literal("eBounceHelper: key pressed, setEnabled="+setEnabled), true);
+//		client.player.sendMessage(Text.literal("eBounceHelper: key pressed, setEnabled="+setEnabled), false);
+
 		if(setEnabled == isEnabled) return;
-		if(!setEnabled){
+		if(!setEnabled || enabledTs != 0){
 			isEnabled = false;
 			enabledTs = 0;
-			client.player.sendMessage(Text.literal("eBounceHelper: disabled"), true);
+//			client.player.sendMessage(Text.literal("eBounceHelper: disabled"), true);
+			client.player.sendMessage(Text.literal("eBounceHelper: disabled"), false);
 			return;
 		}
-		ItemStack chestStack = client.player.getInventory().getArmorStack(2);
-		if(chestStack.getItem() != Items.ELYTRA){
-			client.player.sendMessage(Text.literal("eBounceHelper: Must be wearing elytra first"), true);
-			enabledTs = 0;
-			Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setBooleanValue(false);
-			return;
-		}
-		final long ts = System.currentTimeMillis();
-		if(enabledTs != 0){
-			client.player.sendMessage(Text.literal("eBounceHelper: ENABLE pressed again while in cooldown: "+(ts-enabledTs)), true);
-			Main.LOGGER.info("eBounceHelper: ENABLE pressed again while in enable countdown: "+(ts-enabledTs));
-			return;
-		}
+//		ItemStack chestStack = client.player.getInventory().getArmorStack(2);
+//		if(chestStack.getItem() != Items.ELYTRA){
+////			client.player.sendMessage(Text.literal("eBounceHelper: Must be wearing elytra first"), true);
+//			client.player.sendMessage(Text.literal("eBounceHelper: Must be wearing elytra first"), false);
+//			enabledTs = 0;
+//			Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setBooleanValue(false);
+//			return;
+//		}
+//		if(enabledTs != 0){
+////			client.player.sendMessage(Text.literal("eBounceHelper: ENABLE pressed again while in enable cooldown"), true);
+//			client.player.sendMessage(Text.literal("eBounceHelper: ENABLE pressed again while in enable cooldown"), false);
+//			Main.LOGGER.info("eBounceHelper: ENABLE pressed again while in enable countdown");
+//			return;
+//		}
 
 //		client.player.sendMessage(Text.literal("eBounce Helper: enabling..."), true);
-		enabledTs = ts;
+		client.player.sendMessage(Text.literal("eBounce Helper: enabling..."), false);
+		enabledTs = System.currentTimeMillis();
 	}
 
 	public KeybindEbounceTravelHelper(KeybindEjectJunk ejectJunk){
