@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -21,6 +22,7 @@ import java.util.stream.Stream;
 import javax.imageio.ImageIO;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import fi.dy.masa.malilib.util.StringUtils;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.MapRelationUtils;
@@ -33,6 +35,7 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.block.MapColor;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.BundleContentsComponent;
 import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.FilledMapItem;
@@ -109,55 +112,62 @@ public class CommandExportMapImg{
 		}
 	}
 
-	private int genImgForMapsInInv(FabricClientCommandSource source){
-		int numShulksSaved = 0;
-		String lastRelPath = null;
-		/*invloop:*/for(int i=0; i<41; ++i){
-			ItemStack stack = source.getPlayer().getInventory().getStack(i);
-			ContainerComponent container = stack.get(DataComponentTypes.CONTAINER);
-			if(container == null) continue;
-			if(!container.streamNonEmpty().anyMatch(s -> FilledMapItem.getMapState(s, source.getWorld()) != null)) continue;
-			final int size = (int)container.stream().count();
-			if(size % 9 != 0){source.sendError(Text.literal("Unsupported container size: "+size)); continue;}
-			final int border = Configs.Visuals.EXPORT_MAP_IMG_BORDER.getBooleanValue() ? 8 : 0;
-			BufferedImage img = new BufferedImage(128*9+border*2, 128*(size/9)+border*2, BufferedImage.TYPE_INT_ARGB);
-			if(border > 0) drawBorder(img);
+	private BufferedImage drawImgForMapStates(final FabricClientCommandSource source, final List<MapState> states, final int width){
+		final int height = (states.size()-1)/width + 1;
+		final int border = Configs.Visuals.EXPORT_MAP_IMG_BORDER.getBooleanValue() ? 8 : 0;
+		BufferedImage img = new BufferedImage(128*width + border*2, 128*height + border*2, BufferedImage.TYPE_INT_ARGB);
+		if(border > 0) drawBorder(img);
 
-			Iterator<ItemStack> contents = container.stream().toList().iterator();
-			for(int y=0; y<(size/9); ++y) for(int x=0; x<9; ++x){
-				final MapState state = FilledMapItem.getMapState(contents.next(), source.getWorld());
-				if(state == null){
-					//source.sendError(Text.literal("Slot "+x+","+y+" does not contain a loaded map"));
-					//continue invloop;
-					continue;
-				}
-				final int xo = x*128+border, yo = y*128+border;
-				for(int a=0; a<128; ++a) for(int b=0; b<128; ++b) img.setRGB(xo+a, yo+b, MapColor.getRenderColor(state.colors[a + b*128]));
-			}
-			if(contents.hasNext()) source.sendError(Text.literal("HUH?! Leftover items in container iterator.. bug"));
+		Iterator<MapState> contents = states.iterator();
+		for(int y=0; y<height; ++y) for(int x=0; x<width; ++x){
+			final byte[] colors = contents.next().colors;
+			final int xo = x*128+border, yo = y*128+border;
+			for(int a=0; a<128; ++a) for(int b=0; b<128; ++b) img.setRGB(xo+a, yo+b, MapColor.getRenderColor(colors[a + b*128]));
+			if(!contents.hasNext()) return img;
+		}
+		assert false : "ExportMapImg: Width*Height < states.size()?!";
+		return img;
+	}
 
-			final String imgName = (stack.getCustomName() != null ? stack.getCustomName() : stack.getItemName()).getString()+" - slot"+i;
+	private String lastRelPath = null;
+	private int genImgForMapsInInv(FabricClientCommandSource source, List<ItemStack> inventory, final String name, final int width, final boolean combine){
+		final List<MapState> unnestedMaps = inventory.stream().map(s -> FilledMapItem.getMapState(s, source.getWorld())).filter(Objects::nonNull).toList();
+		List<MapState> allMaps = MapRelationUtils.getAllNestedItems(inventory.stream())
+				.map(s -> FilledMapItem.getMapState(s, source.getWorld()))
+				.filter(Objects::nonNull).toList();
+
+		int numExports = 0;
+		if(!unnestedMaps.isEmpty()){
+			final int w = combine && allMaps.size() > unnestedMaps.size() ? (int)Math.ceil(Math.sqrt(allMaps.size())) : Math.min(width, unnestedMaps.size());
+			final BufferedImage img = drawImgForMapStates(source, combine ? allMaps : unnestedMaps, w);
+
 			if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdir();
-			try{ImageIO.write(img, "png", new File(lastRelPath=(FileIO.DIR+MAP_EXPORT_DIR+imgName+".png")));}
+			try{ImageIO.write(img, "png", new File(lastRelPath=(FileIO.DIR+MAP_EXPORT_DIR+name+".png")));}
 			catch(IOException e){e.printStackTrace();}
-			++numShulksSaved;
+
+			if(combine || allMaps.size() == unnestedMaps.size()) return 1;
+			//else: handle sub-maps
 		}
-		if(numShulksSaved == 1){
-			final String absolutePath = new File(lastRelPath).getAbsolutePath();
-			final Text text = Text.literal("Saved map shulk img to ").withColor(16755200).append(
-					Text.literal(lastRelPath).withColor(43520).formatted(Formatting.UNDERLINE)
-					.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, absolutePath)))
-			);
-			source.sendFeedback(text);
+		for(int i=0; i<inventory.size(); ++i){
+			final ItemStack stack = inventory.get(i);
+			final ContainerComponent container = stack.get(DataComponentTypes.CONTAINER);
+			final BundleContentsComponent contents = stack.get(DataComponentTypes.BUNDLE_CONTENTS);
+			if(container == null && contents == null) continue;
+			final String containerName = stack.getCustomName() != null ? stack.getCustomName().getString()
+					: name+"-slot"+i+":"+stack.getItemName().getString();
+			if(container != null){
+				List<ItemStack> subItems = com.google.common.collect.Streams.stream(container.iterateNonEmpty()).toList();
+				boolean subCombine = subItems.stream().noneMatch(s -> FilledMapItem.getMapState(s, source.getWorld()) != null);
+				int w = subCombine ? (int)Math.ceil(Math.sqrt(subItems.size())) : 9;
+				numExports += genImgForMapsInInv(source, subItems, containerName, w, subCombine);
+			}
+			if(contents != null){
+				List<ItemStack> subItems = com.google.common.collect.Streams.stream(contents.iterate()).toList();
+				int w = (int)Math.ceil(Math.sqrt(subItems.size())); // Should max out at 8
+				numExports += genImgForMapsInInv(source, subItems, containerName, w, /*combine=*/true); // Combine nested bundles
+			}
 		}
-		if(numShulksSaved > 1){
-			final Text text = Text.literal("Saved "+numShulksSaved+" map shulk imgs to ").withColor(16755200).append(
-					Text.literal(FileIO.DIR+MAP_EXPORT_DIR).withColor(43520).formatted(Formatting.UNDERLINE)
-					.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, new File(FileIO.DIR+MAP_EXPORT_DIR).getAbsolutePath())))
-			);
-			source.sendFeedback(text);
-		}
-		return numShulksSaved;
+		return numExports;
 	}
 
 	private void buildMapImgFile(final FabricClientCommandSource source, final Map<Vec3i, ItemFrameEntity> ifeLookup,
@@ -294,6 +304,26 @@ public class CommandExportMapImg{
 				e -> e.getHeldItemStack().getItem() == Items.FILLED_MAP);
 	}
 
+	private int runCommandInInventory(final CommandContext<FabricClientCommandSource> ctx){
+		final int numSaved = genImgForMapsInInv(ctx.getSource(),
+				ctx.getSource().getPlayer().getInventory().main,
+				/*name=*/StringUtils.translate("container.inventory"), /*width=*/9, /*combine=*/false);
+		if(numSaved == 1){
+			final String absolutePath = new File(lastRelPath).getAbsolutePath();
+			ctx.getSource().sendFeedback(Text.literal("Saved map shulk img to ").withColor(16755200).append(
+					Text.literal(lastRelPath).withColor(43520).formatted(Formatting.UNDERLINE)
+					.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, absolutePath)))
+			));
+		}
+		if(numSaved > 1){
+			ctx.getSource().sendFeedback(Text.literal("Saved "+numSaved+" map shulk imgs to ").withColor(16755200).append(
+					Text.literal(FileIO.DIR+MAP_EXPORT_DIR).withColor(43520).formatted(Formatting.UNDERLINE)
+					.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, new File(FileIO.DIR+MAP_EXPORT_DIR).getAbsolutePath())))
+			));
+		}
+		return numSaved == 0 ? 1 : 0;
+	}
+
 	private int runCommandNoArg(final CommandContext<FabricClientCommandSource> ctx){
 		ItemFrameEntity targetIFrame = null;
 		double bestUh = 0;
@@ -311,10 +341,10 @@ public class CommandExportMapImg{
 			if(uh < bestUh){bestUh = uh; targetIFrame = ife;}
 		}
 		if(targetIFrame == null){
-			// Fetch from inventory
-			int numSaved = genImgForMapsInInv(ctx.getSource());
-			if(numSaved == 0) ctx.getSource().sendError(Text.literal("No mapwall (in front of cursor) detected"));
-			return numSaved == 0 ? 1 : 0;
+			// Try checking in inventory
+			final int cmdFeedbackStatus = runCommandInInventory(ctx);
+			if(cmdFeedbackStatus == 1) ctx.getSource().sendError(Text.literal("No mapwall (in front of cursor) detected"));
+			return cmdFeedbackStatus;
 		}
 		// Fetch from iframe wall
 //		HashMap<Vec3i, ItemFrameEntity> ifeLookup = new HashMap<>();
@@ -567,13 +597,15 @@ public class CommandExportMapImg{
 				.executes(this::runCommandNoArg)
 				.then(
 					ClientCommandManager.literal("all_walls")
-//					ClientCommandManager.argument("all", StringArgumentType.word())
-//					.suggests((_1, builder) -> { builder.suggest("all"); return builder.buildFuture();})
 					.executes(this::runCommandForAllWalls)
 				)
 				.then(
 					ClientCommandManager.literal("all_maps")
 					.executes(this::runCommandForAllMaps)
+				)
+				.then(
+					ClientCommandManager.literal("in_inv")
+					.executes(this::runCommandInInventory)
 				)
 				.then(
 					ClientCommandManager.literal("by_name")

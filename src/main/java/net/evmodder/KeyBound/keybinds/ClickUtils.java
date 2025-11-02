@@ -192,7 +192,7 @@ public class ClickUtils{
 				if(tickDurationArr != null){
 					final int msLeft = Math.max(1000, calcRemainingTicks(clicks.size())*(int)TICK_DURATION);
 					estimatedMsLeft = Math.min(estimatedMsLeft, msLeft);
-					StringUtils.translate("");
+//					StringUtils.translate("");
 					client.player.sendMessage(
 						Text.translatable(
 								"keybound.clickutils.waitingForClicks",

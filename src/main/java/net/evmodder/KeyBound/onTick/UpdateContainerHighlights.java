@@ -109,6 +109,5 @@ public class UpdateContainerHighlights{
 			asterisks.stream().distinct() // TODO: the "distinct" only exists in case of configurations where 2+ settings share 1 color
 				.forEach(color -> customTitle.append(Text.literal("*").withColor(color).formatted(Formatting.BOLD)));
 		}
-//		mapsInContainerHash = nonTransparentIds.hashCode() + nonMonoColorIds.hashCode();
 	}
 }
