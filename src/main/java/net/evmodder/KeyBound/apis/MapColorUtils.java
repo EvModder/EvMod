@@ -135,7 +135,7 @@ public abstract class MapColorUtils{
 				uniqueColorIds.add((byte)((color&0xFF)/4));
 				switch(palette){
 					case EMPTY:
-						if(isTransparent){transparency = true; break;}
+						if(isTransparent) break;
 						palette = Palette.CARPET;
 					case CARPET:
 						if(carpetColors.contains(color)) break;
@@ -147,7 +147,7 @@ public abstract class MapColorUtils{
 						palette = Palette.FULLBLOCK;
 					case FULLBLOCK:
 				}
-				if(isTransparent){h=0; continue;}
+				if(isTransparent){h=0; transparency=true; continue;}
 				else if(northLower.contains(color) && (y==0 || !transparentColors.contains(colors[x+(y-1)*128]))){h = h<0 ? 1 : ++h;}
 				else if(northHigher.contains(color)){h = h>0 ? -1 : --h;}
 				else continue;
