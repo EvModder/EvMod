@@ -1,5 +1,6 @@
 package net.evmodder.KeyBound.onTick;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -11,6 +12,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.EndTic
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.command.argument.EntityAnchorArgumentType.EntityAnchor;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
@@ -31,6 +33,7 @@ public class AutoPlaceItemFrames{
 	private Direction dir;
 	private int axis;
 	private final int MAX_REACH = 4;
+	private final boolean ROTATE_PLAYER = false; //TODO: config setting
 
 	private double distFromPlane(BlockPos bp){
 		switch(dir){
@@ -77,22 +80,27 @@ public class AutoPlaceItemFrames{
 		return true;
 	}
 
-	private int tick;
+	private final BlockPos[] recentPlaceAttempts;
+	private int attemptIdx;
 	public AutoPlaceItemFrames(){
+		recentPlaceAttempts = new BlockPos[20];
 		EndTick etl = (client) -> {
 			if(dir == null) return; // iFramePlacer is not currently active
 			if(!Configs.Generic.PLACEMENT_HELPER_IFRAME.getBooleanValue()){
 				dir = null; iFrameItem = null; placeAgainstBlock = null;
 				return;
 			}
-			// Only run ever 5th tick, since there is some iframe placement speed limit (TODO: idk what it is yet)
-			if((++tick)/5 == 1) tick = 0; else return;
 
 			if(client.player == null || client.world == null){ // Player offline, cancel iFramePlacer
 				Main.LOGGER.info("iFramePlacer: Disabling due to player offline");
 				dir = null; iFrameItem = null; placeAgainstBlock = null;
 				return;
 			}
+			// Don't spam-place in the same blockpos, give iframe entity a chance to load
+			if(++attemptIdx >= recentPlaceAttempts.length) attemptIdx = 0;
+			recentPlaceAttempts[attemptIdx] = null;
+
+			if(client.player.getVelocity().lengthSquared() > 0.01) return; // Pause while player is moving
 
 			final int SCAN_DIST = MAX_REACH+2;
 
@@ -107,6 +115,7 @@ public class AutoPlaceItemFrames{
 			Optional<BlockPos> closestValidPlacement = BlockPos.streamOutwards(clientBp, SCAN_DIST, SCAN_DIST, SCAN_DIST)
 				.filter(bp -> isValidIframePlacement(bp, client.world, ifes))
 				.filter(bp -> getPlaceAgainstSurface(bp).squaredDistanceTo(eyePos) <= MAX_REACH*MAX_REACH)
+				.filter(bp -> Arrays.stream(recentPlaceAttempts).noneMatch(attempt -> attempt != null && bp.equals(attempt)))
 				.findFirst();
 			if(closestValidPlacement.isEmpty()) return; // No valid spot in range to place an iFrame
 
@@ -117,17 +126,31 @@ public class AutoPlaceItemFrames{
 				return;
 			}
 
-			// Do the clicky-clicky
 			BlockPos bp = closestValidPlacement.get();
+			recentPlaceAttempts[attemptIdx] = bp;
+
+			// Do the clicky-clicky
 			if(Configs.Generic.PLACEMENT_HELPER_IFRAME_HIT_VECTOR.getBooleanValue()){
-				Vec3d blockHit = getPlaceAgainstSurface(bp);
-				BlockHitResult hitResult = new BlockHitResult(blockHit, dir, bp, /*insideBlock=*/false);
+				BlockHitResult hitResult = new BlockHitResult(getPlaceAgainstSurface(bp), dir, bp, /*insideBlock=*/false);
+				if(ROTATE_PLAYER){
+//					Vec3d playerPos = client.player.getPos();
+//					float oldYaw = client.player.getYaw(), oldPitch = client.player.getPitch();
+					client.player.lookAt(EntityAnchor.EYES, hitResult.getPos());
+//					float grimYaw = client.player.getYaw(), grimPitch = client.player.getPitch();
+//					client.player.setAngles(oldYaw, oldPitch);
+//					client.getNetworkHandler().sendPacket(new PlayerInputC2SPacket(client.player.input.playerInput));
+//					client.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.Full(playerPos.x, playerPos.y, playerPos.z, grimYaw, grimPitch,
+//							client.player.isOnGround(), client.player.horizontalCollision));
+//					client.player.prevYaw = grimYaw;
+//					client.player.prevPitch = grimPitch;
+				}
 				client.interactionManager.interactBlock(client.player, hand, hitResult);
 //				client.player.swingHand(Hand.MAIN_HAND, false);
 //				client.getNetworkHandler().sendPacket(new HandSwingC2SPacket(hand));
 			}
 			else{
-				BlockHitResult hitResult = new BlockHitResult(Vec3d.ofCenter(bp), Direction.DOWN, bp, /*insideBlock=*/true);
+				BlockHitResult hitResult = new BlockHitResult(Vec3d.ofCenter(bp), dir, bp, /*insideBlock=*/true);
+//				if(ROTATE_PLAYER) client.player.lookAt(EntityAnchor.EYES, hitResult.getPos());
 				client.interactionManager.interactBlock(client.player, hand, hitResult);
 				// Airplace, basically
 				client.player.swingHand(Hand.MAIN_HAND, false);
