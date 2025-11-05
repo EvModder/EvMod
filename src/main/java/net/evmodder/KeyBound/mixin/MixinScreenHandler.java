@@ -2,7 +2,6 @@ package net.evmodder.KeyBound.mixin;
 
 import net.evmodder.KeyBound.apis.MapClickMoveNeighbors;
 import net.evmodder.KeyBound.config.Configs;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -29,11 +28,12 @@ abstract class MixinScreenHandler{
 
 	@Inject(method = "internalOnSlotClick", at = @At("TAIL"))
 	private void click_move_neighbors_caller(int slotIndex, int button, SlotActionType actionType, PlayerEntity player, CallbackInfo ci){
-		if(!Configs.Generic.MAP_CLICK_MOVE_NEIGHBORS.getBooleanValue()) return;
+		if(!Configs.Hotkeys.MAP_CLICK_MOVE_NEIGHBORS.getBooleanValue()) return;
 		if(button != 0 || actionType != SlotActionType.PICKUP) return;
 		if(!player.currentScreenHandler.getCursorStack().isEmpty()) return;
 		if(slotIndex < 0 || slotIndex >= player.currentScreenHandler.slots.size()) return;
-		if(!Screen.hasShiftDown() && !Screen.hasControlDown() && !Screen.hasAltDown()) return;
+//		if(!Screen.hasShiftDown() && !Screen.hasControlDown() && !Screen.hasAltDown()) return;
+		if(!Configs.Hotkeys.MAP_CLICK_MOVE_NEIGHBORS_KEY.getKeybind().isKeybindHeld()) return;
 		final ItemStack itemPlaced = player.currentScreenHandler.getSlot(slotIndex).getStack();
 		if(itemPlaced.getItem() != Items.FILLED_MAP) return;
 		if(itemPlaced.getCustomName() == null || itemPlaced.getCustomName().getLiteralString() == null) return; // TODO: support unnamed maps

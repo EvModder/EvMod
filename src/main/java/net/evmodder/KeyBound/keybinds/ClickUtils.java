@@ -7,7 +7,6 @@ import java.util.TimerTask;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import fi.dy.masa.malilib.util.StringUtils;
 import net.evmodder.EvLib.TextUtils;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.mixin.AccessorPlayerListHud;
@@ -190,7 +189,8 @@ public class ClickUtils{
 					return;
 				}
 				if(tickDurationArr != null){
-					final int msLeft = Math.max(1000, calcRemainingTicks(clicks.size())*(int)TICK_DURATION);
+					// +1000 so it always says at least "1s left" and not "0s left"
+					final int msLeft = 1000 + calcRemainingTicks(clicks.size())*(int)TICK_DURATION;
 					estimatedMsLeft = Math.min(estimatedMsLeft, msLeft);
 //					StringUtils.translate("");
 					client.player.sendMessage(

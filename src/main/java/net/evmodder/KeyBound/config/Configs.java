@@ -33,8 +33,6 @@ public class Configs implements IConfigHandler{
 				MapStateCacheOption.MEMORY_AND_DISK).apply(GENERIC_KEY);
 //		public static final ConfigOptionList MAP_STATE_CACHE_TYPE = new ConfigOptionList("mapStateCacheType",
 //				MapStateCacheOptionType.BY_INV_POS).apply(GENERIC_KEY);
-		public static final ConfigBooleanHotkeyed MAP_CLICK_MOVE_NEIGHBORS = new ConfigBooleanHotkeyed(
-				"mapClickMoveNeighbors", true, "LEFT_ALT", KeybindSettings.MODIFIER_GUI).apply(GENERIC_KEY);
 
 		public static final ConfigInteger MAX_IFRAME_TRACKING_DIST = new ConfigInteger("iFrameTrackingDist", 128, 0, 10_000_000);
 		public static double MAX_IFRAME_TRACKING_DIST_SQ;
@@ -81,12 +79,12 @@ public class Configs implements IConfigHandler{
 
 		public static final List<IConfigBase> getOptions(){
 			List<IConfigBase> availableOptions = new ArrayList<>();
-			availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT, MAP_CLICK_MOVE_NEIGHBORS));
+			availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT));
 			if((Main.serverJoinListener && Main.serverQuitListener) || Main.containerOpenCloseListener != null){
 				availableOptions.add(MAP_STATE_CACHE);
 //				if(MAP_STATE_CACHE.getOptionListValue() != MapStateCacheOption.OFF) availableOptions.add(MAP_STATE_CACHE_TYPE);
 			}
-			if(Main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME,
+			if(Main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME, PLACEMENT_HELPER_IFRAME_HIT_VECTOR,
 					PLACEMENT_HELPER_IFRAME_MUST_CONNECT, PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK));
 			if(Main.placementHelperMapArt){
 				availableOptions.addAll(List.of(PLACEMENT_HELPER_MAPART, PLACEMENT_HELPER_MAPART_USE_NAMES, PLACEMENT_HELPER_MAPART_USE_IMAGE));
@@ -189,14 +187,20 @@ public class Configs implements IConfigHandler{
 	public static class Hotkeys{
 		private static final KeybindSettings GUI_OR_INGAME_SETTINGS = KeybindSettings.create(Context.ANY,
 				KeyAction.PRESS, /*allowExtraKeys=*/false, /*orderSensitive=*/true, /*exclusive=*/false, /*cancel=*/true);
+		private static final KeybindSettings GUI_ALLOW_EXTRA_KEYS = KeybindSettings.create(Context.GUI,
+				KeyAction.PRESS, /*allowExtraKeys=*/true, /*orderSensitive=*/true, /*exclusive=*/false, /*cancel=*/true);
 
 		public static final ConfigHotkey OPEN_CONFIG_GUI = new ConfigHotkey("openConfigGui", "M,N").apply(HOTKEYS_KEY);
 
 		public static final ConfigHotkey MAP_COPY = new ConfigHotkey("mapCopy", "T", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_LOAD = new ConfigHotkey("mapLoad", "E", KeybindSettings.GUI).apply(HOTKEYS_KEY);
-		public static final ConfigHotkey MAP_MOVE = new ConfigHotkey("mapMove", "T", KeybindSettings.GUI).apply(HOTKEYS_KEY);
+		public static final ConfigHotkey MAP_MOVE = new ConfigHotkey("mapMove", "T", GUI_ALLOW_EXTRA_KEYS).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_MOVE_BUNDLE = new ConfigHotkey("mapMoveBundle", "D", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_MOVE_BUNDLE_REVERSE = new ConfigHotkey("mapMoveBundleReverse", "", KeybindSettings.GUI).apply(HOTKEYS_KEY);
+
+		public static final ConfigBoolean MAP_CLICK_MOVE_NEIGHBORS = new ConfigBoolean("mapClickMoveNeighbors", true).apply(HOTKEYS_KEY);
+		public static final ConfigHotkey MAP_CLICK_MOVE_NEIGHBORS_KEY = new ConfigHotkey("mapClickMoveNeighborsKey", "LEFT_ALT",
+				KeybindSettings.MODIFIER_GUI).apply(HOTKEYS_KEY);
 
 		public static final ConfigHotkey TOGGLE_CAPE = new ConfigHotkey("toggleCape", Main.mapArtFeaturesOnly ? "" : ",");
 		public static final ConfigBoolean SYNC_CAPE_WITH_ELYTRA = new ConfigBoolean("syncCapeWithElytra", false).apply(HOTKEYS_KEY);
@@ -311,7 +315,8 @@ public class Configs implements IConfigHandler{
 			List<IConfigBase> availableOptions = new ArrayList<>();
 			availableOptions.addAll(List.of(
 					OPEN_CONFIG_GUI,
-					MAP_COPY, MAP_LOAD, MAP_MOVE, MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE
+					MAP_COPY, MAP_LOAD, MAP_MOVE, MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE,
+					MAP_CLICK_MOVE_NEIGHBORS, MAP_CLICK_MOVE_NEIGHBORS_KEY
 			));
 			if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(
 					TOGGLE_CAPE, SYNC_CAPE_WITH_ELYTRA,

@@ -44,6 +44,7 @@ public abstract class MapRelationUtils{
 		int i=0; while(a.length()-i > 0 && b.length()-i > 0 && a.codePointAt(a.length()-i-1) == b.codePointAt(b.length()-i-1)) ++i; return i;
 	}
 
+	// Will only return [0-9A-Z ]+
 	public static final String simplifyPosStr(String pos){
 		pos = Normalizer.normalize(pos, Normalizer.Form.NFKD).toUpperCase();
 		pos = pos.replace("\u250c", "TL").replace("\u2510", "TR").replace("\u2514", "BL").replace("\u2518", "BR");
@@ -245,7 +246,5 @@ public abstract class MapRelationUtils{
 		return new PosData2D(isSideways, min, max);
 	}*/
 
-	public static final RelatedMapsData orderRelatedMaps(RelatedMapsData data){
-		return data;
-	}
+//	public static final RelatedMapsData orderRelatedMaps(RelatedMapsData data){return data;}
 }
