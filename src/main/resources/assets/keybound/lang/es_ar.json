@@ -2,6 +2,13 @@
 	"keybound.clickutils.waitingForClicks": "Clicks Restantes: %s, ~%s",
 	"keybound.clickutils.clicksDone": "Clicks Completados!",
 
+	"keybound.command.mapartgroup.notFound": "MapArtGroup%s not found: %s",
+	"keybound.command.mapartgroup.corrupted": "MapArtGroup file corrupted/unrecognized: %s",
+	"keybound.command.mapartgroup.compare.needSecondGroup": "Specify a 2nd group to compare against",
+	"keybound.command.mapartgroup.compare.identical": "MapArtGroups %s and %s are identical",
+	"keybound.command.mapartgroup.compare.create": "Created group '%s' and set as active (ids: %s)",
+	"keybound.command.mapartgroup.compare.intersection": "Using set-intersection as active group (ids: (%s-%s)+(%s-%s)=%s)",
+
 	"keybound.gui.title": "Configuraciones de KeyBound  - %s",
 	"keybound.gui.button.generic": "Genericos",
 	"keybound.gui.button.visuals": "Visuales",
@@ -29,7 +36,6 @@
 
 	"keybound.config.generic.name.mapStateCache": "Cache de mapas",
 	"keybound.config.generic.comment.mapStateCache": "Conserva la vista previa de los mapas en el inventario o en los cofres entre sesiones (estos se descargan al desconectarte del servidor)",
-	"keybound.config.generic.name.mapClickMoveNeighbors": "mapClickMoveNeighbors",
 	"keybound.config.generic.name.whisperPlaySound": "whisperPlaySound",
 	"keybound.config.generic.name.whisperPearlPull": "whisperPearlPull",
 	"keybound.config.generic.name.commandMapArtGroupIncludeUnlocked": "commandMapArtGroupIncludeUnlocked",
@@ -44,7 +50,6 @@
 	"keybound.config.generic.name.inventoryRestockAuto": "Restock de Inventario Automatico",
 	"keybound.config.generic.name.inventoryRestockAutoForOrganization": "inventoryRestockAutoForOrganization",
 
-	"keybound.config.generic.comment.mapClickMoveNeighbors": "mueve los vecinos junto con el mapa (manten R-alt)",
 	"keybound.config.generic.comment.whisperPlaySound": "emite un sonido al recibir un whisper",
 	"keybound.config.generic.comment.whisperPearlPull": "/w msg to trigger a pearl",
 	"keybound.config.generic.comment.commandMapArtGroupIncludeUnlocked": "Include unlocked maps in MapGroups (not recommended)",
@@ -55,7 +60,7 @@
 	"keybound.config.generic.comment.ignoreMonoColorMapsInHightlights": "Ignora mapas de un solo color en highlights",
 
 	"keybound.config.generic.name.placementHelperIFrame": "ayudante para marco de items",
-	"keybound.config.generic.name.placementHelperRaycast": "delineado del ayudante para marco de items",
+	"keybound.config.generic.name.placementHelperIFrameRaycast": "delineado del ayudante para marco de items",
 	"keybound.config.generic.name.placementHelperIFrameMustConnect": "iFramePlacementHelperMustConnect",
 	"keybound.config.generic.name.placementHelperIFrameMustMatchBlock": "iFramePlacementHelperMustMatchBlock",
 	"keybound.config.generic.name.placementHelperMapArt": "ayudante para mapart",
@@ -122,6 +127,9 @@
 	"keybound.config.hotkeys.comment.mapMoveBundle": "Take/Stow maps in bundle",
 	"keybound.config.hotkeys.name.mapMoveBundleReverse": "mapMoveBundleReverse",
 	"keybound.config.hotkeys.comment.mapMoveBundleReverse": "Take/Stow maps in bundle in reverse order",
+	"keybound.config.hotkeys.name.mapClickMoveNeighbors": "mueve los vecinos junto con el mapa",
+	"keybound.config.hotkeys.comment.mapClickMoveNeighbors": "",
+	"keybound.config.hotkeys.name.mapClickMoveNeighborsKey": "mueve los vecinos junto con el mapa",
 
 	"keybound.config.hotkeys.name.toggleCape": "toggleCape",
 	"keybound.config.hotkeys.name.syncCapeWithElytra": "syncCapeWithElytra",
