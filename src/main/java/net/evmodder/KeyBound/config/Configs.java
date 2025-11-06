@@ -45,6 +45,7 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART = new ConfigBoolean("placementHelperMapArt", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_NAMES = new ConfigBoolean("placementHelperMapArtUseNames", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_IMAGE = new ConfigBoolean("placementHelperMapArtUseImage", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_FROM_BUNDLE = new ConfigBoolean("placementHelperMapArtFromBundle", true).apply(GENERIC_KEY);
 		public static final ConfigBooleanHotkeyed PLACEMENT_HELPER_MAPART_AUTOPLACE = new ConfigBooleanHotkeyed("placementHelperMapArtAutoPlace", true, "").apply(GENERIC_KEY);
 
 		public static final ConfigString WHISPER_PLAY_SOUND = new ConfigString("whisperPlaySound", "{sound:block.note_block.bass, category:PLAYERS, volume:.7, pitch:2}").apply(GENERIC_KEY);
@@ -87,7 +88,8 @@ public class Configs implements IConfigHandler{
 			if(Main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME, PLACEMENT_HELPER_IFRAME_HIT_VECTOR,
 					PLACEMENT_HELPER_IFRAME_MUST_CONNECT, PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK));
 			if(Main.placementHelperMapArt){
-				availableOptions.addAll(List.of(PLACEMENT_HELPER_MAPART, PLACEMENT_HELPER_MAPART_USE_NAMES, PLACEMENT_HELPER_MAPART_USE_IMAGE));
+				availableOptions.addAll(List.of(PLACEMENT_HELPER_MAPART, PLACEMENT_HELPER_MAPART_USE_NAMES, PLACEMENT_HELPER_MAPART_USE_IMAGE,
+						PLACEMENT_HELPER_MAPART_FROM_BUNDLE));
 				if(Main.placementHelperMapArtAuto) availableOptions.add(PLACEMENT_HELPER_MAPART_AUTOPLACE);
 			}
 			if(Main.gameMessageListener) availableOptions.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PEARL_PULL));

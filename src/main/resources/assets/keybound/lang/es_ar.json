@@ -87,6 +87,7 @@
 	"keybound.config.generic.name.placementHelperMapArt": "ayudante para mapart",
 	"keybound.config.generic.name.placementHelperMapArtUseNames": "ayudante para mapart - usa el nombre del item",
 	"keybound.config.generic.name.placementHelperMapArtUseImage": "ayudante para mapart - usa la imagen",
+	"keybound.config.generic.name.placementHelperMapArtFromBundle": "placementHelperMapArtFromBundle",
 	"keybound.config.generic.name.placementHelperMapArtAutoPlace": "ayudante para mapart - AutoPlace",
 	"keybound.config.generic.comment.placementHelperIFrame": "ayudante para colocar marco de items",
 	"keybound.config.generic.comment.placementHelperIFrameMustConnect": "ayudante para marco de items - Solo coloca item frames conectados",
@@ -94,6 +95,7 @@
 	"keybound.config.generic.comment.placementHelperMapArt": "ayudante para colocar Maparts",
 	"keybound.config.generic.comment.placementHelperMapArtUseNames": "Precide el siguiente mapa usando el nombre del item",
 	"keybound.config.generic.comment.placementHelperMapArtUseImage": "Precide el siguiente mapa usando la imagen",
+	"keybound.config.generic.comment.placementHelperMapArtFromBundle": "Allow mod to pull next-map prediction from bundles",
 	"keybound.config.generic.comment.placementHelperMapArtAutoPlace": "coloca automaticamente mapas desde tu inventario",
 
 	"keybound.config.generic.name.hotbarSlotItemTypeScrollOrder": "hotbarSlotItemTypeScrollOrder",
