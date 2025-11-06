@@ -3,6 +3,7 @@ package net.evmodder.KeyBound.keybinds;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.CartographyTableScreen;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
@@ -32,7 +33,11 @@ public final class KeybindMapCopy{
 	private long lastCopy;
 	private final long copyCooldown = 250l;
 	private final boolean PRESERVE_EXACT_POS = true;
-	private final ItemStack EMPTY_ITEM = new ItemStack(Items.AIR);
+
+	record ConstFields(int RESULT, int INPUT_START, int INPUT_END, int INV_START, int INV_END, int HOTBAR_START, int HOTBAR_END){}
+	final ConstFields INV = new ConstFields(0, 1, 5, 9, 36, 36, 45); // PlayerScreenHandler.class
+	final ConstFields CRAFTER = new ConstFields(0, 1, 10, 10, 37, 37, 46); // CraftingScreenHandler.class
+	final ConstFields CARTO = new ConstFields(2, 0, 1, 3, 30, 30, 39); // CartographyTableScreenHandler.class
 
 	// Shift-click results:
 	// Shift-click in crafting input -> TL of inv
@@ -45,42 +50,53 @@ public final class KeybindMapCopy{
 		slots[i] = slots[j];
 		slots[j] = t;
 	}
-	private final boolean simShiftClick(final ArrayDeque<ClickEvent> clicks, final ItemStack[] slots, final int i, final boolean isCrafter){
+	private final boolean simShiftClick(final ArrayDeque<ClickEvent> clicks, final ItemStack[] slots, final int i, final ConstFields f){
 		if(slots[i].isEmpty()){Main.LOGGER.warn("MapCopy: simShiftClick() called for an empty slot"); return true;}
-		final int CRAFT_RESULT = 0;
-		final int INPUT_START = 1, INPUT_END = isCrafter ? 10 : 5;
-		final int INV_START = isCrafter ? 10 : 9, INV_END = isCrafter ? 37 : 36;
-		final int HOTBAR_START = isCrafter ? 37 : 36, HOTBAR_END = isCrafter ? 46 : 45;
 
 		// Goes to BR
-		if(i == CRAFT_RESULT){
-			for(int j=HOTBAR_END-1; j>=INV_START; --j) if(slots[j].isEmpty()){swap(slots, i, j); return true;} // BR inv + hotbar
+		if(i == f.RESULT){
+			for(int j=f.HOTBAR_END-1; j>=f.INV_START; --j) if(slots[j].isEmpty()){swap(slots, i, j); return true;} // BR inv + hotbar
 			return false;
 		}
 		// Goes to TL
 		int START = -1, END = -1;
-		if(i >= INPUT_START && i < INPUT_END){START = INV_START; END = HOTBAR_END;} // -> TL inv + hotbar
-		if(isCrafter && i >= INV_START && i < HOTBAR_END){START = INPUT_START; END = INPUT_END;} // -> TL crafter
-		if(!isCrafter && i >= INV_START && i < INV_END){START = HOTBAR_START; END = HOTBAR_END;} // -> TL hotbar
-		if(!isCrafter && i >= HOTBAR_START && i < HOTBAR_END){START = INV_START; END = INV_END;} // -> TL inv
+		if(i >= f.INPUT_START && i < f.INPUT_END){START = f.INV_START; END = f.HOTBAR_END;} // -> TL inv + hotbar
+		if(f==CRAFTER && i >= f.INV_START && i < f.HOTBAR_END){START = f.INPUT_START; END = f.INPUT_END;} // -> TL crafter
+		if(f==CARTO && i >= f.INV_START && i < f.HOTBAR_END){ // -> matching carto input
+			if(slots[i].getItem() == Items.FILLED_MAP){START = 0; END = 1;}
+			else if(slots[i].getItem() == Items.MAP || slots[i].getItem() == Items.GLASS_PANE){START = 1; END = 2;}
+		}
+		if(f!=CRAFTER && START==-1 && i >= f.INV_START && i < f.INV_END){START = f.HOTBAR_START; END = f.HOTBAR_END;} // -> TL hotbar
+		if(f!=CRAFTER && START==-1 && i >= f.HOTBAR_START && i < f.HOTBAR_END){START = f.INV_START; END = f.INV_END;} // -> TL inv
 		if(START == -1){
 			Main.LOGGER.error("MapCopy: simShiftClick() with an unsupported slot index! "+i);
 			return false;
 		}
-		for(int j=START; j<END; ++j) if(slots[j].isEmpty()){swap(slots, i, j); return true;}
+		for(int j=START; j<END; ++j){
+			if(slots[j].isEmpty()){swap(slots, i, j); return true;}
+			if(f==CARTO && ItemStack.areItemsAndComponentsEqual(slots[i], slots[j])){
+				int sumCount = slots[j].getCount() + slots[i].getCount();
+				if(sumCount <= slots[j].getMaxCount()){
+					slots[j].setCount(sumCount);
+					slots[i] = ItemStack.EMPTY;
+				}
+				else{
+					slots[j].setCount(slots[j].getMaxCount());
+					slots[i].setCount(sumCount - slots[j].getMaxCount());
+				}
+				return true;
+			}
+		}
 
 		Main.LOGGER.error("MapCopy: simShiftClick() failed due to no available destination slots! "+i);
 		return false;
 	}
 
-	private final int getEmptyMapsIntoInput(final ArrayDeque<ClickEvent> clicks, final ItemStack[] slots, final boolean isCrafter,
+	private final int getEmptyMapsIntoInput(final ArrayDeque<ClickEvent> clicks, final ItemStack[] slots, final ConstFields f,
 			final int amtNeeded, int amtInGrid, final int dontLeaveEmptySlotsAfterThisSlot){
-		final int INPUT_START = 1;
-		final int INV_START = isCrafter ? 10 : 9;
-		final int HOTBAR_START = isCrafter ? 37 : 36, HOTBAR_END = isCrafter ? 46 : 45;
 
 		// Restock empty maps as needed
-		for(int j=INV_START; j<HOTBAR_END && amtInGrid < amtNeeded; ++j){
+		for(int j=f.INV_START; j<f.HOTBAR_END && amtInGrid < amtNeeded; ++j){
 			if(slots[j].getItem() != Items.MAP) continue;
 			final boolean leaveOne = j > dontLeaveEmptySlotsAfterThisSlot;
 			if(leaveOne && slots[j].getCount() == 1) continue;
@@ -88,30 +104,36 @@ public final class KeybindMapCopy{
 			final int combinedCnt = slots[j].getCount() + amtInGrid;
 			final int combinedHalfCnt = (slots[j].getCount()+1)/2 + amtInGrid;
 
-			if(j >= HOTBAR_START && (!leaveOne || amtInGrid > 0) && slots[j].getCount() >= amtNeeded){
-				clicks.add(new ClickEvent(INPUT_START, j-HOTBAR_START, SlotActionType.SWAP));
+			if(j >= f.HOTBAR_START && (!leaveOne || amtInGrid > 0) && slots[j].getCount() >= amtNeeded){
+				clicks.add(new ClickEvent(f.INPUT_START+1, j-f.HOTBAR_START, SlotActionType.SWAP));
 				amtInGrid = slots[j].getCount();
 				slots[j].setCount(combinedCnt-amtInGrid); // Effectively swap the counts
 				break;
 			}
-			else if(isCrafter && !leaveOne && combinedCnt <= 64){
+			else if(f==CRAFTER && !leaveOne && combinedCnt <= 64){
 				clicks.add(new ClickEvent(j, 0, SlotActionType.QUICK_MOVE)); // Move all to input
-				slots[j] = EMPTY_ITEM;
+				slots[j] = ItemStack.EMPTY;
 				amtInGrid = combinedCnt;
+			}
+			else if(f==CARTO && (!leaveOne || combinedCnt > 64)){
+				clicks.add(new ClickEvent(j, 0, SlotActionType.QUICK_MOVE)); // Move all to input
+				if(combinedCnt <= 64) slots[j] = ItemStack.EMPTY;
+				else slots[j].setCount(combinedCnt - 64);
+				amtInGrid = Math.min(combinedCnt, 64);
 			}
 			else if(!leaveOne && combinedCnt <= 64){
 				clicks.add(new ClickEvent(j, 0, SlotActionType.PICKUP)); // Pickup all
-				clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.PICKUP)); // Place all in input
-				slots[j] = EMPTY_ITEM;
+				clicks.add(new ClickEvent(f.INPUT_START+1, 0, SlotActionType.PICKUP)); // Place all in input
+				slots[j] = ItemStack.EMPTY;
 				amtInGrid = combinedCnt;
 			}
 			else if(slots[j].getCount() > 1 && combinedHalfCnt >= amtNeeded && combinedHalfCnt <= 64){
 				clicks.add(new ClickEvent(j, 1, SlotActionType.PICKUP)); // Pickup half
-				clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.PICKUP)); // Place all in input
+				clicks.add(new ClickEvent(f.INPUT_START+1, 0, SlotActionType.PICKUP)); // Place all in input
 				slots[j].setCount(slots[j].getCount()/2);
 				amtInGrid = combinedHalfCnt;
 			}
-			else if(!leaveOne || combinedCnt > 64 ){
+			else if(!leaveOne || combinedCnt > 64){
 //				clicks.add(new ClickEvent(j, 0, SlotActionType.QUICK_MOVE)); // Move all to input + overflow
 //				clicks.add(new ClickEvent(INPUT_START+1, 0, SlotActionType.QUICK_MOVE)); // Move back overflow
 //				ItemStack temp = slots[j];
@@ -120,7 +142,7 @@ public final class KeybindMapCopy{
 //				slots[lastEmptySlot(slots, HOTBAR_END, INV_START)] = temp;
 //				amtInGrid = 64;
 				clicks.add(new ClickEvent(j, 0, SlotActionType.PICKUP)); // Pickup all
-				clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.PICKUP)); // Place in input
+				clicks.add(new ClickEvent(f.INPUT_START+1, 0, SlotActionType.PICKUP)); // Place in input
 				clicks.add(new ClickEvent(j, 0, SlotActionType.PICKUP)); // Putback leftovers
 				slots[j].setCount(combinedCnt - 64);
 				amtInGrid = 64;
@@ -128,7 +150,7 @@ public final class KeybindMapCopy{
 			else{
 				clicks.add(new ClickEvent(j, 0, SlotActionType.PICKUP)); // Pickup all
 				clicks.add(new ClickEvent(j, 1, SlotActionType.PICKUP)); // Putback one
-				clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.PICKUP)); // Place all in input
+				clicks.add(new ClickEvent(f.INPUT_START+1, 0, SlotActionType.PICKUP)); // Place all in input
 				slots[j].setCount(1);
 				amtInGrid = combinedCnt - 1;
 			}
@@ -152,12 +174,9 @@ public final class KeybindMapCopy{
 	private record PrioAndSlot(int p, int slot) implements Comparable<PrioAndSlot> {
 		@Override public int compareTo(PrioAndSlot o){return p != o.p ? p - o.p : slot - o.slot;}
 	};
-	private void copyMapArtInBundles(final ArrayDeque<ClickEvent> clicks, final ItemStack[] slots, final boolean isCrafter,
+	private void copyMapArtInBundles(final ArrayDeque<ClickEvent> clicks, final ItemStack[] slots, final ConstFields f,
 			int numEmptyMapsInGrid, final int totalEmptyMaps){
-		final int INPUT_START = 1/*, INPUT_END = isCrafter ? 10 : 5*/;
-		final int INV_START = isCrafter ? 10 : 9;
-		final int /*HOTBAR_START = isCrafter ? 37 : 36, */HOTBAR_END = isCrafter ? 46 : 45, HOTBAR_START = HOTBAR_END-9;
-		final int[] slotsWithBundles = IntStream.range(INV_START, HOTBAR_END).filter(i -> {
+		final int[] slotsWithBundles = IntStream.range(f.INV_START, f.HOTBAR_END).filter(i -> {
 			BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
 			return contents != null && contents.stream().allMatch(s -> s.getItem() == Items.FILLED_MAP);
 		}).toArray();
@@ -166,7 +185,7 @@ public final class KeybindMapCopy{
 		final int SRC_BUNDLES = (int)Arrays.stream(bundles).filter(Predicate.not(BundleContentsComponent::isEmpty)).count();
 		final int emptyBundles = bundles.length - SRC_BUNDLES;
 		if(emptyBundles == 1){Main.LOGGER.warn("MapCopyBundle: Could not find an auxiliary bundle"); return;}
-		int LAST_EMPTY_SLOT = lastEmptySlot(slots, HOTBAR_END, INV_START);
+		int LAST_EMPTY_SLOT = lastEmptySlot(slots, f.HOTBAR_END, f.INV_START);
 		if(LAST_EMPTY_SLOT == -1 && Arrays.stream(bundles).anyMatch(b -> b.stream().anyMatch(s -> s.getCount() > 1))){
 			Main.LOGGER.warn("MapCopyBundle: Unable to copy bundles containing maps with stackSize>1 without an empty inv slot");
 			return;
@@ -260,50 +279,50 @@ public final class KeybindMapCopy{
 				final int count = bundles[entry.getKey()].get(i).getCount();
 
 				clicks.add(new ClickEvent(tempBundleSlot, 1, SlotActionType.PICKUP)); // Take last map from temp bundle
-				clicks.add(new ClickEvent(INPUT_START+1, 0, SlotActionType.PICKUP)); // Place in crafter
+				clicks.add(new ClickEvent(f.INPUT_START, 0, SlotActionType.PICKUP)); // Place in crafter
 				boolean didShiftCraft = false;
 				//Main.LOGGER.info("MapCopyBundle: Coping map item into "+bundlesToCopy.get(k).size()+" dest bundles");
 				for(int d : entry.getValue()){
 					if(numEmptyMapsInGrid < count){
 //						Main.LOGGER.info("restocking empty maps at least: "+count+" (curr: "+numEmptyMapsInGrid+")");
-						numEmptyMapsInGrid = getEmptyMapsIntoInput(clicks, slots, isCrafter, count, numEmptyMapsInGrid, /*dontLeaveEmptySlotsAfterThisSlot=*/99);
-						LAST_EMPTY_SLOT = lastEmptySlot(slots, HOTBAR_END, INV_START);
+						numEmptyMapsInGrid = getEmptyMapsIntoInput(clicks, slots, f, count, numEmptyMapsInGrid, /*dontLeaveEmptySlotsAfterThisSlot=*/99);
+						LAST_EMPTY_SLOT = lastEmptySlot(slots, f.HOTBAR_END, f.INV_START);
 //						Main.LOGGER.info("numEmptyMapsInGrid after restock: "+numEmptyMapsInGrid);
 					}
 					numEmptyMapsInGrid -= count;
 					if(didShiftCraft){
-						if(LAST_EMPTY_SLOT >= HOTBAR_START){
+						if(LAST_EMPTY_SLOT >= f.HOTBAR_START){
 //							Main.LOGGER.info("swap into crafter: "+LAST_EMPTY_SLOT+"->"+(INPUT_START+1));
-							clicks.add(new ClickEvent(INPUT_START+1, LAST_EMPTY_SLOT-HOTBAR_START, SlotActionType.SWAP)); // Swap into crafter
+							clicks.add(new ClickEvent(f.INPUT_START, LAST_EMPTY_SLOT-f.HOTBAR_START, SlotActionType.SWAP)); // Swap into crafter
 						}
 						else{
 							clicks.add(new ClickEvent(LAST_EMPTY_SLOT, 0, SlotActionType.PICKUP)); // Pickup all
-							clicks.add(new ClickEvent(INPUT_START+1, 0, SlotActionType.PICKUP)); // Place in crafter
+							clicks.add(new ClickEvent(f.INPUT_START, 0, SlotActionType.PICKUP)); // Place in crafter
 						}
 					}
 					if(LAST_EMPTY_SLOT != -1 && (count > 1 || d == entry.getValue().getLast())){
 						didShiftCraft = true;
 //						Main.LOGGER.info("MapCopyBundle: shift-craft into last-empty-slot: "+LAST_EMPTY_SLOT);
-						clicks.add(new ClickEvent(0, 0, SlotActionType.QUICK_MOVE)); // Move all from crafters
+						clicks.add(new ClickEvent(f.RESULT, 0, SlotActionType.QUICK_MOVE)); // Move all from crafters
 						clicks.add(new ClickEvent(LAST_EMPTY_SLOT, 1, SlotActionType.PICKUP)); // Pickup half
 						clicks.add(new ClickEvent(slotsWithBundles[d], 0, SlotActionType.PICKUP)); // Put half in dest bundle
 					}
 					else{
 						didShiftCraft = false;
 //						Main.LOGGER.info("MapCopyBundle: normal-craft");
-						clicks.add(new ClickEvent(0, 0, SlotActionType.PICKUP)); // Take from crafter output
-						clicks.add(new ClickEvent(INPUT_START+1, 0, SlotActionType.PICKUP)); // Place back in crafter input
-						clicks.add(new ClickEvent(INPUT_START+1, 1, SlotActionType.PICKUP)); // Pickup half
+						clicks.add(new ClickEvent(f.RESULT, 0, SlotActionType.PICKUP)); // Take from crafter output
+						clicks.add(new ClickEvent(f.INPUT_START, 0, SlotActionType.PICKUP)); // Place back in crafter input
+						clicks.add(new ClickEvent(f.INPUT_START, 1, SlotActionType.PICKUP)); // Pickup half
 						clicks.add(new ClickEvent(slotsWithBundles[d], 0, SlotActionType.PICKUP)); // Put half in dest bundle
 					}
 				}//for(dest bundles)
-				final int fromSlot = didShiftCraft ? LAST_EMPTY_SLOT : INPUT_START+1;
+				final int fromSlot = didShiftCraft ? LAST_EMPTY_SLOT : f.INPUT_START;
 //				Main.LOGGER.info("MapCopyBundle: Putting map item back into src bundle ("+fromSlot+"->"+slotsWithBundles[entry.getKey()]+")");
 				clicks.add(new ClickEvent(fromSlot, 0, SlotActionType.PICKUP)); // Pickup all
 				clicks.add(new ClickEvent(slotsWithBundles[entry.getKey()], 0, SlotActionType.PICKUP)); // Place back in src bundle
 			}//for(item in src bundle)
 		}//for(src bundle)
-		if(numEmptyMapsInGrid > 0) clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.QUICK_MOVE));
+		if(numEmptyMapsInGrid > 0) clicks.add(new ClickEvent(f.INPUT_START+1, 0, SlotActionType.QUICK_MOVE));
 
 		//Main.LOGGER.info("MapCopyBundle: STARTED");
 		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("MapCopyBundle: DONE"));
@@ -320,8 +339,9 @@ public final class KeybindMapCopy{
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
 		final boolean isCrafter = client.currentScreen instanceof CraftingScreen;
-		if(!(client.currentScreen instanceof InventoryScreen || isCrafter)){
-			Main.LOGGER.warn("MapCopy: not in InventoryScreen or CraftingScreen");
+		final boolean isCartographyTable = client.currentScreen instanceof CartographyTableScreen;
+		if(!(client.currentScreen instanceof InventoryScreen || isCrafter || isCartographyTable)){
+			Main.LOGGER.warn("MapCopy: not in InventoryScreen/CraftingScreen/CartographyTableScreen");
 			return;
 		}
 		final long ts = System.currentTimeMillis();
@@ -344,25 +364,20 @@ public final class KeybindMapCopy{
 			slots[emptySlot.getAsInt()] = xsh.getCursorStack();
 		}
 
-		//PlayerScreenHandler.CRAFTING_INPUT_START=1, CraftingScreenHandler.INPUT_START=1
-		//PlayerScreenHandler.CRAFTING_INPUT_END=5, CraftingScreenHandler.INPUT_END=10
-		//PlayerScreenHandler.HOTBAR_START=36, CraftingScreenHandler.HOTBAR_START=37
-		final int INPUT_START = 1, INPUT_END = isCrafter ? 10 : 5;
-		final int INV_START = isCrafter ? 10 : 9;
-		final int HOTBAR_START = isCrafter ? 37 : 36, HOTBAR_END = isCrafter ? 46 : 45;
+		final ConstFields f = isCrafter ? CRAFTER : isCartographyTable ? CARTO : INV;
 
 		// Ensure crafting 2x2 (or 3x3) is clear or has 1 slot with blank_maps
 		int numEmptyMapsInGrid = 0;
-		for(int i=INPUT_START; i<INPUT_END; ++i){
+		for(int i=f.INPUT_START; i<f.INPUT_END; ++i){
 			if(slots[i].isEmpty()) continue;
 			if(slots[i].getItem() != Items.MAP){
 				Main.LOGGER.warn("MapCopy: Non-empty-map item in crafting grid");
-				if(!simShiftClick(clicks, slots, i, isCrafter)) return;
+				if(!simShiftClick(clicks, slots, i, f)) return;
 				clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
 			}
-			else if(i != INPUT_START){
-				Main.LOGGER.warn("MapCopy: Empty map already in crafting grid, and isn't in 1st slot");
-				if(!simShiftClick(clicks, slots, i, isCrafter)) return;
+			else if(i != f.INPUT_START+1){
+				Main.LOGGER.warn("MapCopy: Empty map already in crafting grid, and isn't in 2nd slot");
+				if(!simShiftClick(clicks, slots, i, f)) return;
 				clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
 			}
 			else numEmptyMapsInGrid = slots[i].getCount();
@@ -370,16 +385,16 @@ public final class KeybindMapCopy{
 
 		// Verify we have at least SOME empty maps for copying
 		int lastEmptyMapSlot = -1;
-		for(int i=slots.length-1; i>=INV_START; --i) if(slots[i].getItem() == Items.MAP){lastEmptyMapSlot = i; break;}
+		for(int i=slots.length-1; i>=f.INV_START; --i) if(slots[i].getItem() == Items.MAP){lastEmptyMapSlot = i; break;}
 		if(lastEmptyMapSlot == -1){Main.LOGGER.warn("MapCopy: No empty maps found"); return;}
 
 		// Figure out how many usable empty maps we have
-		final int totalEmptyMaps = IntStream.rangeClosed(INV_START, lastEmptyMapSlot)
+		final int totalEmptyMaps = IntStream.rangeClosed(f.INV_START, lastEmptyMapSlot)
 				.filter(i -> slots[i].getItem() == Items.MAP).map(i -> slots[i].getCount()).sum();
 
 		// Decide which maps to copy (the ones with fewest copies) and how many (to match the next fewest)
 		int minMapCount = 65, secondMinMapCount = 65, firstSlotToCopy = -1;
-		for(int i=INV_START; i<HOTBAR_END; ++i){
+		for(int i=f.INV_START; i<f.HOTBAR_END; ++i){
 			if(slots[i].getItem() != Items.FILLED_MAP) continue;
 			if(slots[i].getCount() < minMapCount){
 				secondMinMapCount = minMapCount;
@@ -396,18 +411,18 @@ public final class KeybindMapCopy{
 			if(slots[i].getItem() != Items.MAP) continue;
 			if(numEmptyMapsInGrid + slots[i].getCount() > 64) continue;
 			numEmptyMapsInGrid += slots[i].getCount();
-			if(isCrafter) clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
-			else if(i >= HOTBAR_START) clicks.add(new ClickEvent(INPUT_START, i-HOTBAR_START, SlotActionType.SWAP));
+			if(isCartographyTable) clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
+			else if(i >= f.HOTBAR_START) clicks.add(new ClickEvent(f.INPUT_START+1, i-f.HOTBAR_START, SlotActionType.SWAP));
 			else{
 				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP));
-				clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.PICKUP));
+				clicks.add(new ClickEvent(f.INPUT_START+1, 0, SlotActionType.PICKUP));
 			}
-			slots[i] = EMPTY_ITEM;
+			slots[i] = ItemStack.EMPTY;
 		}
 
 		if(minMapCount >= 64){
 			if(minMapCount == 65 && Arrays.stream(slots).anyMatch(this::isMapArtBundle)){
-				copyMapArtInBundles(clicks, slots, isCrafter, numEmptyMapsInGrid, totalEmptyMaps);
+				copyMapArtInBundles(clicks, slots, f, numEmptyMapsInGrid, totalEmptyMaps);
 				return;
 			}
 			Main.LOGGER.warn("MapCopy: No maps found which need copying!");
@@ -423,7 +438,7 @@ public final class KeybindMapCopy{
 //		final long numSlotsToCopy = IntStream.range(INV_START, HOTBAR_END)
 //				.filter(i -> slots[i].getItem() == Items.FILLED_MAP && slots[i].getCount() == minMapCount).count();
 		int numSlotsToCopy = 0;
-		for(int i=INV_START; i<HOTBAR_END; ++i) if(slots[i].getItem() == Items.FILLED_MAP && slots[i].getCount() == minMapCount) ++numSlotsToCopy;
+		for(int i=f.INV_START; i<f.HOTBAR_END; ++i) if(slots[i].getItem() == Items.FILLED_MAP && slots[i].getCount() == minMapCount) ++numSlotsToCopy;
 
 		// Ensure we have enough empty maps to copy everything
 		final int emptyMapsPerCopy = secondMinMapCount - minMapCount;
@@ -452,58 +467,58 @@ public final class KeybindMapCopy{
 		// Execute copy operations
 		IdentityHashMap<ClickEvent, Integer> reserveClicks = new IdentityHashMap<>();
 		Main.LOGGER.info("MapCopy: Starting copy, item.count "+minMapCount+" -> "+secondMinMapCount+". leftover: "+leftoversInSlot);
-		for(int i=HOTBAR_END-1; i>=INV_START; --i){
+		for(int i=f.HOTBAR_END-1; i>=f.INV_START; --i){
 			if(slots[i].getItem() != Items.FILLED_MAP) continue;
 			if(slots[i].getCount() != minMapCount) continue;
-
-			// Restock empty maps as needed
-			if(numEmptyMapsInGrid < emptyMapsPerCopy){
-				final int dontLeaveEmptySlotsAfter = PRESERVE_EXACT_POS ? HOTBAR_END : firstSlotToCopy;
-				numEmptyMapsInGrid = getEmptyMapsIntoInput(clicks, slots, isCrafter, emptyMapsPerCopy, numEmptyMapsInGrid, dontLeaveEmptySlotsAfter);
-			}
 
 			final int clicksAtStart = clicks.size();
 			final ClickEvent firstClick;
 			// Move filled map(s) to crafter input
-			if(copyAll && i >= HOTBAR_START) clicks.add(firstClick=new ClickEvent(INPUT_START+1, i-HOTBAR_START, SlotActionType.SWAP));
-			else if(copyAll && isCrafter) clicks.add(firstClick=new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
+			if(copyAll && i >= f.HOTBAR_START) clicks.add(firstClick=new ClickEvent(f.INPUT_START, i-f.HOTBAR_START, SlotActionType.SWAP));
+			else if(copyAll && f != INV) clicks.add(firstClick=new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
 			else{
 				clicks.add(firstClick=new ClickEvent(i, pickupHalf ? 1 : 0, SlotActionType.PICKUP)); // Pickup all or half
 				if(moveExactToCrafter) for(int j=emptyMapsPerCopy; j<amtPickedUp; ++j) clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // Put back one
-				clicks.add(new ClickEvent(INPUT_START+1, 0, SlotActionType.PICKUP)); // Place all
+				clicks.add(new ClickEvent(f.INPUT_START, 0, SlotActionType.PICKUP)); // Place all
 			}
 
+			// Restock empty maps as needed
+			if(numEmptyMapsInGrid < emptyMapsPerCopy){
+				final int dontLeaveEmptySlotsAfter = PRESERVE_EXACT_POS ? f.HOTBAR_END : firstSlotToCopy;
+				numEmptyMapsInGrid = getEmptyMapsIntoInput(clicks, slots, f, emptyMapsPerCopy, numEmptyMapsInGrid, dontLeaveEmptySlotsAfter);
+			}
 			numEmptyMapsInGrid -= emptyMapsPerCopy; // Deduct empty maps
 
-			if(leftoversInSlot || (moveExactToCrafter && lastEmptySlot(slots, HOTBAR_END, INV_START) < i)){
+			// Execute copy
+			if(leftoversInSlot || (moveExactToCrafter && lastEmptySlot(slots, f.HOTBAR_END, f.INV_START) < i)){
 				Main.LOGGER.info("MapCopy: EzPz shift-click output");
-				clicks.add(new ClickEvent(0, 0, SlotActionType.QUICK_MOVE)); // Move ALL maps from crafter output
+				clicks.add(new ClickEvent(f.RESULT, 0, SlotActionType.QUICK_MOVE)); // Move ALL maps from crafter output
 			}
 			else if(moveExactToCrafter){
-				if(i >= HOTBAR_START){
-					Main.LOGGER.info("MapCopy: Swap 1 from output"+(minMapCount>1?", then shift-click":"")+" (hb:"+(i>=HOTBAR_START)+")");
-					clicks.add(new ClickEvent(0, i-HOTBAR_START, SlotActionType.SWAP)); // Swap 1 map from crafter output
+				if(i >= f.HOTBAR_START){
+					Main.LOGGER.info("MapCopy: Swap 1 from output"+(minMapCount>1?", then shift-click":"")+" (hb:"+(i>=f.HOTBAR_START)+")");
+					clicks.add(new ClickEvent(f.RESULT, i-f.HOTBAR_START, SlotActionType.SWAP)); // Swap 1 map from crafter output
 				}
 				else{
 					Main.LOGGER.info("MapCopy: Pickup-place 1 from output"+(minMapCount>1?", then shift-click":""));
-					clicks.add(new ClickEvent(0, 0, SlotActionType.PICKUP)); // Pickup ONE map from crafter output
+					clicks.add(new ClickEvent(f.RESULT, 0, SlotActionType.PICKUP)); // Pickup ONE map from crafter output
 					clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // Place back in source slot
 				}
 				// Equivalent: emptyMapsToCopy > 1
-				if(minMapCount > 1) clicks.add(new ClickEvent(0, 0, SlotActionType.QUICK_MOVE)); // Move ALL maps from crafter output
+				if(minMapCount > 1) clicks.add(new ClickEvent(f.RESULT, 0, SlotActionType.QUICK_MOVE)); // Move ALL maps from crafter output
 			}
 			else{
 				Main.LOGGER.info("MapCopy: Move "+emptyMapsPerCopy+" from output, then shift-click leftover inputs");
-				for(int j=0; j<emptyMapsPerCopy; ++j) clicks.add(new ClickEvent(0, 0, SlotActionType.PICKUP)); // Pickup ONE map from crafter output
+				for(int j=0; j<emptyMapsPerCopy; ++j) clicks.add(new ClickEvent(f.RESULT, 0, SlotActionType.PICKUP)); // Pickup ONE map from crafter output
 				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // Place back in source slot
-				clicks.add(new ClickEvent(INPUT_START+1, 0, SlotActionType.QUICK_MOVE)); // Move back leftover input maps
+				clicks.add(new ClickEvent(f.INPUT_START, 0, SlotActionType.QUICK_MOVE)); // Move back leftover input maps
 			}
 			final int clicksUsed = clicks.size() - clicksAtStart;
 			if(clicksUsed <= Main.clickUtils.MAX_CLICKS) reserveClicks.put(firstClick, clicksUsed);
 		}// copy maps
 
 		// Seems like copy followed by bundle stow causes all empty maps in inv to get tossed?? Well, adding this final click fixes it apparently
-		if(numEmptyMapsInGrid > 0) clicks.add(new ClickEvent(INPUT_START, 0, SlotActionType.QUICK_MOVE)); 
+		if(numEmptyMapsInGrid > 0) clicks.add(new ClickEvent(f.INPUT_START+1, 0, SlotActionType.QUICK_MOVE)); 
 
 		//Main.LOGGER.info("MapCopy: STARTED");
 		Main.clickUtils.executeClicks(clicks,
