@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.MapColorUtils;
 import net.evmodder.KeyBound.apis.MapGroupUtils;
@@ -81,9 +82,7 @@ public class UpdateContainerHighlights{
 		if(items.isEmpty()) return;
 		final List<MapState> states = items.stream().map(i -> FilledMapItem.getMapState(i, client.world)).filter(Objects::nonNull).toList();
 		final List<UUID> nonTransparentIds = (!Configs.Generic.SKIP_TRANSPARENT_MAPS.getBooleanValue() ? states.stream() :
-			states.stream().filter(s -> !MapColorUtils.isTransparentOrStone(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
-		final List<UUID> nonMonoColorIds = (!Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue() ? states.stream() :
-			states.stream().filter(s -> !MapColorUtils.isMonoColor(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
+			states.stream().filter(s -> !MapColorUtils.isFullyTransparent(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
 
 		nonTransparentIds.stream().filter(UpdateInventoryHighlights::isInInventory).forEach(inContainerAndInInv::add);
 		if(renderAsterisks){
@@ -97,7 +96,11 @@ public class UpdateContainerHighlights{
 //		if(!nonFillerIds.stream().allMatch(new HashSet<>(nonFillerIds.size())::add)) asterisks.add(Main.MAP_COLOR_MULTI_INV); // Check duplicates within the container
 		duplicatesInContainer.clear();
 		uniqueMapIds.clear();
-		nonMonoColorIds.stream().filter(Predicate.not(uniqueMapIds::add)).forEach(duplicatesInContainer::add);
+		final Stream<UUID> uniqueIdsStream;
+		if(!Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue()) uniqueIdsStream = nonTransparentIds.stream();
+		else uniqueIdsStream = states.stream().filter(s -> !MapColorUtils.isMonoColor(s.colors)).map(MapGroupUtils::getIdForMapState);
+
+		uniqueIdsStream.filter(Predicate.not(uniqueMapIds::add)).forEach(duplicatesInContainer::add);
 		if(renderAsterisks){
 			if(!duplicatesInContainer.isEmpty()) asterisks.add(Configs.Visuals.MAP_COLOR_MULTI_INV.getIntegerValue());
 			if(items.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue());

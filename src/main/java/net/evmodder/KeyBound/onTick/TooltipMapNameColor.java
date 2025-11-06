@@ -57,18 +57,18 @@ public final class TooltipMapNameColor{
 			final List<MapState> states = mapItems.stream().map(i -> context.getMapState(i.get(DataComponentTypes.MAP_ID))).filter(Objects::nonNull).toList();
 //			final List<UUID> nonFillerIds = states.stream().filter(Predicate.not(MapRelationUtils::isFillerMap)).map(MapGroupUtils::getIdForMapState).toList();
 			final List<UUID> colorIds = states.stream().map(MapGroupUtils::getIdForMapState).toList();
-//			final List<UUID> nonTransparentIds = (!Main.skipTransparentMaps ? states.stream() :
-//				states.stream().filter(s -> !MapRelationUtils.isFullyTransparent(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
-//			final List<UUID> nonMonoColorIds = (!Main.skipMonoColorMaps ? states.stream() :
-//				states.stream().filter(s -> !MapRelationUtils.isMonoColor(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
+			final List<UUID> unskippedIds = (
+					Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue() ? states.stream().filter(s -> !MapColorUtils.isMonoColor(s.colors)) :
+					Configs.Generic.SKIP_TRANSPARENT_MAPS.getBooleanValue() ? states.stream().filter(s -> !MapColorUtils.isFullyTransparent(s.colors)) :
+					states.stream()).map(MapGroupUtils::getIdForMapState).toList();
 
 			List<Integer> asterisks = new ArrayList<>(4);
 			if(colorIds.stream().anyMatch(UpdateInventoryHighlights::isInInventory)) asterisks.add(MAP_COLOR_IN_INV);
 			if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(MAP_COLOR_NOT_IN_GROUP);
 			if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(MAP_COLOR_UNLOCKED);
-			if(colorIds.stream().anyMatch(UpdateContainerHighlights::hasDuplicateInContainer)) asterisks.add(MAP_COLOR_MULTI_INV);
+			if(unskippedIds.stream().anyMatch(UpdateContainerHighlights::hasDuplicateInContainer)) asterisks.add(MAP_COLOR_MULTI_INV);
 			if(mapItems.size() > states.size()) asterisks.add(MAP_COLOR_UNLOADED);
-			else if(mixedOnDisplayAndNotOnDisplay(colorIds)) asterisks.add(MAP_COLOR_IN_IFRAME);
+			else if(mixedOnDisplayAndNotOnDisplay(unskippedIds)) asterisks.add(MAP_COLOR_IN_IFRAME);
 			if(mapItems.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(MAP_COLOR_UNNAMED);
 
 			if(!asterisks.isEmpty()){
@@ -87,20 +87,23 @@ public final class TooltipMapNameColor{
 			tooltipCache.put(item, lines);
 			return;
 		}
-		UUID colordsId = MapGroupUtils.getIdForMapState(state);
+		UUID colorsId = MapGroupUtils.getIdForMapState(state);
+		final boolean isSkipped =
+				Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue() ? MapColorUtils.isMonoColor(state.colors) :
+				Configs.Generic.SKIP_TRANSPARENT_MAPS.getBooleanValue() ? MapColorUtils.isFullyTransparent(state.colors) :
+				false;
 		List<Integer> asterisks = new ArrayList<>();
-		if(UpdateContainerHighlights.isInInvAndContainer(colordsId)) asterisks.add(MAP_COLOR_IN_INV);
+		if(UpdateContainerHighlights.isInInvAndContainer(colorsId)) asterisks.add(MAP_COLOR_IN_INV);
 		if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)) asterisks.add(MAP_COLOR_NOT_IN_GROUP);
 		if(!state.locked) asterisks.add(MAP_COLOR_UNLOCKED);
-		if(UpdateItemFrameHighlights.isInItemFrame(colordsId)) asterisks.add(MAP_COLOR_IN_IFRAME);
-		if(UpdateContainerHighlights.hasDuplicateInContainer(colordsId)) asterisks.add(MAP_COLOR_MULTI_INV);
+		if(UpdateItemFrameHighlights.isInItemFrame(colorsId)) asterisks.add(MAP_COLOR_IN_IFRAME);
+		if(UpdateContainerHighlights.hasDuplicateInContainer(colorsId) && !isSkipped) asterisks.add(MAP_COLOR_MULTI_INV);
 		if(asterisks.isEmpty()){
 			if(item.getCustomName() == null) lines.addFirst(lines.removeFirst().copy().withColor(MAP_COLOR_UNNAMED));
 			tooltipCache.put(item, lines);
 			return;
 		}
-		final boolean nameColor = !(asterisks.get(0) == MAP_COLOR_UNNAMED
-				|| (asterisks.get(0) == MAP_COLOR_MULTI_INV && Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue() && MapColorUtils.isMonoColor(state.colors)));
+		final boolean nameColor = asterisks.get(0) != MAP_COLOR_MULTI_INV; // This one is only permitted as an asterisk (idk why, ask older me)
 
 		asterisks = asterisks.stream().distinct().toList(); // TODO: this line only exists in case of configurations where 2+ meanings share 1 color
 		MutableText text = lines.removeFirst().copy();

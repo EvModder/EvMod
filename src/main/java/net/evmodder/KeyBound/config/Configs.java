@@ -54,7 +54,7 @@ public class Configs implements IConfigHandler{
 
 		public static final ConfigInteger KEYBIND_BUNDLE_REMOVE_MAX = new ConfigInteger("keybindMapArtBundleRemoveMax", 64, 1, 64).apply(GENERIC_KEY);
 		public static final ConfigBoolean KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS = new ConfigBoolean("keybindMapArtMoveIgnoreAirPockets", false).apply(GENERIC_KEY);
-		public static final ConfigBoolean SKIP_TRANSPARENT_MAPS = new ConfigBoolean("skipTransparentMapsInKeybinds", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean SKIP_TRANSPARENT_MAPS = new ConfigBoolean("ignoreBlankMapsIndHighlightsAndKeybinds", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean SKIP_MONO_COLOR_MAPS = new ConfigBoolean("ignoreMonoColorMapsInHightlights", false).apply(GENERIC_KEY);
 
 		public static final ConfigStringList SCROLL_ORDER = new ConfigStringList("hotbarSlotItemTypeScrollOrder", ImmutableList.of(

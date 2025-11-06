@@ -29,7 +29,7 @@ public final class KeybindMapMove{
 	static final boolean isFillerMap(ItemStack[] slots, ItemStack stack, World world){
 		if(!Configs.Generic.SKIP_TRANSPARENT_MAPS.getBooleanValue()) return false;
 		final MapState state = FilledMapItem.getMapState(stack, world);
-		if(state == null || !MapColorUtils.isTransparentOrStone(state.colors)) return false;
+		if(state == null || !MapColorUtils.isFullyTransparent(state.colors)) return false;
 		if(stack.getCustomName() == null) return true;
 		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(
 				Arrays.asList(slots), stack.getCustomName().getString(), stack.getCount(), state.locked, world);

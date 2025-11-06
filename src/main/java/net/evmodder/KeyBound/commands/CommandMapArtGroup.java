@@ -264,18 +264,18 @@ public class CommandMapArtGroup{
 		}
 		else if(newActiveGroup.equals(activeGroupName)){
 			if(activeGroup.equals(mapsInGroup)){
-				source.sendError(Text.translatable(PREFIX+"noUpdate", activeGroupName, activeGroup.size()).withColor(ERROR_COLOR));
+				source.sendError(Text.translatable(PREFIX+"noUpdate", activeGroupName, activeGroup.size()).withColor(DONE_COLOR));
 //				source.sendError(Text.literal("Active group: '"+activeGroupName+"' (ids: "+activeGroup.size()+")").withColor(DONE_COLOR));
 				return 1;
 			}
 			else{
-				source.sendError(Text.translatable(PREFIX+"fileUpdate", activeGroupName, activeGroup.size(), mapsInGroup.size()).withColor(ERROR_COLOR));
+				source.sendError(Text.translatable(PREFIX+"fileUpdate", activeGroupName, activeGroup.size(), mapsInGroup.size()).withColor(DONE_COLOR));
 //				source.sendFeedback(Text.literal("Updated group from file: '"+activeGroupName
 //						+"' (ids: "+activeGroup.size()+"\u2192"+mapsInGroup.size()+").").withColor(DONE_COLOR));
 			}
 		}
 		else{
-			source.sendError(Text.translatable(PREFIX+"groupUpdate", newActiveGroup, mapsInGroup.size()).withColor(ERROR_COLOR));
+			source.sendError(Text.translatable(PREFIX+"groupUpdate", newActiveGroup, mapsInGroup.size()).withColor(DONE_COLOR));
 //			source.sendFeedback(Text.literal("Set active group: '"+newActiveGroup+"' (ids: "+mapsInGroup.size()+").").withColor(DONE_COLOR));
 		}
 		MapGroupUtils.setCurrentGroup(activeGroup = mapsInGroup);
@@ -318,7 +318,8 @@ public class CommandMapArtGroup{
 			dispatcher.register(
 				ClientCommandManager.literal(getClass().getSimpleName().substring(7).toLowerCase())
 				.executes(ctx->{
-					ctx.getSource().sendError(Text.literal("Missing subcommand: set/create/append <g>, or compare <g1> <g2>"));
+					ctx.getSource().sendError(Text.translatable(PREFIX+".missingSubcommand"));
+//					ctx.getSource().sendError(Text.literal("Missing subcommand: set/create/append <g>, or compare <g1> <g2>"));
 					return 1;
 				})
 				.then(

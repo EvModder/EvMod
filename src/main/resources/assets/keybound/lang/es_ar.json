@@ -7,6 +7,7 @@
 	"keybound.command.mapartgroup.subcommand.append": "append",
 	"keybound.command.mapartgroup.subcommand.compare": "compare",
 	"keybound.command.mapartgroup.subcommand.reset": "reset",
+	"keybound.command.mapartgroup.missingSubcommand": "Missing argument: set|create|append <g>, or compare <g1> <g2>",
 	"keybound.command.mapartgroup.invalidSubcommand": "Invalid subcommand: %s",
 	"keybound.command.mapartgroup.needsGroup": "Command needs a group name",
 	"keybound.command.mapartgroup.notFound": "MapArtGroup%s not found: %s",
@@ -62,7 +63,7 @@
 
 	"keybound.config.generic.name.keybindMapArtBundleRemoveMax": "Maximo de mapas por Saco",
 	"keybound.config.generic.name.keybindMapArtMoveIgnoreAirPockets": "keybindMapArtMoveIgnoreAirPockets",
-	"keybound.config.generic.name.skipTransparentMapsInKeybinds": "skipTransparentMapsInKeybinds",
+	"keybound.config.generic.name.ignoreBlankMapsIndHighlightsAndKeybinds": "ignoreBlankMapsIndHighlightsAndKeybinds",
 	"keybound.config.generic.name.ignoreMonoColorMapsInHightlights": "ignoreMonoColorMapsInHightlights",
 	"keybound.config.generic.name.hotbarSlotItemTypeScrollOrder": "hotbarSlotItemTypeScrollOrder",
 	"keybound.config.generic.name.sendChatsOnServerJoin": "Envia Mensaje al Unirse",

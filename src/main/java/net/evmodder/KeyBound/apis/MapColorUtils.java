@@ -9,16 +9,23 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
 public abstract class MapColorUtils{
-	public static final boolean isTransparentOrStone(final byte[] colors){
+	public static final boolean isFullyTransparent(final byte[] colors){
 		assert colors != null && colors.length == 128*128;
 		// This is faster apparently (less branching beats short-circuit)
-		byte anyColor = 0;
-		for(byte b : colors) anyColor |= b;
-		return anyColor == 0 || anyColor == 45;//11*4+1 = flat stone
+		byte c = 0;
+		for(byte b : colors) c |= b;
+		return 0<=c && c<=3;
+//		for(byte b : colors) if(b<0 || b>3 /*!transparentColors.contains(b)*/) return false;
+//		return true;
 	}
 	public static final boolean isMonoColor(final byte[] colors){
 		assert colors != null && colors.length == 128*128;
-		for(int i=1; i<colors.length; ++i) if(colors[i] != colors[i-1]) return false;
+//		final byte firstColor = colors[0];
+//		boolean allSame = true;
+//		for(byte b : colors) allSame &= (b==firstColor);
+//		return allSame || (0<=c && c<=3);
+		final boolean notTransparent = colors[0]<0 || colors[0]>3;
+		for(int i=1; i<colors.length; ++i) if(colors[i] != colors[i-1] && (notTransparent || colors[i]<0 || colors[i]>3)) return false;
 		return true;
 	}
 
