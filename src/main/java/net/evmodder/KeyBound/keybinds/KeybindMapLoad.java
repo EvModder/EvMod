@@ -3,6 +3,7 @@ package net.evmodder.KeyBound.keybinds;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -161,11 +162,13 @@ public final class KeybindMapLoad{
 		//
 		int[] putBackSlots = new int[hbButtons.length];
 		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
+		HashSet<Integer> mapIdsToLoad = new HashSet<>();
 		final int MAX_BATCH_SIZE = Math.min(hbButtons.length, Main.clickUtils.MAX_CLICKS/2);
 
 		int hbi = 0;
 		for(int i=0; i<slots.size(); ++i){
 			if(!isUnloadedMapArt(client.player.clientWorld, slots.get(i).getStack())) continue;
+			if(!mapIdsToLoad.add(slots.get(i).getStack().get(DataComponentTypes.MAP_ID).id())) continue;
 			clicks.add(new ClickEvent(i, hbButtons[hbi], SlotActionType.SWAP));
 			putBackSlots[hbi] = i;
 			if(++hbi == hbButtons.length){
