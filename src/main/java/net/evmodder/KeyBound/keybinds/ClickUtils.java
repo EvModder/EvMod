@@ -167,6 +167,10 @@ public class ClickUtils{
 			client.executeSync(()->{
 				while(calcAvailableClicks() > 0 && !clicks.isEmpty()){
 					if(!canProceed.apply(clicks.peek())) break;//{waitedForClicks = true; return;}
+					if(calcAvailableClicks() <= 0){
+						Main.LOGGER.error("executeClicks() lost available click mid-op, seemingly due to click(s) occuring during check of canProceed()!");
+						break;
+					}
 					ClickEvent click = clicks.remove();
 					try{
 						//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
