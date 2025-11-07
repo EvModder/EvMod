@@ -12,7 +12,6 @@ import com.nimbusds.oauth2.sdk.util.StringUtils;
 import net.evmodder.KeyBound.onTick.AutoPlaceMapArt;
 import net.evmodder.KeyBound.onTick.UpdateInventoryHighlights;
 import net.evmodder.KeyBound.Main;
-import net.evmodder.KeyBound.apis.MapGroupUtils;
 import net.evmodder.KeyBound.apis.MapRelationUtils;
 import net.evmodder.KeyBound.apis.MapRelationUtils.RelatedMapsData;
 import net.evmodder.KeyBound.config.Configs;
@@ -445,7 +444,7 @@ public final class MapHandRestock{
 				IntStream.range(0, 41).noneMatch(i -> i != player.getInventory().selectedSlot &&
 				FilledMapItem.getMapState(player.getInventory().getStack(i), player.getWorld()) == state)){
 //			InventoryHighlightUpdater.currentlyBeingPlacedIntoItemFrameSlot = player.getInventory().selectedSlot;
-			UpdateInventoryHighlights.currentlyBeingPlacedIntoItemFrame = MapGroupUtils.getIdForMapState(state);
+			UpdateInventoryHighlights.currentlyBeingPlacedIntoItemFrame = mapInHand.copy();
 			UpdateInventoryHighlights.onUpdateTick(client);
 		}
 
@@ -479,9 +478,12 @@ public final class MapHandRestock{
 		final int restockFromSlotFinal = restockFromSlot;
 		waitingForRestock = true;
 		new Thread(){@Override public void run(){
+			Main.LOGGER.info("MapRestock: waiting for currently placed map to load");
 			while(UpdateInventoryHighlights.currentlyBeingPlacedIntoItemFrame != null) Thread.yield();
+			Main.LOGGER.info("MapRestock: ok, sync client execution");
 			client.executeSync(()->{
 //				try{sleep(50l);}catch(InterruptedException e){e.printStackTrace();waitingForRestock=false;} // 50ms = 1tick
+				Main.LOGGER.info("MapRestock: ok, doing restock click(s)");
 
 				if(slots.get(restockFromSlotFinal).get(DataComponentTypes.BUNDLE_CONTENTS) != null){
 					ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
@@ -537,6 +539,7 @@ public final class MapHandRestock{
 			ItemStack stack = player.getMainHandStack();
 			if(waitingForRestock && (stack.isEmpty() || stack.getItem() == Items.FILLED_MAP)){
 				// Little safety net to keep player from placing offhand item into iFrame if right-clicking faster than hand restock can handle
+				Main.LOGGER.warn("MapRestock: Player right-clicking iFrame before previous tryToStockNextMap() has finished!");
 				return ActionResult.FAIL;
 			}
 			if(stack.getItem() != Items.FILLED_MAP) return ActionResult.PASS;

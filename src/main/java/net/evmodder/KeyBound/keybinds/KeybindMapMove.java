@@ -133,8 +133,10 @@ public final class KeybindMapMove{
 				clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // right-click: pickup half
 				if(numInShulk == 0){
 					if(Main.clickUtils.MAX_CLICKS >= 2) reserveClicks.put(clicks.peekLast(), 2);
-					while(!slots[j].isEmpty()) ++j;
-					if(j >= 27) Main.LOGGER.error("MapMove: inv -> inv! (Should be unreachable)");
+					while(!slots[j].isEmpty()) if(++j == 27){
+						Main.LOGGER.error("MapMove: inv -> inv! (Should be unreachable)");
+						continue;
+					}
 					clicks.add(new ClickEvent(j++, 0, SlotActionType.PICKUP)); //left-click: place all into next empty slot
 					continue;
 				}

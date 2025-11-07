@@ -9,6 +9,7 @@ import net.evmodder.KeyBound.apis.MapGroupUtils;
 import net.evmodder.KeyBound.apis.MapRelationUtils;
 import net.evmodder.KeyBound.config.Configs;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
@@ -17,7 +18,7 @@ import net.minecraft.item.map.MapState;
 public class UpdateInventoryHighlights{
 //	private static int invHash;
 	private static HashSet<UUID> inventoryMapGroup = new HashSet<>(), nestedInventoryMapGroup = new HashSet<>();
-	public static UUID currentlyBeingPlacedIntoItemFrame;
+	public static ItemStack currentlyBeingPlacedIntoItemFrame;
 	public static int mapsInInvHash;
 
 	public static final boolean isInInventory(/*final int id, */final UUID colorsUUID){
@@ -43,12 +44,12 @@ public class UpdateInventoryHighlights{
 			}
 			return false;
 		}
-		final UUID colorsId = MapGroupUtils.getIdForMapState(state);
-		if(/*i == currentlyBeingPlacedIntoItemFrameSlot && */colorsId.equals(currentlyBeingPlacedIntoItemFrame)){
+		//if(i == currentlyBeingPlacedIntoItemFrameSlot &&
+		if(currentlyBeingPlacedIntoItemFrame != null && ItemStack.areEqual(stack, currentlyBeingPlacedIntoItemFrame)){
 //			mapPlaceStillOngoing = true; continue;
 			return true;
 		}
-		inventoryMapGroup.add(colorsId);
+		inventoryMapGroup.add(MapGroupUtils.getIdForMapState(state));
 //		newInvHash += colorsId.hashCode();
 		return false;
 	}
@@ -74,6 +75,7 @@ public class UpdateInventoryHighlights{
 //			invHash = newInvHash;
 //			ItemFrameHighlightUpdater.highlightedIFrames.clear();
 //		}
-		mapsInInvHash = inventoryMapGroup.hashCode() + nestedInventoryMapGroup.hashCode();
+		final int syncId = client.currentScreen instanceof HandledScreen hs ? hs.getScreenHandler().syncId : 0;
+		mapsInInvHash = syncId + inventoryMapGroup.hashCode() + nestedInventoryMapGroup.hashCode();
 	}
 }
