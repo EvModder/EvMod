@@ -59,8 +59,8 @@ public final class KeybindMapLoad{
 		return IntStream.range(0, 9).filter(hb -> isUsable(client.player.getInventory().getStack(hb))).toArray();
 	}
 
-	private final long WAIT_FOR_STATE_UPDATE = 71; // 50 = 1 tick
-	private long stateWaitStart;
+	private final long WAIT_FOR_STATE_UPDATE = 71, STATE_LOAD_TIMEOUT = 5*1000; // 50 = 1 tick
+	private long stateUpdateWaitStart, stateLoadWaitStart;
 	private final void loadMapArtFromBundles(){
 //		Main.LOGGER.warn("MapLoadBundle: in InventoryScreen");
 		final MinecraftClient client = MinecraftClient.getInstance();
@@ -125,13 +125,20 @@ public final class KeybindMapLoad{
 					}
 				}
 				if(c.slotId() != emptySlot) return true;
-				if(stateWaitStart == 0){stateWaitStart = -1; return true;}
+				if(stateUpdateWaitStart == 0){stateUpdateWaitStart = -1; return true;}
 				ItemStack item = client.player.currentScreenHandler.slots.get(emptySlot).getStack();
-				if(!isLoadedMapArt(client.world, item)) return false;
+//				if(!isLoadedMapArt(client.world, item)) return false;
+				if(!isLoadedMapArt(client.world, item)){
+					if(stateLoadWaitStart == 0) stateLoadWaitStart = System.currentTimeMillis();
+					if(System.currentTimeMillis() - stateLoadWaitStart < STATE_LOAD_TIMEOUT) return false;
+					stateUpdateWaitStart = stateLoadWaitStart = 0;
+					Main.LOGGER.warn("MapLoadBundle: Timed out while waiting for map state to load!");
+					return true;
+				}
 				// Wait a bit even aft map state is loaded, to ensure it REALLY gets loaded
-				else if(stateWaitStart <= 0){stateWaitStart = System.currentTimeMillis(); return false;}
-				else if(System.currentTimeMillis() - stateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
-				else{stateWaitStart = 0; return true;}
+				else if(stateUpdateWaitStart <= 0){stateUpdateWaitStart = System.currentTimeMillis(); return false;}
+				else if(System.currentTimeMillis() - stateUpdateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
+				else{stateUpdateWaitStart = 0; return true;}
 			},
 			()->Main.LOGGER.info("MapLoadBundle: DONE!")
 		);
@@ -194,12 +201,16 @@ public final class KeybindMapLoad{
 				// Ugh just wait if any unloaded map in hotbar(or inv)
 				if(client.player.getInventory().main.stream().anyMatch(s -> isUnloadedMapArt(client.world, s))){
 //					Main.LOGGER.info("MapLoad: still waiting for map state to load from hotbar slot: "+c.button());
-					return false;
+					if(stateLoadWaitStart == 0) stateLoadWaitStart = System.currentTimeMillis();
+					if(System.currentTimeMillis() - stateLoadWaitStart < STATE_LOAD_TIMEOUT) return false;
+					stateUpdateWaitStart = stateLoadWaitStart = 0;
+					Main.LOGGER.warn("MapLoad: Timed out while waiting for map state to load!");
+					return true;
 				}
-				else if(stateWaitStart == 0){stateWaitStart = System.currentTimeMillis(); return false;}
-				else if(System.currentTimeMillis() - stateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
-				Main.LOGGER.info("map state load finished");
-				stateWaitStart = 0;
+				else if(stateUpdateWaitStart == 0){stateUpdateWaitStart = System.currentTimeMillis(); return false;}
+				else if(System.currentTimeMillis() - stateUpdateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
+				Main.LOGGER.info("MapLoad: map state loaded and updated");
+				stateUpdateWaitStart = stateLoadWaitStart = 0;
 				++clickIndex;
 				return true;
 			},
