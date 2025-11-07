@@ -12,6 +12,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.EndTic
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.command.argument.EntityAnchorArgumentType.EntityAnchor;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.Item;
@@ -32,7 +33,7 @@ public class AutoPlaceItemFrames{
 	private Item iFrameItem;
 	private Direction dir;
 	private int axis;
-	private final int MAX_REACH = 4;
+	private final double MAX_REACH = 3.5;
 	private final boolean ROTATE_PLAYER = false; //TODO: config setting
 
 	private double distFromPlane(BlockPos bp){
@@ -80,6 +81,11 @@ public class AutoPlaceItemFrames{
 		return true;
 	}
 
+	private boolean isMovingTooFast(Vec3d velocity){
+		double xzLengthSq = velocity.x*velocity.x + velocity.z*velocity.z;
+		return xzLengthSq > 0.0001 || Math.abs(velocity.y) > 0.08;
+	}
+
 	private final BlockPos[] recentPlaceAttempts;
 	private int attemptIdx;
 	public AutoPlaceItemFrames(){
@@ -100,9 +106,9 @@ public class AutoPlaceItemFrames{
 			if(++attemptIdx >= recentPlaceAttempts.length) attemptIdx = 0;
 			recentPlaceAttempts[attemptIdx] = null;
 
-			if(client.player.getVelocity().lengthSquared() > 0.01) return; // Pause while player is moving
+			if(isMovingTooFast(client.player.getVelocity())) return; // Pause while player is moving
 
-			final int SCAN_DIST = MAX_REACH+2;
+			final int SCAN_DIST = (int)(MAX_REACH+2);
 
 			BlockPos clientBp = client.player.getBlockPos();
 			if(distFromPlane(clientBp) > SCAN_DIST) return; // Player out of range of iFrame wall
@@ -178,7 +184,13 @@ public class AutoPlaceItemFrames{
 			return ActionResult.PASS;
 		});
 		ClientEntityEvents.ENTITY_UNLOAD.register((entity, world) -> {
-			if(dir != null && entity instanceof ItemFrameEntity ife && ife.getFacing() == dir && distFromPlane(ife.getBlockPos().offset(dir.getOpposite())) == 0){
+			if(dir != null && entity instanceof ItemFrameEntity ife
+					&& ife.getFacing() == dir && distFromPlane(ife.getBlockPos().offset(dir.getOpposite())) == 0
+					// Filter out "ghost" itemframes (failed auto-place attempts that appear client-side for a tick)
+					&& (ife.age > 0 || Arrays.stream(recentPlaceAttempts).noneMatch(attempt -> attempt != null && ife.getBlockPos().equals(attempt)))
+					// Filter out itemframes that were not punched by the player (likely just unloaded due to render distance)
+					&& ife.squaredDistanceTo(MinecraftClient.getInstance().player) < 32*32
+			){
 				Main.LOGGER.info("iFramePlacer: Disabling due to removed ItemFrameEntity");
 				dir = null; iFrameItem = null; placeAgainstBlock = null;
 			}

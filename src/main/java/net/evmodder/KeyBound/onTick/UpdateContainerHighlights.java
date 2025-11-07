@@ -80,7 +80,7 @@ public class UpdateContainerHighlights{
 		final int currHash = UpdateInventoryHighlights.mapsInInvHash + mapsInContainerHash;
 		if(lastHash == currHash) return;
 		lastHash = currHash;
-		Main.LOGGER.info("ContainerHighlighter: Recomputing cache");
+//		Main.LOGGER.info("ContainerHighlighter: Recomputing cache");
 
 		if(items.isEmpty()) return;
 		final List<MapState> states = items.stream().map(i -> FilledMapItem.getMapState(i, client.world)).filter(Objects::nonNull).toList();
@@ -110,7 +110,7 @@ public class UpdateContainerHighlights{
 		}
 
 		if(renderAsterisks && !asterisks.isEmpty()){
-			Main.LOGGER.info("ContainerHighlighter: colored title! asterisks.size()="+asterisks.size());
+//			Main.LOGGER.info("ContainerHighlighter: colored title! asterisks.size()="+asterisks.size());
 			customTitle = hs.getTitle().copy();
 			asterisks.stream().distinct() // TODO: the "distinct" only exists in case of configurations where 2+ settings share 1 color
 				.forEach(color -> customTitle.append(Text.literal("*").withColor(color).formatted(Formatting.BOLD)));

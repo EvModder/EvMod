@@ -131,7 +131,7 @@ public class CommandMapArtGroup{
 				else{
 					activeGroupName = "intersection_"+groupName1+"_and_"+groupName2; // Set intersection
 					source.sendError(Text.translatable("keybound.command.mapartgroup.compare.intersection",
-							activeGroupName, colorIds1.size(), in1Not2.size(), colorIds2OriginalSize, in2Not1.size(), colorIds2.size())
+							colorIds1.size(), in1Not2.size(), colorIds2OriginalSize, in2Not1.size(), colorIds2.size())
 							.withColor(CREATE_COLOR));
 //					source.sendFeedback(Text.literal("Using set-intersection as active group "
 //							+"(ids: ("+colorIds1.size()+"-"+in1Not2.size()+")+("+(colorIds2.size()+in2Not1.size())+"-"+in2Not1.size()+")="
