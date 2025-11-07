@@ -17,6 +17,7 @@ import net.minecraft.client.gui.screen.ingame.AnvilScreen;
 import net.minecraft.client.gui.screen.ingame.CartographyTableScreen;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.client.gui.screen.ingame.RecipeBookScreen;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -60,15 +61,17 @@ public class UpdateContainerHighlights{
 	public static final void onUpdateTick(MinecraftClient client){
 		if(client.player == null || client.world == null || !client.player.isAlive() ||
 			client.currentScreen == null || !(client.currentScreen instanceof HandledScreen hs) ||
-			client.currentScreen instanceof AnvilScreen || // These get false-flagged for "duplicate map in container" with i/o slots
-			client.currentScreen instanceof CraftingScreen ||
-			client.currentScreen instanceof CartographyTableScreen)
+			hs instanceof RecipeBookScreen || //parent of InventoryScreen, neither of which is a container
+			hs instanceof AnvilScreen || // These get false-flagged for "duplicate map in container" with i/o slots
+			hs instanceof CraftingScreen ||
+			hs instanceof CartographyTableScreen)
 		{
 			customTitle = null;
 			mapsInContainerHash = 0;
 			inContainerAndInInv.clear();
 			return;
 		}
+		if(hs.getScreenHandler().syncId == 0) Main.LOGGER.error("!!!!!! alarm bells!!!");
 		final boolean renderAsterisks = Configs.Visuals.MAP_HIGHLIGHT_CONTAINER_NAME.getBooleanValue();
 
 		final List<ItemStack> items = getAllMapItemsInContainer(hs.getScreenHandler().slots);
