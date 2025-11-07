@@ -25,6 +25,7 @@ public class ConfigGui extends GuiConfigsBase{
 		int x = 10;
 		int y = 26;
 
+		x += this.createButton(x, y, -1, ConfigGuiTab.ALL);
 		x += this.createButton(x, y, -1, ConfigGuiTab.GENERIC);
 		x += this.createButton(x, y, -1, ConfigGuiTab.VISUALS);
 		x += this.createButton(x, y, -1, ConfigGuiTab.HOTKEYS);
@@ -47,6 +48,7 @@ public class ConfigGui extends GuiConfigsBase{
 	@Override public List<ConfigOptionWrapper> getConfigs(){
 		List<? extends IConfigBase> configs;
 		configs = switch(tab) {
+			case ALL -> Configs.allOptions();
 			case GENERIC -> Configs.Generic.getOptions();
 			case VISUALS -> Configs.Visuals.getOptions();
 			case HOTKEYS -> Configs.Hotkeys.getOptions();
@@ -66,6 +68,7 @@ public class ConfigGui extends GuiConfigsBase{
 	}
 
 	public enum ConfigGuiTab{
+		ALL("keybound.gui.button.all"),
 		GENERIC("keybound.gui.button.generic"),
 		VISUALS("keybound.gui.button.visuals"),
 		HOTKEYS("keybound.gui.button.hotkeys"),

@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.config.Configs;
+import net.evmodder.KeyBound.config.InventoryRestockLimits;
 import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -236,7 +238,9 @@ public final class KeybindInventoryOrganize{
 					if(p.name.equals(getName(stack))) alreadyRestockedItems.add(stack.getItem());
 				}
 			}
-			if(!KeybindInventoryRestock.LEAVE_1) countainerCounts = null;
+			final InventoryRestockLimits limits = (InventoryRestockLimits)Configs.Hotkeys.INV_RESTOCK_LIMITS.getOptionListValue();
+			final boolean LEAVE_ONE = limits == InventoryRestockLimits.LEAVE_ONE_ITEM || limits == InventoryRestockLimits.LEAVE_ONE_STACK;
+			if(!LEAVE_ONE) countainerCounts = null;
 			else{
 				countainerCounts = new HashMap<>();
 				for(int i=0; i<MAIN_INV_START; ++i){

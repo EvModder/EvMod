@@ -65,6 +65,7 @@
 	"keybound.config.generic.name.keybindMapArtMoveIgnoreAirPockets": "keybindMapArtMoveIgnoreAirPockets",
 	"keybound.config.generic.name.ignoreBlankMapsIndHighlightsAndKeybinds": "ignoreBlankMapsIndHighlightsAndKeybinds",
 	"keybound.config.generic.name.ignoreMonoColorMapsInHightlights": "ignoreMonoColorMapsInHightlights",
+	"keybound.config.generic.name.iFrameTrackingDist": "iFrameTrackingDist",
 	"keybound.config.generic.name.hotbarSlotItemTypeScrollOrder": "hotbarSlotItemTypeScrollOrder",
 	"keybound.config.generic.name.sendChatsOnServerJoin": "Envia Mensaje al Unirse",
 	"keybound.config.generic.name.logCoordsOnServerQuit": "Guarda Coordenadas al Salir en log",

@@ -31,6 +31,7 @@
 	"keybound.command.mapartgroup.groupUpdate": "Set active group: '%s' (ids: %s)",
 
 	"keybound.gui.title": "KeyBound Configs - %s",
+	"keybound.gui.button.all": "All",
 	"keybound.gui.button.generic": "Generic",
 	"keybound.gui.button.visuals": "Visuals",
 	"keybound.gui.button.hotkeys": "Hotkeys",
@@ -47,6 +48,11 @@
 	"keybound.gui.label.cacheMapstateType.byId": "By MapId",
 	"keybound.gui.label.cacheMapstateType.byName": "By ItemName",
 	"keybound.gui.label.cacheMapstateType.byInvPos": "By Inv/Echest Slot",
+
+	"keybound.gui.label.inventoryRestock.leaveOneItem": "Leave One Item",
+	"keybound.gui.label.inventoryRestock.leaveOneStack": "Leave One Stack",
+	"keybound.gui.label.inventoryRestock.leaveUnlessOneType": "Leave Unless One-Type",
+	"keybound.gui.label.inventoryRestock.leaveUnlessAllResupply": "Leave Unless All-Resupply",
 
 	"keybound.config.generic.name.clickLimitCount": "clickLimitCount",
 	"keybound.config.generic.comment.clickLimitCount": "2b2t will kick you for setning >80 clicks in <80 ticks (Last checked: 2025-10-15)",
@@ -65,6 +71,7 @@
 	"keybound.config.generic.name.keybindMapArtMoveIgnoreAirPockets": "keybindMapArtMoveIgnoreAirPockets",
 	"keybound.config.generic.name.ignoreBlankMapsIndHighlightsAndKeybinds": "ignoreBlankMapsIndHighlightsAndKeybinds",
 	"keybound.config.generic.name.ignoreMonoColorMapsInHightlights": "ignoreMonoColorMapsInHightlights",
+	"keybound.config.generic.name.iFrameTrackingDist": "iFrameTrackingDist",
 	"keybound.config.generic.name.hotbarSlotItemTypeScrollOrder": "hotbarSlotItemTypeScrollOrder",
 	"keybound.config.generic.name.sendChatsOnServerJoin": "sendChatsOnServerJoin",
 	"keybound.config.generic.name.logCoordsOnServerQuit": "logCoordsOnServerQuit",
@@ -79,6 +86,7 @@
 	"keybound.config.generic.comment.keybindMapArtMoveIgnoreAirPockets": "Disregard empty space in containers",
 	"keybound.config.generic.comment.skipTransparentMapsInKeybinds": "Treat fully transparent map as a filler item (this is very useful)",
 	"keybound.config.generic.comment.ignoreMonoColorMapsInHightlights": "Ignore Monocolor maps in highlights (they are almost always highlighted as duplicates)",
+	"keybound.config.generic.comment.iFrameTrackingDist": "Set to 0 to disable recalculating nearby iFrames (slightly better performance)",
 
 	"keybound.config.generic.name.placementHelperIFrame": "iFramePlacementHelper",
 	"keybound.config.generic.name.placementHelperIFrameRaycast": "iFramePlacementHelperRaycast",
@@ -89,7 +97,7 @@
 	"keybound.config.generic.name.placementHelperMapArtUseImage": "mapartPlacementHelperUseMapImage",
 	"keybound.config.generic.name.placementHelperMapArtFromBundle": "placementHelperMapArtFromBundle",
 	"keybound.config.generic.name.placementHelperMapArtAutoPlace": "mapartPlacementHelperAutoPlace",
-	"keybound.config.generic.comment.placementHelperIFrame": "iFrame Placement Helper",
+	"keybound.config.generic.comment.placementHelperIFrame": "iFrame Helper - An item_frame auto placer",
 	"keybound.config.generic.comment.placementHelperIFrameMustConnect": "iFrame Helper - Only place connecting iFrames",
 	"keybound.config.generic.comment.placementHelperIFrameMustMatchBlock": "iFrame Helper - Only place on matching blocks",
 	"keybound.config.generic.comment.placementHelperMapArt": "MapArt Placement Helper",
@@ -176,6 +184,7 @@
 	"keybound.config.hotkeys.name.inventoryOrganize3": "inventoryOrganize3",
 	"keybound.config.hotkeys.name.triggerInventoryOrganize3": "triggerInventoryOrganize3",
 	"keybound.config.hotkeys.name.inventoryRestock": "inventoryRestock",
+	"keybound.config.hotkeys.name.inventoryRestockLimits": "inventoryRestockLimits",
 	"keybound.config.hotkeys.name.inventoryRestockBlacklist": "inventoryRestockBlacklist",
 	"keybound.config.hotkeys.name.inventoryRestockWhitelist": "inventoryRestockWhitelist",
 

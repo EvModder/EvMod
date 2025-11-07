@@ -34,7 +34,7 @@ public class Configs implements IConfigHandler{
 //		public static final ConfigOptionList MAP_STATE_CACHE_TYPE = new ConfigOptionList("mapStateCacheType",
 //				MapStateCacheOptionType.BY_INV_POS).apply(GENERIC_KEY);
 
-		public static final ConfigInteger MAX_IFRAME_TRACKING_DIST = new ConfigInteger("iFrameTrackingDist", 128, 0, 10_000_000);
+		public static final ConfigInteger MAX_IFRAME_TRACKING_DIST = new ConfigInteger("iFrameTrackingDist", /*default=*/128, 0, 10_000_000);
 		public static double MAX_IFRAME_TRACKING_DIST_SQ;
 		static{MAX_IFRAME_TRACKING_DIST.setValueChangeCallback(d -> MAX_IFRAME_TRACKING_DIST_SQ=Math.pow(d.getIntegerValue(), 2));}
 
@@ -78,35 +78,39 @@ public class Configs implements IConfigHandler{
 		public static final ConfigString TEMP_BROADCAST_TIMESTAMP = new ConfigString("broadcastTimestamp", "1738990800").apply(GENERIC_KEY);
 		public static final ConfigStringList TEMP_BROADCAST_MSGS = new ConfigStringList("broadcastMsgs", ImmutableList.of()).apply(GENERIC_KEY);
 
+		private static List<IConfigBase> availableOptions;
 		public static final List<IConfigBase> getOptions(){
-			List<IConfigBase> availableOptions = new ArrayList<>();
-			availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT));
-			if((Main.serverJoinListener && Main.serverQuitListener) || Main.containerOpenCloseListener != null){
-				availableOptions.add(MAP_STATE_CACHE);
-//				if(MAP_STATE_CACHE.getOptionListValue() != MapStateCacheOption.OFF) availableOptions.add(MAP_STATE_CACHE_TYPE);
-			}
-			if(Main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME, PLACEMENT_HELPER_IFRAME_HIT_VECTOR,
-					PLACEMENT_HELPER_IFRAME_MUST_CONNECT, PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK));
-			if(Main.placementHelperMapArt){
-				availableOptions.addAll(List.of(PLACEMENT_HELPER_MAPART, PLACEMENT_HELPER_MAPART_USE_NAMES, PLACEMENT_HELPER_MAPART_USE_IMAGE,
-						PLACEMENT_HELPER_MAPART_FROM_BUNDLE));
-				if(Main.placementHelperMapArtAuto) availableOptions.add(PLACEMENT_HELPER_MAPART_AUTOPLACE);
-			}
-			if(Main.gameMessageListener) availableOptions.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PEARL_PULL));
-			if(Main.cmdMapArtGroup) availableOptions.add(MAPART_GROUP_INCLUDE_UNLOCKED);
-//			if(Main.keybindMapArtMoveBundle)
-				availableOptions.add(KEYBIND_BUNDLE_REMOVE_MAX);
-//			if(Main.keybindMapArtMove)
-				availableOptions.add(KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS);
+			if(availableOptions == null){
+				availableOptions = new ArrayList<>();
+				availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT));
+				if((Main.serverJoinListener && Main.serverQuitListener) || Main.containerOpenCloseListener != null){
+					availableOptions.add(MAP_STATE_CACHE);
+//					if(MAP_STATE_CACHE.getOptionListValue() != MapStateCacheOption.OFF) availableOptions.add(MAP_STATE_CACHE_TYPE);
+				}
+				if(Main.mapHighlights) availableOptions.add(MAX_IFRAME_TRACKING_DIST);
+				if(Main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME, PLACEMENT_HELPER_IFRAME_HIT_VECTOR,
+						PLACEMENT_HELPER_IFRAME_MUST_CONNECT, PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK));
+				if(Main.placementHelperMapArt){
+					availableOptions.addAll(List.of(PLACEMENT_HELPER_MAPART, PLACEMENT_HELPER_MAPART_USE_NAMES, PLACEMENT_HELPER_MAPART_USE_IMAGE,
+							PLACEMENT_HELPER_MAPART_FROM_BUNDLE));
+					if(Main.placementHelperMapArtAuto) availableOptions.add(PLACEMENT_HELPER_MAPART_AUTOPLACE);
+				}
+				if(Main.gameMessageListener) availableOptions.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PEARL_PULL));
+				if(Main.cmdMapArtGroup) availableOptions.add(MAPART_GROUP_INCLUDE_UNLOCKED);
+//				if(Main.keybindMapArtMoveBundle)
+					availableOptions.add(KEYBIND_BUNDLE_REMOVE_MAX);
+//				if(Main.keybindMapArtMove)
+					availableOptions.add(KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS);
 
-			if(!Main.mapArtFeaturesOnly) availableOptions.add(SCROLL_ORDER);
-//			if(Main.keybindMapArtMove || Main.keybindMapArtMoveBundle)
-				availableOptions.add(SKIP_TRANSPARENT_MAPS);
-			if(Main.mapHighlights) availableOptions.add(SKIP_MONO_COLOR_MAPS);
-			if(Main.serverJoinListener) availableOptions.add(SEND_ON_SERVER_JOIN);
-			if(Main.serverQuitListener) availableOptions.add(LOG_COORDS_ON_SERVER_QUIT);
-			if(Main.inventoryRestockAuto) availableOptions.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
-			if(Main.broadcaster) availableOptions.addAll(List.of(TEMP_BROADCAST_ACCOUNT, TEMP_BROADCAST_TIMESTAMP, TEMP_BROADCAST_MSGS));
+				if(!Main.mapArtFeaturesOnly) availableOptions.add(SCROLL_ORDER);
+//				if(Main.keybindMapArtMove || Main.keybindMapArtMoveBundle)
+					availableOptions.add(SKIP_TRANSPARENT_MAPS);
+				if(Main.mapHighlights) availableOptions.add(SKIP_MONO_COLOR_MAPS);
+				if(Main.serverJoinListener) availableOptions.add(SEND_ON_SERVER_JOIN);
+				if(Main.serverQuitListener) availableOptions.add(LOG_COORDS_ON_SERVER_QUIT);
+				if(Main.inventoryRestockAuto) availableOptions.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
+				if(Main.broadcaster) availableOptions.addAll(List.of(TEMP_BROADCAST_ACCOUNT, TEMP_BROADCAST_TIMESTAMP, TEMP_BROADCAST_MSGS));
+			}
 			return availableOptions;
 		}
 //		public static final List<IHotkey> HOTKEY_LIST = ImmutableList.of(
@@ -157,29 +161,32 @@ public class Configs implements IConfigHandler{
 		public static final ConfigColor EXPORT_MAP_IMG_BORDER_COLOR1 = new ConfigColor("exportMapImageBorderColor1", "#FFFFC864").apply(VISUALS_KEY); // -14236 Yellow
 		public static final ConfigColor EXPORT_MAP_IMG_BORDER_COLOR2 = new ConfigColor("exportMapImageBorderColor2", "#00322D32").apply(VISUALS_KEY); // 3288370 Gray
 
+		private static List<IConfigBase> availableOptions;
 		public static final List<IConfigBase> getOptions(){
-			List<IConfigBase> availableOptions = new ArrayList<>();
-			if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(REPAIR_COST_HOTBAR_HUD, REPAIR_COST_TOOLTIP));
-			availableOptions.addAll(List.of(
-					INVIS_IFRAMES, INVIS_IFRAMES_SEMI_TRANSPARENT,
-					MAP_HIGHLIGHT_IFRAME, MAP_HIGHLIGHT_TOOLTIP, MAP_HIGHLIGHT_HOTBAR_HUD, MAP_HIGHLIGHT_CONTAINER_NAME,
-
-					MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES,
-
-					MAP_COLOR_UNLOADED, MAP_COLOR_UNLOCKED, MAP_COLOR_UNNAMED, MAP_COLOR_NOT_IN_GROUP,
-					MAP_COLOR_IN_INV, MAP_COLOR_IN_IFRAME, MAP_COLOR_MULTI_IFRAME, MAP_COLOR_MULTI_INV,
-
-//					MAP_METADATA_TOOLTIP,
-					MAP_METADATA_TOOLTIP_STAIRCASE, MAP_METADATA_TOOLTIP_MATERIAL,
-					MAP_METADATA_TOOLTIP_NUM_COLORS, MAP_METADATA_TOOLTIP_NUM_COLOR_IDS,
-					MAP_METADATA_TOOLTIP_TRANSPARENCY, MAP_METADATA_TOOLTIP_NOOBLINE,
-					MAP_METADATA_TOOLTIP_PERCENT_CARPET, MAP_METADATA_TOOLTIP_PERCENT_STAIRCASE
-			));
-			if(Main.cmdExportMapImg){
+			if(availableOptions == null){
+				availableOptions = new ArrayList<>();
+				if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(REPAIR_COST_HOTBAR_HUD, REPAIR_COST_TOOLTIP));
 				availableOptions.addAll(List.of(
-						EXPORT_MAP_IMG_UPSCALE,
-						EXPORT_MAP_IMG_BORDER,
-						EXPORT_MAP_IMG_BORDER_COLOR1, EXPORT_MAP_IMG_BORDER_COLOR2));
+						INVIS_IFRAMES, INVIS_IFRAMES_SEMI_TRANSPARENT,
+						MAP_HIGHLIGHT_IFRAME, MAP_HIGHLIGHT_TOOLTIP, MAP_HIGHLIGHT_HOTBAR_HUD, MAP_HIGHLIGHT_CONTAINER_NAME,
+
+						MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES,
+
+						MAP_COLOR_UNLOADED, MAP_COLOR_UNLOCKED, MAP_COLOR_UNNAMED, MAP_COLOR_NOT_IN_GROUP,
+						MAP_COLOR_IN_INV, MAP_COLOR_IN_IFRAME, MAP_COLOR_MULTI_IFRAME, MAP_COLOR_MULTI_INV,
+
+//						MAP_METADATA_TOOLTIP,
+						MAP_METADATA_TOOLTIP_STAIRCASE, MAP_METADATA_TOOLTIP_MATERIAL,
+						MAP_METADATA_TOOLTIP_NUM_COLORS, MAP_METADATA_TOOLTIP_NUM_COLOR_IDS,
+						MAP_METADATA_TOOLTIP_TRANSPARENCY, MAP_METADATA_TOOLTIP_NOOBLINE,
+						MAP_METADATA_TOOLTIP_PERCENT_CARPET, MAP_METADATA_TOOLTIP_PERCENT_STAIRCASE
+				));
+				if(Main.cmdExportMapImg){
+					availableOptions.addAll(List.of(
+							EXPORT_MAP_IMG_UPSCALE,
+							EXPORT_MAP_IMG_BORDER,
+							EXPORT_MAP_IMG_BORDER_COLOR1, EXPORT_MAP_IMG_BORDER_COLOR2));
+				}
 			}
 			return availableOptions;
 		}
@@ -222,10 +229,12 @@ public class Configs implements IConfigHandler{
 //		public static final ConfigHotkey SMART_SPACEBAR_CRAFTING = new ConfigHotkey("smartInventoryReCrafting", " ").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey HOTBAR_TYPE_INCR = new ConfigHotkey("hotbarSlotItemTypeIncrement", "").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey HOTBAR_TYPE_DECR = new ConfigHotkey("hotbarSlotItemTypeDecrement", "").apply(HOTKEYS_KEY);
-		//TODO: HOTBAR_TYPE_SCROLLER
 
+		//TODO: ConfigSlotList, ConfigSlotListHotkeyed
 		public static final ConfigHotkey INV_RESTOCK = new ConfigHotkey("inventoryRestock",
 				Main.mapArtFeaturesOnly ? "" : "R", KeybindSettings.GUI).apply(HOTKEYS_KEY);
+		public static final ConfigOptionList INV_RESTOCK_LIMITS = new ConfigOptionList("inventoryRestockLimits",
+				InventoryRestockLimits.LEAVE_UNLESS_ONE_TYPE).apply(HOTKEYS_KEY);
 		public static final ConfigStringList INV_RESTOCK_BLACKLIST = new ConfigStringList("inventoryRestockBlacklist", ImmutableList.of(
 //				"ender_chest", "filled_map"
 		)).apply(HOTKEYS_KEY);
@@ -313,38 +322,41 @@ public class Configs implements IConfigHandler{
 		public static final ConfigFloat SNAP_ANGLE_PITCH_2 = new ConfigFloat("snapAnglePitch2", 0, -90, 90).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TRIGGER_SNAP_ANGLE_2 = new ConfigHotkey("triggerSnapAngle2", "").apply(HOTKEYS_KEY);
 
+		private static List<IConfigBase> availableOptions;
 		public static final List<IConfigBase> getOptions(){
-			List<IConfigBase> availableOptions = new ArrayList<>();
-			availableOptions.addAll(List.of(
-					OPEN_CONFIG_GUI,
-					MAP_COPY, MAP_LOAD, MAP_MOVE, MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE,
-					MAP_CLICK_MOVE_NEIGHBORS, MAP_CLICK_MOVE_NEIGHBORS_KEY
-			));
-			if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(
-					TOGGLE_CAPE, SYNC_CAPE_WITH_ELYTRA,
-					TOGGLE_HAT, TOGGLE_JACKET, TOGGLE_SLEEVE_LEFT, TOGGLE_SLEEVE_RIGHT, TOGGLE_PANTS_LEG_LEFT, TOGGLE_PANTS_LEG_RIGHT,
-					AIE_TRAVEL_HELPER,
-					EBOUNCE_TRAVEL_HELPER,
-					EJECT_JUNK_ITEMS,
-					HOTBAR_TYPE_INCR, HOTBAR_TYPE_DECR,
-					INV_ORGANIZE_1, TRIGGER_INV_ORGANIZE_1,
-					INV_ORGANIZE_2, TRIGGER_INV_ORGANIZE_2,
-					INV_ORGANIZE_3, TRIGGER_INV_ORGANIZE_3,
-					INV_RESTOCK, INV_RESTOCK_BLACKLIST, INV_RESTOCK_WHITELIST,
+			if(availableOptions == null){
+				availableOptions = new ArrayList<>();
+				availableOptions.addAll(List.of(
+						OPEN_CONFIG_GUI,
+						MAP_COPY, MAP_LOAD, MAP_MOVE, MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE,
+						MAP_CLICK_MOVE_NEIGHBORS, MAP_CLICK_MOVE_NEIGHBORS_KEY
+				));
+				if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(
+						TOGGLE_CAPE, SYNC_CAPE_WITH_ELYTRA,
+						TOGGLE_HAT, TOGGLE_JACKET, TOGGLE_SLEEVE_LEFT, TOGGLE_SLEEVE_RIGHT, TOGGLE_PANTS_LEG_LEFT, TOGGLE_PANTS_LEG_RIGHT,
+						AIE_TRAVEL_HELPER,
+						EBOUNCE_TRAVEL_HELPER,
+						EJECT_JUNK_ITEMS,
+						HOTBAR_TYPE_INCR, HOTBAR_TYPE_DECR,
+						INV_ORGANIZE_1, TRIGGER_INV_ORGANIZE_1,
+						INV_ORGANIZE_2, TRIGGER_INV_ORGANIZE_2,
+						INV_ORGANIZE_3, TRIGGER_INV_ORGANIZE_3,
+						INV_RESTOCK, INV_RESTOCK_LIMITS, INV_RESTOCK_BLACKLIST, INV_RESTOCK_WHITELIST,
 
-					CHAT_MSG_1, TRIGGER_CHAT_MSG_1,
-					CHAT_MSG_2, TRIGGER_CHAT_MSG_2,
-					CHAT_MSG_3, TRIGGER_CHAT_MSG_3
-			));
-			if(Main.remoteSender != null) availableOptions.addAll(List.of(
-					REMOTE_MSG_1, TRIGGER_REMOTE_MSG_1,
-					REMOTE_MSG_2, TRIGGER_REMOTE_MSG_2,
-					REMOTE_MSG_3, TRIGGER_REMOTE_MSG_3
-			));
-			if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(
-					SNAP_ANGLE_YAW_1, SNAP_ANGLE_PITCH_1, TRIGGER_SNAP_ANGLE_1,
-					SNAP_ANGLE_YAW_2, SNAP_ANGLE_PITCH_2, TRIGGER_SNAP_ANGLE_2
-			));
+						CHAT_MSG_1, TRIGGER_CHAT_MSG_1,
+						CHAT_MSG_2, TRIGGER_CHAT_MSG_2,
+						CHAT_MSG_3, TRIGGER_CHAT_MSG_3
+				));
+				if(Main.remoteSender != null) availableOptions.addAll(List.of(
+						REMOTE_MSG_1, TRIGGER_REMOTE_MSG_1,
+						REMOTE_MSG_2, TRIGGER_REMOTE_MSG_2,
+						REMOTE_MSG_3, TRIGGER_REMOTE_MSG_3
+				));
+				if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(
+						SNAP_ANGLE_YAW_1, SNAP_ANGLE_PITCH_1, TRIGGER_SNAP_ANGLE_1,
+						SNAP_ANGLE_YAW_2, SNAP_ANGLE_PITCH_2, TRIGGER_SNAP_ANGLE_2
+				));
+			}
 			return availableOptions;
 		}
 	}
@@ -366,15 +378,30 @@ public class Configs implements IConfigHandler{
 		)).apply(DATABASE_KEY);
 		public static final ConfigBoolean SHARE_JOIN_QUIT = new ConfigBoolean("shareJoinQuit", true).apply(DATABASE_KEY);
 
+		private static List<IConfigBase> availableOptions;
 		public static final List<IConfigBase> getOptions(){
-			List<IConfigBase> availableOptions = new ArrayList<>();
-			availableOptions.addAll(List.of(CLIENT_ID, CLIENT_KEY, ADDRESS, SHARE_MAPART));
-			if(Main.epearlLookup != null) availableOptions.addAll(List.of(EPEARL_OWNERS_BY_UUID, EPEARL_OWNERS_BY_XZ));
-			if(Main.gameMessageListener) availableOptions.add(SHARE_IGNORES);
-			if(Main.gameMessageFilter != null) availableOptions.add(BORROW_IGNORES);
-			if(Main.serverJoinListener || Main.serverQuitListener) availableOptions.add(SHARE_JOIN_QUIT);
+			if(availableOptions == null){
+				availableOptions = new ArrayList<>();
+				availableOptions.addAll(List.of(CLIENT_ID, CLIENT_KEY, ADDRESS, SHARE_MAPART));
+				if(Main.epearlLookup != null) availableOptions.addAll(List.of(EPEARL_OWNERS_BY_UUID, EPEARL_OWNERS_BY_XZ));
+				if(Main.gameMessageListener) availableOptions.add(SHARE_IGNORES);
+				if(Main.gameMessageFilter != null) availableOptions.add(BORROW_IGNORES);
+				if(Main.serverJoinListener || Main.serverQuitListener) availableOptions.add(SHARE_JOIN_QUIT);
+			}
 			return availableOptions;
 		}
+	}
+
+	private static List<IConfigBase> allOptions;
+	static List<IConfigBase> allOptions(){
+		if(allOptions == null){
+			allOptions = new ArrayList<>();
+			allOptions.addAll(Generic.getOptions());
+			allOptions.addAll(Visuals.getOptions());
+			allOptions.addAll(Hotkeys.getOptions());
+			if(Main.remoteSender != null) allOptions.addAll(Database.getOptions());
+		}
+		return allOptions;
 	}
 
 	public static void loadFromFile(){
