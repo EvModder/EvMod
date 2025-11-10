@@ -54,6 +54,7 @@ public class Main implements ClientModInitializer{
 	//TODO:
 	// AutoMapPlacer (for LVotU)
 	// fix the JANKY BROKENESS of MapMove when count==2 (i think selective move?)
+	// GUI: StringHotkeyed, SlotListHotkeyed, YawPitchHotkeyed, UUIDList/PlayerList, ServerAddress(addr:port)
 
 	// Investigate https://github.com/Siphalor/amecs-api (potential better alternative to MaLiLib?)
 
@@ -63,7 +64,7 @@ public class Main implements ClientModInitializer{
 
 	// SendOnServerJoin configureable per-server (via ip?)
 
-	// timeOfDay >= 2000 && timeOfDay < 9000 
+	// timeOfDay >= 2000 && timeOfDay < 9000
 
 	// Feature Ideas:
 	// change render order of certain villager trades (in particular: make cleric redstone always above rotten flesh)

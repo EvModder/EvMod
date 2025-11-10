@@ -174,7 +174,7 @@
 	"keybound.config.hotkeys.comment.automaticInfiniteElytraTravelHelper": "https://modrinth.com/mod/automatic-infinite-elytra",
 	"keybound.config.hotkeys.name.eBounceTravelHelper": "eBounceTravelHelper",
 	"keybound.config.hotkeys.name.ejectJunkItems": "ejectJunkItems",
-	"keybound.config.hotkeys.name.smartInventoryReCrafting": "smartInventoryReCrafting",
+	"keybound.config.hotkeys.name.smartCraftingRestock": "smartCraftingRestock",
 	"keybound.config.hotkeys.name.hotbarSlotItemTypeIncrement": "hotbarSlotItemTypeIncrement",
 	"keybound.config.hotkeys.name.hotbarSlotItemTypeDecrement": "hotbarSlotItemTypeDecrement",
 	"keybound.config.hotkeys.name.inventoryOrganize1": "inventoryOrganize1",
@@ -187,6 +187,7 @@
 	"keybound.config.hotkeys.name.inventoryRestockLimits": "inventoryRestockLimits",
 	"keybound.config.hotkeys.name.inventoryRestockBlacklist": "inventoryRestockBlacklist",
 	"keybound.config.hotkeys.name.inventoryRestockWhitelist": "inventoryRestockWhitelist",
+	"keybound.config.hotkeys.comment.inventoryRestockLimits": "Restrictions container items eligibility for restock",
 
 	"keybound.config.hotkeys.name.chatMessage1": "chatMessage1",
 	"keybound.config.hotkeys.name.triggerChatMessage1": "triggerChatMessage1",

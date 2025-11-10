@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.stream.IntStream;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.config.InventoryRestockLimits;
@@ -224,10 +225,11 @@ public final class KeybindInventoryOrganize{
 		}
 
 		// Stuff for Container->Inventory restock logic:
+		final boolean CAN_RESTOCK_FROM_CONTAINER;
 		final HashSet<Item> alreadyRestockedItems;
 		final HashMap<Item, Integer> countainerCounts;
 		final HashSet<Item> itemsInInv;
-		if(isInvScreen){alreadyRestockedItems = null; countainerCounts = null; itemsInInv = null;}
+		if(isInvScreen){alreadyRestockedItems = null; countainerCounts = null; itemsInInv = null; CAN_RESTOCK_FROM_CONTAINER = true;}
 		else{
 			if(!RESTOCK_ONLY_1_SLOT_PER_TYPE) alreadyRestockedItems = null;
 			else{
@@ -240,14 +242,20 @@ public final class KeybindInventoryOrganize{
 			}
 			final InventoryRestockLimits limits = (InventoryRestockLimits)Configs.Hotkeys.INV_RESTOCK_LIMITS.getOptionListValue();
 			final boolean LEAVE_ONE = limits == InventoryRestockLimits.LEAVE_ONE_ITEM || limits == InventoryRestockLimits.LEAVE_ONE_STACK;
-			if(!LEAVE_ONE) countainerCounts = null;
-			else{
+			if(LEAVE_ONE){
+				CAN_RESTOCK_FROM_CONTAINER = true;
 				countainerCounts = new HashMap<>();
 				for(int i=0; i<MAIN_INV_START; ++i){
 					Integer occ = countainerCounts.get(simSlots[i].getItem());
 					countainerCounts.put(simSlots[i].getItem(), occ == null ? 1 : occ+1);
 				}
 //				Main.LOGGER.info("InvOrganize: countainerCounts="+countainerCounts);
+			}
+			else/* if(limits == InventoryRestockLimits.LEAVE_UNLESS_ALL_RESUPPLY)*/{
+				HashSet<String> itemNamesInInv = new HashSet<>();
+				layoutMap.stream().map(SlotAndItemName::name).forEach(itemNamesInInv::add);
+				CAN_RESTOCK_FROM_CONTAINER = IntStream.range(0, MAIN_INV_START).allMatch(i -> itemNamesInInv.contains(getName(simSlots[i])));
+				countainerCounts = null;
 			}
 			if(!DONT_RESTOCK_IF_ALREADY_IN_INV) itemsInInv = null;
 			else{
@@ -284,6 +292,7 @@ public final class KeybindInventoryOrganize{
 			final int srcSlot = findSlotWithItem(simSlots, p.name, doneSlots);
 			if(srcSlot == -1 || doneSlots[srcSlot]) continue;
 			if(RESTOCK_ONLY && srcSlot >= MAIN_INV_START) continue;
+			if(!CAN_RESTOCK_FROM_CONTAINER && srcSlot < MAIN_INV_START) continue;
 			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && srcSlot < MAIN_INV_START && alreadyRestockedItems.contains(simSlots[srcSlot].getItem())) continue;
 			if(DONT_RESTOCK_IF_ALREADY_IN_INV && srcSlot < MAIN_INV_START && itemsInInv.contains(simSlots[srcSlot].getItem())) continue;
 			if(srcSlot < MAIN_INV_START && countainerCounts != null){ // Avoid taking 100% of any item type from src container
@@ -329,6 +338,7 @@ public final class KeybindInventoryOrganize{
 			final int srcSlot = findSlotWithItem(simSlots, p.name, doneSlots);
 			if(srcSlot == -1 || doneSlots[srcSlot]) continue;
 			if(RESTOCK_ONLY && srcSlot >= MAIN_INV_START) continue;
+			if(!CAN_RESTOCK_FROM_CONTAINER && srcSlot < MAIN_INV_START) continue;
 			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && srcSlot < MAIN_INV_START && alreadyRestockedItems.contains(simSlots[srcSlot].getItem())) continue;
 			if(DONT_RESTOCK_IF_ALREADY_IN_INV && srcSlot < MAIN_INV_START && itemsInInv.contains(simSlots[srcSlot].getItem())) continue;
 			if(srcSlot < MAIN_INV_START && countainerCounts != null){ // Avoid taking 100% of any item type from src container
@@ -357,7 +367,7 @@ public final class KeybindInventoryOrganize{
 		}
 
 		// Handle leftover armor for container -> inventory
-		if(!isInvScreen) for(SlotAndItemName p : layoutMap){
+		if(!isInvScreen && CAN_RESTOCK_FROM_CONTAINER) for(SlotAndItemName p : layoutMap){
 			if(p.slot == -106 || p.slot == 45) continue;
 			if(p.slot > 8) continue;
 			if(!client.player.getInventory().getArmorStack(3 - (p.slot - 5)).isEmpty()) continue; // -5 to get armor index, 3-x to reverse order

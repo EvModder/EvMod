@@ -479,9 +479,12 @@ public final class MapHandRestock{
 		waitingForRestock = true;
 		new Thread(){@Override public void run(){
 			Main.LOGGER.info("MapRestock: waiting for currently placed map to load");
-			while(UpdateInventoryHighlights.currentlyBeingPlacedIntoItemFrame != null) Thread.yield();
+			while(client.player != null && !client.player.isInCreativeMode()
+					&& UpdateInventoryHighlights.currentlyBeingPlacedIntoItemFrame != null){
+				Thread.yield();
+			}
 			Main.LOGGER.info("MapRestock: ok, sync client execution");
-			client.executeSync(()->{
+			if(client.player != null) client.executeSync(()->{
 //				try{sleep(50l);}catch(InterruptedException e){e.printStackTrace();waitingForRestock=false;} // 50ms = 1tick
 				Main.LOGGER.info("MapRestock: ok, doing restock click(s)");
 

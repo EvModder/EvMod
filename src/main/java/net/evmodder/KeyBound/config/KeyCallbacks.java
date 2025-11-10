@@ -8,6 +8,7 @@ import net.evmodder.KeyBound.keybinds.ClickUtils;
 import net.evmodder.KeyBound.keybinds.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screen.ingame.CartographyTableScreen;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -50,6 +51,7 @@ public class KeyCallbacks{
 	public static final void init(MinecraftClient mc){
 		KeybindAIETravelHelper kbAIE = new KeybindAIETravelHelper();
 		KeybindEjectJunk kbej = new KeybindEjectJunk();
+		KeybindSmartInvCraft kbSIC = new KeybindSmartInvCraft();
 		KeybindEbounceTravelHelper kbEbounce = new KeybindEbounceTravelHelper(kbej);
 		KeybindHotbarTypeScroller kbHbScroll = new KeybindHotbarTypeScroller();
 
@@ -80,7 +82,8 @@ public class KeyCallbacks{
 
 		keybindCallback(Configs.Hotkeys.OPEN_CONFIG_GUI, Objects::isNull, ()->GuiBase.openGui(new ConfigGui()));
 
-		keybindCallback(Configs.Hotkeys.MAP_COPY, s->s instanceof InventoryScreen || s instanceof CraftingScreen, kbMapCopy::copyMapArtInInventory);
+		keybindCallback(Configs.Hotkeys.MAP_COPY, s->s instanceof InventoryScreen
+				|| s instanceof CraftingScreen || s instanceof CartographyTableScreen, kbMapCopy::copyMapArtInInventory);
 		keybindCallback(Configs.Hotkeys.MAP_LOAD, HandledScreen.class::isInstance, kbMapLoad::loadMapArtFromContainer);
 		keybindCallback(Configs.Hotkeys.MAP_MOVE, s->s instanceof HandledScreen && s instanceof InventoryScreen == false, kbMapMove::moveMapArtToFromShulker);
 		Function<Screen, Boolean> allowInScreen =
@@ -101,6 +104,7 @@ public class KeyCallbacks{
 //		keybindCallback(Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER, null, kbEbounce::toggle);
 		Configs.Hotkeys.AIE_TRAVEL_HELPER.setValueChangeCallback(newValue->kbAIE.updateEnabled(newValue.getBooleanValue()));
 		Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setValueChangeCallback(newValue->kbEbounce.toggle(newValue.getBooleanValue()));
+		keybindCallback(Configs.Hotkeys.SMART_CRAFTING_RESTOCK, null/*HandledScreen.class::isInstance*/, kbSIC::restockInputSlots);
 		keybindCallback(Configs.Hotkeys.EJECT_JUNK_ITEMS, s->s==null || s instanceof HandledScreen, kbej::ejectJunkItems);
 		keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_INCR, null, ()->kbHbScroll.scrollHotbarSlot(true));
 		keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_DECR, null, ()->kbHbScroll.scrollHotbarSlot(false));

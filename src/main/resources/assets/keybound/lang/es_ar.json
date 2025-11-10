@@ -169,7 +169,7 @@
 	"keybound.config.hotkeys.comment.automaticInfiniteElytraTravelHelper": "https://modrinth.com/mod/automatic-infinite-elytra",
 	"keybound.config.hotkeys.name.eBounceTravelHelper": "eBounceTravelHelper",
 	"keybound.config.hotkeys.name.ejectJunkItems": "ejectJunkItems",
-	"keybound.config.hotkeys.name.smartInventoryReCrafting": "smartInventoryReCrafting",
+	"keybound.config.hotkeys.name.smartCraftingRestock": "smartCraftingRestock",
 	"keybound.config.hotkeys.name.hotbarSlotItemTypeIncrement": "hotbarSlotItemTypeIncrement",
 	"keybound.config.hotkeys.name.hotbarSlotItemTypeDecrement": "hotbarSlotItemTypeDecrement",
 	"keybound.config.hotkeys.name.inventoryOrganize1": "inventoryOrganize1",

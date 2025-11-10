@@ -11,6 +11,7 @@ import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.config.InventoryRestockLimits;
 import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
+import net.evmodder.KeyBound.keybinds.KeybindInventoryOrganize.SlotAndItemName;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.AnvilScreen;
 import net.minecraft.client.gui.screen.ingame.CartographyTableScreen;
@@ -48,13 +49,20 @@ public final class KeybindInventoryRestock{
 
 
 		InventoryRestockLimits limits = (InventoryRestockLimits)Configs.Hotkeys.INV_RESTOCK_LIMITS.getOptionListValue();
+		Main.LOGGER.info("InvRestock: restock limits: "+limits.name());
 		final boolean LEAVE_ONE = limits == InventoryRestockLimits.LEAVE_ONE_ITEM || limits == InventoryRestockLimits.LEAVE_ONE_STACK;
+		HashSet<String> itemNamesInInv;
+		if(limits == InventoryRestockLimits.LEAVE_UNLESS_ALL_RESUPPLY){
+			itemNamesInInv = new HashSet<>();
+			organizationLayouts.stream().forEach(kio -> kio.layoutMap.stream().map(SlotAndItemName::name).forEach(itemNamesInInv::add));
+		}
+		else itemNamesInInv = null;
 		// TODO: hardcoded assumption that slots < len-36 are from the currently viewed container
 		for(int i=slots.length-37; i>=0; --i){
 			if(slots[i].isEmpty()) continue;
 			if(limits == InventoryRestockLimits.LEAVE_UNLESS_ALL_RESUPPLY){
 				final String itemName = Registries.ITEM.getId(slots[i].getItem()).getPath();
-				if(organizationLayouts.stream().noneMatch(kio -> kio.layoutMap.stream().anyMatch(item -> item.name().equals(itemName)))){
+				if(itemNamesInInv.contains(itemName)){
 					Main.LOGGER.info("InvRestock: not a valid source (LEAVE_UNLESS_ALL_RESUPPLY: container has unlisted item type '"+itemName+"')");
 					return;
 				}

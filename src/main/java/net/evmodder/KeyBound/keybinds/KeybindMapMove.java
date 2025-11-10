@@ -57,8 +57,8 @@ public final class KeybindMapMove{
 			else if(stack.getItem() == Items.FILLED_MAP){
 				if(isFillerMap(slots, stack, client.world)) continue;
 				if(FilledMapItem.getMapState(stack, client.world) == null){
-					Main.LOGGER.error("MapMove cancelled: Unloaded map in player inventory (!!!)");
-					return;
+					Main.LOGGER.warn("MapMove: Unloaded map in player inventory!");
+//					return;
 				}
 				++numInInv;
 				final int count = stack.getCount();

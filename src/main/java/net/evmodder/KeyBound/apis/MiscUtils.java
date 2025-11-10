@@ -30,7 +30,8 @@ public class MiscUtils{
 			case "152.228.212.15:25567": // JalvaBot
 			case "152.228.212.15:25565": // Jalvaviel
 			case "209.44.205.3:14445": // EvMD
-			case "104.128.56.167:14445": // EvModder
+			case "104.128.56.167:14445": // EvMod
+			case "104.128.56.146:14446": // Vr
 				return "2b2t.org";
 			default:
 				final int i = address.lastIndexOf(':');
