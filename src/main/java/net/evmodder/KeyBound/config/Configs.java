@@ -211,7 +211,7 @@ public class Configs implements IConfigHandler{
 		public static final ConfigHotkey MAP_CLICK_MOVE_NEIGHBORS_KEY = new ConfigHotkey("mapClickMoveNeighborsKey", "LEFT_ALT",
 				KeybindSettings.MODIFIER_GUI).apply(HOTKEYS_KEY);
 
-		public static final ConfigHotkey TOGGLE_CAPE = new ConfigHotkey("toggleCape", Main.mapArtFeaturesOnly ? "" : ",");
+		public static final ConfigHotkey TOGGLE_CAPE = new ConfigHotkey("toggleCape", /*!Main.mapArtFeaturesOnly ? "," : */"");
 		public static final ConfigBoolean SYNC_CAPE_WITH_ELYTRA = new ConfigBoolean("syncCapeWithElytra", false).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TOGGLE_HAT = new ConfigHotkey("toggleHat", "");
 		public static final ConfigHotkey TOGGLE_JACKET = new ConfigHotkey("toggleJacket", Main.mapArtFeaturesOnly ? "" : "I");
@@ -226,7 +226,8 @@ public class Configs implements IConfigHandler{
 				Main.mapArtFeaturesOnly ? "" : "A", KeybindSettings.PRESS_ALLOWEXTRA).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey EJECT_JUNK_ITEMS = new ConfigHotkey("ejectJunkItems",
 				Main.mapArtFeaturesOnly ? "" : "R", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
-//		public static final ConfigHotkey SMART_SPACEBAR_CRAFTING = new ConfigHotkey("smartInventoryReCrafting", " ").apply(HOTKEYS_KEY);
+		public static final ConfigBooleanHotkeyed CRAFT_RESTOCK = new ConfigBooleanHotkeyed("craftingRestock", false,
+				" ", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey HOTBAR_TYPE_INCR = new ConfigHotkey("hotbarSlotItemTypeIncrement", "").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey HOTBAR_TYPE_DECR = new ConfigHotkey("hotbarSlotItemTypeDecrement", "").apply(HOTKEYS_KEY);
 
@@ -300,27 +301,18 @@ public class Configs implements IConfigHandler{
 		public static final ConfigStringList INV_ORGANIZE_3 = new ConfigStringList("inventoryOrganize3", ImmutableList.of()).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TRIGGER_INV_ORGANIZE_3 = new ConfigHotkey("triggerInventoryOrganize3", "", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 
-		public static final ConfigString CHAT_MSG_1 = new ConfigString("chatMessage1", "meow :3").apply(HOTKEYS_KEY);
-		public static final ConfigHotkey TRIGGER_CHAT_MSG_1 = new ConfigHotkey("triggerChatMessage1", "").apply(HOTKEYS_KEY);
-		public static final ConfigString CHAT_MSG_2 = new ConfigString("chatMessage2", "/home").apply(HOTKEYS_KEY);
-		public static final ConfigHotkey TRIGGER_CHAT_MSG_2 = new ConfigHotkey("triggerChatMessage2", "").apply(HOTKEYS_KEY);
-		public static final ConfigString CHAT_MSG_3 = new ConfigString("chatMessage3", "/cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost").apply(HOTKEYS_KEY);
+		public static final ConfigStringHotkeyed CHAT_MSG_1 = new ConfigStringHotkeyed("chatMessage1", "meow :3", "").apply(HOTKEYS_KEY);
+		public static final ConfigStringHotkeyed CHAT_MSG_2 = new ConfigStringHotkeyed("chatMessage2", "/home", "").apply(HOTKEYS_KEY);
+		public static final ConfigStringHotkeyed CHAT_MSG_3 = new ConfigStringHotkeyed("chatMessage3", "/cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost", "").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TRIGGER_CHAT_MSG_3 = new ConfigHotkey("triggerChatMessage3",
 				Main.mapArtFeaturesOnly ? "" : "Z").apply(HOTKEYS_KEY);
 
-		public static final ConfigString REMOTE_MSG_1 = new ConfigString("remoteMessage1", "EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c").apply(HOTKEYS_KEY);
-		public static final ConfigHotkey TRIGGER_REMOTE_MSG_1 = new ConfigHotkey("triggerRemoteMessage1", "").apply(HOTKEYS_KEY);
-		public static final ConfigString REMOTE_MSG_2 = new ConfigString("remoteMessage2", "").apply(HOTKEYS_KEY);
-		public static final ConfigHotkey TRIGGER_REMOTE_MSG_2 = new ConfigHotkey("triggerRemoteMessage2", "").apply(HOTKEYS_KEY);
-		public static final ConfigString REMOTE_MSG_3 = new ConfigString("remoteMessage3", "").apply(HOTKEYS_KEY);
-		public static final ConfigHotkey TRIGGER_REMOTE_MSG_3 = new ConfigHotkey("triggerRemoteMessage3", "").apply(HOTKEYS_KEY);
+		public static final ConfigStringHotkeyed REMOTE_MSG_1 = new ConfigStringHotkeyed("remoteMessage1", "EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c", "").apply(HOTKEYS_KEY);
+		public static final ConfigStringHotkeyed REMOTE_MSG_2 = new ConfigStringHotkeyed("remoteMessage2", "", "").apply(HOTKEYS_KEY);
+		public static final ConfigStringHotkeyed REMOTE_MSG_3 = new ConfigStringHotkeyed("remoteMessage3", "", "").apply(HOTKEYS_KEY);
 
-		public static final ConfigFloat SNAP_ANGLE_YAW_1 = new ConfigFloat("snapAngleYaw1", 0, -180, 180).apply(HOTKEYS_KEY);
-		public static final ConfigFloat SNAP_ANGLE_PITCH_1 = new ConfigFloat("snapAnglePitch1", 0, -90, 90).apply(HOTKEYS_KEY);
-		public static final ConfigHotkey TRIGGER_SNAP_ANGLE_1 = new ConfigHotkey("triggerSnapAngle1", "").apply(HOTKEYS_KEY);
-		public static final ConfigFloat SNAP_ANGLE_YAW_2 = new ConfigFloat("snapAngleYaw2", 0, -180, 180).apply(HOTKEYS_KEY);
-		public static final ConfigFloat SNAP_ANGLE_PITCH_2 = new ConfigFloat("snapAnglePitch2", 0, -90, 90).apply(HOTKEYS_KEY);
-		public static final ConfigHotkey TRIGGER_SNAP_ANGLE_2 = new ConfigHotkey("triggerSnapAngle2", "").apply(HOTKEYS_KEY);
+		public static final ConfigYawPitchHotkeyed SNAP_ANGLE_1 = new ConfigYawPitchHotkeyed("snapAngle1", 148, -73, "").apply(HOTKEYS_KEY);
+		public static final ConfigYawPitchHotkeyed SNAP_ANGLE_2 = new ConfigYawPitchHotkeyed("snapAngle2", -159, -51, "").apply(HOTKEYS_KEY);
 
 		private static List<IConfigBase> availableOptions;
 		public static final List<IConfigBase> getOptions(){
@@ -337,24 +329,20 @@ public class Configs implements IConfigHandler{
 						AIE_TRAVEL_HELPER,
 						EBOUNCE_TRAVEL_HELPER,
 						EJECT_JUNK_ITEMS,
+						CRAFT_RESTOCK,
 						HOTBAR_TYPE_INCR, HOTBAR_TYPE_DECR,
 						INV_ORGANIZE_1, TRIGGER_INV_ORGANIZE_1,
 						INV_ORGANIZE_2, TRIGGER_INV_ORGANIZE_2,
 						INV_ORGANIZE_3, TRIGGER_INV_ORGANIZE_3,
 						INV_RESTOCK, INV_RESTOCK_LIMITS, INV_RESTOCK_BLACKLIST, INV_RESTOCK_WHITELIST,
 
-						CHAT_MSG_1, TRIGGER_CHAT_MSG_1,
-						CHAT_MSG_2, TRIGGER_CHAT_MSG_2,
-						CHAT_MSG_3, TRIGGER_CHAT_MSG_3
+						CHAT_MSG_1, CHAT_MSG_2, CHAT_MSG_3
 				));
 				if(Main.remoteSender != null) availableOptions.addAll(List.of(
-						REMOTE_MSG_1, TRIGGER_REMOTE_MSG_1,
-						REMOTE_MSG_2, TRIGGER_REMOTE_MSG_2,
-						REMOTE_MSG_3, TRIGGER_REMOTE_MSG_3
+						REMOTE_MSG_1, REMOTE_MSG_2, REMOTE_MSG_3
 				));
 				if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(
-						SNAP_ANGLE_YAW_1, SNAP_ANGLE_PITCH_1, TRIGGER_SNAP_ANGLE_1,
-						SNAP_ANGLE_YAW_2, SNAP_ANGLE_PITCH_2, TRIGGER_SNAP_ANGLE_2
+						SNAP_ANGLE_1, SNAP_ANGLE_2
 				));
 			}
 			return availableOptions;

@@ -51,7 +51,6 @@ public class KeyCallbacks{
 	public static final void init(MinecraftClient mc){
 		KeybindAIETravelHelper kbAIE = new KeybindAIETravelHelper();
 		KeybindEjectJunk kbej = new KeybindEjectJunk();
-		KeybindSmartInvCraft kbSIC = new KeybindSmartInvCraft();
 		KeybindEbounceTravelHelper kbEbounce = new KeybindEbounceTravelHelper(kbej);
 		KeybindHotbarTypeScroller kbHbScroll = new KeybindHotbarTypeScroller();
 
@@ -104,7 +103,7 @@ public class KeyCallbacks{
 //		keybindCallback(Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER, null, kbEbounce::toggle);
 		Configs.Hotkeys.AIE_TRAVEL_HELPER.setValueChangeCallback(newValue->kbAIE.updateEnabled(newValue.getBooleanValue()));
 		Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setValueChangeCallback(newValue->kbEbounce.toggle(newValue.getBooleanValue()));
-		keybindCallback(Configs.Hotkeys.SMART_CRAFTING_RESTOCK, null/*HandledScreen.class::isInstance*/, kbSIC::restockInputSlots);
+		keybindCallback(Configs.Hotkeys.CRAFT_RESTOCK, null/*HandledScreen.class::isInstance*/, ()->Main.kbCraftRestock.restockInputSlots());
 		keybindCallback(Configs.Hotkeys.EJECT_JUNK_ITEMS, s->s==null || s instanceof HandledScreen, kbej::ejectJunkItems);
 		keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_INCR, null, ()->kbHbScroll.scrollHotbarSlot(true));
 		keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_DECR, null, ()->kbHbScroll.scrollHotbarSlot(false));
@@ -114,17 +113,17 @@ public class KeyCallbacks{
 		keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_3, null, ()->kbInvOrg3.organizeInventory(false, null));
 		keybindCallback(Configs.Hotkeys.INV_RESTOCK, s->s instanceof HandledScreen && s instanceof InventoryScreen == false, ()->Main.kbInvRestock.doRestock(null));
 
-		keybindCallback(Configs.Hotkeys.TRIGGER_CHAT_MSG_1, null, ()->MiscUtils.sendChatMsg(Configs.Hotkeys.CHAT_MSG_1.getStringValue()));
-		keybindCallback(Configs.Hotkeys.TRIGGER_CHAT_MSG_2, null, ()->MiscUtils.sendChatMsg(Configs.Hotkeys.CHAT_MSG_2.getStringValue()));
-		keybindCallback(Configs.Hotkeys.TRIGGER_CHAT_MSG_3, null, ()->MiscUtils.sendChatMsg(Configs.Hotkeys.CHAT_MSG_3.getStringValue()));
+		keybindCallback(Configs.Hotkeys.CHAT_MSG_1, null, ()->MiscUtils.sendChatMsg(Configs.Hotkeys.CHAT_MSG_1.getStringValue()));
+		keybindCallback(Configs.Hotkeys.CHAT_MSG_2, null, ()->MiscUtils.sendChatMsg(Configs.Hotkeys.CHAT_MSG_2.getStringValue()));
+		keybindCallback(Configs.Hotkeys.CHAT_MSG_3, null, ()->MiscUtils.sendChatMsg(Configs.Hotkeys.CHAT_MSG_3.getStringValue()));
 		if(Main.remoteSender != null){
-			keybindCallback(Configs.Hotkeys.TRIGGER_REMOTE_MSG_1, null, ()->MiscUtils.sendRemoteMsg(Configs.Hotkeys.REMOTE_MSG_1.getStringValue()));
-			keybindCallback(Configs.Hotkeys.TRIGGER_REMOTE_MSG_2, null, ()->MiscUtils.sendRemoteMsg(Configs.Hotkeys.REMOTE_MSG_2.getStringValue()));
-			keybindCallback(Configs.Hotkeys.TRIGGER_REMOTE_MSG_3, null, ()->MiscUtils.sendRemoteMsg(Configs.Hotkeys.REMOTE_MSG_3.getStringValue()));
+			keybindCallback(Configs.Hotkeys.REMOTE_MSG_1, null, ()->MiscUtils.sendRemoteMsg(Configs.Hotkeys.REMOTE_MSG_1.getStringValue()));
+			keybindCallback(Configs.Hotkeys.REMOTE_MSG_2, null, ()->MiscUtils.sendRemoteMsg(Configs.Hotkeys.REMOTE_MSG_2.getStringValue()));
+			keybindCallback(Configs.Hotkeys.REMOTE_MSG_3, null, ()->MiscUtils.sendRemoteMsg(Configs.Hotkeys.REMOTE_MSG_3.getStringValue()));
 		}
-		keybindCallback(Configs.Hotkeys.TRIGGER_SNAP_ANGLE_1, null, ()->MinecraftClient.getInstance().player
-			.setAngles(Configs.Hotkeys.SNAP_ANGLE_YAW_1.getFloatValue(), Configs.Hotkeys.SNAP_ANGLE_PITCH_1.getFloatValue()));
-		keybindCallback(Configs.Hotkeys.TRIGGER_SNAP_ANGLE_2, null, ()->MinecraftClient.getInstance().player
-				.setAngles(Configs.Hotkeys.SNAP_ANGLE_YAW_2.getFloatValue(), Configs.Hotkeys.SNAP_ANGLE_PITCH_2.getFloatValue()));
+		keybindCallback(Configs.Hotkeys.SNAP_ANGLE_1, null,
+				()->MinecraftClient.getInstance().player.setAngles(Configs.Hotkeys.SNAP_ANGLE_1.getYaw(), Configs.Hotkeys.SNAP_ANGLE_1.getPitch()));
+		keybindCallback(Configs.Hotkeys.SNAP_ANGLE_2, null,
+				()->MinecraftClient.getInstance().player.setAngles(Configs.Hotkeys.SNAP_ANGLE_2.getYaw(), Configs.Hotkeys.SNAP_ANGLE_2.getPitch()));
 	}
 }

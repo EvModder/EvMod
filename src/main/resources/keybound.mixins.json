@@ -13,7 +13,11 @@
 		"MixinInGameHud",
 		"MixinItemFrameRenderer",
 		//"MixinItemRenderer",
-		"MixinScreenHandler"
+		"MixinScreenHandler",
+
+		// MaLiLib mixins:
+		"AccessorWidgetListConfigOptions",
+		"MixinWidgetConfigOption"
 	],
 	"injectors": { "defaultRequire": 1 }
 }

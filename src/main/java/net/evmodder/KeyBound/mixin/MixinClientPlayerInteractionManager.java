@@ -51,6 +51,8 @@ abstract class MixinClientPlayerInteractionManager{
 
 	@Inject(method = "clickSlot", at = @At("HEAD"), cancellable = true)
 	private void avoid_sending_too_many_clicks(int syncId, int slot, int button, SlotActionType action, PlayerEntity player, CallbackInfo ci){
+//		MinecraftClient.getInstance().player.sendMessage(Text.literal("clickSlot: syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
+		if(player.isCreative()) return;
 //		if(action == SlotActionType.THROW/* || action == SlotActionType.CLONE || action == SlotActionType.QUICK_CRAFT*/) return;
 		if(slot == -999) return; // TODO: comment this out to test things
 		final boolean isBotted = Main.clickUtils.isThisClickBotted(/*friend*/);
@@ -64,6 +66,7 @@ abstract class MixinClientPlayerInteractionManager{
 		final int availableClicks = Main.clickUtils.calcAvailableClicks();
 		if(availableClicks > 0){
 			Main.clickUtils.addClick(action);
+			Main.kbCraftRestock.checkIfCraftAction(player.currentScreenHandler, slot, button, action);
 		}
 		else{
 			if(isBotted) Main.LOGGER.error("Botted click somehow triggered click limited! VERY BAD!!");
