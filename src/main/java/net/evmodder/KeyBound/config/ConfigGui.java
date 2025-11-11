@@ -10,8 +10,6 @@ import fi.dy.masa.malilib.gui.button.ButtonGeneric;
 import fi.dy.masa.malilib.gui.button.IButtonActionListener;
 import fi.dy.masa.malilib.util.StringUtils;
 import net.evmodder.KeyBound.Main;
-import net.minecraft.util.Pair;
-import net.minecraft.util.math.MathHelper;
 
 public class ConfigGui extends GuiConfigsBase{
 	enum ConfigGuiTab{
@@ -29,6 +27,7 @@ public class ConfigGui extends GuiConfigsBase{
 
 	public ConfigGui(){
 		super(10, 50, Main.MOD_ID, /*parent=*/null, "keybound.gui.title", StringUtils.getModVersionString(Main.MOD_ID));
+		setConfigWidth(224);
 	}
 
 	@Override public void initGui(){
@@ -78,29 +77,5 @@ public class ConfigGui extends GuiConfigsBase{
 			Objects.requireNonNull(parent.getListWidget()).resetScrollbarPosition();
 			parent.initGui();
 		}
-	}
-
-	public Pair<Integer, Integer> adjustWidths(int guiWidth, int maxTextWidth){
-		int labelWidth;
-		int panelWidth = 190;
-
-		//#if MC >= 11800
-		//$$ guiWidth -= 74;
-		//#else
-		guiWidth -= 75;
-		//#endif
-
-		// tweak label width first, to make sure the panel is not too close or too far from the label
-		labelWidth = MathHelper.clamp(guiWidth - panelWidth, maxTextWidth - 5, maxTextWidth + 100);
-		// decrease the panel width if space is not enough
-		panelWidth = MathHelper.clamp(guiWidth - labelWidth, 100, panelWidth);
-		// decrease the label width for a bit if space is still way not enough (the label text might overlap with the panel now)
-		labelWidth = MathHelper.clamp(guiWidth - panelWidth + 25, labelWidth - Math.max((int)(maxTextWidth * 0.4), 30), labelWidth);
-
-		// just in case
-		labelWidth = Math.max(labelWidth, 0);
-		panelWidth = Math.max(panelWidth, 0);
-
-		return new Pair<Integer, Integer>(labelWidth, panelWidth);
 	}
 }
