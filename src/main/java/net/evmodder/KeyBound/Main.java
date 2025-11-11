@@ -90,6 +90,7 @@ public class Main implements ClientModInitializer{
 	public static EpearlLookup epearlLookup;
 	public static GameMessageFilter gameMessageFilter;
 	public static KeybindInventoryRestock kbInvRestock;
+	public static KeybindCraftingRestock kbCraftRestock;
 	public static ContainerOpenCloseListener containerOpenCloseListener;
 
 	public static boolean mapArtFeaturesOnly = true; ////////////////// TODO: ewww
@@ -184,6 +185,7 @@ public class Main implements ClientModInitializer{
 		if(cmdTimeOnline/* && serverJoinListener*/) new CommandTimeOnline();
 
 		kbInvRestock = new KeybindInventoryRestock();
+		kbCraftRestock = new KeybindCraftingRestock();
 		if(inventoryRestockAuto &= (containerOpenCloseListener!=null)) ClientTickEvents.END_CLIENT_TICK.register(containerOpenCloseListener::onUpdateTick);
 		//new KeybindSpamclick();
 

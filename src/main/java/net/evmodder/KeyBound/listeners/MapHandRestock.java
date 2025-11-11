@@ -31,6 +31,7 @@ import net.minecraft.item.map.MapState;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypeFilter;
@@ -543,6 +544,7 @@ public final class MapHandRestock{
 			if(waitingForRestock && (stack.isEmpty() || stack.getItem() == Items.FILLED_MAP)){
 				// Little safety net to keep player from placing offhand item into iFrame if right-clicking faster than hand restock can handle
 				Main.LOGGER.warn("MapRestock: Player right-clicking iFrame before previous tryToStockNextMap() has finished!");
+				player.sendMessage(Text.literal("Warn: right-clicking iFrame before AutoHandRestock has finished"), true);
 				return ActionResult.FAIL;
 			}
 			if(stack.getItem() != Items.FILLED_MAP) return ActionResult.PASS;
