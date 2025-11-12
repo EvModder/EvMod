@@ -4,7 +4,7 @@ import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
 
 public enum OptionInventoryRestockLimit implements IConfigOptionListEntry {
-	LEAVE_ONE_ITEM("leaveOneItem", "keybound.gui.label.inventoryRestock.leaveOneItem"),
+	LEAVE_ONE_ITEM("leaveOneItem", "keybound.gui.label.inventoryRestock.leaveOneItem"),//TODO: leaveOne + leaveUnlessResupply
 	LEAVE_ONE_STACK("leaveOneStack", "keybound.gui.label.inventoryRestock.leaveOneStack"),
 	LEAVE_UNLESS_ONE_TYPE("leaveUnlessOneType", "keybound.gui.label.inventoryRestock.leaveUnlessOneType"),
 	LEAVE_UNLESS_ALL_RESUPPLY("leaveUnlessAllResupply", "keybound.gui.label.inventoryRestock.leaveUnlessAllResupply")

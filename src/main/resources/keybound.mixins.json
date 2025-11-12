@@ -3,6 +3,7 @@
 	"package": "net.evmodder.KeyBound.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"AccessorAnvilScreen",
 		"AccessorPlayerListHud",
 		"AccessorProjectileEntity",
 		"MixinClientPlayerInteractionManager",

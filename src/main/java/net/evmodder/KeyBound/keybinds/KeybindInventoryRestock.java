@@ -49,20 +49,21 @@ public final class KeybindInventoryRestock{
 
 
 		OptionInventoryRestockLimit limits = (OptionInventoryRestockLimit)Configs.Hotkeys.INV_RESTOCK_LIMITS.getOptionListValue();
-		Main.LOGGER.info("InvRestock: restock limits: "+limits.name());
+//		Main.LOGGER.info("InvRestock: restock limits: "+limits.name());
 		final boolean LEAVE_ONE = limits == OptionInventoryRestockLimit.LEAVE_ONE_ITEM || limits == OptionInventoryRestockLimit.LEAVE_ONE_STACK;
-		HashSet<String> itemNamesInInv;
+		HashSet<String> itemNamesInLayout;
 		if(limits == OptionInventoryRestockLimit.LEAVE_UNLESS_ALL_RESUPPLY){
-			itemNamesInInv = new HashSet<>();
-			organizationLayouts.stream().forEach(kio -> kio.layoutMap.stream().map(SlotAndItemName::name).forEach(itemNamesInInv::add));
+			itemNamesInLayout = new HashSet<>();
+			organizationLayouts.stream().forEach(kio -> kio.layoutMap.stream().map(SlotAndItemName::name).forEach(itemNamesInLayout::add));
+//			Main.LOGGER.info("supported restock items: "+itemNamesInLayout.toString());
 		}
-		else itemNamesInInv = null;
+		else itemNamesInLayout = null;
 		// TODO: hardcoded assumption that slots < len-36 are from the currently viewed container
 		for(int i=slots.length-37; i>=0; --i){
 			if(slots[i].isEmpty()) continue;
 			if(limits == OptionInventoryRestockLimit.LEAVE_UNLESS_ALL_RESUPPLY){
 				final String itemName = Registries.ITEM.getId(slots[i].getItem()).getPath();
-				if(itemNamesInInv.contains(itemName)){
+				if(!itemNamesInLayout.contains(itemName)){
 					Main.LOGGER.info("InvRestock: not a valid source (LEAVE_UNLESS_ALL_RESUPPLY: container has unlisted item type '"+itemName+"')");
 					return;
 				}
@@ -88,16 +89,16 @@ public final class KeybindInventoryRestock{
 			final int maxCount = slots[i].getMaxCount();
 			if(slots[i].getCount() >= maxCount) continue;
 			if(IS_WHITELIST != itemList.contains(slots[i].getItem())) continue;
-			Integer totalInContainer = supply.get(slots[i].getItem());
-			if(totalInContainer == null || (LEAVE_ONE && totalInContainer == 1)) continue;
+			int totalInContainer = supply.getOrDefault(slots[i].getItem(), 0);
+			if(LEAVE_ONE && totalInContainer <= 1) continue;
 
 			for(int j=slots.length-37; j>=0; --j){
 				if(!ItemStack.areItemsAndComponentsEqual(slots[i], slots[j])) continue;
 //				Main.LOGGER.info("Adding clicks to restock "+slots[i].getItem().getName().getString()+" from slot "+j+" -> "+i);
 
 				int combinedCount = slots[i].getCount() + slots[j].getCount();
-				final boolean needToLeave1 = combinedCount <= maxCount && (totalInContainer -= slots[j].getCount()) == 0
-						&& (limits == OptionInventoryRestockLimit.LEAVE_ONE_ITEM);
+				final boolean needToLeave1 = limits == OptionInventoryRestockLimit.LEAVE_ONE_ITEM
+						&& combinedCount <= maxCount && (totalInContainer -= slots[j].getCount()) == 0;
 
 				if(needToLeave1 || combinedCount != maxCount) clicks.add(new ClickEvent(j, 0, SlotActionType.PICKUP)); // Pickup all
 				else{
@@ -125,7 +126,7 @@ public final class KeybindInventoryRestock{
 				}
 				if(combinedCount >= maxCount) break;
 			}
-			supply.put(slots[i].getItem(), totalInContainer);
+			if(LEAVE_ONE) supply.put(slots[i].getItem(), totalInContainer);
 		}
 
 //		if(organizationLayouts != null) for(KeybindInventoryOrganize kio : organizationLayouts) kio.organizeInventory(/*RESTOCK_ONLY=*/true);

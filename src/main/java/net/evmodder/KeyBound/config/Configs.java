@@ -226,7 +226,7 @@ public class Configs implements IConfigHandler{
 				Main.mapArtFeaturesOnly ? "" : "A", KeybindSettings.PRESS_ALLOWEXTRA).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey EJECT_JUNK_ITEMS = new ConfigHotkey("ejectJunkItems",
 				Main.mapArtFeaturesOnly ? "" : "R", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
-		public static final ConfigBooleanHotkeyed CRAFT_RESTOCK = new ConfigBooleanHotkeyed("craftingRestock", false,
+		public static final ConfigBooleanHotkeyed CRAFT_RESTOCK = new ConfigBooleanHotkeyed("craftingRestock", true,
 				" ", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey HOTBAR_TYPE_INCR = new ConfigHotkey("hotbarSlotItemTypeIncrement", "").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey HOTBAR_TYPE_DECR = new ConfigHotkey("hotbarSlotItemTypeDecrement", "").apply(HOTKEYS_KEY);
@@ -235,7 +235,7 @@ public class Configs implements IConfigHandler{
 		public static final ConfigHotkey INV_RESTOCK = new ConfigHotkey("inventoryRestock",
 				Main.mapArtFeaturesOnly ? "" : "R", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigOptionList INV_RESTOCK_LIMITS = new ConfigOptionList("inventoryRestockLimits",
-				OptionInventoryRestockLimit.LEAVE_UNLESS_ONE_TYPE).apply(HOTKEYS_KEY);
+				OptionInventoryRestockLimit.LEAVE_UNLESS_ALL_RESUPPLY).apply(HOTKEYS_KEY);
 		public static final ConfigStringList INV_RESTOCK_BLACKLIST = new ConfigStringList("inventoryRestockBlacklist", ImmutableList.of(
 //				"ender_chest", "filled_map"
 		)).apply(HOTKEYS_KEY);

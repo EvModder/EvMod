@@ -120,7 +120,7 @@ public final class KeybindInventoryOrganize{
 			return;
 		}
 		if(hs.getScreenHandler().slots.size() < 46){
-			Main.LOGGER.warn("InvOrganize: Inventory too small to restock from (due to limitations in current code)");
+//			Main.LOGGER.warn("InvOrganize: Inventory too small to restock from (due to limitations in current code)");
 			return;
 		}
 		final boolean isInvScreen = client.currentScreen instanceof InventoryScreen;
