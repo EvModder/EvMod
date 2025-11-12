@@ -1,9 +1,10 @@
-package net.evmodder.KeyBound.config;
+package net.evmodder.KeyBound;
 
-import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.ChatBroadcaster;
 import net.evmodder.KeyBound.apis.MiscUtils;
 import net.evmodder.KeyBound.apis.RemoteServerSender;
+import net.evmodder.KeyBound.config.ConfigGui;
+import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.keybinds.ClickUtils;
 import net.evmodder.KeyBound.keybinds.*;
 import net.minecraft.client.MinecraftClient;

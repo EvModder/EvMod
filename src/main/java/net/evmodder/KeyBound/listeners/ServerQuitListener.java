@@ -5,7 +5,7 @@ import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.MapStateCacher;
 import net.evmodder.KeyBound.apis.MiscUtils;
 import net.evmodder.KeyBound.config.Configs;
-import net.evmodder.KeyBound.config.MapStateCacheOption;
+import net.evmodder.KeyBound.config.OptionMapStateCache;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 
 public class ServerQuitListener{
@@ -23,7 +23,7 @@ public class ServerQuitListener{
 						/*udp=*/true, 5000, MiscUtils.getCurrentServerAndPlayerData(), /*recv=*/null);
 			}
 
-			if(Configs.Generic.MAP_STATE_CACHE.getDefaultOptionListValue() != MapStateCacheOption.OFF){
+			if(Configs.Generic.MAP_STATE_CACHE.getDefaultOptionListValue() != OptionMapStateCache.OFF){
 				MapStateCacher.saveMapStates(client.player.getInventory().main, MapStateCacher.HolderType.PLAYER_INV);
 				ContainerOpenCloseListener.echestCacheLoaded = false; // TODO: eww
 			}

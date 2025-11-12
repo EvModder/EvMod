@@ -28,8 +28,6 @@ import net.evmodder.KeyBound.apis.RemoteServerSender;
 import net.evmodder.KeyBound.commands.*;
 import net.evmodder.KeyBound.config.ConfigGui;
 import net.evmodder.KeyBound.config.Configs;
-import net.evmodder.KeyBound.config.InputHandler;
-import net.evmodder.KeyBound.config.KeyCallbacks;
 import net.evmodder.KeyBound.keybinds.*;
 import net.evmodder.KeyBound.listeners.*;
 import net.evmodder.KeyBound.onTick.AutoPlaceItemFrames;

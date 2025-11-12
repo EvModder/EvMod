@@ -3,17 +3,15 @@ package net.evmodder.KeyBound.config;
 import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
 
-public enum InventoryRestockLimits implements IConfigOptionListEntry {
-	LEAVE_ONE_ITEM("leaveOneItem", "keybound.gui.label.inventoryRestock.leaveOneItem"),
-	LEAVE_ONE_STACK("leaveOneStack", "keybound.gui.label.inventoryRestock.leaveOneStack"),
-	LEAVE_UNLESS_ONE_TYPE("leaveUnlessOneType", "keybound.gui.label.inventoryRestock.leaveUnlessOneType"),
-	LEAVE_UNLESS_ALL_RESUPPLY("leaveUnlessAllResupply", "keybound.gui.label.inventoryRestock.leaveUnlessAllResupply")
-	;
+public enum OptionMapStateCacheTarget implements IConfigOptionListEntry {
+	BY_ID("byId", "keybound.gui.label.cacheMapstate.target.byId"),
+	BY_NAME("byName", "keybound.gui.label.cacheMapstate.target.byName"),
+	BY_INV_POS("byInvPos", "keybound.gui.label.cacheMapstate.target.byInvPos");
 
 	private final String configString;
 	private final String translationKey;
 
-	InventoryRestockLimits(String configString, String translationKey){
+	OptionMapStateCacheTarget(String configString, String translationKey){
 		this.configString = configString;
 		this.translationKey = translationKey;
 	}

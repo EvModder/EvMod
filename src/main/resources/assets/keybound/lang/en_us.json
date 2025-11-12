@@ -41,13 +41,13 @@
 	"keybound.gui.label.tooltipDisplay.on": "On",
 	"keybound.gui.label.tooltipDisplay.advanced": "Advanced tooltips",
 
-	"keybound.gui.label.cacheMapstate.off": "Off",
-	"keybound.gui.label.cacheMapstate.memory": "Session-only",
-	"keybound.gui.label.cacheMapstate.memoryAndDisk": "Persistent",
+	"keybound.gui.label.cacheMapState.off": "Off",
+	"keybound.gui.label.cacheMapState.memory": "Session-only",
+	"keybound.gui.label.cacheMapState.memoryAndDisk": "Persistent",
 
-	"keybound.gui.label.cacheMapstateType.byId": "By MapId",
-	"keybound.gui.label.cacheMapstateType.byName": "By ItemName",
-	"keybound.gui.label.cacheMapstateType.byInvPos": "By Inv/Echest Slot",
+	"keybound.gui.label.cacheMapState.target.byId": "By MapId",
+	"keybound.gui.label.cacheMapState.target.byName": "By ItemName",
+	"keybound.gui.label.cacheMapState.target.byInvPos": "By Inv/Echest Slot",
 
 	"keybound.gui.label.inventoryRestock.leaveOneItem": "Leave One Item",
 	"keybound.gui.label.inventoryRestock.leaveOneStack": "Leave One Stack",

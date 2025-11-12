@@ -40,13 +40,13 @@
 	"keybound.gui.label.tooltipDisplay.on": "apagado",
 	"keybound.gui.label.tooltipDisplay.advanced": "Descripciones avanzadas",
 
-	"keybound.gui.label.cacheMapstate.off": "Encendido",
-	"keybound.gui.label.cacheMapstate.memory": "Solo esta Sesion",
-	"keybound.gui.label.cacheMapstate.memoryAndDisk": "Persistente",
+	"keybound.gui.label.cacheMapState.off": "Encendido",
+	"keybound.gui.label.cacheMapState.memory": "Solo esta Sesion",
+	"keybound.gui.label.cacheMapState.memoryAndDisk": "Persistente",
 
-	"keybound.gui.label.cacheMapstateType.byId": "Por ID",
-	"keybound.gui.label.cacheMapstateType.byName": "Por Nombre",
-	"keybound.gui.label.cacheMapstateType.byInvPos": "Por hueco de inventario/cofre",
+	"keybound.gui.label.cacheMapState.target.byId": "Por ID",
+	"keybound.gui.label.cacheMapState.target.byName": "Por Nombre",
+	"keybound.gui.label.cacheMapState.target.byInvPos": "Por hueco de inventario/cofre",
 
 	"keybound.config.generic.name.clickLimitCount": "Conteo de clicks",
 	"keybound.config.generic.comment.clickLimitCount": "2b2t will kick you for setning >80 clicks in <80 ticks (Last checked: 2025-10-15)",

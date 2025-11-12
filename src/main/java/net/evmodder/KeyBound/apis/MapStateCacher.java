@@ -13,7 +13,7 @@ import java.util.List;
 import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.config.Configs;
-import net.evmodder.KeyBound.config.MapStateCacheOption;
+import net.evmodder.KeyBound.config.OptionMapStateCache;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
@@ -30,7 +30,7 @@ import net.minecraft.world.World;
 public class MapStateCacher{
 	public enum HolderType {PLAYER_INV, ENDER_CHEST}
 
-	private static HashMap<Integer, List<MapState>> mapStatesInInv;
+	private static HashMap<Integer, List<MapState>> inMemoryCache;
 	public static List<ItemStack> enderChestContents;
 
 //	public static final byte CACHED_MARKER_SCALE = (byte)128;
@@ -65,7 +65,7 @@ public class MapStateCacher{
 		try(FileInputStream fis = new FileInputStream(FileIO.DIR+"cached_mapstates"); ObjectInputStream ois = new ObjectInputStream(fis)){
 			HashMap<Integer, List<MapStateSerializable>> persistentMapStatesInInv = (HashMap<Integer, List<MapStateSerializable>>)ois.readObject();
 			for(var entry : persistentMapStatesInInv.entrySet()){
-				mapStatesInInv.put(entry.getKey(), entry.getValue().stream().map(mss -> mss == null ? null : mss.toMapState()).toList());
+				inMemoryCache.put(entry.getKey(), entry.getValue().stream().map(mss -> mss == null ? null : mss.toMapState()).toList());
 			}
 		}
 		catch(EOFException e){} // Hasn't been cached yet
@@ -73,8 +73,8 @@ public class MapStateCacher{
 	}
 	private static final void saveToFile(){
 		try(FileOutputStream fos = new FileOutputStream(FileIO.DIR+"cached_mapstates"); ObjectOutputStream oos = new ObjectOutputStream(fos)){
-			HashMap<Integer, List<MapStateSerializable>> persistentMapStatesInInv = new HashMap<>(mapStatesInInv.size());
-			for(var entry : mapStatesInInv.entrySet()){
+			HashMap<Integer, List<MapStateSerializable>> persistentMapStatesInInv = new HashMap<>(inMemoryCache.size());
+			for(var entry : inMemoryCache.entrySet()){
 				persistentMapStatesInInv.put(entry.getKey(), entry.getValue().stream().map(MapStateSerializable::fromMapState).toList());
 			}
 			oos.writeObject(persistentMapStatesInInv);
@@ -92,21 +92,21 @@ public class MapStateCacher{
 			Main.LOGGER.info("MapStateCacher: "+type.name()+" nothing to save");
 			return false;
 		}
-		if(mapStatesInInv == null){
-			mapStatesInInv = new HashMap<>();
-			if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() == MapStateCacheOption.MEMORY_AND_DISK) readFromFile();
+		if(inMemoryCache == null){
+			inMemoryCache = new HashMap<>();
+			if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK) readFromFile();
 		}
-		mapStatesInInv.put(key, mapStates);
+		inMemoryCache.put(key, mapStates);
 
-		if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() == MapStateCacheOption.MEMORY_AND_DISK) saveToFile();
+		if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK) saveToFile();
 		Main.LOGGER.info("MapStateCacher: "+type.name()+" saved "+mapStates.size()+" mapstates");
 		return true;
 	}
 
 	public static final boolean loadMapStates(List<ItemStack> items, HolderType type){
-		if(mapStatesInInv == null){
-			if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() == MapStateCacheOption.MEMORY_AND_DISK){
-				mapStatesInInv = new HashMap<>();
+		if(inMemoryCache == null){
+			if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK){
+				inMemoryCache = new HashMap<>();
 				readFromFile();
 			}
 			else{
@@ -116,7 +116,7 @@ public class MapStateCacher{
 		}
 		MinecraftClient client = MinecraftClient.getInstance();
 		final int key = client.player.getUuid().hashCode() + MiscUtils.getCurrentServerAddressHashCode() + type.ordinal();
-		List<MapState> cachedMapStates = mapStatesInInv.get(key);
+		List<MapState> cachedMapStates = inMemoryCache.get(key);
 		if(cachedMapStates == null || cachedMapStates.isEmpty()){
 			Main.LOGGER.info("MapStateCacher: "+type.name()+" no saved mapstates for given key: "+key);
 			return false;

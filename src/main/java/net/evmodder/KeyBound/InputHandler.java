@@ -1,9 +1,11 @@
-package net.evmodder.KeyBound.config;
+package net.evmodder.KeyBound;
 
-import fi.dy.masa.malilib.hotkeys.*;
-import net.evmodder.KeyBound.Main;
+import fi.dy.masa.malilib.hotkeys.IHotkey;
+import fi.dy.masa.malilib.hotkeys.IKeybindManager;
+import fi.dy.masa.malilib.hotkeys.IKeybindProvider;
+import net.evmodder.KeyBound.config.Configs;
 
-public class InputHandler implements IKeybindProvider {
+public class InputHandler implements IKeybindProvider{
 	private static final InputHandler INSTANCE = new InputHandler();
 
 	public static InputHandler getInstance(){
@@ -13,6 +15,8 @@ public class InputHandler implements IKeybindProvider {
 	private InputHandler(){}
 
 	@Override public void addKeysToMap(IKeybindManager manager){
+//		Configs.Hotkeys.getOptions().stream().filter(IHotkey.class::isInstance).map(IHotkey.class::cast)
+//				.map(IHotkey::getKeybind).forEach(manager::addKeybindToMap);
 		Configs.Hotkeys.getOptions().forEach(opt ->{if(opt instanceof IHotkey hotkey) manager.addKeybindToMap(hotkey.getKeybind());});
 		Configs.Generic.getOptions().forEach(opt ->{if(opt instanceof IHotkey hotkey) manager.addKeybindToMap(hotkey.getKeybind());});
 	}

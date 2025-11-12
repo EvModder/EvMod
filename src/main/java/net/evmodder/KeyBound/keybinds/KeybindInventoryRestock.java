@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Set;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.config.Configs;
-import net.evmodder.KeyBound.config.InventoryRestockLimits;
+import net.evmodder.KeyBound.config.OptionInventoryRestockLimit;
 import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
 import net.evmodder.KeyBound.keybinds.KeybindInventoryOrganize.SlotAndItemName;
 import net.minecraft.client.MinecraftClient;
@@ -48,11 +48,11 @@ public final class KeybindInventoryRestock{
 		HashMap<Item, Integer> supply = new HashMap<>();
 
 
-		InventoryRestockLimits limits = (InventoryRestockLimits)Configs.Hotkeys.INV_RESTOCK_LIMITS.getOptionListValue();
+		OptionInventoryRestockLimit limits = (OptionInventoryRestockLimit)Configs.Hotkeys.INV_RESTOCK_LIMITS.getOptionListValue();
 		Main.LOGGER.info("InvRestock: restock limits: "+limits.name());
-		final boolean LEAVE_ONE = limits == InventoryRestockLimits.LEAVE_ONE_ITEM || limits == InventoryRestockLimits.LEAVE_ONE_STACK;
+		final boolean LEAVE_ONE = limits == OptionInventoryRestockLimit.LEAVE_ONE_ITEM || limits == OptionInventoryRestockLimit.LEAVE_ONE_STACK;
 		HashSet<String> itemNamesInInv;
-		if(limits == InventoryRestockLimits.LEAVE_UNLESS_ALL_RESUPPLY){
+		if(limits == OptionInventoryRestockLimit.LEAVE_UNLESS_ALL_RESUPPLY){
 			itemNamesInInv = new HashSet<>();
 			organizationLayouts.stream().forEach(kio -> kio.layoutMap.stream().map(SlotAndItemName::name).forEach(itemNamesInInv::add));
 		}
@@ -60,7 +60,7 @@ public final class KeybindInventoryRestock{
 		// TODO: hardcoded assumption that slots < len-36 are from the currently viewed container
 		for(int i=slots.length-37; i>=0; --i){
 			if(slots[i].isEmpty()) continue;
-			if(limits == InventoryRestockLimits.LEAVE_UNLESS_ALL_RESUPPLY){
+			if(limits == OptionInventoryRestockLimit.LEAVE_UNLESS_ALL_RESUPPLY){
 				final String itemName = Registries.ITEM.getId(slots[i].getItem()).getPath();
 				if(itemNamesInInv.contains(itemName)){
 					Main.LOGGER.info("InvRestock: not a valid source (LEAVE_UNLESS_ALL_RESUPPLY: container has unlisted item type '"+itemName+"')");
@@ -68,11 +68,11 @@ public final class KeybindInventoryRestock{
 				}
 			}
 			else{
-				final int amt = limits == InventoryRestockLimits.LEAVE_ONE_STACK ? 1 : slots[i].getCount();
+				final int amt = limits == OptionInventoryRestockLimit.LEAVE_ONE_STACK ? 1 : slots[i].getCount();
 				supply.put(slots[i].getItem(), supply.getOrDefault(slots[i].getItem(), 0) + amt);
 			}
 		}
-		if(supply.size() > 1 && limits == InventoryRestockLimits.LEAVE_UNLESS_ONE_TYPE){
+		if(supply.size() > 1 && limits == OptionInventoryRestockLimit.LEAVE_UNLESS_ONE_TYPE){
 			Main.LOGGER.info("InvRestock: not a valid source (LEAVE_UNLESS_ONE_TYPE: container has multiple item types)");
 			return;
 		}
@@ -97,7 +97,7 @@ public final class KeybindInventoryRestock{
 
 				int combinedCount = slots[i].getCount() + slots[j].getCount();
 				final boolean needToLeave1 = combinedCount <= maxCount && (totalInContainer -= slots[j].getCount()) == 0
-						&& (limits == InventoryRestockLimits.LEAVE_ONE_ITEM);
+						&& (limits == OptionInventoryRestockLimit.LEAVE_ONE_ITEM);
 
 				if(needToLeave1 || combinedCount != maxCount) clicks.add(new ClickEvent(j, 0, SlotActionType.PICKUP)); // Pickup all
 				else{

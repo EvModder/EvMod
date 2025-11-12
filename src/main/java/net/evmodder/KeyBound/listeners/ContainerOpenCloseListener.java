@@ -2,11 +2,11 @@ package net.evmodder.KeyBound.listeners;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.evmodder.KeyBound.KeyCallbacks;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.MapStateCacher;
 import net.evmodder.KeyBound.config.Configs;
-import net.evmodder.KeyBound.config.KeyCallbacks;
-import net.evmodder.KeyBound.config.MapStateCacheOption;
+import net.evmodder.KeyBound.config.OptionMapStateCache;
 import net.evmodder.KeyBound.keybinds.KeybindInventoryOrganize;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.ItemStack;
@@ -43,7 +43,7 @@ public final class ContainerOpenCloseListener{
 		ScreenHandler sh = client.player.currentScreenHandler;
 		final int newSyncId = sh == null ? 0 : sh.syncId;
 		if(newSyncId == syncId){
-			if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() != MapStateCacheOption.OFF && currentlyViewingEchest) echestContents = sh.getStacks();
+			if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() != OptionMapStateCache.OFF && currentlyViewingEchest) echestContents = sh.getStacks();
 			return;
 		}
 		syncId = newSyncId;
@@ -51,7 +51,7 @@ public final class ContainerOpenCloseListener{
 //			Main.LOGGER.info("ContainerOpenCloseListener: container opened, syncId="+newSyncId+", name="+client.currentScreen.getTitle().toString());
 			if(Configs.Generic.INV_RESTOCK_AUTO.getBooleanValue()) organizeInvThenRestock(0);
 
-			if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() != MapStateCacheOption.OFF
+			if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() != OptionMapStateCache.OFF
 					&& (currentlyViewingEchest=client.currentScreen.getTitle().contains(Text.translatable("container.enderchest")))
 					&& !echestCacheLoaded // Don't reload from cache unless player leaves and rejoins server
 			){
@@ -61,7 +61,7 @@ public final class ContainerOpenCloseListener{
 		}
 		else{
 //			Main.LOGGER.info("ContainerOpenCloseListener: container closed, wasViewingEchest="+currentlyViewingEchest);
-			if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() != MapStateCacheOption.OFF && currentlyViewingEchest){
+			if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() != OptionMapStateCache.OFF && currentlyViewingEchest){
 				currentlyViewingEchest = false;
 				MapStateCacher.saveMapStates(echestContents, MapStateCacher.HolderType.ENDER_CHEST);
 			}

@@ -30,9 +30,9 @@ public class Configs implements IConfigHandler{
 
 		public static final ConfigOptionList MAP_STATE_CACHE = new ConfigOptionList("mapStateCache",
 //				new SimpleStringOption("keybound.gui.label.cache_mapstate.", "a", "b", "c")).apply(GENERIC_KEY);
-				MapStateCacheOption.MEMORY_AND_DISK).apply(GENERIC_KEY);
-//		public static final ConfigOptionList MAP_STATE_CACHE_TYPE = new ConfigOptionList("mapStateCacheType",
-//				MapStateCacheOptionType.BY_INV_POS).apply(GENERIC_KEY);
+				OptionMapStateCache.MEMORY_AND_DISK).apply(GENERIC_KEY);
+//		public static final ConfigMultiOptionList MAP_STATE_CACHE_TYPE = new ConfigMultiOptionList("mapStateCacheType",
+//				List.of(MapStateCacheOptionType.BY_INV_POS, MapStateCacheOptionType.BY_NAME)).apply(GENERIC_KEY);
 
 		public static final ConfigInteger MAX_IFRAME_TRACKING_DIST = new ConfigInteger("iFrameTrackingDist", /*default=*/128, 0, 10_000_000);
 		public static double MAX_IFRAME_TRACKING_DIST_SQ;
@@ -235,7 +235,7 @@ public class Configs implements IConfigHandler{
 		public static final ConfigHotkey INV_RESTOCK = new ConfigHotkey("inventoryRestock",
 				Main.mapArtFeaturesOnly ? "" : "R", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigOptionList INV_RESTOCK_LIMITS = new ConfigOptionList("inventoryRestockLimits",
-				InventoryRestockLimits.LEAVE_UNLESS_ONE_TYPE).apply(HOTKEYS_KEY);
+				OptionInventoryRestockLimit.LEAVE_UNLESS_ONE_TYPE).apply(HOTKEYS_KEY);
 		public static final ConfigStringList INV_RESTOCK_BLACKLIST = new ConfigStringList("inventoryRestockBlacklist", ImmutableList.of(
 //				"ender_chest", "filled_map"
 		)).apply(HOTKEYS_KEY);

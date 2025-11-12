@@ -7,7 +7,7 @@ import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.MapStateCacher;
 import net.evmodder.KeyBound.apis.MiscUtils;
 import net.evmodder.KeyBound.config.Configs;
-import net.evmodder.KeyBound.config.MapStateCacheOption;
+import net.evmodder.KeyBound.config.OptionMapStateCache;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
@@ -33,7 +33,7 @@ public class ServerJoinListener{
 
 			MinecraftClient client  = MinecraftClient.getInstance();
 
-			if(Configs.Generic.MAP_STATE_CACHE.getDefaultOptionListValue() != MapStateCacheOption.OFF){
+			if(Configs.Generic.MAP_STATE_CACHE.getDefaultOptionListValue() != OptionMapStateCache.OFF){
 				if(invLoadTimer != null){invLoadTimer.cancel(); invLoadTimer = null;}
 				if(client.player.getInventory().isEmpty()){ // Inventory not loaded (can also mean still in queue)
 					invLoadTimer = new Timer();
