@@ -5,7 +5,6 @@ import net.evmodder.KeyBound.apis.MiscUtils;
 import net.evmodder.KeyBound.apis.RemoteServerSender;
 import net.evmodder.KeyBound.config.ConfigGui;
 import net.evmodder.KeyBound.config.Configs;
-import net.evmodder.KeyBound.keybinds.ClickUtils;
 import net.evmodder.KeyBound.keybinds.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
@@ -41,6 +40,7 @@ public class KeyCallbacks{
 	public static final KeybindInventoryOrganize kbInvOrg1 = new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_1.getStrings());
 	public static final KeybindInventoryOrganize kbInvOrg2 = new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_2.getStrings());
 	public static final KeybindInventoryOrganize kbInvOrg3 = new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_3.getStrings());
+	public static final KeybindInventoryRestock kbInvRestock = new KeybindInventoryRestock();
 
 	private static final void keybindCallback(IHotkey hotkey, Function<Screen, Boolean> allowInScreen, Runnable callback){
 		hotkey.getKeybind().setCallback((_0, _1) ->{
@@ -76,21 +76,22 @@ public class KeyCallbacks{
 		Configs.Hotkeys.INV_ORGANIZE_1.setValueChangeCallback(newValue -> kbInvOrg1.refreshLayout(newValue.getStrings()));
 		Configs.Hotkeys.INV_ORGANIZE_2.setValueChangeCallback(newValue -> kbInvOrg2.refreshLayout(newValue.getStrings()));
 		Configs.Hotkeys.INV_ORGANIZE_3.setValueChangeCallback(newValue -> kbInvOrg3.refreshLayout(newValue.getStrings()));
-		Configs.Hotkeys.INV_RESTOCK_BLACKLIST.setValueChangeCallback(_0 -> Main.kbInvRestock.refreshLists());
-		Configs.Hotkeys.INV_RESTOCK_WHITELIST.setValueChangeCallback(_0 -> Main.kbInvRestock.refreshLists());
-		Configs.Generic.INV_RESTOCK_AUTO_FOR_INV_ORGS.setValueChangeCallback(newValue -> Main.containerOpenCloseListener.refreshLayouts(newValue.getStrings()));
+		Configs.Hotkeys.INV_RESTOCK_BLACKLIST.setValueChangeCallback(_0 -> kbInvRestock.refreshLists());
+		Configs.Hotkeys.INV_RESTOCK_WHITELIST.setValueChangeCallback(_0 -> kbInvRestock.refreshLists());
+		Configs.Generic.INV_RESTOCK_AUTO_FOR_INV_ORGS.setValueChangeCallback(newValue -> kbInvRestock.refreshLayouts());
 
 		keybindCallback(Configs.Hotkeys.OPEN_CONFIG_GUI, Objects::isNull, ()->GuiBase.openGui(new ConfigGui()));
 
 		keybindCallback(Configs.Hotkeys.MAP_COPY, s->s instanceof InventoryScreen
 				|| s instanceof CraftingScreen || s instanceof CartographyTableScreen, kbMapCopy::copyMapArtInInventory);
 		keybindCallback(Configs.Hotkeys.MAP_LOAD, HandledScreen.class::isInstance, kbMapLoad::loadMapArtFromContainer);
-		keybindCallback(Configs.Hotkeys.MAP_MOVE, s->s instanceof HandledScreen && s instanceof InventoryScreen == false, kbMapMove::moveMapArtToFromShulker);
-		Function<Screen, Boolean> allowInScreen =
+		keybindCallback(Configs.Hotkeys.MAP_MOVE,
+				s->s instanceof HandledScreen && s instanceof InventoryScreen == false, kbMapMove::moveMapArtToFromShulker);
+		Function<Screen, Boolean> allowInScreenBundleMove =
 				//InventoryScreen.class::isInstance
 				s->s instanceof InventoryScreen || s instanceof GenericContainerScreen || s instanceof ShulkerBoxScreen || s instanceof CraftingScreen;
-		keybindCallback(Configs.Hotkeys.MAP_MOVE_BUNDLE, allowInScreen, ()->kbMapMoveBundle.moveMapArtToFromBundle(false));
-		keybindCallback(Configs.Hotkeys.MAP_MOVE_BUNDLE_REVERSE, allowInScreen, ()->kbMapMoveBundle.moveMapArtToFromBundle(true));
+		keybindCallback(Configs.Hotkeys.MAP_MOVE_BUNDLE, allowInScreenBundleMove, ()->kbMapMoveBundle.moveMapArtToFromBundle(false));
+		keybindCallback(Configs.Hotkeys.MAP_MOVE_BUNDLE_REVERSE, allowInScreenBundleMove, ()->kbMapMoveBundle.moveMapArtToFromBundle(true));
 
 		keybindCallback(Configs.Hotkeys.TOGGLE_CAPE, null, ()->MiscUtils.toggleSkinLayer(PlayerModelPart.CAPE));
 		keybindCallback(Configs.Hotkeys.TOGGLE_HAT, null, ()->MiscUtils.toggleSkinLayer(PlayerModelPart.HAT));
@@ -112,7 +113,7 @@ public class KeyCallbacks{
 		keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_1, null, ()->kbInvOrg1.organizeInventory(false, null));
 		keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_2, null, ()->kbInvOrg2.organizeInventory(false, null));
 		keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_3, null, ()->kbInvOrg3.organizeInventory(false, null));
-		keybindCallback(Configs.Hotkeys.INV_RESTOCK, s->s instanceof HandledScreen && s instanceof InventoryScreen == false, ()->Main.kbInvRestock.doRestock(null));
+		keybindCallback(Configs.Hotkeys.INV_RESTOCK, s->s instanceof HandledScreen && s instanceof InventoryScreen == false, kbInvRestock::doRestock);
 
 		keybindCallback(Configs.Hotkeys.CHAT_MSG_1, null, ()->MiscUtils.sendChatMsg(Configs.Hotkeys.CHAT_MSG_1.getStringValue()));
 		keybindCallback(Configs.Hotkeys.CHAT_MSG_2, null, ()->MiscUtils.sendChatMsg(Configs.Hotkeys.CHAT_MSG_2.getStringValue()));

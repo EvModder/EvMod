@@ -1,12 +1,14 @@
 package net.evmodder.KeyBound.keybinds;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import net.evmodder.KeyBound.KeyCallbacks;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.config.OptionInventoryRestockLimit;
@@ -28,13 +30,14 @@ import net.minecraft.util.Identifier;
 public final class KeybindInventoryRestock{
 	private boolean IS_WHITELIST;
 	private Set<Item> itemList;
+	private List<KeybindInventoryOrganize> organizationLayouts;
 
 //	private final void orEqualsArray(boolean[] source, boolean[] input){
 //		assert source.length == input.length;
 //		for(int i=0; i<source.length; ++i) source[i] |= input[i];
 //	}
 
-	public final void doRestock(List<KeybindInventoryOrganize> organizationLayouts){
+	public final void doRestock(){
 		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("InvRestock cancelled: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -53,6 +56,10 @@ public final class KeybindInventoryRestock{
 		final boolean LEAVE_ONE = limits == OptionInventoryRestockLimit.LEAVE_ONE_ITEM || limits == OptionInventoryRestockLimit.LEAVE_ONE_STACK;
 		HashSet<String> itemNamesInLayout;
 		if(limits == OptionInventoryRestockLimit.LEAVE_UNLESS_ALL_RESUPPLY){
+			if(organizationLayouts == null){
+				Main.LOGGER.warn("InvRestock: Restriction to only take resupply items, but no items are defined! (InvOrganizeLayout is empty)");
+				return;
+			}
 			itemNamesInLayout = new HashSet<>();
 			organizationLayouts.stream().forEach(kio -> kio.layoutMap.stream().map(SlotAndItemName::name).forEach(itemNamesInLayout::add));
 //			Main.LOGGER.info("supported restock items: "+itemNamesInLayout.toString());
@@ -138,6 +145,12 @@ public final class KeybindInventoryRestock{
 		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("InvRestock: DONE!"));
 	}
 
+	private void organizeThenRestock(int i){
+		if(i == organizationLayouts.size()) doRestock();
+		else organizationLayouts.get(i).organizeInventory(/*RESTOCK_ONLY=*/true, ()->organizeThenRestock(i+1));
+	}
+	public void organizeThenRestock(){organizeThenRestock(0);}
+
 	private List<Item> parseItemList(List<String> list){
 		return list.stream().map(
 //				s -> Registries.ITEM.get(Identifier.of(s))
@@ -164,8 +177,17 @@ public final class KeybindInventoryRestock{
 			}
 		}
 	}
+	public void refreshLayouts(){
+		if(organizationLayouts == null) organizationLayouts = new ArrayList<>();
+		else organizationLayouts.clear();
+		// TODO: replace with ConfigOptionList, for named organization schemes
+		List<String> layouts = Configs.Generic.INV_RESTOCK_AUTO_FOR_INV_ORGS.getStrings();
+		if(layouts.contains("1")) organizationLayouts.add(KeyCallbacks.kbInvOrg1);
+		if(layouts.contains("2")) organizationLayouts.add(KeyCallbacks.kbInvOrg2);
+		if(layouts.contains("3")) organizationLayouts.add(KeyCallbacks.kbInvOrg3);
+	}
 	public KeybindInventoryRestock(){
 		refreshLists();
-//		new Keybind("inventory_restock", ()->doRestock(null), s->s instanceof HandledScreen && s instanceof InventoryScreen == false, GLFW.GLFW_KEY_R);
+		refreshLayouts();
 	}
 }

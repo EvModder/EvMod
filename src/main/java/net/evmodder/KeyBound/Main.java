@@ -87,7 +87,6 @@ public class Main implements ClientModInitializer{
 	public static RemoteServerSender remoteSender;
 	public static EpearlLookup epearlLookup;
 	public static GameMessageFilter gameMessageFilter;
-	public static KeybindInventoryRestock kbInvRestock;
 	public static KeybindCraftingRestock kbCraftRestock;
 	public static ContainerOpenCloseListener containerOpenCloseListener;
 
@@ -182,7 +181,6 @@ public class Main implements ClientModInitializer{
 		if(cmdSendAs) new CommandSendAs();
 		if(cmdTimeOnline/* && serverJoinListener*/) new CommandTimeOnline();
 
-		kbInvRestock = new KeybindInventoryRestock();
 		kbCraftRestock = new KeybindCraftingRestock();
 		if(inventoryRestockAuto &= (containerOpenCloseListener!=null)) ClientTickEvents.END_CLIENT_TICK.register(containerOpenCloseListener::onUpdateTick);
 		//new KeybindSpamclick();

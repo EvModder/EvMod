@@ -1,37 +1,16 @@
 package net.evmodder.KeyBound.listeners;
 
-import java.util.ArrayList;
 import java.util.List;
 import net.evmodder.KeyBound.KeyCallbacks;
-import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.MapStateCacher;
 import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.config.OptionMapStateCache;
-import net.evmodder.KeyBound.keybinds.KeybindInventoryOrganize;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.text.Text;
 
 public final class ContainerOpenCloseListener{
-	private List<KeybindInventoryOrganize> mustMatchLayouts;
-
-	public final void refreshLayouts(List<String> layouts){
-		mustMatchLayouts = new ArrayList<>();
-//		List<String> organizationLayouts = Configs.Generic.INV_RESTOCK_AUTO_FOR_INV_ORGS.getStrings();
-		if(layouts.contains("1")) mustMatchLayouts.add(KeyCallbacks.kbInvOrg1);
-		if(layouts.contains("2")) mustMatchLayouts.add(KeyCallbacks.kbInvOrg2);
-		if(layouts.contains("3")) mustMatchLayouts.add(KeyCallbacks.kbInvOrg3);
-	}
-
-	public ContainerOpenCloseListener(){
-		refreshLayouts(Configs.Generic.INV_RESTOCK_AUTO_FOR_INV_ORGS.getStrings());
-	}
-
-	private final void organizeInvThenRestock(int i){
-		if(mustMatchLayouts == null || i >= mustMatchLayouts.size()) Main.kbInvRestock.doRestock(mustMatchLayouts);
-		else mustMatchLayouts.get(i).organizeInventory(/*RESTOCK_ONLY=*/true, ()->organizeInvThenRestock(i+1));
-	}
 
 	private int syncId;
 	private boolean currentlyViewingEchest;
@@ -49,7 +28,7 @@ public final class ContainerOpenCloseListener{
 		syncId = newSyncId;
 		if(newSyncId != 0){
 //			Main.LOGGER.info("ContainerOpenCloseListener: container opened, syncId="+newSyncId+", name="+client.currentScreen.getTitle().toString());
-			if(Configs.Generic.INV_RESTOCK_AUTO.getBooleanValue()) organizeInvThenRestock(0);
+			if(Configs.Generic.INV_RESTOCK_AUTO.getBooleanValue()) KeyCallbacks.kbInvRestock.organizeThenRestock();
 
 			if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() != OptionMapStateCache.OFF
 					&& (currentlyViewingEchest=client.currentScreen.getTitle().contains(Text.translatable("container.enderchest")))
