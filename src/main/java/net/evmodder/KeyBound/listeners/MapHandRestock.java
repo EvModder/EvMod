@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
@@ -302,7 +301,7 @@ public final class MapHandRestock{
 				+(posData2d == null ? ", posData2d=null" : ", minPos2="+posData2d.minPos2+", maxPos2="+posData2d.maxPos2+", sideways="+posData2d.isSideways)
 				+", name: "+prevName);
 
-		final int i = getNextSlotByNameUsingPosData2d(slots, data, prevPosStr, posData2d, /*infoLogs=*/true);//TODO: set to true for debugging
+		final int i = getNextSlotByNameUsingPosData2d(slots, data, prevPosStr, posData2d, /*infoLogs=*/false);//TODO: set to true for debugging
 		if(i == -999){
 			Main.LOGGER.info("MapRestock: getNextSlotByName() failed");
 			return -1;
@@ -404,40 +403,37 @@ public final class MapHandRestock{
 				e -> ItemStack.areEqual(e.getHeldItemStack(), stack)).isEmpty();
 	}
 
+	private List<ItemStack> getSlotsWithBundleSub(List<ItemStack> slots, PlayerEntity player, String prevName){
+		if(!Configs.Generic.PLACEMENT_HELPER_MAPART_FROM_BUNDLE.getBooleanValue()) return slots;
+		if(!slots.stream().map(s -> s.get(DataComponentTypes.BUNDLE_CONTENTS))
+				.anyMatch(b -> b != null && !b.isEmpty() && b.stream().allMatch(s -> s.getItem() == Items.FILLED_MAP))) return slots;
+		ArrayList<ItemStack> slotsWithBundleSub = new ArrayList<>(slots);
+		for(int i=0; i<slots.size(); ++i){
+			BundleContentsComponent contents = slots.get(i).get(DataComponentTypes.BUNDLE_CONTENTS);
+			if(contents == null || contents.isEmpty()) continue;
+			ItemStack stack = contents.get(contents.size()-1);
+			if(stack.getItem() != Items.FILLED_MAP) continue;
+			if(slots.stream().anyMatch(s -> ItemStack.areItemsAndComponentsEqual(s, stack))) continue; // If map is also present unbundled in inv
+			if(stack.getCount() == 1 && isInNearbyItemFrame(stack, player, 20)) continue;
+
+			final String name = stack.getCustomName() == null ? null : stack.getCustomName().getLiteralString();
+			if((prevName == null) != (name == null) || (prevName != null && prevName.equals(name))) continue;
+
+			Main.LOGGER.info("MapRestock: available from bundle slot="+i+",name="+name+",prevName="+prevName);
+			slotsWithBundleSub.set(i, stack);
+		}
+		return slotsWithBundleSub;
+	}
+
 	private boolean waitingForRestock;
 	private final void tryToStockNextMap(PlayerEntity player){
 		final int prevSlot = player.getInventory().selectedSlot+36;
 		final ItemStack mapInHand = player.getMainHandStack();
-		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).collect(Collectors.toList());
+		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).toList();
 		assert slots.get(prevSlot) == mapInHand;
 		final String prevName = mapInHand.getCustomName() == null ? null : mapInHand.getCustomName().getLiteralString();
 
-		final List<ItemStack> slotsWithBundleSub;
-		if(Configs.Generic.PLACEMENT_HELPER_MAPART_FROM_BUNDLE.getBooleanValue()
-				&& slots.stream().map(s -> s.get(DataComponentTypes.BUNDLE_CONTENTS))
-					.anyMatch(b -> b != null && !b.isEmpty() && b.get(0).getItem() == Items.FILLED_MAP))
-		{
-			slotsWithBundleSub = new ArrayList<>(slots);
-			for(int i=0; i<slots.size(); ++i){
-				BundleContentsComponent contents = slots.get(i).get(DataComponentTypes.BUNDLE_CONTENTS);
-				if(contents == null || contents.isEmpty()) continue;
-//				Main.LOGGER.info("Restock 1st bundle item: "+contents.iterate().iterator().next().getName().getString());
-//				Main.LOGGER.info("Restock 1st bundle item: "+contents.get(0).getName().getString());
-//				Main.LOGGER.info("Restock last bundle item: "+contents.get(contents.size()-1).getName().getString());
-				ItemStack stack = contents.get(contents.size()-1);
-				if(stack.getItem() != Items.FILLED_MAP) continue;
-				if(ItemStack.areItemsAndComponentsEqual(mapInHand, stack)) continue;
-				if(stack.getCount() == 1 && isInNearbyItemFrame(stack, player, 20)) continue;
-
-				final String name = stack.getCustomName() == null ? null : stack.getCustomName().getLiteralString();
-				if((prevName == null) != (name == null) || (prevName != null && prevName.equals(name))) continue;
-
-				Main.LOGGER.info("MapRestock: available from bundle slot="+i+",name="
-						+(stack.getCustomName()==null?"null":stack.getCustomName().getString())+",prevName="+prevName);
-				slotsWithBundleSub.set(i, stack);
-			}
-		}
-		else slotsWithBundleSub = slots;
+		final List<ItemStack> slotsWithBundleSub = getSlotsWithBundleSub(slots, player, prevName);
 
 		final MapState state = FilledMapItem.getMapState(mapInHand, player.getWorld());
 		MinecraftClient client = MinecraftClient.getInstance();
@@ -479,14 +475,14 @@ public final class MapHandRestock{
 		final int restockFromSlotFinal = restockFromSlot;
 		waitingForRestock = true;
 		new Thread(){@Override public void run(){
-			Main.LOGGER.info("MapRestock: waiting for currently placed map to load");
+//			Main.LOGGER.info("MapRestock: waiting for currently placed map to load");
 			while(client.player != null && !client.player.isInCreativeMode()
 					&& UpdateInventoryHighlights.currentlyBeingPlacedIntoItemFrame != null) Thread.yield();
 
-			Main.LOGGER.info("MapRestock: ok, sync client execution");
+//			Main.LOGGER.info("MapRestock: ok, sync client execution");
 			if(client.player != null) client.executeSync(()->{
 //				try{sleep(50l);}catch(InterruptedException e){e.printStackTrace();waitingForRestock=false;} // 50ms = 1tick
-				Main.LOGGER.info("MapRestock: ok, doing restock click(s)");
+//				Main.LOGGER.info("MapRestock: ok, doing restock click(s)");
 
 				if(slots.get(restockFromSlotFinal).get(DataComponentTypes.BUNDLE_CONTENTS) != null){
 					ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
@@ -517,11 +513,11 @@ public final class MapHandRestock{
 		final AutoPlaceMapArt mapAutoPlacer;
 		if(Main.placementHelperMapArtAuto){
 			mapAutoPlacer = new AutoPlaceMapArt();
-			ClientTickEvents.START_CLIENT_TICK.register(client -> mapAutoPlacer.placeNearestMap(client));
+			ClientTickEvents.END_CLIENT_TICK.register(client -> mapAutoPlacer.placeNearestMap(client));
 			AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
 //				if(mapAutoPlacer.isActive() && entity instanceof ItemFrameEntity ife && ife.getHeldItemStack().getItem() == Items.FILLED_MAP){
 				if(mapAutoPlacer.isActive()){
-					mapAutoPlacer.recalcIsActive(lastIfe=null, lastStack=null, null, null);
+					mapAutoPlacer.recalcIsActive(/*player=*/null, lastIfe=null, lastStack=null, null, null);
 					Main.LOGGER.info("MapAutoPlacer: Disabling due to EntityAttackEvent");
 				}
 				return ActionResult.PASS;
@@ -550,7 +546,7 @@ public final class MapHandRestock{
 			if(stack.getCount() > 2) return ActionResult.PASS;
 			//Main.LOGGER.info("item in hand is filled_map [1or2]");
 
-			if(mapAutoPlacer.recalcIsActive(lastIfe, lastStack, ife, stack)){
+			if(mapAutoPlacer.recalcIsActive(player, lastIfe, lastStack, ife, stack)){
 				Main.LOGGER.info("MapAutoPlacer is running, no need to handle restock");
 			}
 			else{

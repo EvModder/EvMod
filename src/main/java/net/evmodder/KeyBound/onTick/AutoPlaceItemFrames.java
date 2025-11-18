@@ -33,7 +33,6 @@ public class AutoPlaceItemFrames{
 	private Item iFrameItem;
 	private Direction dir;
 	private int axis;
-	private final double MAX_REACH = 3.5;
 	private final boolean ROTATE_PLAYER = false; //TODO: config setting
 
 	private double distFromPlane(BlockPos bp){
@@ -46,7 +45,7 @@ public class AutoPlaceItemFrames{
 		}
 	}
 
-	private Vec3d getPlaceAgainstSurface(BlockPos bp){
+	Vec3d getPlaceAgainstSurface(BlockPos bp){
 		Vec3d blockHit = bp.toCenterPos();
 		switch(dir){
 			case UP: return blockHit.add(0, .5, 0);
@@ -108,6 +107,7 @@ public class AutoPlaceItemFrames{
 
 			if(isMovingTooFast(client.player.getVelocity())) return; // Pause while player is moving
 
+			final double MAX_REACH = Configs.Generic.PLACEMENT_HELPER_IFRAME_REACH.getDoubleValue();
 			final int SCAN_DIST = (int)(MAX_REACH+2);
 
 			BlockPos clientBp = client.player.getBlockPos();
@@ -136,7 +136,7 @@ public class AutoPlaceItemFrames{
 			recentPlaceAttempts[attemptIdx] = bp;
 
 			// Do the clicky-clicky
-			if(Configs.Generic.PLACEMENT_HELPER_IFRAME_HIT_VECTOR.getBooleanValue()){
+			if(Configs.Generic.PLACEMENT_HELPER_IFRAME_RAYCAST.getBooleanValue()){
 				BlockHitResult hitResult = new BlockHitResult(getPlaceAgainstSurface(bp), dir, bp, /*insideBlock=*/false);
 				if(ROTATE_PLAYER){
 //					Vec3d playerPos = client.player.getPos();

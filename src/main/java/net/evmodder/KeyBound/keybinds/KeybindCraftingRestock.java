@@ -66,6 +66,7 @@ public final class KeybindCraftingRestock{
 //		if(sh instanceof EnchantmentScreenHandler esh/* && clicked ench table button?? not tracked as a slot-click event i think*/){
 //			inputItems = List.of(esh.getSlot(0).getStack().copy(), esh.getSlot(1).getStack().copy());
 //		}
+		// TODO: EnchantTable, Grindstone, Stonecutter,
 	}
 
 	private void updateAnvilName(AnvilScreen as){
