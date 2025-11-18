@@ -2,11 +2,8 @@ package net.evmodder.KeyBound.onTick;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.function.IntPredicate;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import net.evmodder.KeyBound.Main;
@@ -22,14 +19,10 @@ import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
@@ -44,6 +37,9 @@ public class AutoPlaceMapArt{
 	private RelatedMapsData currentData;
 //	private HashSet<String> namesForCurrentData;
 	private ArrayList<ItemStack> stacksForCurrentData;
+//	private long lastPlaceTs;
+	private final int[] recentPlaceAttempts;
+	private int attemptIdx;
 	public AutoPlaceMapArt(){
 //		namesForCurrentData = new HashSet<>();
 		stacksForCurrentData = new ArrayList<>();
@@ -262,9 +258,6 @@ public class AutoPlaceMapArt{
 		return null;
 	}
 
-//	private long lastPlaceTs;
-	private final int[] recentPlaceAttempts;
-	private int attemptIdx;
 	public final void placeNearestMap(MinecraftClient client){
 		if(dir == null) return; // mapartPlacer is not currently active
 		if(client.player == null || client.world == null){disableAndReset(); return;}
@@ -359,18 +352,15 @@ public class AutoPlaceMapArt{
 
 		Main.LOGGER.info("AutoPlaceMapArt: right-clicking target iFrame ("+nearestIfe.getBlockPos().toShortString()+")");
 
-		UpdateInventoryHighlights.currentlyBeingPlacedIntoItemFrame = client.player.getInventory().getMainHandStack().copy();
 		recentPlaceAttempts[attemptIdx] = nearestIfe.getId();
 //		lastPlaceTs = ts;
 
-//		EntityHitResult ehr = new EntityHitResult(nearestIfe, nearestIfe.getEyePos());
-//		ActionResult result = client.interactionManager.interactEntityAtLocation(client.player, nearestIfe, ehr, Hand.MAIN_HAND);
-
-//		Vec3d test = nearestIfe.getEyePos().subtract(client.player.getEyePos());
 //		client.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
 		client.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.interactAt(nearestIfe, client.player.isSneaking(), Hand.MAIN_HAND, nearestIfe.getEyePos()));
 		client.interactionManager.interactEntity(client.player, nearestIfe, Hand.MAIN_HAND);
 
+//		EntityHitResult ehr = new EntityHitResult(nearestIfe, nearestIfe.getEyePos());
+//		ActionResult result = client.interactionManager.interactEntityAtLocation(client.player, nearestIfe, ehr, Hand.MAIN_HAND);
 //		Main.LOGGER.info("AutoPlaceMapArt: interact result: "+(
 //			result == ActionResult.CONSUME ? "consume" :
 //			result == ActionResult.FAIL ? "fail" :

@@ -188,7 +188,7 @@ public class Main implements ClientModInitializer{
 		if(mapHighlights){
 			if(mapHighlightTooltip) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors);
 			ClientTickEvents.START_CLIENT_TICK.register(client -> {
-				UpdateInventoryHighlights.onUpdateTick(client);
+				UpdateInventoryHighlights.onUpdateTick(client.player);
 				UpdateItemFrameHighlights.onUpdateTick(client);
 				if(mapHighlightsInGUIs) UpdateContainerHighlights.onUpdateTick(client);
 			});

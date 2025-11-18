@@ -8,12 +8,11 @@ import java.util.stream.Stream;
 import net.evmodder.KeyBound.apis.MapGroupUtils;
 import net.evmodder.KeyBound.apis.MapRelationUtils;
 import net.evmodder.KeyBound.config.Configs;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.map.MapState;
+import net.minecraft.world.World;
 
 public class UpdateInventoryHighlights{
 //	private static int invHash;
@@ -28,7 +27,7 @@ public class UpdateInventoryHighlights{
 		return nestedInventoryMapGroup.contains(colorsUUID);
 	}
 
-	private static final boolean addMapStateIds(final ItemStack stack, final ClientWorld world){
+	private static final boolean addMapStateIds(final ItemStack stack, final World world){
 		if(stack.isEmpty()) return false;
 		final MapState state = FilledMapItem.getMapState(stack, world);
 		if(state == null){
@@ -53,15 +52,15 @@ public class UpdateInventoryHighlights{
 //		newInvHash += colorsId.hashCode();
 		return false;
 	}
-	public static final void onUpdateTick(MinecraftClient client){
-		if(client.player == null || client.world == null || !client.player.isAlive()) return;
+	public static final void onUpdateTick(PlayerEntity player){
+		if(player == null || player.getWorld() == null || !player.isAlive()) return;
 //		int newInvHash = inventoryMapGroup.size() * nestedInventoryMapGroup.size();
 		inventoryMapGroup.clear();
 		nestedInventoryMapGroup.clear();
 		boolean mapPlaceStillOngoing = false;
-		for(int i=0; i<41; ++i) mapPlaceStillOngoing |= addMapStateIds(client.player.getInventory().getStack(i), client.world);
-		if(client.player.currentScreenHandler != null){
-			mapPlaceStillOngoing |= addMapStateIds(client.player.currentScreenHandler.getCursorStack(), client.world);
+		for(int i=0; i<41; ++i) mapPlaceStillOngoing |= addMapStateIds(player.getInventory().getStack(i), player.getWorld());
+		if(player.currentScreenHandler != null){
+			mapPlaceStillOngoing |= addMapStateIds(player.currentScreenHandler.getCursorStack(), player.getWorld());
 		}
 
 		if(!mapPlaceStillOngoing){
@@ -75,7 +74,7 @@ public class UpdateInventoryHighlights{
 //			invHash = newInvHash;
 //			ItemFrameHighlightUpdater.highlightedIFrames.clear();
 //		}
-		final int syncId = client.currentScreen instanceof HandledScreen hs ? hs.getScreenHandler().syncId : 0;
+		final int syncId = player.currentScreenHandler != null ? player.currentScreenHandler.syncId : 0;
 		mapsInInvHash = syncId + inventoryMapGroup.hashCode() + nestedInventoryMapGroup.hashCode();
 	}
 }
