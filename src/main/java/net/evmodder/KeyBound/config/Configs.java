@@ -23,7 +23,7 @@ public class Configs implements IConfigHandler{
 
 	private static final String GENERIC_KEY = Main.MOD_ID+".config.generic";
 	public static class Generic{
-		public static final ConfigInteger CLICK_LIMIT_COUNT = new ConfigInteger("clickLimitCount", 79, 0, 100_000).apply(GENERIC_KEY);
+		public static final ConfigInteger CLICK_LIMIT_COUNT = new ConfigInteger("clickLimitCount", 69, 0, 100_000).apply(GENERIC_KEY);
 		public static final ConfigInteger CLICK_LIMIT_DURATION = new ConfigInteger("clickLimitWindow", 99, 1, 72_000).apply(GENERIC_KEY);
 		public static final ConfigBoolean CLICK_LIMIT_USER_INPUT = new ConfigBoolean("clickLimitUserInputs", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean CLICK_FILTER_USER_INPUT = new ConfigBoolean("clickBlockUserInputsDuringOperation", true).apply(GENERIC_KEY);
@@ -39,7 +39,7 @@ public class Configs implements IConfigHandler{
 		static{MAX_IFRAME_TRACKING_DIST.setValueChangeCallback(d -> MAX_IFRAME_TRACKING_DIST_SQ=Math.pow(d.getIntegerValue(), 2));}
 
 		public static final ConfigBooleanHotkeyed PLACEMENT_HELPER_IFRAME = new ConfigBooleanHotkeyed("placementHelperIFrame", false, "").apply(GENERIC_KEY);
-		public static final ConfigDouble PLACEMENT_HELPER_IFRAME_REACH = new ConfigDouble("placementHelperIFrameReach", 3.5).apply(GENERIC_KEY);
+		public static final ConfigDouble PLACEMENT_HELPER_IFRAME_REACH = new ConfigDouble("placementHelperIFrameReach", 3.5d).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_IFRAME_RAYCAST = new ConfigBoolean("placementHelperIFrameRaycast", true).apply(GENERIC_KEY);
 		// ConfigOptionList: RaycastOnly, RaycastRotatePlayer, RaycastGrimRotate
 //		public static final ConfigBoolean PLACEMENT_HELPER_IFRAME_ROTATE_PLAYER = new ConfigBoolean("placementHelperIFrameRotatePlayer", false).apply(GENERIC_KEY);
@@ -47,7 +47,7 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK = new ConfigBoolean("placementHelperIFrameMustMatchBlock", true).apply(GENERIC_KEY);
 
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART = new ConfigBoolean("placementHelperMapArt", true).apply(GENERIC_KEY);
-		public static final ConfigDouble PLACEMENT_HELPER_MAPART_REACH = new ConfigDouble("placementHelperMapArtReach", 4).apply(GENERIC_KEY);
+		public static final ConfigDouble PLACEMENT_HELPER_MAPART_REACH = new ConfigDouble("placementHelperMapArtReach", 4d).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_NAMES = new ConfigBoolean("placementHelperMapArtUseNames", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_IMAGE = new ConfigBoolean("placementHelperMapArtUseImage", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_FROM_BUNDLE = new ConfigBoolean("placementHelperMapArtFromBundle", true).apply(GENERIC_KEY);

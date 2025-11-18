@@ -159,7 +159,7 @@ public class AutoPlaceMapArt{
 			return false;
 		}
 
-		if(currIfe.getFacing() != lastIfe.getFacing()){
+		if((dir=currIfe.getFacing()) != lastIfe.getFacing()){
 			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not facing the same dir");
 			disableAndReset(); return false;
 		}
@@ -181,12 +181,16 @@ public class AutoPlaceMapArt{
 		// Parse 2d pos (and cache for other maps items, if necessary)
 		final ArrayList<ItemStack> allMapItems = currentData == null ? new ArrayList<>() : null;
 		if(currentData == null){
-			allMapItems.add(currStack);
+			allMapItems.add(currStack); allMapItems.add(lastStack);
 			MapRelationUtils.getAllNestedItems(player.getInventory().main.stream()).filter(s -> s.getItem() == Items.FILLED_MAP).forEach(allMapItems::add);
-			Main.LOGGER.info("AutoPlaceMapArt: all maps in inv: "+(allMapItems.size()-1));
+			Main.LOGGER.info("AutoPlaceMapArt: all maps in inv: "+(allMapItems.size()-2));
 
 			currentData = MapRelationUtils.getRelatedMapsByName0(allMapItems, player.getWorld());
-			Main.LOGGER.info("AutoPlaceMapArt: related maps in inv: "+(currentData.slots().size()-1));
+			if(currentData.slots().size() <= 3){
+				Main.LOGGER.info("AutoPlaceMapArt: not enough remaining maps in inv to justify enabling AutoPlace");
+				disableAndReset(); return false;
+			}
+			Main.LOGGER.info("AutoPlaceMapArt: related maps in inv: "+(currentData.slots().size()-2));
 		}
 		final String currPosStr = this.currPosStr=getPosStrFromName(currStack, currentData), lastPosStr = getPosStrFromName(lastStack, currentData);
 		final Pos2DPair pos2dPair = getRelativePosPair(currPosStr, lastPosStr);
@@ -195,7 +199,7 @@ public class AutoPlaceMapArt{
 			disableAndReset(); return false;
 		}
 
-		if(dir != null){
+		if(allMapItems == null){
 			// Validate consistent with an ongoing autoPlace - if not, disable with a loud warning!!
 			return true;
 		}
@@ -232,14 +236,16 @@ public class AutoPlaceMapArt{
 			stacksForCurrentData.ensureCapacity(currentData.slots().size());
 			currentData.slots().stream().map(i -> allMapItems.get(i)).forEach(stacksForCurrentData::add);
 		}
-		dir = currIfe.getFacing(); // Very important that this is the fianl variable to be set
-		return true;//TODO: switch to toggle feature on
+		Main.LOGGER.info("AutoPlaceMapArt: varAxis1Origin="+varAxis1Origin+",varAxis2Origin="+varAxis2Origin);
+		assert !stacksForCurrentData.isEmpty();
+		return true;
 	}
 
 	private BlockPos getPlacement(ItemStack stack, ClientWorld world){
 		if(!stacksForCurrentData.contains(stack)){
 			RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(currStack, stack), world);
 			if(data.slots().size() != 2 || data.prefixLen() == -1) return null; // Not part of the map being autoplaced
+			Main.LOGGER.info("AutoPlaceMapArt: Added map itemstack to currentData"+(stack.getCustomName()==null?"":", name="+stack.getCustomName().getString()));
 			stacksForCurrentData.add(stack);
 		}
 		final String posStr = getPosStrFromName(stack, currentData);
@@ -258,16 +264,28 @@ public class AutoPlaceMapArt{
 		return null;
 	}
 
+	boolean unableToFindMap;
 	public final void placeNearestMap(MinecraftClient client){
-		if(dir == null) return; // mapartPlacer is not currently active
-		if(client.player == null || client.world == null){disableAndReset(); return;}
-		if(!Configs.Generic.PLACEMENT_HELPER_MAPART_AUTOPLACE.getBooleanValue()){disableAndReset(); return;}
+		if(stacksForCurrentData.isEmpty()) return; // mapartPlacer is not currently active
+		if(client.player == null || client.world == null){
+			Main.LOGGER.info("AutoPlaceMapArt: player disconnected mid-op");
+			disableAndReset();
+			return;
+		}
+		if(!Configs.Generic.PLACEMENT_HELPER_MAPART_AUTOPLACE.getBooleanValue()){
+			Main.LOGGER.info("AutoPlaceMapArt: disabled mid-op");
+			disableAndReset();
+			return;
+		}
 //		final long ts = System.currentTimeMillis();
 //		if(ts-lastPlaceTs < 100) return; // Cooldown
-		if(UpdateInventoryHighlights.currentlyBeingPlacedIntoItemFrame != null) return;
+		if(UpdateInventoryHighlights.currentlyBeingPlacedIntoItemFrame != null){
+			Main.LOGGER.info("AutoPlaceMapArt: waiting for current mapart to be placed in iFrame");
+			return;
+		}
 
 		// Don't spam-place in the same blockpos, give iframe entity a chance to load
-		final boolean lastAttemptSucceeded = recentPlaceAttempts[attemptIdx] != 0;
+//		final boolean lastAttemptSucceeded = recentPlaceAttempts[attemptIdx] != 0;
 		if(++attemptIdx >= recentPlaceAttempts.length) attemptIdx = 0;
 		recentPlaceAttempts[attemptIdx] = 0;
 
@@ -302,7 +320,7 @@ public class AutoPlaceMapArt{
 			BlockPos bp = getPlacement(mapItem, client.world);
 			if(bp == null) continue;
 			++numUsableMaps;
-			final double distSq = bp.getSquaredDistance(client.player.getBlockPos());
+			final double distSq = bp.getSquaredDistance(client.player.getEyePos());
 			if(distSq < MAX_REACH*MAX_REACH){
 				++numUsableMapsInRange;
 				Optional<ItemFrameEntity> optionalIfe = ifes.stream().filter(ife -> ife.getBlockPos().equals(bp)).findAny();
@@ -325,12 +343,19 @@ public class AutoPlaceMapArt{
 				final boolean isHbSlot = i >= 36 && i < 45;
 				if(isHbSlot || distSq < nearestDistSq){nearestDistSq=distSq; nearestSlot=i; nearestIfe=optionalIfe.get();}
 			}
+			else{
+				Main.LOGGER.info("distSq:"+distSq+",maxReachSq:"+(MAX_REACH*MAX_REACH));
+				Main.LOGGER.info("bp: "+bp.toShortString());
+				Main.LOGGER.info("eye: "+client.player.getBlockPos().toShortString());
+			}
 		}
 		if(nearestSlot == -1){
-			if(lastAttemptSucceeded) Main.LOGGER.info("AutoPlaceMapArt: No viable itemstack->iframe found. #nearby_ifes="+ifes.size()
+			if(!unableToFindMap) Main.LOGGER.info("AutoPlaceMapArt: No viable itemstack->iframe found. #nearby_ifes="+ifes.size()
 				+",#map_items="+numMaps+",#usable_maps="+numUsableMaps+",#numUsableMapsInRange="+numUsableMapsInRange);
+			unableToFindMap = true;
 			return;
 		}
+		unableToFindMap = false;
 		if(nearestDistSq > MAX_REACH*MAX_REACH){
 			Main.LOGGER.info("AutoPlaceMapArt: Nearest placement spot is out of reach. distSq="+nearestDistSq);
 			return;
