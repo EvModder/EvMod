@@ -129,23 +129,38 @@ public final class KeybindMapMove{
 			if(isFillerMap(slots, slots[i], client.world)) continue;
 			final int count = slots[i].getCount();
 			if(selectiveMove && count != countsInInv.last()) continue;
-			if((count == 2 || count == 3) && !isShiftClick){
-				clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // right-click: pickup half
-				if(numInShulk == 0){
-					if(Main.clickUtils.MAX_CLICKS >= 2) reserveClicks.put(clicks.peekLast(), 2);
-					while(!slots[j].isEmpty()) if(++j == 27){
-						Main.LOGGER.error("MapMove: inv -> inv! (Should be unreachable)");
-						continue;
-					}
-					clicks.add(new ClickEvent(j++, 0, SlotActionType.PICKUP)); //left-click: place all into next empty slot
-					continue;
+			if(numInShulk == 0){
+				while(j < 27 && !slots[j].isEmpty()) ++j;
+				if(j >= 27){
+					Main.LOGGER.warn("MapMove: ran out of slots in shulker!");
+					break;
 				}
-				else if(Main.clickUtils.MAX_CLICKS >= 3) reserveClicks.put(clicks.peekLast(), 3);
 			}
-			clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE)); // shift-click: all in slot to shulker
-			if((count == 2 || count == 3) && !isShiftClick){
-				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // left-click: put back all on cursor
+			if(count == 1 || isShiftClick){
+				clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
 			}
+			else{ // put 1 into shulk
+				if(count == 2 || (count == 3 && numInShulk != 0)){
+					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // pickup half
+					if(numInShulk == 0){
+						if(Main.clickUtils.MAX_CLICKS >= 2) reserveClicks.put(clicks.peekLast(), 2);
+						clicks.add(new ClickEvent(j, 0, SlotActionType.PICKUP)); // place into next empty slot
+					}
+					else{
+						if(Main.clickUtils.MAX_CLICKS >= 3) reserveClicks.put(clicks.peekLast(), 3);
+						clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE)); // shift-move remaining (1)
+						clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // place back
+					}
+				}
+				else{
+					clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // pickup all
+					if(Main.clickUtils.MAX_CLICKS >= 4) reserveClicks.put(clicks.peekLast(), 4);
+					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // place one
+					clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE)); // shift-move the one
+					clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // place all (-1)
+				}
+			}
+			if(numInShulk == 0) ++j;
 		}
 		else for(int i=26, j=62; i>=0; --i){
 //			if(isMapArt(sh.getSlot(i).getStack())) clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.QUICK_MOVE));
@@ -153,28 +168,38 @@ public final class KeybindMapMove{
 			if(isFillerMap(slots, slots[i], client.world)) continue;
 			final int count = slots[i].getCount();
 			if(selectiveMove && count != countsInShulk.last()) continue;
-			if(count > 1 && !isShiftClick){
-				if(count == 2){
-					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // right-click: pickup half
+			if(numInInv == 0){
+				while(j >= 27 && !slots[j].isEmpty()) --j;
+				if(j < 27){
+					Main.LOGGER.warn("MapMove: ran out of slots in inv!");
+					break;
+				}
+			}
+			if(count == 1 || isShiftClick){
+				clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
+			}
+			else{ // take 1 from shulk
+				if(count == 2 || (count == 3 && numInInv != 0)){
+					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // pickup half
 					if(numInInv == 0){
 						if(Main.clickUtils.MAX_CLICKS >= 2) reserveClicks.put(clicks.peekLast(), 2);
-						while(!slots[j].isEmpty()) --j;
-						if(j < 27) Main.LOGGER.error("MapMove: shulker -> shulker! (Should be unreachable)");
-						clicks.add(new ClickEvent(j--, 0, SlotActionType.PICKUP)); //left-click: place all into next empty slot
-						continue;
+						clicks.add(new ClickEvent(j, 0, SlotActionType.PICKUP)); // place into next empty slot
 					}
-					else if(Main.clickUtils.MAX_CLICKS >= 3) reserveClicks.put(clicks.peekLast(), 3);
+					else{
+						if(Main.clickUtils.MAX_CLICKS >= 3) reserveClicks.put(clicks.peekLast(), 3);
+						clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE)); // shift-move remaining (1)
+						clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // place back
+					}
 				}
 				else{
-					clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // left-click: pickup all
+					clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // pickup all
 					if(Main.clickUtils.MAX_CLICKS >= 4) reserveClicks.put(clicks.peekLast(), 4);
-					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // right-click: place one
+					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // place one
+					clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE)); // shift-move the one
+					clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // place all (-1)
 				}
 			}
-			clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
-			if(count > 1 && !isShiftClick){
-				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // left-click: place all
-			}
+			if(numInInv == 0) --j;
 		}
 
 		//Main.LOGGER.info("MapMove: STARTED");
