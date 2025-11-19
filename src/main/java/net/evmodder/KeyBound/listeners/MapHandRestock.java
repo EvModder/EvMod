@@ -468,8 +468,7 @@ public final class MapHandRestock{
 		waitingForRestock = true;
 		new Thread(){@Override public void run(){
 //			Main.LOGGER.info("MapRestock: waiting for currently placed map to load");
-			while(player != null && !player.isInCreativeMode()
-					&& UpdateInventoryHighlights.currentlyBeingPlacedIntoItemFrame != null) Thread.yield();
+			while(player != null && !player.isInCreativeMode() && UpdateInventoryHighlights.hasCurrentlyBeingPlaceMapArt()) Thread.yield();
 
 //			Main.LOGGER.info("MapRestock: ok, sync client execution");
 			MinecraftClient client = MinecraftClient.getInstance();
@@ -539,14 +538,7 @@ public final class MapHandRestock{
 			if(stack.getCount() > 2) return ActionResult.PASS;
 			//Main.LOGGER.info("item in hand is filled_map [1or2]");
 
-			final MapState state = FilledMapItem.getMapState(stack, player.getWorld());
-			if(state != null && stack.getCount() == 1 &&
-					IntStream.range(0, 41).noneMatch(i -> i != player.getInventory().selectedSlot &&
-					FilledMapItem.getMapState(player.getInventory().getStack(i), player.getWorld()) == state)){
-//				InventoryHighlightUpdater.currentlyBeingPlacedIntoItemFrameSlot = player.getInventory().selectedSlot;
-				UpdateInventoryHighlights.currentlyBeingPlacedIntoItemFrame = stack.copy();
-				UpdateInventoryHighlights.onUpdateTick(player);
-			}
+			UpdateInventoryHighlights.setCurrentlyBeingPlacedMapArt(player, stack);
 
 			if(mapAutoPlacer.recalcIsActive(player, lastIfe, lastStack, ife, stack)){
 				Main.LOGGER.info("MapAutoPlacer is running, no need to handle restock");

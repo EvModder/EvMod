@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import net.evmodder.KeyBound.apis.MapGroupUtils;
 import net.evmodder.KeyBound.apis.MapRelationUtils;
@@ -17,7 +18,7 @@ import net.minecraft.world.World;
 public class UpdateInventoryHighlights{
 //	private static int invHash;
 	private static HashSet<UUID> inventoryMapGroup = new HashSet<>(), nestedInventoryMapGroup = new HashSet<>();
-	public static ItemStack currentlyBeingPlacedIntoItemFrame;
+	private static ItemStack currentlyBeingPlacedIntoItemFrame;
 	public static int mapsInInvHash;
 
 	public static final boolean isInInventory(/*final int id, */final UUID colorsUUID){
@@ -26,6 +27,21 @@ public class UpdateInventoryHighlights{
 	public static final boolean isNestedInInventory(final UUID colorsUUID){
 		return nestedInventoryMapGroup.contains(colorsUUID);
 	}
+
+	public static final boolean setCurrentlyBeingPlacedMapArt(PlayerEntity player, ItemStack stack){
+		final MapState state = FilledMapItem.getMapState(stack, player.getWorld());
+		if(state != null && stack.getCount() == 1 &&
+				IntStream.range(0, 41).noneMatch(i -> i != player.getInventory().selectedSlot &&
+				FilledMapItem.getMapState(player.getInventory().getStack(i), player.getWorld()) == state))
+		{
+//			currentlyBeingPlacedIntoItemFrameSlot = player.getInventory().selectedSlot;
+			currentlyBeingPlacedIntoItemFrame = stack.copy();
+			onUpdateTick(player);
+			return true;
+		}
+		return false;
+	}
+	public static final boolean hasCurrentlyBeingPlaceMapArt(){return currentlyBeingPlacedIntoItemFrame != null;}
 
 	private static final boolean addMapStateIds(final ItemStack stack, final World world){
 		if(stack.isEmpty()) return false;
