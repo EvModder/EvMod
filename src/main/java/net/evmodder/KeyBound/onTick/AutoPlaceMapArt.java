@@ -39,8 +39,10 @@ public class AutoPlaceMapArt{
 	private final ArrayList<Integer> stacksHashesForCurrentData;
 //	private long lastPlaceTs;
 	private final int[] recentPlaceAttempts;
-	private ItemStack lastPlacedMapStack;
-	private int attemptIdx;
+//	private ItemStack lastPlacedMapStack;
+	private int attemptIdx, lastAttemptIdx;
+	private final int INV_DELAY_TICKS = 1;
+	private int ticksSinceInvAction;
 
 	public AutoPlaceMapArt(){
 		allMapItems = new ArrayList<>();
@@ -335,13 +337,23 @@ public class AutoPlaceMapArt{
 
 		// Sadly this doesn't appear to work, since UseEntityCallback.EVENT isn't triggered for some reason.
 		// And yeah, I tried setting it manually, but since the code can't guarantee a map gets placed, doing so can get it stuck.
-//		if(!client.player.isInCreativeMode() && UpdateInventoryHighlights.hasCurrentlyBeingPlaceMapArt()){
-//			Main.LOGGER.info("AutoPlaceMapArt: waiting for current mapart to be placed in iFrame");
+		if(!client.player.isInCreativeMode() && UpdateInventoryHighlights.hasCurrentlyBeingPlaceMapArt()){
+			Main.LOGGER.info("AutoPlaceMapArt: waiting for last manually-placed mapart to vanish from mainhand");
+			return;
+		}
+
+		// Same problem
+//		if(lastPlacedMapStack != null && ItemStack.areEqual(lastPlacedMapStack, client.player.getMainHandStack())){
+//			Main.LOGGER.info("AutoPlaceMapArt: waiting for current mapart to be placed in iFrame...");
 //			return;
 //		}
-		if(ItemStack.areEqual(lastPlacedMapStack, client.player.getMainHandStack())){
-			Main.LOGGER.info("AutoPlaceMapArt: waiting for current mapart to be placed in iFrame...");
-			return;
+		{
+			Entity e = client.world.getEntityById(recentPlaceAttempts[lastAttemptIdx]);
+			if(e != null && e instanceof ItemFrameEntity ife && ItemStack.areEqual(client.player.getMainHandStack(), ife.getHeldItemStack())){
+				final int waited = lastAttemptIdx < attemptIdx ? attemptIdx-lastAttemptIdx : recentPlaceAttempts.length+attemptIdx-lastAttemptIdx;
+				Main.LOGGER.info("AutoPlaceMapArt: waiting for current map to vanish from mainhand ("+waited+"ticks)");
+				return;
+			}
 		}
 
 		// Don't spam-place in the same blockpos, give iframe entity a chance to load
@@ -362,9 +374,12 @@ public class AutoPlaceMapArt{
 			while(i != attemptIdx){
 				Entity e = client.world.getEntityById(recentPlaceAttempts[i]);
 				if(e != null && e instanceof ItemFrameEntity ife && ife.getHeldItemStack().isEmpty()){
-					final int rem = i < attemptIdx ? attemptIdx-i : attemptIdx+recentPlaceAttempts.length-i;
-					Main.LOGGER.info("AutoPlaceMapArt: waiting for current mapart to be placed in iFrame (timeout in "+rem+"ticks)");
-					return;
+					if(ife.getHeldItemStack().isEmpty()){
+	//					final int rem = attemptIdx < i ? i-attemptIdx : recentPlaceAttempts.length+i-attemptIdx;
+						final int waited = i < attemptIdx ? attemptIdx-i : recentPlaceAttempts.length+attemptIdx-i;
+						Main.LOGGER.info("AutoPlaceMapArt: waiting for current map to appear in iFrame ("+waited+"ticks)");
+						return;
+					}
 				}
 				if(++i == recentPlaceAttempts.length) i = 0;
 			}
@@ -413,7 +428,7 @@ public class AutoPlaceMapArt{
 					continue;
 				}
 				if(i-36 == selectedSlot){
-					Main.LOGGER.info("AutoPlaceMapArt: Stack in hand is a valid candidate, using it!");
+//					Main.LOGGER.info("AutoPlaceMapArt: Stack in hand is a valid candidate, using it!");
 					nearestSlot = i;
 					nearestDistSq = distSq;
 					nearestIfe = optionalIfe.get();
@@ -447,6 +462,7 @@ public class AutoPlaceMapArt{
 		}
 //		Main.LOGGER.info("AutoPlaceMapArt: distance to place-loc for itemstack in slot"+nearestSlot+": "+Math.sqrt(nearestDistSq));
 
+		//TODO: handle bundles
 		if(nearestSlot - 36 != selectedSlot){
 			if(nearestSlot >= 36 && nearestSlot < 45){
 				client.player.getInventory().setSelectedSlot(nearestSlot - 36);
@@ -456,22 +472,29 @@ public class AutoPlaceMapArt{
 				client.interactionManager.clickSlot(0, nearestSlot, selectedSlot, SlotActionType.SWAP, client.player);
 				Main.LOGGER.info("AutoPlaceMapArt: Swapped inv.selectedSlot to nextMap: s="+nearestSlot);
 			}
+			ticksSinceInvAction = 0;
+		}
+		if(ticksSinceInvAction++ < INV_DELAY_TICKS){
+			Main.LOGGER.info("AutoPlaceMapArt: waiting for inv action cooldown ("+ticksSinceInvAction+"ticks)");
 			return;
 		}
 //		assert client.player.getInventory().getMainHandStack().equals(client.player.getInventory().main.get(client.player.getInventory().selectedSlot));
 
-		Main.LOGGER.info("AutoPlaceMapArt: right-clicking target iFrame ("+nearestIfe.getBlockPos().toShortString()+") with map: "+nearestStack.getName().getString());
+		Main.LOGGER.info("AutoPlaceMapArt: right-clicking target iFrame"
+//				+ " ("+nearestIfe.getBlockPos().toShortString()+")"
+				+ " with map: "+nearestStack.getName().getString());
 
 //		UpdateInventoryHighlights.setCurrentlyBeingPlacedMapArt(null, nearestStack);
+//		lastPlacedMapStack = nearestStack.copy();
 		recentPlaceAttempts[attemptIdx] = nearestIfe.getId();
-		lastPlacedMapStack = nearestStack.copy();
+		lastAttemptIdx = attemptIdx;
 //		lastPlaceTs = ts;
 
 //		client.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
 		client.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.interactAt(nearestIfe, client.player.isSneaking(), Hand.MAIN_HAND, nearestIfe.getEyePos()));
 		client.interactionManager.interactEntity(client.player, nearestIfe, Hand.MAIN_HAND);
-		nearestIfe.interactAt(client.player, nearestIfe.getEyePos(), Hand.MAIN_HAND);
-		client.player.interact(nearestIfe, Hand.MAIN_HAND);
+//		nearestIfe.interactAt(client.player, nearestIfe.getEyePos(), Hand.MAIN_HAND);
+//		client.player.interact(nearestIfe, Hand.MAIN_HAND);
 
 //		EntityHitResult ehr = new EntityHitResult(nearestIfe, nearestIfe.getEyePos());
 //		ActionResult result = client.interactionManager.interactEntityAtLocation(client.player, nearestIfe, ehr, Hand.MAIN_HAND);
