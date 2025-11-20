@@ -8,6 +8,7 @@ public abstract class LoadingCache<K, V>{
 	//TODO: loading duration tracking?
 	private final HashMap<K, Thread> loading = new HashMap<>();
 	private final V V_NOT_FOUND, V_LOADING;
+	boolean alwaysLoadSync;
 	public LoadingCache(final HashMap<K, V> initMap, final V notFound, final V loading){cache = initMap; V_NOT_FOUND = notFound; V_LOADING = loading;}
 	public LoadingCache(final V notFound, final V loading){this(new HashMap<>(), notFound, loading);}
 	public LoadingCache(){this(new HashMap<>(), null, null);}
@@ -29,23 +30,7 @@ public abstract class LoadingCache<K, V>{
 		return true;
 	}
 //	public final boolean containsKey(final K k){return cache.containsKey(k);}
-	public final V get(final K k, final Consumer<V> callback){
-		if(cache.containsKey(k)){
-			if(callback != null) callback.accept(cache.get(k));
-			return cache.get(k);
-//			final V v = cache.get(k);
-//			if(v == null) assert V_NOT_FOUND == null;
-//			return v != null ? v : V_NOT_FOUND;
-		}
-		{
-			final V v = loadSyncOrNull(k);
-			if(v != null){
-				assert v != V_LOADING : "loadSyncOrNull() failed to do what its name implies (didn't load, yet didn't return null)";
-				cache.put(k, v);
-				if(callback != null) callback.accept(v);
-				return v;
-			}
-		}
+	private final void loadValue(final K k, final Consumer<V> callback){
 		synchronized(loading){
 			if(!loading.containsKey(k)){
 				final Thread t = new Thread(()->{
@@ -62,10 +47,28 @@ public abstract class LoadingCache<K, V>{
 				t.start();
 			}
 		}
+	}
+	public final V get(final K k, final Consumer<V> callback){
+		{
+			final V v = loadSyncOrNull(k);
+			if(v != null){
+				assert v != V_LOADING : "loadSyncOrNull() failed to do what its name implies (didn't load, yet didn't return null)";
+				cache.put(k, v);
+				if(callback != null) callback.accept(v);
+				return v;
+			}
+		}
+		if(cache.containsKey(k)){
+			if(callback != null) callback.accept(cache.get(k));
+			return cache.get(k);
+//			final V v = cache.get(k);
+//			if(v == null) assert V_NOT_FOUND == null;
+//			return v != null ? v : V_NOT_FOUND;
+		}
+		loadValue(k, callback);
 		return V_LOADING;
 	}
 	public final V getSync(final K k){
-		if(cache.containsKey(k)) return cache.get(k);
 		{
 			final V v = loadSyncOrNull(k);
 			if(v != null){
@@ -74,6 +77,7 @@ public abstract class LoadingCache<K, V>{
 				return v;
 			}
 		}
+		if(cache.containsKey(k)) return cache.get(k);
 		final boolean iAmTheLoader;
 //		assert Thread.currentThread() != null; // iirc, main thread id=1
 		synchronized(loading){iAmTheLoader = loading.putIfAbsent(k, Thread.currentThread()) == null;}

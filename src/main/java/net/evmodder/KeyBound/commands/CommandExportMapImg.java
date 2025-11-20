@@ -54,8 +54,6 @@ import net.minecraft.util.math.Direction.Axis;
 
 public class CommandExportMapImg{
 	final int RENDER_DIST = 10*16;
-//	final boolean BLOCK_BORDER;
-//	final int BORDER_1, BORDER_2, UPSCALE_TO;
 	final String MAP_EXPORT_DIR = "mapart_exports/";
 
 	// Matrix math from the internet:

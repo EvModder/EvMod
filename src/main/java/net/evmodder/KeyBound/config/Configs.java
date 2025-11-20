@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -368,9 +369,9 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean EPEARL_OWNERS_BY_XZ = new ConfigBoolean("epearlDatabaseXZ", false).apply(DATABASE_KEY);
 		//public static final ConfigBoolean SHARE_EPEARL_OWNERS = new ConfigBoolean("shareMapArt", true).apply(GENERIC_KEY); //TODO: implement
 		public static final ConfigBoolean SHARE_IGNORES = new ConfigBoolean("shareIgnoreList", false).apply(DATABASE_KEY);
-		public static final ConfigStringList BORROW_IGNORES = new ConfigStringList("borrowIgnoreLists", ImmutableList.of(
-				"34471e8d-d0c5-47b9-b8e1-b5b9472affa4",
-				"0e314b60-29c7-4e35-bef3-3c652c8fb467"
+		public static final ConfigPlayerList BORROW_IGNORES = new ConfigPlayerList("borrowIgnoreLists", List.of(
+				UUID.fromString("34471e8d-d0c5-47b9-b8e1-b5b9472affa4"),
+				UUID.fromString("0e314b60-29c7-4e35-bef3-3c652c8fb467")
 		)).apply(DATABASE_KEY);
 		public static final ConfigBoolean SHARE_JOIN_QUIT = new ConfigBoolean("shareJoinQuit", true).apply(DATABASE_KEY);
 

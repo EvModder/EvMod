@@ -49,8 +49,8 @@ public class MojangProfileLookup{
 			return null;
 		}
 		@Override protected UUID load(String key){
-			if(key.isBlank()){
-				Main.LOGGER.error("MojangProfileLookup: UUID load() called for an empty username!");
+			if(key.isBlank()/*!key.matches("[a-zA-Z0-9]+")*/){
+				Main.LOGGER.error("MojangProfileLookup: UUID load() called for an invalid username!");
 				return UUID_404;
 			}
 			String data = WebUtils.getReadURL("https://api.mojang.com/users/profiles/minecraft/"+key);

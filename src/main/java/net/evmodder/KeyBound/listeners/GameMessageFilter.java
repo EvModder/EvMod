@@ -1,7 +1,6 @@
 package net.evmodder.KeyBound.listeners;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.UUID;
 import net.evmodder.EvLib.Command;
@@ -21,24 +20,7 @@ public class GameMessageFilter{
 	public void recomputeIgnoreLists(){
 		if(Main.remoteSender == null || currentServer != Main.HASHCODE_2B2T) return;
 		Main.LOGGER.info("GameMessageFilter: Recomputing borrowed ignorelists for 2b2t");
-		boolean waitingOnLookup = false;
-		ArrayList<UUID> uuids = new ArrayList<>(Configs.Database.BORROW_IGNORES.getStrings().size());
-		for(String provider : Configs.Database.BORROW_IGNORES.getStrings()){
-			try{uuids.add(UUID.fromString(provider));}
-			catch(IllegalArgumentException e){
-				final String providerName = provider.toLowerCase();
-				if(!MojangProfileLookup.uuidLookup.contains(providerName)){
-					MojangProfileLookup.uuidLookup.get(providerName, _0->recomputeIgnoreLists());
-					waitingOnLookup = true;
-				}
-				else{
-					UUID uuid = MojangProfileLookup.uuidLookup.getSync(providerName);
-					if(uuid == MojangProfileLookup.UUID_404) continue;
-					uuids.add(uuid);
-				}
-			}
-		}
-		if(!waitingOnLookup) for(UUID uuid : uuids){
+		for(UUID uuid : Configs.Database.BORROW_IGNORES.getUUIDs()){
 			Main.remoteSender.sendBotMessage(Command.DB_PLAYER_FETCH_IGNORES, /*udp=*/false, 5000, PacketHelper.toByteArray(uuid), reply -> {
 				String name = MojangProfileLookup.nameLookup.get(uuid, null);
 				String nameOrUUID = name == MojangProfileLookup.NAME_404 || name == MojangProfileLookup.NAME_LOADING ? uuid.toString() : name;
