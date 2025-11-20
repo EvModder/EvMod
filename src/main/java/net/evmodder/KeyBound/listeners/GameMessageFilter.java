@@ -21,6 +21,7 @@ public class GameMessageFilter{
 		if(Main.remoteSender == null || currentServer != Main.HASHCODE_2B2T) return;
 		Main.LOGGER.info("GameMessageFilter: Recomputing borrowed ignorelists for 2b2t");
 		for(UUID uuid : Configs.Database.BORROW_IGNORES.getUUIDs()){
+			if(uuid == null) continue;
 			Main.remoteSender.sendBotMessage(Command.DB_PLAYER_FETCH_IGNORES, /*udp=*/false, 5000, PacketHelper.toByteArray(uuid), reply -> {
 				String name = MojangProfileLookup.nameLookup.get(uuid, null);
 				String nameOrUUID = name == MojangProfileLookup.NAME_404 || name == MojangProfileLookup.NAME_LOADING ? uuid.toString() : name;

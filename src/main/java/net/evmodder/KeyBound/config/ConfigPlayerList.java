@@ -19,43 +19,55 @@ public class ConfigPlayerList extends ConfigBase<ConfigPlayerList> implements IC
 	private class NameAndUUID{ // Basically, a record but mutable :P
 		String name; UUID uuid;
 		NameAndUUID(String n, UUID u){name=n; uuid=u;}
-		String name(){return name;}
-		UUID uuid(){return uuid;}
+//		String name(){return name;}
+//		UUID uuid(){return uuid;}
 	}
 	private final List<UUID> defaultUUIDs;
-	private List<NameAndUUID> players;
+	private final List<NameAndUUID> players = new ArrayList<>();
+	private List<String> strings = new ArrayList<>(); // Needed due to some B.S.
 
-	@Override public void setStrings(List<String> names){
+	@Override public void setStrings(List<String> strings){
 //		names = names.stream().map(String::trim).toList();
-		if(names.equals(getStrings())) return;
+		if(strings.equals(getStrings())) return;
 		LinkedHashSet<String> set = new LinkedHashSet<>();
-		set.addAll(names);
-		players = set.stream().map(n -> {
+		set.addAll(strings);
+		players.clear();
+		set.stream().map(n -> {
 			NameAndUUID player = new NameAndUUID(n, null);
 			player.uuid = MojangProfileLookup.uuidLookup.get(n, u->{
 				if(u != MojangProfileLookup.UUID_404) player.uuid=u;
 				else synchronized(players){players.removeIf(p -> p.name == n);} // Not a real player name
 			});
 			return player;
-		}).toList();
+		}).forEach(players::add);
+		this.strings = strings;
+		onValueChanged();
 	}
-	public void setUUIDs(List<UUID> uuids){
-		if(uuids.equals(getUUIDs())) return;
-		LinkedHashSet<UUID> set = new LinkedHashSet<>();
-		set.addAll(uuids);
-		players = set.stream().map(u -> {
+	private void setUUIDs(List<UUID> uuids){
+		players.clear();
+		set.stream().map(u -> {
 			NameAndUUID player = new NameAndUUID(null, u);
 			player.name = MojangProfileLookup.nameLookup.get(u, n->{
 				if(n != MojangProfileLookup.NAME_404) player.name=n;
 				else synchronized(players){players.removeIf(p -> p.uuid == u);} // Not a real player UUID
 			});
 			return player;
-		}).toList();
+		}).forEach(players::add);
+		getStrings();
+		onValueChanged();
 	}
 
 	public ConfigPlayerList(String name, List<UUID> defaultUUIDs, String comment, String prettyName, String translatedName){
 		super(ConfigType.STRING_LIST, name, comment, prettyName, translatedName);
-		setUUIDs(defaultUUIDs);
+		for(UUID uuid : defaultUUIDs){
+			NameAndUUID player = new NameAndUUID(null, uuid);
+			player.name = MojangProfileLookup.nameLookup.get(uuid, n->player.name=n);
+			players.add(player);
+//			player.name = MojangProfileLookup.nameLookup.get(uuid, n->{
+//				if(n != MojangProfileLookup.NAME_404) player.name=n;
+//				else synchronized(players){players.removeIf(p -> p.uuid == uuid);} // Not a real player UUID!!
+//			});
+		}
 		this.defaultUUIDs = getUUIDs();
 	}
 	public ConfigPlayerList(String name, List<UUID> defaultUUIDs, String comment, String prettyName){
@@ -68,12 +80,17 @@ public class ConfigPlayerList extends ConfigBase<ConfigPlayerList> implements IC
 		this(name, defaultUUIDs, name + " Comment?", StringUtils.splitCamelCase(name), name);
 	}
 
-	@Override public List<String> getStrings(){return players.stream().map(NameAndUUID::name).toList();}
-	public List<UUID> getUUIDs(){return players.stream().map(NameAndUUID::uuid).toList();}
+	public List<UUID> getUUIDs(){return players.stream().map(nu -> nu.uuid).toList();}
+	@Override public List<String> getStrings(){
+		// Gotta do this instead of stream.toList() due to MaLiLib modifying the return value and expecting those changes to be reflected
+		strings.clear();
+		for(NameAndUUID nu : players) strings.add(nu.name);
+		return strings;
+	}
 	@Override public ImmutableList<String> getDefaultStrings(){
 		return ImmutableList.copyOf(defaultUUIDs.stream().map(MojangProfileLookup.nameLookup::getSync).toList());
 	}
-	@Override public void setModified(){onValueChanged();}
+	@Override public void setModified(){setStrings(strings); onValueChanged();}
 	@Override public boolean isModified(){return !defaultUUIDs.equals(getUUIDs());}
 	@Override public void resetToDefault(){setUUIDs(defaultUUIDs);}
 
@@ -91,7 +108,7 @@ public class ConfigPlayerList extends ConfigBase<ConfigPlayerList> implements IC
 			final int sep = nameAndUuid.indexOf(':');
 			final String cachedName = nameAndUuid.substring(0, sep);
 			final String uuidStr = nameAndUuid.substring(sep+1);
-			uuids.set(i, UUID.fromString(uuidStr));
+			uuids.add(uuidStr.equals("null") ? null : UUID.fromString(uuidStr));
 //			MojangProfileLookup.nameLookup.get(uuids.get(i), null); // Fetch up-to-date username
 			MojangProfileLookup.nameLookup.putIfAbsent(uuids.get(i), cachedName); // Use cached name in the meantime
 		}
