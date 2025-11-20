@@ -18,6 +18,7 @@ import fi.dy.masa.malilib.hotkeys.KeybindSettings.Context;
 import fi.dy.masa.malilib.util.FileUtils;
 import fi.dy.masa.malilib.util.JsonUtils;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.config.ConfigPlayerList.NameAndUUID;
 
 public class Configs implements IConfigHandler{
 	private static final String CONFIG_FILE_NAME = Main.MOD_ID+"/keybound.json";
@@ -52,7 +53,10 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_NAMES = new ConfigBoolean("placementHelperMapArtUseNames", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_IMAGE = new ConfigBoolean("placementHelperMapArtUseImage", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_FROM_BUNDLE = new ConfigBoolean("placementHelperMapArtFromBundle", true).apply(GENERIC_KEY);
-		public static final ConfigBooleanHotkeyed PLACEMENT_HELPER_MAPART_AUTOPLACE = new ConfigBooleanHotkeyed("placementHelperMapArtAutoPlace", true, "").apply(GENERIC_KEY);
+		public static final ConfigBooleanHotkeyed MAPART_AUTOPLACE = new ConfigBooleanHotkeyed("mapArtAutoPlace", true, "").apply(GENERIC_KEY);
+
+		public static final ConfigBooleanHotkeyed MAPART_AUTOREMOVE = new ConfigBooleanHotkeyed("mapArtAutoRemove", true, "").apply(GENERIC_KEY);
+		public static final ConfigInteger MAPART_AUTOREMOVE_AFTER = new ConfigInteger("mapArtAutoRemoveThreshold", 2, 1, 20).apply(GENERIC_KEY);
 
 		public static final ConfigString WHISPER_PLAY_SOUND = new ConfigString("whisperPlaySound", "{sound:block.note_block.bass, category:PLAYERS, volume:.7, pitch:2}").apply(GENERIC_KEY);
 		public static final ConfigString WHISPER_PEARL_PULL = new ConfigString("whisperPearlPull", "(?:e?p|e?pearl|([iI]'?m ?)?r(ea)?dy)").apply(GENERIC_KEY);
@@ -102,7 +106,7 @@ public class Configs implements IConfigHandler{
 							//PLACEMENT_HELPER_MAPART_REACH
 							PLACEMENT_HELPER_MAPART_USE_NAMES, PLACEMENT_HELPER_MAPART_USE_IMAGE,
 							PLACEMENT_HELPER_MAPART_FROM_BUNDLE));
-					if(Main.placementHelperMapArtAuto) availableOptions.add(PLACEMENT_HELPER_MAPART_AUTOPLACE);
+					if(Main.placementHelperMapArtAuto) availableOptions.add(MAPART_AUTOPLACE);
 				}
 				if(Main.gameMessageListener) availableOptions.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PEARL_PULL));
 				if(Main.cmdMapArtGroup) availableOptions.add(MAPART_GROUP_INCLUDE_UNLOCKED);
@@ -369,9 +373,9 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean EPEARL_OWNERS_BY_XZ = new ConfigBoolean("epearlDatabaseXZ", false).apply(DATABASE_KEY);
 		//public static final ConfigBoolean SHARE_EPEARL_OWNERS = new ConfigBoolean("shareMapArt", true).apply(GENERIC_KEY); //TODO: implement
 		public static final ConfigBoolean SHARE_IGNORES = new ConfigBoolean("shareIgnoreList", false).apply(DATABASE_KEY);
-		public static final ConfigPlayerList BORROW_IGNORES = new ConfigPlayerList("borrowIgnoreLists", List.of(
-				UUID.fromString("34471e8d-d0c5-47b9-b8e1-b5b9472affa4"),
-				UUID.fromString("0e314b60-29c7-4e35-bef3-3c652c8fb467")
+		public static final ConfigPlayerList BORROW_IGNORES = (ConfigPlayerList)new ConfigPlayerList("borrowIgnoreLists", List.of(
+				new NameAndUUID("EvDoc", UUID.fromString("34471e8d-d0c5-47b9-b8e1-b5b9472affa4")),
+				new NameAndUUID("EvModder", UUID.fromString("0e314b60-29c7-4e35-bef3-3c652c8fb467"))
 		)).apply(DATABASE_KEY);
 		public static final ConfigBoolean SHARE_JOIN_QUIT = new ConfigBoolean("shareJoinQuit", true).apply(DATABASE_KEY);
 

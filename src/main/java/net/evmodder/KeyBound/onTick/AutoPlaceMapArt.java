@@ -123,7 +123,7 @@ public class AutoPlaceMapArt{
 		return MapRelationUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
 	}
 	public final boolean recalcIsActive(PlayerEntity player, ItemFrameEntity lastIfe, ItemStack lastStack, ItemFrameEntity currIfe, ItemStack currStack){
-		if(!Generic.PLACEMENT_HELPER_MAPART_AUTOPLACE.getBooleanValue()
+		if(!Generic.MAPART_AUTOPLACE.getBooleanValue()
 			|| currIfe == null || currStack == null || lastIfe == null || lastStack == null || currStack.getCount() != 1 || lastStack.getCount() != 1)
 		{
 			disableAndReset();
@@ -295,7 +295,7 @@ public class AutoPlaceMapArt{
 			disableAndReset();
 			return;
 		}
-		if(!Configs.Generic.PLACEMENT_HELPER_MAPART_AUTOPLACE.getBooleanValue()){
+		if(!Configs.Generic.MAPART_AUTOPLACE.getBooleanValue()){
 			Main.LOGGER.info("AutoPlaceMapArt: disabled mid-op");
 			disableAndReset();
 			return;
