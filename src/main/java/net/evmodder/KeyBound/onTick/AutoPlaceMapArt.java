@@ -364,7 +364,7 @@ public class AutoPlaceMapArt{
 			if(nearestIsInHotbar && !isInHotbar) continue;
 			ItemStack mapItem = slots.get(i);
 			BundleContentsComponent contents = slots.get(i).get(DataComponentTypes.BUNDLE_CONTENTS);
-			if(contents != null && !contents.isEmpty()) mapItem = contents.get(0);
+			if(contents != null && !contents.isEmpty()) mapItem = contents.get(contents.size()-1);
 			if(mapItem.getItem() != Items.FILLED_MAP) continue;
 			++numMaps;
 			BlockPos bp = getPlacement(mapItem, client.world);
@@ -413,8 +413,20 @@ public class AutoPlaceMapArt{
 		}
 //		Main.LOGGER.info("AutoPlaceMapArt: distance to place-loc for itemstack in slot"+nearestSlot+": "+Math.sqrt(nearestDistSq));
 
-		//TODO: handle bundles
-		if(nearestSlot - 36 != selectedSlot){
+		BundleContentsComponent contents = slots.get(nearestSlot).get(DataComponentTypes.BUNDLE_CONTENTS);
+		if(contents != null){
+			if(!client.player.getMainHandStack().isEmpty() ||
+					(client.player.currentScreenHandler != null && !client.player.currentScreenHandler.getCursorStack().isEmpty()))
+			{
+				Main.LOGGER.info("AutoPlaceMapArt: Main hand is not empty! Unable to extract from bundle");
+				disableAndReset();
+				return;
+			}
+			client.interactionManager.clickSlot(0, nearestSlot, 1, SlotActionType.PICKUP, client.player);
+			client.interactionManager.clickSlot(0, selectedSlot+36, 0, SlotActionType.PICKUP, client.player);
+			Main.LOGGER.info("AutoPlaceMapArt: Extracted next map from bundle into mainhand");
+		}
+		else if(nearestSlot - 36 != selectedSlot){
 			if(nearestSlot >= 36 && nearestSlot < 45){
 				client.player.getInventory().setSelectedSlot(nearestSlot - 36);
 				Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to nearestMap: hb="+(nearestSlot-36));
