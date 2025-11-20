@@ -70,6 +70,11 @@ public class UpdateInventoryHighlights{
 	}
 	public static final void onUpdateTick(PlayerEntity player){
 		if(player == null || player.getWorld() == null || !player.isAlive()) return;
+
+		//TODO: this might make more sense in its own onTick() listener
+		MapState state = FilledMapItem.getMapState(player.getMainHandStack(), player.getWorld());
+		if(state != null && !state.locked) MapGroupUtils.getIdForMapState(state, /*evictUnlocked*/true);
+
 //		int newInvHash = inventoryMapGroup.size() * nestedInventoryMapGroup.size();
 		inventoryMapGroup.clear();
 		nestedInventoryMapGroup.clear();
