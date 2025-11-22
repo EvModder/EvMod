@@ -30,6 +30,8 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean CLICK_LIMIT_USER_INPUT = new ConfigBoolean("clickLimitUserInputs", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean CLICK_FILTER_USER_INPUT = new ConfigBoolean("clickBlockUserInputsDuringOperation", true).apply(GENERIC_KEY);
 
+		public static final ConfigBoolean BUNDLE_SELECT_REVERSED = new ConfigBoolean("selectBundleSlotsInReverse", true).apply(GENERIC_KEY);
+
 		public static final ConfigOptionList MAP_STATE_CACHE = new ConfigOptionList("mapStateCache",
 //				new SimpleStringOption("keybound.gui.label.cache_mapstate.", "a", "b", "c")).apply(GENERIC_KEY);
 				OptionMapStateCache.MEMORY_AND_DISK).apply(GENERIC_KEY);
@@ -49,12 +51,12 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK = new ConfigBoolean("placementHelperIFrameMustMatchBlock", true).apply(GENERIC_KEY);
 
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART = new ConfigBoolean("placementHelperMapArt", true).apply(GENERIC_KEY);
-		public static final ConfigDouble PLACEMENT_HELPER_MAPART_REACH = new ConfigDouble("placementHelperMapArtReach", 4d).apply(GENERIC_KEY);
+		public static final ConfigDouble PLACEMENT_HELPER_MAPART_REACH = new ConfigDouble("placementHelperMapArtReach", 3.9d).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_NAMES = new ConfigBoolean("placementHelperMapArtUseNames", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_IMAGE = new ConfigBoolean("placementHelperMapArtUseImage", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_FROM_BUNDLE = new ConfigBoolean("placementHelperMapArtFromBundle", true).apply(GENERIC_KEY);
 		public static final ConfigBooleanHotkeyed MAPART_AUTOPLACE = new ConfigBooleanHotkeyed("mapArtAutoPlace", true, "").apply(GENERIC_KEY);
-		public static final ConfigInteger MAPART_AUTOPLACE_INV_DELAY = new ConfigInteger("mapArtAutoPlaceInvDelay", 1, 0, 20).apply(GENERIC_KEY);
+		public static final ConfigInteger MAPART_AUTOPLACE_INV_DELAY = new ConfigInteger("mapArtAutoPlaceInvDelay", 3, 0, 20).apply(GENERIC_KEY);
 
 		public static final ConfigBooleanHotkeyed MAPART_AUTOREMOVE = new ConfigBooleanHotkeyed("mapArtAutoRemove", true, "").apply(GENERIC_KEY);
 		public static final ConfigInteger MAPART_AUTOREMOVE_AFTER = new ConfigInteger("mapArtAutoRemoveThreshold", 2, 1, 20).apply(GENERIC_KEY);
@@ -94,6 +96,7 @@ public class Configs implements IConfigHandler{
 			if(availableOptions == null){
 				availableOptions = new ArrayList<>();
 				availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT));
+				if(Main.placementHelperMapArt) availableOptions.add(BUNDLE_SELECT_REVERSED);
 				if((Main.serverJoinListener && Main.serverQuitListener) || Main.containerOpenCloseListener != null){
 					availableOptions.add(MAP_STATE_CACHE);
 //					if(MAP_STATE_CACHE.getOptionListValue() != MapStateCacheOption.OFF) availableOptions.add(MAP_STATE_CACHE_TYPE);

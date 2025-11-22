@@ -55,11 +55,14 @@
 	"keybound.gui.label.inventoryRestock.leaveUnlessAllResupply": "Leave Unless All-Resupply",
 
 	"keybound.config.generic.name.clickLimitCount": "clickLimitCount*",
-	"keybound.config.generic.comment.clickLimitCount": "2b2t will kick you for setning >80 clicks in <80 ticks (Last checked: 2025-10-15)",
+	"keybound.config.generic.comment.clickLimitCount": "2b2t will kick you for sending >80 clicks in <80 ticks (Last checked: 2025-10-15)",
 	"keybound.config.generic.name.clickLimitWindow": "clickLimitWindow*",
-	"keybound.config.generic.comment.clickLimitWindow": "2b2t will kick you for setning >80 clicks in <80 ticks (Last checked: 2025-10-15)",
+	"keybound.config.generic.comment.clickLimitWindow": "2b2t will kick you for sending >80 clicks in <80 ticks (Last checked: 2025-10-15)",
 	"keybound.config.generic.name.clickLimitUserInputs": "clickLimitAlsoApplyToUserInputs",
 	"keybound.config.generic.name.clickBlockUserInputsDuringOperation": "blockUserInputsDuringClickOperation",
+
+	"keybound.config.generic.name.selectBundleSlotsInReverse": "selectBundleSlotsInReverse",
+	"keybound.config.generic.comment.selectBundleSlotsInReverse": "When pulling items out of a bundle, use reverse index from vanilla (goofy 2b2t Hausemaster thing)",
 
 	"keybound.config.generic.name.mapStateCache": "mapStateCache*",
 	"keybound.config.generic.comment.mapStateCache": "Preserves cached map previews in player's inventory or echest between sessions (since MapStates get unloaded when you log off 2b2t)",

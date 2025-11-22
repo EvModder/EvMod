@@ -49,11 +49,14 @@
 	"keybound.gui.label.cacheMapState.target.byInvPos": "Por hueco de inventario/cofre",
 
 	"keybound.config.generic.name.clickLimitCount": "Conteo de clicks",
-	"keybound.config.generic.comment.clickLimitCount": "2b2t will kick you for setning >80 clicks in <80 ticks (Last checked: 2025-10-15)",
+	"keybound.config.generic.comment.clickLimitCount": "2b2t will kick you for sending >80 clicks in <80 ticks (Last checked: 2025-10-15)",
 	"keybound.config.generic.name.clickLimitWindow": "Ventana de limite",
-	"keybound.config.generic.comment.clickLimitWindow": "2b2t will kick you for setning >80 clicks in <80 ticks (Last checked: 2025-10-15)",
+	"keybound.config.generic.comment.clickLimitWindow": "2b2t will kick you for sending >80 clicks in <80 ticks (Last checked: 2025-10-15)",
 	"keybound.config.generic.name.clickLimitUserInputs": "Limite a clicks de usuario",
 	"keybound.config.generic.name.clickBlockUserInputsDuringOperation": "blockUserInputsDuringClickOperation",
+
+	"keybound.config.generic.name.selectBundleSlotsInReverse": "selectBundleSlotsInReverse",
+	"keybound.config.generic.comment.selectBundleSlotsInReverse": "2b2t",
 
 	"keybound.config.generic.name.mapStateCache": "Cache de mapas",
 	"keybound.config.generic.comment.mapStateCache": "Conserva la vista previa de los mapas en el inventario o en los cofres entre sesiones (estos se descargan al desconectarte del servidor)",

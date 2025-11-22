@@ -21,6 +21,7 @@ import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.network.packet.c2s.play.BundleItemSelectedC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
@@ -28,6 +29,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public class AutoPlaceMapArt{
@@ -290,12 +292,12 @@ public class AutoPlaceMapArt{
 
 	public final boolean isActive(){return !stacksHashesForCurrentData.isEmpty();}
 
-	private final void placeMapInFrame(MinecraftClient client, ItemStack stack, ItemFrameEntity ife){
+	private final void placeMapInFrame(MinecraftClient client, ItemFrameEntity ife){
 		assert client.player.getInventory().getMainHandStack().equals(client.player.getInventory().main.get(client.player.getInventory().selectedSlot));
 
 		Main.LOGGER.info("AutoPlaceMapArt: right-clicking target iFrame"
 //				+ " ("+ife.getBlockPos().toShortString()+")"
-				+ " with map: "+stack.getName().getString());
+				+ " with map: "+client.player.getInventory().getMainHandStack().getName().getString());
 
 //		UpdateInventoryHighlights.setCurrentlyBeingPlacedMapArt(null, stack);
 		recentPlaceAttempts[attemptIdx] = ife.getId();
@@ -309,7 +311,7 @@ public class AutoPlaceMapArt{
 	}
 
 	boolean foundValidPosOnLastAttempt;
-	record MapPlacementData(int slot, int bundleSlot, ItemStack mapStack, ItemFrameEntity ife){}
+	record MapPlacementData(int slot, int bundleSlot, ItemFrameEntity ife){}
 	private final MapPlacementData getNearestMapPlacement(PlayerEntity player){
 		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).collect(Collectors.toList());
 
@@ -327,37 +329,36 @@ public class AutoPlaceMapArt{
 		double nearestDistSq = Double.MAX_VALUE;
 //		BlockPos nearestBp;
 		ItemFrameEntity nearestIfe = null;
-		ItemStack nearestStack = null;
-		int nearestSlot = -1, bundleSlot = -1;
-		int numMaps = 0, numUsableMaps = 0, numUsableMapsInRange = 0;
+		int nearestSlot = -1, bundleSlot = 0;
+		int numMaps = 0, numRelated = 0, numRelatedInRange = 0, numRelatedInRangeStrict = 0;
 		boolean nearestIsInHotbar = false;
-		invloop: for(int i=0; i<slots.size(); ++i){
+		invloop: for(int i=slots.size()-1; i>=0; --i){
 			final boolean isInHotbar = i >= 36 && i < 45 && slots.get(i).getItem() == Items.FILLED_MAP;
 			if(nearestIsInHotbar && !isInHotbar) continue;
 //			ItemStack mapItem = slots.get(i);
 			BundleContentsComponent contents = slots.get(i).get(DataComponentTypes.BUNDLE_CONTENTS);
+			if(bundleSlot == -1 && contents != null) continue; // Prefer to avoid bundles when we have an alterantive itemstack
 			final int bundleSz = contents != null ? contents.size() : 0;
 //			if(contents != null && !contents.isEmpty()) mapItem = contents.get(contents.size()-1);
 
-//			int j=bundleSz==0 ? -1 : 0;
-			int j=bundleSz-1;
-			for(; j<bundleSz; ++j){
-				ItemStack mapStack = bundleSz==0 ? slots.get(i) : contents.get(j);
+			for(int j=-1; j<bundleSz; ++j){
+				ItemStack mapStack = j==-1 ? slots.get(i) : contents.get(j);
 				if(mapStack.getItem() != Items.FILLED_MAP) continue;
 				++numMaps;
 				BlockPos bp = getPlacement(mapStack, player.getWorld());
 				if(bp == null) continue;
-				++numUsableMaps;
+				++numRelated;
 				if(bp.getSquaredDistance(player.getEyePos()) > SCAN_DIST*SCAN_DIST) continue;
-				++numUsableMapsInRange;
+				++numRelatedInRange;
 				Optional<ItemFrameEntity> optionalIfe = ifes.stream().filter(ife -> ife.getBlockPos().equals(bp)).findAny();
 				if(optionalIfe.isEmpty()){
 					Main.LOGGER.warn("AutoPlaceMapArt: Missing iFrame at pos! "+bp.toShortString());
 					continue;
 				}
 				ItemFrameEntity ife = optionalIfe.get();
-				final double distSq = ife.getEyePos().squaredDistanceTo(player.getEyePos());
+				final double distSq = ife.getEyePos().squaredDistanceTo(player.getEyePos());//TODO: ife.getNearestCornerToPlayer
 				if(distSq > MAX_REACH*MAX_REACH) continue;
+				++numRelatedInRangeStrict;
 
 				if(Arrays.stream(recentPlaceAttempts).anyMatch(id -> id == ife.getId())){
 					Main.LOGGER.warn("AutoPlaceMapArt: Cannot place into the same iFrame twice! "+bp.toShortString());
@@ -370,7 +371,6 @@ public class AutoPlaceMapArt{
 					nearestSlot = i;
 					bundleSlot = j;
 					nearestIfe = ife;
-					nearestStack = mapStack;
 					if(isSelected){
 						Main.LOGGER.info("AutoPlaceMapArt: Stack in hand is a valid candidate, using it!");
 						break invloop;
@@ -382,12 +382,75 @@ public class AutoPlaceMapArt{
 //		return nearestSlot == -1 ? null : new MapPlacementData(nearestSlot, bundleSlot, nearestStack, nearestIfe);
 		if(nearestSlot == -1){
 			if(foundValidPosOnLastAttempt) Main.LOGGER.info("AutoPlaceMapArt: No viable itemstack->iframe found. #nearby_ifes="+ifes.size()
-				+",#map_items="+numMaps+",#usable_maps="+numUsableMaps+",#numUsableMapsInRange="+numUsableMapsInRange);
+				+",#maps="+numMaps+",#related="+numRelated+",#in_range="+numRelatedInRange+",#in_range_strict(ife)="+numRelatedInRangeStrict);
 			foundValidPosOnLastAttempt = false;
 			return null;
 		}
 		foundValidPosOnLastAttempt = true;
-		return new MapPlacementData(nearestSlot, bundleSlot, nearestStack, nearestIfe);
+		return new MapPlacementData(nearestSlot, bundleSlot, nearestIfe);
+	}
+
+	private final void executeClicks(Runnable onDone, ClickEvent... clicks){
+		Main.clickUtils.executeClicks(new ArrayDeque<>(List.of(clicks)), _0->true, onDone);
+	}
+	private final void getMapIntoMainHand(MinecraftClient client, int slot, int bundleSlot){
+//		assert slot != client.player.getInventory().selectedSlot+36 || bundleSlot != -1;
+
+		int TICKS_BETWEEN_INV_ACTIONS = Configs.Generic.MAPART_AUTOPLACE_INV_DELAY.getIntegerValue();
+		if(ticksSinceInvAction < TICKS_BETWEEN_INV_ACTIONS){
+			Main.LOGGER.info("AutoPlaceMapArt: waiting for inv action cooldown ("+ticksSinceInvAction+"ticks)");
+			return;
+		}
+		final Runnable onDone = TICKS_BETWEEN_INV_ACTIONS == 0 ? ()->placeNearestMap(client) : ()->ticksSinceInvAction=0;
+		final int selectedSlot = client.player.getInventory().selectedSlot;
+		if(bundleSlot == -1){
+			if(slot >= 36 && slot < 45){
+				client.player.getInventory().setSelectedSlot(slot - 36);
+				ticksSinceInvAction = 0;
+				Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to nearestMap: hb="+(slot-36));
+			}
+			else{
+				// Swap from upper inv to main hand
+				executeClicks(onDone, new ClickEvent(slot, selectedSlot+36, SlotActionType.SWAP));
+				Main.LOGGER.info("AutoPlaceMapArt: Swapped inv.selectedSlot to nextMap: s="+slot);
+			}
+		}
+		else{ // bundleSlot != -1
+			if(slot == selectedSlot+36 || !client.player.getMainHandStack().isEmpty()){
+				Main.LOGGER.info("AutoPlaceMapArt: Main hand is not empty! Unable to extract from bundle");
+//				disableAndReset();
+//				return;
+				int hbSlot = 0;
+				while(hbSlot < 9 && !client.player.getInventory().main.get(hbSlot).isEmpty()) ++hbSlot;
+				if(hbSlot != 9){
+					client.player.getInventory().setSelectedSlot(hbSlot);
+					ticksSinceInvAction = 0;
+					Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to empty slot: hb="+hbSlot);
+				}
+				else{
+					// Try to move item out of main hand
+					executeClicks(onDone, new ClickEvent(selectedSlot+36, 0, SlotActionType.QUICK_MOVE));
+					Main.LOGGER.info("AutoPlaceMapArt: Shift-clicking item out of mainhand (to upper inv), hb="+selectedSlot);
+				}
+				return;
+			}
+			BundleContentsComponent contents = client.player.playerScreenHandler.slots.get(slot).getStack().get(DataComponentTypes.BUNDLE_CONTENTS);
+			assert contents != null && contents.size() > bundleSlot;
+//			if(bundleSlot != contents.size()-1){
+				int bundleSlotUsed = Configs.Generic.BUNDLE_SELECT_REVERSED.getBooleanValue() ? contents.size()-(bundleSlot+1) : bundleSlot;
+				client.player.networkHandler.sendPacket(new BundleItemSelectedC2SPacket(slot, bundleSlotUsed));
+//			}
+			executeClicks(onDone,
+					new ClickEvent(slot, 1, SlotActionType.PICKUP), // Take from bundle
+					new ClickEvent(selectedSlot+36, 0, SlotActionType.PICKUP) // Place in main hand
+			);
+			Main.LOGGER.info("AutoPlaceMapArt: Extracted map from bundle into mainhand");
+		}
+	}
+
+	private boolean isMovingTooFast(Vec3d velocity){
+		double xzLengthSq = velocity.x*velocity.x + velocity.z*velocity.z;
+		return xzLengthSq > 0.0001 || Math.abs(velocity.y) > 0.08;
 	}
 
 	public final void placeNearestMap(MinecraftClient client){
@@ -407,14 +470,13 @@ public class AutoPlaceMapArt{
 			Main.LOGGER.info("AutoPlaceMapArt: waiting for inv action to complete");
 			return;
 		}
-		final int INV_DELAY_TICKS = Configs.Generic.MAPART_AUTOPLACE_INV_DELAY.getIntegerValue();
-		if(ticksSinceInvAction++ < INV_DELAY_TICKS){
-			Main.LOGGER.info("AutoPlaceMapArt: waiting for inv action cooldown ("+ticksSinceInvAction+"ticks)");
-			return;
-		}
+		++ticksSinceInvAction;
+//		if(ticksSinceInvAction++ < INV_DELAY_TICKS){
+//			Main.LOGGER.info("AutoPlaceMapArt: waiting for inv action cooldown ("+ticksSinceInvAction+"ticks)");
+//			return;
+//		}
 
-		if(client.player.currentScreenHandler != null &&
-				(client.player.currentScreenHandler.syncId != 0 || !client.player.currentScreenHandler.getCursorStack().isEmpty())){
+		if(client.player.currentScreenHandler != null && client.player.currentScreenHandler.syncId != 0){
 //			Main.LOGGER.info("AutoPlaceMapArt: paused, currently in container gui");
 			return;
 		}
@@ -426,6 +488,10 @@ public class AutoPlaceMapArt{
 			return;
 		}
 
+		// Don't spam-place in the same blockpos, give iframe entity a chance to load
+		if(++attemptIdx >= recentPlaceAttempts.length) attemptIdx = 0;
+		recentPlaceAttempts[attemptIdx] = 0;
+
 		{
 			Entity e = client.world.getEntityById(recentPlaceAttempts[lastAttemptIdx]);
 			if(e != null && e instanceof ItemFrameEntity ife && ItemStack.areEqual(client.player.getMainHandStack(), ife.getHeldItemStack())){
@@ -434,10 +500,6 @@ public class AutoPlaceMapArt{
 				return;
 			}
 		}
-
-		// Don't spam-place in the same blockpos, give iframe entity a chance to load
-		if(++attemptIdx >= recentPlaceAttempts.length) attemptIdx = 0;
-		recentPlaceAttempts[attemptIdx] = 0;
 
 		{
 //			assert 0 <= attemptIdx < recentPlaceAttempts.length;
@@ -456,61 +518,27 @@ public class AutoPlaceMapArt{
 			}
 		}
 
+		if(isMovingTooFast(client.player.getVelocity())) return; // Pause while player is moving
+
 		MapPlacementData data = getNearestMapPlacement(client.player);
 		if(data == null) return;
 
-		final Runnable ON_CLICKS_DONE = INV_DELAY_TICKS == 0 ? ()->placeNearestMap(client) : ()->ticksSinceInvAction=0;
-		final int selectedSlot = client.player.getInventory().selectedSlot;
-		if(data.bundleSlot != -1){
-			if(data.slot == selectedSlot+36 || !client.player.getMainHandStack().isEmpty()){
-				Main.LOGGER.info("AutoPlaceMapArt: Main hand is not empty! Unable to extract from bundle");
-//				disableAndReset();
-//				return;
-				int hbSlot = 0;
-				while(hbSlot < 9 && !client.player.getInventory().main.get(hbSlot).isEmpty()) ++hbSlot;
-				if(hbSlot != 9){
-					client.player.getInventory().setSelectedSlot(hbSlot);
-					Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to empty slot: hb="+hbSlot);
-					ticksSinceInvAction = 0;
-				}
-				else{
-					Main.clickUtils.executeClicks(new ArrayDeque<>(List.of(
-							new ClickEvent(selectedSlot+36, 0, SlotActionType.QUICK_MOVE) // Try to move item out of main hand
-					)), _0->true, ON_CLICKS_DONE);
-					Main.LOGGER.info("AutoPlaceMapArt: Shift-clicking item out of mainhand (to upper inv), hb="+selectedSlot);
-				}
+		if(client.player.playerScreenHandler != null && !client.player.playerScreenHandler.getCursorStack().isEmpty()){
+			Main.LOGGER.warn("AutoPlaceMapArt: item stuck on cursor! attempting to place into empty slot");
+			for(int i=44; i>=0; --i) if(!client.player.playerScreenHandler.slots.get(i).hasStack()){
+				// Place stack on cursor
+				Main.clickUtils.executeClicks(new ArrayDeque<>(List.of(new ClickEvent(i, 0, SlotActionType.PICKUP))), _0->true, ()->{});
 				return;
 			}
-//			if(ticksSinceInvAction < 0) return;
-//			ticksSinceInvAction = - 5;
-//			client.player.networkHandler.sendPacket(new BundleItemSelectedC2SPacket(data.slot, data.bundleSlot));
-//			client.player.networkHandler.sendPacket(new ClickSlotC2SPacket(
-//					/*syncId=*/0, -1, data.bundleSlot, 0, SlotActionType.PICKUP, ItemStack.EMPTY, new Int2ObjectOpenHashMap<ItemStack>()));
-//			client.interactionManager.clickSlot(0, selectedSlot+36, 0, SlotActionType.PICKUP, client.player);
-			
-//			if(data.bundleSlot == bundle.contents.size()-1){
-				Main.clickUtils.executeClicks(new ArrayDeque<>(List.of(
-						new ClickEvent(data.slot, 1, SlotActionType.PICKUP), // Take from bundle
-						new ClickEvent(selectedSlot+36, 0, SlotActionType.PICKUP) // Place in main hand
-				)), _0->true, ON_CLICKS_DONE);
-				Main.LOGGER.info("AutoPlaceMapArt: Extracted next map from bundle into mainhand");
-//			}
+			disableAndReset();
 			return;
 		}
-		else if(data.slot != selectedSlot+36){
-			if(data.slot >= 36 && data.slot < 45){
-				client.player.getInventory().setSelectedSlot(data.slot - 36);
-				Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to nearestMap: hb="+(data.slot-36));
-				ticksSinceInvAction = 0;
-			}
-			else{
-				Main.clickUtils.executeClicks(new ArrayDeque<>(List.of(
-						new ClickEvent(data.slot, selectedSlot, SlotActionType.SWAP) // Swap from upper inv to main hand
-				)), _0->true, ON_CLICKS_DONE);
-				Main.LOGGER.info("AutoPlaceMapArt: Swapped inv.selectedSlot to nextMap: s="+data.slot);
-				return;
-			}
+
+		if(data.slot != client.player.getInventory().selectedSlot+36 || data.bundleSlot != -1){
+			Main.LOGGER.warn("AutoPlaceMapArt: stack target!=held, calling getMapIntoMainHand()");
+			getMapIntoMainHand(client, data.slot, data.bundleSlot);
+			return;
 		}
-		placeMapInFrame(client, data.mapStack, data.ife);
+		placeMapInFrame(client, data.ife);
 	}
 }
