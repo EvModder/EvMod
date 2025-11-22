@@ -211,7 +211,7 @@ public class ClickUtils{
 //						).withColor(OUTTA_CLICKS_COLOR), false);
 				}
 			});
-		}}, 1l, 23l);//51l = just over a tick, 23l=just under half a tick
+		}}, 0l, 23l);//51l = just over a tick, 23l=just under half a tick
 	}
 
 	public static void executeClicksLEGACY(

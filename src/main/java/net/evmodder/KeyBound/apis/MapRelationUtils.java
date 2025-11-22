@@ -48,7 +48,7 @@ public abstract class MapRelationUtils{
 	public static final String simplifyPosStr(String pos){
 		pos = Normalizer.normalize(pos, Normalizer.Form.NFKD).toUpperCase();
 		pos = pos.replace("\u250c", "TL").replace("\u2510", "TR").replace("\u2514", "BL").replace("\u2518", "BR");
-		pos = pos.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", " ").trim().replaceAll("\\s+", " ");
+		pos = pos.replaceAll("[^-\\p{IsAlphabetic}\\p{IsDigit}]+", " ").trim().replaceAll("\\s+", " ");
 		pos = pos.replace("TOP", "T").replace("BOTTOM", "B").replace("LEFT", "L").replace("RIGHT", "R").replace("MIDDLE", "M");
 		pos = pos.replace("UP", "T").replace("DOWN", "B");
 		pos = pos.replace("FIRST", "0").replace("SECOND", "1").replace("ONE", "0").replace("TWO", "1");

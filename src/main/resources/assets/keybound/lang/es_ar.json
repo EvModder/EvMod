@@ -90,6 +90,7 @@
 	"keybound.config.generic.name.placementHelperMapArtUseImage": "ayudante para mapart - usa la imagen",
 	"keybound.config.generic.name.placementHelperMapArtFromBundle": "placementHelperMapArtFromBundle",
 	"keybound.config.generic.name.mapArtAutoPlace": "ayudante para mapart - AutoPlace",
+	"keybound.config.generic.name.mapArtAutoPlaceInvDelay": "mapArtAutoPlaceInvDelay",
 	"keybound.config.generic.comment.placementHelperIFrame": "ayudante para colocar marco de items",
 	"keybound.config.generic.comment.placementHelperIFrameMustConnect": "ayudante para marco de items - Solo coloca item frames conectados",
 	"keybound.config.generic.comment.placementHelperIFrameMustMatchBlock": "ayudante para marco de items - solo coloca en bloques que coinciden",

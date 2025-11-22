@@ -1,5 +1,6 @@
 package net.evmodder.KeyBound.onTick;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -11,8 +12,8 @@ import net.evmodder.KeyBound.apis.MapRelationUtils;
 import net.evmodder.KeyBound.apis.MapRelationUtils.RelatedMapsData;
 import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.config.Configs.Generic;
+import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.BundleContentsComponent;
 import net.minecraft.entity.Entity;
@@ -27,6 +28,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
+import net.minecraft.world.World;
 
 public class AutoPlaceMapArt{
 	private Direction dir;
@@ -41,7 +43,6 @@ public class AutoPlaceMapArt{
 
 	private final int[] recentPlaceAttempts;
 	private int attemptIdx, lastAttemptIdx;
-	private final int INV_DELAY_TICKS = 1;
 	private int ticksSinceInvAction;
 
 	public AutoPlaceMapArt(){
@@ -75,8 +76,8 @@ public class AutoPlaceMapArt{
 
 	record Pos2DPair(int a1, int a2, int b1, int b2){}
 	private int intFromPos(String pos){
-		assert pos.matches("[A-Z]+|[0-9]+") : "Invalid 2d pos str part! "+pos;
-		if('0' <= pos.charAt(0) && pos.charAt(0) <= '9') return Integer.parseInt(pos);
+		assert pos.matches("[A-Z]+|-?[0-9]+") : "Invalid 2d pos str part! "+pos;
+		if(pos.charAt(0) < 'A' || 'Z' > pos.charAt(0)) return Integer.parseInt(pos);
 
 		int res = pos.charAt(0) - 'A';
 		for(int i=1; i<pos.length(); ++i){
@@ -105,7 +106,7 @@ public class AutoPlaceMapArt{
 		return new Pos2DPair(intFromPos(posA1), intFromPos(posA2), intFromPos(posB1), intFromPos(posB2));
 	}
 
-	private void disableAndReset(){
+	public final void disableAndReset(){
 		if(dir != null){
 			dir = null;
 			currStack = null;
@@ -123,6 +124,7 @@ public class AutoPlaceMapArt{
 		return MapRelationUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
 	}
 	public final boolean recalcIsActive(PlayerEntity player, ItemFrameEntity lastIfe, ItemStack lastStack, ItemFrameEntity currIfe, ItemStack currStack){
+		synchronized(allMapItems){
 		if(!Generic.MAPART_AUTOPLACE.getBooleanValue()
 			|| currIfe == null || currStack == null || lastIfe == null || lastStack == null || currStack.getCount() != 1 || lastStack.getCount() != 1)
 		{
@@ -141,7 +143,7 @@ public class AutoPlaceMapArt{
 		}
 
 		final int ifeOffset1 = currAxisData.varAxis1 - lastAxisData.varAxis1, ifeOffset2 = currAxisData.varAxis2 - lastAxisData.varAxis2;
-//		Main.LOGGER.info("AutoPlaceMapArt: ifeOffset1="+ifeOffset1+",ifeOffset2="+ifeOffset2);
+		Main.LOGGER.info("AutoPlaceMapArt: ifeOffset1="+ifeOffset1+",ifeOffset2="+ifeOffset2);
 		if(ifeOffset1 == 0 && ifeOffset2 == 0){
 			Main.LOGGER.error("AutoPlaceMapArt: Placed maps appear to have the same pos! (shouldn't be possible!)");
 			disableAndReset(); return false;
@@ -178,18 +180,18 @@ public class AutoPlaceMapArt{
 		}
 
 		final int posOffset1 = pos2dPair.a1 - pos2dPair.b1, posOffset2 = pos2dPair.a2 - pos2dPair.b2;
-//		Main.LOGGER.info("AutoPlaceMapArt: posOffset1="+posOffset1+",posOffset2="+posOffset2);
+		Main.LOGGER.info("AutoPlaceMapArt: posOffset1="+posOffset1+",posOffset2="+posOffset2);
 
 //		assert(
 //			(Math.abs(posOffset1) == Math.abs(ifeOffset1) && Math.abs(posOffset2) == Math.abs(ifeOffset2)) ||
 //			(Math.abs(posOffset1) == Math.abs(ifeOffset2) && Math.abs(posOffset2) == Math.abs(ifeOffset1))
 //		);
 		if(Math.abs(posOffset1) != Math.abs(ifeOffset1) && Math.abs(posOffset1) != Math.abs(ifeOffset2)){
-			Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! abs(axisDiff1)");
+			Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! abs(axisDiff1), "+posOffset1);
 			disableAndReset(); return false;
 		}
 		if(Math.abs(posOffset2) != Math.abs(ifeOffset1) && Math.abs(posOffset2) != Math.abs(ifeOffset2)){
-			Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! abs(axisDiff2)");
+			Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! abs(axisDiff2), "+posOffset2);
 			disableAndReset(); return false;
 		}
 
@@ -260,9 +262,10 @@ public class AutoPlaceMapArt{
 
 //		Main.LOGGER.info("AutoPlaceMapArt: varAxis1o="+varAxis1Origin+",varAxis2o="+varAxis2Origin+",varAxis1Neg="+varAxis1Neg+",varAxis2Neg="+varAxis2Neg);
 		return true;
+		}
 	}
 
-	private BlockPos getPlacement(ItemStack stack, ClientWorld world){
+	private BlockPos getPlacement(ItemStack stack, World world){
 		if(!stacksHashesForCurrentData.contains(ItemStack.hashCode(stack))){
 			RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(currStack, stack), world);
 			if(data.slots().size() != 2 || data.prefixLen() == -1) return null; // Not part of the map being autoplaced
@@ -287,7 +290,106 @@ public class AutoPlaceMapArt{
 
 	public final boolean isActive(){return !stacksHashesForCurrentData.isEmpty();}
 
-	boolean unableToFindMap;
+	private final void placeMapInFrame(MinecraftClient client, ItemStack stack, ItemFrameEntity ife){
+		assert client.player.getInventory().getMainHandStack().equals(client.player.getInventory().main.get(client.player.getInventory().selectedSlot));
+
+		Main.LOGGER.info("AutoPlaceMapArt: right-clicking target iFrame"
+//				+ " ("+ife.getBlockPos().toShortString()+")"
+				+ " with map: "+stack.getName().getString());
+
+//		UpdateInventoryHighlights.setCurrentlyBeingPlacedMapArt(null, stack);
+		recentPlaceAttempts[attemptIdx] = ife.getId();
+		lastAttemptIdx = attemptIdx;
+
+//		client.player.networkHandler.sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+		client.player.networkHandler.sendPacket(PlayerInteractEntityC2SPacket.interactAt(ife, client.player.isSneaking(), Hand.MAIN_HAND, ife.getEyePos()));
+		client.interactionManager.interactEntity(client.player, ife, Hand.MAIN_HAND);
+//		nearestIfe.interactAt(client.player, ife.getEyePos(), Hand.MAIN_HAND);
+//		client.player.interact(ife, Hand.MAIN_HAND);
+	}
+
+	boolean foundValidPosOnLastAttempt;
+	record MapPlacementData(int slot, int bundleSlot, ItemStack mapStack, ItemFrameEntity ife){}
+	private final MapPlacementData getNearestMapPlacement(PlayerEntity player){
+		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).collect(Collectors.toList());
+
+		final double MAX_REACH = Configs.Generic.PLACEMENT_HELPER_MAPART_REACH.getDoubleValue();
+		final double SCAN_DIST = MAX_REACH+2;
+
+		Box box = player.getBoundingBox().expand(SCAN_DIST, SCAN_DIST, SCAN_DIST);
+		Predicate<ItemFrameEntity> filter = ife -> ife.getFacing() == dir && distFromPlane(ife.getBlockPos()) == 0 && ife.getHeldItemStack().isEmpty();
+		List<ItemFrameEntity> ifes = player.getWorld().getEntitiesByClass(ItemFrameEntity.class, box, filter);
+		if(ifes.isEmpty()){
+//			Main.LOGGER.warn("AutoPlaceMapArt: no nearby iframes");
+			return null;
+		}
+		
+		double nearestDistSq = Double.MAX_VALUE;
+//		BlockPos nearestBp;
+		ItemFrameEntity nearestIfe = null;
+		ItemStack nearestStack = null;
+		int nearestSlot = -1, bundleSlot = -1;
+		int numMaps = 0, numUsableMaps = 0, numUsableMapsInRange = 0;
+		boolean nearestIsInHotbar = false;
+		invloop: for(int i=0; i<slots.size(); ++i){
+			final boolean isInHotbar = i >= 36 && i < 45 && slots.get(i).getItem() == Items.FILLED_MAP;
+			if(nearestIsInHotbar && !isInHotbar) continue;
+//			ItemStack mapItem = slots.get(i);
+			BundleContentsComponent contents = slots.get(i).get(DataComponentTypes.BUNDLE_CONTENTS);
+			final int bundleSz = contents != null ? contents.size() : 0;
+//			if(contents != null && !contents.isEmpty()) mapItem = contents.get(contents.size()-1);
+
+//			int j=bundleSz==0 ? -1 : 0;
+			int j=bundleSz-1;
+			for(; j<bundleSz; ++j){
+				ItemStack mapStack = bundleSz==0 ? slots.get(i) : contents.get(j);
+				if(mapStack.getItem() != Items.FILLED_MAP) continue;
+				++numMaps;
+				BlockPos bp = getPlacement(mapStack, player.getWorld());
+				if(bp == null) continue;
+				++numUsableMaps;
+				if(bp.getSquaredDistance(player.getEyePos()) > SCAN_DIST*SCAN_DIST) continue;
+				++numUsableMapsInRange;
+				Optional<ItemFrameEntity> optionalIfe = ifes.stream().filter(ife -> ife.getBlockPos().equals(bp)).findAny();
+				if(optionalIfe.isEmpty()){
+					Main.LOGGER.warn("AutoPlaceMapArt: Missing iFrame at pos! "+bp.toShortString());
+					continue;
+				}
+				ItemFrameEntity ife = optionalIfe.get();
+				final double distSq = ife.getEyePos().squaredDistanceTo(player.getEyePos());
+				if(distSq > MAX_REACH*MAX_REACH) continue;
+
+				if(Arrays.stream(recentPlaceAttempts).anyMatch(id -> id == ife.getId())){
+					Main.LOGGER.warn("AutoPlaceMapArt: Cannot place into the same iFrame twice! "+bp.toShortString());
+					continue;
+				}
+				final boolean isSelected = isInHotbar && i-36 == player.getInventory().selectedSlot;
+				if(isSelected || distSq < nearestDistSq || (isInHotbar && !nearestIsInHotbar)){
+					nearestIsInHotbar = isInHotbar;
+					nearestDistSq = distSq;
+					nearestSlot = i;
+					bundleSlot = j;
+					nearestIfe = ife;
+					nearestStack = mapStack;
+					if(isSelected){
+						Main.LOGGER.info("AutoPlaceMapArt: Stack in hand is a valid candidate, using it!");
+						break invloop;
+					}
+				}
+			}
+		}
+//		Main.LOGGER.info("AutoPlaceMapArt: distance to place-loc for itemstack in slot"+nearestSlot+": "+Math.sqrt(nearestDistSq));
+//		return nearestSlot == -1 ? null : new MapPlacementData(nearestSlot, bundleSlot, nearestStack, nearestIfe);
+		if(nearestSlot == -1){
+			if(foundValidPosOnLastAttempt) Main.LOGGER.info("AutoPlaceMapArt: No viable itemstack->iframe found. #nearby_ifes="+ifes.size()
+				+",#map_items="+numMaps+",#usable_maps="+numUsableMaps+",#numUsableMapsInRange="+numUsableMapsInRange);
+			foundValidPosOnLastAttempt = false;
+			return null;
+		}
+		foundValidPosOnLastAttempt = true;
+		return new MapPlacementData(nearestSlot, bundleSlot, nearestStack, nearestIfe);
+	}
+
 	public final void placeNearestMap(MinecraftClient client){
 		if(!isActive()) return;
 		if(client.player == null || client.world == null){
@@ -298,6 +400,22 @@ public class AutoPlaceMapArt{
 		if(!Configs.Generic.MAPART_AUTOPLACE.getBooleanValue()){
 			Main.LOGGER.info("AutoPlaceMapArt: disabled mid-op");
 			disableAndReset();
+			return;
+		}
+
+		if(Main.clickUtils.hasOngoingClicks()){
+			Main.LOGGER.info("AutoPlaceMapArt: waiting for inv action to complete");
+			return;
+		}
+		final int INV_DELAY_TICKS = Configs.Generic.MAPART_AUTOPLACE_INV_DELAY.getIntegerValue();
+		if(ticksSinceInvAction++ < INV_DELAY_TICKS){
+			Main.LOGGER.info("AutoPlaceMapArt: waiting for inv action cooldown ("+ticksSinceInvAction+"ticks)");
+			return;
+		}
+
+		if(client.player.currentScreenHandler != null &&
+				(client.player.currentScreenHandler.syncId != 0 || !client.player.currentScreenHandler.getCursorStack().isEmpty())){
+//			Main.LOGGER.info("AutoPlaceMapArt: paused, currently in container gui");
 			return;
 		}
 
@@ -338,123 +456,61 @@ public class AutoPlaceMapArt{
 			}
 		}
 
-		final List<ItemStack> slots = client.player.playerScreenHandler.slots.stream().map(Slot::getStack).collect(Collectors.toList());
+		MapPlacementData data = getNearestMapPlacement(client.player);
+		if(data == null) return;
+
+		final Runnable ON_CLICKS_DONE = INV_DELAY_TICKS == 0 ? ()->placeNearestMap(client) : ()->ticksSinceInvAction=0;
 		final int selectedSlot = client.player.getInventory().selectedSlot;
-
-		final double MAX_REACH = Configs.Generic.PLACEMENT_HELPER_MAPART_REACH.getDoubleValue();
-		final double SCAN_DIST = MAX_REACH+2;
-
-		Box box = client.player.getBoundingBox().expand(SCAN_DIST, SCAN_DIST, SCAN_DIST);
-		Predicate<ItemFrameEntity> filter = ife -> ife.getFacing() == dir && distFromPlane(ife.getBlockPos()) == 0 && ife.getHeldItemStack().isEmpty();
-		List<ItemFrameEntity> ifes = client.world.getEntitiesByClass(ItemFrameEntity.class, box, filter);
-		if(ifes.isEmpty()){
-//			Main.LOGGER.warn("AutoPlaceMapArt: no nearby iframes");
-			return;
-		}
-
-		double nearestDistSq = Double.MAX_VALUE;
-//		BlockPos nearestBp;
-		ItemFrameEntity nearestIfe = null;
-		ItemStack nearestStack = null;
-		int nearestSlot = -1;
-		int numMaps = 0, numUsableMaps = 0, numUsableMapsInRange = 0;
-		boolean nearestIsInHotbar = false;
-		for(int i=0; i<slots.size(); ++i){
-			final boolean isInHotbar = i >= 36 && i < 45;
-			if(nearestIsInHotbar && !isInHotbar) continue;
-			ItemStack mapItem = slots.get(i);
-			BundleContentsComponent contents = slots.get(i).get(DataComponentTypes.BUNDLE_CONTENTS);
-			if(contents != null && !contents.isEmpty()) mapItem = contents.get(contents.size()-1);
-			if(mapItem.getItem() != Items.FILLED_MAP) continue;
-			++numMaps;
-			BlockPos bp = getPlacement(mapItem, client.world);
-			if(bp == null) continue;
-			++numUsableMaps;
-			final double distSq = bp.getSquaredDistance(client.player.getEyePos());
-			if(distSq < MAX_REACH*MAX_REACH){
-				++numUsableMapsInRange;
-				Optional<ItemFrameEntity> optionalIfe = ifes.stream().filter(ife -> ife.getBlockPos().equals(bp)).findAny();
-				if(optionalIfe.isEmpty()){
-					Main.LOGGER.warn("AutoPlaceMapArt: Missing iFrame at pos! "+bp.toShortString());
-					continue;
-				}
-				final int ifeId = optionalIfe.get().getId();
-				if(Arrays.stream(recentPlaceAttempts).anyMatch(id -> id == ifeId)){
-					Main.LOGGER.warn("AutoPlaceMapArt: Cannot place into the same iFrame twice! "+bp.toShortString());
-					continue;
-				}
-				if(i-36 == selectedSlot){
-//					Main.LOGGER.info("AutoPlaceMapArt: Stack in hand is a valid candidate, using it!");
-					nearestSlot = i;
-					nearestDistSq = distSq;
-					nearestIfe = optionalIfe.get();
-					nearestStack = mapItem;
-					break;
-				}
-				if(distSq < nearestDistSq || (isInHotbar && !nearestIsInHotbar)){
-					nearestIsInHotbar = isInHotbar;
-					nearestDistSq = distSq;
-					nearestSlot=i;
-					nearestIfe=optionalIfe.get();
-					nearestStack=mapItem;
-				}
-			}
-		}
-		if(nearestSlot == -1){
-			if(!unableToFindMap) Main.LOGGER.info("AutoPlaceMapArt: No viable itemstack->iframe found. #nearby_ifes="+ifes.size()
-				+",#map_items="+numMaps+",#usable_maps="+numUsableMaps+",#numUsableMapsInRange="+numUsableMapsInRange);
-			unableToFindMap = true;
-			return;
-		}
-		unableToFindMap = false;
-		if(nearestDistSq > MAX_REACH*MAX_REACH){
-			Main.LOGGER.info("AutoPlaceMapArt: Nearest placement spot is out of reach. distSq="+nearestDistSq);
-			return;
-		}
-//		Main.LOGGER.info("AutoPlaceMapArt: distance to place-loc for itemstack in slot"+nearestSlot+": "+Math.sqrt(nearestDistSq));
-
-		BundleContentsComponent contents = slots.get(nearestSlot).get(DataComponentTypes.BUNDLE_CONTENTS);
-		if(contents != null){
-			if(!client.player.getMainHandStack().isEmpty() ||
-					(client.player.currentScreenHandler != null && !client.player.currentScreenHandler.getCursorStack().isEmpty()))
-			{
+		if(data.bundleSlot != -1){
+			if(data.slot == selectedSlot+36 || !client.player.getMainHandStack().isEmpty()){
 				Main.LOGGER.info("AutoPlaceMapArt: Main hand is not empty! Unable to extract from bundle");
-				disableAndReset();
+//				disableAndReset();
+//				return;
+				int hbSlot = 0;
+				while(hbSlot < 9 && !client.player.getInventory().main.get(hbSlot).isEmpty()) ++hbSlot;
+				if(hbSlot != 9){
+					client.player.getInventory().setSelectedSlot(hbSlot);
+					Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to empty slot: hb="+hbSlot);
+					ticksSinceInvAction = 0;
+				}
+				else{
+					Main.clickUtils.executeClicks(new ArrayDeque<>(List.of(
+							new ClickEvent(selectedSlot+36, 0, SlotActionType.QUICK_MOVE) // Try to move item out of main hand
+					)), _0->true, ON_CLICKS_DONE);
+					Main.LOGGER.info("AutoPlaceMapArt: Shift-clicking item out of mainhand (to upper inv), hb="+selectedSlot);
+				}
 				return;
 			}
-			client.interactionManager.clickSlot(0, nearestSlot, 1, SlotActionType.PICKUP, client.player);
-			client.interactionManager.clickSlot(0, selectedSlot+36, 0, SlotActionType.PICKUP, client.player);
-			Main.LOGGER.info("AutoPlaceMapArt: Extracted next map from bundle into mainhand");
-		}
-		else if(nearestSlot - 36 != selectedSlot){
-			if(nearestSlot >= 36 && nearestSlot < 45){
-				client.player.getInventory().setSelectedSlot(nearestSlot - 36);
-				Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to nearestMap: hb="+(nearestSlot-36));
-			}
-			else{
-				client.interactionManager.clickSlot(0, nearestSlot, selectedSlot, SlotActionType.SWAP, client.player);
-				Main.LOGGER.info("AutoPlaceMapArt: Swapped inv.selectedSlot to nextMap: s="+nearestSlot);
-			}
-			ticksSinceInvAction = 0;
-		}
-		if(ticksSinceInvAction++ < INV_DELAY_TICKS){
-			Main.LOGGER.info("AutoPlaceMapArt: waiting for inv action cooldown ("+ticksSinceInvAction+"ticks)");
+//			if(ticksSinceInvAction < 0) return;
+//			ticksSinceInvAction = - 5;
+//			client.player.networkHandler.sendPacket(new BundleItemSelectedC2SPacket(data.slot, data.bundleSlot));
+//			client.player.networkHandler.sendPacket(new ClickSlotC2SPacket(
+//					/*syncId=*/0, -1, data.bundleSlot, 0, SlotActionType.PICKUP, ItemStack.EMPTY, new Int2ObjectOpenHashMap<ItemStack>()));
+//			client.interactionManager.clickSlot(0, selectedSlot+36, 0, SlotActionType.PICKUP, client.player);
+			
+//			if(data.bundleSlot == bundle.contents.size()-1){
+				Main.clickUtils.executeClicks(new ArrayDeque<>(List.of(
+						new ClickEvent(data.slot, 1, SlotActionType.PICKUP), // Take from bundle
+						new ClickEvent(selectedSlot+36, 0, SlotActionType.PICKUP) // Place in main hand
+				)), _0->true, ON_CLICKS_DONE);
+				Main.LOGGER.info("AutoPlaceMapArt: Extracted next map from bundle into mainhand");
+//			}
 			return;
 		}
-//		assert client.player.getInventory().getMainHandStack().equals(client.player.getInventory().main.get(client.player.getInventory().selectedSlot));
-
-		Main.LOGGER.info("AutoPlaceMapArt: right-clicking target iFrame"
-//				+ " ("+nearestIfe.getBlockPos().toShortString()+")"
-				+ " with map: "+nearestStack.getName().getString());
-
-//		UpdateInventoryHighlights.setCurrentlyBeingPlacedMapArt(null, nearestStack);
-		recentPlaceAttempts[attemptIdx] = nearestIfe.getId();
-		lastAttemptIdx = attemptIdx;
-
-//		client.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
-		client.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.interactAt(nearestIfe, client.player.isSneaking(), Hand.MAIN_HAND, nearestIfe.getEyePos()));
-		client.interactionManager.interactEntity(client.player, nearestIfe, Hand.MAIN_HAND);
-//		nearestIfe.interactAt(client.player, nearestIfe.getEyePos(), Hand.MAIN_HAND);
-//		client.player.interact(nearestIfe, Hand.MAIN_HAND);
+		else if(data.slot != selectedSlot+36){
+			if(data.slot >= 36 && data.slot < 45){
+				client.player.getInventory().setSelectedSlot(data.slot - 36);
+				Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to nearestMap: hb="+(data.slot-36));
+				ticksSinceInvAction = 0;
+			}
+			else{
+				Main.clickUtils.executeClicks(new ArrayDeque<>(List.of(
+						new ClickEvent(data.slot, selectedSlot, SlotActionType.SWAP) // Swap from upper inv to main hand
+				)), _0->true, ON_CLICKS_DONE);
+				Main.LOGGER.info("AutoPlaceMapArt: Swapped inv.selectedSlot to nextMap: s="+data.slot);
+				return;
+			}
+		}
+		placeMapInFrame(client, data.mapStack, data.ife);
 	}
 }

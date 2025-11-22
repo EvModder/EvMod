@@ -504,20 +504,20 @@ public final class MapHandRestock{
 	private ItemFrameEntity lastIfe;
 	private ItemStack lastStack;
 	public MapHandRestock(){
-		final AutoPlaceMapArt mapAutoPlacer;
+		final AutoPlaceMapArt autoPlaceMapArt;
 		if(Main.placementHelperMapArtAuto){
-			mapAutoPlacer = new AutoPlaceMapArt();
-			ClientTickEvents.END_CLIENT_TICK.register(client -> mapAutoPlacer.placeNearestMap(client));
+			autoPlaceMapArt = new AutoPlaceMapArt();
+			ClientTickEvents.END_CLIENT_TICK.register(client -> autoPlaceMapArt.placeNearestMap(client));
 			AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
 //				if(mapAutoPlacer.isActive() && entity instanceof ItemFrameEntity ife && ife.getHeldItemStack().getItem() == Items.FILLED_MAP){
-				if(mapAutoPlacer.isActive()){
-					mapAutoPlacer.recalcIsActive(/*player=*/null, lastIfe=null, lastStack=null, null, null);
-					Main.LOGGER.info("MapAutoPlacer: Disabling due to EntityAttackEvent");
+				if(autoPlaceMapArt.isActive()){
+					autoPlaceMapArt.disableAndReset();
+					Main.LOGGER.info("AutoPlaceMapArt: Disabling due to EntityAttackEvent");
 				}
 				return ActionResult.PASS;
 			});
 		}
-		else mapAutoPlacer = null;
+		else autoPlaceMapArt = null;
 
 		UseEntityCallback.EVENT.register((player, _0, hand, entity, _1) -> {
 			if(!(entity instanceof ItemFrameEntity ife)) return ActionResult.PASS;
@@ -542,11 +542,11 @@ public final class MapHandRestock{
 
 			UpdateInventoryHighlights.setCurrentlyBeingPlacedMapArt(player, stack);
 
-			if(mapAutoPlacer.recalcIsActive(player, lastIfe, lastStack, ife, stack)){
-				Main.LOGGER.info("MapRestock: MapAutoPlacer is active, no need to handle restock");
+			if(autoPlaceMapArt.recalcIsActive(player, lastIfe, lastStack, ife, stack)){
+				Main.LOGGER.info("MapRestock: AutoPlaceMapArt is active, no need to handle restock");
 			}
 			else{
-				Main.LOGGER.info("MapRestock: MapAutoPlacer disabled, doing best-guess restock");
+				Main.LOGGER.info("MapRestock: AutoPlaceMapArt is not active, doing best-guess restock");
 				tryToStockNextMap(player);
 			}
 			lastIfe = ife;
