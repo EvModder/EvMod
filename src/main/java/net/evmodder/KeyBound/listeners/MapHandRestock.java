@@ -469,10 +469,11 @@ public final class MapHandRestock{
 		new Thread(){@Override public void run(){
 //			Main.LOGGER.info("MapRestock: waiting for currently placed map to load");
 			while(player != null && !player.isInCreativeMode() && UpdateInventoryHighlights.hasCurrentlyBeingPlaceMapArt()) Thread.yield();
+			if(player == null){waitingForRestock = false; return;}
 
 //			Main.LOGGER.info("MapRestock: ok, sync client execution");
 			MinecraftClient client = MinecraftClient.getInstance();
-			if(player != null) client.executeSync(()->{
+			client.executeSync(()->{
 //				try{sleep(50l);}catch(InterruptedException e){e.printStackTrace();waitingForRestock=false;} // 50ms = 1tick
 //				Main.LOGGER.info("MapRestock: ok, doing restock click(s)");
 
@@ -487,7 +488,7 @@ public final class MapHandRestock{
 					Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlotFinal+" -> hb="+player.getInventory().selectedSlot);
 				}
 				else if(isHotbarSlot){
-//					client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(restockFromSlotFinal - 36));
+//					player.networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(restockFromSlotFinal - 36));
 //					player.getInventory().selectedSlot = restockFromSlotFinal - 36;
 					player.getInventory().setSelectedSlot(restockFromSlotFinal - 36);
 					Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().selectedSlot);

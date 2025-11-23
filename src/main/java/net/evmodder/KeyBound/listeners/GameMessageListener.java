@@ -5,7 +5,6 @@ import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.PacketHelper;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.EpearlActivator;
-import net.evmodder.KeyBound.apis.MiscUtils;
 import net.evmodder.KeyBound.config.Configs;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.MinecraftClient;
@@ -47,7 +46,8 @@ public class GameMessageListener{
 					}
 				}
 			}
-			if(Configs.Database.SHARE_IGNORES.getBooleanValue() && Main.remoteSender != null && MiscUtils.getCurrentServerAddressHashCode() == Main.HASHCODE_2B2T){
+			if(Configs.Database.SHARE_IGNORES.getBooleanValue() && Main.remoteSender != null
+					/*&& MiscUtils.getCurrentServerAddressHashCode() == Main.HASHCODE_2B2T*/){
 				//"Permanently ignoring ___. This is saved in /ignorelist."
 				if(literal.startsWith("Permanently ignoring ") && literal.endsWith(". This is saved in /ignorelist."))
 					sendIgnoreStatePacket(literal.substring(21, literal.length()-31), true);

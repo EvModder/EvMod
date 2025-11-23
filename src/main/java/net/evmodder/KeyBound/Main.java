@@ -81,7 +81,7 @@ public class Main implements ClientModInitializer{
 	//public static final String MOD_VERSION = "@MOD_VERSION@";
 	private static final String CONFIG_NAME = "enabled_features.txt";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-	public static final int HASHCODE_2B2T = -437714968;//"2b2t.org".hashCode() // TODO: make mod more server-independent 
+//	public static final int HASHCODE_2B2T = -437714968;//"2b2t.org".hashCode() // TODO: make mod more server-independent 
 
 	public static ClickUtils clickUtils;
 	public static RemoteServerSender remoteSender;

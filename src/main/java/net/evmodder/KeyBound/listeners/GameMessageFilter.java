@@ -18,7 +18,7 @@ public class GameMessageFilter{
 	private int currentServer;
 
 	public void recomputeIgnoreLists(){
-		if(Main.remoteSender == null || currentServer != Main.HASHCODE_2B2T) return;
+		if(Main.remoteSender == null/* || currentServer != Main.HASHCODE_2B2T*/) return;
 		Main.LOGGER.info("GameMessageFilter: Recomputing borrowed ignorelists for 2b2t");
 		for(UUID uuid : Configs.Database.BORROW_IGNORES.getUUIDs()){
 			if(uuid == null) continue;

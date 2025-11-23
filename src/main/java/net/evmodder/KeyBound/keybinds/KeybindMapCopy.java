@@ -491,16 +491,16 @@ public final class KeybindMapCopy{
 
 			// Execute copy
 			if(leftoversInSlot || (moveExactToCrafter && lastEmptySlot(slots, f.HOTBAR_END, f.INV_START) < i)){
-				Main.LOGGER.info("MapCopy: EzPz shift-click output");
+//				Main.LOGGER.info("MapCopy: EzPz shift-click output");
 				clicks.add(new ClickEvent(f.RESULT, 0, SlotActionType.QUICK_MOVE)); // Move ALL maps from crafter output
 			}
 			else if(moveExactToCrafter){
 				if(i >= f.HOTBAR_START){
-					Main.LOGGER.info("MapCopy: Swap 1 from output"+(minMapCount>1?", then shift-click":"")+" (hb:"+(i>=f.HOTBAR_START)+")");
+//					Main.LOGGER.info("MapCopy: Swap 1 from output"+(minMapCount>1?", then shift-click":"")+" (hb:"+(i>=f.HOTBAR_START)+")");
 					clicks.add(new ClickEvent(f.RESULT, i-f.HOTBAR_START, SlotActionType.SWAP)); // Swap 1 map from crafter output
 				}
 				else{
-					Main.LOGGER.info("MapCopy: Pickup-place 1 from output"+(minMapCount>1?", then shift-click":""));
+//					Main.LOGGER.info("MapCopy: Pickup-place 1 from output"+(minMapCount>1?", then shift-click":""));
 					clicks.add(new ClickEvent(f.RESULT, 0, SlotActionType.PICKUP)); // Pickup ONE map from crafter output
 					clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // Place back in source slot
 				}
@@ -508,7 +508,7 @@ public final class KeybindMapCopy{
 				if(minMapCount > 1) clicks.add(new ClickEvent(f.RESULT, 0, SlotActionType.QUICK_MOVE)); // Move ALL maps from crafter output
 			}
 			else{
-				Main.LOGGER.info("MapCopy: Move "+emptyMapsPerCopy+" from output, then shift-click leftover inputs");
+//				Main.LOGGER.info("MapCopy: Move "+emptyMapsPerCopy+" from output, then shift-click leftover inputs");
 				for(int j=0; j<emptyMapsPerCopy; ++j) clicks.add(new ClickEvent(f.RESULT, 0, SlotActionType.PICKUP)); // Pickup ONE map from crafter output
 				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // Place back in source slot
 				clicks.add(new ClickEvent(f.INPUT_START, 0, SlotActionType.QUICK_MOVE)); // Move back leftover input maps

@@ -3,6 +3,7 @@ package net.evmodder.KeyBound.apis;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
+import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.UUID;
 import net.evmodder.EvLib.Command;
@@ -22,16 +23,9 @@ public class MiscUtils{
 	}
 
 	private static final String getRealServerAddress(String address){
-		switch(address){ // TODO: remove all this hacky BS
+		switch(address){
 			case "2b2t.org":
 			case "connect.2b2t.org":
-			case "152.228.212.15:25572": // 0crit
-			case "152.228.212.15:25566": // Minuscul
-			case "152.228.212.15:25567": // JalvaBot
-			case "152.228.212.15:25565": // Jalvaviel
-			case "209.44.205.3:14445": // EvMD
-			case "104.128.56.167:14445": // EvMod
-			case "104.128.56.146:14446": // Vr
 				return "2b2t.org";
 			default:
 				final int i = address.lastIndexOf(':');
@@ -49,6 +43,8 @@ public class MiscUtils{
 
 	public static final int getServerAddressHashCode(ServerInfo serverInfo){
 		if(serverInfo == null) return 0;
+		final String name = Normalizer.normalize(serverInfo.name, Normalizer.Form.NFKD).toLowerCase().replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", "");
+		if(name.contains("2b2tproxy")) return "2b2t.org".hashCode();
 		return getRealServerAddress(serverInfo.address.toLowerCase()).hashCode();
 	}
 	public static final int getCurrentServerAddressHashCode(){

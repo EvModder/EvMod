@@ -54,7 +54,7 @@ public class ServerJoinListener{
 						/*udp=*/true, 5000, MiscUtils.getCurrentServerAndPlayerData(), /*recv=*/null);
 			}
 
-			if(currServerHashCode != Main.HASHCODE_2B2T) return;
+//			if(currServerHashCode != Main.HASHCODE_2B2T) return;
 
 			if(joinMsgTimer != null) joinMsgTimer.cancel(); // Restart timer
 
