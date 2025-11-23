@@ -79,7 +79,7 @@ public class AutoPlaceMapArt{
 	record Pos2DPair(int a1, int a2, int b1, int b2){}
 	private int intFromPos(String pos){
 		assert pos.matches("[A-Z]+|-?[0-9]+") : "Invalid 2d pos str part! "+pos;
-		if(pos.charAt(0) < 'A' || 'Z' > pos.charAt(0)) return Integer.parseInt(pos);
+		if(pos.charAt(0) < 'A' || pos.charAt(0) > 'Z') return Integer.parseInt(pos);
 
 		int res = pos.charAt(0) - 'A';
 		for(int i=1; i<pos.length(); ++i){
@@ -88,7 +88,29 @@ public class AutoPlaceMapArt{
 		}
 		return res;
 	}
+	private int intFromTLBR(char c, boolean hasM){
+		switch(c){
+			case 'T': case 'L': return 0;
+			case 'M': return 1;
+			case 'B': case 'R': return hasM ? 2 : 1;
+			default: throw new IllegalArgumentException();
+		}
+	}
 	private final Pos2DPair getRelativePosPair(final String posA, final String posB){
+		if(posA.matches("[TMB][LMR]") && posB.matches("[TMB][LMR]")){
+			assert currentData.slots().stream().allMatch(i -> getPosStrFromName(allMapItems.get(i)).matches("[TMB][LMR]"));
+			final boolean hasM1 =  currentData.slots().stream().anyMatch(i -> getPosStrFromName(allMapItems.get(i)).charAt(0) == 'M');
+			final boolean hasM2 =  currentData.slots().stream().anyMatch(i -> getPosStrFromName(allMapItems.get(i)).charAt(1) == 'M');
+//			final boolean hasM1 = posA.charAt(0) == 'M' || posB.charAt(0) == 'M';
+//			final boolean hasM2 = posA.charAt(1) == 'M' || posB.charAt(1) == 'M';
+			return new Pos2DPair(
+					intFromTLBR(posA.charAt(0), hasM1), intFromTLBR(posA.charAt(1), hasM2),
+					intFromTLBR(posB.charAt(0), hasM1), intFromTLBR(posB.charAt(1), hasM2)
+			);
+		}
+		if(posA.matches("[1-9][0-9]*") && posB.matches("[1-9][0-9]*")){
+			//TODO: support 1d posStr (e.g., 1/6 for a 3x2)
+		}
 		int cutA, cutB, cutSpaceA, cutSpaceB;
 		if(posA.length() == posB.length() && posA.length() == 2){cutA = cutB = 1; cutSpaceA = cutSpaceB = 0;}
 		else{cutA = posA.indexOf(' '); cutB = posB.indexOf(' '); cutSpaceA = cutSpaceB = 1;}
@@ -121,9 +143,9 @@ public class AutoPlaceMapArt{
 		}
 	}
 
-	private String getPosStrFromName(final ItemStack stack, final RelatedMapsData data){
+	private String getPosStrFromName(final ItemStack stack){
 		final String name = stack.getCustomName().getString();
-		return MapRelationUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
+		return MapRelationUtils.simplifyPosStr(name.substring(currentData.prefixLen(), name.length()-currentData.suffixLen()));
 	}
 	public final boolean recalcIsActive(PlayerEntity player, ItemFrameEntity lastIfe, ItemStack lastStack, ItemFrameEntity currIfe, ItemStack currStack){
 		synchronized(allMapItems){
@@ -174,7 +196,7 @@ public class AutoPlaceMapArt{
 			}
 			Main.LOGGER.info("AutoPlaceMapArt: related maps in inv: "+(currentData.slots().size()-2));
 		}
-		final String currPosStr = this.currPosStr=getPosStrFromName(currStack, currentData), lastPosStr = getPosStrFromName(lastStack, currentData);
+		final String currPosStr = this.currPosStr=getPosStrFromName(currStack), lastPosStr = getPosStrFromName(lastStack);
 		final Pos2DPair pos2dPair = getRelativePosPair(currPosStr, lastPosStr);
 		if(pos2dPair == null){ // TODO: Support non-standard pos data (e.g., TL,TR,BL,BR)
 			Main.LOGGER.info("AutoPlaceMapArt: unable to parse pos2dPair from pos strs ("+currPosStr+","+lastPosStr+")");
@@ -208,9 +230,9 @@ public class AutoPlaceMapArt{
 		}
 		if(axisMatch == null){
 			// At this point, we know abs(posOffset1) == abs(posOffset2) == abs(ifeOffset1) == abs(ifeOffset2);
-			final boolean sameSign = ((posOffset1 == ifeOffset1) == (posOffset1 == ifeOffset2)) && ((posOffset2 == ifeOffset1) == (posOffset2 == ifeOffset2));
+			final boolean sameSign = ((ifeOffset1 == posOffset1) == (ifeOffset1 == posOffset2)) && ((ifeOffset2 == posOffset1) == (ifeOffset2 == posOffset2));
 			if(sameSign){
-				final boolean isNeg = posOffset1 != ifeOffset1;
+				final boolean isNeg = ifeOffset1 != posOffset1;
 				if(varAxis1Neg == null) varAxis1Neg = isNeg;
 				else if(varAxis1Neg != isNeg){
 					Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axisDiff1");
@@ -227,18 +249,18 @@ public class AutoPlaceMapArt{
 			return false;
 		}
 
-		if(posOffset1 != 0){
-			final boolean isNeg = axisMatch ? posOffset1 != ifeOffset1 : posOffset1 != ifeOffset2;
-			assert posOffset1 == (axisMatch ? ifeOffset1 : ifeOffset2)*(isNeg ? -1 : +1);
+		if(ifeOffset1 != 0){
+			final boolean isNeg = ifeOffset1 != (axisMatch ? posOffset1 : posOffset2);
+			assert ifeOffset1 == (axisMatch ? posOffset1 : posOffset2)*(isNeg ? -1 : +1) : "?? "+axisMatch+","+posOffset1+","+posOffset2+","+isNeg;
 			if(varAxis1Neg == null) varAxis1Neg = isNeg;
 			else if(varAxis1Neg != isNeg){
 				Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axis1");
 				disableAndReset(); return false;
 			}
 		}
-		if(posOffset2 != 0){
-			final boolean isNeg = axisMatch ? posOffset2 != ifeOffset2 : posOffset2 != ifeOffset1;
-			assert posOffset2 == (axisMatch ? ifeOffset2 : ifeOffset1)*(isNeg ? -1 : +1);
+		if(ifeOffset2 != 0){
+			final boolean isNeg = ifeOffset2 != (axisMatch ? posOffset2 : posOffset1);
+			assert ifeOffset2 == (axisMatch ? posOffset2 : posOffset1)*(isNeg ? -1 : +1);
 			if(varAxis2Neg == null) varAxis2Neg = isNeg;
 			else if(varAxis2Neg != isNeg){
 				Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axis2");
@@ -249,7 +271,10 @@ public class AutoPlaceMapArt{
 		if(!stacksHashesForCurrentData.isEmpty()) return true; // Already ongoing and all values are defined
 
 		if(varAxis1Neg == null || varAxis2Neg == null){
-			Main.LOGGER.warn("AutoPlaceMapArt: determined 1 of 2 axis offsets, just need to get the other offset before enabling");
+			boolean foundAxis1 = varAxis1Neg != null;
+			Main.LOGGER.warn("AutoPlaceMapArt: determined axisMatch="+axisMatch+" and 1 of 2 axis offsets"
+					+" (axis"+(foundAxis1?"1="+(varAxis1Neg?"-":"+"):"2="+(varAxis2Neg?"-":"+"))
+					+"), just need to get the other offset before enabling");
 			return false;
 		}
 
@@ -262,20 +287,20 @@ public class AutoPlaceMapArt{
 		currentData.slots().stream().map(i -> ItemStack.hashCode(allMapItems.get(i))).forEach(stacksHashesForCurrentData::add);
 		assert !stacksHashesForCurrentData.isEmpty();
 
-//		Main.LOGGER.info("AutoPlaceMapArt: varAxis1o="+varAxis1Origin+",varAxis2o="+varAxis2Origin+",varAxis1Neg="+varAxis1Neg+",varAxis2Neg="+varAxis2Neg);
+		Main.LOGGER.info("AutoPlaceMapArt: activated! varAxis1o="+varAxis1Origin+",varAxis2o="+varAxis2Origin+",varAxis1Neg="+varAxis1Neg+",varAxis2Neg="+varAxis2Neg);
 		return true;
 		}
 	}
 
 	private BlockPos getPlacement(ItemStack stack, World world){
+		synchronized(allMapItems){
 		if(!stacksHashesForCurrentData.contains(ItemStack.hashCode(stack))){
 			RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(currStack, stack), world);
 			if(data.slots().size() != 2 || data.prefixLen() == -1) return null; // Not part of the map being autoplaced
 			Main.LOGGER.info("AutoPlaceMapArt: Added map itemstack to currentData"+(stack.getCustomName()==null?"":", name="+stack.getCustomName().getString()));
 			stacksHashesForCurrentData.add(ItemStack.hashCode(stack));
 		}
-		final String posStr = getPosStrFromName(stack, currentData);
-		final Pos2DPair pos2dPair = getRelativePosPair(currPosStr, posStr);
+		final Pos2DPair pos2dPair = getRelativePosPair(currPosStr, getPosStrFromName(stack));
 		if(pos2dPair == null) return null;
 		int varAxis1 = varAxis1Origin+(axisMatch ? pos2dPair.b1 : pos2dPair.b2)*(varAxis1Neg?-1:+1);
 		int varAxis2 = varAxis2Origin+(axisMatch ? pos2dPair.b2 : pos2dPair.b1)*(varAxis2Neg?-1:+1);
@@ -288,6 +313,7 @@ public class AutoPlaceMapArt{
 		Main.LOGGER.info("AutoPlaceMapArt: Unreachable!!!");
 		assert false;
 		return null;
+		}
 	}
 
 	public final boolean isActive(){return !stacksHashesForCurrentData.isEmpty();}
@@ -411,8 +437,8 @@ public class AutoPlaceMapArt{
 			}
 			else{
 				// Swap from upper inv to main hand
-				executeClicks(onDone, new ClickEvent(slot, selectedSlot+36, SlotActionType.SWAP));
-				Main.LOGGER.info("AutoPlaceMapArt: Swapped inv.selectedSlot to nextMap: s="+slot);
+				executeClicks(onDone, new ClickEvent(slot, selectedSlot, SlotActionType.SWAP));
+				Main.LOGGER.info("AutoPlaceMapArt: Swapped nextMap to inv.selectedSlot: s="+slot+"->hb="+(selectedSlot));
 			}
 		}
 		else{ // bundleSlot != -1
@@ -436,10 +462,10 @@ public class AutoPlaceMapArt{
 			}
 			BundleContentsComponent contents = client.player.playerScreenHandler.slots.get(slot).getStack().get(DataComponentTypes.BUNDLE_CONTENTS);
 			assert contents != null && contents.size() > bundleSlot;
-//			if(bundleSlot != contents.size()-1){
+			if(contents.size() != 1){
 				int bundleSlotUsed = Configs.Generic.BUNDLE_SELECT_REVERSED.getBooleanValue() ? contents.size()-(bundleSlot+1) : bundleSlot;
 				client.player.networkHandler.sendPacket(new BundleItemSelectedC2SPacket(slot, bundleSlotUsed));
-//			}
+			}
 			executeClicks(onDone,
 					new ClickEvent(slot, 1, SlotActionType.PICKUP), // Take from bundle
 					new ClickEvent(selectedSlot+36, 0, SlotActionType.PICKUP) // Place in main hand
@@ -535,7 +561,7 @@ public class AutoPlaceMapArt{
 		}
 
 		if(data.slot != client.player.getInventory().selectedSlot+36 || data.bundleSlot != -1){
-			Main.LOGGER.warn("AutoPlaceMapArt: stack target!=held, calling getMapIntoMainHand()");
+//			Main.LOGGER.warn("AutoPlaceMapArt: calling getMapIntoMainHand(), data.slot="+data.slot+",hb="+client.player.getInventory().selectedSlot);
 			getMapIntoMainHand(client, data.slot, data.bundleSlot);
 			return;
 		}
