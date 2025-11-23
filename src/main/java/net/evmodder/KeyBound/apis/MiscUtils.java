@@ -22,36 +22,37 @@ public class MiscUtils{
 		return entity.prevX != entity.getX() || entity.prevY != entity.getY() || entity.prevZ != entity.getZ();
 	}
 
-	private static final String getRealServerAddress(String address){
+	public static final int HASHCODE_2B2T = -437714968;//"2b2t.org".hashCode() // TODO: make mod more server-independent 
+	private static final int getRealServerAddressHashCode(String address){
 		switch(address){
 			case "2b2t.org":
 			case "connect.2b2t.org":
-				return "2b2t.org";
+				return HASHCODE_2B2T;
 			default:
 				final int i = address.lastIndexOf(':');
 				try{
 					final InetAddress addr = InetAddress.getByName(i == -1 ? address : address.substring(0, i));
 					// Use canonical host name if available, otherwise use input hostname (I think it will be the same as `address`, but not sure)
-					return addr.getCanonicalHostName().equals(addr.getHostAddress()) ? addr.getHostName() : addr.getCanonicalHostName();
+					return (addr.getCanonicalHostName().equals(addr.getHostAddress()) ? addr.getHostName() : addr.getCanonicalHostName()).hashCode();
 				}
 				catch(UnknownHostException e){
 					Main.LOGGER.warn("Server not found: "+address);
 				}
-				return address;
+				return address.hashCode();
 		}
 	}
 
 	public static final int getServerAddressHashCode(ServerInfo serverInfo){
 		if(serverInfo == null) return 0;
 		final String name = Normalizer.normalize(serverInfo.name, Normalizer.Form.NFKD).toLowerCase().replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", "");
-		if(name.contains("2b2tproxy")) return "2b2t.org".hashCode();
-		return getRealServerAddress(serverInfo.address.toLowerCase()).hashCode();
+		if(name.contains("2b2tproxy")) return HASHCODE_2B2T;
+		return getRealServerAddressHashCode(serverInfo.address.toLowerCase());
 	}
 	public static final int getCurrentServerAddressHashCode(){
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(client == null || client.getCurrentServerEntry() == null) return 0;
 		// TODO: if connected to a proxy, figure out the server IP
-		return getRealServerAddress(client.getCurrentServerEntry().address.toLowerCase()).hashCode();
+		return getRealServerAddressHashCode(client.getCurrentServerEntry().address.toLowerCase());
 	}
 	public static byte[] getCurrentServerAndPlayerData(){
 		UUID playerUUID = MinecraftClient.getInstance().player.getUuid();
