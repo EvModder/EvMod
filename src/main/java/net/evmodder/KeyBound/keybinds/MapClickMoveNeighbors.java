@@ -1,8 +1,10 @@
-package net.evmodder.KeyBound.apis;
+package net.evmodder.KeyBound.keybinds;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.HashSet;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.apis.MapRelationUtils;
 import net.evmodder.KeyBound.apis.MapRelationUtils.RelatedMapsData;
 import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
 import net.minecraft.component.DataComponentTypes;
@@ -58,10 +60,13 @@ public abstract class MapClickMoveNeighbors{
 			return;
 		}
 
+		HashSet<Integer> slotsInvolved = new HashSet<>();
+		slotsInvolved.addAll(data.slots());
+
 		int tl = data.slots().stream().mapToInt(i->i.intValue()).min().getAsInt();
-		if(tl%9 != 0 && data.slots().contains(tl+8)) --tl;
+		if(tl%9 != 0 && slotsInvolved.contains(tl+8)) --tl;
 		int br = data.slots().stream().mapToInt(i->i.intValue()).max().getAsInt();
-		if(br%9 != 8 && data.slots().contains(br-8)) ++br;
+		if(br%9 != 8 && slotsInvolved.contains(br-8)) ++br;
 		int h = (br/9)-(tl/9)+1;
 		int w = (br%9)-(tl%9)+1;
 
@@ -99,7 +104,7 @@ public abstract class MapClickMoveNeighbors{
 		int fromSlot = -1;
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 			int s = tl + i*9 + j;
-			if(data.slots().contains(s)) continue;
+			if(slotsInvolved.contains(s)) continue;
 			if(fromSlot != -1){Main.LOGGER.info("MapMoveClick: Maps not in a rectangle");return;}
 			ItemStack stack = slots[i];
 			if(!stack.isEmpty() && stack.getItem() != Items.FILLED_MAP) Main.LOGGER.warn("MapMoveClick: moveFrom slot:"+s+" contains junk item: "+stack.getItem());
@@ -112,10 +117,11 @@ public abstract class MapClickMoveNeighbors{
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 			int d = tlDest + i*9 + j;
 			if(d == destSlot) continue;
-			if(!slots[d].isEmpty() && !data.slots().contains(d)){
+			if(!slots[d].isEmpty() && !slotsInvolved.contains(d)){
 				Main.LOGGER.info("MapMoveClick: Destination is not empty (dTL="+tlDest+",cur="+d+")");
 				return;
 			}
+			slotsInvolved.add(d);
 		}
 		final int brDest = tlDest + (br-tl);//equivalent: destSlot+(br-fromSlot);
 
@@ -134,15 +140,7 @@ public abstract class MapClickMoveNeighbors{
 
 		int tempSlot = -1;
 		if(!player.getInventory().getStack(hotbarButton).isEmpty()){
-			Main.LOGGER.warn("MapMoveClick: No available hotbar slot");
-			if(tl > tlDest){
-				for(int i=tlDest-1; i>=0; --i) if(slots[i].isEmpty()){tempSlot=i; break;}
-				if(tempSlot==-1) for(int i=br; i<slots.length; ++i) if(slots[i].isEmpty()){tempSlot=i; break;}
-			}
-			else{
-				for(int i=tl; i>=0; --i) if(slots[i].isEmpty()){tempSlot=i; break;}
-				if(tempSlot==-1) for(int i=brDest; i<slots.length; ++i) if(slots[i].isEmpty()){tempSlot=i; break;}
-			}
+			for(int i=0; i<slots.length; ++i) if(slots[i].isEmpty() && !slotsInvolved.contains(i)){tempSlot = i; break;}
 			if(tempSlot == -1) Main.LOGGER.warn("MapMoveClick: No available slot with which to free up offhand");
 		}
 
