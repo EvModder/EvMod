@@ -11,7 +11,7 @@
 		"issues": "https://github.com/EvModder/${mod_name}/issues"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/${mod_id}/icon.png",
+	"icon": "assets/${mod_id}/icon128x128.png",
 	"environment": "*",
 	"entrypoints": {
 		"client": [ "net.evmodder.${mod_name}.Main" ]
