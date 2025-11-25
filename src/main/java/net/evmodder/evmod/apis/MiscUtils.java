@@ -64,14 +64,14 @@ public class MiscUtils{
 	public static final int getServerAddressHashCode(ServerInfo serverInfo){
 		if(serverInfo == null) return 0;
 		final String name = Normalizer.normalize(serverInfo.name, Normalizer.Form.NFKD).toLowerCase().replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", "");
+		// TODO: if connected to a proxy, figure out the server IP
 		if(name.contains("2b2tproxy")) return HASHCODE_2B2T;
 		return getRealServerAddressHashCode(serverInfo.address.toLowerCase());
 	}
 	public static final int getCurrentServerAddressHashCode(){
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(client == null || client.getCurrentServerEntry() == null) return 0;
-		// TODO: if connected to a proxy, figure out the server IP
-		return getRealServerAddressHashCode(client.getCurrentServerEntry().address.toLowerCase());
+		return getServerAddressHashCode(client.getCurrentServerEntry());
 	}
 	public static byte[] getCurrentServerAndPlayerData(){
 		UUID playerUUID = MinecraftClient.getInstance().player.getUuid();
