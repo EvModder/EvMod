@@ -1,8 +1,8 @@
 # Enable or disable mod features
 
-placement_helper.iframe: true #(registers: onTick())
-placement_helper.mapart: true #(registers: onTick() + listener.entityInteractEvent)
-placement_helper.mapart.auto: true #(registers: onTick() + listener.entityAttackEvent)
+placement_helper.iframe: true
+placement_helper.mapart: true
+placement_helper.mapart.auto: true
 
 map_highlights: true
 map_highlights.in_gui: true

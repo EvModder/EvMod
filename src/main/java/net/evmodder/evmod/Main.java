@@ -83,7 +83,6 @@ public class Main{
 //	public static final String MC_VERSION = MinecraftVersion.CURRENT.getName();
 //	public static final String MOD_TYPE = "fabric";
 //	public static final String MOD_STRING = MOD_ID + "-" + MOD_TYPE + "-" + MC_VERSION + "-" + MOD_VERSION;
-	private static final String CONFIG_NAME = "enabled_features_for_mapart_ver.txt";
 
 	private static Main instance; static Main getInstance(){return instance;}
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
@@ -108,7 +107,7 @@ public class Main{
 
 	private HashMap<String, Boolean> loadConfig(){
 		HashMap<String, Boolean> config = new HashMap<>();
-		final String configContents = FileIO_New.loadFile(CONFIG_NAME, getClass().getResourceAsStream("/"+CONFIG_NAME));
+		final String configContents = FileIO_New.loadFile("enabled_features.txt", getClass().getResourceAsStream("/enabled_features_for_mapart_ver.txt"));
 		for(String line : configContents.split("\\r?\\n")){
 			final int sep = line.indexOf(':');
 			if(sep == -1) continue;
