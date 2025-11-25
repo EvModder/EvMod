@@ -187,7 +187,7 @@ public class ClickUtils{
 					cancel();
 					if(clickOpOngoing){
 						clickOpOngoing=false;
-						if(estimatedMsLeft != Integer.MAX_VALUE) client.player.sendMessage(Text.translatable("keybound.clickutils.clicksDone"), true);
+						if(estimatedMsLeft != Integer.MAX_VALUE) client.player.sendMessage(Text.translatable(Main.MOD_ID+".clickutils.clicksDone"), true);
 						onComplete.run();
 					}
 					return;
@@ -199,7 +199,7 @@ public class ClickUtils{
 //					StringUtils.translate("");
 					client.player.sendMessage(
 						Text.translatable(
-								"keybound.clickutils.waitingForClicks",
+								Main.MOD_ID+".clickutils.waitingForClicks",
 								clicks.size(), TextUtils.formatTime(estimatedMsLeft)
 						).withColor(OUTTA_CLICKS_COLOR), true);
 //					client.player.sendMessage(

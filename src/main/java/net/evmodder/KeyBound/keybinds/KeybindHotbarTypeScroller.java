@@ -14,7 +14,7 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Identifier;
 
 public final class KeybindHotbarTypeScroller{
-	//private final static String COLOR_SCROLL_CATEGORY = "key.categories."+KeyBound.MOD_ID+".color_scroll";
+	//private final static String COLOR_SCROLL_CATEGORY = "key.categories."+Main.MOD_ID+".color_scroll";
 
 	// e.g. [[tube, brain, bubble, fire, horn],...]
 	private List<String[]> variantLists;
@@ -92,15 +92,15 @@ public final class KeybindHotbarTypeScroller{
 						inventory.main.set(j, is);
 						client.interactionManager.clickSlot(/*client.player.playerScreenHandler.syncId*/0, j, inventory.selectedSlot, SlotActionType.SWAP, client.player);
 					}
-					//KeyBound.LOGGER.error("did swap");
+					//Main.LOGGER.error("did swap");
 					break;
 				}
-				//else KeyBound.LOGGER.error("no "+id.getPath()+", continuing for next item");
+				//else Main.LOGGER.error("no "+id.getPath()+", continuing for next item");
 				final int new_i = upOrDown ? (i == colors.length-1 ? 0 : i+1) : (i == 0 ? colors.length-1 : i-1);
 				id = Identifier.of(id.getNamespace(), id.getPath().replace(colors[i], colors[new_i]));
 				i = new_i;
 			}while(i != original_i);
-			//KeyBound.LOGGER.error("full wrap-around: "+i);
+			//Main.LOGGER.error("full wrap-around: "+i);
 		}
 	}
 

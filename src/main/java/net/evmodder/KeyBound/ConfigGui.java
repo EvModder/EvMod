@@ -12,11 +12,11 @@ import fi.dy.masa.malilib.util.StringUtils;
 
 public class ConfigGui extends GuiConfigsBase{
 	enum ConfigGuiTab{
-		ALL("keybound.gui.button.all"),
-		GENERIC("keybound.gui.button.generic"),
-		VISUALS("keybound.gui.button.visuals"),
-		HOTKEYS("keybound.gui.button.hotkeys"),
-		DATABASE("keybound.gui.button.database");
+		ALL(Main.MOD_ID+".gui.button.all"),
+		GENERIC(Main.MOD_ID+".gui.button.generic"),
+		VISUALS(Main.MOD_ID+".gui.button.visuals"),
+		HOTKEYS(Main.MOD_ID+".gui.button.hotkeys"),
+		DATABASE(Main.MOD_ID+".gui.button.database");
 
 		private final String translationKey;
 		private ConfigGuiTab(String translationKey){this.translationKey = translationKey;}
@@ -25,7 +25,7 @@ public class ConfigGui extends GuiConfigsBase{
 	private static ConfigGuiTab tab = ConfigGuiTab.HOTKEYS;
 
 	ConfigGui(){
-		super(10, 50, Main.MOD_ID, /*parent=*/null, "keybound.gui.title", StringUtils.getModVersionString(Main.MOD_ID));
+		super(10, 50, Main.MOD_ID, /*parent=*/null, Main.MOD_ID+".gui.title", StringUtils.getModVersionString(Main.MOD_ID));
 		setConfigWidth(224);
 	}
 

@@ -2,11 +2,12 @@ package net.evmodder.KeyBound.config;
 
 import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
+import net.evmodder.KeyBound.Main;
 
 public enum OptionMapStateCache implements IConfigOptionListEntry {
-	OFF("off", "keybound.gui.label.cacheMapState.off"),
-	MEMORY("memory", "keybound.gui.label.cacheMapState.memory"),
-	MEMORY_AND_DISK("memoryAndDisk", "keybound.gui.label.cacheMapState.memoryAndDisk");
+	OFF("off", Main.MOD_ID+".gui.label.cacheMapState.off"),
+	MEMORY("memory", Main.MOD_ID+".gui.label.cacheMapState.memory"),
+	MEMORY_AND_DISK("memoryAndDisk", Main.MOD_ID+".gui.label.cacheMapState.memoryAndDisk");
 
 	private final String configString;
 	private final String translationKey;

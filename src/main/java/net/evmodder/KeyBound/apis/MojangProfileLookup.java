@@ -25,7 +25,7 @@ public class MojangProfileLookup{
 			return null;
 		}
 		@Override protected String load(UUID key){
-			//KeyBound.LOGGER.info("oof, web request D:");
+			//Main.LOGGER.info("oof, web request D:");
 			ProfileResult pr = client.getSessionService().fetchProfile(key, /*requireSecure=*/false);
 			if(pr == null || pr.profile() == null || pr.profile().getName() == null){
 				Main.LOGGER.error("Unable to find name for player UUID: "+key.toString());
@@ -39,7 +39,7 @@ public class MojangProfileLookup{
 	};
 	public static final LoadingCache<String, UUID> uuidLookup = new LoadingCache<>(UUID_404, UUID_LOADING){
 		@Override protected UUID loadSyncOrNull(String key){
-			//KeyBound.LOGGER.info("fetch name called for uuid: "+key);
+			//Main.LOGGER.info("fetch name called for uuid: "+key);
 			ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
 			if(networkHandler != null){
 				for(PlayerListEntry entry : networkHandler.getPlayerList()){

@@ -2,11 +2,12 @@ package net.evmodder.KeyBound.config;
 
 import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
+import net.evmodder.KeyBound.Main;
 
 public enum OptionMapStateCacheTarget implements IConfigOptionListEntry {
-	BY_ID("byId", "keybound.gui.label.cacheMapstate.target.byId"),
-	BY_NAME("byName", "keybound.gui.label.cacheMapstate.target.byName"),
-	BY_INV_POS("byInvPos", "keybound.gui.label.cacheMapstate.target.byInvPos");
+	BY_ID("byId", Main.MOD_ID+".gui.label.cacheMapstate.target.byId"),
+	BY_NAME("byName", Main.MOD_ID+".gui.label.cacheMapstate.target.byName"),
+	BY_INV_POS("byInvPos", Main.MOD_ID+".gui.label.cacheMapstate.target.byInvPos");
 
 	private final String configString;
 	private final String translationKey;

@@ -17,16 +17,11 @@ import fi.dy.masa.malilib.hotkeys.KeybindSettings;
 import fi.dy.masa.malilib.hotkeys.KeybindSettings.Context;
 import fi.dy.masa.malilib.util.FileUtils;
 import fi.dy.masa.malilib.util.JsonUtils;
-import net.evmodder.KeyBound.config.ConfigPlayerList;
-import net.evmodder.KeyBound.config.ConfigStringHotkeyed;
-import net.evmodder.KeyBound.config.ConfigYawPitchHotkeyed;
-import net.evmodder.KeyBound.config.OptionInventoryRestockLimit;
-import net.evmodder.KeyBound.config.OptionMapStateCache;
-import net.evmodder.KeyBound.config.TooltipDisplayOption;
+import net.evmodder.KeyBound.config.*;
 import net.evmodder.KeyBound.config.ConfigPlayerList.NameAndUUID;
 
 public class Configs implements IConfigHandler{
-	private static final String CONFIG_FILE_NAME = Main.MOD_ID+"/keybound.json";
+	private static final String CONFIG_FILE_NAME = Main.MOD_ID+"/"+Main.MOD_ID+".json";
 
 	private static final String GENERIC_KEY = Main.MOD_ID+".config.generic";
 	public static class Generic{
@@ -38,7 +33,7 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean BUNDLE_SELECT_REVERSED = new ConfigBoolean("selectBundleSlotsInReverse", true).apply(GENERIC_KEY);
 
 		public static final ConfigOptionList MAP_STATE_CACHE = new ConfigOptionList("mapStateCache",
-//				new SimpleStringOption("keybound.gui.label.cache_mapstate.", "a", "b", "c")).apply(GENERIC_KEY);
+//				new SimpleStringOption(Main.MOD_ID+".gui.label.cache_mapstate.", "a", "b", "c")).apply(GENERIC_KEY);
 				OptionMapStateCache.MEMORY_AND_DISK).apply(GENERIC_KEY);
 //		public static final ConfigMultiOptionList MAP_STATE_CACHE_TYPE = new ConfigMultiOptionList("mapStateCacheType",
 //				List.of(MapStateCacheOptionType.BY_INV_POS, MapStateCacheOptionType.BY_NAME)).apply(GENERIC_KEY);

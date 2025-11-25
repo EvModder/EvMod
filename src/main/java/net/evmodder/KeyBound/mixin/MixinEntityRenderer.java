@@ -70,9 +70,9 @@ abstract class MixinEntityRenderer{
 						}}, 10_000L, 10_000L);
 					}
 					pearlsAtXYZ.put(xyz, pearls);
-					//KeyBound.LOGGER.info("Couldn't find pearl set at XZ: "+xyz.x()+","+xyz.z());
+					//Main.LOGGER.info("Couldn't find pearl set at XZ: "+xyz.x()+","+xyz.z());
 				}
-				//else KeyBound.LOGGER.info("Found pearl set at XZ: "+xyz.x()+","+xyz.z());
+				//else Main.LOGGER.info("Found pearl set at XZ: "+xyz.x()+","+xyz.z());
 			}
 		}
 		HashSet<Integer> pearlsForName = pearls.get(name);

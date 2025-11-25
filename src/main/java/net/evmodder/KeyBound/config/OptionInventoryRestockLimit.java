@@ -2,12 +2,13 @@ package net.evmodder.KeyBound.config;
 
 import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
+import net.evmodder.KeyBound.Main;
 
 public enum OptionInventoryRestockLimit implements IConfigOptionListEntry {
-	LEAVE_ONE_ITEM("leaveOneItem", "keybound.gui.label.inventoryRestock.leaveOneItem"),//TODO: leaveOne + leaveUnlessResupply
-	LEAVE_ONE_STACK("leaveOneStack", "keybound.gui.label.inventoryRestock.leaveOneStack"),
-	LEAVE_UNLESS_ONE_TYPE("leaveUnlessOneType", "keybound.gui.label.inventoryRestock.leaveUnlessOneType"),
-	LEAVE_UNLESS_ALL_RESUPPLY("leaveUnlessAllResupply", "keybound.gui.label.inventoryRestock.leaveUnlessAllResupply")
+	LEAVE_ONE_ITEM("leaveOneItem", Main.MOD_ID+".gui.label.inventoryRestock.leaveOneItem"),//TODO: leaveOne + leaveUnlessResupply
+	LEAVE_ONE_STACK("leaveOneStack", Main.MOD_ID+".gui.label.inventoryRestock.leaveOneStack"),
+	LEAVE_UNLESS_ONE_TYPE("leaveUnlessOneType", Main.MOD_ID+".gui.label.inventoryRestock.leaveUnlessOneType"),
+	LEAVE_UNLESS_ALL_RESUPPLY("leaveUnlessAllResupply", Main.MOD_ID+".gui.label.inventoryRestock.leaveUnlessAllResupply")
 	;
 
 	private final String configString;
