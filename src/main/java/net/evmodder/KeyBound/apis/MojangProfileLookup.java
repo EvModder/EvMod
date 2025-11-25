@@ -2,8 +2,8 @@ package net.evmodder.KeyBound.apis;
 
 import java.util.UUID;
 import com.mojang.authlib.yggdrasil.ProfileResult;
-import net.evmodder.EvLib.LoadingCache;
-import net.evmodder.EvLib.WebUtils;
+import net.evmodder.EvLib.util.LoadingCache;
+import net.evmodder.EvLib.util.WebHook;
 import net.evmodder.KeyBound.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
@@ -53,7 +53,7 @@ public class MojangProfileLookup{
 				Main.LOGGER.error("MojangProfileLookup: UUID load() called for an invalid username!");
 				return UUID_404;
 			}
-			String data = WebUtils.getReadURL("https://api.mojang.com/users/profiles/minecraft/"+key);
+			String data = WebHook.getReadURL("https://api.mojang.com/users/profiles/minecraft/"+key);
 			if(data == null) return UUID_404;
 			final int uuidStart = data.indexOf("\"id\":\"")+6;
 			final int uuidEnd = data.indexOf("\"", uuidStart+2); // +2 instead of +1 because we assume name field is non-empty (has at least 1 char)

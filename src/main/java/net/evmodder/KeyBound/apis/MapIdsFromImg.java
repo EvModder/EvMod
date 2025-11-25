@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.UUID;
 import javax.imageio.ImageIO;
-import net.evmodder.EvLib.FileIO;
+import net.evmodder.EvLib.util.FileIO_New;
 import net.minecraft.block.MapColor;
 
 public class MapIdsFromImg{
@@ -137,7 +137,7 @@ public class MapIdsFromImg{
 	}
 
 	public static HashSet<UUID> loadColorIds(String filename){
-		byte[] data = FileIO.loadFileBytes(filename);
+		byte[] data = FileIO_New.loadFileBytes(filename);
 		int numIds = data.length/16;
 		assert numIds*16 == data.length;
 		HashSet<UUID> colorIds = new HashSet<>(numIds);

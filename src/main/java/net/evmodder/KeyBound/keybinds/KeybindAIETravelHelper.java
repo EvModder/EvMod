@@ -1,6 +1,6 @@
 package net.evmodder.KeyBound.keybinds;
 
-import net.evmodder.EvLib.TextUtils;
+import net.evmodder.EvLib.util.TextUtils_New;
 import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -58,7 +58,7 @@ public final class KeybindAIETravelHelper{
 					if(stoppedFlyingTs == 0) stoppedFlyingTs = System.currentTimeMillis();
 					final long countDownToKick = SAFE_KICK_DELAY - (System.currentTimeMillis() - stoppedFlyingTs);
 					if(countDownToKick > 0){
-						client.player.sendMessage(Text.literal("AIE Helper: will disconnect due to not-flying in: " + TextUtils.formatTime(countDownToKick)), true);
+						client.player.sendMessage(Text.literal("AIE Helper: will disconnect due to not-flying in: " + TextUtils_New.formatTime(countDownToKick)), true);
 						return;
 					}
 					stoppedFlyingTs = 0;
@@ -93,7 +93,7 @@ public final class KeybindAIETravelHelper{
 					final long countDownToKick = SAFE_KICK_DELAY - (System.currentTimeMillis() - enabledTs);
 					if(countDownToKick > 0){
 						client.player.sendMessage(Text.literal("AIE Helper: will trigger disconnect due to too low "
-								+(atUnsafeY?"Y":"dur")+" in: "+TextUtils.formatTime(countDownToKick)), true);
+								+(atUnsafeY?"Y":"dur")+" in: "+TextUtils_New.formatTime(countDownToKick)), true);
 						return;
 					}
 				}

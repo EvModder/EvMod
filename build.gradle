@@ -73,6 +73,9 @@ java {
 	targetCompatibility = JavaVersion.VERSION_21
 }
 
+// https://github.com/EvModder/EvLib
+sourceSets { main { java { srcDirs 'src/main/java', '../../Plugins/EvLib/src/net/evmodder/EvLib/util/' } } }
+
 jar {
 	inputs.property "archivesName", project.base.archivesName
 

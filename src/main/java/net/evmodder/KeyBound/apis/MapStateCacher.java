@@ -10,7 +10,7 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import net.evmodder.EvLib.FileIO;
+import net.evmodder.EvLib.util.FileIO_New;
 import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.config.OptionMapStateCache;
@@ -62,7 +62,7 @@ public class MapStateCacher{
 
 	@SuppressWarnings("unchecked")
 	public static final void readFromFile(){
-		try(FileInputStream fis = new FileInputStream(FileIO.DIR+"cached_mapstates"); ObjectInputStream ois = new ObjectInputStream(fis)){
+		try(FileInputStream fis = new FileInputStream(FileIO_New.DIR+"cached_mapstates"); ObjectInputStream ois = new ObjectInputStream(fis)){
 			HashMap<Integer, List<MapStateSerializable>> persistentMapStatesInInv = (HashMap<Integer, List<MapStateSerializable>>)ois.readObject();
 			for(var entry : persistentMapStatesInInv.entrySet()){
 				inMemoryCache.put(entry.getKey(), entry.getValue().stream().map(mss -> mss == null ? null : mss.toMapState()).toList());
@@ -72,7 +72,7 @@ public class MapStateCacher{
 		catch(IOException | ClassNotFoundException e){e.printStackTrace();}
 	}
 	private static final void saveToFile(){
-		try(FileOutputStream fos = new FileOutputStream(FileIO.DIR+"cached_mapstates"); ObjectOutputStream oos = new ObjectOutputStream(fos)){
+		try(FileOutputStream fos = new FileOutputStream(FileIO_New.DIR+"cached_mapstates"); ObjectOutputStream oos = new ObjectOutputStream(fos)){
 			HashMap<Integer, List<MapStateSerializable>> persistentMapStatesInInv = new HashMap<>(inMemoryCache.size());
 			for(var entry : inMemoryCache.entrySet()){
 				persistentMapStatesInInv.put(entry.getKey(), entry.getValue().stream().map(MapStateSerializable::fromMapState).toList());

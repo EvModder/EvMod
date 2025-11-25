@@ -2,7 +2,7 @@ package net.evmodder.KeyBound.listeners;
 
 import java.util.Timer;
 import java.util.TimerTask;
-import net.evmodder.EvLib.Command;
+import net.evmodder.EvLib.util.Command;
 import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.MapStateCacher;

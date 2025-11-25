@@ -2,11 +2,11 @@ package net.evmodder.KeyBound.commands;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import net.evmodder.EvLib.Command;
-import net.evmodder.EvLib.PacketHelper;
-import net.evmodder.EvLib.PearlDataClient;
 import java.util.List;
 import java.util.UUID;
+import net.evmodder.EvLib.util.Command;
+import net.evmodder.EvLib.util.PacketHelper;
+import net.evmodder.EvLib.util.PearlDataClient;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.EpearlLookup;
 import net.evmodder.KeyBound.apis.MiscUtils;

@@ -9,9 +9,9 @@ import java.util.UUID;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.evmodder.EvLib.Command;
-import net.evmodder.EvLib.PacketHelper;
-import net.evmodder.EvLib.PacketHelper.MessageReceiver;
+import net.evmodder.EvLib.util.Command;
+import net.evmodder.EvLib.util.PacketHelper;
+import net.evmodder.EvLib.util.PacketHelper.MessageReceiver;
 
 public final class RemoteServerSender{
 	public static final int DEFAULT_PORT = 14441;

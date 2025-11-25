@@ -6,12 +6,12 @@ import java.util.HashSet;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
-import net.evmodder.EvLib.Command;
-import net.evmodder.EvLib.FileIO;
-import net.evmodder.EvLib.LoadingCache;
-import net.evmodder.EvLib.PacketHelper;
-import net.evmodder.EvLib.PearlDataClient;
-import net.evmodder.EvLib.TextUtils;
+import net.evmodder.EvLib.util.Command;
+import net.evmodder.EvLib.util.FileIO_New;
+import net.evmodder.EvLib.util.LoadingCache;
+import net.evmodder.EvLib.util.PacketHelper;
+import net.evmodder.EvLib.util.PearlDataClient;
+import net.evmodder.EvLib.util.TextUtils_New;
 import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.commands.CommandAssignPearl;
@@ -45,7 +45,7 @@ public final class EpearlLookup{
 		final String DB_FILENAME;
 		final Command DB_FETCH_COMMAND;
 		RSLoadingCache(final String dbFilename, final Command fetchCommand){
-			super(FileIO.loadFromClientFile(dbFilename), PD_404, PD_LOADING);
+			super(FileIO_New.loadFromClientFile(dbFilename), PD_404, PD_LOADING);
 			DB_FILENAME = dbFilename;
 			DB_FETCH_COMMAND = fetchCommand;
 		}
@@ -81,7 +81,7 @@ public final class EpearlLookup{
 						else{
 							Main.LOGGER.info("EpearLookup(Fetch): Got ownerUUID for pearlUUID: "+key+" at "+xyz+", appending to clientFile");
 							pdc = new PearlDataClient(fetchedUUID, xyz.x(), xyz.x(), xyz.z());
-							FileIO.appendToClientFile(DB_FILENAME, key, pdc);
+							FileIO_New.appendToClientFile(DB_FILENAME, key, pdc);
 						}
 					}
 					putIfAbsent(key, pdc);
@@ -99,7 +99,7 @@ public final class EpearlLookup{
 		assert cmd == Command.DB_PEARL_STORE_BY_UUID || cmd == Command.DB_PEARL_STORE_BY_XZ;
 		final String DB_FILENAME = cmd == Command.DB_PEARL_STORE_BY_UUID ? DB_FILENAME_UUID : DB_FILENAME_XZ;
 		final RSLoadingCache cache = cmd == Command.DB_PEARL_STORE_BY_UUID ? cacheByUUID : cacheByXZ;
-		if(cache.putIfAbsent(key, pdc)) FileIO.appendToClientFile(DB_FILENAME, key, pdc);
+		if(cache.putIfAbsent(key, pdc)) FileIO_New.appendToClientFile(DB_FILENAME, key, pdc);
 	}
 
 	private boolean recentChunkLoad = true;
@@ -131,7 +131,7 @@ public final class EpearlLookup{
 				}
 				synchronized(removalChecker){ // Really this is just here to synchonize access to FileDBs
 					if(USE_DB_UUID){
-						HashSet<UUID> deletedKeys = FileIO.removeMissingFromClientFile(DB_FILENAME_UUID, playerX, playerY, playerZ, maxDistSq, pearlsSeen1);
+						HashSet<UUID> deletedKeys = FileIO_New.removeMissingFromClientFile(DB_FILENAME_UUID, playerX, playerY, playerZ, maxDistSq, pearlsSeen1);
 						if(deletedKeys == null){
 //							Main.LOGGER.error("!! Delete failed because FileDB is null: "+DB_FILENAME_UUID);
 						}
@@ -149,7 +149,7 @@ public final class EpearlLookup{
 						}
 					}
 					if(USE_DB_XZ){
-						HashSet<UUID> deletedKeys = FileIO.removeMissingFromClientFile(DB_FILENAME_XZ, playerX, playerY, playerZ, maxDistSq, pearlsSeen2);
+						HashSet<UUID> deletedKeys = FileIO_New.removeMissingFromClientFile(DB_FILENAME_XZ, playerX, playerY, playerZ, maxDistSq, pearlsSeen2);
 						if(deletedKeys == null){
 //							Main.LOGGER.error("!! Delete failed because FileDB is null: "+DB_FILENAME_XZ);
 						}
@@ -201,7 +201,7 @@ public final class EpearlLookup{
 		if(owner == null ? MojangProfileLookup.UUID_LOADING == null : owner.equals(MojangProfileLookup.UUID_LOADING)){
 			Long startTs = requestStartTimes.get(key);
 			if(startTs == null) return MojangProfileLookup.NAME_U_LOADING+" ERROR";
-			return MojangProfileLookup.NAME_U_LOADING+" "+TextUtils.formatTime(System.currentTimeMillis()-startTs);
+			return MojangProfileLookup.NAME_U_LOADING+" "+TextUtils_New.formatTime(System.currentTimeMillis()-startTs);
 		}
 		return MojangProfileLookup.nameLookup.get(owner, /*callback=*/null);
 	}
@@ -231,14 +231,14 @@ public final class EpearlLookup{
 			if(ownerUUID != null){
 				final PearlDataClient pdc = new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
 				if(cacheByUUID.putIfAbsent(key, pdc)){
-					if(Main.remoteSender == null) FileIO.appendToClientFile(DB_FILENAME_UUID, key, pdc);
+					if(Main.remoteSender == null) FileIO_New.appendToClientFile(DB_FILENAME_UUID, key, pdc);
 					else{
 						Main.LOGGER.debug("EpearlLookup: Sending STORE_OWNER(uuid) '"+ownerName+"' for pearl at "+epearl.getBlockX()+","+epearl.getBlockZ());
 						Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, ownerUUID), msg->{
 							if(msg != null && msg.length == 1){
 								if(msg[0] != 0) Main.LOGGER.info("EpearlLookup: Added pearl UUID to remote DB!");
 								else Main.LOGGER.info("EpearlLookup: Remote DB already contains pearl UUID");
-								FileIO.appendToClientFile(DB_FILENAME_UUID, key, pdc);
+								FileIO_New.appendToClientFile(DB_FILENAME_UUID, key, pdc);
 							}
 							else Main.LOGGER.info("EpearlLookup: Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_UUID: "+msg);
 						});
@@ -272,14 +272,14 @@ public final class EpearlLookup{
 				if(oldKey == null){
 					final PearlDataClient pdc = new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
 					if(cacheByXZ.putIfAbsent(key, pdc)){
-						if(Main.remoteSender == null) FileIO.appendToClientFile(DB_FILENAME_XZ, key, pdc);
+						if(Main.remoteSender == null) FileIO_New.appendToClientFile(DB_FILENAME_XZ, key, pdc);
 						else{
 							Main.LOGGER.debug("EpearlLookup: Sending STORE_OWNER(XZ) '"+ownerName+"' for pearl at "+epearl.getBlockX()+","+epearl.getBlockZ());
 							Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_XZ, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, ownerUUID), msg->{
 								if(msg != null && msg.length == 1){
 									if(msg[0] != 0) Main.LOGGER.info("EpearlLookup: Added pearl XZ to remote DB!");
 									else Main.LOGGER.info("EpearlLookup: Remote DB already contains pearl XZ (or rejected it for other reasons)");
-									FileIO.appendToClientFile(DB_FILENAME_XZ, key, pdc);
+									FileIO_New.appendToClientFile(DB_FILENAME_XZ, key, pdc);
 								}
 								else Main.LOGGER.info("EpearlLookup: Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_XZ: "+msg);
 							});

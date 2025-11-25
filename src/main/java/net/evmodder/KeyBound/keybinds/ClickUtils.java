@@ -7,7 +7,7 @@ import java.util.TimerTask;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import net.evmodder.EvLib.TextUtils;
+import net.evmodder.EvLib.util.TextUtils_New;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.mixin.AccessorPlayerListHud;
 import net.minecraft.client.MinecraftClient;
@@ -116,7 +116,7 @@ public class ClickUtils{
 		final Text footerText = playerListHudAccessor.getFooter();
 		if(footerText == null) return TICK_DURATION;
 		final MutableText text = Text.empty(); footerText.withoutStyle().forEach(text::append);
-		final String footerStr = TextUtils.stripColorAndFormats(text.getString());
+		final String footerStr = TextUtils_New.stripColorAndFormats(text.getString());
 		//§819.90 tps — 692 players online — 92 ping
 		final Matcher matcher = tpsPattern.matcher(footerStr);
 		if(!matcher.find()) return TICK_DURATION;
@@ -200,7 +200,7 @@ public class ClickUtils{
 					client.player.sendMessage(
 						Text.translatable(
 								Main.MOD_ID+".clickutils.waitingForClicks",
-								clicks.size(), TextUtils.formatTime(estimatedMsLeft)
+								clicks.size(), TextUtils_New.formatTime(estimatedMsLeft)
 						).withColor(OUTTA_CLICKS_COLOR), true);
 //					client.player.sendMessage(
 //						Text.literal(

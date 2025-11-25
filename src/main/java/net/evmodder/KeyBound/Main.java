@@ -20,8 +20,8 @@ import fi.dy.masa.malilib.config.ConfigManager;
 import fi.dy.masa.malilib.event.InputEventHandler;
 import fi.dy.masa.malilib.registry.Registry;
 import fi.dy.masa.malilib.util.data.ModInfo;
-import net.evmodder.EvLib.Command;
-import net.evmodder.EvLib.FileIO;
+import net.evmodder.EvLib.util.Command;
+import net.evmodder.EvLib.util.FileIO_New;
 import net.evmodder.KeyBound.apis.ChatBroadcaster;
 import net.evmodder.KeyBound.apis.EpearlLookup;
 import net.evmodder.KeyBound.apis.RemoteServerSender;
@@ -108,7 +108,7 @@ public class Main{
 
 	private HashMap<String, Boolean> loadConfig(){
 		HashMap<String, Boolean> config = new HashMap<>();
-		final String configContents = FileIO.loadFile(CONFIG_NAME, getClass().getResourceAsStream("/"+CONFIG_NAME));
+		final String configContents = FileIO_New.loadFile(CONFIG_NAME, getClass().getResourceAsStream("/"+CONFIG_NAME));
 		for(String line : configContents.split("\\r?\\n")){
 			final int sep = line.indexOf(':');
 			if(sep == -1) continue;

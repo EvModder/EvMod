@@ -1,8 +1,8 @@
 package net.evmodder.KeyBound.commands;
 
 import java.nio.ByteBuffer;
-import net.evmodder.EvLib.Command;
-import net.evmodder.EvLib.TextUtils;
+import net.evmodder.EvLib.util.Command;
+import net.evmodder.EvLib.util.TextUtils_New;
 import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.MiscUtils;
@@ -17,10 +17,10 @@ public class CommandTimeOnline{
 
 	private void tellTimeOnline(final FabricClientCommandSource source, final long lastJoinTs){
 		final long timeOnline = System.currentTimeMillis() - lastJoinTs;
-		source.sendFeedback(Text.literal("Time online: "+TextUtils.formatTime(timeOnline)));
+		source.sendFeedback(Text.literal("Time online: "+TextUtils_New.formatTime(timeOnline)));
 		if(MiscUtils.getCurrentServerAddressHashCode() == MiscUtils.HASHCODE_2B2T){
 			final long timeLeft = 8l*60l*60l*1000l - timeOnline;
-			source.sendFeedback(Text.literal("Time left on 2b2t (assuming 8h limit): "+TextUtils.formatTime(timeLeft)));
+			source.sendFeedback(Text.literal("Time left on 2b2t (assuming 8h limit): "+TextUtils_New.formatTime(timeLeft)));
 		}
 	}
 	public CommandTimeOnline(){
