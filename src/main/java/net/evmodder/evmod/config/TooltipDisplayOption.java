@@ -2,11 +2,12 @@ package net.evmodder.evmod.config;
 
 import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
+import net.evmodder.evmod.Main;
 
 public enum TooltipDisplayOption implements IConfigOptionListEntry {
-	OFF("off", "keybound.gui.label.tooltipDisplay.off"),
-	ON("on", "keybound.gui.label.tooltipDisplay.on"),
-	ADVANCED_TOOLTIPS("advancedTooltips", "keybound.gui.label.tooltipDisplay.advanced");
+	OFF("off", Main.MOD_ID+".gui.label.tooltipDisplay.off"),
+	ON("on", Main.MOD_ID+".gui.label.tooltipDisplay.on"),
+	ADVANCED_TOOLTIPS("advancedTooltips", Main.MOD_ID+".gui.label.tooltipDisplay.advanced");
 
 	private final String configString;
 	private final String translationKey;

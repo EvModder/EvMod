@@ -1,6 +1,6 @@
-package net.evmodder.KeyBound.mixin;
+package net.evmodder.evmod.mixin;
 
-import net.evmodder.KeyBound.Main;
+import net.evmodder.evmod.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.item.ItemModelManager;
 import net.minecraft.item.ItemStack;

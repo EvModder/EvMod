@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound.config;
+package net.evmodder.evmod.config;
 
 import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
