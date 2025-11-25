@@ -7,16 +7,16 @@
 	"authors": [ "EvModder" ],
 	"contact": {
 		"homepage": "https://modrinth.com/project/${mod_id}",
-		"sources": "https://github.com/EvModder/${mod_name}",
-		"issues": "https://github.com/EvModder/${mod_name}/issues"
+		"sources": "https://github.com/EvModder/${mod_id}",
+		"issues": "https://github.com/EvModder/${mod_id}/issues"
 	},
 	"license": "CC-BY-NC-SA-4.0",
 	"icon": "assets/${mod_id}/icon128x128.png",
 	"environment": "*",
 	"entrypoints": {
-		"client": [ "net.evmodder.${mod_name}.FabricEntryPoint" ]
+		"client": [ "net.evmodder.${mod_id}.FabricEntryPoint" ]
 	},
-	"mixins": [ "${mod_id}.mixins.json" ],
+	"mixins": [ "mixins.json" ],
 	"depends": {
 		"fabricloader": ">=${loader_version}",
 		"minecraft": "~${minecraft_version}",

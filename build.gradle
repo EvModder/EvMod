@@ -4,7 +4,7 @@ plugins {
 }
 
 /*loom {
-	accessWidenerPath = file("src/main/resources/keybound.accesswidener")
+	accessWidenerPath = file("src/main/resources/accesswidener")
 }*/
 
 version = project.mod_version
@@ -12,7 +12,7 @@ group = project.maven_group
 compileJava.options.encoding = 'UTF-8'
 
 base {
-	archivesName = project.mod_id + '-' + project.minecraft_version
+	archivesName = project.mod_name + '-' + project.minecraft_version
 }
 
 repositories {
