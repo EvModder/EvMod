@@ -3,8 +3,6 @@ package net.evmodder.KeyBound;
 import net.evmodder.KeyBound.apis.ChatBroadcaster;
 import net.evmodder.KeyBound.apis.MiscUtils;
 import net.evmodder.KeyBound.apis.RemoteServerSender;
-import net.evmodder.KeyBound.config.ConfigGui;
-import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.keybinds.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
@@ -50,11 +48,13 @@ public class KeyCallbacks{
 	}
 
 	public static final void init(MinecraftClient mc){
+		Main main = Main.getInstance();
 		KeybindAIETravelHelper kbAIE = new KeybindAIETravelHelper();
 		KeybindEjectJunk kbej = new KeybindEjectJunk();
 		KeybindEbounceTravelHelper kbEbounce = new KeybindEbounceTravelHelper(kbej);
 		KeybindHotbarTypeScroller kbHbScroll = new KeybindHotbarTypeScroller();
 
+//		KeybindCraftingRestock kbCraftRestock = new KeybindCraftingRestock(); // Needs to be in Main :(
 //		KeybindInventoryRestock kbInvRestock = new KeybindInventoryRestock();
 		KeybindMapCopy kbMapCopy = new KeybindMapCopy();
 		KeybindMapLoad kbMapLoad = new KeybindMapLoad();
@@ -66,7 +66,7 @@ public class KeyCallbacks{
 		Configs.Database.ADDRESS.setValueChangeCallback(KeyCallbacks::remakeRemoteServerSender);
 		Configs.Database.CLIENT_ID.setValueChangeCallback(KeyCallbacks::remakeRemoteServerSender);
 		Configs.Database.CLIENT_KEY.setValueChangeCallback(KeyCallbacks::remakeRemoteServerSender);
-		Configs.Database.BORROW_IGNORES.setValueChangeCallback(_0 -> Main.gameMessageFilter.recomputeIgnoreLists());
+		Configs.Database.BORROW_IGNORES.setValueChangeCallback(_0 -> main.gameMessageFilter.recomputeIgnoreLists());
 		Configs.Database.EPEARL_OWNERS_BY_UUID.setValueChangeCallback(newValue -> {if(newValue.getBooleanValue()) Main.epearlLookup.loadEpearlCacheUUID();});
 		Configs.Database.EPEARL_OWNERS_BY_XZ.setValueChangeCallback(newValue -> {if(newValue.getBooleanValue()) Main.epearlLookup.loadEpearlCacheXZ();});
 		Configs.Generic.TEMP_BROADCAST_ACCOUNT.setValueChangeCallback(_0 -> ChatBroadcaster.refreshBroadcast());
@@ -105,7 +105,7 @@ public class KeyCallbacks{
 //		keybindCallback(Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER, null, kbEbounce::toggle);
 		Configs.Hotkeys.AIE_TRAVEL_HELPER.setValueChangeCallback(newValue->kbAIE.updateEnabled(newValue.getBooleanValue()));
 		Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setValueChangeCallback(newValue->kbEbounce.toggle(newValue.getBooleanValue()));
-		keybindCallback(Configs.Hotkeys.CRAFT_RESTOCK, null/*HandledScreen.class::isInstance*/, ()->Main.kbCraftRestock.restockInputSlots());
+		keybindCallback(Configs.Hotkeys.CRAFT_RESTOCK, null/*HandledScreen.class::isInstance*/, Main.kbCraftRestock::restockInputSlots);
 		keybindCallback(Configs.Hotkeys.EJECT_JUNK_ITEMS, s->s==null || s instanceof HandledScreen, kbej::ejectJunkItems);
 		keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_INCR, null, ()->kbHbScroll.scrollHotbarSlot(true));
 		keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_DECR, null, ()->kbHbScroll.scrollHotbarSlot(false));

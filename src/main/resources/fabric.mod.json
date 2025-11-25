@@ -6,15 +6,15 @@
 	"description": "Keybinds and stuff",
 	"authors": [ "EvModder" ],
 	"contact": {
-		"homepage": "https://legacy.curseforge.com/minecraft/mc-mods/${mod_id}",
+		"homepage": "https://modrinth.com/project/${mod_id}",
 		"sources": "https://github.com/EvModder/${mod_name}",
 		"issues": "https://github.com/EvModder/${mod_name}/issues"
 	},
-	"license": "CC0-1.0",
+	"license": "CC-BY-NC-SA-4.0",
 	"icon": "assets/${mod_id}/icon128x128.png",
 	"environment": "*",
 	"entrypoints": {
-		"client": [ "net.evmodder.${mod_name}.Main" ]
+		"client": [ "net.evmodder.${mod_name}.FabricEntryPoint" ]
 	},
 	"mixins": [ "${mod_id}.mixins.json" ],
 	"depends": {

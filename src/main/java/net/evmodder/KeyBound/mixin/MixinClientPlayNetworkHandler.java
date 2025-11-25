@@ -1,7 +1,7 @@
 package net.evmodder.KeyBound.mixin;
 
+import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.apis.MapStateCacher;
-import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.config.OptionMapStateCache;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.world.ClientWorld;

@@ -1,10 +1,10 @@
 package net.evmodder.KeyBound.listeners;
 
 import net.evmodder.EvLib.Command;
+import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.MapStateCacher;
 import net.evmodder.KeyBound.apis.MiscUtils;
-import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.config.OptionMapStateCache;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 

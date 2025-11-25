@@ -1,7 +1,7 @@
 package net.evmodder.KeyBound.mixin;
 
+import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.apis.MapGroupUtils;
-import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.onTick.UpdateItemFrameHighlights;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.InGameHud;

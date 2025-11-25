@@ -1,9 +1,9 @@
 package net.evmodder.KeyBound.listeners;
 
 import java.util.List;
+import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.KeyCallbacks;
 import net.evmodder.KeyBound.apis.MapStateCacher;
-import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.config.OptionMapStateCache;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.ItemStack;

@@ -3,9 +3,10 @@ package net.evmodder.KeyBound.listeners;
 import java.util.UUID;
 import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.PacketHelper;
+import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.EpearlActivator;
-import net.evmodder.KeyBound.config.Configs;
+import net.evmodder.KeyBound.apis.EpearlLookup;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
@@ -26,8 +27,8 @@ public class GameMessageListener{
 				/*udp=*/true, 2000, PacketHelper.toByteArray(client.player.getUuid(), ignoredUUID), /*recv=*/null);
 	}
 
-	public GameMessageListener(){
-		final EpearlActivator pearlActivator = new EpearlActivator();
+	public GameMessageListener(EpearlLookup epl){
+		final EpearlActivator pearlActivator = new EpearlActivator(epl);
 
 		ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {
 			if(overlay) return;

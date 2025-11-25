@@ -3,7 +3,7 @@ package net.evmodder.KeyBound.apis;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.UUID;
-import net.evmodder.KeyBound.config.Configs;
+import net.evmodder.KeyBound.Configs;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.map.MapState;

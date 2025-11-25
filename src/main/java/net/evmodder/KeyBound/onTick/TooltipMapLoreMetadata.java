@@ -3,10 +3,10 @@ package net.evmodder.KeyBound.onTick;
 import java.util.HashMap;
 import java.util.List;
 import net.minecraft.item.Item.TooltipContext;
+import net.evmodder.KeyBound.apis.Tooltip;
+import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.apis.MapColorUtils;
 import net.evmodder.KeyBound.apis.MapColorUtils.MapColorData;
-import net.evmodder.KeyBound.config.Configs;
-import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.ItemStack;
@@ -16,11 +16,7 @@ import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
-public final class TooltipMapLoreMetadata{
-	public TooltipMapLoreMetadata(){
-		ItemTooltipCallback.EVENT.register(this::tooltipMetadata);
-	}
-
+public final class TooltipMapLoreMetadata implements Tooltip{
 	private final String paletteSymbol(MapColorUtils.Palette palette){
 		return //StringUtils.capitalize(
 				palette.name().toLowerCase().replace('_', '-');
@@ -42,7 +38,7 @@ public final class TooltipMapLoreMetadata{
 	private static final HashMap<ItemStack, List<Text>> tooltipCache = new HashMap<>();
 	private static int lastHash;
 
-	public final void tooltipMetadata(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
+	@Override public final void get(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
 		int currHash = UpdateInventoryHighlights.mapsInInvHash + UpdateContainerHighlights.mapsInContainerHash;
 		if(lastHash != currHash){lastHash = currHash; tooltipCache.clear();}
 		List<Text> cachedLines = tooltipCache.get(item);

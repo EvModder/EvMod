@@ -8,6 +8,8 @@ import net.evmodder.EvLib.PearlDataClient;
 import java.util.List;
 import java.util.UUID;
 import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.apis.EpearlLookup;
+import net.evmodder.KeyBound.apis.MiscUtils;
 import net.evmodder.KeyBound.apis.MojangProfileLookup;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -17,27 +19,19 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
 
 public class CommandAssignPearl{
+	private final EpearlLookup epearlLookup;
+
 	public static final class Friend{private Friend(){}}
 	private static final Friend friend = new Friend();
-
-	private boolean isLookingAt(Entity entity, Entity player){
-		Vec3d vec3d = player.getRotationVec(1.0F).normalize();
-		Vec3d vec3d2 = new Vec3d(entity.getX() - player.getX(), entity.getEyeY() - player.getEyeY(), entity.getZ() - player.getZ());
-		double d = vec3d2.length();
-		vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d);//normalize
-		double e = vec3d.dotProduct(vec3d2);
-		return e > 1.0D - 0.03D / d ? /*client.player.canSee(entity)*/true : false;
-	}
 
 	private int assignPearl(CommandContext<FabricClientCommandSource> ctx, Command cmd){
 		assert cmd == Command.DB_PEARL_STORE_BY_UUID || cmd == Command.DB_PEARL_STORE_BY_XZ;
 		final Entity player = ctx.getSource().getPlayer();
 		final Box box = player.getBoundingBox().expand(8, 6, 8);
 		List<EnderPearlEntity> epearls =  player.getWorld().getEntitiesByType(EntityType.ENDER_PEARL, box, e->{
-			return isLookingAt(e, player) && !Main.epearlLookup.isLoadedOwnerName(Main.epearlLookup.getOwnerName(e));
+			return MiscUtils.isLookingAt(e, player) && !epearlLookup.isLoadedOwnerName(epearlLookup.getOwnerName(e));
 		});
 		if(epearls.isEmpty()){
 			ctx.getSource().sendError(Text.literal("Unable to detect target unassigned epearl"));
@@ -59,14 +53,14 @@ public class CommandAssignPearl{
 			}
 //			ctx.getSource().sendFeedback(Text.literal("Sending DB update for epearl: "+key+" -> "+uuid));
 			final PearlDataClient pdc = new PearlDataClient(uuid, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
-			if(Main.remoteSender == null) Main.epearlLookup.assignPearlOwner(friend, key, pdc, cmd);
+			if(Main.remoteSender == null) epearlLookup.assignPearlOwner(friend, key, pdc, cmd);
 			else{
 				Main.remoteSender.sendBotMessage(cmd, /*udp=*/true, /*timeout=*/3000, PacketHelper.toByteArray(key, uuid), (reply)->{
 					if(reply != null && reply.length == 1){
 						if(reply[0] == -1/*aka (byte)255*/) ctx.getSource().sendFeedback(Text.literal("Added pearl owner to remote DB!").withColor(16755200));
 						else ctx.getSource().sendError(Text.literal("Remote DB already contains pearl owner").withColor(16755200));
 	
-						Main.epearlLookup.assignPearlOwner(friend, key, pdc, cmd);
+						epearlLookup.assignPearlOwner(friend, key, pdc, cmd);
 					}
 					else ctx.getSource().sendError(Text.literal("Unexpected response from RMS for "+cmd+": "+reply).withColor(16733525));
 				});
@@ -75,7 +69,8 @@ public class CommandAssignPearl{
 		return 1;
 	}
 
-	public CommandAssignPearl(){
+	public CommandAssignPearl(EpearlLookup epl){
+		epearlLookup = epl;
 		ClientCommandRegistrationCallback.EVENT.register(
 			(dispatcher, _0) -> dispatcher.register(
 				ClientCommandManager.literal("assignpearl").then(

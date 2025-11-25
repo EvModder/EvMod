@@ -7,8 +7,8 @@ import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import net.evmodder.EvLib.FileIO;
+import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
-import net.evmodder.KeyBound.config.Configs;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 

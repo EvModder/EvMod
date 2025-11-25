@@ -10,10 +10,10 @@ import java.util.stream.Stream;
 import com.nimbusds.oauth2.sdk.util.StringUtils;
 import net.evmodder.KeyBound.onTick.AutoPlaceMapArt;
 import net.evmodder.KeyBound.onTick.UpdateInventoryHighlights;
+import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
 import net.evmodder.KeyBound.apis.MapRelationUtils;
 import net.evmodder.KeyBound.apis.MapRelationUtils.RelatedMapsData;
-import net.evmodder.KeyBound.config.Configs;
 import net.evmodder.KeyBound.keybinds.ClickUtils.ClickEvent;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
@@ -504,9 +504,9 @@ public final class MapHandRestock{
 
 	private ItemFrameEntity lastIfe;
 	private ItemStack lastStack;
-	public MapHandRestock(){
+	public MapHandRestock(final boolean allowAutoPlacer){
 		final AutoPlaceMapArt autoPlaceMapArt;
-		if(Main.placementHelperMapArtAuto){
+		if(allowAutoPlacer){
 			autoPlaceMapArt = new AutoPlaceMapArt();
 			ClientTickEvents.END_CLIENT_TICK.register(client -> autoPlaceMapArt.placeNearestMap(client));
 			AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {

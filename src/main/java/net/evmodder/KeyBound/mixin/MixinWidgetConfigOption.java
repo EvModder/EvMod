@@ -33,7 +33,7 @@ import fi.dy.masa.malilib.gui.interfaces.IKeybindConfigGui;
 import fi.dy.masa.malilib.gui.widgets.*;
 import fi.dy.masa.malilib.gui.widgets.WidgetConfigOption.ListenerSliderToggle;
 import fi.dy.masa.malilib.hotkeys.*;
-import net.evmodder.KeyBound.config.ConfigGui;
+import net.evmodder.KeyBound.ConfigGui;
 import net.evmodder.KeyBound.config.ConfigStringHotkeyed;
 import net.evmodder.KeyBound.config.ConfigYawPitchHotkeyed;
 import net.minecraft.client.gui.DrawContext;

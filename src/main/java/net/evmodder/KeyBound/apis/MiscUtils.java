@@ -8,19 +8,38 @@ import java.util.Arrays;
 import java.util.UUID;
 import net.evmodder.EvLib.Command;
 import net.evmodder.EvLib.PacketHelper;
+import net.evmodder.KeyBound.Configs;
 import net.evmodder.KeyBound.Main;
-import net.evmodder.KeyBound.config.Configs;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerModelPart;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
+import net.minecraft.util.math.Vec3d;
 
 public class MiscUtils{
 	public static final boolean hasMoved(Entity entity){
 		return entity.prevX != entity.getX() || entity.prevY != entity.getY() || entity.prevZ != entity.getZ();
 	}
+
+	public static final boolean isLookingAt(Entity entity, Entity player){
+		Vec3d vec3d = player.getRotationVec(1.0F).normalize();
+		Vec3d vec3d2 = new Vec3d(entity.getX() - player.getX(), entity.getEyeY() - player.getEyeY(), entity.getZ() - player.getZ());
+		double d = vec3d2.length();
+		vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d);//normalize
+		double e = vec3d.dotProduct(vec3d2);
+		return e > 1.0D - 0.03D / d ? /*client.player.canSee(entity)*/true : false;
+	}
+
+	/*public static String getModVersionString(String modId){
+		for(ModContainer container : FabricLoader.getInstance().getAllMods()){
+			if(container.getMetadata().getId().equals(modId)){
+				return container.getMetadata().getVersion().getFriendlyString();
+			}
+		}
+		return "?";
+	}*/
 
 	public static final int HASHCODE_2B2T = -437714968;//"2b2t.org".hashCode() // TODO: make mod more server-independent 
 	private static final int getRealServerAddressHashCode(String address){

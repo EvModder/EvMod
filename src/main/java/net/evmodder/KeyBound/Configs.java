@@ -1,4 +1,4 @@
-package net.evmodder.KeyBound.config;
+package net.evmodder.KeyBound;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +17,12 @@ import fi.dy.masa.malilib.hotkeys.KeybindSettings;
 import fi.dy.masa.malilib.hotkeys.KeybindSettings.Context;
 import fi.dy.masa.malilib.util.FileUtils;
 import fi.dy.masa.malilib.util.JsonUtils;
-import net.evmodder.KeyBound.Main;
+import net.evmodder.KeyBound.config.ConfigPlayerList;
+import net.evmodder.KeyBound.config.ConfigStringHotkeyed;
+import net.evmodder.KeyBound.config.ConfigYawPitchHotkeyed;
+import net.evmodder.KeyBound.config.OptionInventoryRestockLimit;
+import net.evmodder.KeyBound.config.OptionMapStateCache;
+import net.evmodder.KeyBound.config.TooltipDisplayOption;
 import net.evmodder.KeyBound.config.ConfigPlayerList.NameAndUUID;
 
 public class Configs implements IConfigHandler{
@@ -94,26 +99,27 @@ public class Configs implements IConfigHandler{
 		private static List<IConfigBase> availableOptions;
 		public static final List<IConfigBase> getOptions(){
 			if(availableOptions == null){
+				Main main = Main.getInstance();
 				availableOptions = new ArrayList<>();
 				availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT));
-				if(Main.placementHelperMapArt) availableOptions.add(BUNDLE_SELECT_REVERSED);
-				if((Main.serverJoinListener && Main.serverQuitListener) || Main.containerOpenCloseListener != null){
+				if(main.placementHelperMapArt) availableOptions.add(BUNDLE_SELECT_REVERSED);
+				if((main.serverJoinListener && main.serverQuitListener) || main.containerOpenCloseListener != null){
 					availableOptions.add(MAP_STATE_CACHE);
 //					if(MAP_STATE_CACHE.getOptionListValue() != MapStateCacheOption.OFF) availableOptions.add(MAP_STATE_CACHE_TYPE);
 				}
-				if(Main.mapHighlights) availableOptions.add(MAX_IFRAME_TRACKING_DIST);
-				if(Main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME,
+				if(main.mapHighlights) availableOptions.add(MAX_IFRAME_TRACKING_DIST);
+				if(main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME,
 						//PLACEMENT_HELPER_IFRAME_REACH, PLACEMENT_HELPER_IFRAME_RAYCAST,
 						PLACEMENT_HELPER_IFRAME_MUST_CONNECT, PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK));
-				if(Main.placementHelperMapArt){
+				if(main.placementHelperMapArt){
 					availableOptions.addAll(List.of(PLACEMENT_HELPER_MAPART,
 							//PLACEMENT_HELPER_MAPART_REACH
 							PLACEMENT_HELPER_MAPART_USE_NAMES, PLACEMENT_HELPER_MAPART_USE_IMAGE,
 							PLACEMENT_HELPER_MAPART_FROM_BUNDLE));
-					if(Main.placementHelperMapArtAuto) availableOptions.addAll(List.of(MAPART_AUTOPLACE, MAPART_AUTOPLACE_INV_DELAY));
+					if(main.placementHelperMapArtAuto) availableOptions.addAll(List.of(MAPART_AUTOPLACE, MAPART_AUTOPLACE_INV_DELAY));
 				}
-				if(Main.gameMessageListener) availableOptions.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PEARL_PULL));
-				if(Main.cmdMapArtGroup) availableOptions.add(MAPART_GROUP_INCLUDE_UNLOCKED);
+				if(main.gameMessageListener) availableOptions.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PEARL_PULL));
+				if(main.cmdMapArtGroup) availableOptions.add(MAPART_GROUP_INCLUDE_UNLOCKED);
 //				if(Main.keybindMapArtMoveBundle)
 					availableOptions.add(KEYBIND_BUNDLE_REMOVE_MAX);
 //				if(Main.keybindMapArtMove)
@@ -122,11 +128,11 @@ public class Configs implements IConfigHandler{
 				if(!Main.mapArtFeaturesOnly) availableOptions.add(SCROLL_ORDER);
 //				if(Main.keybindMapArtMove || Main.keybindMapArtMoveBundle)
 					availableOptions.add(SKIP_TRANSPARENT_MAPS);
-				if(Main.mapHighlights) availableOptions.add(SKIP_MONO_COLOR_MAPS);
-				if(Main.serverJoinListener) availableOptions.add(SEND_ON_SERVER_JOIN);
-				if(Main.serverQuitListener) availableOptions.add(LOG_COORDS_ON_SERVER_QUIT);
-				if(Main.inventoryRestockAuto) availableOptions.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
-				if(Main.broadcaster) availableOptions.addAll(List.of(TEMP_BROADCAST_ACCOUNT, TEMP_BROADCAST_TIMESTAMP, TEMP_BROADCAST_MSGS));
+				if(main.mapHighlights) availableOptions.add(SKIP_MONO_COLOR_MAPS);
+				if(main.serverJoinListener) availableOptions.add(SEND_ON_SERVER_JOIN);
+				if(main.serverQuitListener) availableOptions.add(LOG_COORDS_ON_SERVER_QUIT);
+				if(main.inventoryRestockAuto) availableOptions.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
+				if(main.broadcaster) availableOptions.addAll(List.of(TEMP_BROADCAST_ACCOUNT, TEMP_BROADCAST_TIMESTAMP, TEMP_BROADCAST_MSGS));
 			}
 			return availableOptions;
 		}
@@ -181,24 +187,33 @@ public class Configs implements IConfigHandler{
 		private static List<IConfigBase> availableOptions;
 		public static final List<IConfigBase> getOptions(){
 			if(availableOptions == null){
+				Main main = Main.getInstance();
 				availableOptions = new ArrayList<>();
-				if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(REPAIR_COST_HOTBAR_HUD, REPAIR_COST_TOOLTIP));
-				availableOptions.addAll(List.of(
-						INVIS_IFRAMES, INVIS_IFRAMES_SEMI_TRANSPARENT,
-						MAP_HIGHLIGHT_IFRAME, MAP_HIGHLIGHT_TOOLTIP, MAP_HIGHLIGHT_HOTBAR_HUD, MAP_HIGHLIGHT_CONTAINER_NAME,
-
+				if(!Main.mapArtFeaturesOnly){
+					availableOptions.add(REPAIR_COST_HOTBAR_HUD);
+					if(main.tooltipRepairCost) availableOptions.add(REPAIR_COST_TOOLTIP);
+				}
+				availableOptions.addAll(List.of(INVIS_IFRAMES, INVIS_IFRAMES_SEMI_TRANSPARENT));
+				if(main.mapHighlights){
+					availableOptions.add(MAP_HIGHLIGHT_IFRAME);
+					if(main.tooltipMapHighlights) availableOptions.add(MAP_HIGHLIGHT_TOOLTIP);
+					availableOptions.add(MAP_HIGHLIGHT_HOTBAR_HUD);
+					if(main.mapHighlightsInGUIs) availableOptions.add(MAP_HIGHLIGHT_CONTAINER_NAME);
+					availableOptions.addAll(List.of(
 						MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES,
 
 						MAP_COLOR_UNLOADED, MAP_COLOR_UNLOCKED, MAP_COLOR_UNNAMED, MAP_COLOR_NOT_IN_GROUP,
-						MAP_COLOR_IN_INV, MAP_COLOR_IN_IFRAME, MAP_COLOR_MULTI_IFRAME, MAP_COLOR_MULTI_INV,
-
+						MAP_COLOR_IN_INV, MAP_COLOR_IN_IFRAME, MAP_COLOR_MULTI_IFRAME, MAP_COLOR_MULTI_INV
+					));
+				}
+				if(main.tooltipMapMetadata) availableOptions.addAll(List.of(
 //						MAP_METADATA_TOOLTIP,
 						MAP_METADATA_TOOLTIP_STAIRCASE, MAP_METADATA_TOOLTIP_MATERIAL,
 						MAP_METADATA_TOOLTIP_NUM_COLORS, MAP_METADATA_TOOLTIP_NUM_COLOR_IDS,
 						MAP_METADATA_TOOLTIP_TRANSPARENCY, MAP_METADATA_TOOLTIP_NOOBLINE,
 						MAP_METADATA_TOOLTIP_PERCENT_CARPET, MAP_METADATA_TOOLTIP_PERCENT_STAIRCASE
 				));
-				if(Main.cmdExportMapImg){
+				if(main.cmdExportMapImg){
 					availableOptions.addAll(List.of(
 							EXPORT_MAP_IMG_UPSCALE,
 							EXPORT_MAP_IMG_BORDER,
@@ -386,12 +401,13 @@ public class Configs implements IConfigHandler{
 		private static List<IConfigBase> availableOptions;
 		public static final List<IConfigBase> getOptions(){
 			if(availableOptions == null){
+				Main main = Main.getInstance();
 				availableOptions = new ArrayList<>();
 				availableOptions.addAll(List.of(CLIENT_ID, CLIENT_KEY, ADDRESS, SHARE_MAPART));
 				if(Main.epearlLookup != null) availableOptions.addAll(List.of(EPEARL_OWNERS_BY_UUID, EPEARL_OWNERS_BY_XZ));
-				if(Main.gameMessageListener) availableOptions.add(SHARE_IGNORES);
-				if(Main.gameMessageFilter != null) availableOptions.add(BORROW_IGNORES);
-				if(Main.serverJoinListener || Main.serverQuitListener) availableOptions.add(SHARE_JOIN_QUIT);
+				if(main.gameMessageListener) availableOptions.add(SHARE_IGNORES);
+				if(main.gameMessageFilter != null) availableOptions.add(BORROW_IGNORES);
+				if(main.serverJoinListener || main.serverQuitListener) availableOptions.add(SHARE_JOIN_QUIT);
 			}
 			return availableOptions;
 		}

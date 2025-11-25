@@ -3,7 +3,6 @@ package net.evmodder.KeyBound;
 import fi.dy.masa.malilib.hotkeys.IHotkey;
 import fi.dy.masa.malilib.hotkeys.IKeybindManager;
 import fi.dy.masa.malilib.hotkeys.IKeybindProvider;
-import net.evmodder.KeyBound.config.Configs;
 
 public class InputHandler implements IKeybindProvider{
 	private static final InputHandler INSTANCE = new InputHandler();

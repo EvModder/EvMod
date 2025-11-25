@@ -2,7 +2,8 @@ package net.evmodder.KeyBound.onTick;
 
 import java.util.List;
 import net.minecraft.item.Item.TooltipContext;
-import net.evmodder.KeyBound.config.Configs;
+import net.evmodder.KeyBound.Configs;
+import net.evmodder.KeyBound.apis.Tooltip;
 import net.evmodder.KeyBound.config.TooltipDisplayOption;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
@@ -10,8 +11,8 @@ import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
-public final class TooltipRepairCost{
-	public static final void addRC(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
+public final class TooltipRepairCost implements Tooltip{
+	@Override public final void get(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
 		switch((TooltipDisplayOption)Configs.Visuals.REPAIR_COST_TOOLTIP.getOptionListValue()){
 			case OFF: return;
 			case ADVANCED_TOOLTIPS: if(type == TooltipType.BASIC) return;

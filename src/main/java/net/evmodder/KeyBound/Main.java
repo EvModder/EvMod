@@ -25,10 +25,10 @@ import net.evmodder.EvLib.FileIO;
 import net.evmodder.KeyBound.apis.ChatBroadcaster;
 import net.evmodder.KeyBound.apis.EpearlLookup;
 import net.evmodder.KeyBound.apis.RemoteServerSender;
+import net.evmodder.KeyBound.apis.Tooltip;
 import net.evmodder.KeyBound.commands.*;
-import net.evmodder.KeyBound.config.ConfigGui;
-import net.evmodder.KeyBound.config.Configs;
-import net.evmodder.KeyBound.keybinds.*;
+import net.evmodder.KeyBound.keybinds.ClickUtils;
+import net.evmodder.KeyBound.keybinds.KeybindCraftingRestock;
 import net.evmodder.KeyBound.listeners.*;
 import net.evmodder.KeyBound.onTick.AutoPlaceItemFrames;
 import net.evmodder.KeyBound.onTick.TooltipMapLoreMetadata;
@@ -37,17 +37,17 @@ import net.evmodder.KeyBound.onTick.TooltipRepairCost;
 import net.evmodder.KeyBound.onTick.UpdateContainerHighlights;
 import net.evmodder.KeyBound.onTick.UpdateInventoryHighlights;
 import net.evmodder.KeyBound.onTick.UpdateItemFrameHighlights;
-import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.minecraft.client.MinecraftClient;
 
-// gradle genSources/eclipse/cleanloom/--stop
-//MC source will be in ~/.gradle/caches/fabric-loom or ./.gradle/loom-cache
+//MC source code will be in ~/.gradle/caches/fabric-loom or ./.gradle/loom-cache
+// gradle tasks --all
+// gradle genSources/eclipse/--stop
 // gradle build --refresh-dependencies
 // gradle migrateMappings --mappings "1.21.4+build.8"
-// Fix broken eclipse build paths after updating loom,fabric-api,version in configs: gradle eclipse
-public class Main implements ClientModInitializer{
+
+public class Main{
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
 	// AutoMapPlacer (for LVotU)
@@ -75,30 +75,39 @@ public class Main implements ClientModInitializer{
 	// Low RC quest: auto enchant dia sword, auto grindstone, auto rename, auto anvil combine. auto enchant bulk misc items
 	// inv-keybind-craft-latest-item, also for enchant table and grindstone (eg. spam enchanting axes) via spacebar, like vanilla
 
-	// Reference variables
-	public static final String MOD_ID = "keybound"; // TODO: pull from fabric/gradle?
-	public static final String MOD_NAME = "KeyBound"; // TODO: pull from fabric/gradle?
-	//public static final String MOD_VERSION = "@MOD_VERSION@";
-	private static final String CONFIG_NAME = "enabled_features.txt";
+
+	// Static references (TODO: fetch from fabric.mod.json?)
+	public static final String MOD_ID = "evmod";
+	public static final String MOD_NAME = "Ev's Mod";
+//	public static final String MOD_VERSION = MiscUtils.getModVersionString(MOD_ID);
+//	public static final String MC_VERSION = MinecraftVersion.CURRENT.getName();
+//	public static final String MOD_TYPE = "fabric";
+//	public static final String MOD_STRING = MOD_ID + "-" + MOD_TYPE + "-" + MC_VERSION + "-" + MOD_VERSION;
+	private static final String CONFIG_NAME = "enabled_features_for_mapart_ver.txt";
+
+	private static Main instance; static Main getInstance(){return instance;}
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	public static ClickUtils clickUtils;
-	public static RemoteServerSender remoteSender;
-	public static EpearlLookup epearlLookup;
-	public static GameMessageFilter gameMessageFilter;
-	public static KeybindCraftingRestock kbCraftRestock;
-	public static ContainerOpenCloseListener containerOpenCloseListener;
 
-	public static boolean mapArtFeaturesOnly = true; ////////////////// TODO: ewww
-	public static boolean inventoryRestockAuto, placementHelperIframe, placementHelperMapArt, placementHelperMapArtAuto, broadcaster;
-	public static boolean serverJoinListener, serverQuitListener, gameMessageListener;//, gameMessageFilter;
-	public static boolean cmdExportMapImg, cmdMapArtGroup;
-//	public static boolean keybindMapArtMove, keybindMapArtMoveBundle;
+	// TODO: Worth finding a way to make these private+final+nonstatic?
+	public static ClickUtils clickUtils; // Public accessors: virtually all keybinds
+	public static RemoteServerSender remoteSender; // Public accessors: EpearlLookup, MiscUtils
+	public static EpearlLookup epearlLookup; // Public accessors: MixinEntityRenderer
+	public static final KeybindCraftingRestock kbCraftRestock = new KeybindCraftingRestock(); // Public accessors: MixinClientPlayerInteractionManager
 
-	public static boolean mapHighlights, mapHighlightsInGUIs;
+	static boolean mapArtFeaturesOnly = true; //// TODO: ewww hacky
 
-	private HashMap<String, String> loadConfig(){
-		HashMap<String, String> config = new HashMap<>();
+	// TOOD: Worth finding a way to make these private?
+	final GameMessageFilter gameMessageFilter; // Accessors: Configs
+	final ContainerOpenCloseListener containerOpenCloseListener; // Accessors: Configs
+
+	final boolean inventoryRestockAuto, placementHelperIframe, placementHelperMapArt, placementHelperMapArtAuto, broadcaster;
+	final boolean serverJoinListener, serverQuitListener, gameMessageListener;//, gameMessageFilter;
+	final boolean cmdExportMapImg, cmdMapArtGroup;
+	final boolean mapHighlights, mapHighlightsInGUIs, tooltipMapHighlights, tooltipMapMetadata, tooltipRepairCost;
+
+	private HashMap<String, Boolean> loadConfig(){
+		HashMap<String, Boolean> config = new HashMap<>();
 		final String configContents = FileIO.loadFile(CONFIG_NAME, getClass().getResourceAsStream("/"+CONFIG_NAME));
 		for(String line : configContents.split("\\r?\\n")){
 			final int sep = line.indexOf(':');
@@ -106,54 +115,52 @@ public class Main implements ClientModInitializer{
 			final String key = line.substring(0, sep).trim();
 			final String value = line.substring(sep+1).trim();
 			if(key.isEmpty() || value.isEmpty()) continue;
-			config.put(key, value);
+			config.put(key, !value.equalsIgnoreCase("false"));
 		}
 		return config;
 	}
 
-	@Override public void onInitializeClient(){
-		HashMap<String, String> config = loadConfig();
-		boolean cmdAssignPearl=false,/* cmdExportMapImg=false,*//* cmdMapArtGroup=false,*/ cmdSeen=false, cmdSendAs=false, cmdTimeOnline=false;
-		boolean database=false;
-		boolean epearlOwners=false;
-		boolean mapHighlightTooltip=false;
+	private boolean extractConfigValue(HashMap<String, Boolean> config, String key){
+		Boolean value = config.remove(key);
+		return value != null ? value : false;
+	}
 
-		//config.forEach((key, value) -> {
-		for(String key : config.keySet()){
-			final String value = config.get(key);
-			switch(key){
-				case "database": database = !value.equalsIgnoreCase("false"); break;
-				case "epearl_owners": epearlOwners = !value.equalsIgnoreCase("false"); break;
-				case "mapart_features_only": mapArtFeaturesOnly = !value.equalsIgnoreCase("false"); break;///////////
+	Main(){
+		instance = this;
+		final HashMap<String, Boolean> config = loadConfig();
 
-				case "broadcaster": broadcaster = !value.equalsIgnoreCase("false"); break;
-				case "placement_helper.iframe": placementHelperIframe = !value.equalsIgnoreCase("false"); break;
-				case "placement_helper.mapart": placementHelperMapArt = !value.equalsIgnoreCase("false"); break;
-				case "placement_helper.mapart.auto": placementHelperMapArtAuto = !value.equalsIgnoreCase("false"); break;
-				case "listener.server_join": serverJoinListener = !value.equalsIgnoreCase("false"); break;
-				case "listener.server_quit": serverQuitListener = !value.equalsIgnoreCase("false"); break;
-				case "listener.game_message.read": if(gameMessageListener = !value.equalsIgnoreCase("false")); break;
-				case "listener.game_message.filter": if(!value.equalsIgnoreCase("false")) gameMessageFilter = new GameMessageFilter(); break;
-				case "listener.container_open": if(!value.equalsIgnoreCase("false")) containerOpenCloseListener = new ContainerOpenCloseListener(); break;
-				case "map_highlights": mapHighlights = !value.equalsIgnoreCase("false"); break;
-				case "map_highlights.in_gui": mapHighlightsInGUIs = !value.equalsIgnoreCase("false"); break;
-				case "tooltip.map_highlights": mapHighlightTooltip = !value.equalsIgnoreCase("false"); break;
-				case "tooltip.map_metadata": new TooltipMapLoreMetadata(); break;
-				case "tooltip.repair_cost": if(!value.equalsIgnoreCase("false")) ItemTooltipCallback.EVENT.register(TooltipRepairCost::addRC); break;
-				case "inventory_restock.auto": inventoryRestockAuto = !value.equalsIgnoreCase("false"); break;
+		mapArtFeaturesOnly = config.getOrDefault("mapart_features_only", true); // Note: true instead of false
+		config.remove("mapart_features_only");
 
-				case "command.assignpearl": cmdAssignPearl = !value.equalsIgnoreCase("false"); break;
-				case "command.exportmapimg": cmdExportMapImg = !value.equalsIgnoreCase("false"); break;
-				case "command.mapartgroup": cmdMapArtGroup = !value.equalsIgnoreCase("false"); break;
-				case "command.seen": cmdSeen = !value.equalsIgnoreCase("false"); break;
-				case "command.sendas": cmdSendAs = !value.equalsIgnoreCase("false"); break;
-				case "command.timeonline": cmdTimeOnline = !value.equalsIgnoreCase("false"); break;
+		boolean database = extractConfigValue(config, "database");
+		boolean epearlOwners = extractConfigValue(config, "epearl_owners");
+		broadcaster = extractConfigValue(config, "broadcaster");
+		placementHelperIframe = extractConfigValue(config, "placement_helper.iframe");
+		placementHelperMapArt = extractConfigValue(config, "placement_helper.mapart");
+		placementHelperMapArtAuto = placementHelperMapArt && extractConfigValue(config, "placement_helper.mapart.auto");
+		serverJoinListener = extractConfigValue(config, "listener.server_join");
+		serverQuitListener = extractConfigValue(config, "listener.server_quit");
+		gameMessageListener = extractConfigValue(config, "listener.game_message.read");
+		boolean registerGameMessageFilter = extractConfigValue(config, "listener.game_message.filter");
+		boolean registerContainerOpenListener = extractConfigValue(config, "listener.container_open");
+		mapHighlights = extractConfigValue(config, "map_highlights");
+		mapHighlightsInGUIs = extractConfigValue(config, "map_highlights.in_gui");
+		tooltipMapHighlights = mapHighlights && extractConfigValue(config, "tooltip.map_highlights");
+		tooltipMapMetadata = extractConfigValue(config, "tooltip.map_metadata");
+		tooltipRepairCost = extractConfigValue(config, "tooltip.repair_cost");
+		inventoryRestockAuto = registerContainerOpenListener && extractConfigValue(config, "inventory_restock.auto");
 
-				//case "mapart_notify_not_in_group": notifyIfLoadNewMapArt = !value.equalsIgnoreCase("false"); break;
-				default:
-					LOGGER.warn("Unrecognized config setting: "+key);
-			}
+		boolean cmdAssignPearl = epearlOwners && extractConfigValue(config, "command.assignpearl");
+		cmdExportMapImg = extractConfigValue(config, "command.exportmapimg");
+		cmdMapArtGroup = extractConfigValue(config, "command.mapartgroup");
+		boolean cmdSeen = database && extractConfigValue(config, "command.seen");
+		boolean cmdSendAs = database && extractConfigValue(config, "command.sendas");
+		boolean cmdTimeOnline = database && extractConfigValue(config, "command.timeonline");
+
+		if(!config.isEmpty()){
+			LOGGER.error("Unrecognized config setting(s)!: "+config);
 		}
+
 		KeyCallbacks.remakeClickUtils(null);
 		if(database){
 			KeyCallbacks.remakeRemoteServerSender(null);
@@ -162,39 +169,44 @@ public class Main implements ClientModInitializer{
 		}
 		if(epearlOwners){
 			epearlLookup = new EpearlLookup(); // MUST be instantiated AFTER remoteSender
-			if(cmdAssignPearl) new CommandAssignPearl();
+			if(cmdAssignPearl) new CommandAssignPearl(epearlLookup);
 		}
+		else epearlLookup = null;
+
 		if(serverJoinListener) new ServerJoinListener();
 		if(serverQuitListener) new ServerQuitListener();
 //		if(gameMessageListener) new GameMessageListener();
-//		if(registerGameMessageFilter) gameMessageFilter = new GameMessageFilter();
+		gameMessageFilter = registerGameMessageFilter ? new GameMessageFilter() : null;
+
+		containerOpenCloseListener = registerContainerOpenListener ? new ContainerOpenCloseListener() : null;
+		if(inventoryRestockAuto) ClientTickEvents.END_CLIENT_TICK.register(containerOpenCloseListener::onUpdateTick);
 
 		if(placementHelperIframe) new AutoPlaceItemFrames();
-		if(placementHelperMapArt) new MapHandRestock();
+		if(placementHelperMapArt) new MapHandRestock(placementHelperMapArtAuto);
 		if(broadcaster) ChatBroadcaster.refreshBroadcast();
 
-		if(cmdAssignPearl) new CommandAssignPearl();
+		if(cmdAssignPearl) new CommandAssignPearl(epearlLookup);
 		if(cmdExportMapImg) new CommandExportMapImg();
 		if(cmdMapArtGroup) new CommandMapArtGroup();
 		if(cmdSeen) new CommandSeen();
 		if(cmdSendAs) new CommandSendAs();
-		if(cmdTimeOnline/* && serverJoinListener*/) new CommandTimeOnline();
+		if(cmdTimeOnline) new CommandTimeOnline();
 
-		kbCraftRestock = new KeybindCraftingRestock();
-		if(inventoryRestockAuto &= (containerOpenCloseListener!=null)) ClientTickEvents.END_CLIENT_TICK.register(containerOpenCloseListener::onUpdateTick);
 		//new KeybindSpamclick();
 
 		if(mapHighlights){
-			if(mapHighlightTooltip) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors);
+			if(tooltipMapHighlights) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors);
 			ClientTickEvents.START_CLIENT_TICK.register(client -> {
 				UpdateInventoryHighlights.onUpdateTick(client.player);
 				UpdateItemFrameHighlights.onUpdateTick(client);
 				if(mapHighlightsInGUIs) UpdateContainerHighlights.onUpdateTick(client);
 			});
 		}
+		if(tooltipMapMetadata) Tooltip.register(new TooltipMapLoreMetadata());
+		if(tooltipRepairCost) Tooltip.register(new TooltipRepairCost());
 
 		ConfigManager.getInstance().registerConfigHandler(MOD_ID, new Configs());
-		Registry.CONFIG_SCREEN.registerConfigScreenFactory(new ModInfo(MOD_ID, "KeyBound", ConfigGui::new));
+		Registry.CONFIG_SCREEN.registerConfigScreenFactory(new ModInfo(MOD_ID, MOD_NAME, ConfigGui::new));
 
 		InputEventHandler.getKeybindManager().registerKeybindProvider(InputHandler.getInstance());
 		KeyCallbacks.init(MinecraftClient.getInstance());
