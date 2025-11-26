@@ -1,6 +1,7 @@
 package net.evmodder.evmod;
 
 import net.evmodder.evmod.apis.ChatBroadcaster;
+import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.evmodder.evmod.keybinds.*;

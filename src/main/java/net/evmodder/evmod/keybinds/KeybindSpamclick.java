@@ -1,7 +1,8 @@
 package net.evmodder.evmod.keybinds;
 
 import net.evmodder.evmod.Main;
-import net.evmodder.evmod.keybinds.ClickUtils.ClickEvent;
+import net.evmodder.evmod.apis.ClickUtils;
+import net.evmodder.evmod.apis.ClickUtils.ClickEvent;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;

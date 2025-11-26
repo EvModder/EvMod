@@ -1,7 +1,7 @@
 package net.evmodder.evmod.keybinds;
 
 import net.evmodder.evmod.Main;
-import net.evmodder.evmod.keybinds.ClickUtils.ClickEvent;
+import net.evmodder.evmod.apis.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.CartographyTableScreen;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;

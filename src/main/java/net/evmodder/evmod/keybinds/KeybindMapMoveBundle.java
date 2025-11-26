@@ -7,7 +7,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.math.Fraction;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
-import net.evmodder.evmod.keybinds.ClickUtils.ClickEvent;
+import net.evmodder.evmod.apis.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;

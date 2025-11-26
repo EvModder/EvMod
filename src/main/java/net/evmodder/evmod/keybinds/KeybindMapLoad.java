@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
 import net.evmodder.evmod.Main;
-import net.evmodder.evmod.keybinds.ClickUtils.ClickEvent;
+import net.evmodder.evmod.apis.ClickUtils.ClickEvent;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
