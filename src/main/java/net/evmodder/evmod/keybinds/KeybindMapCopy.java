@@ -325,7 +325,7 @@ public final class KeybindMapCopy{
 		if(numEmptyMapsInGrid > 0) clicks.add(new InvAction(f.INPUT_START+1, 0, ActionType.SHIFT_CLICK));
 
 		//Main.LOGGER.info("MapCopyBundle: STARTED");
-		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("MapCopyBundle: DONE"));
+		Main.clickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("MapCopyBundle: DONE"), clicks);
 	}
 
 	private boolean isMapArtBundle(ItemStack stack){
@@ -521,16 +521,16 @@ public final class KeybindMapCopy{
 		if(numEmptyMapsInGrid > 0) clicks.add(new InvAction(f.INPUT_START+1, 0, ActionType.SHIFT_CLICK)); 
 
 		//Main.LOGGER.info("MapCopy: STARTED");
-		Main.clickUtils.executeClicks(clicks,
-			c->{
-				// Don't start individual copy operation unless we can fully knock it out (unless impossible to do in 1 go)
-				final Integer clicksNeeded = reserveClicks.get(c);
-				if(clicksNeeded == null || clicksNeeded <= Main.clickUtils.calcAvailableClicks()) return true;
-				return false; // Wait for clicks
-			},
+		Main.clickUtils.executeClicks(c->{
+			// Don't start individual copy operation unless we can fully knock it out (unless impossible to do in 1 go)
+			final Integer clicksNeeded = reserveClicks.get(c);
+			if(clicksNeeded == null || clicksNeeded <= Main.clickUtils.calcAvailableClicks()) return true;
+			return false; // Wait for clicks
+		},
 			()->{
 				Main.LOGGER.info("MapCopy: DONE");
-			}
+			},
+			clicks
 		);
 	}
 

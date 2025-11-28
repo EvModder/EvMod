@@ -176,11 +176,11 @@ public abstract class MapClickMoveNeighbors{
 
 		final int numClicks = clicks.size();
 		ongoingClickMove = true;
-		Main.clickUtils.executeClicks(clicks, /*canProceed=*/_0->true, ()->{
+		Main.clickUtils.executeClicks(/*canProceed=*/_0->true, ()->{
 			ongoingClickMove = false;
 			Main.LOGGER.info("MapMoveClick: DONE (clicks:"+numClicks+")");
 			player.sendMessage(Text.literal("MapMoveClick: DONE (clicks:"+numClicks+")"), true);
-		});
+		}, clicks);
 //		if(Main.inventoryUtils.addClick(null) >= Main.inventoryUtils.MAX_CLICKS){
 //			Main.LOGGER.warn("Not enough clicks available to execute MapMoveNeighbors :(");
 //			return;

@@ -110,37 +110,37 @@ public final class KeybindMapLoad{
 		}
 //		client.player.sendMessage(Text.literal("Scheduling clicks: "+clicks.size()), true);
 		Main.LOGGER.info("MapLoadBundle: STARTED");
-		Main.clickUtils.executeClicks(clicks,
-			c->{
-				if(client.player == null || client.world == null) return true;
-				Integer skipIfLoaded = ableToSkipClicks.get(c);
+		Main.clickUtils.executeClicks(c->{
+			if(client.player == null || client.world == null) return true;
+			Integer skipIfLoaded = ableToSkipClicks.get(c);
 //				Main.LOGGER.info("click for slot: "+c.slotId()+", clicksLeft: "+clicks.size());
-				if(skipIfLoaded != null){
-					//Main.LOGGER.info("MapLoadBundle: potentially skippable");
-					BundleContentsComponent contents = client.player.currentScreenHandler.slots.get(c.slot()).getStack().get(DataComponentTypes.BUNDLE_CONTENTS);
-					if(contents != null && contents.stream().allMatch(s -> isLoadedMapArt(client.world, s))){
+			if(skipIfLoaded != null){
+				//Main.LOGGER.info("MapLoadBundle: potentially skippable");
+				BundleContentsComponent contents = client.player.currentScreenHandler.slots.get(c.slot()).getStack().get(DataComponentTypes.BUNDLE_CONTENTS);
+				if(contents != null && contents.stream().allMatch(s -> isLoadedMapArt(client.world, s))){
 //						Main.LOGGER.info("MapLoadBundle: skippable! whoop whoop: "+(skipIfLoaded));
-						for(int i=0; i<skipIfLoaded; ++i) clicks.remove();
-						return false;
-					}
+					for(int i=0; i<skipIfLoaded; ++i) clicks.remove();
+					return false;
 				}
-				if(c.slot() != emptySlot) return true;
-				if(stateUpdateWaitStart == 0){stateUpdateWaitStart = -1; return true;}
-				ItemStack item = client.player.currentScreenHandler.slots.get(emptySlot).getStack();
+			}
+			if(c.slot() != emptySlot) return true;
+			if(stateUpdateWaitStart == 0){stateUpdateWaitStart = -1; return true;}
+			ItemStack item = client.player.currentScreenHandler.slots.get(emptySlot).getStack();
 //				if(!isLoadedMapArt(client.world, item)) return false;
-				if(!isLoadedMapArt(client.world, item)){
-					if(stateLoadWaitStart == 0) stateLoadWaitStart = System.currentTimeMillis();
-					if(System.currentTimeMillis() - stateLoadWaitStart < STATE_LOAD_TIMEOUT) return false;
-					stateUpdateWaitStart = stateLoadWaitStart = 0;
-					Main.LOGGER.warn("MapLoadBundle: Timed out while waiting for map state to load!");
-					return true;
-				}
-				// Wait a bit even aft map state is loaded, to ensure it REALLY gets loaded
-				else if(stateUpdateWaitStart <= 0){stateUpdateWaitStart = System.currentTimeMillis(); return false;}
-				else if(System.currentTimeMillis() - stateUpdateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
-				else{stateUpdateWaitStart = 0; return true;}
-			},
-			()->Main.LOGGER.info("MapLoadBundle: DONE!")
+			if(!isLoadedMapArt(client.world, item)){
+				if(stateLoadWaitStart == 0) stateLoadWaitStart = System.currentTimeMillis();
+				if(System.currentTimeMillis() - stateLoadWaitStart < STATE_LOAD_TIMEOUT) return false;
+				stateUpdateWaitStart = stateLoadWaitStart = 0;
+				Main.LOGGER.warn("MapLoadBundle: Timed out while waiting for map state to load!");
+				return true;
+			}
+			// Wait a bit even aft map state is loaded, to ensure it REALLY gets loaded
+			else if(stateUpdateWaitStart <= 0){stateUpdateWaitStart = System.currentTimeMillis(); return false;}
+			else if(System.currentTimeMillis() - stateUpdateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
+			else{stateUpdateWaitStart = 0; return true;}
+		},
+			()->Main.LOGGER.info("MapLoadBundle: DONE!"),
+			clicks
 		);
 	}
 
@@ -187,37 +187,37 @@ public final class KeybindMapLoad{
 		for(int j=0; j<hbi; ++j) clicks.add(new InvAction(putBackSlots[j], hbButtons[j], ActionType.HOTBAR_SWAP));
 
 		Main.LOGGER.info("MapLoad: STARTED, clicks: "+clicks.size()+", extraPutBackIndex: "+extraPutBackIndex);
-		Main.clickUtils.executeClicks(clicks,
-			c->{
-				if(client.player == null || client.world == null) return true;
+		Main.clickUtils.executeClicks(c->{
+			if(client.player == null || client.world == null) return true;
 //				if(isUnloadedMapArt(/*client.player.clientWorld*/client.world, item)) return false;
-				if(clickIndex % hbButtons.length != 0 && clickIndex != extraPutBackIndex){++clickIndex; return true;}
-				if(Main.clickUtils.calcAvailableClicks() < MAX_BATCH_SIZE) return false; // Wait for clicks
+			if(clickIndex % hbButtons.length != 0 && clickIndex != extraPutBackIndex){++clickIndex; return true;}
+			if(Main.clickUtils.calcAvailableClicks() < MAX_BATCH_SIZE) return false; // Wait for clicks
 
-				if((clickIndex/hbButtons.length)%2 == 0 && clickIndex < extraPutBackIndex){++clickIndex; return true;} // Moving TO hotbar
+			if((clickIndex/hbButtons.length)%2 == 0 && clickIndex < extraPutBackIndex){++clickIndex; return true;} // Moving TO hotbar
 //				ItemStack item = client.player.getInventory().getStack(c.button());
-				//if(!isLoadedMapArt(client.world, item)){ // Weird issue rn with non-maps getting moved around? (bundles?)
-				//if(isUnloadedMapArt(client.world, s){
-				// Ugh just wait if any unloaded map in hotbar(or inv)
-				if(client.player.getInventory().main.stream().anyMatch(s -> isUnloadedMapArt(client.world, s))){
+			//if(!isLoadedMapArt(client.world, item)){ // Weird issue rn with non-maps getting moved around? (bundles?)
+			//if(isUnloadedMapArt(client.world, s){
+			// Ugh just wait if any unloaded map in hotbar(or inv)
+			if(client.player.getInventory().main.stream().anyMatch(s -> isUnloadedMapArt(client.world, s))){
 //					Main.LOGGER.info("MapLoad: still waiting for map state to load from hotbar slot: "+c.button());
-					if(stateLoadWaitStart == 0) stateLoadWaitStart = System.currentTimeMillis();
-					if(System.currentTimeMillis() - stateLoadWaitStart < STATE_LOAD_TIMEOUT) return false;
-					stateUpdateWaitStart = stateLoadWaitStart = 0;
-					Main.LOGGER.warn("MapLoad: Timed out while waiting for map state to load!");
-					return true;
-				}
-				else if(stateUpdateWaitStart == 0){stateUpdateWaitStart = System.currentTimeMillis(); return false;}
-				else if(System.currentTimeMillis() - stateUpdateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
-				Main.LOGGER.info("MapLoad: map state loaded and updated");
+				if(stateLoadWaitStart == 0) stateLoadWaitStart = System.currentTimeMillis();
+				if(System.currentTimeMillis() - stateLoadWaitStart < STATE_LOAD_TIMEOUT) return false;
 				stateUpdateWaitStart = stateLoadWaitStart = 0;
-				++clickIndex;
+				Main.LOGGER.warn("MapLoad: Timed out while waiting for map state to load!");
 				return true;
-			},
+			}
+			else if(stateUpdateWaitStart == 0){stateUpdateWaitStart = System.currentTimeMillis(); return false;}
+			else if(System.currentTimeMillis() - stateUpdateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
+			Main.LOGGER.info("MapLoad: map state loaded and updated");
+			stateUpdateWaitStart = stateLoadWaitStart = 0;
+			++clickIndex;
+			return true;
+		},
 			()->{
 				clickIndex = 0;
 				Main.LOGGER.info("MapLoad: DONE!");
-			}
+			},
+			clicks
 		);
 	}
 

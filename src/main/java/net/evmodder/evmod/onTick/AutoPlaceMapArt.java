@@ -415,9 +415,6 @@ public class AutoPlaceMapArt{
 		return new MapPlacementData(nearestSlot, bundleSlot, nearestIfe);
 	}
 
-	private final void executeClicks(Runnable onDone, InvAction... clicks){
-		Main.clickUtils.executeClicks(new ArrayDeque<>(List.of(clicks)), _0->true, onDone);
-	}
 	private final void getMapIntoMainHand(MinecraftClient client, int slot, int bundleSlot){
 //		assert slot != client.player.getInventory().selectedSlot+36 || bundleSlot != -1;
 
@@ -436,7 +433,7 @@ public class AutoPlaceMapArt{
 			}
 			else{
 				// Swap from upper inv to main hand
-				executeClicks(onDone, new InvAction(slot, selectedSlot, ActionType.HOTBAR_SWAP));
+				Main.clickUtils.executeClicks(_0->true, onDone, new InvAction(slot, selectedSlot, ActionType.HOTBAR_SWAP));
 				Main.LOGGER.info("AutoPlaceMapArt: Swapped nextMap to inv.selectedSlot: s="+slot+"->hb="+(selectedSlot));
 			}
 		}
@@ -454,7 +451,7 @@ public class AutoPlaceMapArt{
 				}
 				else{
 					// Try to move item out of main hand
-					executeClicks(onDone, new InvAction(selectedSlot+36, 0, ActionType.SHIFT_CLICK));
+					Main.clickUtils.executeClicks(_0->true, onDone, new InvAction(selectedSlot+36, 0, ActionType.SHIFT_CLICK));
 					Main.LOGGER.info("AutoPlaceMapArt: Shift-clicking item out of mainhand (to upper inv), hb="+selectedSlot);
 				}
 				return;
@@ -468,7 +465,7 @@ public class AutoPlaceMapArt{
 			}
 			clicks.add(new InvAction(slot, 1, ActionType.CLICK)); // Take from bundle
 			clicks.add(new InvAction(selectedSlot+36, 0, ActionType.CLICK)); // Place in main hand
-			Main.clickUtils.executeClicks(clicks, _0->true, onDone);
+			Main.clickUtils.executeClicks(_0->true, onDone, clicks);
 			Main.LOGGER.info("AutoPlaceMapArt: Extracted map from bundle into mainhand");
 		}
 	}
@@ -552,7 +549,7 @@ public class AutoPlaceMapArt{
 			Main.LOGGER.warn("AutoPlaceMapArt: item stuck on cursor! attempting to place into empty slot");
 			for(int i=44; i>=0; --i) if(!client.player.playerScreenHandler.slots.get(i).hasStack()){
 				// Place stack on cursor
-				Main.clickUtils.executeClicks(new ArrayDeque<>(List.of(new InvAction(i, 0, ActionType.CLICK))), _0->true, ()->{});
+				Main.clickUtils.executeClicks(_0->true, ()->{}, new InvAction(i, 0, ActionType.CLICK));
 				return;
 			}
 			disableAndReset();

@@ -401,9 +401,8 @@ public final class KeybindInventoryOrganize{
 			if(onComplete != null) onComplete.run();
 			return;
 		}
-		Main.clickUtils.executeClicks(clicks,
-				_0->true,
-//				_0->{
+		Main.clickUtils.executeClicks(_0->true,
+				//				_0->{
 //					//client.player.sendMessage(Text.literal("click "+c.slotId()+" "+c.button()+" "+c.actionType()), false);
 //					return true;
 //				},
@@ -415,7 +414,8 @@ public final class KeybindInventoryOrganize{
 						depth = 0;
 						if(onComplete != null) onComplete.run();
 					}
-				});
+				},
+clicks);
 	}
 
 	public void refreshLayout(List<String> strings){

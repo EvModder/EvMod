@@ -1,6 +1,8 @@
 package net.evmodder.evmod.apis;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Queue;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -140,7 +142,7 @@ public class ClickUtils{
 	private boolean clickOpOngoing/*, waitedForClicks*/;
 	private int estimatedMsLeft;
 	public final boolean hasOngoingClicks(){return clickOpOngoing;}
-	public final void executeClicks(Queue<InvAction> clicks, Function<InvAction, Boolean> canProceed, Runnable onComplete){
+	public final void executeClicks(Function<InvAction, Boolean> canProceed, Runnable onComplete, Queue<InvAction> clicks){
 		final MinecraftClient client = MinecraftClient.getInstance();
 		if(clickOpOngoing){
 			Main.LOGGER.warn("executeClicks() already has an ongoing operation");
@@ -226,6 +228,9 @@ public class ClickUtils{
 				}
 			});
 		}}, 0l, 23l);//51l = just over a tick, 23l=just under half a tick
+	}
+	public final void executeClicks(Function<InvAction, Boolean> canProceed, Runnable onComplete, InvAction... clicks){
+		executeClicks(canProceed, onComplete, new ArrayDeque<>(List.of(clicks)));
 	}
 
 	public static void executeClicksLEGACY(

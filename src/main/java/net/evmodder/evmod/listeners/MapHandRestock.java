@@ -485,7 +485,7 @@ public final class MapHandRestock{
 //					clicks.add(new ClickEvent(restockFromSlotFinal, 0, SlotActionType.PICKUP)); // Putback bundle
 					clicks.add(new InvAction(restockFromSlotFinal, 1, ActionType.CLICK)); // Take last from bundle
 					clicks.add(new InvAction(36+player.getInventory().selectedSlot, 0, ActionType.CLICK)); // Place in active hb slot
-					Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("HandRestockFromBundle: DONE"));
+					Main.clickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("HandRestockFromBundle: DONE"), clicks);
 					Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlotFinal+" -> hb="+player.getInventory().selectedSlot);
 				}
 				else if(isHotbarSlot){

@@ -151,7 +151,7 @@ public final class KeybindMapMoveBundle{
 		}
 		if(bundleSlot != -1 && !pickupHalf) clicks.add(new InvAction(bundleSlot, 0, ActionType.CLICK));
 
-		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("MapBundleOp: DONE!"));
+		Main.clickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("MapBundleOp: DONE!"), clicks);
 	}
 
 	/*public KeybindMapMoveBundle(boolean regular, boolean reverse){
