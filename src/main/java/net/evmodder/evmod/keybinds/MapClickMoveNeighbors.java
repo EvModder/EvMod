@@ -5,7 +5,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapRelationUtils;
-import net.evmodder.evmod.apis.ClickUtils.ClickEvent;
+import net.evmodder.evmod.apis.ClickUtils.ActionType;
+import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
@@ -15,7 +16,6 @@ import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.slot.Slot;
-import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;
 
@@ -145,8 +145,8 @@ public abstract class MapClickMoveNeighbors{
 		}
 
 //		final MinecraftClient client = MinecraftClient.getInstance();
-		final ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
-		if(tempSlot != -1) clicks.add(new ClickEvent(tempSlot, hotbarButton, SlotActionType.SWAP));
+		final ArrayDeque<InvAction> clicks = new ArrayDeque<>();
+		if(tempSlot != -1) clicks.add(new InvAction(tempSlot, hotbarButton, ActionType.HOTBAR_SWAP));
 
 		if(tl > tlDest){
 			Main.LOGGER.info("MapMoveClick: Moving all, starting from TL");
@@ -154,10 +154,10 @@ public abstract class MapClickMoveNeighbors{
 				int s = tl + i*9 + j, d = tlDest + i*9 + j;
 				if(d == destSlot) continue;
 				//Main.LOGGER.warn("MapMoveClick: adding 2 clicks: "+s+"->"+d+", hb:"+hotbarButton);
-				clicks.add(new ClickEvent(s, hotbarButton, SlotActionType.SWAP));
-				clicks.add(new ClickEvent(d, hotbarButton, SlotActionType.SWAP));
-//				client.interactionManager.clickSlot(syncId, s, hotbarButton, SlotActionType.SWAP, player);
-//				client.interactionManager.clickSlot(syncId, d, hotbarButton, SlotActionType.SWAP, player);
+				clicks.add(new InvAction(s, hotbarButton, ActionType.HOTBAR_SWAP));
+				clicks.add(new InvAction(d, hotbarButton, ActionType.HOTBAR_SWAP));
+//				client.interactionManager.clickSlot(syncId, s, hotbarButton, ClickAction.HOTBAR_SWAP, player);
+//				client.interactionManager.clickSlot(syncId, d, hotbarButton, ClickAction.HOTBAR_SWAP, player);
 			}
 		}
 		else{
@@ -166,13 +166,13 @@ public abstract class MapClickMoveNeighbors{
 				int s = br - i*9 - j, d = brDest - i*9 - j;
 				if(d == destSlot) continue;
 				//Main.LOGGER.warn("MapMoveClick: adding 2 clicks: "+s+"->"+d+", hb:"+hotbarButton);
-				clicks.add(new ClickEvent(s, hotbarButton, SlotActionType.SWAP));
-				clicks.add(new ClickEvent(d, hotbarButton, SlotActionType.SWAP));
-//				client.interactionManager.clickSlot(syncId, s, hotbarButton, SlotActionType.SWAP, player);
-//				client.interactionManager.clickSlot(syncId, d, hotbarButton, SlotActionType.SWAP, player);
+				clicks.add(new InvAction(s, hotbarButton, ActionType.HOTBAR_SWAP));
+				clicks.add(new InvAction(d, hotbarButton, ActionType.HOTBAR_SWAP));
+//				client.interactionManager.clickSlot(syncId, s, hotbarButton, ClickAction.HOTBAR_SWAP, player);
+//				client.interactionManager.clickSlot(syncId, d, hotbarButton, ClickAction.HOTBAR_SWAP, player);
 			}
 		}
-		if(tempSlot != -1) clicks.add(new ClickEvent(tempSlot, hotbarButton, SlotActionType.SWAP));
+		if(tempSlot != -1) clicks.add(new InvAction(tempSlot, hotbarButton, ActionType.HOTBAR_SWAP));
 
 		final int numClicks = clicks.size();
 		ongoingClickMove = true;

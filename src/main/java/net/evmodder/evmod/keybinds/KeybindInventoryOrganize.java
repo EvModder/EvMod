@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.stream.IntStream;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
-import net.evmodder.evmod.apis.ClickUtils.ClickEvent;
+import net.evmodder.evmod.apis.ClickUtils.ActionType;
+import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.config.OptionInventoryRestockLimit;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -17,7 +18,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
-import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Identifier;
 
 public final class KeybindInventoryOrganize{
@@ -141,7 +141,7 @@ public final class KeybindInventoryOrganize{
 //		Main.LOGGER.info("InvOrganize: "+layoutMap.size()+" mappings, isInvScreen="+isInvScreen+", numSlots="+simSlots.length
 //				+", hotbarStart="+HOTBAR_START+", invStart="+MAIN_INV_START);
 
-		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
+		ArrayDeque<InvAction> clicks = new ArrayDeque<>();
 		checkDoneSlots(simSlots, doneSlots, isInvScreen);
 		boolean[] plannedSlots;
 		if(isInvScreen){
@@ -169,10 +169,10 @@ public final class KeybindInventoryOrganize{
 						return;
 					}
 					//client.player.sendMessage(Text.literal("Click: Unequipping armor"), false);
-					clicks.add(new ClickEvent(p.slot, 0, SlotActionType.QUICK_MOVE));
+					clicks.add(new InvAction(p.slot, 0, ActionType.SHIFT_CLICK));
 				}
 				//client.player.sendMessage(Text.literal("Click: "+dstSlot+" Equipping armor"), false);
-				clicks.add(new ClickEvent(srcSlot, 0, SlotActionType.QUICK_MOVE));
+				clicks.add(new InvAction(srcSlot, 0, ActionType.SHIFT_CLICK));
 				swapSlots(simSlots, emptySlots, srcSlot, dstSlot);
 				doneSlots[dstSlot] = true;
 				plannedSlots[srcSlot] = false;
@@ -202,8 +202,8 @@ public final class KeybindInventoryOrganize{
 				//if(srcSlot == -1) continue;
 				if(srcSlot < HOTBAR_START) continue; // We want items coming FROM hotbar/offhand
 //				client.player.sendMessage(Text.literal("Click: "+srcSlot+"->"+dstSlot+", Hotbar->Anywhere (sorting)"), false);
-				if(isInvScreen && srcSlot == 45) clicks.add(new ClickEvent(dstSlot, 40, SlotActionType.SWAP));
-				else clicks.add(new ClickEvent(dstSlot, srcSlot-HOTBAR_START, SlotActionType.SWAP));
+				if(isInvScreen && srcSlot == 45) clicks.add(new InvAction(dstSlot, 40, ActionType.HOTBAR_SWAP));
+				else clicks.add(new InvAction(dstSlot, srcSlot-HOTBAR_START, ActionType.HOTBAR_SWAP));
 
 				swapSlots(simSlots, emptySlots, srcSlot, dstSlot);
 				doneSlots[dstSlot] = true;
@@ -218,7 +218,7 @@ public final class KeybindInventoryOrganize{
 				final int originalCount = simSlots[i].getCount();
 				if(simulateShiftClick(simSlots, emptySlots, /*fromArmor=*/false, i) < originalCount){
 //					client.player.sendMessage(Text.literal("Click: "+i+" Hotbar->UpperInv (cleaning)"), false);
-					clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
+					clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK));
 				}
 			}
 			checkDoneSlots(simSlots, doneSlots, isInvScreen);
@@ -311,12 +311,12 @@ public final class KeybindInventoryOrganize{
 				}
 			}
 //			client.player.sendMessage(Text.literal("Click: "+srcSlot+"->"+dstSlot+" UpperInv->Hotbar->UpperInv"), false);
-			clicks.add(new ClickEvent(srcSlot, hb, SlotActionType.SWAP));
-			clicks.add(new ClickEvent(dstSlot, hb, SlotActionType.SWAP));
+			clicks.add(new InvAction(srcSlot, hb, ActionType.HOTBAR_SWAP));
+			clicks.add(new InvAction(dstSlot, hb, ActionType.HOTBAR_SWAP));
 			if(!emptySlots[dstSlot] || !emptySlots[hb == 40 ? 45 : hb+36]){
 				//Main.LOGGER.info("putting back original displaced item");
 				// Put back the displaced hotbar/offhand item
-				clicks.add(new ClickEvent(srcSlot, hb, SlotActionType.SWAP));
+				clicks.add(new InvAction(srcSlot, hb, ActionType.HOTBAR_SWAP));
 			}
 			swapSlots(simSlots, emptySlots, srcSlot, dstSlot);
 			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && !isInvScreen) alreadyRestockedItems.add(simSlots[dstSlot].getItem());
@@ -357,8 +357,8 @@ public final class KeybindInventoryOrganize{
 				}
 			}
 //			client.player.sendMessage(Text.literal("Click: "+srcSlot+"->"+dstSlot+" UpperInv->Hotbar"), false);
-			if(isInvScreen && dstSlot == 45) clicks.add(new ClickEvent(srcSlot, 40, SlotActionType.SWAP));
-			else clicks.add(new ClickEvent(srcSlot, dstSlot-HOTBAR_START, SlotActionType.SWAP));
+			if(isInvScreen && dstSlot == 45) clicks.add(new InvAction(srcSlot, 40, ActionType.HOTBAR_SWAP));
+			else clicks.add(new InvAction(srcSlot, dstSlot-HOTBAR_START, ActionType.HOTBAR_SWAP));
 
 			swapSlots(simSlots, emptySlots, srcSlot, dstSlot);
 			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && !isInvScreen) alreadyRestockedItems.add(simSlots[dstSlot].getItem());
@@ -391,7 +391,7 @@ public final class KeybindInventoryOrganize{
 				}
 			}
 //			client.player.sendMessage(Text.literal("Click: "+srcSlot+" Container->Inventory (armor slot unavailable)"), false);
-			clicks.add(new ClickEvent(srcSlot, 0, SlotActionType.QUICK_MOVE));
+			clicks.add(new InvAction(srcSlot, 0, ActionType.SHIFT_CLICK));
 		}
 
 		final int numClicks = clicks.size();

@@ -2,7 +2,8 @@ package net.evmodder.evmod.keybinds;
 
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils;
-import net.evmodder.evmod.apis.ClickUtils.ClickEvent;
+import net.evmodder.evmod.apis.ClickUtils.ActionType;
+import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
@@ -10,7 +11,6 @@ import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil.Type;
 import net.minecraft.screen.PlayerScreenHandler;
-import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 import java.util.ArrayDeque;
 
@@ -59,11 +59,11 @@ public final class KeybindSpamclick{
 
 					client.player.sendMessage(Text.literal("SpamClick: executing "+numClicks+"c in "+numTicks+"t"), /*overlay=*/false);
 
-					ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
+					ArrayDeque<InvAction> clicks = new ArrayDeque<>();
 					for(int i=0; i<numClicks; ++i){
 						int a = i%4;
-						//clicks.add(new ClickEvent(i%2 == 0 ? PlayerScreenHandler.HOTBAR_START : PlayerScreenHandler.INVENTORY_START, 0, SlotActionType.QUICK_MOVE));
-						clicks.add(new ClickEvent(a==0||a==3 ? PlayerScreenHandler.HOTBAR_START : PlayerScreenHandler.HOTBAR_START+1, 0, SlotActionType.PICKUP));
+						//clicks.add(new ClickEvent(i%2 == 0 ? PlayerScreenHandler.HOTBAR_START : PlayerScreenHandler.INVENTORY_START, 0, ClickAction.SHIFT_CLICK));
+						clicks.add(new InvAction(a==0||a==3 ? PlayerScreenHandler.HOTBAR_START : PlayerScreenHandler.HOTBAR_START+1, 0, ActionType.CLICK));
 					}
 					final int msPerClick = (int)((numTicks*50l)/numClicks);
 					if(numTicks*50l % numClicks != 0){

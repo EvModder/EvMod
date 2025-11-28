@@ -9,7 +9,8 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
 import net.evmodder.evmod.Main;
-import net.evmodder.evmod.apis.ClickUtils.ClickEvent;
+import net.evmodder.evmod.apis.ClickUtils.ActionType;
+import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
@@ -22,7 +23,6 @@ import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.BundleContentsComponent;
 import net.minecraft.screen.slot.Slot;
-import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.world.World;
 
@@ -81,8 +81,8 @@ public final class KeybindMapLoad{
 		if(emptySlotOpt.isEmpty()){Main.LOGGER.warn("MapLoadBundle: Empty slot not found"); return;}
 		final int emptySlot = emptySlotOpt.get();
 
-		final ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
-		final IdentityHashMap<ClickEvent, Integer> ableToSkipClicks = new IdentityHashMap<>();
+		final ArrayDeque<InvAction> clicks = new ArrayDeque<>();
+		final IdentityHashMap<InvAction, Integer> ableToSkipClicks = new IdentityHashMap<>();
 		for(int i : slotsWithBundles){
 			BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
 			if(contents.isEmpty()) continue;
@@ -90,18 +90,18 @@ public final class KeybindMapLoad{
 			if(contents.stream().allMatch(s -> isLoadedMapArt(client.world, s))) continue; // Skip bundles with already-loaded mapart
 //			Main.LOGGER.info("MapLoadBundle: found bundle with "+contents.size()+" maps");
 			for(int j=0; j<contents.size(); ++j){
-				ClickEvent c;
-				clicks.add(c=new ClickEvent(i, 1, SlotActionType.PICKUP)); // Take last map from bundle
-				clicks.add(new ClickEvent(emptySlot, 0, SlotActionType.PICKUP)); // Place map in empty slot
+				InvAction c;
+				clicks.add(c=new InvAction(i, 1, ActionType.CLICK)); // Take last map from bundle
+				clicks.add(new InvAction(emptySlot, 0, ActionType.CLICK)); // Place map in empty slot
 				// Wait for map state to load
-				clicks.add(new ClickEvent(emptySlot, 0, SlotActionType.PICKUP)); // Take map from empty slot
-				clicks.add(new ClickEvent(emptyBundleSlot, 0, SlotActionType.PICKUP)); // Place map in empty bundle
+				clicks.add(new InvAction(emptySlot, 0, ActionType.CLICK)); // Take map from empty slot
+				clicks.add(new InvAction(emptyBundleSlot, 0, ActionType.CLICK)); // Place map in empty bundle
 
 				ableToSkipClicks.put(c, 6*(contents.size()-j));
 			}
 			for(int j=0; j<contents.size(); ++j){
-				clicks.add(new ClickEvent(emptyBundleSlot, 1, SlotActionType.PICKUP)); // Take last map from empty bundle
-				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // Place map back in original bundle
+				clicks.add(new InvAction(emptyBundleSlot, 1, ActionType.CLICK)); // Take last map from empty bundle
+				clicks.add(new InvAction(i, 0, ActionType.CLICK)); // Place map back in original bundle
 			}
 		}
 		if(clicks.isEmpty()){
@@ -117,14 +117,14 @@ public final class KeybindMapLoad{
 //				Main.LOGGER.info("click for slot: "+c.slotId()+", clicksLeft: "+clicks.size());
 				if(skipIfLoaded != null){
 					//Main.LOGGER.info("MapLoadBundle: potentially skippable");
-					BundleContentsComponent contents = client.player.currentScreenHandler.slots.get(c.slotId()).getStack().get(DataComponentTypes.BUNDLE_CONTENTS);
+					BundleContentsComponent contents = client.player.currentScreenHandler.slots.get(c.slot()).getStack().get(DataComponentTypes.BUNDLE_CONTENTS);
 					if(contents != null && contents.stream().allMatch(s -> isLoadedMapArt(client.world, s))){
 //						Main.LOGGER.info("MapLoadBundle: skippable! whoop whoop: "+(skipIfLoaded));
 						for(int i=0; i<skipIfLoaded; ++i) clicks.remove();
 						return false;
 					}
 				}
-				if(c.slotId() != emptySlot) return true;
+				if(c.slot() != emptySlot) return true;
 				if(stateUpdateWaitStart == 0){stateUpdateWaitStart = -1; return true;}
 				ItemStack item = client.player.currentScreenHandler.slots.get(emptySlot).getStack();
 //				if(!isLoadedMapArt(client.world, item)) return false;
@@ -168,7 +168,7 @@ public final class KeybindMapLoad{
 		if(hbButtons.length == 0){Main.LOGGER.warn("MapLoad cancelled: in shulker, and hotbar is full of shulkers"); return;}
 		//
 		int[] putBackSlots = new int[hbButtons.length];
-		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
+		ArrayDeque<InvAction> clicks = new ArrayDeque<>();
 		HashSet<Integer> mapIdsToLoad = new HashSet<>();
 		final int MAX_BATCH_SIZE = Math.min(hbButtons.length, Main.clickUtils.MAX_CLICKS/2);
 
@@ -176,15 +176,15 @@ public final class KeybindMapLoad{
 		for(int i=0; i<slots.size(); ++i){
 			if(!isUnloadedMapArt(client.player.clientWorld, slots.get(i).getStack())) continue;
 			if(!mapIdsToLoad.add(slots.get(i).getStack().get(DataComponentTypes.MAP_ID).id())) continue;
-			clicks.add(new ClickEvent(i, hbButtons[hbi], SlotActionType.SWAP));
+			clicks.add(new InvAction(i, hbButtons[hbi], ActionType.HOTBAR_SWAP));
 			putBackSlots[hbi] = i;
 			if(++hbi == hbButtons.length){
 				hbi = 0;
-				for(int j=0; j<hbButtons.length; ++j) clicks.add(new ClickEvent(putBackSlots[j], hbButtons[j], SlotActionType.SWAP));
+				for(int j=0; j<hbButtons.length; ++j) clicks.add(new InvAction(putBackSlots[j], hbButtons[j], ActionType.HOTBAR_SWAP));
 			}
 		}
 		int extraPutBackIndex = clicks.size();
-		for(int j=0; j<hbi; ++j) clicks.add(new ClickEvent(putBackSlots[j], hbButtons[j], SlotActionType.SWAP));
+		for(int j=0; j<hbi; ++j) clicks.add(new InvAction(putBackSlots[j], hbButtons[j], ActionType.HOTBAR_SWAP));
 
 		Main.LOGGER.info("MapLoad: STARTED, clicks: "+clicks.size()+", extraPutBackIndex: "+extraPutBackIndex);
 		Main.clickUtils.executeClicks(clicks,

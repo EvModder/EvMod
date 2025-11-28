@@ -11,7 +11,8 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.Configs.Generic;
 import net.evmodder.evmod.apis.MapRelationUtils;
-import net.evmodder.evmod.apis.ClickUtils.ClickEvent;
+import net.evmodder.evmod.apis.ClickUtils.ActionType;
+import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
@@ -21,10 +22,8 @@ import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.network.packet.c2s.play.BundleItemSelectedC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.screen.slot.Slot;
-import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -416,7 +415,7 @@ public class AutoPlaceMapArt{
 		return new MapPlacementData(nearestSlot, bundleSlot, nearestIfe);
 	}
 
-	private final void executeClicks(Runnable onDone, ClickEvent... clicks){
+	private final void executeClicks(Runnable onDone, InvAction... clicks){
 		Main.clickUtils.executeClicks(new ArrayDeque<>(List.of(clicks)), _0->true, onDone);
 	}
 	private final void getMapIntoMainHand(MinecraftClient client, int slot, int bundleSlot){
@@ -437,7 +436,7 @@ public class AutoPlaceMapArt{
 			}
 			else{
 				// Swap from upper inv to main hand
-				executeClicks(onDone, new ClickEvent(slot, selectedSlot, SlotActionType.SWAP));
+				executeClicks(onDone, new InvAction(slot, selectedSlot, ActionType.HOTBAR_SWAP));
 				Main.LOGGER.info("AutoPlaceMapArt: Swapped nextMap to inv.selectedSlot: s="+slot+"->hb="+(selectedSlot));
 			}
 		}
@@ -455,21 +454,21 @@ public class AutoPlaceMapArt{
 				}
 				else{
 					// Try to move item out of main hand
-					executeClicks(onDone, new ClickEvent(selectedSlot+36, 0, SlotActionType.QUICK_MOVE));
+					executeClicks(onDone, new InvAction(selectedSlot+36, 0, ActionType.SHIFT_CLICK));
 					Main.LOGGER.info("AutoPlaceMapArt: Shift-clicking item out of mainhand (to upper inv), hb="+selectedSlot);
 				}
 				return;
 			}
 			BundleContentsComponent contents = client.player.playerScreenHandler.slots.get(slot).getStack().get(DataComponentTypes.BUNDLE_CONTENTS);
 			assert contents != null && contents.size() > bundleSlot;
+			ArrayDeque<InvAction> clicks = new ArrayDeque<>();
 			if(contents.size() != 1){
 				int bundleSlotUsed = Configs.Generic.BUNDLE_SELECT_REVERSED.getBooleanValue() ? contents.size()-(bundleSlot+1) : bundleSlot;
-				client.player.networkHandler.sendPacket(new BundleItemSelectedC2SPacket(slot, bundleSlotUsed));
+				clicks.add(new InvAction(slot, bundleSlotUsed, ActionType.BUNDLE_SELECT)); // Select bundle slot
 			}
-			executeClicks(onDone,
-					new ClickEvent(slot, 1, SlotActionType.PICKUP), // Take from bundle
-					new ClickEvent(selectedSlot+36, 0, SlotActionType.PICKUP) // Place in main hand
-			);
+			clicks.add(new InvAction(slot, 1, ActionType.CLICK)); // Take from bundle
+			clicks.add(new InvAction(selectedSlot+36, 0, ActionType.CLICK)); // Place in main hand
+			Main.clickUtils.executeClicks(clicks, _0->true, onDone);
 			Main.LOGGER.info("AutoPlaceMapArt: Extracted map from bundle into mainhand");
 		}
 	}
@@ -553,7 +552,7 @@ public class AutoPlaceMapArt{
 			Main.LOGGER.warn("AutoPlaceMapArt: item stuck on cursor! attempting to place into empty slot");
 			for(int i=44; i>=0; --i) if(!client.player.playerScreenHandler.slots.get(i).hasStack()){
 				// Place stack on cursor
-				Main.clickUtils.executeClicks(new ArrayDeque<>(List.of(new ClickEvent(i, 0, SlotActionType.PICKUP))), _0->true, ()->{});
+				Main.clickUtils.executeClicks(new ArrayDeque<>(List.of(new InvAction(i, 0, ActionType.CLICK))), _0->true, ()->{});
 				return;
 			}
 			disableAndReset();

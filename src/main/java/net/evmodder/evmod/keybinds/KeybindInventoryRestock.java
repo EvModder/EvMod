@@ -11,7 +11,8 @@ import java.util.Set;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.KeyCallbacks;
 import net.evmodder.evmod.Main;
-import net.evmodder.evmod.apis.ClickUtils.ClickEvent;
+import net.evmodder.evmod.apis.ClickUtils.ActionType;
+import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.config.OptionInventoryRestockLimit;
 import net.evmodder.evmod.keybinds.KeybindInventoryOrganize.SlotAndItemName;
 import net.minecraft.client.MinecraftClient;
@@ -22,7 +23,6 @@ import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
-import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Identifier;
 
 //TODO: Shift-click (only 2 clicks intead of 3) when possible
@@ -47,7 +47,7 @@ public final class KeybindInventoryRestock{
 		//
 		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(s -> s.getStack().copy()).toArray(ItemStack[]::new);
 
-		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
+		ArrayDeque<InvAction> clicks = new ArrayDeque<>();
 		HashMap<Item, Integer> supply = new HashMap<>();
 
 
@@ -107,26 +107,26 @@ public final class KeybindInventoryRestock{
 				final boolean needToLeave1 = limits == OptionInventoryRestockLimit.LEAVE_ONE_ITEM
 						&& combinedCount <= maxCount && (totalInContainer -= slots[j].getCount()) == 0;
 
-				if(needToLeave1 || combinedCount != maxCount) clicks.add(new ClickEvent(j, 0, SlotActionType.PICKUP)); // Pickup all
+				if(needToLeave1 || combinedCount != maxCount) clicks.add(new InvAction(j, 0, ActionType.CLICK)); // Pickup all
 				else{
-					clicks.add(new ClickEvent(j, 0, SlotActionType.QUICK_MOVE)); // Shift-click
+					clicks.add(new InvAction(j, 0, ActionType.SHIFT_CLICK)); // Shift-click
 					totalInContainer -= slots[j].getCount();
 					slots[i].setCount(maxCount);
 					slots[j] = ItemStack.EMPTY;
 					break;
 				}
 				if(needToLeave1){
-					clicks.add(new ClickEvent(j, 1, SlotActionType.PICKUP)); // Leave 1
+					clicks.add(new InvAction(j, 1, ActionType.CLICK)); // Leave 1
 					--combinedCount;
 				}
-				clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // Place as many as possible
+				clicks.add(new InvAction(i, 0, ActionType.CLICK)); // Place as many as possible
 				if(combinedCount <= maxCount){
 					totalInContainer -= (combinedCount - slots[i].getCount());
 					slots[i].setCount(combinedCount);
 					slots[j] = ItemStack.EMPTY;
 				}
 				else{
-					clicks.add(new ClickEvent(j, 0, SlotActionType.PICKUP)); // Put back extras
+					clicks.add(new InvAction(j, 0, ActionType.CLICK)); // Put back extras
 					totalInContainer -= (maxCount - slots[i].getCount());
 					slots[i].setCount(maxCount);
 					slots[j].setCount(combinedCount - maxCount);

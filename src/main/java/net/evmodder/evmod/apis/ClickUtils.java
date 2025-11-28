@@ -11,12 +11,23 @@ import net.evmodder.EvLib.util.TextUtils_New;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.mixin.AccessorPlayerListHud;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.network.packet.c2s.play.BundleItemSelectedC2SPacket;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
 public class ClickUtils{
-	public record ClickEvent(int slotId, int button, SlotActionType actionType){}
+	public enum ActionType{
+		CLICK(SlotActionType.PICKUP),
+		SHIFT_CLICK(SlotActionType.QUICK_MOVE),
+		HOTBAR_SWAP(SlotActionType.SWAP),
+		THROW(SlotActionType.THROW),
+		BUNDLE_SELECT(null);
+
+		SlotActionType action;
+		ActionType(SlotActionType a){action = a;}
+	}
+	public record InvAction(int slot, int button, ActionType action){}
 
 	public final int MAX_CLICKS;
 	private final int[] tickDurationArr;
@@ -129,7 +140,7 @@ public class ClickUtils{
 	private boolean clickOpOngoing/*, waitedForClicks*/;
 	private int estimatedMsLeft;
 	public final boolean hasOngoingClicks(){return clickOpOngoing;}
-	public final void executeClicks(Queue<ClickEvent> clicks, Function<ClickEvent, Boolean> canProceed, Runnable onComplete){
+	public final void executeClicks(Queue<InvAction> clicks, Function<InvAction, Boolean> canProceed, Runnable onComplete){
 		final MinecraftClient client = MinecraftClient.getInstance();
 		if(clickOpOngoing){
 			Main.LOGGER.warn("executeClicks() already has an ongoing operation");
@@ -171,11 +182,14 @@ public class ClickUtils{
 						Main.LOGGER.error("executeClicks() lost available click mid-op, seemingly due to click(s) occuring during check of canProceed()!");
 						break;
 					}
-					ClickEvent click = clicks.remove();
+					InvAction click = clicks.remove();
 					try{
 						//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
 						thisClickIsBotted = true;
-						client.interactionManager.clickSlot(syncId, click.slotId, click.button, click.actionType, client.player);
+						if(click.action == ActionType.BUNDLE_SELECT){
+							client.player.networkHandler.sendPacket(new BundleItemSelectedC2SPacket(click.slot, click.button));
+						}
+						else client.interactionManager.clickSlot(syncId, click.slot, click.button, click.action.action, client.player);
 						thisClickIsBotted = false;
 					}
 					catch(NullPointerException e){
@@ -216,8 +230,8 @@ public class ClickUtils{
 
 	public static void executeClicksLEGACY(
 			MinecraftClient client,
-			Queue<ClickEvent> clicks, final int MILLIS_BETWEEN_CLICKS, final int MAX_CLICKS_PER_SECOND,
-			Function<ClickEvent, Boolean> canProceed, Runnable onComplete)
+			Queue<InvAction> clicks, final int MILLIS_BETWEEN_CLICKS, final int MAX_CLICKS_PER_SECOND,
+			Function<InvAction, Boolean> canProceed, Runnable onComplete)
 	{
 		if(clicks.isEmpty()){
 			Main.LOGGER.warn("executeClicks() called with an empty ClickEvent list");
@@ -237,9 +251,12 @@ public class ClickUtils{
 				@Override public void run(){
 					int clicksThisStep = 0;
 					while(clicksInLastSecond < MAX_CLICKS_PER_SECOND && canProceed.apply(clicks.peek())){
-						ClickEvent click = clicks.remove();
+						InvAction click = clicks.remove();
 						try{
-							client.interactionManager.clickSlot(syncId, click.slotId, click.button, click.actionType, client.player);
+							if(click.action == ActionType.BUNDLE_SELECT){
+								client.player.networkHandler.sendPacket(new BundleItemSelectedC2SPacket(click.slot, click.button));
+							}
+							else client.interactionManager.clickSlot(syncId, click.slot, click.button, click.action.action, client.player);
 						}
 						catch(NullPointerException e){
 							Main.LOGGER.error("executeClicks()-MODE:c/ms(array) failure due to null client. Clicks left: "+clicks.size());
@@ -259,9 +276,12 @@ public class ClickUtils{
 			new Timer().schedule(new TimerTask(){@Override public void run(){
 				if(clicks.isEmpty()){cancel(); onComplete.run(); return;}
 				if(!canProceed.apply(clicks.peek())) return;
-				ClickEvent click = clicks.remove();
+				InvAction click = clicks.remove();
 				try{
-					client.interactionManager.clickSlot(syncId, click.slotId, click.button, click.actionType, client.player);
+					if(click.action == ActionType.BUNDLE_SELECT){
+						client.player.networkHandler.sendPacket(new BundleItemSelectedC2SPacket(click.slot, click.button));
+					}
+					else client.interactionManager.clickSlot(syncId, click.slot, click.button, click.action.action, client.player);
 				}
 				catch(NullPointerException e){
 					Main.LOGGER.error("executeClicks()-MODE:c/ms(simple) failure due to null client. Clicks left: "+clicks.size());
@@ -275,10 +295,13 @@ public class ClickUtils{
 			int clicksInLastSecondArrIndex = 0;
 			@Override public void run(){
 				if(clicksInLastSecond < MAX_CLICKS_PER_SECOND && canProceed.apply(clicks.peek())){
-					ClickEvent click = clicks.remove();
+					InvAction click = clicks.remove();
 					//Main.LOGGER.info("click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
 					try{
-						client.interactionManager.clickSlot(syncId, click.slotId, click.button, click.actionType, client.player);
+						if(click.action == ActionType.BUNDLE_SELECT){
+							client.player.networkHandler.sendPacket(new BundleItemSelectedC2SPacket(click.slot, click.button));
+						}
+						else client.interactionManager.clickSlot(syncId, click.slot, click.button, click.action.action, client.player);
 					}
 					catch(NullPointerException e){
 						Main.LOGGER.error("executeClicks()-MODE:ms/c failure due to null client. Clicks left: "+clicks.size());

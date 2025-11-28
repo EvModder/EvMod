@@ -11,7 +11,8 @@ import com.nimbusds.oauth2.sdk.util.StringUtils;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapRelationUtils;
-import net.evmodder.evmod.apis.ClickUtils.ClickEvent;
+import net.evmodder.evmod.apis.ClickUtils.ActionType;
+import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
 import net.evmodder.evmod.onTick.AutoPlaceMapArt;
 import net.evmodder.evmod.onTick.UpdateInventoryHighlights;
@@ -478,12 +479,12 @@ public final class MapHandRestock{
 //				Main.LOGGER.info("MapRestock: ok, doing restock click(s)");
 
 				if(slots.get(restockFromSlotFinal).get(DataComponentTypes.BUNDLE_CONTENTS) != null){
-					ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
+					ArrayDeque<InvAction> clicks = new ArrayDeque<>();
 //					clicks.add(new ClickEvent(restockFromSlotFinal, 0, SlotActionType.PICKUP)); // Pickup bundle
 //					clicks.add(new ClickEvent(36+player.getInventory().selectedSlot, 1, SlotActionType.PICKUP)); // Place in active hb slot
 //					clicks.add(new ClickEvent(restockFromSlotFinal, 0, SlotActionType.PICKUP)); // Putback bundle
-					clicks.add(new ClickEvent(restockFromSlotFinal, 1, SlotActionType.PICKUP)); // Take last from bundle
-					clicks.add(new ClickEvent(36+player.getInventory().selectedSlot, 0, SlotActionType.PICKUP)); // Place in active hb slot
+					clicks.add(new InvAction(restockFromSlotFinal, 1, ActionType.CLICK)); // Take last from bundle
+					clicks.add(new InvAction(36+player.getInventory().selectedSlot, 0, ActionType.CLICK)); // Place in active hb slot
 					Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("HandRestockFromBundle: DONE"));
 					Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlotFinal+" -> hb="+player.getInventory().selectedSlot);
 				}

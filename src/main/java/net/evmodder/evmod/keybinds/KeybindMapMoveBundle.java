@@ -7,7 +7,8 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.math.Fraction;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
-import net.evmodder.evmod.apis.ClickUtils.ClickEvent;
+import net.evmodder.evmod.apis.ClickUtils.ActionType;
+import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
@@ -20,7 +21,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.slot.Slot;
-import net.minecraft.screen.slot.SlotActionType;
 
 public final class KeybindMapMoveBundle{
 	//final int WITHDRAW_MAX = 27;
@@ -65,7 +65,7 @@ public final class KeybindMapMoveBundle{
 		final boolean anyArtToPickup = Arrays.stream(slotsWithMapArt).anyMatch(i -> slots[i].getCount() == (pickupHalf ? 2 : 1));
 
 //		Main.LOGGER.info("MapBundleOp: begin bundle search");
-		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
+		ArrayDeque<InvAction> clicks = new ArrayDeque<>();
 		final ItemStack cursorStack = hs.getScreenHandler().getCursorStack();
 		int bundleSlot = -1, mostEmpty = Integer.MAX_VALUE, mostFull = 0;
 		final Fraction occupancy;
@@ -101,7 +101,7 @@ public final class KeybindMapMoveBundle{
 			}
 			if(!pickupHalf){
 				Main.LOGGER.warn("MapBundleOp: using bundle in slot: "+bundleSlot);
-				clicks.add(new ClickEvent(bundleSlot, 0, SlotActionType.PICKUP));
+				clicks.add(new InvAction(bundleSlot, 0, ActionType.CLICK));
 			}
 			occupancy = slots[bundleSlot].get(DataComponentTypes.BUNDLE_CONTENTS).getOccupancy();
 		}
@@ -117,10 +117,10 @@ public final class KeybindMapMoveBundle{
 				if(slots[i].getItem() != Items.FILLED_MAP) continue;
 				if(slots[i].getCount() != (pickupHalf ? 2 : 1)) continue;
 				if(pickupHalf){
-					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // Pickup half
-					clicks.add(new ClickEvent(bundleSlot, 0, SlotActionType.PICKUP)); // Put into bundle
+					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // Pickup half
+					clicks.add(new InvAction(bundleSlot, 0, ActionType.CLICK)); // Put into bundle
 				}
-				else clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // Suck up item with bundle on cursor
+				else clicks.add(new InvAction(i, 0, ActionType.CLICK)); // Suck up item with bundle on cursor
 				if(++suckedUp == space) break;
 			}
 			Main.LOGGER.info("MapBundleOp: stored "+suckedUp+" maps in bundle");
@@ -132,7 +132,7 @@ public final class KeybindMapMoveBundle{
 			if(reverse){
 				for(int i=SLOT_START; i<SLOT_END && withdrawn < stored; ++i){
 					if(!slots[i].isEmpty()) continue;
-					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP));
+					clicks.add(new InvAction(i, 1, ActionType.CLICK));
 					++withdrawn;
 				}
 			}
@@ -143,13 +143,13 @@ public final class KeybindMapMoveBundle{
 				for(; emptySlots > stored; --i) if(slots[i].isEmpty()) --emptySlots;
 				for(; i>=SLOT_START && withdrawn < stored; --i){
 					if(!slots[i].isEmpty()) continue;
-					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP));
+					clicks.add(new InvAction(i, 1, ActionType.CLICK));
 					++withdrawn;
 				}
 			}
 			Main.LOGGER.info("MapBundleOp: withdrew "+withdrawn+" maps from bundle");
 		}
-		if(bundleSlot != -1 && !pickupHalf) clicks.add(new ClickEvent(bundleSlot, 0, SlotActionType.PICKUP));
+		if(bundleSlot != -1 && !pickupHalf) clicks.add(new InvAction(bundleSlot, 0, ActionType.CLICK));
 
 		Main.clickUtils.executeClicks(clicks, _0->true, ()->Main.LOGGER.info("MapBundleOp: DONE!"));
 	}

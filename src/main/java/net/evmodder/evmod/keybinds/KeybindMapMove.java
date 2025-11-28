@@ -10,7 +10,8 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MapRelationUtils;
-import net.evmodder.evmod.apis.ClickUtils.ClickEvent;
+import net.evmodder.evmod.apis.ClickUtils.ActionType;
+import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
@@ -19,7 +20,6 @@ import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
-import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;
 
@@ -122,8 +122,8 @@ public final class KeybindMapMove{
 		Main.LOGGER.info("MapMove: moveToShulk="+moveToShulk+", isShiftClick="+isShiftClick+", selectiveMove="+selectiveMove);
 //		client.player.sendMessage(Text.literal("MapMove: moveToShulk="+moveToShulk+", isShiftClick="+isShiftClick+", selectiveMove="+selectiveMove), false);
 
-		ArrayDeque<ClickEvent> clicks = new ArrayDeque<>();
-		IdentityHashMap<ClickEvent, Integer> reserveClicks = new IdentityHashMap<>();
+		ArrayDeque<InvAction> clicks = new ArrayDeque<>();
+		IdentityHashMap<InvAction, Integer> reserveClicks = new IdentityHashMap<>();
 		if(moveToShulk) for(int i=27, j=0; i<63; ++i){
 			if(slots[i].getItem() != Items.FILLED_MAP) continue;
 			if(isFillerMap(slots, slots[i], client.world)) continue;
@@ -137,33 +137,33 @@ public final class KeybindMapMove{
 				}
 			}
 			if(count == 1 || isShiftClick){
-				clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
+				clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK));
 			}
 			else{ // put 1 into shulk
 				if(count == 2 || (count == 3 && numInShulk != 0)){
-					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // pickup half
+					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // pickup half
 					if(numInShulk == 0){
 						if(Main.clickUtils.MAX_CLICKS >= 2) reserveClicks.put(clicks.peekLast(), 2);
-						clicks.add(new ClickEvent(j, 0, SlotActionType.PICKUP)); // place into next empty slot
+						clicks.add(new InvAction(j, 0, ActionType.CLICK)); // place into next empty slot
 					}
 					else{
 						if(Main.clickUtils.MAX_CLICKS >= 3) reserveClicks.put(clicks.peekLast(), 3);
-						clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE)); // shift-move remaining (1)
-						clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // place back
+						clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK)); // shift-move remaining (1)
+						clicks.add(new InvAction(i, 0, ActionType.CLICK)); // place back
 					}
 				}
 				else{
-					clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // pickup all
+					clicks.add(new InvAction(i, 0, ActionType.CLICK)); // pickup all
 					if(Main.clickUtils.MAX_CLICKS >= 4) reserveClicks.put(clicks.peekLast(), 4);
-					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // place one
-					clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE)); // shift-move the one
-					clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // place all (-1)
+					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // place one
+					clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK)); // shift-move the one
+					clicks.add(new InvAction(i, 0, ActionType.CLICK)); // place all (-1)
 				}
 			}
 			if(numInShulk == 0) ++j;
 		}
 		else for(int i=26, j=62; i>=0; --i){
-//			if(isMapArt(sh.getSlot(i).getStack())) clicks.add(new ClickEvent(sh.syncId, i, 0, SlotActionType.QUICK_MOVE));
+//			if(isMapArt(sh.getSlot(i).getStack())) clicks.add(new ClickEvent(sh.syncId, i, 0, ClickAction.SHIFT_CLICK));
 			if(slots[i].getItem() != Items.FILLED_MAP) continue;
 			if(isFillerMap(slots, slots[i], client.world)) continue;
 			final int count = slots[i].getCount();
@@ -176,27 +176,27 @@ public final class KeybindMapMove{
 				}
 			}
 			if(count == 1 || isShiftClick){
-				clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE));
+				clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK));
 			}
 			else{ // take 1 from shulk
 				if(count == 2 || (count == 3 && numInInv != 0)){
-					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // pickup half
+					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // pickup half
 					if(numInInv == 0){
 						if(Main.clickUtils.MAX_CLICKS >= 2) reserveClicks.put(clicks.peekLast(), 2);
-						clicks.add(new ClickEvent(j, 0, SlotActionType.PICKUP)); // place into next empty slot
+						clicks.add(new InvAction(j, 0, ActionType.CLICK)); // place into next empty slot
 					}
 					else{
 						if(Main.clickUtils.MAX_CLICKS >= 3) reserveClicks.put(clicks.peekLast(), 3);
-						clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE)); // shift-move remaining (1)
-						clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // place back
+						clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK)); // shift-move remaining (1)
+						clicks.add(new InvAction(i, 0, ActionType.CLICK)); // place back
 					}
 				}
 				else{
-					clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // pickup all
+					clicks.add(new InvAction(i, 0, ActionType.CLICK)); // pickup all
 					if(Main.clickUtils.MAX_CLICKS >= 4) reserveClicks.put(clicks.peekLast(), 4);
-					clicks.add(new ClickEvent(i, 1, SlotActionType.PICKUP)); // place one
-					clicks.add(new ClickEvent(i, 0, SlotActionType.QUICK_MOVE)); // shift-move the one
-					clicks.add(new ClickEvent(i, 0, SlotActionType.PICKUP)); // place all (-1)
+					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // place one
+					clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK)); // shift-move the one
+					clicks.add(new InvAction(i, 0, ActionType.CLICK)); // place all (-1)
 				}
 			}
 			if(numInInv == 0) --j;
