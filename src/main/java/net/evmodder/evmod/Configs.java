@@ -229,6 +229,7 @@ public class Configs implements IConfigHandler{
 		public static final ConfigHotkey OPEN_CONFIG_GUI = new ConfigHotkey("openConfigGui", "M,N").apply(HOTKEYS_KEY);
 
 		public static final ConfigHotkey MAP_COPY = new ConfigHotkey("mapCopy", "T", KeybindSettings.GUI).apply(HOTKEYS_KEY);
+		public static final ConfigBoolean MAP_COPY_BUNDLE_BETA = new ConfigBoolean("mapCopyBundleSelectPacket", true).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_LOAD = new ConfigHotkey("mapLoad", "E", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_MOVE = new ConfigHotkey("mapMove", "T", GUI_ALLOW_EXTRA_KEYS).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_MOVE_BUNDLE = new ConfigHotkey("mapMoveBundle", "D", KeybindSettings.GUI).apply(HOTKEYS_KEY);
@@ -347,7 +348,7 @@ public class Configs implements IConfigHandler{
 				availableOptions = new ArrayList<>();
 				availableOptions.addAll(List.of(
 						OPEN_CONFIG_GUI,
-						MAP_COPY, MAP_LOAD, MAP_MOVE, MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE,
+						MAP_COPY, MAP_COPY_BUNDLE_BETA, MAP_LOAD, MAP_MOVE, MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE,
 						MAP_CLICK_MOVE_NEIGHBORS, MAP_CLICK_MOVE_NEIGHBORS_KEY
 				));
 				if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(

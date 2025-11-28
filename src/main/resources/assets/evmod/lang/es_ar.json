@@ -147,6 +147,8 @@
 	"evmod.config.hotkeys.name.openConfigGui": "openConfigGui",
 	"evmod.config.hotkeys.name.mapCopy": "mapCopy",
 	"evmod.config.hotkeys.comment.mapCopy": "Copy maps in inv or in bundles",
+	"evmod.config.hotkeys.name.mapCopyBundleSelectPacket": "mapCopyBundleSelectPacket",
+	"evmod.config.hotkeys.comment.mapCopyBundleSelectPacket": "Enable a BETA speed enhancement, for bundle-copy",
 	"evmod.config.hotkeys.name.mapLoad": "mapLoad",
 	"evmod.config.hotkeys.comment.mapLoad": "Load map previews for container/bundle",
 	"evmod.config.hotkeys.name.mapMove": "mapMove",
