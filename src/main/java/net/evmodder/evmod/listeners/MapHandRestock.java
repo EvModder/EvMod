@@ -506,30 +506,37 @@ public final class MapHandRestock{
 	private ItemFrameEntity lastIfe;
 	private ItemStack lastStack;
 	public MapHandRestock(final boolean allowAutoPlacer){
-		final AutoPlaceMapArt autoPlaceMapArt;
+		final AutoPlaceMapArt autoPlacer;
 		if(allowAutoPlacer){
-			autoPlaceMapArt = new AutoPlaceMapArt();
-			ClientTickEvents.END_CLIENT_TICK.register(client -> autoPlaceMapArt.placeNearestMap(client));
+			autoPlacer = new AutoPlaceMapArt();
+			ClientTickEvents.END_CLIENT_TICK.register(client -> autoPlacer.placeNearestMap(client));
 			AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
 //				if(mapAutoPlacer.isActive() && entity instanceof ItemFrameEntity ife && ife.getHeldItemStack().getItem() == Items.FILLED_MAP){
-				if(autoPlaceMapArt.isActive()){
-					autoPlaceMapArt.disableAndReset();
+				if(autoPlacer.isActive()){
+					autoPlacer.disableAndReset();
 					Main.LOGGER.info("AutoPlaceMapArt: Disabling due to EntityAttackEvent");
 				}
 				return ActionResult.PASS;
 			});
 		}
-		else autoPlaceMapArt = null;
+		else autoPlacer = null;
 
 		UseEntityCallback.EVENT.register((player, _0, hand, entity, _1) -> {
 			if(!(entity instanceof ItemFrameEntity ife)) return ActionResult.PASS;
 			//Main.LOGGER.info("clicked item frame");
 			if(hand != Hand.MAIN_HAND){
-				Main.LOGGER.info("not main hand: "+hand.name());
+				Main.LOGGER.info("MapHandRestock: not main hand: "+hand.name());
 //				return ActionResult.FAIL;
 			}
-			//Main.LOGGER.info("placed item from offhand");
-			if(!ife.getHeldItemStack().isEmpty()) return ActionResult.PASS;
+			//Main.LOGGER.info("placed item from mainhand");
+			if(!ife.getHeldItemStack().isEmpty()){
+				if(allowAutoPlacer && Configs.Generic.MAPART_AUTOPLACE_ANTI_ROTATE.getBooleanValue() && autoPlacer.isActive()
+						&& ife.getHeldItemStack().getItem() == Items.FILLED_MAP){
+					Main.LOGGER.info("AutoPlaceMapArt: Ignoring a (likely accidental) map-rotation click");
+					return ActionResult.FAIL;
+				}
+				return ActionResult.PASS;
+			}
 			//Main.LOGGER.info("item frame is empty");
 			ItemStack stack = player.getMainHandStack();
 			if(waitingForRestock && (stack.isEmpty() || stack.getItem() == Items.FILLED_MAP)){
@@ -544,7 +551,7 @@ public final class MapHandRestock{
 
 			UpdateInventoryHighlights.setCurrentlyBeingPlacedMapArt(player, stack);
 
-			if(autoPlaceMapArt.recalcIsActive(player, lastIfe, lastStack, ife, stack)){
+			if(allowAutoPlacer && autoPlacer.recalcIsActive(player, lastIfe, lastStack, ife, stack)){
 				Main.LOGGER.info("MapRestock: AutoPlaceMapArt is active, no need to handle restock");
 			}
 			else{

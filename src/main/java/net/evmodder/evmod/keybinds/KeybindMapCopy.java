@@ -288,8 +288,6 @@ public final class KeybindMapCopy{
 				if(USE_TEMP_BUNDLE) clicks.add(new InvAction(tempBundleSlot, 1, ActionType.CLICK)); // Take map from temp bundle
 				else{
 					final int innerBundleSlot = BUNDLE_SELECT_REVERSE ? content.size()-1 : 0;
-//					final int innerBundleSlot = BUNDLE_SELECT_REVERSE ? content.size()-(i+1) : i;
-//					final int innerBundleSlot = BUNDLE_SELECT_REVERSE ? i : content.size()-(i+1);
 					clicks.add(new InvAction(slotsWithBundles[entry.getKey()], innerBundleSlot, ActionType.BUNDLE_SELECT)); // Select 1st map in bundle
 					clicks.add(new InvAction(slotsWithBundles[entry.getKey()], 1, ActionType.CLICK)); // Take map from src bundle
 				}

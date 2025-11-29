@@ -57,6 +57,7 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_FROM_BUNDLE = new ConfigBoolean("placementHelperMapArtFromBundle", true).apply(GENERIC_KEY);
 		public static final ConfigBooleanHotkeyed MAPART_AUTOPLACE = new ConfigBooleanHotkeyed("mapArtAutoPlace", true, "").apply(GENERIC_KEY);
 		public static final ConfigInteger MAPART_AUTOPLACE_INV_DELAY = new ConfigInteger("mapArtAutoPlaceInvDelay", 3, 0, 20).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAPART_AUTOPLACE_ANTI_ROTATE = new ConfigBoolean("mapArtAutoPlaceAntiRotate", true).apply(GENERIC_KEY);
 
 		public static final ConfigBooleanHotkeyed MAPART_AUTOREMOVE = new ConfigBooleanHotkeyed("mapArtAutoRemove", true, "").apply(GENERIC_KEY);
 		public static final ConfigInteger MAPART_AUTOREMOVE_AFTER = new ConfigInteger("mapArtAutoRemoveThreshold", 2, 1, 20).apply(GENERIC_KEY);
@@ -111,7 +112,7 @@ public class Configs implements IConfigHandler{
 							//PLACEMENT_HELPER_MAPART_REACH
 							PLACEMENT_HELPER_MAPART_USE_NAMES, PLACEMENT_HELPER_MAPART_USE_IMAGE,
 							PLACEMENT_HELPER_MAPART_FROM_BUNDLE));
-					if(main.placementHelperMapArtAuto) availableOptions.addAll(List.of(MAPART_AUTOPLACE, MAPART_AUTOPLACE_INV_DELAY));
+					if(main.placementHelperMapArtAuto) availableOptions.addAll(List.of(MAPART_AUTOPLACE, MAPART_AUTOPLACE_INV_DELAY, MAPART_AUTOPLACE_ANTI_ROTATE));
 				}
 				if(main.gameMessageListener) availableOptions.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PEARL_PULL));
 				if(main.cmdMapArtGroup) availableOptions.add(MAPART_GROUP_INCLUDE_UNLOCKED);
