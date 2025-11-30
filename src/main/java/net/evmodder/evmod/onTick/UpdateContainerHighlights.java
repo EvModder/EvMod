@@ -102,7 +102,7 @@ public class UpdateContainerHighlights{
 
 		uniqueIdsStream.filter(Predicate.not(uniqueMapIds::add)).forEach(duplicatesInContainer::add);
 		if(renderAsterisks){
-			if(!duplicatesInContainer.isEmpty()) asterisks.add(Configs.Visuals.MAP_COLOR_MULTI_INV.getIntegerValue());
+			if(!duplicatesInContainer.isEmpty()) asterisks.add(Configs.Visuals.MAP_COLOR_MULTI_CONTAINER.getIntegerValue());
 			if(items.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue());
 		}
 

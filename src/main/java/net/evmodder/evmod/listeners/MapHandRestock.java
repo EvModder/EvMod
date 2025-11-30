@@ -412,7 +412,8 @@ public final class MapHandRestock{
 		for(int i=0; i<slots.size(); ++i){
 			BundleContentsComponent contents = slots.get(i).get(DataComponentTypes.BUNDLE_CONTENTS);
 			if(contents == null || contents.isEmpty()) continue;
-			ItemStack stack = contents.get(contents.size()-1);
+			int topBundleSlot = Configs.Generic.BUNDLE_SELECT_REVERSED.getBooleanValue() ? contents.size()-1 : 0;
+			ItemStack stack = contents.get(topBundleSlot);
 			if(stack.getItem() != Items.FILLED_MAP) continue;
 			if(slots.stream().anyMatch(s -> ItemStack.areItemsAndComponentsEqual(s, stack))) continue; // If map is also present unbundled in inv
 			if(stack.getCount() == 1 && isInNearbyItemFrame(stack, player, 20)) continue;
@@ -532,7 +533,7 @@ public final class MapHandRestock{
 			if(!ife.getHeldItemStack().isEmpty()){
 				if(allowAutoPlacer && Configs.Generic.MAPART_AUTOPLACE_ANTI_ROTATE.getBooleanValue() && autoPlacer.isActive()
 						&& ife.getHeldItemStack().getItem() == Items.FILLED_MAP){
-					Main.LOGGER.info("AutoPlaceMapArt: Ignoring a (likely accidental) map-rotation click");
+					Main.LOGGER.warn("AutoPlaceMapArt: Discarding a (likely accidental) map-rotation click");
 					return ActionResult.FAIL;
 				}
 				return ActionResult.PASS;

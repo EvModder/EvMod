@@ -25,11 +25,12 @@ public class Configs implements IConfigHandler{
 
 	private static final String GENERIC_KEY = Main.MOD_ID+".config.generic";
 	public static class Generic{
-		public static final ConfigInteger CLICK_LIMIT_COUNT = new ConfigInteger("clickLimitCount", 69, 0, 100_000).apply(GENERIC_KEY);
-		public static final ConfigInteger CLICK_LIMIT_DURATION = new ConfigInteger("clickLimitWindow", 99, 1, 72_000).apply(GENERIC_KEY);
+		public static final ConfigInteger CLICK_LIMIT_COUNT = new ConfigInteger("clickLimitCount", 74, 0, 100_000).apply(GENERIC_KEY);
+		public static final ConfigInteger CLICK_LIMIT_DURATION = new ConfigInteger("clickLimitWindow", 81, 1, 72_000).apply(GENERIC_KEY);
 		public static final ConfigBoolean CLICK_LIMIT_USER_INPUT = new ConfigBoolean("clickLimitUserInputs", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean CLICK_FILTER_USER_INPUT = new ConfigBoolean("clickBlockUserInputsDuringOperation", true).apply(GENERIC_KEY);
 
+		public static final ConfigBoolean BUNDLE_SELECT_PACKET = new ConfigBoolean("selectBundleSlotsPacket", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean BUNDLE_SELECT_REVERSED = new ConfigBoolean("selectBundleSlotsInReverse", true).apply(GENERIC_KEY);
 
 		public static final ConfigOptionList MAP_STATE_CACHE = new ConfigOptionList("mapStateCache",
@@ -97,8 +98,8 @@ public class Configs implements IConfigHandler{
 			if(availableOptions == null){
 				Main main = Main.getInstance();
 				availableOptions = new ArrayList<>();
-				availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT));
-				if(main.placementHelperMapArt) availableOptions.add(BUNDLE_SELECT_REVERSED);
+				availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT,
+						BUNDLE_SELECT_PACKET, BUNDLE_SELECT_REVERSED));
 				if((main.serverJoinListener && main.serverQuitListener) || main.containerOpenCloseListener != null){
 					availableOptions.add(MAP_STATE_CACHE);
 //					if(MAP_STATE_CACHE.getOptionListValue() != MapStateCacheOption.OFF) availableOptions.add(MAP_STATE_CACHE_TYPE);
@@ -163,7 +164,7 @@ public class Configs implements IConfigHandler{
 		public static final ConfigColor MAP_COLOR_IN_INV = new ConfigColor("highlightColorInInv", "#FFB4FFFF").apply(VISUALS_KEY); // 11862015 Aqua
 		public static final ConfigColor MAP_COLOR_IN_IFRAME = new ConfigColor("highlightColorInIFrame", "#FF55AAE6").apply(VISUALS_KEY); // 5614310 Blue
 		public static final ConfigColor MAP_COLOR_MULTI_IFRAME = new ConfigColor("highlightColorMultiIFrame", "#FFB450E6").apply(VISUALS_KEY); // 11817190 Purple
-		public static final ConfigColor MAP_COLOR_MULTI_INV = new ConfigColor("highlightColorMultiInv", "#FFB450E6").apply(VISUALS_KEY); // 11817190 Purple
+		public static final ConfigColor MAP_COLOR_MULTI_CONTAINER = new ConfigColor("highlightColorMultiContainer", "#FFB450E6").apply(VISUALS_KEY); // 11817190 Purple
 
 //		public static final ConfigBoolean MAP_METADATA_TOOLTIP = new ConfigBoolean("mapMetadataTooltip", true);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_STAIRCASE = new ConfigBoolean("mapMetadataTooltipStaircase", true).apply(VISUALS_KEY);
@@ -198,8 +199,9 @@ public class Configs implements IConfigHandler{
 					availableOptions.addAll(List.of(
 						MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES,
 
-						MAP_COLOR_UNLOADED, MAP_COLOR_UNLOCKED, MAP_COLOR_UNNAMED, MAP_COLOR_NOT_IN_GROUP,
-						MAP_COLOR_IN_INV, MAP_COLOR_IN_IFRAME, MAP_COLOR_MULTI_IFRAME, MAP_COLOR_MULTI_INV
+						MAP_COLOR_IN_INV, MAP_COLOR_NOT_IN_GROUP, MAP_COLOR_UNLOCKED,
+						MAP_COLOR_UNLOADED, MAP_COLOR_UNNAMED, MAP_COLOR_IN_IFRAME,
+						MAP_COLOR_MULTI_IFRAME, MAP_COLOR_MULTI_CONTAINER
 					));
 				}
 				if(main.tooltipMapMetadata) availableOptions.addAll(List.of(
@@ -230,7 +232,6 @@ public class Configs implements IConfigHandler{
 		public static final ConfigHotkey OPEN_CONFIG_GUI = new ConfigHotkey("openConfigGui", "M,N").apply(HOTKEYS_KEY);
 
 		public static final ConfigHotkey MAP_COPY = new ConfigHotkey("mapCopy", "T", KeybindSettings.GUI).apply(HOTKEYS_KEY);
-		public static final ConfigBoolean MAP_COPY_BUNDLE_BETA = new ConfigBoolean("mapCopyBundleSelectPacket", true).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_LOAD = new ConfigHotkey("mapLoad", "E", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_MOVE = new ConfigHotkey("mapMove", "T", GUI_ALLOW_EXTRA_KEYS).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_MOVE_BUNDLE = new ConfigHotkey("mapMoveBundle", "D", KeybindSettings.GUI).apply(HOTKEYS_KEY);
@@ -349,7 +350,7 @@ public class Configs implements IConfigHandler{
 				availableOptions = new ArrayList<>();
 				availableOptions.addAll(List.of(
 						OPEN_CONFIG_GUI,
-						MAP_COPY, MAP_COPY_BUNDLE_BETA, MAP_LOAD, MAP_MOVE, MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE,
+						MAP_COPY, MAP_LOAD, MAP_MOVE, MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE,
 						MAP_CLICK_MOVE_NEIGHBORS, MAP_CLICK_MOVE_NEIGHBORS_KEY
 				));
 				if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(

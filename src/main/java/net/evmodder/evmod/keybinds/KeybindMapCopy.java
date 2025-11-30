@@ -184,7 +184,7 @@ public final class KeybindMapCopy{
 		final BundleContentsComponent[] bundles = Arrays.stream(slotsWithBundles)
 				.mapToObj(i -> slots[i].get(DataComponentTypes.BUNDLE_CONTENTS)).toArray(BundleContentsComponent[]::new);
 		final int SRC_BUNDLES = (int)Arrays.stream(bundles).filter(Predicate.not(BundleContentsComponent::isEmpty)).count();
-		final boolean USE_TEMP_BUNDLE = !Configs.Hotkeys.MAP_COPY_BUNDLE_BETA.getBooleanValue();
+		final boolean USE_TEMP_BUNDLE = !Configs.Generic.BUNDLE_SELECT_PACKET.getBooleanValue();
 		final int USABLE_EMPTY_BUNDLES = bundles.length - SRC_BUNDLES - (USE_TEMP_BUNDLE ? 1 : 0);
 		if(USABLE_EMPTY_BUNDLES <= 0){Main.LOGGER.warn("MapCopyBundle: Could not find a usable empty bundle"); return;}
 		int LAST_EMPTY_SLOT = lastEmptySlot(slots, f.HOTBAR_END, f.INV_START);

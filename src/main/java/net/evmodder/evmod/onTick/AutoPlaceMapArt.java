@@ -366,8 +366,12 @@ public class AutoPlaceMapArt{
 			final int bundleSz = contents != null ? contents.size() : 0;
 //			if(contents != null && !contents.isEmpty()) mapItem = contents.get(contents.size()-1);
 
+			final boolean ALLOW_ONLY_TOP_SLOT = !Configs.Generic.BUNDLE_SELECT_PACKET.getBooleanValue();
 			for(int j=-1; j<bundleSz; ++j){
-				ItemStack mapStack = j==-1 ? slots.get(i) : contents.get(j);
+				final ItemStack mapStack;
+				if(j == -1) mapStack = slots.get(i);
+				else if(ALLOW_ONLY_TOP_SLOT && j != bundleSz-1) continue;
+				else mapStack = contents.get(j);
 				if(mapStack.getItem() != Items.FILLED_MAP) continue;
 				++numMaps;
 				BlockPos bp = getPlacement(mapStack, player.getWorld());
@@ -459,7 +463,7 @@ public class AutoPlaceMapArt{
 			BundleContentsComponent contents = client.player.playerScreenHandler.slots.get(slot).getStack().get(DataComponentTypes.BUNDLE_CONTENTS);
 			assert contents != null && contents.size() > bundleSlot;
 			ArrayDeque<InvAction> clicks = new ArrayDeque<>();
-			if(contents.size() != 1){
+			if(bundleSlot != contents.size()-1){
 				int bundleSlotUsed = Configs.Generic.BUNDLE_SELECT_REVERSED.getBooleanValue() ? contents.size()-(bundleSlot+1) : bundleSlot;
 				clicks.add(new InvAction(slot, bundleSlotUsed, ActionType.BUNDLE_SELECT)); // Select bundle slot
 			}

@@ -60,7 +60,7 @@ abstract class MixinClientPlayerInteractionManager{
 			ci.cancel();
 			if(syncId == 0 && slot == 0 && button == 0 && action == SlotActionType.QUICK_MOVE) return; // QUICK_CRAFT sometimes sends duplicate fake QUICK_MOVE?
 			MinecraftClient.getInstance().player.sendMessage(Text.literal("Discarding user click to protect an ongoing ClickOp").withColor(/*&c=*/16733525), false);
-			MinecraftClient.getInstance().player.sendMessage(Text.literal("syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
+//			MinecraftClient.getInstance().player.sendMessage(Text.literal("syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
 			return;
 		}
 		final int availableClicks = Main.clickUtils.calcAvailableClicks();

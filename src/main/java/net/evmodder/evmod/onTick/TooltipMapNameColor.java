@@ -37,7 +37,7 @@ public final class TooltipMapNameColor{
 		final int MAP_COLOR_IN_INV = Configs.Visuals.MAP_COLOR_IN_INV.getIntegerValue();
 		final int MAP_COLOR_NOT_IN_GROUP = Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue();
 		final int MAP_COLOR_UNLOCKED = Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue();
-		final int MAP_COLOR_MULTI_INV = Configs.Visuals.MAP_COLOR_MULTI_INV.getIntegerValue();
+		final int MAP_COLOR_MULTI_CONTAINER = Configs.Visuals.MAP_COLOR_MULTI_CONTAINER.getIntegerValue();
 		final int MAP_COLOR_UNLOADED = Configs.Visuals.MAP_COLOR_UNLOADED.getIntegerValue();
 		final int MAP_COLOR_IN_IFRAME = Configs.Visuals.MAP_COLOR_IN_IFRAME.getIntegerValue();
 		final int MAP_COLOR_UNNAMED = Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue();
@@ -66,7 +66,7 @@ public final class TooltipMapNameColor{
 			if(colorIds.stream().anyMatch(UpdateInventoryHighlights::isInInventory)) asterisks.add(MAP_COLOR_IN_INV);
 			if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(MAP_COLOR_NOT_IN_GROUP);
 			if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(MAP_COLOR_UNLOCKED);
-			if(unskippedIds.stream().anyMatch(UpdateContainerHighlights::hasDuplicateInContainer)) asterisks.add(MAP_COLOR_MULTI_INV);
+			if(unskippedIds.stream().anyMatch(UpdateContainerHighlights::hasDuplicateInContainer)) asterisks.add(MAP_COLOR_MULTI_CONTAINER);
 			if(mapItems.size() > states.size()) asterisks.add(MAP_COLOR_UNLOADED);
 			else if(mixedOnDisplayAndNotOnDisplay(unskippedIds)) asterisks.add(MAP_COLOR_IN_IFRAME);
 			if(mapItems.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(MAP_COLOR_UNNAMED);
@@ -97,13 +97,13 @@ public final class TooltipMapNameColor{
 		if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)) asterisks.add(MAP_COLOR_NOT_IN_GROUP);
 		if(!state.locked) asterisks.add(MAP_COLOR_UNLOCKED);
 		if(UpdateItemFrameHighlights.isInItemFrame(colorsId)) asterisks.add(MAP_COLOR_IN_IFRAME);
-		if(UpdateContainerHighlights.hasDuplicateInContainer(colorsId) && !isSkipped) asterisks.add(MAP_COLOR_MULTI_INV);
+		if(UpdateContainerHighlights.hasDuplicateInContainer(colorsId) && !isSkipped) asterisks.add(MAP_COLOR_MULTI_CONTAINER);
 		if(asterisks.isEmpty()){
 			if(item.getCustomName() == null) lines.addFirst(lines.removeFirst().copy().withColor(MAP_COLOR_UNNAMED));
 			tooltipCache.put(item, lines);
 			return;
 		}
-		final boolean nameColor = asterisks.get(0) != MAP_COLOR_MULTI_INV; // This one is only permitted as an asterisk (idk why, ask older me)
+		final boolean nameColor = asterisks.get(0) != MAP_COLOR_MULTI_CONTAINER; // This one is only permitted as an asterisk (idk why, ask older me)
 
 		asterisks = asterisks.stream().distinct().toList(); // TODO: this line only exists in case of configurations where 2+ meanings share 1 color
 		MutableText text = lines.removeFirst().copy();

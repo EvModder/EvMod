@@ -1,13 +1,13 @@
 package net.evmodder.evmod.keybinds;
 
 import java.util.ArrayDeque;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.stream.IntStream;
+import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
@@ -59,53 +59,74 @@ public final class KeybindMapLoad{
 		return IntStream.range(0, 9).filter(hb -> isUsable(client.player.getInventory().getStack(hb))).toArray();
 	}
 
-	private final long WAIT_FOR_STATE_UPDATE = 71, STATE_LOAD_TIMEOUT = 5*1000; // 50 = 1 tick
+	private final long WAIT_FOR_STATE_UPDATE = 101, STATE_LOAD_TIMEOUT = 5*1000; // 50 = 1 tick
 	private long stateUpdateWaitStart, stateLoadWaitStart;
 	private final void loadMapArtFromBundles(){
 //		Main.LOGGER.warn("MapLoadBundle: in InventoryScreen");
 		final MinecraftClient client = MinecraftClient.getInstance();
 		final InventoryScreen is = (InventoryScreen)client.currentScreen;
 		final ItemStack[] slots = is.getScreenHandler().slots.stream().map(s -> s.getStack()).toArray(ItemStack[]::new);
-		final int[] slotsWithBundles = IntStream.range(9, 45).filter(i -> slots[i].get(DataComponentTypes.BUNDLE_CONTENTS) != null).toArray();
-		if(slotsWithBundles.length == 0){
-			Main.LOGGER.warn("MapLoadBundle: No bundles in inventory");
+		final int[] slotsWithMapArtBundles = IntStream.range(9, 45).filter(i -> {
+			BundleContentsComponent content = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
+			return content != null && !content.isEmpty() && content.stream().allMatch(s -> s.getItem() == Items.FILLED_MAP);
+		}).toArray();
+		if(slotsWithMapArtBundles.length == 0){
+			Main.LOGGER.warn("MapLoadBundle: No mapart bundles in inventory");
 			return;
 		}
-		final OptionalInt emptyBundleSlotOpt = Arrays.stream(slotsWithBundles)
-				.filter(i -> slots[i].get(DataComponentTypes.BUNDLE_CONTENTS).getOccupancy().getNumerator() == 0).findAny();
-		if(emptyBundleSlotOpt.isEmpty()){Main.LOGGER.warn("MapLoadBundle: Empty bundle not found"); return;}
-		final int emptyBundleSlot = emptyBundleSlotOpt.getAsInt();
+		final boolean USE_TEMP_BUNDLE = !Configs.Generic.BUNDLE_SELECT_PACKET.getBooleanValue();
+		int emptyBundleSlot = -1;
+		if(USE_TEMP_BUNDLE){
+			final OptionalInt emptyBundleSlotOpt = IntStream.range(9, 45).filter(i -> slots[i].get(DataComponentTypes.BUNDLE_CONTENTS).isEmpty()).findAny();
+			if(emptyBundleSlotOpt.isEmpty()){Main.LOGGER.warn("MapLoadBundle: Empty bundle not found"); return;}
+			emptyBundleSlot = emptyBundleSlotOpt.getAsInt();
+		}
 //		final OptionalInt emptySlotOpt = IntStream.range(9, 45).filter(i -> slots[i].isEmpty()).min(Comparator.comparingInt(i -> Math.abs(i-emptyBundleSlot)));
 		Optional<Integer> emptySlotOpt = IntStream.range(9, 45).filter(i -> slots[i].isEmpty()).boxed()
-				.min(Comparator.comparingInt(i -> Math.abs(i-emptyBundleSlot)));
+				.min(Comparator.comparingInt(i -> Math.abs(i-slotsWithMapArtBundles[0])));
 		if(emptySlotOpt.isEmpty()){Main.LOGGER.warn("MapLoadBundle: Empty slot not found"); return;}
 		final int emptySlot = emptySlotOpt.get();
 
 		final ArrayDeque<InvAction> clicks = new ArrayDeque<>();
 		final IdentityHashMap<InvAction, Integer> ableToSkipClicks = new IdentityHashMap<>();
-		for(int i : slotsWithBundles){
+		for(int i : slotsWithMapArtBundles){
 			BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
 			if(contents.isEmpty()) continue;
-			if(contents.stream().anyMatch(s -> s.getItem() != Items.FILLED_MAP)) continue; // Skip bundles with non-mapart contents
+//			if(contents.stream().anyMatch(s -> s.getItem() != Items.FILLED_MAP)) continue; // Skip bundles with non-mapart contents
 			if(contents.stream().allMatch(s -> isLoadedMapArt(client.world, s))) continue; // Skip bundles with already-loaded mapart
 //			Main.LOGGER.info("MapLoadBundle: found bundle with "+contents.size()+" maps");
-			for(int j=0; j<contents.size(); ++j){
-				InvAction c;
-				clicks.add(c=new InvAction(i, 1, ActionType.CLICK)); // Take last map from bundle
-				clicks.add(new InvAction(emptySlot, 0, ActionType.CLICK)); // Place map in empty slot
-				// Wait for map state to load
-				clicks.add(new InvAction(emptySlot, 0, ActionType.CLICK)); // Take map from empty slot
-				clicks.add(new InvAction(emptyBundleSlot, 0, ActionType.CLICK)); // Place map in empty bundle
+			if(USE_TEMP_BUNDLE){
+				for(int j=0; j<contents.size(); ++j){
+					InvAction c;
+					clicks.add(c=new InvAction(i, 1, ActionType.CLICK)); // Take last map from bundle
+					clicks.add(new InvAction(emptySlot, 0, ActionType.CLICK)); // Place map in empty slot
+					// Wait for map state to load
+					clicks.add(new InvAction(emptySlot, 0, ActionType.CLICK)); // Take map from empty slot
+					clicks.add(new InvAction(emptyBundleSlot, 0, ActionType.CLICK)); // Place map in empty bundle
 
-				ableToSkipClicks.put(c, 6*(contents.size()-j));
+					ableToSkipClicks.put(c, 6*(contents.size()-j));
+				}
+				for(int j=0; j<contents.size(); ++j){
+					clicks.add(new InvAction(emptyBundleSlot, 1, ActionType.CLICK)); // Take last map from empty bundle
+					clicks.add(new InvAction(i, 0, ActionType.CLICK)); // Place map back in original bundle
+				}
 			}
-			for(int j=0; j<contents.size(); ++j){
-				clicks.add(new InvAction(emptyBundleSlot, 1, ActionType.CLICK)); // Take last map from empty bundle
-				clicks.add(new InvAction(i, 0, ActionType.CLICK)); // Place map back in original bundle
+			else{
+				for(int j=0; j<contents.size(); ++j){
+					if(contents.size() > 1){
+						int bottomBundleSlot = Configs.Generic.BUNDLE_SELECT_REVERSED.getBooleanValue() ? contents.size()-1 : 0;
+						clicks.add(new InvAction(i, bottomBundleSlot, ActionType.BUNDLE_SELECT)); // Select 1st map in bundle
+					}
+					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // Take 1st map from bundle
+					clicks.add(new InvAction(emptySlot, 0, ActionType.CLICK)); // Place map in empty slot
+					// Wait for map state to load
+					clicks.add(new InvAction(emptySlot, 0, ActionType.CLICK)); // Take map from empty slot
+					clicks.add(new InvAction(i, 0, ActionType.CLICK)); // Place map back into bundle
+				}
 			}
 		}
 		if(clicks.isEmpty()){
-			Main.LOGGER.warn("MapLoadBundle: No bundles containing mapart in inventory");
+			Main.LOGGER.warn("MapLoadBundle: No bundles containing unloaded mapart in inventory");
 			return; // No bundles with maps
 		}
 //		client.player.sendMessage(Text.literal("Scheduling clicks: "+clicks.size()), true);
@@ -134,7 +155,7 @@ public final class KeybindMapLoad{
 				Main.LOGGER.warn("MapLoadBundle: Timed out while waiting for map state to load!");
 				return true;
 			}
-			// Wait a bit even aft map state is loaded, to ensure it REALLY gets loaded
+			// Wait a bit even after map state is loaded, to ensure it REALLY gets loaded
 			else if(stateUpdateWaitStart <= 0){stateUpdateWaitStart = System.currentTimeMillis(); return false;}
 			else if(System.currentTimeMillis() - stateUpdateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
 			else{stateUpdateWaitStart = 0; return true;}

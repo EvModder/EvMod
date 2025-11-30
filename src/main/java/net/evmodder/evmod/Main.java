@@ -50,9 +50,9 @@ import net.minecraft.client.MinecraftClient;
 public class Main{
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
-	// AutoMapPlacer (for LVotU)
-	// fix the JANKY BROKENESS of MapMove when count==2 (i think selective move?)
-	// GUI: StringHotkeyed, SlotListHotkeyed, YawPitchHotkeyed, UUIDList/PlayerList, ServerAddress(addr:port)
+	// map load from bundle skip loaded maps
+	// new caching, support non-QWERTY?
+	// GUI: StringHotkeyed, SlotListHotkeyed, ServerAddress(addr:port)
 
 	// Investigate https://github.com/Siphalor/amecs-api (potential better alternative to MaLiLib?)
 
