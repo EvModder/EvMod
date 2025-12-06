@@ -366,11 +366,12 @@ public class AutoPlaceMapArt{
 			final int bundleSz = contents != null ? contents.size() : 0;
 //			if(contents != null && !contents.isEmpty()) mapItem = contents.get(contents.size()-1);
 
-			final boolean ALLOW_ONLY_TOP_SLOT = !Configs.Generic.BUNDLE_SELECT_PACKET.getBooleanValue();
+			final boolean ALLOW_ONLY_TOP_SLOT = !Configs.Generic.USE_BUNDLE_PACKET.getBooleanValue();
+			final int TOP_SLOT = Configs.Generic.BUNDLES_ARE_REVERSED.getBooleanValue() ? contents.size()-1 : 0;
 			for(int j=-1; j<bundleSz; ++j){
 				final ItemStack mapStack;
 				if(j == -1) mapStack = slots.get(i);
-				else if(ALLOW_ONLY_TOP_SLOT && j != bundleSz-1) continue;
+				else if(ALLOW_ONLY_TOP_SLOT && j != TOP_SLOT) continue;
 				else mapStack = contents.get(j);
 				if(mapStack.getItem() != Items.FILLED_MAP) continue;
 				++numMaps;
@@ -464,7 +465,7 @@ public class AutoPlaceMapArt{
 			assert contents != null && contents.size() > bundleSlot;
 			ArrayDeque<InvAction> clicks = new ArrayDeque<>();
 			if(bundleSlot != contents.size()-1){
-				int bundleSlotUsed = Configs.Generic.BUNDLE_SELECT_REVERSED.getBooleanValue() ? contents.size()-(bundleSlot+1) : bundleSlot;
+				int bundleSlotUsed = Configs.Generic.BUNDLES_ARE_REVERSED.getBooleanValue() ? contents.size()-(bundleSlot+1) : bundleSlot;
 				clicks.add(new InvAction(slot, bundleSlotUsed, ActionType.BUNDLE_SELECT)); // Select bundle slot
 			}
 			clicks.add(new InvAction(slot, 1, ActionType.CLICK)); // Take from bundle

@@ -184,7 +184,7 @@ public final class KeybindMapCopy{
 		final BundleContentsComponent[] bundles = Arrays.stream(slotsWithBundles)
 				.mapToObj(i -> slots[i].get(DataComponentTypes.BUNDLE_CONTENTS)).toArray(BundleContentsComponent[]::new);
 		final int SRC_BUNDLES = (int)Arrays.stream(bundles).filter(Predicate.not(BundleContentsComponent::isEmpty)).count();
-		final boolean USE_TEMP_BUNDLE = !Configs.Generic.BUNDLE_SELECT_PACKET.getBooleanValue();
+		final boolean USE_TEMP_BUNDLE = !Configs.Generic.USE_BUNDLE_PACKET.getBooleanValue();
 		final int USABLE_EMPTY_BUNDLES = bundles.length - SRC_BUNDLES - (USE_TEMP_BUNDLE ? 1 : 0);
 		if(USABLE_EMPTY_BUNDLES <= 0){Main.LOGGER.warn("MapCopyBundle: Could not find a usable empty bundle"); return;}
 		int LAST_EMPTY_SLOT = lastEmptySlot(slots, f.HOTBAR_END, f.INV_START);
@@ -270,7 +270,7 @@ public final class KeybindMapCopy{
 					+", uniqueFromSrcType="+((pas.p&2)==0)+", uniqueFromDstType="+((pas.p&1)==0));
 		}
 
-		final boolean BUNDLE_SELECT_REVERSE = !USE_TEMP_BUNDLE && Configs.Generic.BUNDLE_SELECT_REVERSED.getBooleanValue();
+		final boolean BUNDLE_SELECT_REVERSE = !USE_TEMP_BUNDLE && Configs.Generic.BUNDLES_ARE_REVERSED.getBooleanValue();
 		for(var entry : bundlesToCopy.entrySet()){
 			BundleContentsComponent content = bundles[entry.getKey()];
 //			Main.LOGGER.info("MapCopyBundle: Copying map bundle in slot "+k+", "+slots[k].getName().getString()+" to slots: "+bundlesToCopy.get(k));

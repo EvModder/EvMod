@@ -74,7 +74,7 @@ public final class KeybindMapLoad{
 			Main.LOGGER.warn("MapLoadBundle: No mapart bundles in inventory");
 			return;
 		}
-		final boolean USE_TEMP_BUNDLE = !Configs.Generic.BUNDLE_SELECT_PACKET.getBooleanValue();
+		final boolean USE_TEMP_BUNDLE = !Configs.Generic.USE_BUNDLE_PACKET.getBooleanValue();
 		int emptyBundleSlot = -1;
 		if(USE_TEMP_BUNDLE){
 			final OptionalInt emptyBundleSlotOpt = IntStream.range(9, 45).filter(i -> slots[i].get(DataComponentTypes.BUNDLE_CONTENTS).isEmpty()).findAny();
@@ -114,7 +114,7 @@ public final class KeybindMapLoad{
 			else{
 				for(int j=0; j<contents.size(); ++j){
 					if(contents.size() > 1){
-						int bottomBundleSlot = Configs.Generic.BUNDLE_SELECT_REVERSED.getBooleanValue() ? contents.size()-1 : 0;
+						int bottomBundleSlot = Configs.Generic.BUNDLES_ARE_REVERSED.getBooleanValue() ? contents.size()-1 : 0;
 						clicks.add(new InvAction(i, bottomBundleSlot, ActionType.BUNDLE_SELECT)); // Select 1st map in bundle
 					}
 					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // Take 1st map from bundle

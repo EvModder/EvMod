@@ -30,8 +30,8 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean CLICK_LIMIT_USER_INPUT = new ConfigBoolean("clickLimitUserInputs", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean CLICK_FILTER_USER_INPUT = new ConfigBoolean("clickBlockUserInputsDuringOperation", true).apply(GENERIC_KEY);
 
-		public static final ConfigBoolean BUNDLE_SELECT_PACKET = new ConfigBoolean("selectBundleSlotsPacket", true).apply(GENERIC_KEY);
-		public static final ConfigBoolean BUNDLE_SELECT_REVERSED = new ConfigBoolean("selectBundleSlotsInReverse", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean USE_BUNDLE_PACKET = new ConfigBoolean("useBundlePacket", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean BUNDLES_ARE_REVERSED = new ConfigBoolean("bundlesAreReversed", true).apply(GENERIC_KEY);
 
 		public static final ConfigOptionList MAP_STATE_CACHE = new ConfigOptionList("mapStateCache",
 //				new SimpleStringOption(Main.MOD_ID+".gui.label.cache_mapstate.", "a", "b", "c")).apply(GENERIC_KEY);
@@ -99,7 +99,7 @@ public class Configs implements IConfigHandler{
 				Main main = Main.getInstance();
 				availableOptions = new ArrayList<>();
 				availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT,
-						BUNDLE_SELECT_PACKET, BUNDLE_SELECT_REVERSED));
+						USE_BUNDLE_PACKET, BUNDLES_ARE_REVERSED));
 				if((main.serverJoinListener && main.serverQuitListener) || main.containerOpenCloseListener != null){
 					availableOptions.add(MAP_STATE_CACHE);
 //					if(MAP_STATE_CACHE.getOptionListValue() != MapStateCacheOption.OFF) availableOptions.add(MAP_STATE_CACHE_TYPE);

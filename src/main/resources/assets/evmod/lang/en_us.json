@@ -60,9 +60,10 @@
 	"evmod.config.generic.comment.clickLimitWindow": "2b2t will kick you for sending >80 clicks in <80 ticks (Last checked: 2025-10-15)",
 	"evmod.config.generic.name.clickLimitUserInputs": "clickLimitAlsoApplyToUserInputs",
 	"evmod.config.generic.name.clickBlockUserInputsDuringOperation": "blockUserInputsDuringClickOperation",
-
-	"evmod.config.generic.name.selectBundleSlotsInReverse": "selectBundleSlotsInReverse",
-	"evmod.config.generic.comment.selectBundleSlotsInReverse": "When pulling items out of a bundle, use reverse index from vanilla (goofy 2b2t Hausemaster thing)",
+	"evmod.config.generic.name.useBundlePacket": "useBundlePacket",
+	"evmod.config.generic.comment.useBundlePacket": "Enable internal bundle select packets (makes bundle copy faster)",
+	"evmod.config.generic.name.bundlesAreReversed": "bundlesAreReversed",
+	"evmod.config.generic.comment.bundlesAreReversed": "When pulling items out of a bundle, use reverse index (goofy 2b2t thing, thx Hause)",
 
 	"evmod.config.generic.name.mapStateCache": "mapStateCache*",
 	"evmod.config.generic.comment.mapStateCache": "Preserves cached map previews in player's inventory or echest between sessions (since MapStates get unloaded when you log off 2b2t)",
@@ -164,8 +165,6 @@
 	"evmod.config.hotkeys.name.openConfigGui": "openConfigGui",
 	"evmod.config.hotkeys.name.mapCopy": "mapCopy",
 	"evmod.config.hotkeys.comment.mapCopy": "Copy maps in inv or in bundles",
-	"evmod.config.hotkeys.name.mapCopyBundleSelectPacket": "mapCopyBundleSelectPacket",
-	"evmod.config.hotkeys.comment.mapCopyBundleSelectPacket": "Enable a BETA speed enhancement, for bundle-copy",
 	"evmod.config.hotkeys.name.mapLoad": "mapLoad",
 	"evmod.config.hotkeys.comment.mapLoad": "Load map previews for container/bundle",
 	"evmod.config.hotkeys.name.mapMove": "mapMove",
