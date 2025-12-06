@@ -121,12 +121,14 @@ public class Configs implements IConfigHandler{
 				if(main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME,
 						//PLACEMENT_HELPER_IFRAME_REACH, PLACEMENT_HELPER_IFRAME_RAYCAST,
 						PLACEMENT_HELPER_IFRAME_MUST_CONNECT, PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK));
+				else PLACEMENT_HELPER_IFRAME.setBooleanValue(false);
 				if(main.placementHelperMapArt){
 					availableOptions.addAll(List.of(PLACEMENT_HELPER_MAPART,
 							//PLACEMENT_HELPER_MAPART_REACH
 							PLACEMENT_HELPER_MAPART_USE_NAMES, PLACEMENT_HELPER_MAPART_USE_IMAGE,
 							PLACEMENT_HELPER_MAPART_FROM_BUNDLE));
 					if(main.placementHelperMapArtAuto) availableOptions.addAll(List.of(MAPART_AUTOPLACE, MAPART_AUTOPLACE_INV_DELAY, MAPART_AUTOPLACE_ANTI_ROTATE));
+					else MAPART_AUTOPLACE.setBooleanValue(false);
 				}
 				if(main.gameMessageListener) availableOptions.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PLAY_SOUND_UNFOCUSED_ONLY, WHISPER_PEARL_PULL));
 				if(main.cmdMapArtGroup) availableOptions.add(MAPART_GROUP_INCLUDE_UNLOCKED);
