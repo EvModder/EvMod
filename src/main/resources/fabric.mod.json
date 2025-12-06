@@ -18,10 +18,8 @@
 	},
 	"mixins": [ "mixins.json" ],
 	"depends": {
-		"fabricloader": ">=${loader_version}",
-		"minecraft": "~${minecraft_version}",
 		"fabric-api": "*",
-		"fabric-key-binding-api-v1": "*"
+		"malilib": ">=0.23.4-"
 	},
 	"suggests": {
 		"another-mod": "*"
