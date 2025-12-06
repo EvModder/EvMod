@@ -6,15 +6,15 @@ import net.evmodder.evmod.KeyCallbacks;
 import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.config.OptionMapStateCache;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.text.Text;
 
 public final class ContainerOpenCloseListener{
-
 	private int syncId;
-	private boolean currentlyViewingEchest;
-	private List<ItemStack> echestContents; // null until echest is opened
+	private boolean currentlyViewingEchest, currentlyViewingContainer;
+	private List<ItemStack> contents; // null until echest is opened
 	public static boolean echestCacheLoaded; // TODO: remove horrible public static var
 
 	public final void onUpdateTick(MinecraftClient client){
@@ -22,7 +22,9 @@ public final class ContainerOpenCloseListener{
 		ScreenHandler sh = client.player.currentScreenHandler;
 		final int newSyncId = sh == null ? 0 : sh.syncId;
 		if(newSyncId == syncId){
-			if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() != OptionMapStateCache.OFF && currentlyViewingEchest) echestContents = sh.getStacks();
+			if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
+				if(currentlyViewingContainer) contents = sh.getStacks();
+			}
 			return;
 		}
 		syncId = newSyncId;
@@ -30,19 +32,43 @@ public final class ContainerOpenCloseListener{
 //			Main.LOGGER.info("ContainerOpenCloseListener: container opened, syncId="+newSyncId+", name="+client.currentScreen.getTitle().toString());
 			if(Configs.Generic.INV_RESTOCK_AUTO.getBooleanValue()) KeyCallbacks.kbInvRestock.organizeThenRestock();
 
-			if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() != OptionMapStateCache.OFF
-					&& (currentlyViewingEchest=client.currentScreen.getTitle().contains(Text.translatable("container.enderchest")))
-					&& !echestCacheLoaded // Don't reload from cache unless player leaves and rejoins server
-			){
-				MapStateCacher.loadMapStates(echestContents=sh.getStacks(), MapStateCacher.HolderType.ENDER_CHEST);
-				echestCacheLoaded = true;
+			if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
+				currentlyViewingContainer = true;
+				// Don't reload from echest-cache unless player leaves and rejoins server
+				if(Configs.Generic.MAP_CACHE_BY_EC_POS.getBooleanValue() && !echestCacheLoaded && (
+					currentlyViewingEchest=client.currentScreen.getTitle().contains(Text.translatable("container.enderchest")))
+				){
+					MapStateCacher.loadMapStatesByPos(contents=sh.getStacks(), MapStateCacher.Cache.BY_PLAYER_EC);
+					echestCacheLoaded = true;
+				}
+//				else if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue()){
+//					MapStateCacher.loadMapStatesByPos(contents=sh.getStacks(), MapStateCacher.HolderType.CONTAINER);//TODO: holder-identifying data? xyz?
+//					holderXYZCacheLoaded = true;
+//				}
 			}
 		}
 		else{
 //			Main.LOGGER.info("ContainerOpenCloseListener: container closed, wasViewingEchest="+currentlyViewingEchest);
-			if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() != OptionMapStateCache.OFF && currentlyViewingEchest){
-				currentlyViewingEchest = false;
-				MapStateCacher.saveMapStates(echestContents, MapStateCacher.HolderType.ENDER_CHEST);
+			if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
+				if(currentlyViewingContainer){
+					currentlyViewingContainer = false;
+					if(currentlyViewingEchest){
+						currentlyViewingEchest = false;
+						MapStateCacher.saveMapStatesByPos(contents, MapStateCacher.Cache.BY_PLAYER_EC);
+					}
+					else{
+//						if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue()){
+//							MapStateCacher.saveMapStatesByPos(contents, MapStateCacher.HolderType.CONTAINER);//TODO: holder-identifying data? xyz?
+//						}
+						if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()){
+							contents.stream()
+								.filter(s -> s.getCustomName() != null && s.getCustomName().getLiteralString() != null
+									&& FilledMapItem.getMapState(s, client.world) != null)
+								.forEach(s -> MapStateCacher.saveMapStateByName(
+										s.getCustomName().getLiteralString(), FilledMapItem.getMapState(s, client.world)));
+						}
+					}
+				}
 			}
 		}
 	}

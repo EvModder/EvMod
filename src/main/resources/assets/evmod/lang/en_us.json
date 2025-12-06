@@ -45,10 +45,6 @@
 	"evmod.gui.label.cacheMapState.memory": "Session-only",
 	"evmod.gui.label.cacheMapState.memoryAndDisk": "Persistent",
 
-	"evmod.gui.label.cacheMapState.target.byId": "By MapId",
-	"evmod.gui.label.cacheMapState.target.byName": "By ItemName",
-	"evmod.gui.label.cacheMapState.target.byInvPos": "By Inv/Echest Slot",
-
 	"evmod.gui.label.inventoryRestock.leaveOneItem": "Leave One Item",
 	"evmod.gui.label.inventoryRestock.leaveOneStack": "Leave One Stack",
 	"evmod.gui.label.inventoryRestock.leaveUnlessOneType": "Leave Unless One-Type",
@@ -65,8 +61,20 @@
 	"evmod.config.generic.name.bundlesAreReversed": "bundlesAreReversed",
 	"evmod.config.generic.comment.bundlesAreReversed": "When pulling items out of a bundle, use reverse index (goofy 2b2t thing, thx Hause)",
 
-	"evmod.config.generic.name.mapStateCache": "mapStateCache*",
+	"evmod.config.generic.name.mapStateCache": "mapCache",
 	"evmod.config.generic.comment.mapStateCache": "Preserves cached map previews in player's inventory or echest between sessions (since MapStates get unloaded when you log off 2b2t)",
+	"evmod.config.generic.name.mapStateCache.unlocked": "mapCacheUnlocked",
+	"evmod.config.generic.name.mapStateCache.byId": "mapCache: by MapId",
+	"evmod.config.generic.comment.mapStateCache.byId": "Does not work on 2b2t!",
+	"evmod.config.generic.name.mapStateCache.byName": "mapCache: by ItemName (unique)",
+	"evmod.config.generic.comment.mapStateCache.byName": "Unreliable for non-unique item names",
+	"evmod.config.generic.name.mapStateCache.byInvPos": "mapCache: by inv slot",
+	"evmod.config.generic.comment.mapStateCache.byInvPos": "Unreliable for shared-access accounts",
+	"evmod.config.generic.name.mapStateCache.byEchestPos": "mapCache: by ec slot",
+	"evmod.config.generic.comment.mapStateCache.byEchestPos": "Unreliable for shared-access accounts",
+	"evmod.config.generic.name.mapStateCache.byContainerPos": "mapCache: by any container slot",
+	"evmod.config.generic.comment.mapStateCache.byContainerPos": "Unreliable for non-private chests (non-solo bases)",
+
 	"evmod.config.generic.name.whisperPlaySound": "whisperPlaySound",
 	"evmod.config.generic.name.whisperPearlPull": "whisperPearlPull",
 	"evmod.config.generic.name.commandMapArtGroupIncludeUnlocked": "commandMapArtGroupIncludeUnlocked",

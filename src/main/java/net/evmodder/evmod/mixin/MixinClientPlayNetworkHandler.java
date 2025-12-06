@@ -18,7 +18,7 @@ abstract class MixinClientPlayNetworkHandler{
 			"Lnet/minecraft/client/world/ClientWorld;getMapState(Lnet/minecraft/component/type/MapIdComponent;)Lnet/minecraft/item/map/MapState;"))
 	private MapState replaceIfClientMaps(ClientWorld instance, MapIdComponent id){
 		final MapState s = instance.getMapState(id);
-		if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() != OptionMapStateCache.MEMORY_AND_DISK) return s;
+		if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.MEMORY_AND_DISK) return s;
 		return s == null || MapStateCacher.hasCacheMarker(s) ? null : s;
 	}
 }

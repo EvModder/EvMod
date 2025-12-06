@@ -33,11 +33,19 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean USE_BUNDLE_PACKET = new ConfigBoolean("useBundlePacket", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean BUNDLES_ARE_REVERSED = new ConfigBoolean("bundlesAreReversed", true).apply(GENERIC_KEY);
 
-		public static final ConfigOptionList MAP_STATE_CACHE = new ConfigOptionList("mapStateCache",
+		public static final ConfigOptionList MAP_CACHE = new ConfigOptionList("mapStateCache",
 //				new SimpleStringOption(Main.MOD_ID+".gui.label.cache_mapstate.", "a", "b", "c")).apply(GENERIC_KEY);
 				OptionMapStateCache.MEMORY_AND_DISK).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAP_CACHE_UNLOCKED = new ConfigBoolean("mapStateCache.unlocked", false).apply(GENERIC_KEY);
 //		public static final ConfigMultiOptionList MAP_STATE_CACHE_TYPE = new ConfigMultiOptionList("mapStateCacheType",
 //				List.of(MapStateCacheOptionType.BY_INV_POS, MapStateCacheOptionType.BY_NAME)).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAP_CACHE_BY_ID = new ConfigBoolean("mapStateCache.byId", false).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAP_CACHE_BY_NAME = new ConfigBoolean("mapStateCache.byName", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAP_CACHE_BY_INV_POS = new ConfigBoolean("mapStateCache.byInvPos", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAP_CACHE_BY_EC_POS = new ConfigBoolean("mapStateCache.byEchestPos", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAP_CACHE_BY_CONTAINER_POS = new ConfigBoolean("mapStateCache.byContainerPos", false).apply(GENERIC_KEY);
+
+		//ConfigOptionList MAP_CACHE_BY_NAME{UNIQUE, FIRST}
 
 		public static final ConfigInteger MAX_IFRAME_TRACKING_DIST = new ConfigInteger("iFrameTrackingDist", /*default=*/128, 0, 10_000_000);
 		public static double MAX_IFRAME_TRACKING_DIST_SQ;
@@ -100,10 +108,12 @@ public class Configs implements IConfigHandler{
 				availableOptions = new ArrayList<>();
 				availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT,
 						USE_BUNDLE_PACKET, BUNDLES_ARE_REVERSED));
-				if((main.serverJoinListener && main.serverQuitListener) || main.containerOpenCloseListener != null){
-					availableOptions.add(MAP_STATE_CACHE);
-//					if(MAP_STATE_CACHE.getOptionListValue() != MapStateCacheOption.OFF) availableOptions.add(MAP_STATE_CACHE_TYPE);
-				}
+				final boolean CAN_CACHE_MAPS = (main.serverJoinListener && main.serverQuitListener) || main.containerOpenCloseListener != null;
+				if(CAN_CACHE_MAPS) availableOptions.addAll(List.of(MAP_CACHE, MAP_CACHE_UNLOCKED));
+				if(main.serverJoinListener) availableOptions.addAll(List.of(MAP_CACHE_BY_ID, MAP_CACHE_BY_NAME));
+				if(main.serverJoinListener && main.serverQuitListener) availableOptions.add(MAP_CACHE_BY_INV_POS);
+				if(main.containerOpenCloseListener != null) availableOptions.addAll(List.of(MAP_CACHE_BY_EC_POS, MAP_CACHE_BY_CONTAINER_POS));
+
 				if(main.mapHighlights) availableOptions.add(MAX_IFRAME_TRACKING_DIST);
 				if(main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME,
 						//PLACEMENT_HELPER_IFRAME_REACH, PLACEMENT_HELPER_IFRAME_RAYCAST,
@@ -144,7 +154,7 @@ public class Configs implements IConfigHandler{
 //		public static final ConfigBoolean SPAWNER_ACTIVATION_HIGHLIGHT = new ConfigBoolean("spawnerActivationHighlight", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean REPAIR_COST_HOTBAR_HUD = new ConfigBoolean("repairCostInHotbarHUD", false).apply(VISUALS_KEY);
 		public static final ConfigOptionList REPAIR_COST_TOOLTIP = new ConfigOptionList("repairCostTooltip",
-				Main.mapArtFeaturesOnly ? TooltipDisplayOption.OFF : TooltipDisplayOption.ADVANCED_TOOLTIPS).apply(VISUALS_KEY);
+				Main.mapArtFeaturesOnly ? OptionTooltipDisplay.OFF : OptionTooltipDisplay.ADVANCED_TOOLTIPS).apply(VISUALS_KEY);
 		public static final ConfigBoolean INVIS_IFRAMES = new ConfigBoolean("invisIFramesMapArt", true).apply(VISUALS_KEY);
 		//InvisIFrameOption {ANY_ITEM, MAPART, PARTIALLY_TRANSPARENT_MAPART}
 //		public static final ConfigOptionList INVIS_IFRAMES = new ConfigOptionList("invisIFrames", InvisIFrameOption.PARTIALLY_TRANSPARENT_MAPART}).apply(GENERIC_KEY);
@@ -386,7 +396,7 @@ public class Configs implements IConfigHandler{
 		public static final ConfigString CLIENT_KEY = new ConfigString("clientKey", "some_unique_key").apply(DATABASE_KEY);
 		public static final ConfigString ADDRESS = new ConfigString("address", "evmodder.net:14441").apply(DATABASE_KEY);
 		public static final ConfigBoolean SHARE_MAPART = new ConfigBoolean("shareMapArt", true).apply(DATABASE_KEY); //TODO: implement
-		public static final ConfigBoolean EPEARL_OWNERS_BY_UUID = new ConfigBoolean("epearlDatabaseUUID", true).apply(DATABASE_KEY);
+		public static final ConfigBoolean EPEARL_OWNERS_BY_UUID = new ConfigBoolean("epearlDatabaseUUID", Main.epearlLookup != null).apply(DATABASE_KEY);
 		public static final ConfigBoolean EPEARL_OWNERS_BY_XZ = new ConfigBoolean("epearlDatabaseXZ", false).apply(DATABASE_KEY);
 		//public static final ConfigBoolean SHARE_EPEARL_OWNERS = new ConfigBoolean("shareMapArt", true).apply(GENERIC_KEY); //TODO: implement
 		public static final ConfigBoolean SHARE_IGNORES = new ConfigBoolean("shareIgnoreList", false).apply(DATABASE_KEY);

@@ -1,22 +1,28 @@
 package net.evmodder.evmod.apis;
 
 import java.io.EOFException;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 import net.evmodder.EvLib.util.FileIO_New;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.config.OptionMapStateCache;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
+import net.minecraft.entity.Entity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -28,10 +34,56 @@ import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 
 public class MapStateCacher{
-	public enum HolderType {PLAYER_INV, ENDER_CHEST}
+	// Server address -> cache
+	private static HashMap<String, HashMap<Integer, MapStateSerializable>> byId;
+	private static HashMap<String, HashMap<String, MapStateSerializable>> byName;
+	private static HashMap<String, HashMap<UUID, List<MapStateSerializable>>> bySlot;
 
-	private static HashMap<Integer, List<MapState>> inMemoryCache;
-	public static List<ItemStack> enderChestContents;
+//	public static abstract class Cache{
+//		final String filename;
+//		private Cache(String n){filename=n;}
+//	}
+//	private static final class CacheById extends Cache{CacheById(){super("ids");}}
+//	private static final class CacheByName extends Cache{CacheByName(){super("names");}}
+//	private static final class CacheBySlot extends Cache{UUID uuid; CacheBySlot(UUID u){super("containers"); uuid = u;}}
+//
+//	public static final RegistryKey<Registry<Cache>> REGISTRY_KEY = RegistryKey.ofRegistry(Identifier.of(Main.MOD_ID, "map_state_cache"));
+//	DefaultedRegistry<Cache> registry = FabricRegistryBuilder.createDefaulted(
+//			REGISTRY_KEY, Identifier.of(Main.MOD_ID, "cache_by_slot")
+//			).buildAndRegister();
+//
+//	public static final CacheById BY_ID = new CacheById();
+//	public static final CacheByName BY_NAME = new CacheByName();
+//	public static final CacheBySlot BY_PLAYER_INV = new CacheBySlot(new UUID(445878968, -696921926));
+//	public static final CacheBySlot BY_PLAYER_EC = new CacheBySlot(new UUID(744859711, -1296040053));
+	public static enum Cache{
+		BY_ID("ids", null), BY_NAME("names", null),
+		BY_PLAYER_INV("containers", new UUID(445878968, -696921926)),
+		BY_PLAYER_EC("containers", new UUID(744859711, -1296040053));
+//		BY_SLOT("containers", ...);
+		String filename;
+		private UUID uuid;
+		Cache(String n, UUID u){filename=n; uuid=u;}
+
+		private final UUID getContainerId(){
+			switch(this){
+				case BY_PLAYER_INV: return getPlayerInvKey(uuid);
+				case BY_PLAYER_EC: return getPlayerInvKey(uuid);
+				default: return uuid;
+			}
+		}
+	}
+
+	private static final UUID getPlayerInvKey(UUID cacheKey){
+		Entity e = MinecraftClient.getInstance().player;
+		if(e == null) return cacheKey;
+		ByteBuffer bb = ByteBuffer.wrap(new byte[32]);
+		bb.putLong(e.getUuid().getMostSignificantBits());
+		bb.putLong(e.getUuid().getLeastSignificantBits());
+		bb.putLong(cacheKey.getMostSignificantBits());
+		bb.putLong(cacheKey.getLeastSignificantBits());
+		return UUID.nameUUIDFromBytes(bb.array());
+	}
 
 //	public static final byte CACHED_MARKER_SCALE = (byte)128;
 	private static final MapDecoration CACHED_MARKER_DECORATION
@@ -42,8 +94,7 @@ public class MapStateCacher{
 		return iter.hasNext() && iter.next() == CACHED_MARKER_DECORATION && !iter.hasNext();
 	}
 
-	record MapStateSerializable(byte scale, boolean locked, String dimRegistry, String dimValue, byte[] colors)
-	implements Serializable{
+	private static final record MapStateSerializable(byte scale, boolean locked, String dimRegistry, String dimValue, byte[] colors) implements Serializable{
 		private static final long serialVersionUID = 2713495820097984925L;
 
 		public static MapStateSerializable fromMapState(MapState ms){
@@ -60,89 +111,193 @@ public class MapStateCacher{
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	public static final void readFromFile(){
-		try(FileInputStream fis = new FileInputStream(FileIO_New.DIR+"cached_mapstates"); ObjectInputStream ois = new ObjectInputStream(fis)){
-			HashMap<Integer, List<MapStateSerializable>> persistentMapStatesInInv = (HashMap<Integer, List<MapStateSerializable>>)ois.readObject();
-			for(var entry : persistentMapStatesInInv.entrySet()){
-				inMemoryCache.put(entry.getKey(), entry.getValue().stream().map(mss -> mss == null ? null : mss.toMapState()).toList());
-			}
+	private static final String getServerIp(MinecraftClient client){
+		if(client == null) return "null0";
+		if(client.getCurrentServerEntry() == null){
+			return client.getServer() == null ? "null1" : client.getServer().getSaveProperties().getLevelName();
+		}
+		return client.getCurrentServerEntry().address;
+	}
+
+	private static final HashMap<?, ?> getInMemCachePerServer(String server, Cache type){
+		switch(type){
+			case BY_ID: return byId == null ? null : byId.get(server);
+			case BY_NAME: return byName == null ? null : byName.get(server);
+//			case BY_PLAYER_INV: return bySlot == null ? null : bySlot.get(server);
+//			case BY_PLAYER_EC: return bySlot == null ? null : bySlot.get(server);
+			default:
+//				if(type instanceof CacheBySlot == false) Main.LOGGER.error("MapStateCacher: Unknown cache type!");
+//				assert type instanceof CacheBySlot;
+				return bySlot == null ? null : bySlot.get(server);
+		}
+	}
+
+	private static final Object getInMemCacheSpecific(String server, Cache type){
+		switch(type){
+			case BY_ID: return byId == null ? null : byId.get(server); // Same as getInMemCacheServer()
+			case BY_NAME: return byName == null ? null : byName.get(server); // Same as getInMemCacheServer()
+//			case BY_PLAYER_INV: return bySlot == null ? null : bySlot.get(server).get(getPlayerInvKey(Cache.BY_PLAYER_INV.uuid));
+//			case BY_PLAYER_EC: return bySlot == null ? null : bySlot.get(server).get(getPlayerInvKey(Cache.BY_PLAYER_EC.uuid));
+			default:
+//				if(type instanceof CacheBySlot == false) Main.LOGGER.error("MapStateCacher: Unknown cache type!");
+//				assert type instanceof CacheBySlot;
+//				return bySlot == null ? null : bySlot.get(server).get(getSlotKey((CacheBySlot)type));
+				return bySlot == null ? null : bySlot.get(server).get(type.getContainerId());
+		}
+	}
+
+	private static final Object readFile(String filename){
+		try(FileInputStream fis = new FileInputStream(FileIO_New.DIR+"map_cache/"+filename+".cache"); ObjectInputStream ois = new ObjectInputStream(fis)){
+			return ois.readObject();
 		}
 		catch(EOFException e){} // Hasn't been cached yet
 		catch(IOException | ClassNotFoundException e){e.printStackTrace();}
+		return null;
 	}
-	private static final void saveToFile(){
-		try(FileOutputStream fos = new FileOutputStream(FileIO_New.DIR+"cached_mapstates"); ObjectOutputStream oos = new ObjectOutputStream(fos)){
-			HashMap<Integer, List<MapStateSerializable>> persistentMapStatesInInv = new HashMap<>(inMemoryCache.size());
-			for(var entry : inMemoryCache.entrySet()){
-				persistentMapStatesInInv.put(entry.getKey(), entry.getValue().stream().map(MapStateSerializable::fromMapState).toList());
-			}
-			oos.writeObject(persistentMapStatesInInv);
+	private static final void writeFile(String filename, Object obj){
+		try(FileOutputStream fos = new FileOutputStream(FileIO_New.DIR+"map_cache/"+filename+".cache"); ObjectOutputStream oos = new ObjectOutputStream(fos)){
+			oos.writeObject(obj);
 		}
 		catch(IOException e){e.printStackTrace();}
 	}
+	private static final String getCacheName(String server, Cache type){
+		File dir = new File(FileIO_New.DIR+"map_cache/"+server);
+		if(!dir.isDirectory()) dir.mkdir();
+		return FileIO_New.DIR+"map_cache/"+server+"/"+type.filename;
+	}
+	private static final boolean saveCacheFile(String server, Cache type){
+		if(getInMemCacheSpecific(server, type) == null) return false;
+		String filename = getCacheName(server, type);
+		HashMap<?, ?> perServerCache = getInMemCachePerServer(server, type);
+		writeFile(filename, perServerCache);
+		return true;
+	}
+	@SuppressWarnings("unchecked")
+	private static final boolean loadCacheFile(String server, Cache type){
+//		if(getInMemCacheSpecific(client, type) != null) return false;
+		String filename = getCacheName(server, type);
+		HashMap<?, ?> cache = (HashMap<?, ?>)readFile(filename);
+		if(cache == null) return false;
+//		HashMap<?, ?> oldCache = getInMemCacheServer(client, type);
+//		if(oldCache != null && oldCache.equals(cache)) return false; // Shouldn't happen
+		switch(type){
+			case BY_ID:
+				if(byId == null) byId = new HashMap<>();
+				byId.put(server, (HashMap<Integer, MapStateSerializable>)cache);
+				return true;
+			case BY_NAME:
+				if(byName == null) byName = new HashMap<>();
+				byName.put(server, (HashMap<String, MapStateSerializable>)cache);
+				return true;
+//			case Cache.BY_PLAYER_INV:
+//				containerId = getPlayerInvKey(Cache.BY_PLAYER_INV.uuid);
+//				break;
+//			case Cache.BY_PLAYER_EC:
+//				containerId = getPlayerInvKey(Cache.BY_PLAYER_EC.uuid);
+//				break;
+			default:
+//				if(type instanceof CacheBySlot == false) Main.LOGGER.error("MapStateCacher: Unknown cache type!");
+				UUID containerId = type.getContainerId();
+				List<MapStateSerializable> containerCache = (List<MapStateSerializable>)cache.get(containerId);
+				if(containerCache == null) return false;
 
-	public static final boolean saveMapStates(List<ItemStack> items, HolderType type){
+				if(bySlot == null) bySlot = new HashMap<>();
+				HashMap<UUID, List<MapStateSerializable>> bySlotSub = bySlot.get(server);
+				if(bySlotSub == null){
+					bySlot.put(server, (HashMap<UUID, List<MapStateSerializable>>)cache);
+					return true;
+				}
+//				List<MapStateSerializable> oldSlotCache = bySlotSub.get(containerId);
+//				if(oldSlotCache != null && oldSlotCache.equals(containerCache)) return false; // Shouldn't happen
+				bySlotSub.put(containerId, (List<MapStateSerializable>)cache.get(containerId));
+				return true;
+		}
+	}
+
+	private static final boolean keepOldCache(List<MapStateSerializable> oldCache, List<MapStateSerializable> newCache){
+		if(newCache.size() != oldCache.size()) return false; // Potentially different maps!
+		for(int i=0; i<oldCache.size(); ++i){
+			if(newCache.get(i) != null && (oldCache.get(i) == null || !oldCache.get(i).equals(newCache.get(i)))) return false; // Different maps!
+			if(oldCache.get(i) != null && newCache.get(i) == null){
+				Main.LOGGER.error("MapStateCacher: Cached mapstate index "+i+" never got loaded (?!)");
+			}
+		}
+		return true;
+	}
+	public static final boolean saveMapStatesByPos(List<ItemStack> items, Cache type){
 		MinecraftClient client = MinecraftClient.getInstance();
-		final int key = client.player.getUuid().hashCode() + MiscUtils.getCurrentServerAddressHashCode() + type.ordinal();
-		final List<MapState> mapStates = MapRelationUtils.getAllNestedItems(items.stream().sequential())
+		final List<MapStateSerializable> mapStates = MapRelationUtils.getAllNestedItems(items.stream().sequential())
 				.sequential()
-				.filter(s -> s.getItem() == Items.FILLED_MAP).map(s -> FilledMapItem.getMapState(s, client.world)).toList();
-		if(mapStates.isEmpty()){
-			Main.LOGGER.info("MapStateCacher: "+type.name()+" nothing to save");
+				.filter(s -> s.getItem() == Items.FILLED_MAP)
+				.map(s -> FilledMapItem.getMapState(s, client.world))
+				.map(MapStateSerializable::fromMapState).toList();
+		if(mapStates.isEmpty() || mapStates.stream().allMatch(Objects::isNull)){
+			Main.LOGGER.info("MapStateCacher: "+type.filename+" has nothing to save");
 			return false;
 		}
-		if(inMemoryCache == null){
-			inMemoryCache = new HashMap<>();
-			if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK) readFromFile();
+		// Load old cache values (actually loads all slot-based container caches for the current server)
+		final String server = getServerIp(client);
+		@SuppressWarnings("unchecked")
+		final List<MapStateSerializable> oldCache = (List<MapStateSerializable>)getInMemCacheSpecific(server, type);
+		if(oldCache == null){
+			if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK) loadCacheFile(server, type);
+			if(bySlot == null) bySlot = new HashMap<>();
+			if(!bySlot.containsKey(server)) bySlot.put(server, new HashMap<>());
 		}
-		inMemoryCache.put(key, mapStates);
+		else if(keepOldCache(oldCache, mapStates)) return false; // No cache update needed
+		bySlot.get(server).put(type.getContainerId(), mapStates);
+		if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK) saveCacheFile(server, type);
 
-		if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK) saveToFile();
-		Main.LOGGER.info("MapStateCacher: "+type.name()+" saved "+mapStates.size()+" mapstates");
+		Main.LOGGER.info("MapStateCacher: "+type.filename+" saved "+mapStates.size()+" mapstates");
 		return true;
 	}
 
-	public static final boolean loadMapStates(List<ItemStack> items, HolderType type){
-		if(inMemoryCache == null){
-			if(Configs.Generic.MAP_STATE_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK){
-				inMemoryCache = new HashMap<>();
-				readFromFile();
-			}
-			else{
-				Main.LOGGER.info("MapStateCacher: "+type.name()+" no saved mapstates");
-				return false;
-			}
-		}
+	private static final Object commonCacheLoad(Cache type){
 		MinecraftClient client = MinecraftClient.getInstance();
-		final int key = client.player.getUuid().hashCode() + MiscUtils.getCurrentServerAddressHashCode() + type.ordinal();
-		List<MapState> cachedMapStates = inMemoryCache.get(key);
-		if(cachedMapStates == null || cachedMapStates.isEmpty()){
-			Main.LOGGER.info("MapStateCacher: "+type.name()+" no saved mapstates for given key: "+key);
-			return false;
+		if(client == null || client.player == null || client.world == null) return null;
+		final String server = getServerIp(client);
+		Object cache = getInMemCacheSpecific(server, type);
+		if(cache == null){
+			if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK){
+				if(loadCacheFile(server, type)) cache = getInMemCacheSpecific(server, type);
+			}
+			if(cache == null){
+				Main.LOGGER.info("MapStateCacher: no cached mapstates found for the target inv");
+			}
 		}
+		return cache;
+	}
+
+	public static final boolean loadMapStatesByPos(List<ItemStack> items, Cache type){
+		@SuppressWarnings("unchecked")
+		List<MapStateSerializable> cache = (List<MapStateSerializable>) commonCacheLoad(type);
+		if(cache == null) return false;
 		List<ItemStack> mapItems = MapRelationUtils.getAllNestedItems(items.stream()).filter(s -> s.getItem() == Items.FILLED_MAP).toList();
-		if(mapItems.size() != cachedMapStates.size()){
-			Main.LOGGER.warn("MapStateCacher: "+type.name()+" mapItems.size:"+mapItems.size()+" != cachedMapStates.size:"+cachedMapStates.size());
+		if(mapItems.size() != cache.size()){
+			Main.LOGGER.warn("MapStateCacher: "+type.name()+" mapItems.size:"+mapItems.size()+" != cache.size:"+cache.size());
 			return false;
 		}
 //		Main.LOGGER.info("MapStateCacher: "+type.name()+" loading cached map states (size="+mapItems.size()+")");
 		int statesLoaded = 0, statesCached = 0;
+		ClientWorld world = MinecraftClient.getInstance().world;
 		for(int i=0; i<mapItems.size(); ++i){
-			if(cachedMapStates.get(i) == null) continue; // Loaded state wasn't cached
+			if(cache.get(i) == null) continue; // Loaded state wasn't cached
 			++statesCached;
 			MapIdComponent mapIdComponent = mapItems.get(i).get(DataComponentTypes.MAP_ID);
-			if(mapIdComponent == null){
-				Main.LOGGER.warn("MapStateCacher: Item's mapIdComponent==null despite the cache indicating it is a map!");
-				continue;
-			}
-			if(client.world.getMapState(mapIdComponent) != null) continue; // Already loaded
-//			client.world.putMapState(mapIdComponent, cachedMapStates.get(i));
-			client.world.putClientsideMapState(mapIdComponent, cachedMapStates.get(i));
-//			client.getMapRenderer().update(mapIdComponent, cachedMapStates.get(i), null);
+			assert mapIdComponent != null : "Unable to load from cache when even the mapId is missing!";
+			if(world.getMapState(mapIdComponent) != null) continue; // Already loaded
+//			world.putMapState(mapIdComponent, cachedMapStates.get(i));
+			world.putClientsideMapState(mapIdComponent, cache.get(i).toMapState());
+//			getMapRenderer().update(mapIdComponent, cachedMapStates.get(i), null);
 			++statesLoaded;
 		}
 		Main.LOGGER.info("MapStateCacher: "+type.name()+" loaded cached map states (loaded="+statesLoaded+",nonnull="+statesCached+",cached="+mapItems.size()+")");
 		return statesLoaded > 0;
 	}
+
+	public static final boolean saveMapStateById(int id, MapState state){return false;}//true if added
+	public static final boolean loadMapStatesById(){return false;}//true if loaded
+
+	public static final boolean saveMapStateByName(String name, MapState state){return false;}//true if added
+	public static final boolean loadMapStatesByName(){return false;}//true if loaded
 }

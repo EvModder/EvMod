@@ -15,6 +15,7 @@ import net.evmodder.EvLib.util.Command;
 import net.evmodder.EvLib.util.FileIO_New;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
+import net.evmodder.evmod.apis.MapStateCacher;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.component.type.MapIdComponent;
@@ -48,7 +49,11 @@ abstract class MixinClientWorld{
 
 	@Inject(method="putClientsideMapState", at=@At("HEAD"))
 	private void e(MapIdComponent id, MapState state, CallbackInfo ci){
-		if(!Configs.Database.SHARE_MAPART.getBooleanValue()) return;
+		if(MapStateCacher.hasCacheMarker(state)) return;
+		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.saveMapStateById(id.id(), state);
+//		if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) MapStateCacher.saveMapStateByName(name, state);
+
+		if(!Configs.Database.SHARE_MAPART.getBooleanValue() && Main.remoteSender == null) return;
 		if(!state.locked) return; // TODO: supporting unlocked maps could waste a LOT of disk with 1-pixel changes while building
 		final String addr = client != null && client.getCurrentServerEntry() != null ? client.getCurrentServerEntry().address : null;
 		if(addr == null) return;

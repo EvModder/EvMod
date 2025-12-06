@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
+import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.onTick.UpdateItemFrameHighlights;
 import net.evmodder.evmod.onTick.UpdateItemFrameHighlights.Highlight;
 import net.minecraft.client.MinecraftClient;
@@ -86,12 +87,17 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		final ItemStack stack = itemFrameEntity.getHeldItemStack();
 		if(stack == null || stack.isEmpty());
 		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
-		if(FilledMapItem.getMapState(stack, itemFrameEntity.getWorld()) == null) return;
+		if(state == null) return;
 		Highlight hl = UpdateItemFrameHighlights.iFrameGetHighlight(itemFrameEntity.getId());
 		if(hl == null) return;
 
 		Text cachedName = UpdateItemFrameHighlights.displayNameCache.get(itemFrameEntity);
 		if(cachedName != null){cir.setReturnValue(cachedName); return;}
+
+		if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()){
+			String name = stack.getCustomName() == null ? null : stack.getCustomName().getLiteralString();
+			if(name != null) MapStateCacher.saveMapStateByName(name, state);
+		}
 
 		MutableText name = stack.getName().copy();
 		if(hl == Highlight.INV_OR_NESTED_INV){

@@ -23,8 +23,8 @@ public class ServerQuitListener{
 						/*udp=*/true, 5000, MiscUtils.getCurrentServerAndPlayerData(), /*recv=*/null);
 			}
 
-			if(Configs.Generic.MAP_STATE_CACHE.getDefaultOptionListValue() != OptionMapStateCache.OFF){
-				MapStateCacher.saveMapStates(client.player.getInventory().main, MapStateCacher.HolderType.PLAYER_INV);
+			if(Configs.Generic.MAP_CACHE.getDefaultOptionListValue() != OptionMapStateCache.OFF){
+				MapStateCacher.saveMapStatesByPos(client.player.getInventory().main, MapStateCacher.Cache.BY_PLAYER_INV);
 				ContainerOpenCloseListener.echestCacheLoaded = false; // TODO: eww
 			}
 		});

@@ -21,6 +21,15 @@ public class ServerJoinListener{
 
 	public static long lastJoinTs; // TODO: remove horrible public static eww
 
+	private void loadMapStateCaches(MinecraftClient client){
+		if(Configs.Generic.MAP_CACHE_BY_INV_POS.getBooleanValue())
+			MapStateCacher.loadMapStatesByPos(client.player.getInventory().main, MapStateCacher.Cache.BY_PLAYER_INV);
+		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue())
+			MapStateCacher.loadMapStatesById();
+		if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue())
+			MapStateCacher.loadMapStatesByName();
+	}
+
 	public ServerJoinListener(){
 		ClientPlayConnectionEvents.JOIN.register(
 				//ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server
@@ -31,21 +40,21 @@ public class ServerJoinListener{
 			final int currServerHashCode = MiscUtils.getServerAddressHashCode(handler.getServerInfo());
 			assert currServerHashCode == MiscUtils.getCurrentServerAddressHashCode();
 
-			MinecraftClient client  = MinecraftClient.getInstance();
+			MinecraftClient client = MinecraftClient.getInstance();
 
-			if(Configs.Generic.MAP_STATE_CACHE.getDefaultOptionListValue() != OptionMapStateCache.OFF){
+			if(Configs.Generic.MAP_CACHE.getDefaultOptionListValue() != OptionMapStateCache.OFF){
 				if(invLoadTimer != null){invLoadTimer.cancel(); invLoadTimer = null;}
-				if(client.player.getInventory().isEmpty()){ // Inventory not loaded (can also mean still in queue)
+				if(!client.player.getInventory().isEmpty()) loadMapStateCaches(client);
+				else{// Inventory not loaded (can also mean still in queue)
 					invLoadTimer = new Timer();
 					invLoadTimer.schedule(new TimerTask(){@Override public void run(){
 						if(client.player == null){cancel(); invLoadTimer.cancel(); invLoadTimer = null;}
 						else if(!client.player.getInventory().isEmpty()){
 							cancel(); invLoadTimer.cancel(); invLoadTimer = null;
-							MapStateCacher.loadMapStates(client.player.getInventory().main, MapStateCacher.HolderType.PLAYER_INV);
+							loadMapStateCaches(client);
 						}
 					}}, 1l, 50l); // check 20 times per second
 				}
-				else MapStateCacher.loadMapStates(client.player.getInventory().main, MapStateCacher.HolderType.PLAYER_INV);
 			}
 			if(Configs.Database.SHARE_JOIN_QUIT.getBooleanValue() && Main.remoteSender != null){
 				final String sessionName = client.getSession().getUsername(), playerName = client.player.getGameProfile().getName();
@@ -97,6 +106,7 @@ public class ServerJoinListener{
 				loadedAt = 0;
 				cancel();
 				joinMsgTimer.cancel();
+				if(invLoadTimer != null){invLoadTimer.cancel(); invLoadTimer = null;}
 			}}, 0l, 100l);
 		});
 	}

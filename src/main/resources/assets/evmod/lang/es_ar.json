@@ -44,10 +44,6 @@
 	"evmod.gui.label.cacheMapState.memory": "Solo esta Sesion",
 	"evmod.gui.label.cacheMapState.memoryAndDisk": "Persistente",
 
-	"evmod.gui.label.cacheMapState.target.byId": "Por ID",
-	"evmod.gui.label.cacheMapState.target.byName": "Por Nombre",
-	"evmod.gui.label.cacheMapState.target.byInvPos": "Por hueco de inventario/cofre",
-
 	"evmod.config.generic.name.clickLimitCount": "Conteo de clicks",
 	"evmod.config.generic.comment.clickLimitCount": "2b2t will kick you for sending >80 clicks in <80 ticks (Last checked: 2025-10-15)",
 	"evmod.config.generic.name.clickLimitWindow": "Ventana de limite",
@@ -61,6 +57,12 @@
 
 	"evmod.config.generic.name.mapStateCache": "Cache de mapas",
 	"evmod.config.generic.comment.mapStateCache": "Conserva la vista previa de los mapas en el inventario o en los cofres entre sesiones (estos se descargan al desconectarte del servidor)",
+	"evmod.config.generic.name.mapStateCache.byId": "Cache de mapas: por ID",
+	"evmod.config.generic.name.mapStateCache.byName": "Cache de mapas: por Nombre",
+	"evmod.config.generic.name.mapStateCache.byInvPos": "Cache de mapas: por hueco de inventario",
+	"evmod.config.generic.name.mapStateCache.byEchestPos": "Cache de mapas: por hueco de cofre",
+	"evmod.config.generic.name.mapStateCache.byContainerPos": "Cache de mapas: por hueco ()",
+
 	"evmod.config.generic.name.whisperPlaySound": "whisperPlaySound",
 	"evmod.config.generic.name.whisperPearlPull": "whisperPearlPull",
 	"evmod.config.generic.name.commandMapArtGroupIncludeUnlocked": "commandMapArtGroupIncludeUnlocked",
