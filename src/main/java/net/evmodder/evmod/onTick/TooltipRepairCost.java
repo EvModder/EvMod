@@ -4,7 +4,7 @@ import java.util.List;
 import net.minecraft.item.Item.TooltipContext;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.Tooltip;
-import net.evmodder.evmod.config.TooltipDisplayOption;
+import net.evmodder.evmod.config.OptionTooltipDisplay;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
@@ -13,7 +13,7 @@ import net.minecraft.util.Formatting;
 
 public final class TooltipRepairCost implements Tooltip{
 	@Override public final void get(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
-		switch((TooltipDisplayOption)Configs.Visuals.REPAIR_COST_TOOLTIP.getOptionListValue()){
+		switch((OptionTooltipDisplay)Configs.Visuals.REPAIR_COST_TOOLTIP.getOptionListValue()){
 			case OFF: return;
 			case ADVANCED_TOOLTIPS: if(type == TooltipType.BASIC) return;
 			case ON: /*no op*/
