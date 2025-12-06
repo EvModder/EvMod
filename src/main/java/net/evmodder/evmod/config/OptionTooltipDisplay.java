@@ -4,7 +4,7 @@ import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
 import net.evmodder.evmod.Main;
 
-public enum TooltipDisplayOption implements IConfigOptionListEntry {
+public enum OptionTooltipDisplay implements IConfigOptionListEntry {
 	OFF("off", Main.MOD_ID+".gui.label.tooltipDisplay.off"),
 	ON("on", Main.MOD_ID+".gui.label.tooltipDisplay.on"),
 	ADVANCED_TOOLTIPS("advancedTooltips", Main.MOD_ID+".gui.label.tooltipDisplay.advanced");
@@ -12,7 +12,7 @@ public enum TooltipDisplayOption implements IConfigOptionListEntry {
 	private final String configString;
 	private final String translationKey;
 
-	TooltipDisplayOption(String configString, String translationKey){
+	OptionTooltipDisplay(String configString, String translationKey){
 		this.configString = configString;
 		this.translationKey = translationKey;
 	}

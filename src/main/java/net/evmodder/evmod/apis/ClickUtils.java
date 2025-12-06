@@ -35,7 +35,7 @@ public class ClickUtils{
 	private final int[] tickDurationArr;
 	private int tickDurIndex, sumClicksInDuration;
 	private long lastTick;
-	private final int OUTTA_CLICKS_COLOR = 15764490, SYNC_ID_CHANGED_COLOR = 16733525;
+	private final int OUTTA_CLICKS_COLOR = 15777300, SYNC_ID_CHANGED_COLOR = 16733525;
 //	private final double C_PER_T;
 	public static long TICK_DURATION = 51l; // LOL!! TODO: estimate base off TPS/ping
 
