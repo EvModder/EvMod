@@ -114,7 +114,7 @@ public class Main{
 			final String key = line.substring(0, sep).trim();
 			final String value = line.substring(sep+1).trim();
 			if(key.isEmpty() || value.isEmpty()) continue;
-			config.put(key, !value.equalsIgnoreCase("false"));
+			config.put(key, value.equalsIgnoreCase("true"));
 		}
 		return config;
 	}
