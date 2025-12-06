@@ -5,6 +5,7 @@ import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.evmodder.evmod.keybinds.*;
+import net.evmodder.evmod.listeners.WhisperPlaySound;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CartographyTableScreen;
@@ -80,6 +81,8 @@ public class KeyCallbacks{
 		Configs.Hotkeys.INV_RESTOCK_BLACKLIST.setValueChangeCallback(_0 -> kbInvRestock.refreshLists());
 		Configs.Hotkeys.INV_RESTOCK_WHITELIST.setValueChangeCallback(_0 -> kbInvRestock.refreshLists());
 		Configs.Generic.INV_RESTOCK_AUTO_FOR_INV_ORGS.setValueChangeCallback(newValue -> kbInvRestock.refreshLayouts());
+		WhisperPlaySound.recomputeSound(Configs.Generic.WHISPER_PLAY_SOUND.getStringValue());
+		Configs.Generic.WHISPER_PLAY_SOUND.setValueChangeCallback(newValue -> WhisperPlaySound.recomputeSound(newValue.getStringValue()));
 
 		keybindCallback(Configs.Hotkeys.OPEN_CONFIG_GUI, Objects::isNull, ()->GuiBase.openGui(new ConfigGui()));
 

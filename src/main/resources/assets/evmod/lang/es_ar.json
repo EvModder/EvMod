@@ -37,7 +37,7 @@
 	"evmod.gui.button.database": "Base de Datos",
 
 	"evmod.gui.label.tooltipDisplay.off": "Encendido",
-	"evmod.gui.label.tooltipDisplay.on": "apagado",
+	"evmod.gui.label.tooltipDisplay.on": "Apagado",
 	"evmod.gui.label.tooltipDisplay.advanced": "Descripciones avanzadas",
 
 	"evmod.gui.label.cacheMapState.off": "Encendido",
@@ -57,13 +57,15 @@
 
 	"evmod.config.generic.name.mapStateCache": "Cache de mapas",
 	"evmod.config.generic.comment.mapStateCache": "Conserva la vista previa de los mapas en el inventario o en los cofres entre sesiones (estos se descargan al desconectarte del servidor)",
-	"evmod.config.generic.name.mapStateCache.byId": "Cache de mapas: por ID",
-	"evmod.config.generic.name.mapStateCache.byName": "Cache de mapas: por Nombre",
-	"evmod.config.generic.name.mapStateCache.byInvPos": "Cache de mapas: por hueco de inventario",
-	"evmod.config.generic.name.mapStateCache.byEchestPos": "Cache de mapas: por hueco de cofre",
-	"evmod.config.generic.name.mapStateCache.byContainerPos": "Cache de mapas: por hueco ()",
+	"evmod.config.generic.name.mapStateCacheUnlocked": "Cache de mapas: unlocked",
+	"evmod.config.generic.name.mapStateCacheById": "Cache de mapas: por ID",
+	"evmod.config.generic.name.mapStateCacheByName": "Cache de mapas: por Nombre",
+	"evmod.config.generic.name.mapStateCacheByInvPos": "Cache de mapas: por hueco de inventario",
+	"evmod.config.generic.name.mapStateCacheByEchestPos": "Cache de mapas: por hueco de cofre",
+	"evmod.config.generic.name.mapStateCacheByContainerPos": "Cache de mapas: por hueco ()",
 
 	"evmod.config.generic.name.whisperPlaySound": "whisperPlaySound",
+	"evmod.config.generic.name.whisperPlaySoundUnfocusedOnly": "whisperPlaySoundUnfocusedOnly",
 	"evmod.config.generic.name.whisperPearlPull": "whisperPearlPull",
 	"evmod.config.generic.name.commandMapArtGroupIncludeUnlocked": "commandMapArtGroupIncludeUnlocked",
 

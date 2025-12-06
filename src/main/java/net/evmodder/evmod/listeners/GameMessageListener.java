@@ -28,7 +28,7 @@ public class GameMessageListener{
 	}
 
 	public GameMessageListener(EpearlLookup epl){
-		final EpearlActivator pearlActivator = new EpearlActivator(epl);
+		final EpearlActivator pearlActivator = epl == null ? null : new EpearlActivator(epl);
 
 		ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {
 			if(overlay) return;
@@ -36,11 +36,12 @@ public class GameMessageListener{
 			if(literal == null) return;
 //			Main.LOGGER.info("GameMsgListener: received msg: "+literal);
 
-			if(literal.matches("\\w+ whispers: ")){// TODO: per-server format support
+			if(literal.matches("^\\w+ whispers: .*")){// TODO: per-server format support
+//				Main.LOGGER.info("GameMsgListener: whisper detected");
 				WhisperPlaySound.playSound();
 
 				final String PEARL_PULL_TRIGGER = Configs.Generic.WHISPER_PEARL_PULL.getStringValue();
-				if(!PEARL_PULL_TRIGGER.isBlank()){
+				if(!PEARL_PULL_TRIGGER.isBlank() && pearlActivator != null){
 					final String name = literal.substring(0, literal.indexOf(' '));
 					if(literal.substring(name.length()+" whispers: ".length()).matches(PEARL_PULL_TRIGGER+MSG_MATCH_END)){
 						pearlActivator.triggerPearl(name);

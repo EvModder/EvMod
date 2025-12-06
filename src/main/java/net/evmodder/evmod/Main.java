@@ -95,6 +95,7 @@ public class Main{
 	public static final KeybindCraftingRestock kbCraftRestock = new KeybindCraftingRestock(); // Public accessors: MixinClientPlayerInteractionManager
 
 	static boolean mapArtFeaturesOnly = true; //// TODO: ewww hacky
+	private final String internalConfigFile = mapArtFeaturesOnly ? "enabled_features_for_mapart_ver.txt" : "enabled_features.txt";
 
 	// TOOD: Worth finding a way to make these private?
 	final GameMessageFilter gameMessageFilter; // Accessors: Configs
@@ -107,14 +108,15 @@ public class Main{
 
 	private HashMap<String, Boolean> loadConfig(){
 		HashMap<String, Boolean> config = new HashMap<>();
-		final String configContents = FileIO_New.loadFile("enabled_features.txt", getClass().getResourceAsStream("/enabled_features_for_mapart_ver.txt"));
+		final String configContents = FileIO_New.loadFile("enabled_features.txt", getClass().getResourceAsStream("/"+internalConfigFile));
 		for(String line : configContents.split("\\r?\\n")){
 			final int sep = line.indexOf(':');
 			if(sep == -1) continue;
 			final String key = line.substring(0, sep).trim();
 			final String value = line.substring(sep+1).trim();
 			if(key.isEmpty() || value.isEmpty()) continue;
-			config.put(key, value.equalsIgnoreCase("true"));
+			if(key.equals("mapart_features_only")) config.put(key, !value.equalsIgnoreCase("false")); // Prefer true when ambiguous
+			else config.put(key, value.equalsIgnoreCase("true")); // Prefer false when ambiguous
 		}
 		return config;
 	}
@@ -174,7 +176,7 @@ public class Main{
 
 		if(serverJoinListener) new ServerJoinListener();
 		if(serverQuitListener) new ServerQuitListener();
-//		if(gameMessageListener) new GameMessageListener();
+		if(gameMessageListener) new GameMessageListener(epearlLookup);
 		gameMessageFilter = registerGameMessageFilter ? new GameMessageFilter() : null;
 
 		containerOpenCloseListener = registerContainerOpenListener ? new ContainerOpenCloseListener() : null;

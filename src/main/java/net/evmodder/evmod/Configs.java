@@ -36,14 +36,14 @@ public class Configs implements IConfigHandler{
 		public static final ConfigOptionList MAP_CACHE = new ConfigOptionList("mapStateCache",
 //				new SimpleStringOption(Main.MOD_ID+".gui.label.cache_mapstate.", "a", "b", "c")).apply(GENERIC_KEY);
 				OptionMapStateCache.MEMORY_AND_DISK).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAP_CACHE_UNLOCKED = new ConfigBoolean("mapStateCache.unlocked", false).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAP_CACHE_UNLOCKED = new ConfigBoolean("mapStateCacheUnlocked", false).apply(GENERIC_KEY);//TODO: currently does nothing!!
 //		public static final ConfigMultiOptionList MAP_STATE_CACHE_TYPE = new ConfigMultiOptionList("mapStateCacheType",
 //				List.of(MapStateCacheOptionType.BY_INV_POS, MapStateCacheOptionType.BY_NAME)).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAP_CACHE_BY_ID = new ConfigBoolean("mapStateCache.byId", false).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAP_CACHE_BY_NAME = new ConfigBoolean("mapStateCache.byName", true).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAP_CACHE_BY_INV_POS = new ConfigBoolean("mapStateCache.byInvPos", true).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAP_CACHE_BY_EC_POS = new ConfigBoolean("mapStateCache.byEchestPos", true).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAP_CACHE_BY_CONTAINER_POS = new ConfigBoolean("mapStateCache.byContainerPos", false).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAP_CACHE_BY_ID = new ConfigBoolean("mapStateCacheById", false).apply(GENERIC_KEY);//TODO: currently does nothing!!
+		public static final ConfigBoolean MAP_CACHE_BY_NAME = new ConfigBoolean("mapStateCacheByName", true).apply(GENERIC_KEY);//TODO: currently does nothing!!
+		public static final ConfigBoolean MAP_CACHE_BY_INV_POS = new ConfigBoolean("mapStateCacheByInvPos", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAP_CACHE_BY_EC_POS = new ConfigBoolean("mapStateCacheByEchestPos", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAP_CACHE_BY_CONTAINER_POS = new ConfigBoolean("mapStateCacheByContainerPos", false).apply(GENERIC_KEY);//TODO: currently does nothing!!
 
 		//ConfigOptionList MAP_CACHE_BY_NAME{UNIQUE, FIRST}
 
@@ -71,8 +71,11 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBooleanHotkeyed MAPART_AUTOREMOVE = new ConfigBooleanHotkeyed("mapArtAutoRemove", true, "").apply(GENERIC_KEY);
 		public static final ConfigInteger MAPART_AUTOREMOVE_AFTER = new ConfigInteger("mapArtAutoRemoveThreshold", 2, 1, 20).apply(GENERIC_KEY);
 
-		public static final ConfigString WHISPER_PLAY_SOUND = new ConfigString("whisperPlaySound", "{sound:block.note_block.bass, category:PLAYERS, volume:.7, pitch:2}").apply(GENERIC_KEY);
-		public static final ConfigString WHISPER_PEARL_PULL = new ConfigString("whisperPearlPull", "(?:e?p|e?pearl|([iI]'?m ?)?r(ea)?dy)").apply(GENERIC_KEY);
+		public static final ConfigString WHISPER_PLAY_SOUND = new ConfigString("whisperPlaySound",
+				Main.mapArtFeaturesOnly ? "" : "{sound:block.note_block.bass, category:PLAYERS, volume:.7, pitch:2}").apply(GENERIC_KEY);
+		public static final ConfigBoolean WHISPER_PLAY_SOUND_UNFOCUSED_ONLY = new ConfigBoolean("whisperPlaySoundUnfocusedOnly", false).apply(GENERIC_KEY);
+		public static final ConfigString WHISPER_PEARL_PULL = new ConfigString("whisperPearlPull",
+				Main.mapArtFeaturesOnly ? "" : "(?:e?p|e?pearl|([iI]'?m ?)?r(ea)?dy)").apply(GENERIC_KEY);
 
 		public static final ConfigBoolean MAPART_GROUP_INCLUDE_UNLOCKED = new ConfigBoolean("commandMapArtGroupIncludeUnlocked", false).apply(GENERIC_KEY);
 
@@ -88,10 +91,10 @@ public class Configs implements IConfigHandler{
 				"tube, brain, bubble, fire, horn",
 				"oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry, bamboo, crimson, warped"
 		)).apply(GENERIC_KEY);
-		public static final ConfigStringList SEND_ON_SERVER_JOIN = new ConfigStringList("sendChatsOnServerJoin", ImmutableList.of(
-				"/mapartgroup set end_misc+end_big+end_square"
+		public static final ConfigStringList SEND_ON_SERVER_JOIN = new ConfigStringList("sendChatsOnServerJoin",
+				Main.mapArtFeaturesOnly ? ImmutableList.of() :ImmutableList.of("/mapartgroup set end_misc+end_big+end_square"
 		)).apply(GENERIC_KEY);
-		public static final ConfigBoolean LOG_COORDS_ON_SERVER_QUIT = new ConfigBoolean("logCoordsOnServerQuit", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean LOG_COORDS_ON_SERVER_QUIT = new ConfigBoolean("logCoordsOnServerQuit", !Main.mapArtFeaturesOnly).apply(GENERIC_KEY);
 
 		public static final ConfigBoolean INV_RESTOCK_AUTO = new ConfigBoolean("inventoryRestockAuto", true).apply(GENERIC_KEY);
 //		public static final ConfigOptionList INV_RESTOCK_AUTO_FOR_INV_ORGS = new ConfigOptionList("inventoryRestockAutoForOrganization", RestockAutoLayouts._2).apply(GENERIC_KEY);
@@ -110,9 +113,9 @@ public class Configs implements IConfigHandler{
 						USE_BUNDLE_PACKET, BUNDLES_ARE_REVERSED));
 				final boolean CAN_CACHE_MAPS = (main.serverJoinListener && main.serverQuitListener) || main.containerOpenCloseListener != null;
 				if(CAN_CACHE_MAPS) availableOptions.addAll(List.of(MAP_CACHE, MAP_CACHE_UNLOCKED));
-				if(main.serverJoinListener) availableOptions.addAll(List.of(MAP_CACHE_BY_ID, MAP_CACHE_BY_NAME));
+//				if(main.serverJoinListener) availableOptions.addAll(List.of(MAP_CACHE_BY_ID, MAP_CACHE_BY_NAME));
 				if(main.serverJoinListener && main.serverQuitListener) availableOptions.add(MAP_CACHE_BY_INV_POS);
-				if(main.containerOpenCloseListener != null) availableOptions.addAll(List.of(MAP_CACHE_BY_EC_POS, MAP_CACHE_BY_CONTAINER_POS));
+				if(main.containerOpenCloseListener != null) availableOptions.addAll(List.of(MAP_CACHE_BY_EC_POS/*, MAP_CACHE_BY_CONTAINER_POS*/));
 
 				if(main.mapHighlights) availableOptions.add(MAX_IFRAME_TRACKING_DIST);
 				if(main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME,
@@ -125,7 +128,7 @@ public class Configs implements IConfigHandler{
 							PLACEMENT_HELPER_MAPART_FROM_BUNDLE));
 					if(main.placementHelperMapArtAuto) availableOptions.addAll(List.of(MAPART_AUTOPLACE, MAPART_AUTOPLACE_INV_DELAY, MAPART_AUTOPLACE_ANTI_ROTATE));
 				}
-				if(main.gameMessageListener) availableOptions.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PEARL_PULL));
+				if(main.gameMessageListener) availableOptions.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PLAY_SOUND_UNFOCUSED_ONLY, WHISPER_PEARL_PULL));
 				if(main.cmdMapArtGroup) availableOptions.add(MAPART_GROUP_INCLUDE_UNLOCKED);
 //				if(Main.keybindMapArtMoveBundle)
 					availableOptions.add(KEYBIND_BUNDLE_REMOVE_MAX);
@@ -395,8 +398,8 @@ public class Configs implements IConfigHandler{
 		public static final ConfigInteger CLIENT_ID = new ConfigInteger("clientId", 1, 0, 1000000).apply(DATABASE_KEY);
 		public static final ConfigString CLIENT_KEY = new ConfigString("clientKey", "some_unique_key").apply(DATABASE_KEY);
 		public static final ConfigString ADDRESS = new ConfigString("address", "evmodder.net:14441").apply(DATABASE_KEY);
-		public static final ConfigBoolean SHARE_MAPART = new ConfigBoolean("shareMapArt", true).apply(DATABASE_KEY); //TODO: implement
-		public static final ConfigBoolean EPEARL_OWNERS_BY_UUID = new ConfigBoolean("epearlDatabaseUUID", Main.epearlLookup != null).apply(DATABASE_KEY);
+		public static final ConfigBoolean SHARE_MAPART = new ConfigBoolean("shareMapArt", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY); //TODO: implement
+		public static final ConfigBoolean EPEARL_OWNERS_BY_UUID = new ConfigBoolean("epearlDatabaseUUID", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
 		public static final ConfigBoolean EPEARL_OWNERS_BY_XZ = new ConfigBoolean("epearlDatabaseXZ", false).apply(DATABASE_KEY);
 		//public static final ConfigBoolean SHARE_EPEARL_OWNERS = new ConfigBoolean("shareMapArt", true).apply(GENERIC_KEY); //TODO: implement
 		public static final ConfigBoolean SHARE_IGNORES = new ConfigBoolean("shareIgnoreList", false).apply(DATABASE_KEY);
@@ -404,7 +407,7 @@ public class Configs implements IConfigHandler{
 				new NameAndUUID("EvDoc", UUID.fromString("34471e8d-d0c5-47b9-b8e1-b5b9472affa4")),
 				new NameAndUUID("EvModder", UUID.fromString("0e314b60-29c7-4e35-bef3-3c652c8fb467"))
 		)).apply(DATABASE_KEY);
-		public static final ConfigBoolean SHARE_JOIN_QUIT = new ConfigBoolean("shareJoinQuit", true).apply(DATABASE_KEY);
+		public static final ConfigBoolean SHARE_JOIN_QUIT = new ConfigBoolean("shareJoinQuit", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
 
 		private static List<IConfigBase> availableOptions;
 		public static final List<IConfigBase> getOptions(){

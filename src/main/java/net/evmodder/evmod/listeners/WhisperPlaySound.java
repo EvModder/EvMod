@@ -1,5 +1,6 @@
 package net.evmodder.evmod.listeners;
 
+import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.sound.SoundCategory;
@@ -12,6 +13,7 @@ public class WhisperPlaySound{
 	private static SoundCategory category;
 
 	public static void recomputeSound(String soundData){
+		if(soundData == null || soundData.isBlank()) return;
 		if(soundData.lastIndexOf('{') != 0 || soundData.indexOf('}') != soundData.length()-1){
 			Main.LOGGER.warn("Unrecognized sound format: "+soundData+" (not wrapped in {})");
 			return;
@@ -33,6 +35,8 @@ public class WhisperPlaySound{
 
 	public static void playSound(){
 		if(sound == null || category == null || volume == 0) return;
-		MinecraftClient.getInstance().player.playSoundToPlayer(sound, category, volume, pitch);
+		MinecraftClient client = MinecraftClient.getInstance();
+		if(Configs.Generic.WHISPER_PLAY_SOUND_UNFOCUSED_ONLY.getBooleanValue() && client.isWindowFocused()) return;
+		client.player.playSoundToPlayer(sound, category, volume, pitch);
 	}
 }
