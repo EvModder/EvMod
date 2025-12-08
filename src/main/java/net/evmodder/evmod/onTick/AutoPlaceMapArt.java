@@ -367,7 +367,7 @@ public class AutoPlaceMapArt{
 //			if(contents != null && !contents.isEmpty()) mapItem = contents.get(contents.size()-1);
 
 			final boolean ALLOW_ONLY_TOP_SLOT = !Configs.Generic.USE_BUNDLE_PACKET.getBooleanValue();
-			final int TOP_SLOT = Configs.Generic.BUNDLES_ARE_REVERSED.getBooleanValue() ? contents.size()-1 : 0;
+			final int TOP_SLOT = Configs.Generic.BUNDLES_ARE_REVERSED.getBooleanValue() ? bundleSz-1 : 0;
 			for(int j=-1; j<bundleSz; ++j){
 				final ItemStack mapStack;
 				if(j == -1) mapStack = slots.get(i);
