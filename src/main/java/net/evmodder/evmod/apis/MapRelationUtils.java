@@ -52,7 +52,7 @@ public abstract class MapRelationUtils{
 		pos = pos.replace("TOP", "T").replace("BOTTOM", "B").replace("LEFT", "L").replace("RIGHT", "R").replace("MIDDLE", "M");
 		pos = pos.replace("UP", "T").replace("DOWN", "B");
 		pos = pos.replace("FIRST", "0").replace("SECOND", "1").replace("ONE", "0").replace("TWO", "1");
-		pos = pos.replace("[^a-zA-Z0-9](?:by|By|BY) [a-zA-Z0-9_]+[^a-zA-Z0-9 ]?", "").trim(); // Author attribution
+//		pos = pos.replaceAll("(?i)[^a-zA-Z0-9](?:by) [a-zA-Z0-9_]+[^a-zA-Z0-9 ]?$", "").trim(); // Author attribution
 		while(pos.matches(".*[^0-9 ][^0-9 ].*")) pos = pos.replaceAll("([^0-9 ])([^0-9 ])", "$1 $2");
 		return pos;
 	}
@@ -96,6 +96,11 @@ public abstract class MapRelationUtils{
 		return score; // Maximum score = 3*128 = 384
 	}
 
+	private static final String posStrRegex = "(\\d+([^0-9]+\\d+)?)|\\p{L}\\d+|\\p{L}\\p{L}\\p{L}?";
+	public static final String removeByArtist(String name){
+		return name.replaceAll("(?i)^(.*?("+posStrRegex+").*?)\\s*-\\s*(by)?.*$", "$1");
+	}
+
 	public static final boolean isMapArtWithCount(final ItemStack stack, final int count){
 		return stack.getCount() == count && stack.getItem() == Items.FILLED_MAP;
 	}
@@ -109,9 +114,10 @@ public abstract class MapRelationUtils{
 	// Output inclues input map
 	public static final RelatedMapsData getRelatedMapsByName(final List<ItemStack> slots, final String sourceName,
 			final int count, final Boolean locked, final World world){
+//		Main.LOGGER.info("getRelatedMapsByName() called, sourceName="+sourceName);
 		List<Integer> relatedMapSlots = new ArrayList<>();
 		if(sourceName == null) return new RelatedMapsData(-1, -1, relatedMapSlots);
-//		sourceName = removeByArtist(sourceName);//TODO
+		final String sourceName2 = removeByArtist(sourceName);
 
 		int prefixLen = -1, suffixLen = -1;
 //		Main.LOGGER.info("MapAdjUtil: getRelatedMapsByName() called for name: "+sourceName);
@@ -125,49 +131,73 @@ public abstract class MapRelationUtils{
 
 			final String name = item.getCustomName().getLiteralString();
 			if(name == null) continue;
-//			name = removeByArtist(name);//TODO
 			if(name.equals(sourceName)){relatedMapSlots.add(i); continue;}
+//			final String nameMinusArtist = removeByArtist(name);
+			final String name2 = removeByArtist(name);
+//			if(nameMinusArtist.equals(sourceNameMinusArtist)){relatedMapSlots.add(i); continue;}
 
 			//if(item.equals(prevMap)) continue;
-			int a = commonPrefixLen(sourceName, name), b = commonSuffixLen(sourceName, name);
-			int o = a-(Math.min(name.length(), sourceName.length())-b);
+			int a = commonPrefixLen(sourceName2, name2), b = commonSuffixLen(sourceName2, name2);
+			int o = a-(Math.min(name2.length(), sourceName2.length())-b);
 			if(o>0){a-=o; b-=o;}//Handle special case: "a 11/x"+"a 111/x", a=len(a 11)=4,b=len(11/x)=4,o=2 => a=len(a ),b=len(/x)
 			//if(a == 0 && b == 0) continue; // No shared prefix/suffix
 			//Main.LOGGER.info("MapRestock: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
 			if(prefixLen == a && suffixLen == b) continue;// No change to prefix/suffix
 			//Main.LOGGER.info("MapRestock: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
-			final String posStr = simplifyPosStr(name.substring(a, name.length()-b));
-			final String sourcePosStr = simplifyPosStr(sourceName.substring(a, sourceName.length()-b));
-			if(posStr.isBlank()) Main.LOGGER.info("Empty posStr for name in slot "+i+": "+name+", prefix/suffix: "+a+"/"+b);
+			final String posStr = simplifyPosStr(name2.substring(a, name2.length()-b));
+			final String sourcePosStr = simplifyPosStr(sourceName2.substring(a, sourceName2.length()-b));
+			//if(posStr.isBlank()) Main.LOGGER.info("Empty posStr for name in slot "+i+": "+name2+", prefix/suffix: "+a+"/"+b);
 			final boolean validMatchingPosStrs = isValidPosStr(posStr) && isValidPosStr(sourcePosStr) && 
 					(posStr.indexOf(' ') != -1) == (sourcePosStr.indexOf(' ') != -1);
 //			Main.LOGGER.info("slot: "+i+ ", posStr: "+posStr+", sourcePosStr: "+sourcePosStr+", bothValid: "+validMatchingPosStrs);
 			if(prefixLen == -1 && suffixLen == -1){ // Prefix/suffix not yet determined
 				if(validMatchingPosStrs){prefixLen = a; suffixLen = b;}
 				else if(a != 0 || b != 0)
-					Main.LOGGER.debug("MapAdjUtil: found matching prefix/suffix ("+a+"/"+b+"), but invalid PosStr: "+name.substring(a, name.length()-b));
+					Main.LOGGER.debug("MapAdjUtil: found matching prefix/suffix ("+a+"/"+b+"), but invalid PosStr: "+name2.substring(a, name2.length()-b));
 				continue;
 			}
-			final boolean oldContainsNew = prefixLen >= a && suffixLen >= b && (prefixLen > a || suffixLen > b);
-			//final boolean newContainsOld = a >= prefixLen && b >= suffixLen;
-			if(oldContainsNew && validMatchingPosStrs){
-				Main.LOGGER.info("MapAdjUtil: decreasing prefix/suffix from "+prefixLen+"/"+suffixLen+" to "+a+"/"+b+" for name: "+name);
-				prefixLen = a; suffixLen = b; // Expand posStr
+			if(validMatchingPosStrs){
+				boolean keepFullNumberPrefix = posStr.charAt(0) >= '0' && posStr.charAt(0) >= '9';
+				boolean keepFullNumberSuffix = posStr.charAt(posStr.length()-1) >= '0' && posStr.charAt(posStr.length()-1) >= '9';
+				if(keepFullNumberPrefix){
+					while(a > 0 && name2.charAt(a-1) >= '0' && name2.charAt(a-1) <= '9') --a;
+					if(a != prefixLen){
+						assert a < prefixLen;
+						Main.LOGGER.info("MapAdjUtil: decreasing prefix len from "+prefixLen+" to "+a+" to capture full number for name: "+name2);
+						prefixLen=a;
+					}
+				}
+				if(keepFullNumberSuffix){
+					while(b > 0 && name2.charAt(name2.length()-b) >= '0' && name2.charAt(name2.length()-b) <= '9') --b;
+					if(b != suffixLen){
+						assert b < suffixLen;
+						Main.LOGGER.info("MapAdjUtil: decreasing suffix len from "+suffixLen+" to "+b+" to capture full number for name: "+name2);
+						suffixLen=b;
+					}
+				}
+				final boolean oldContainsNew = prefixLen >= a && suffixLen >= b && (prefixLen > a || suffixLen > b);
+				//final boolean newContainsOld = a >= prefixLen && b >= suffixLen;
+				if(oldContainsNew){
+					Main.LOGGER.info("MapAdjUtil: decreasing prefix/suffix from "+prefixLen+"/"+suffixLen+" to "+a+"/"+b
+							+" ("+name2.substring(a, name2.length()-b)+") for name: "+name2);
+					prefixLen = a; suffixLen = b; // Expand posStr
+				}
 			}
-			if(a+b > prefixLen+suffixLen && !isValidPosStr(simplifyPosStr(name.substring(Math.min(a, prefixLen), name.length()-Math.min(b, suffixLen))))){
-				Main.LOGGER.info("MapAdjUtil: increasing prefix/suffix from "+prefixLen+"/"+suffixLen+" to "+a+"/"+b+" for name: "+name);
+			if(a+b > prefixLen+suffixLen && !isValidPosStr(simplifyPosStr(name2.substring(Math.min(a, prefixLen), name2.length()-Math.min(b, suffixLen))))){
+				Main.LOGGER.info("MapAdjUtil: increasing prefix/suffix from "+prefixLen+"/"+suffixLen+" to "+a+"/"+b
+						+" ("+name2.substring(a, name2.length()-b)+") for name: "+name2);
 				prefixLen = a; suffixLen = b; // Shrink posStr
 			}
 		}
 		if(prefixLen == -1){
 			// error:
-			if(relatedMapSlots.isEmpty()) Main.LOGGER.warn("MapAdjUtil: no shared prefix/suffix named maps found for name: "+sourceName);
+			if(relatedMapSlots.isEmpty()) Main.LOGGER.warn("MapAdjUtil: no shared prefix/suffix named maps found for name: "+sourceName2);
 			// 1x1:
 //			if(relatedMapSlots.size() == 1) Main.LOGGER.warn("MapAdjUtil: only one shared prefix/suffix named maps found for name: "+sourceName);
 			return new RelatedMapsData(prefixLen, suffixLen, relatedMapSlots);
 		}
 		//Main.LOGGER.info("MapAdjUtil: prefixLen="+prefixLen+", suffixLen="+suffixLen);
-		final String sourcePosStr = simplifyPosStr(sourceName.substring(prefixLen, sourceName.length()-suffixLen));
+		final String sourcePosStr = simplifyPosStr(sourceName2.substring(prefixLen, sourceName2.length()-suffixLen));
 		final boolean sourcePosIs2d = sourcePosStr.indexOf(' ') != -1;
 		//Main.LOGGER.info("AdjacentMapUtils:sourcePosStr: "+sourcePosStr);
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
@@ -180,20 +210,21 @@ public abstract class MapRelationUtils{
 
 			final String name = item.getCustomName().getString();
 			if(name == null) continue;
-			if(name.length() < prefixLen+suffixLen+1 || name.equals(sourceName)) continue;
-			if(!sourceName.regionMatches(0, name, 0, prefixLen) || !sourceName.regionMatches(
-					sourceName.length()-suffixLen, name, name.length()-suffixLen, suffixLen)){
+			final String name2 = removeByArtist(name);
+			if(name2.length() < prefixLen+suffixLen+1 || name2.equals(sourceName2)) continue;
+			if(!sourceName2.regionMatches(0, name2, 0, prefixLen) || !sourceName2.regionMatches(
+					sourceName2.length()-suffixLen, name2, name2.length()-suffixLen, suffixLen)){
 				//Main.LOGGER.info("MapAdjUtil: name does not match: "+name);
 				continue;
 			}
-			final String posStr = simplifyPosStr(name.substring(prefixLen, name.length()-suffixLen));
+			final String posStr = simplifyPosStr(name2.substring(prefixLen, name2.length()-suffixLen));
 			if(!isValidPosStr(posStr)){
 				//Main.LOGGER.info("MapAdjUtil: unrecognized pos data: '"+posStr+"' for name:'"+name+"'");
 				continue;
 			}
 			final boolean pos2d = posStr.indexOf(' ') != -1;
 			//TODO: finding next map by name: "Flag 2/8" -> mismatched pos data: "Flag 4&8/8"
-			if(pos2d != sourcePosIs2d){Main.LOGGER.warn("MapAdjUtil: mismatched pos data: "+name); return new RelatedMapsData(-1, -1, new ArrayList<>());}
+			if(pos2d != sourcePosIs2d){Main.LOGGER.warn("MapAdjUtil: mismatched pos data: "+name2); return new RelatedMapsData(-1, -1, new ArrayList<>());}
 			relatedMapSlots.add(i);
 		}
 		return new RelatedMapsData(prefixLen, suffixLen, relatedMapSlots);

@@ -208,8 +208,10 @@ public final class MapHandRestock{
 		return checkComesAfterAnyOrder(posA, posB, regular2dData, /*infoLogs=*/false) != 0
 			|| checkComesAfterAnyOrder(posA, posB, rotated2dData, /*infoLogs=*/false) != 0;
 	}
-	private String getPosStrFromName(final String name, final RelatedMapsData data){
-		return data.prefixLen() == -1 ? name : MapRelationUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
+	private String getPosStrFromName(String name, final RelatedMapsData data){
+		if(data.prefixLen() == -1) return name;
+		name = MapRelationUtils.removeByArtist(name);
+		return MapRelationUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
 	}
 	private int getNextSlotByNameUsingPosData2d(final List<ItemStack> slots, final RelatedMapsData data,
 			final String prevPosStr, final PosData2D posData2d, final boolean infoLogs){
@@ -271,16 +273,17 @@ public final class MapHandRestock{
 //		assert (data.prefixLen() == -1) == (data.suffixLen() == -1); // Unreachable. But yes, should always be true
 		assert data.prefixLen() < prevName.length() && data.suffixLen() < prevName.length();
 
-		final String prevPosStr = getPosStrFromName(prevName, data);
+		final String nameWoArtist = MapRelationUtils.removeByArtist(prevName);
+		final String prevPosStr = MapRelationUtils.simplifyPosStr(nameWoArtist.substring(data.prefixLen(), nameWoArtist.length()-data.suffixLen()));
 
 		PosData2D posData2d = posData2dForName.getOrDefault(prevName, POS_DATA_404);
 		if(posData2d == POS_DATA_404){
 			final List<String> mapNames = Stream.concat(Stream.of(prevSlot), data.slots().stream())
 					.map(i -> slots.get(i).getCustomName().getLiteralString()).toList();
-			final String prefixStr = prevName.substring(0, data.prefixLen());
-			final String suffixStr = prevName.substring(prevName.length()-data.suffixLen());
+			final String prefixStr = nameWoArtist.substring(0, data.prefixLen());
+			final String suffixStr = nameWoArtist.substring(nameWoArtist.length()-data.suffixLen()) + prevName.substring(nameWoArtist.length());
 			final String nonPosName = prefixStr + "[XY]" + suffixStr;
-			Main.LOGGER.info("MapRestock: determining posData2d for map '"+nonPosName+"', related names: "+mapNames);
+			Main.LOGGER.info("MapRestock: finding posData2d for map '"+nonPosName+"', related names: "+mapNames.size());
 			final boolean hasSizeInName = suffixStr.matches("\\s*(of|/)\\s*\\d+.*");
 			if(hasSizeInName){
 				posData2d = null;
@@ -303,7 +306,7 @@ public final class MapHandRestock{
 				+(posData2d == null ? ", posData2d=null" : ", minPos2="+posData2d.minPos2+", maxPos2="+posData2d.maxPos2+", sideways="+posData2d.isSideways)
 				+", name: "+prevName);
 
-		final int i = getNextSlotByNameUsingPosData2d(slots, data, prevPosStr, posData2d, /*infoLogs=*/false);//TODO: set to true for debugging
+		final int i = getNextSlotByNameUsingPosData2d(slots, data, prevPosStr, posData2d, /*infoLogs=*/true);//TODO: set to true for debugging
 		if(i == -999){
 			Main.LOGGER.info("MapRestock: getNextSlotByName() failed");
 			return -1;
@@ -378,7 +381,7 @@ public final class MapHandRestock{
 			final MapState state = FilledMapItem.getMapState(slots.get(i), world);
 //			assert state != null;
 			if(state == null) continue; // Only possible if map IDs get corrupted (or a player in creative spawns an id that doesn't exist yet)
-			if(prevLocked != null & state.locked != prevLocked) continue;
+			if(prevLocked != null && state.locked != prevLocked) continue;
 			if(bestScore < 2){bestScore = 2; bestSlot = i;} // It's a map with the same locked state
 			if(slots.get(i).getCustomName() == null) continue;
 			final String name = slots.get(i).getCustomName().getLiteralString();
@@ -387,7 +390,7 @@ public final class MapHandRestock{
 			final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, name, prevCount, prevLocked, world);
 			if(data.slots().size() < 2 != prevWas1x1) continue;
 			if(bestScore < 4){bestScore = 4; bestSlot = i;} // It's a named map with matching 1x1 status
-			String posStr = data.prefixLen() == -1 ? name : MapRelationUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
+			final String posStr = getPosStrFromName(name, data);
 			if(bestPosStr == null || posStr.compareTo(bestPosStr) < 0){bestPosStr = posStr; bestScore=5; bestSlot = i;} // In a map group, possible starter
 		}
 		if(bestScore == 5) Main.LOGGER.info("MapRestock: findAny() found same count/locked/hasName/is1x1, potential TL map");
@@ -422,7 +425,7 @@ public final class MapHandRestock{
 			final String name = stack.getCustomName() == null ? null : stack.getCustomName().getLiteralString();
 			if((prevName == null) != (name == null) || (prevName != null && prevName.equals(name))) continue;
 
-			Main.LOGGER.info("MapRestock: available from bundle slot="+i+",name="+name+",prevName="+prevName);
+			Main.LOGGER.info("MapRestock: available from bundle slot="+i+",name="+name);
 			slotsWithBundleSub.set(i, stack);
 		}
 		return slotsWithBundleSub;

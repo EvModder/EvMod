@@ -3,6 +3,7 @@ package net.evmodder.evmod.apis;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -159,6 +160,7 @@ public class MapStateCacher{
 		try(FileInputStream fis = new FileInputStream(FileIO_New.DIR+"map_cache/"+filename+".cache"); ObjectInputStream ois = new ObjectInputStream(fis)){
 			return ois.readObject();
 		}
+		catch(FileNotFoundException e){return null;}
 		catch(EOFException e){} // Hasn't been cached yet
 		catch(IOException | ClassNotFoundException e){e.printStackTrace();}
 		return null;

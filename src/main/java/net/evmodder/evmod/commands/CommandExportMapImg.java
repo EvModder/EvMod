@@ -168,6 +168,49 @@ public class CommandExportMapImg{
 		return numExports;
 	}
 
+	private final String getCleanedName(String itemName0, RelatedMapsData data){
+//		if(data.prefixLen() == -1) return itemName0;
+//		else{
+//			final String nameWoArtist = MapRelationUtils.removeByArtist(itemName0);
+//			return itemName0.substring(0, data.prefixLen())
+//					+ "*"
+//					+ nameWoArtist.substring(nameWoArtist.length()-data.suffixLen())
+//					+ itemName0.substring(nameWoArtist.length());
+//		}
+		if(data.prefixLen() == -1) return itemName0.trim();
+		else{
+			String nameWithoutArtist = MapRelationUtils.removeByArtist(itemName0);
+			String prefixStr = nameWithoutArtist.substring(0, data.prefixLen());
+			String suffixStr = nameWithoutArtist.substring(nameWithoutArtist.length() - data.suffixLen()) + itemName0.substring(nameWithoutArtist.length());
+			if(REMOVE_MAX_CNT){
+				final String szCntStr = ""+data.slots().size();
+				final int idx = suffixStr.indexOf(szCntStr);
+				if(idx != -1 && Normalizer.normalize(suffixStr.substring(0, idx), Normalizer.Form.NFKD).toLowerCase().matches("\\s*(of|/)\\s*")){
+					suffixStr = suffixStr.substring(idx + szCntStr.length());
+				}
+			}
+			// Trim leading/trailing whitespace
+			final String prefixStrTrimmed = prefixStr.stripTrailing();
+			final String suffixStrTrimmed =  suffixStr.stripLeading();
+			final boolean hadSpace = prefixStrTrimmed.length() < prefixStr.length() || suffixStrTrimmed.length() < suffixStr.length();
+			prefixStr = prefixStrTrimmed + (hadSpace ? " " : "");
+			suffixStr = suffixStrTrimmed;
+
+			if(REMOVE_BRACKET_SYMBOLS){
+				int a=prefixStr.length()-1, b=0;
+				while(true){
+					while(a >= 0 && Character.isWhitespace(prefixStr.charAt(a))) --a;
+					while(b < suffixStr.length() && Character.isWhitespace(suffixStr.charAt(b))) ++b;
+					if(a == -1 || b == suffixStr.length() || !isReflectedChar(prefixStr.charAt(a), suffixStr.charAt(b))) break;
+					--a; ++b;
+				}
+				prefixStr = prefixStr.substring(0, a+1) + (hadSpace ? " " : "");
+				suffixStr = suffixStr.substring(b);
+			}
+			return (prefixStr + suffixStr).trim();
+		}
+	}
+
 	private void buildMapImgFile(final FabricClientCommandSource source, final Map<Vec3i, ItemFrameEntity> ifeLookup,
 			final ArrayList<Vec3i> mapWall, final int w, final int h){
 		final boolean BLOCK_BORDER = Configs.Visuals.EXPORT_MAP_IMG_BORDER.getBooleanValue();
@@ -219,8 +262,7 @@ public class CommandExportMapImg{
 				ifeLookup.get(mapWall.reversed().stream().filter(ifeLookup::containsKey).findFirst().get()).getHeldItemStack()
 			);
 			RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(sampleStacks, source.getWorld());
-			if(data.prefixLen() == -1) imgName = nameStr;
-			else imgName = nameStr.substring(0, data.prefixLen()) + nameStr.substring(nameStr.length()-data.suffixLen());
+			imgName = getCleanedName(nameStr, data);
 		}
 		imgName = imgName.trim().replaceAll("[.\\\\/]+", "_");
 
@@ -514,39 +556,6 @@ public class CommandExportMapImg{
 			case '-': return r == '-';
 			default:
 				return Character.isWhitespace(l) && Character.isWhitespace(r);
-		}
-	}
-	private final String getCleanedName(String itemName0, RelatedMapsData data){
-		if(data.prefixLen() == -1) return itemName0.trim();
-		else{
-			String prefixStr = itemName0.substring(0, data.prefixLen());
-			String suffixStr = itemName0.substring(itemName0.length() - data.suffixLen());
-			if(REMOVE_MAX_CNT){
-				final String szCntStr = ""+data.slots().size();
-				final int idx = suffixStr.indexOf(szCntStr);
-				if(idx != -1 && Normalizer.normalize(suffixStr.substring(0, idx), Normalizer.Form.NFKD).toLowerCase().matches("\\s*(of|/)\\s*")){
-					suffixStr = suffixStr.substring(idx + szCntStr.length());
-				}
-			}
-			// Trim leading/trailing whitespace
-			final String prefixStrTrimmed = prefixStr.stripTrailing();
-			final String suffixStrTrimmed =  suffixStr.stripLeading();
-			final boolean hadSpace = prefixStrTrimmed.length() < prefixStr.length() || suffixStrTrimmed.length() < suffixStr.length();
-			prefixStr = prefixStrTrimmed + (hadSpace ? " " : "");
-			suffixStr = suffixStrTrimmed;
-
-			if(REMOVE_BRACKET_SYMBOLS){
-				int a=prefixStr.length()-1, b=0;
-				while(true){
-					while(a >= 0 && Character.isWhitespace(prefixStr.charAt(a))) --a;
-					while(b < suffixStr.length() && Character.isWhitespace(suffixStr.charAt(b))) ++b;
-					if(a == -1 || b == suffixStr.length() || !isReflectedChar(prefixStr.charAt(a), suffixStr.charAt(b))) break;
-					--a; ++b;
-				}
-				prefixStr = prefixStr.substring(0, a+1) + (hadSpace ? " " : "");
-				suffixStr = suffixStr.substring(b);
-			}
-			return (prefixStr + suffixStr).trim();
 		}
 	}
 	private final boolean SHOW_ONLY_IF_HAS_AZ = true, REMOVE_MAX_CNT = true, REMOVE_BRACKET_SYMBOLS = true;

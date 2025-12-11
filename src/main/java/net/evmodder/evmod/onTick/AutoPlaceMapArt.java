@@ -140,7 +140,8 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 	private final String getPosStrFromName(final ItemStack stack){
 		final String name = stack.getCustomName().getString();
-		return MapRelationUtils.simplifyPosStr(name.substring(currentData.prefixLen(), name.length()-currentData.suffixLen()));
+		final String nameWithoutArtist = MapRelationUtils.removeByArtist(name);
+		return MapRelationUtils.simplifyPosStr(nameWithoutArtist.substring(currentData.prefixLen(), nameWithoutArtist.length()-currentData.suffixLen()));
 	}
 
 	private ItemFrameEntity lastIfe;
@@ -171,7 +172,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		}
 
 		final int ifeOffset1 = currAxisData.varAxis1 - lastAxisData.varAxis1, ifeOffset2 = currAxisData.varAxis2 - lastAxisData.varAxis2;
-		Main.LOGGER.info("AutoPlaceMapArt: ifeOffset1="+ifeOffset1+",ifeOffset2="+ifeOffset2);
+//		Main.LOGGER.info("AutoPlaceMapArt: ifeOffset1="+ifeOffset1+",ifeOffset2="+ifeOffset2);
 		if(ifeOffset1 == 0 && ifeOffset2 == 0){
 			Main.LOGGER.error("AutoPlaceMapArt: Placed maps appear to have the same pos! (shouldn't be possible!)");
 			disableAndReset(); return false;
@@ -191,14 +192,14 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			assert allMapItems.isEmpty();
 			allMapItems.add(currStack); allMapItems.add(lastStack);
 			MapRelationUtils.getAllNestedItems(player.getInventory().main.stream()).filter(s -> s.getItem() == Items.FILLED_MAP).forEach(allMapItems::add);
-			Main.LOGGER.info("AutoPlaceMapArt: all maps in inv: "+(allMapItems.size()-2));
+//			Main.LOGGER.info("AutoPlaceMapArt: all maps in inv: "+(allMapItems.size()-2));
 
 			currentData = MapRelationUtils.getRelatedMapsByName0(allMapItems, player.getWorld());
 			if(currentData.slots().size() <= 3){
 				Main.LOGGER.info("AutoPlaceMapArt: not enough remaining maps in inv to justify enabling AutoPlace");
 				disableAndReset(); return false;
 			}
-			Main.LOGGER.info("AutoPlaceMapArt: related maps in inv: "+(currentData.slots().size()-2));
+//			Main.LOGGER.info("AutoPlaceMapArt: related maps in inv: "+(currentData.slots().size()-2));
 		}
 		final String currPosStr = this.currPosStr=getPosStrFromName(currStack), lastPosStr = getPosStrFromName(lastStack);
 		final Pos2DPair pos2dPair = getRelativePosPair(currPosStr, lastPosStr);
