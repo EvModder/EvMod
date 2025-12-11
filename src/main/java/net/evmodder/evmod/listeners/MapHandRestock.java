@@ -35,6 +35,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypeFilter;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
 
@@ -510,8 +511,9 @@ public final class MapHandRestock{
 		if(allowAutoPlacer || allowAutoRemover){
 			AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
 				if(allowAutoPlacer && autoPlacer.hasKnownLayout()){
-					if(entity instanceof ItemFrameEntity ife && ife.getHeldItemStack().getItem() == Items.FILLED_MAP
-						&& autoPlacer.ifePosFilter(ife) && !autoPlacer.getPlacement(ife.getHeldItemStack()).equals(ife.getBlockPos()))
+					BlockPos placement;
+					if(entity instanceof ItemFrameEntity ife && ife.getHeldItemStack().getItem() == Items.FILLED_MAP && autoPlacer.ifePosFilter(ife)
+							&& (placement=autoPlacer.getPlacement(ife.getHeldItemStack())) != null && !placement.equals(ife.getBlockPos()))
 					{
 						Main.LOGGER.info("MapRestock: Player manually removed an incorrectly placed map (during AutoPlaceMapArt)");
 					}

@@ -40,6 +40,11 @@
 	"evmod.gui.label.tooltipDisplay.on": "Apagado",
 	"evmod.gui.label.tooltipDisplay.advanced": "Descripciones avanzadas",
 
+	"evmod.gui.label.invisIFramesMapArt.off": "Encendido",
+	"evmod.gui.label.invisIFramesMapArt.all": "Todos",
+	"evmod.gui.label.invisIFramesMapArt.mapArt": "solo para mapart",
+	"evmod.gui.label.invisIFramesMapArt.mapArtSemiTransparent": "solo para semi transparentes",
+
 	"evmod.gui.label.cacheMapState.off": "Encendido",
 	"evmod.gui.label.cacheMapState.memory": "Solo esta Sesion",
 	"evmod.gui.label.cacheMapState.memoryAndDisk": "Persistente",
@@ -120,8 +125,6 @@
 	"evmod.config.visuals.name.displayTotemCount": "Muestra el numero de totems",
 	"evmod.config.visuals.name.repairCostInHotbarHUD": "muestra el costo de reparacion en el HUD",
 	"evmod.config.visuals.name.repairCostTooltip": "informa el costo de reparacion",
-	"evmod.config.visuals.name.invisIFramesMapArt": "Mapart con marcos de item invisibles",
-	"evmod.config.visuals.name.invisIFramesMapArtOnlyForSemiTransparent": "marcos de item invisibles solo para mapas semi transparentes",
 	"evmod.config.visuals.name.mapHighlightInIFrame": "destaca mapas en marcos de item",
 	"evmod.config.visuals.name.mapHighlightInTooltip": "destaca mapas en descripcion",
 	"evmod.config.visuals.name.mapHighlightInHotbarHUD": "destaca mapas en HUD",

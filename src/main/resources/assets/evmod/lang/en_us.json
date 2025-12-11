@@ -41,6 +41,11 @@
 	"evmod.gui.label.tooltipDisplay.on": "On",
 	"evmod.gui.label.tooltipDisplay.advanced": "Advanced tooltips",
 
+	"evmod.gui.label.invisIFramesMapArt.off": "Off",
+	"evmod.gui.label.invisIFramesMapArt.all": "Any item",
+	"evmod.gui.label.invisIFramesMapArt.mapArt": "MapArt only",
+	"evmod.gui.label.invisIFramesMapArt.mapArtSemiTransparent": "Semi-transparent only",
+
 	"evmod.gui.label.cacheMapState.off": "Off",
 	"evmod.gui.label.cacheMapState.memory": "Session-only",
 	"evmod.gui.label.cacheMapState.memoryAndDisk": "Persistent",
@@ -132,8 +137,6 @@
 	"evmod.config.visuals.name.displayTotemCount": "displayTotemCount",
 	"evmod.config.visuals.name.repairCostInHotbarHUD": "repairCostInHotbarHUD",
 	"evmod.config.visuals.name.repairCostTooltip": "repairCostTooltip",
-	"evmod.config.visuals.name.invisIFramesMapArt": "invisIFramesMapArt",
-	"evmod.config.visuals.name.invisIFramesMapArtOnlyForSemiTransparent": "invisIFramesMapArtSemiTransOnly",
 	"evmod.config.visuals.name.mapHighlightInIFrame": "mapHighlightInIFrame",
 	"evmod.config.visuals.name.mapHighlightInTooltip": "mapHighlightInTooltip",
 	"evmod.config.visuals.name.mapHighlightInHotbarHUD": "mapHighlightInHotbarHUD",

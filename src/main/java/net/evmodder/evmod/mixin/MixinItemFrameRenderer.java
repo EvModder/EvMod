@@ -9,6 +9,7 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.MapStateCacher;
+import net.evmodder.evmod.config.OptionInvisIframes;
 import net.evmodder.evmod.onTick.UpdateItemFrameHighlights;
 import net.evmodder.evmod.onTick.UpdateItemFrameHighlights.Highlight;
 import net.minecraft.client.MinecraftClient;
@@ -127,17 +128,27 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		cir.setReturnValue(name);
 	}
 
-	private boolean isSemiTransparent(ItemFrameEntityRenderState ifers){
-		MapState state = client.world.getMapState(ifers.mapId);
+	// TODO: move to MapColorUtils?
+	private boolean isSemiTransparent(MapState state){
 		if(state == null || state.colors == null) return false;
 		boolean trans = false, notTrans = false, t;
 		for(byte b : state.colors){t = (0<=b && b<=3); trans |= t; notTrans |= !t;}
 		return trans && notTrans;
 	}
 
+	private boolean shouldBeInvis(ItemFrameEntityRenderState ifers){
+		switch((OptionInvisIframes)Configs.Visuals.INVIS_IFRAMES.getOptionListValue()){
+			case ANY_ITEM: return !ifers.itemRenderState.isEmpty();
+			case MAPART: return ifers.mapId != null;
+			case SEMI_TRANSPARENT_MAPART: return ifers.mapId != null && isSemiTransparent(client.world.getMapState(ifers.mapId));
+			case OFF:
+			default:
+				return false;
+		}
+	}
+
 	@Inject(method="render", at=@At("HEAD"))
-	private void disableItemFrameFrameRenderingWhenHoldingMaps(ItemFrameEntityRenderState ifers, MatrixStack _0, VertexConsumerProvider _1, int _2, CallbackInfo _3) {
-		ifers.invisible |= (Configs.Visuals.INVIS_IFRAMES.getBooleanValue() && ifers.mapId != null
-				&& (!Configs.Visuals.INVIS_IFRAMES_SEMI_TRANSPARENT.getBooleanValue() || isSemiTransparent(ifers)));
+	private void disableItemFrameFrameRenderingWhenHoldingMaps(ItemFrameEntityRenderState ifers, MatrixStack _0, VertexConsumerProvider _1, int _2, CallbackInfo _3){
+		ifers.invisible |= shouldBeInvis(ifers);
 	}
 }

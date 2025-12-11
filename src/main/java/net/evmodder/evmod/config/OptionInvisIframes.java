@@ -4,15 +4,16 @@ import fi.dy.masa.malilib.config.IConfigOptionListEntry;
 import fi.dy.masa.malilib.util.StringUtils;
 import net.evmodder.evmod.Main;
 
-public enum OptionTooltipDisplay implements IConfigOptionListEntry {
-	OFF("off", Main.MOD_ID+".gui.label.tooltipDisplay.off"),
-	ON("on", Main.MOD_ID+".gui.label.tooltipDisplay.on"),
-	ADVANCED_TOOLTIPS("advanced", Main.MOD_ID+".gui.label.tooltipDisplay.advanced");
+public enum OptionInvisIframes implements IConfigOptionListEntry {
+	OFF("off", Main.MOD_ID+".gui.label.invisIFramesMapArt.off"),
+	ANY_ITEM("all", Main.MOD_ID+".gui.label.invisIFramesMapArt.all"),
+	MAPART("mapArt", Main.MOD_ID+".gui.label.invisIFramesMapArt.mapArt"),
+	SEMI_TRANSPARENT_MAPART("mapArtSemiTransparent", Main.MOD_ID+".gui.label.invisIFramesMapArt.mapArtSemiTransparent");
 
 	private final String configString;
 	private final String translationKey;
 
-	OptionTooltipDisplay(String configString, String translationKey){
+	OptionInvisIframes(String configString, String translationKey){
 		this.configString = configString;
 		this.translationKey = translationKey;
 	}

@@ -162,10 +162,8 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean REPAIR_COST_HOTBAR_HUD = new ConfigBoolean("repairCostInHotbarHUD", false).apply(VISUALS_KEY);
 		public static final ConfigOptionList REPAIR_COST_TOOLTIP = new ConfigOptionList("repairCostTooltip",
 				Main.mapArtFeaturesOnly ? OptionTooltipDisplay.OFF : OptionTooltipDisplay.ADVANCED_TOOLTIPS).apply(VISUALS_KEY);
-		public static final ConfigBoolean INVIS_IFRAMES = new ConfigBoolean("invisIFramesMapArt", true).apply(VISUALS_KEY);
-		//InvisIFrameOption {ANY_ITEM, MAPART, PARTIALLY_TRANSPARENT_MAPART}
-//		public static final ConfigOptionList INVIS_IFRAMES = new ConfigOptionList("invisIFrames", InvisIFrameOption.PARTIALLY_TRANSPARENT_MAPART}).apply(GENERIC_KEY);
-		public static final ConfigBoolean INVIS_IFRAMES_SEMI_TRANSPARENT = new ConfigBoolean("invisIFramesMapArtOnlyForSemiTransparent", true).apply(VISUALS_KEY);
+		public static final ConfigOptionList INVIS_IFRAMES = new ConfigOptionList("invisIFramesMapArt",
+				OptionInvisIframes.SEMI_TRANSPARENT_MAPART).apply(VISUALS_KEY);
 
 		public static final ConfigBoolean MAP_HIGHLIGHT_IFRAME = new ConfigBoolean("mapHighlightInIFrame", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_HIGHLIGHT_TOOLTIP = new ConfigBoolean("mapHighlightInTooltip", true).apply(VISUALS_KEY);
@@ -207,7 +205,7 @@ public class Configs implements IConfigHandler{
 					availableOptions.add(REPAIR_COST_HOTBAR_HUD);
 					if(main.tooltipRepairCost) availableOptions.add(REPAIR_COST_TOOLTIP);
 				}
-				availableOptions.addAll(List.of(INVIS_IFRAMES, INVIS_IFRAMES_SEMI_TRANSPARENT));
+				availableOptions.add(INVIS_IFRAMES);
 				if(main.mapHighlights){
 					availableOptions.add(MAP_HIGHLIGHT_IFRAME);
 					if(main.tooltipMapHighlights) availableOptions.add(MAP_HIGHLIGHT_TOOLTIP);
