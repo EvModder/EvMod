@@ -145,7 +145,7 @@ public abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<Gui
 		ButtonGeneric togglesliderBtn = new ButtonGeneric(x, y + 2, icon);
 		x += sliderWidth + 1;
 
-		configWidth -= textFieldWidth*2 + sliderWidth + 26;
+		configWidth -= textFieldWidth*2 + sliderWidth + 27;
 		IKeybind keybind = config.getKeybind();
 		ConfigButtonKeybind keybindButton = new ConfigButtonKeybind(x, y, configWidth - 2, 20, keybind, host);
 		x += configWidth;

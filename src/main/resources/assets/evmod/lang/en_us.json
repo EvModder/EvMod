@@ -71,7 +71,7 @@
 	"evmod.config.generic.name.mapStateCacheUnlocked": "mapCacheUnlocked",
 	"evmod.config.generic.name.mapStateCacheById": "mapCache: by MapId",
 	"evmod.config.generic.comment.mapStateCacheById": "Does not work on 2b2t!",
-	"evmod.config.generic.name.mapStateCacheByName": "mapCache: by ItemName (unique)",
+	"evmod.config.generic.name.mapStateCacheByName": "mapCache: by ItemName",
 	"evmod.config.generic.comment.mapStateCacheByName": "Unreliable for non-unique item names",
 	"evmod.config.generic.name.mapStateCacheByInvPos": "mapCache: by inv slot",
 	"evmod.config.generic.comment.mapStateCacheByInvPos": "Unreliable for shared-access accounts",
