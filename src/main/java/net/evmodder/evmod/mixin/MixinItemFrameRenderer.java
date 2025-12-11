@@ -95,10 +95,8 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		Text cachedName = UpdateItemFrameHighlights.displayNameCache.get(itemFrameEntity);
 		if(cachedName != null){cir.setReturnValue(cachedName); return;}
 
-		if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()){
-			String name = stack.getCustomName() == null ? null : stack.getCustomName().getLiteralString();
-			if(name != null) MapStateCacher.saveMapStateByName(name, state);
-		}
+		if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue() && stack.getCustomName() != null && stack.getCustomName().getLiteralString() != null)
+			MapStateCacher.addMapStateByName(stack, state);
 
 		MutableText name = stack.getName().copy();
 		if(hl == Highlight.INV_OR_NESTED_INV){

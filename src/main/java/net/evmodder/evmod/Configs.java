@@ -113,7 +113,8 @@ public class Configs implements IConfigHandler{
 						USE_BUNDLE_PACKET, BUNDLES_ARE_REVERSED));
 				final boolean CAN_CACHE_MAPS = (main.serverJoinListener && main.serverQuitListener) || main.containerOpenCloseListener != null;
 				if(CAN_CACHE_MAPS) availableOptions.addAll(List.of(MAP_CACHE, MAP_CACHE_UNLOCKED));
-//				if(main.serverJoinListener) availableOptions.addAll(List.of(MAP_CACHE_BY_ID, MAP_CACHE_BY_NAME));
+				if(main.serverJoinListener) availableOptions.add(MAP_CACHE_BY_ID);
+				if(main.containerOpenCloseListener != null) availableOptions.add(MAP_CACHE_BY_NAME);
 				if(main.serverJoinListener && main.serverQuitListener) availableOptions.add(MAP_CACHE_BY_INV_POS);
 				if(main.containerOpenCloseListener != null) availableOptions.addAll(List.of(MAP_CACHE_BY_EC_POS/*, MAP_CACHE_BY_CONTAINER_POS*/));
 

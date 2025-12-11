@@ -11,7 +11,10 @@ tooltip.map_highlights: true
 tooltip.map_metadata: true
 tooltip.repair_cost: true
 
-listener.container_open: true # for mapstate_cache.echest, mapstate_cache.any
+# Used by map state cacher, if you don't use it feel free to disable
+listener.server_join: true
+listener.server_quit: true
+listener.container_open: true
 
 command.exportmapimg: true
 command.mapartgroup: true

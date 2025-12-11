@@ -8,6 +8,7 @@ import net.evmodder.evmod.config.OptionMapStateCache;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.map.MapState;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.text.Text;
 
@@ -62,10 +63,11 @@ public final class ContainerOpenCloseListener{
 //						}
 						if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()){
 							contents.stream()
-								.filter(s -> s.getCustomName() != null && s.getCustomName().getLiteralString() != null
-									&& FilledMapItem.getMapState(s, client.world) != null)
-								.forEach(s -> MapStateCacher.saveMapStateByName(
-										s.getCustomName().getLiteralString(), FilledMapItem.getMapState(s, client.world)));
+								.filter(s -> s.getCustomName() != null && s.getCustomName().getLiteralString() != null).forEach(s -> {
+									MapState state = FilledMapItem.getMapState(s, client.world);
+									if(state == null) MapStateCacher.loadMapStateByName(s, client.world);
+									else MapStateCacher.addMapStateByName(s, state);
+								});
 						}
 					}
 				}

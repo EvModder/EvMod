@@ -50,7 +50,7 @@ abstract class MixinClientWorld{
 	@Inject(method="putClientsideMapState", at=@At("HEAD"))
 	private void e(MapIdComponent id, MapState state, CallbackInfo ci){
 		if(MapStateCacher.hasCacheMarker(state)) return;
-		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.saveMapStateById(id.id(), state);
+		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.addMapStateById(id.id(), state);
 //		if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) MapStateCacher.saveMapStateByName(name, state);
 
 		if(!Configs.Database.SHARE_MAPART.getBooleanValue() && Main.remoteSender == null) return;

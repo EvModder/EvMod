@@ -137,6 +137,7 @@
 	"evmod.config.visuals.name.displayTotemCount": "displayTotemCount",
 	"evmod.config.visuals.name.repairCostInHotbarHUD": "repairCostInHotbarHUD",
 	"evmod.config.visuals.name.repairCostTooltip": "repairCostTooltip",
+	"evmod.config.visuals.name.invisIFrames": "invisIFrames",
 	"evmod.config.visuals.name.mapHighlightInIFrame": "mapHighlightInIFrame",
 	"evmod.config.visuals.name.mapHighlightInTooltip": "mapHighlightInTooltip",
 	"evmod.config.visuals.name.mapHighlightInHotbarHUD": "mapHighlightInHotbarHUD",

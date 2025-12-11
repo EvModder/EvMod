@@ -125,6 +125,7 @@
 	"evmod.config.visuals.name.displayTotemCount": "Muestra el numero de totems",
 	"evmod.config.visuals.name.repairCostInHotbarHUD": "muestra el costo de reparacion en el HUD",
 	"evmod.config.visuals.name.repairCostTooltip": "informa el costo de reparacion",
+	"evmod.config.visuals.name.invisIFrames": "marcos de item invisibles",
 	"evmod.config.visuals.name.mapHighlightInIFrame": "destaca mapas en marcos de item",
 	"evmod.config.visuals.name.mapHighlightInTooltip": "destaca mapas en descripcion",
 	"evmod.config.visuals.name.mapHighlightInHotbarHUD": "destaca mapas en HUD",

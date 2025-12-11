@@ -22,12 +22,9 @@ public class ServerJoinListener{
 	public static long lastJoinTs; // TODO: remove horrible public static eww
 
 	private void loadMapStateCaches(MinecraftClient client){
+		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.loadMapStatesById();
 		if(Configs.Generic.MAP_CACHE_BY_INV_POS.getBooleanValue())
 			MapStateCacher.loadMapStatesByPos(client.player.getInventory().main, MapStateCacher.Cache.BY_PLAYER_INV);
-		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue())
-			MapStateCacher.loadMapStatesById();
-		if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue())
-			MapStateCacher.loadMapStatesByName();
 	}
 
 	public ServerJoinListener(){
