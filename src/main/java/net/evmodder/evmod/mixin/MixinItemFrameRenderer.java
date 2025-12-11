@@ -130,9 +130,9 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 	private boolean isSemiTransparent(ItemFrameEntityRenderState ifers){
 		MapState state = client.world.getMapState(ifers.mapId);
 		if(state == null || state.colors == null) return false;
-		boolean has0 = false, hasColor = false;
-		for(byte b : state.colors){has0 |= (b==0); hasColor |= (b!=0);}
-		return has0 && hasColor;
+		boolean trans = false, notTrans = false, t;
+		for(byte b : state.colors){t = (0<=b && b<=3); trans |= t; notTrans |= !t;}
+		return trans && notTrans;
 	}
 
 	@Inject(method="render", at=@At("HEAD"))

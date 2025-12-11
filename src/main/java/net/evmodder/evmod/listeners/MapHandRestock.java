@@ -15,8 +15,8 @@ import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
 import net.evmodder.evmod.onTick.AutoPlaceMapArt;
+import net.evmodder.evmod.onTick.AutoRemoveMapArt;
 import net.evmodder.evmod.onTick.UpdateInventoryHighlights;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.client.MinecraftClient;
@@ -504,34 +504,45 @@ public final class MapHandRestock{
 		}}.start();
 	}
 
-	private ItemFrameEntity lastIfe;
-	private ItemStack lastStack;
-	public MapHandRestock(final boolean allowAutoPlacer){
-		final AutoPlaceMapArt autoPlacer;
-		if(allowAutoPlacer){
-			autoPlacer = new AutoPlaceMapArt();
-			ClientTickEvents.END_CLIENT_TICK.register(client -> autoPlacer.placeNearestMap(client));
+	public MapHandRestock(final boolean allowAutoPlacer, final boolean allowAutoRemover){
+		final AutoPlaceMapArt autoPlacer = allowAutoPlacer ? new AutoPlaceMapArt() : null;
+		final AutoRemoveMapArt autoRemover = allowAutoRemover ? new AutoRemoveMapArt() : null;
+		if(allowAutoPlacer || allowAutoRemover){
 			AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
-//				if(mapAutoPlacer.isActive() && entity instanceof ItemFrameEntity ife && ife.getHeldItemStack().getItem() == Items.FILLED_MAP){
-				if(autoPlacer.isActive()){
-					autoPlacer.disableAndReset();
-					Main.LOGGER.info("AutoPlaceMapArt: Disabling due to EntityAttackEvent");
+				if(allowAutoPlacer && autoPlacer.hasKnownLayout()){
+					if(entity instanceof ItemFrameEntity ife && ife.getHeldItemStack().getItem() == Items.FILLED_MAP
+						&& autoPlacer.ifePosFilter(ife) && !autoPlacer.getPlacement(ife.getHeldItemStack()).equals(ife.getBlockPos()))
+					{
+						Main.LOGGER.info("MapRestock: Player manually removed an incorrectly placed map (during AutoPlaceMapArt)");
+					}
+					else{
+						autoPlacer.disableAndReset();
+						Main.LOGGER.info("MapRestock: Disabling AutoPlaceMapArt due to EntityAttackEvent");
+					}
+				}
+				else if(allowAutoRemover && entity instanceof ItemFrameEntity ife && ife.getHeldItemStack().getItem() == Items.FILLED_MAP
+						&& autoRemover.mapRemoved(player, ife))
+				{
+					Main.LOGGER.info("MapRestock: AutoRemoveMapArt is active");
 				}
 				return ActionResult.PASS;
 			});
 		}
-		else autoPlacer = null;
 
 		UseEntityCallback.EVENT.register((player, _0, hand, entity, _1) -> {
 			if(!(entity instanceof ItemFrameEntity ife)) return ActionResult.PASS;
 			//Main.LOGGER.info("clicked item frame");
+			if(allowAutoRemover){
+				autoRemover.disableAndReset();
+				Main.LOGGER.info("MapRestock: Disabling AutoRemoveMapArt due to EntityInteractEvent");
+			}
 			if(hand != Hand.MAIN_HAND){
 				Main.LOGGER.info("MapHandRestock: not main hand: "+hand.name());
 //				return ActionResult.FAIL;
 			}
 			//Main.LOGGER.info("placed item from mainhand");
 			if(!ife.getHeldItemStack().isEmpty()){
-				if(allowAutoPlacer && Configs.Generic.MAPART_AUTOPLACE_ANTI_ROTATE.getBooleanValue() && autoPlacer.isActive()
+				if(allowAutoPlacer && Configs.Generic.MAPART_AUTOPLACE_ANTI_ROTATE.getBooleanValue() && autoPlacer.hasKnownLayout()
 						&& ife.getHeldItemStack().getItem() == Items.FILLED_MAP){
 					Main.LOGGER.warn("AutoPlaceMapArt: Discarding a (likely accidental) map-rotation click");
 					return ActionResult.FAIL;
@@ -552,15 +563,13 @@ public final class MapHandRestock{
 
 			UpdateInventoryHighlights.setCurrentlyBeingPlacedMapArt(player, stack);
 
-			if(allowAutoPlacer && autoPlacer.recalcIsActive(player, lastIfe, lastStack, ife, stack)){
+			if(allowAutoPlacer && autoPlacer.recalcLayout(player, ife, stack)){
 				Main.LOGGER.info("MapRestock: AutoPlaceMapArt is active, no need to handle restock");
 			}
 			else{
 				Main.LOGGER.info("MapRestock: AutoPlaceMapArt is not active, doing best-guess restock");
 				tryToStockNextMap(player);
 			}
-			lastIfe = ife;
-			lastStack = stack;
 			return ActionResult.PASS;
 		});
 	}

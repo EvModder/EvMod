@@ -55,7 +55,7 @@ public final class KeybindCraftingRestock{
 			lastScreen = PlayerScreenHandler.class;
 			inputItems = IntStream.range(PlayerScreenHandler.CRAFTING_INPUT_START, PlayerScreenHandler.CRAFTING_INPUT_END)
 					.mapToObj(i -> new SlotAndItem(sh, i)).toList();
-			Main.LOGGER.info("CraftRestock: Storing 2x2 player inv slots");
+//			Main.LOGGER.info("CraftRestock: Storing 2x2 player inv slots");
 		}
 		if(sh instanceof CraftingScreenHandler && slot == CraftingScreenHandler.RESULT_ID){
 			lastScreen = CraftingScreenHandler.class;

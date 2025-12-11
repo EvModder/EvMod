@@ -3,12 +3,15 @@
 placement_helper.iframe: true
 placement_helper.mapart: true
 placement_helper.mapart.auto: true
+placement_helper.mapart.autoremove: true
 
 map_highlights: true
 map_highlights.in_gui: true
 tooltip.map_highlights: true
 tooltip.map_metadata: true
 tooltip.repair_cost: true
+
+listener.container_open: true # for mapstate_cache.echest, mapstate_cache.any
 
 command.exportmapimg: true
 command.mapartgroup: true

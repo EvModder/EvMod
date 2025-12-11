@@ -112,6 +112,7 @@
 	"evmod.config.generic.name.mapArtAutoPlace": "mapArtAutoPlace",
 	"evmod.config.generic.name.mapArtAutoPlaceInvDelay": "mapArtAutoPlaceInvDelay",
 	"evmod.config.generic.name.mapArtAutoPlaceAntiRotate": "mapArtAutoPlaceAntiRotate",
+	"evmod.config.generic.name.mapArtAutoRemove": "mapArtAutoRemove",
 	"evmod.config.generic.comment.placementHelperIFrame": "iFrame Helper - An item_frame auto placer",
 	"evmod.config.generic.comment.placementHelperIFrameMustConnect": "iFrame Helper - Only place connecting iFrames",
 	"evmod.config.generic.comment.placementHelperIFrameMustMatchBlock": "iFrame Helper - Only place on matching blocks",

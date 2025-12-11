@@ -10,10 +10,11 @@ import java.util.stream.Collectors;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.Configs.Generic;
-import net.evmodder.evmod.apis.MapRelationUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.evmodder.evmod.apis.MapRelationUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.BundleContentsComponent;
@@ -31,8 +32,9 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
-public class AutoPlaceMapArt{
+public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 	private Direction dir;
+	private World world;
 	private ItemStack currStack;
 	private String currPosStr;
 	private int constAxis;
@@ -49,21 +51,14 @@ public class AutoPlaceMapArt{
 	public AutoPlaceMapArt(){
 		allMapItems = new ArrayList<>();
 		stacksHashesForCurrentData = new ArrayList<>();
+
 		recentPlaceAttempts = new int[20];
+
+		ClientTickEvents.END_CLIENT_TICK.register(this::placeNearestMap);
 	}
 
-	private double distFromPlane(BlockPos bp){
-		switch(dir){
-			case UP: case DOWN: return Math.abs(bp.getY() - constAxis);
-			case EAST: case WEST: return Math.abs(bp.getX() - constAxis);
-			case NORTH: case SOUTH: return Math.abs(bp.getZ() - constAxis);
-
-			default: assert(false) : "Unreachable"; return -1;
-		}
-	}
-
-	record AxisData(int constAxis, int varAxis1, int varAxis2){}
-	private AxisData getAxisData(ItemFrameEntity ife){
+	private final record AxisData(int constAxis, int varAxis1, int varAxis2){}
+	private final AxisData getAxisData(ItemFrameEntity ife){
 		final BlockPos bp = ife.getBlockPos();
 		switch(/*dir*/ife.getFacing()){
 			case UP: case DOWN: return new AxisData(bp.getY(), bp.getX(), bp.getZ());
@@ -75,8 +70,8 @@ public class AutoPlaceMapArt{
 		return null;
 	}
 
-	record Pos2DPair(int a1, int a2, int b1, int b2){}
-	private int intFromPos(String pos){
+	private final record Pos2DPair(int a1, int a2, int b1, int b2){}
+	private final int intFromPos(String pos){
 		assert pos.matches("[A-Z]+|-?[0-9]+") : "Invalid 2d pos str part! "+pos;
 		if(pos.charAt(0) < 'A' || pos.charAt(0) > 'Z') return Integer.parseInt(pos);
 
@@ -87,7 +82,7 @@ public class AutoPlaceMapArt{
 		}
 		return res;
 	}
-	private int intFromTLBR(char c, boolean hasM){
+	private final int intFromTLBR(char c, boolean hasM){
 		switch(c){
 			case 'T': case 'L': return 0;
 			case 'M': return 1;
@@ -132,6 +127,7 @@ public class AutoPlaceMapArt{
 	public final void disableAndReset(){
 		if(dir != null){
 			dir = null;
+			world = null;
 			currStack = null;
 			currPosStr = null;
 			constAxis = varAxis1Origin = varAxis2Origin = 0;
@@ -142,21 +138,30 @@ public class AutoPlaceMapArt{
 		}
 	}
 
-	private String getPosStrFromName(final ItemStack stack){
+	private final String getPosStrFromName(final ItemStack stack){
 		final String name = stack.getCustomName().getString();
 		return MapRelationUtils.simplifyPosStr(name.substring(currentData.prefixLen(), name.length()-currentData.suffixLen()));
 	}
-	public final boolean recalcIsActive(PlayerEntity player, ItemFrameEntity lastIfe, ItemStack lastStack, ItemFrameEntity currIfe, ItemStack currStack){
+
+	private ItemFrameEntity lastIfe;
+	private ItemStack lastStack;
+	public final boolean recalcLayout(PlayerEntity player, ItemFrameEntity currIfe, ItemStack currStack){
 		synchronized(allMapItems){
+		try{
 		if(!Generic.MAPART_AUTOPLACE.getBooleanValue()
-			|| currIfe == null || currStack == null || lastIfe == null || lastStack == null || currStack.getCount() != 1 || lastStack.getCount() != 1)
+			|| currIfe == null || currStack == null || currStack.getCount() != 1)
 		{
 			disableAndReset();
 			return false;
 		}
+		if(lastIfe == null) return false;
 
 		if((dir=currIfe.getFacing()) != lastIfe.getFacing()){
 			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not facing the same dir");
+			disableAndReset(); return false;
+		}
+		if((world=currIfe.getWorld()) != lastIfe.getWorld()){
+			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not in the same world!");
 			disableAndReset(); return false;
 		}
 		AxisData currAxisData = getAxisData(currIfe), lastAxisData = getAxisData(lastIfe);
@@ -172,13 +177,13 @@ public class AutoPlaceMapArt{
 			disableAndReset(); return false;
 		}
 
-		RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(this.currStack=currStack, lastStack), currIfe.getWorld());
+		RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(this.currStack=currStack, lastStack), world);
 		if(data.slots().size() != 2){ // TODO: support maps w/o custom name (related by edge detection)
 			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not related");
 			disableAndReset(); return false;
 		}
 		if(data.prefixLen() == -1){ // TODO: support related maps without pos data (same name, no pos data)
-			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not facing the same dir");
+			Main.LOGGER.info("AutoPlaceMapArt: unable to predict placement for map names lacking pos data");
 			disableAndReset(); return false;
 		}
 		// Parse 2d pos (and cache for other maps items, if necessary)
@@ -289,9 +294,14 @@ public class AutoPlaceMapArt{
 		Main.LOGGER.info("AutoPlaceMapArt: activated! varAxis1o="+varAxis1Origin+",varAxis2o="+varAxis2Origin+",varAxis1Neg="+varAxis1Neg+",varAxis2Neg="+varAxis2Neg);
 		return true;
 		}
+		finally{
+			lastIfe = currIfe;
+			lastStack = currStack;
+		}
+		}
 	}
 
-	private BlockPos getPlacement(ItemStack stack, World world){
+	public final BlockPos getPlacement(ItemStack stack){
 		synchronized(allMapItems){
 		if(!stacksHashesForCurrentData.contains(ItemStack.hashCode(stack))){
 			RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(currStack, stack), world);
@@ -315,7 +325,20 @@ public class AutoPlaceMapArt{
 		}
 	}
 
-	public final boolean isActive(){return !stacksHashesForCurrentData.isEmpty();}
+	private final double distFromPlane(BlockPos bp){
+		switch(dir){
+			case UP: case DOWN: return Math.abs(bp.getY() - constAxis);
+			case EAST: case WEST: return Math.abs(bp.getX() - constAxis);
+			case NORTH: case SOUTH: return Math.abs(bp.getZ() - constAxis);
+
+			default: assert(false) : "Unreachable"; return -1;
+		}
+	}
+	public final boolean ifePosFilter(ItemFrameEntity ife){return ife.getFacing() == dir && distFromPlane(ife.getBlockPos()) == 0;}
+
+	public final boolean hasKnownLayout(){return !stacksHashesForCurrentData.isEmpty();}
+
+	// Functions NOT from MapLayoutFinder:
 
 	private final void placeMapInFrame(MinecraftClient client, ItemFrameEntity ife){
 		assert client.player.getInventory().getMainHandStack().equals(client.player.getInventory().main.get(client.player.getInventory().selectedSlot));
@@ -344,7 +367,7 @@ public class AutoPlaceMapArt{
 		final double SCAN_DIST = MAX_REACH+2;
 
 		Box box = player.getBoundingBox().expand(SCAN_DIST, SCAN_DIST, SCAN_DIST);
-		Predicate<ItemFrameEntity> filter = ife -> ife.getFacing() == dir && distFromPlane(ife.getBlockPos()) == 0 && ife.getHeldItemStack().isEmpty();
+		Predicate<ItemFrameEntity> filter = ife -> ifePosFilter(ife) && ife.getHeldItemStack().isEmpty();
 		List<ItemFrameEntity> ifes = player.getWorld().getEntitiesByClass(ItemFrameEntity.class, box, filter);
 		if(ifes.isEmpty()){
 //			Main.LOGGER.warn("AutoPlaceMapArt: no nearby iframes");
@@ -375,7 +398,7 @@ public class AutoPlaceMapArt{
 				else mapStack = contents.get(j);
 				if(mapStack.getItem() != Items.FILLED_MAP) continue;
 				++numMaps;
-				BlockPos bp = getPlacement(mapStack, player.getWorld());
+				BlockPos bp = getPlacement(mapStack);
 				if(bp == null) continue;
 				++numRelated;
 				if(bp.getSquaredDistance(player.getEyePos()) > SCAN_DIST*SCAN_DIST) continue;
@@ -481,7 +504,7 @@ public class AutoPlaceMapArt{
 	}
 
 	public final void placeNearestMap(MinecraftClient client){
-		if(!isActive()) return;
+		if(!hasKnownLayout()) return;
 		if(client.player == null || client.world == null){
 			Main.LOGGER.info("AutoPlaceMapArt: player disconnected mid-op");
 			disableAndReset();
@@ -534,12 +557,10 @@ public class AutoPlaceMapArt{
 			while(i != attemptIdx){
 				Entity e = client.world.getEntityById(recentPlaceAttempts[i]);
 				if(e != null && e instanceof ItemFrameEntity ife && ife.getHeldItemStack().isEmpty()){
-					if(ife.getHeldItemStack().isEmpty()){
-	//					final int rem = attemptIdx < i ? i-attemptIdx : recentPlaceAttempts.length+i-attemptIdx;
-						final int waited = i < attemptIdx ? attemptIdx-i : recentPlaceAttempts.length+attemptIdx-i;
-						Main.LOGGER.info("AutoPlaceMapArt: waiting for current map to appear in iFrame ("+waited+"ticks)");
-						return;
-					}
+//					final int rem = attemptIdx < i ? i-attemptIdx : recentPlaceAttempts.length+i-attemptIdx;
+					final int waited = i < attemptIdx ? attemptIdx-i : recentPlaceAttempts.length+attemptIdx-i;
+					Main.LOGGER.info("AutoPlaceMapArt: waiting for current map to appear in iFrame ("+waited+"ticks)");
+					return;
 				}
 				if(++i == recentPlaceAttempts.length) i = 0;
 			}

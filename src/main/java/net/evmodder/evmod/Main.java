@@ -101,7 +101,7 @@ public class Main{
 	final GameMessageFilter gameMessageFilter; // Accessors: Configs
 	final ContainerOpenCloseListener containerOpenCloseListener; // Accessors: Configs
 
-	final boolean inventoryRestockAuto, placementHelperIframe, placementHelperMapArt, placementHelperMapArtAuto, broadcaster;
+	final boolean inventoryRestockAuto, placementHelperIframe, placementHelperMapArt, placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove, broadcaster;
 	final boolean serverJoinListener, serverQuitListener, gameMessageListener;//, gameMessageFilter;
 	final boolean cmdExportMapImg, cmdMapArtGroup;
 	final boolean mapHighlights, mapHighlightsInGUIs, tooltipMapHighlights, tooltipMapMetadata, tooltipRepairCost;
@@ -138,7 +138,8 @@ public class Main{
 		broadcaster = extractConfigValue(config, "broadcaster");
 		placementHelperIframe = extractConfigValue(config, "placement_helper.iframe");
 		placementHelperMapArt = extractConfigValue(config, "placement_helper.mapart");
-		placementHelperMapArtAuto = placementHelperMapArt && extractConfigValue(config, "placement_helper.mapart.auto");
+		placementHelperMapArtAutoPlace = placementHelperMapArt && extractConfigValue(config, "placement_helper.mapart.auto");
+		placementHelperMapArtAutoRemove = placementHelperMapArt && extractConfigValue(config, "placement_helper.mapart.autoremove");
 		serverJoinListener = extractConfigValue(config, "listener.server_join");
 		serverQuitListener = extractConfigValue(config, "listener.server_quit");
 		gameMessageListener = extractConfigValue(config, "listener.game_message.read");
@@ -183,7 +184,7 @@ public class Main{
 		if(inventoryRestockAuto) ClientTickEvents.END_CLIENT_TICK.register(containerOpenCloseListener::onUpdateTick);
 
 		if(placementHelperIframe) new AutoPlaceItemFrames();
-		if(placementHelperMapArt) new MapHandRestock(placementHelperMapArtAuto);
+		if(placementHelperMapArt) new MapHandRestock(placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove);
 		if(broadcaster) ChatBroadcaster.refreshBroadcast();
 
 		if(cmdAssignPearl) new CommandAssignPearl(epearlLookup);

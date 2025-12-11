@@ -66,7 +66,7 @@ abstract class MixinClientPlayerInteractionManager{
 		final int availableClicks = Main.clickUtils.calcAvailableClicks();
 		if(availableClicks > 0){
 			Main.clickUtils.addClick(action);
-			Main.kbCraftRestock.checkIfCraftAction(player.currentScreenHandler, slot, button, action);
+			if(Configs.Hotkeys.CRAFT_RESTOCK.getKeybind().isValid()) Main.kbCraftRestock.checkIfCraftAction(player.currentScreenHandler, slot, button, action);
 		}
 		else{
 			if(isBotted) Main.LOGGER.error("Botted click somehow triggered click limited! VERY BAD!!");

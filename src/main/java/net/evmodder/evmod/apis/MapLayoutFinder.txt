@@ -1,0 +1,305 @@
+package net.evmodder.evmod.apis;
+
+import java.util.ArrayList;
+import java.util.List;
+import net.evmodder.evmod.Main;
+import net.evmodder.evmod.Configs.Generic;
+import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
+import net.minecraft.entity.decoration.ItemFrameEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.world.World;
+
+public class MapLayoutFinder{
+	private Direction dir;
+	private World world;
+	private ItemStack currStack;
+	private String currPosStr;
+	private int constAxis;
+	private int varAxis1Origin, varAxis2Origin;
+	private Boolean varAxis1Neg, varAxis2Neg, axisMatch;
+	private RelatedMapsData currentData;
+	private final ArrayList<ItemStack> allMapItems;
+	private final ArrayList<Integer> stacksHashesForCurrentData;
+
+	public MapLayoutFinder(){
+		allMapItems = new ArrayList<>();
+		stacksHashesForCurrentData = new ArrayList<>();
+	}
+
+	private final record AxisData(int constAxis, int varAxis1, int varAxis2){}
+	private final AxisData getAxisData(ItemFrameEntity ife){
+		final BlockPos bp = ife.getBlockPos();
+		switch(/*dir*/ife.getFacing()){
+			case UP: case DOWN: return new AxisData(bp.getY(), bp.getX(), bp.getZ());
+			case EAST: case WEST: return new AxisData(bp.getX(), bp.getY(), bp.getZ());
+			case NORTH: case SOUTH: return new AxisData(bp.getZ(), bp.getX(), bp.getY());
+		}
+		Main.LOGGER.info("AutoPlaceMapArt: Unreachable!!!");
+		assert false;
+		return null;
+	}
+
+	private final record Pos2DPair(int a1, int a2, int b1, int b2){}
+	private final int intFromPos(String pos){
+		assert pos.matches("[A-Z]+|-?[0-9]+") : "Invalid 2d pos str part! "+pos;
+		if(pos.charAt(0) < 'A' || pos.charAt(0) > 'Z') return Integer.parseInt(pos);
+
+		int res = pos.charAt(0) - 'A';
+		for(int i=1; i<pos.length(); ++i){
+			res *= 26;
+			res += pos.charAt(i) - 'A';
+		}
+		return res;
+	}
+	private final int intFromTLBR(char c, boolean hasM){
+		switch(c){
+			case 'T': case 'L': return 0;
+			case 'M': return 1;
+			case 'B': case 'R': return hasM ? 2 : 1;
+			default: throw new IllegalArgumentException();
+		}
+	}
+	private final Pos2DPair getRelativePosPair(final String posA, final String posB){
+		if(posA.matches("[TMB][LMR]") && posB.matches("[TMB][LMR]")){
+			assert currentData.slots().stream().allMatch(i -> getPosStrFromName(allMapItems.get(i)).matches("[TMB][LMR]"));
+			final boolean hasM1 =  currentData.slots().stream().anyMatch(i -> getPosStrFromName(allMapItems.get(i)).charAt(0) == 'M');
+			final boolean hasM2 =  currentData.slots().stream().anyMatch(i -> getPosStrFromName(allMapItems.get(i)).charAt(1) == 'M');
+//			final boolean hasM1 = posA.charAt(0) == 'M' || posB.charAt(0) == 'M';
+//			final boolean hasM2 = posA.charAt(1) == 'M' || posB.charAt(1) == 'M';
+			return new Pos2DPair(
+					intFromTLBR(posA.charAt(0), hasM1), intFromTLBR(posA.charAt(1), hasM2),
+					intFromTLBR(posB.charAt(0), hasM1), intFromTLBR(posB.charAt(1), hasM2)
+			);
+		}
+		if(posA.matches("[1-9][0-9]*") && posB.matches("[1-9][0-9]*")){
+			//TODO: support 1d posStr (e.g., 1/6 for a 3x2)
+		}
+		int cutA, cutB, cutSpaceA, cutSpaceB;
+		if(posA.length() == posB.length() && posA.length() == 2){cutA = cutB = 1; cutSpaceA = cutSpaceB = 0;}
+		else{cutA = posA.indexOf(' '); cutB = posB.indexOf(' '); cutSpaceA = cutSpaceB = 1;}
+		//assert (cutA==-1) == (cutB==-1);
+		if(cutA == -1 && cutB == -1) return null;
+		if((cutA == -1) != (cutB == -1)){
+			if(cutA != -1 && posA.length() == posB.length()+1){cutB = cutA; cutSpaceB = 0;}
+			else if(cutB != -1 && posB.length() == posA.length()+1){cutA = cutB; cutSpaceA = 0;}
+			else return null;
+		}
+//		assert posA.replaceFirst(" ", "").matches("[0-9A-Z]+") && posB.replaceFirst(" ", "").matches("[0-9A-Z]+") : "Invalid posStrs: a="+posA+" b="+posB;
+
+		final String posA1 = posA.substring(0, cutA), posA2 = posA.substring(cutA+cutSpaceA);
+		final String posB1 = posB.substring(0, cutB), posB2 = posB.substring(cutB+cutSpaceB);
+
+//		Main.LOGGER.info("posA:"+posA+",posB:"+posB+",posA1:"+posA1+",posA2:"+posA2+",posB1:"+posB1+",posB2:"+posB2);
+		return new Pos2DPair(intFromPos(posA1), intFromPos(posA2), intFromPos(posB1), intFromPos(posB2));
+	}
+
+	public final void disableAndReset(){
+		if(dir != null){
+			dir = null;
+			world = null;
+			currStack = null;
+			currPosStr = null;
+			constAxis = varAxis1Origin = varAxis2Origin = 0;
+			varAxis1Neg = varAxis2Neg = axisMatch = null;
+			currentData = null;
+			allMapItems.clear();
+			stacksHashesForCurrentData.clear();
+		}
+	}
+
+	private final String getPosStrFromName(final ItemStack stack){
+		final String name = stack.getCustomName().getString();
+		return MapRelationUtils.simplifyPosStr(name.substring(currentData.prefixLen(), name.length()-currentData.suffixLen()));
+	}
+	public final boolean recalcLayout(PlayerEntity player, ItemFrameEntity lastIfe, ItemStack lastStack, ItemFrameEntity currIfe, ItemStack currStack){
+		synchronized(allMapItems){
+		if(!Generic.MAPART_AUTOPLACE.getBooleanValue()
+			|| currIfe == null || currStack == null || lastIfe == null || lastStack == null || currStack.getCount() != 1 || lastStack.getCount() != 1)
+		{
+			disableAndReset();
+			return false;
+		}
+
+		if((dir=currIfe.getFacing()) != lastIfe.getFacing()){
+			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not facing the same dir");
+			disableAndReset(); return false;
+		}
+		if((world=currIfe.getWorld()) != lastIfe.getWorld()){
+			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not in the same world!");
+			disableAndReset(); return false;
+		}
+		AxisData currAxisData = getAxisData(currIfe), lastAxisData = getAxisData(lastIfe);
+		if((constAxis=currAxisData.constAxis) != lastAxisData.constAxis){
+			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not on the same const axis");
+			disableAndReset(); return false;
+		}
+
+		final int ifeOffset1 = currAxisData.varAxis1 - lastAxisData.varAxis1, ifeOffset2 = currAxisData.varAxis2 - lastAxisData.varAxis2;
+		Main.LOGGER.info("AutoPlaceMapArt: ifeOffset1="+ifeOffset1+",ifeOffset2="+ifeOffset2);
+		if(ifeOffset1 == 0 && ifeOffset2 == 0){
+			Main.LOGGER.error("AutoPlaceMapArt: Placed maps appear to have the same pos! (shouldn't be possible!)");
+			disableAndReset(); return false;
+		}
+
+		RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(this.currStack=currStack, lastStack), world);
+		if(data.slots().size() != 2){ // TODO: support maps w/o custom name (related by edge detection)
+			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not related");
+			disableAndReset(); return false;
+		}
+		if(data.prefixLen() == -1){ // TODO: support related maps without pos data (same name, no pos data)
+			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not facing the same dir");
+			disableAndReset(); return false;
+		}
+		// Parse 2d pos (and cache for other maps items, if necessary)
+		if(currentData == null){
+			assert allMapItems.isEmpty();
+			allMapItems.add(currStack); allMapItems.add(lastStack);
+			MapRelationUtils.getAllNestedItems(player.getInventory().main.stream()).filter(s -> s.getItem() == Items.FILLED_MAP).forEach(allMapItems::add);
+			Main.LOGGER.info("AutoPlaceMapArt: all maps in inv: "+(allMapItems.size()-2));
+
+			currentData = MapRelationUtils.getRelatedMapsByName0(allMapItems, player.getWorld());
+			if(currentData.slots().size() <= 3){
+				Main.LOGGER.info("AutoPlaceMapArt: not enough remaining maps in inv to justify enabling AutoPlace");
+				disableAndReset(); return false;
+			}
+			Main.LOGGER.info("AutoPlaceMapArt: related maps in inv: "+(currentData.slots().size()-2));
+		}
+		final String currPosStr = this.currPosStr=getPosStrFromName(currStack), lastPosStr = getPosStrFromName(lastStack);
+		final Pos2DPair pos2dPair = getRelativePosPair(currPosStr, lastPosStr);
+		if(pos2dPair == null){ // TODO: Support non-standard pos data (e.g., TL,TR,BL,BR)
+			Main.LOGGER.info("AutoPlaceMapArt: unable to parse pos2dPair from pos strs ("+currPosStr+","+lastPosStr+")");
+			disableAndReset(); return false;
+		}
+
+		final int posOffset1 = pos2dPair.a1 - pos2dPair.b1, posOffset2 = pos2dPair.a2 - pos2dPair.b2;
+		Main.LOGGER.info("AutoPlaceMapArt: posOffset1="+posOffset1+",posOffset2="+posOffset2);
+
+//		assert(
+//			(Math.abs(posOffset1) == Math.abs(ifeOffset1) && Math.abs(posOffset2) == Math.abs(ifeOffset2)) ||
+//			(Math.abs(posOffset1) == Math.abs(ifeOffset2) && Math.abs(posOffset2) == Math.abs(ifeOffset1))
+//		);
+		if(Math.abs(posOffset1) != Math.abs(ifeOffset1) && Math.abs(posOffset1) != Math.abs(ifeOffset2)){
+			Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! abs(axisDiff1), "+posOffset1);
+			disableAndReset(); return false;
+		}
+		if(Math.abs(posOffset2) != Math.abs(ifeOffset1) && Math.abs(posOffset2) != Math.abs(ifeOffset2)){
+			Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! abs(axisDiff2), "+posOffset2);
+			disableAndReset(); return false;
+		}
+
+		final boolean sameAbsPosOffsets = Math.abs(posOffset1) == Math.abs(posOffset2);
+		if(!sameAbsPosOffsets){
+			final boolean axisMatches = Math.abs(posOffset1) == Math.abs(ifeOffset1);
+			if(axisMatch != null && axisMatch != axisMatches){
+				Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! axis swap");
+				disableAndReset(); return false;
+			}
+			axisMatch = axisMatches;
+		}
+		if(axisMatch == null){
+			// At this point, we know abs(posOffset1) == abs(posOffset2) == abs(ifeOffset1) == abs(ifeOffset2);
+			final boolean sameSign = ((ifeOffset1 == posOffset1) == (ifeOffset1 == posOffset2)) && ((ifeOffset2 == posOffset1) == (ifeOffset2 == posOffset2));
+			if(sameSign){
+				final boolean isNeg = ifeOffset1 != posOffset1;
+				if(varAxis1Neg == null) varAxis1Neg = isNeg;
+				else if(varAxis1Neg != isNeg){
+					Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axisDiff1");
+					disableAndReset(); return false;
+				}
+				if(varAxis2Neg == null) varAxis2Neg = isNeg;
+				else if(varAxis2Neg != isNeg){
+					Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axisDiff1");
+					disableAndReset(); return false;
+				}
+//				Main.LOGGER.info("AutoPlaceMapArt: determined both axes offsets are "+(isNeg?"-":"+"));
+			}
+			Main.LOGGER.info("AutoPlaceMapArt: unable to distinguish the 2 variable axes from eachother");
+			return false;
+		}
+
+		if(ifeOffset1 != 0){
+			final boolean isNeg = ifeOffset1 != (axisMatch ? posOffset1 : posOffset2);
+			assert ifeOffset1 == (axisMatch ? posOffset1 : posOffset2)*(isNeg ? -1 : +1) : "?? "+axisMatch+","+posOffset1+","+posOffset2+","+isNeg;
+			if(varAxis1Neg == null) varAxis1Neg = isNeg;
+			else if(varAxis1Neg != isNeg){
+				Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axis1");
+				disableAndReset(); return false;
+			}
+		}
+		if(ifeOffset2 != 0){
+			final boolean isNeg = ifeOffset2 != (axisMatch ? posOffset2 : posOffset1);
+			assert ifeOffset2 == (axisMatch ? posOffset2 : posOffset1)*(isNeg ? -1 : +1);
+			if(varAxis2Neg == null) varAxis2Neg = isNeg;
+			else if(varAxis2Neg != isNeg){
+				Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axis2");
+				disableAndReset(); return false;
+			}
+		}
+
+		if(!stacksHashesForCurrentData.isEmpty()) return true; // Already ongoing and all values are defined
+
+		if(varAxis1Neg == null || varAxis2Neg == null){
+			boolean foundAxis1 = varAxis1Neg != null;
+			Main.LOGGER.warn("AutoPlaceMapArt: determined axisMatch="+axisMatch+" and 1 of 2 axis offsets"
+					+" (axis"+(foundAxis1?"1="+(varAxis1Neg?"-":"+"):"2="+(varAxis2Neg?"-":"+"))
+					+"), just need to get the other offset before enabling");
+			return false;
+		}
+
+		varAxis1Origin = currAxisData.varAxis1-(axisMatch ? pos2dPair.a1 : pos2dPair.a2)*(varAxis1Neg?-1:+1);
+		varAxis2Origin = currAxisData.varAxis2-(axisMatch ? pos2dPair.a2 : pos2dPair.a1)*(varAxis2Neg?-1:+1);
+
+		assert !allMapItems.isEmpty();
+		assert stacksHashesForCurrentData.isEmpty();
+		stacksHashesForCurrentData.ensureCapacity(currentData.slots().size());
+		currentData.slots().stream().map(i -> ItemStack.hashCode(allMapItems.get(i))).forEach(stacksHashesForCurrentData::add);
+		assert !stacksHashesForCurrentData.isEmpty();
+
+		Main.LOGGER.info("AutoPlaceMapArt: activated! varAxis1o="+varAxis1Origin+",varAxis2o="+varAxis2Origin+",varAxis1Neg="+varAxis1Neg+",varAxis2Neg="+varAxis2Neg);
+		return true;
+		}
+	}
+
+	public final BlockPos getPlacement(ItemStack stack){
+		synchronized(allMapItems){
+		if(!stacksHashesForCurrentData.contains(ItemStack.hashCode(stack))){
+			RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(currStack, stack), world);
+			if(data.slots().size() != 2 || data.prefixLen() == -1) return null; // Not part of the map being autoplaced
+			Main.LOGGER.info("AutoPlaceMapArt: Added map itemstack to currentData"+(stack.getCustomName()==null?"":", name="+stack.getCustomName().getString()));
+			stacksHashesForCurrentData.add(ItemStack.hashCode(stack));
+		}
+		final Pos2DPair pos2dPair = getRelativePosPair(currPosStr, getPosStrFromName(stack));
+		if(pos2dPair == null) return null;
+		int varAxis1 = varAxis1Origin+(axisMatch ? pos2dPair.b1 : pos2dPair.b2)*(varAxis1Neg?-1:+1);
+		int varAxis2 = varAxis2Origin+(axisMatch ? pos2dPair.b2 : pos2dPair.b1)*(varAxis2Neg?-1:+1);
+
+		switch(dir){
+			case UP: case DOWN: return new BlockPos(varAxis1, constAxis, varAxis2);
+			case EAST: case WEST: return new BlockPos(constAxis, varAxis1, varAxis2);
+			case NORTH: case SOUTH: return new BlockPos(varAxis1, varAxis2, constAxis);
+		}
+		Main.LOGGER.info("AutoPlaceMapArt: Unreachable!!!");
+		assert false;
+		return null;
+		}
+	}
+
+	private final double distFromPlane(BlockPos bp){
+		switch(dir){
+			case UP: case DOWN: return Math.abs(bp.getY() - constAxis);
+			case EAST: case WEST: return Math.abs(bp.getX() - constAxis);
+			case NORTH: case SOUTH: return Math.abs(bp.getZ() - constAxis);
+
+			default: assert(false) : "Unreachable"; return -1;
+		}
+	}
+	public final boolean ifePosFilter(ItemFrameEntity ife){
+		return ife.getFacing() == dir && distFromPlane(ife.getBlockPos()) == 0;
+	}
+
+	public final boolean hasKnownLayout(){return !stacksHashesForCurrentData.isEmpty();}
+}

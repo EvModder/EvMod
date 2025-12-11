@@ -96,6 +96,6 @@ public class UpdateInventoryHighlights{
 //			ItemFrameHighlightUpdater.highlightedIFrames.clear();
 //		}
 		final int syncId = player.currentScreenHandler != null ? player.currentScreenHandler.syncId : 0;
-		mapsInInvHash = syncId + inventoryMapGroup.hashCode() + nestedInventoryMapGroup.hashCode();
+		mapsInInvHash = syncId + inventoryMapGroup.hashCode() + nestedInventoryMapGroup.hashCode();// * (mapPlaceStillOngoing ? 7 : 1);
 	}
 }
