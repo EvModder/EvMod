@@ -526,7 +526,7 @@ public final class MapHandRestock{
 					}
 				}
 				else if(allowAutoRemover && entity instanceof ItemFrameEntity ife && ife.getHeldItemStack().getItem() == Items.FILLED_MAP
-						&& autoRemover.mapRemoved(player, ife))
+						&& autoRemover.mapRemoved(ife))
 				{
 					Main.LOGGER.info("MapRestock: AutoRemoveMapArt is active");
 				}

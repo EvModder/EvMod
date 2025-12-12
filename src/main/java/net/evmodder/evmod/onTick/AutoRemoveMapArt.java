@@ -10,10 +10,10 @@ import net.evmodder.evmod.apis.MapRelationUtils;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
@@ -30,6 +30,7 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 
 	public AutoRemoveMapArt(){
 		recentRemoveAttempts = new int[20];
+//		ClientTickEvents.END_CLIENT_TICK.register(client->{synchronized(dir){removeNearestMap(client);}});
 		ClientTickEvents.END_CLIENT_TICK.register(this::removeNearestMap);
 	}
 
@@ -41,14 +42,19 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 
 	private ItemFrameEntity lastIfe;
 	private ItemStack lastStack;
-	public final boolean mapRemoved(PlayerEntity player, ItemFrameEntity ife){
+	public final boolean mapRemoved(ItemFrameEntity ife){
+//		synchronized(dir){
 		try{
 			if(!Generic.MAPART_AUTOREMOVE.getBooleanValue() || ife == null){
 				disableAndReset(); return false;
 			}
 			assert !ife.getHeldItemStack().isEmpty();
 
-			if(lastIfe != null){
+			// Values below 1 are invalid and should not be allowed BTW
+			final int NUM_REQ_TO_ENABLE = Generic.MAPART_AUTOREMOVE_AFTER.getIntegerValue();
+
+			if(NUM_REQ_TO_ENABLE > 1 && lastIfe != null){
+				assert lastStack != null;
 				if(ife.getFacing() != lastIfe.getFacing()){
 					Main.LOGGER.info("AutoRemoveMapArt: currIfe and lastIfe are not facing the same dir");
 					disableAndReset(); return false;
@@ -57,17 +63,13 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 					Main.LOGGER.info("AutoRemoveMapArt: currIfe and lastIfe are not in the same world!");
 					disableAndReset(); return false;
 				}
-				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(ife.getHeldItemStack(), lastStack), world);
+				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(ife.getHeldItemStack(), lastStack), ife.getWorld());
 				if(data.slots().size() != 2){ // TODO: support maps w/o custom name (related by edge detection)
 					Main.LOGGER.info("AutoRemoveMapArt: currIfe and lastIfe are not related");
 					disableAndReset(); return false;
 				}
 			}
 
-			// TODO: add a section here to check neighboring ifes, and if they do not contain related maps, return false
-
-			// Values below 1 are invalid and should not be allowed BTW
-			final int NUM_REQ_TO_ENABLE = Generic.MAPART_AUTOREMOVE_AFTER.getIntegerValue();
 			if(++numMatchingRemoved < NUM_REQ_TO_ENABLE) return false;
 
 			// Update autoremover settings
@@ -78,12 +80,24 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 				case EAST: case WEST: constAxis = ife.getBlockX(); break;
 				case NORTH: case SOUTH: constAxis = ife.getBlockZ(); break;
 			}
+
+			// Final check: are there actually any maps that still need to be removed?
+			Box box = ife.getBoundingBox().expand(2, 2, 2);
+			lastStack = ife.getHeldItemStack();
+			Predicate<ItemFrameEntity> filter = oIfe -> oIfe.getFacing() == dir && distFromPlane(oIfe.getBlockPos()) == 0
+					&& oIfe.getHeldItemStack().getItem() == Items.FILLED_MAP && isRelated(oIfe.getHeldItemStack());
+			if(ife.getWorld().getEntitiesByClass(ItemFrameEntity.class, box, filter).isEmpty()){
+				Main.LOGGER.info("AutoRemoveMapArt: appears there are no remaining (related) maps to remove");
+				disableAndReset(); return false;
+			}
 			return true;
 		}
 		finally{
+			recentRemoveAttempts[attemptIdx] = ife.getId();
 			lastIfe = ife;
 			lastStack = ife.getHeldItemStack().copy();
 		}
+//		}
 	}
 
 	private final double distFromPlane(BlockPos bp){
@@ -96,13 +110,21 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 		}
 	}
 
+	private final boolean isRelated(ItemStack stack){
+		assert lastStack != null && world != null;
+//		if(dir == null) return false;
+		RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(lastStack, stack), world);
+		return data.slots().size() == 2;
+	}
 	private final ItemFrameEntity getNearestMapToRemove(PlayerEntity player){
 		final double MAX_REACH = Configs.Generic.PLACEMENT_HELPER_MAPART_REACH.getDoubleValue();
 		final double SCAN_DIST = MAX_REACH+2;
 
 		Box box = player.getBoundingBox().expand(SCAN_DIST, SCAN_DIST, SCAN_DIST);
-		Predicate<ItemFrameEntity> filter = ife -> ife.getFacing() == dir && distFromPlane(ife.getBlockPos()) == 0 && !ife.getHeldItemStack().isEmpty()
-				&& ife.squaredDistanceTo(player.getEyePos()) <= MAX_REACH*MAX_REACH;
+		Predicate<ItemFrameEntity> filter = ife -> ife.getFacing() == dir && distFromPlane(ife.getBlockPos()) == 0
+				&& ife.getHeldItemStack().getItem() == Items.FILLED_MAP
+				&& ife.squaredDistanceTo(player.getEyePos()) <= MAX_REACH*MAX_REACH
+				&& isRelated(ife.getHeldItemStack());
 		List<ItemFrameEntity> ifes = player.getWorld().getEntitiesByClass(ItemFrameEntity.class, box, filter);
 		if(ifes.isEmpty()){
 //			Main.LOGGER.warn("AutoPlaceMapArt: no nearby iframes");
@@ -124,14 +146,15 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 		return null;
 	}
 
-	public final void removeNearestMap(MinecraftClient client){
+	private final void removeNearestMap(MinecraftClient client){
+		if(dir == null) return;
 		if(client.player == null || client.world == null){
 			Main.LOGGER.info("AutoRemoveMapArt: player disconnected mid-op");
-			return;
+			disableAndReset(); return;
 		}
 		if(!Configs.Generic.MAPART_AUTOREMOVE.getBooleanValue()){
 			Main.LOGGER.info("AutoRemoveMapArt: disabled mid-op");
-			return;
+			disableAndReset(); return;
 		}
 
 		if(client.player.currentScreenHandler != null && client.player.currentScreenHandler.syncId != 0){
@@ -143,7 +166,7 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 		if(++attemptIdx >= recentRemoveAttempts.length) attemptIdx = 0;
 		recentRemoveAttempts[attemptIdx] = 0;
 
-		{
+		/*{
 //			assert 0 <= attemptIdx < recentPlaceAttempts.length;
 			int i = (attemptIdx + 1) % recentRemoveAttempts.length;
 			while(i != attemptIdx){
@@ -156,7 +179,7 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 				}
 				if(++i == recentRemoveAttempts.length) i = 0;
 			}
-		}
+		}*/
 
 //		if(isMovingTooFast(client.player.getVelocity())) return; // Pause while player is moving
 

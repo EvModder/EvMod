@@ -54,7 +54,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 		recentPlaceAttempts = new int[20];
 
-		ClientTickEvents.END_CLIENT_TICK.register(this::placeNearestMap);
+		ClientTickEvents.END_CLIENT_TICK.register(client->{synchronized(stacksHashesForCurrentData){placeNearestMap(client);}});
 	}
 
 	private final record AxisData(int constAxis, int varAxis1, int varAxis2){}
@@ -147,7 +147,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 	private ItemFrameEntity lastIfe;
 	private ItemStack lastStack;
 	public final boolean recalcLayout(PlayerEntity player, ItemFrameEntity currIfe, ItemStack currStack){
-		synchronized(allMapItems){
+		synchronized(stacksHashesForCurrentData){
 		try{
 		if(!Generic.MAPART_AUTOPLACE.getBooleanValue()
 			|| currIfe == null || currStack == null || currStack.getCount() != 1)
@@ -255,8 +255,13 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		}
 
 		if(ifeOffset1 != 0){
-			final boolean isNeg = ifeOffset1 != (axisMatch ? posOffset1 : posOffset2);
-			assert ifeOffset1 == (axisMatch ? posOffset1 : posOffset2)*(isNeg ? -1 : +1) : "?? "+axisMatch+","+posOffset1+","+posOffset2+","+isNeg;
+			final int posOffset = (axisMatch ? posOffset1 : posOffset2);
+			final boolean isNeg = ifeOffset1 != posOffset;
+//			assert ifeOffset1 == posOffset*(isNeg ? -1 : +1) : "?? "+axisMatch+","+posOffset+","+isNeg;
+			if(ifeOffset1 != posOffset*(isNeg ? -1 : +1)){
+				Main.LOGGER.info("AutoPlaceMapArt: error ??1 "+axisMatch+","+posOffset+","+isNeg);
+				disableAndReset(); return false;
+			}
 			if(varAxis1Neg == null) varAxis1Neg = isNeg;
 			else if(varAxis1Neg != isNeg){
 				Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axis1");
@@ -264,8 +269,13 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			}
 		}
 		if(ifeOffset2 != 0){
-			final boolean isNeg = ifeOffset2 != (axisMatch ? posOffset2 : posOffset1);
-			assert ifeOffset2 == (axisMatch ? posOffset2 : posOffset1)*(isNeg ? -1 : +1);
+			final int posOffset = (axisMatch ? posOffset2 : posOffset1);
+			final boolean isNeg = ifeOffset2 != posOffset;
+//			assert ifeOffset2 == posOffset*(isNeg ? -1 : +1);
+			if(ifeOffset1 != posOffset*(isNeg ? -1 : +1)){
+				Main.LOGGER.info("AutoPlaceMapArt: error ??2 "+axisMatch+","+posOffset+","+isNeg);
+				disableAndReset(); return false;
+			}
 			if(varAxis2Neg == null) varAxis2Neg = isNeg;
 			else if(varAxis2Neg != isNeg){
 				Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axis2");
@@ -303,26 +313,26 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 	}
 
 	public final BlockPos getPlacement(ItemStack stack){
-		synchronized(allMapItems){
-		if(!stacksHashesForCurrentData.contains(ItemStack.hashCode(stack))){
-			RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(currStack, stack), world);
-			if(data.slots().size() != 2 || data.prefixLen() == -1) return null; // Not part of the map being autoplaced
-			Main.LOGGER.info("AutoPlaceMapArt: Added map itemstack to currentData"+(stack.getCustomName()==null?"":", name="+stack.getCustomName().getString()));
-			stacksHashesForCurrentData.add(ItemStack.hashCode(stack));
-		}
-		final Pos2DPair pos2dPair = getRelativePosPair(currPosStr, getPosStrFromName(stack));
-		if(pos2dPair == null) return null;
-		int varAxis1 = varAxis1Origin+(axisMatch ? pos2dPair.b1 : pos2dPair.b2)*(varAxis1Neg?-1:+1);
-		int varAxis2 = varAxis2Origin+(axisMatch ? pos2dPair.b2 : pos2dPair.b1)*(varAxis2Neg?-1:+1);
-
-		switch(dir){
-			case UP: case DOWN: return new BlockPos(varAxis1, constAxis, varAxis2);
-			case EAST: case WEST: return new BlockPos(constAxis, varAxis1, varAxis2);
-			case NORTH: case SOUTH: return new BlockPos(varAxis1, varAxis2, constAxis);
-		}
-		Main.LOGGER.info("AutoPlaceMapArt: Unreachable!!!");
-		assert false;
-		return null;
+		synchronized(stacksHashesForCurrentData){
+			if(!stacksHashesForCurrentData.contains(ItemStack.hashCode(stack))){
+				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(currStack, stack), world);
+				if(data.slots().size() != 2 || data.prefixLen() == -1) return null; // Not part of the map being autoplaced
+				Main.LOGGER.info("AutoPlaceMapArt: Added map itemstack to currentData"+(stack.getCustomName()==null?"":", name="+stack.getCustomName().getString()));
+				stacksHashesForCurrentData.add(ItemStack.hashCode(stack));
+			}
+			final Pos2DPair pos2dPair = getRelativePosPair(currPosStr, getPosStrFromName(stack));
+			if(pos2dPair == null) return null;
+			int varAxis1 = varAxis1Origin+(axisMatch ? pos2dPair.b1 : pos2dPair.b2)*(varAxis1Neg?-1:+1);
+			int varAxis2 = varAxis2Origin+(axisMatch ? pos2dPair.b2 : pos2dPair.b1)*(varAxis2Neg?-1:+1);
+	
+			switch(dir){
+				case UP: case DOWN: return new BlockPos(varAxis1, constAxis, varAxis2);
+				case EAST: case WEST: return new BlockPos(constAxis, varAxis1, varAxis2);
+				case NORTH: case SOUTH: return new BlockPos(varAxis1, varAxis2, constAxis);
+			}
+			Main.LOGGER.info("AutoPlaceMapArt: Unreachable!!!");
+			assert false;
+			return null;
 		}
 	}
 
@@ -504,7 +514,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		return xzLengthSq > 0.0001 || Math.abs(velocity.y) > 0.08;
 	}
 
-	public final void placeNearestMap(MinecraftClient client){
+	private final void placeNearestMap(MinecraftClient client){
 		if(!hasKnownLayout()) return;
 		if(client.player == null || client.world == null){
 			Main.LOGGER.info("AutoPlaceMapArt: player disconnected mid-op");

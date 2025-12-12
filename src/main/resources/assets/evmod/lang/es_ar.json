@@ -106,6 +106,7 @@
 	"evmod.config.generic.name.mapArtAutoPlaceInvDelay": "mapArtAutoPlaceInvDelay",
 	"evmod.config.generic.name.mapArtAutoPlaceAntiRotate": "mapArtAutoPlaceAntiRotate",
 	"evmod.config.generic.name.mapArtAutoRemove": "mapArtAutoRemove",
+	"evmod.config.generic.name.mapArtAutoRemoveThreshold": "mapArtAutoRemoveThreshold",
 	"evmod.config.generic.comment.placementHelperIFrame": "ayudante para colocar marco de items",
 	"evmod.config.generic.comment.placementHelperIFrameMustConnect": "ayudante para marco de items - Solo coloca item frames conectados",
 	"evmod.config.generic.comment.placementHelperIFrameMustMatchBlock": "ayudante para marco de items - solo coloca en bloques que coinciden",
