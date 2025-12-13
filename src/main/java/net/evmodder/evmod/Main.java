@@ -76,14 +76,17 @@ public class Main{
 
 //	private static final String fabricModJsonStr = FileIO_New.loadResource(FabricEntryPoint.class, "fabric.mod.json", null);
 //	private static final JsonObject fabricModJsonObj = JsonParser.parseString(fabricModJsonStr).getAsJsonObject();
-	public static final String MOD_ID;
-	public static final String MOD_NAME;
-	static{
-		InputStreamReader inputStreamReader = new InputStreamReader(Main.class.getResourceAsStream("/fabric.mod.json"));
-		JsonObject fabricModJsonObj = JsonParser.parseReader(inputStreamReader).getAsJsonObject();
-		MOD_ID = fabricModJsonObj.get("id").getAsString();
-		MOD_NAME = fabricModJsonObj.get("name").getAsString();
-	}
+	public static final String MOD_ID = "evmod";
+	public static final String MOD_NAME = "Ev's Mod";
+//	public static final String MOD_ID;
+//	public static final String MOD_NAME;
+//	static{
+//		InputStreamReader inputStreamReader = new InputStreamReader(Main.class.getResourceAsStream("/fabric.mod.json"));
+//		JsonObject fabricModJsonObj = JsonParser.parseReader(inputStreamReader).getAsJsonObject();
+//		LoggerFactory.getLogger("test").info("fabric mod json: "+fabricModJsonObj.toString());
+//		MOD_ID = fabricModJsonObj.get("id").getAsString();
+//		MOD_NAME = fabricModJsonObj.get("name").getAsString();
+//	}
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
 	// TODO: delete this
