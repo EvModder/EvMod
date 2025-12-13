@@ -107,14 +107,14 @@ public final class KeybindAIETravelHelper{
 		});
 	}
 
-	public void updateEnabled(final boolean setEnabled){
+	public void updateEnabled(final boolean enable){
 //		Main.LOGGER.info("aie_travel_helper key pressed");
 		if(client == null){
 			Main.LOGGER.info("AIE Helper: registered");
 			client = MinecraftClient.getInstance();
 			registerClientTickListener();
 		}
-		if(setEnabled){
+		if(enable){
 			if(!client.player.isGliding()){
 				client.player.sendMessage(Text.literal("AIE Helper: You need to be flying first"), true);
 				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
@@ -123,7 +123,7 @@ public final class KeybindAIETravelHelper{
 			enabledTs = System.currentTimeMillis();
 			lastY = client.player.getY();
 		}
-		Main.LOGGER.info("AIE Helper: "+(setEnabled ? "enabled" : "disabled"));
+		Main.LOGGER.info("AIE Helper: "+(enable ? "enabled" : "disabled"));
 //		if(client.player != null) client.player.sendMessage(Text.literal("AIE Helper: "+(setEnabled ? "enabled" : "disabled")), true);
 	}
 

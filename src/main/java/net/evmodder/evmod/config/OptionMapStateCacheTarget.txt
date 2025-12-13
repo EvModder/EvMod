@@ -1,0 +1,14 @@
+package net.evmodder.evmod.config;
+
+
+public enum OptionMapStateCacheTarget implements ConfigOptionEntry{
+	BY_ID("byId"),
+	BY_NAME("byName"),
+	BY_INV_POS("byInvPos");
+
+	private final String name;
+	OptionMapStateCacheTarget(String name){this.name = name;}
+
+	@Override public String getStringValue(){return this.name;}
+	@Override public String getOptionListName(){return "cacheMapState.target";}
+}

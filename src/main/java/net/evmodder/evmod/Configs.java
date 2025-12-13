@@ -96,7 +96,7 @@ public class Configs implements IConfigHandler{
 		)).apply(GENERIC_KEY);
 		public static final ConfigBoolean LOG_COORDS_ON_SERVER_QUIT = new ConfigBoolean("logCoordsOnServerQuit", !Main.mapArtFeaturesOnly).apply(GENERIC_KEY);
 
-		public static final ConfigBoolean INV_RESTOCK_AUTO = new ConfigBoolean("inventoryRestockAuto", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean INV_RESTOCK_AUTO = new ConfigBoolean("inventoryRestockAuto", !Main.mapArtFeaturesOnly).apply(GENERIC_KEY);
 //		public static final ConfigOptionList INV_RESTOCK_AUTO_FOR_INV_ORGS = new ConfigOptionList("inventoryRestockAutoForOrganization", RestockAutoLayouts._2).apply(GENERIC_KEY);
 		public static final ConfigStringList INV_RESTOCK_AUTO_FOR_INV_ORGS = new ConfigStringList("inventoryRestockAutoForOrganization", ImmutableList.of("2")).apply(GENERIC_KEY);
 
@@ -111,12 +111,12 @@ public class Configs implements IConfigHandler{
 				availableOptions = new ArrayList<>();
 				availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT,
 						USE_BUNDLE_PACKET, BUNDLES_ARE_REVERSED));
-				final boolean CAN_CACHE_MAPS = (main.serverJoinListener && main.serverQuitListener) || main.containerOpenCloseListener != null;
+				final boolean CAN_CACHE_MAPS = (main.serverJoinListener && main.serverQuitListener) || main.containerOpenCloseListener;
 				if(CAN_CACHE_MAPS) availableOptions.addAll(List.of(MAP_CACHE, MAP_CACHE_UNLOCKED));
 				if(main.serverJoinListener) availableOptions.add(MAP_CACHE_BY_ID);
-				if(main.containerOpenCloseListener != null) availableOptions.add(MAP_CACHE_BY_NAME);
+				if(main.containerOpenCloseListener) availableOptions.add(MAP_CACHE_BY_NAME);
 				if(main.serverJoinListener && main.serverQuitListener) availableOptions.add(MAP_CACHE_BY_INV_POS);
-				if(main.containerOpenCloseListener != null) availableOptions.addAll(List.of(MAP_CACHE_BY_EC_POS/*, MAP_CACHE_BY_CONTAINER_POS*/));
+				if(main.containerOpenCloseListener) availableOptions.addAll(List.of(MAP_CACHE_BY_EC_POS/*, MAP_CACHE_BY_CONTAINER_POS*/));
 
 				if(main.mapHighlights) availableOptions.add(MAX_IFRAME_TRACKING_DIST);
 				if(main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME,

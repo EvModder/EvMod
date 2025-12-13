@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Stream;
+import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerInventory;
@@ -104,7 +105,8 @@ public final class KeybindHotbarTypeScroller{
 		}
 	}
 
-	public void refreshColorLists(List<String> colorLists){
+	public void refreshColorLists(){
+		List<String> colorLists = Configs.Generic.SCROLL_ORDER.getStrings();
 		if(variantLists == null){
 			variantLists = new ArrayList<>();
 			scrollableItems = new HashMap<>();

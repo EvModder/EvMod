@@ -416,18 +416,18 @@ public final class KeybindEbounceTravelHelper{
 		});
 	}
 
-	public void toggle(boolean setEnabled){
+	public void updateEnabled(boolean enable){
 //		Main.LOGGER.info("ebounce_travel_helper key pressed");
 		if(client == null){
 			Main.LOGGER.info("ebounce_travel_helper registered");
 			client = MinecraftClient.getInstance();
 			registerClientTickListener();
 		}
-//		client.player.sendMessage(Text.literal("eBounceHelper: key pressed, setEnabled="+setEnabled), true);
-//		client.player.sendMessage(Text.literal("eBounceHelper: key pressed, setEnabled="+setEnabled), false);
+//		client.player.sendMessage(Text.literal("eBounceHelper: key pressed, setEnabled="+enable), true);
+//		client.player.sendMessage(Text.literal("eBounceHelper: key pressed, setEnabled="+enable), false);
 
-		if(setEnabled == isEnabled) return;
-		if(!setEnabled || enabledTs != 0){
+		if(enable == isEnabled) return;
+		if(!enable || enabledTs != 0){
 			isEnabled = false;
 			enabledTs = 0;
 //			client.player.sendMessage(Text.literal("eBounceHelper: disabled"), true);

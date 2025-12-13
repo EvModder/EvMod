@@ -1,5 +1,4 @@
 package net.evmodder.evmod;
-
 /*recommended order:
 public / private / protected
 abstract
@@ -13,9 +12,13 @@ native
 strictfp
 
 */
+
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import fi.dy.masa.malilib.config.ConfigManager;
 import fi.dy.masa.malilib.event.InputEventHandler;
 import fi.dy.masa.malilib.registry.Registry;
@@ -29,6 +32,8 @@ import net.evmodder.evmod.apis.RemoteServerSender;
 import net.evmodder.evmod.apis.Tooltip;
 import net.evmodder.evmod.commands.*;
 import net.evmodder.evmod.keybinds.KeybindCraftingRestock;
+import net.evmodder.evmod.keybinds.KeybindInventoryOrganize;
+import net.evmodder.evmod.keybinds.KeybindInventoryRestock;
 import net.evmodder.evmod.listeners.*;
 import net.evmodder.evmod.onTick.AutoPlaceItemFrames;
 import net.evmodder.evmod.onTick.TooltipMapLoreMetadata;
@@ -39,7 +44,6 @@ import net.evmodder.evmod.onTick.UpdateInventoryHighlights;
 import net.evmodder.evmod.onTick.UpdateItemFrameHighlights;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
-import net.minecraft.client.MinecraftClient;
 
 //MC source code will be in ~/.gradle/caches/fabric-loom or ./.gradle/loom-cache
 // gradle tasks --all
@@ -51,17 +55,12 @@ public class Main{
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
 	// map load from bundle skip loaded maps
-	// new caching, support non-QWERTY?
+	// support non-QWERTY?
 	// GUI: StringHotkeyed, SlotListHotkeyed, ServerAddress(addr:port)
-
 	// Investigate https://github.com/Siphalor/amecs-api (potential better alternative to MaLiLib?)
-
 	// ignorelist sync, /seen and other misc stats cmds for DB mode
-
-	// keybind to sort maps in inventory (rly good request from FartRipper), 2 modes: incr by slot index vs make a rectangle in inv
-
+	// keybind to sort maps in inventory (request from FartRipper), 2 modes: incr by slot index vs make a rectangle in inv
 	// SendOnServerJoin configureable per-server (via ip?)
-
 	// timeOfDay >= 2000 && timeOfDay < 9000
 
 	// Feature Ideas:
@@ -75,36 +74,40 @@ public class Main{
 	// Low RC quest: auto enchant dia sword, auto grindstone, auto rename, auto anvil combine. auto enchant bulk misc items
 	// inv-keybind-craft-latest-item, also for enchant table and grindstone (eg. spam enchanting axes) via spacebar, like vanilla
 
-
-	// Static references (TODO: fetch from fabric.mod.json?)
-	public static final String MOD_ID = "evmod";
-	public static final String MOD_NAME = "Ev's Mod";
-//	public static final String MOD_VERSION = MiscUtils.getModVersionString(MOD_ID);
-//	public static final String MC_VERSION = MinecraftVersion.CURRENT.getName();
-//	public static final String MOD_TYPE = "fabric";
-//	public static final String MOD_STRING = MOD_ID + "-" + MOD_TYPE + "-" + MC_VERSION + "-" + MOD_VERSION;
-
-	private static Main instance; static Main getInstance(){return instance;}
+//	private static final String fabricModJsonStr = FileIO_New.loadResource(FabricEntryPoint.class, "fabric.mod.json", null);
+//	private static final JsonObject fabricModJsonObj = JsonParser.parseString(fabricModJsonStr).getAsJsonObject();
+	public static final String MOD_ID;
+	public static final String MOD_NAME;
+	static{
+		InputStreamReader inputStreamReader = new InputStreamReader(Main.class.getResourceAsStream("/fabric.mod.json"));
+		JsonObject fabricModJsonObj = JsonParser.parseReader(inputStreamReader).getAsJsonObject();
+		MOD_ID = fabricModJsonObj.get("id").getAsString();
+		MOD_NAME = fabricModJsonObj.get("name").getAsString();
+	}
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
+	// TODO: delete this
+	private static Main instance; static Main getInstance(){return instance;} // Accessors: Configs
 
 	// TODO: Worth finding a way to make these private+final+nonstatic?
 	public static ClickUtils clickUtils; // Public accessors: virtually all keybinds
 	public static RemoteServerSender remoteSender; // Public accessors: EpearlLookup, MiscUtils
 	public static EpearlLookup epearlLookup; // Public accessors: MixinEntityRenderer
+
 	public static final KeybindCraftingRestock kbCraftRestock = new KeybindCraftingRestock(); // Public accessors: MixinClientPlayerInteractionManager
+
+	// TOOD: Worth finding a way to make these private?
+	final GameMessageFilter gameMessageFilter; // Accessors: Configs, KeyCallbacks
+	final WhisperPlaySound whisperPlaySound; // Accessors: KeyCallbacks
+	final KeybindInventoryOrganize[] kbInvOrgs;
+	final KeybindInventoryRestock kbInvRestock;
+	final boolean inventoryRestockAuto, placementHelperIframe, placementHelperMapArt, placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove, broadcaster;
+	final boolean serverJoinListener, serverQuitListener, gameMessageListener/*, gameMessageFilter*/, containerOpenCloseListener;
+	final boolean cmdExportMapImg, cmdMapArtGroup;
+	final boolean mapHighlights, mapHighlightsInGUIs, tooltipMapHighlights, tooltipMapMetadata, tooltipRepairCost;
 
 	static boolean mapArtFeaturesOnly = true; //// TODO: ewww hacky
 	private final String internalConfigFile = mapArtFeaturesOnly ? "enabled_features_for_mapart_ver.txt" : "enabled_features.txt";
-
-	// TOOD: Worth finding a way to make these private?
-	final GameMessageFilter gameMessageFilter; // Accessors: Configs
-	final ContainerOpenCloseListener containerOpenCloseListener; // Accessors: Configs
-
-	final boolean inventoryRestockAuto, placementHelperIframe, placementHelperMapArt, placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove, broadcaster;
-	final boolean serverJoinListener, serverQuitListener, gameMessageListener;//, gameMessageFilter;
-	final boolean cmdExportMapImg, cmdMapArtGroup;
-	final boolean mapHighlights, mapHighlightsInGUIs, tooltipMapHighlights, tooltipMapMetadata, tooltipRepairCost;
 
 	private HashMap<String, Boolean> loadConfig(){
 		HashMap<String, Boolean> config = new HashMap<>();
@@ -144,13 +147,13 @@ public class Main{
 		serverQuitListener = extractConfigValue(config, "listener.server_quit");
 		gameMessageListener = extractConfigValue(config, "listener.game_message.read");
 		boolean registerGameMessageFilter = extractConfigValue(config, "listener.game_message.filter");
-		boolean registerContainerOpenListener = extractConfigValue(config, "listener.container_open");
+		containerOpenCloseListener = extractConfigValue(config, "listener.container_open");
 		mapHighlights = extractConfigValue(config, "map_highlights");
 		mapHighlightsInGUIs = extractConfigValue(config, "map_highlights.in_gui");
 		tooltipMapHighlights = mapHighlights && extractConfigValue(config, "tooltip.map_highlights");
 		tooltipMapMetadata = extractConfigValue(config, "tooltip.map_metadata");
 		tooltipRepairCost = extractConfigValue(config, "tooltip.repair_cost");
-		inventoryRestockAuto = registerContainerOpenListener && extractConfigValue(config, "inventory_restock.auto");
+		inventoryRestockAuto = containerOpenCloseListener && extractConfigValue(config, "inventory_restock.auto");
 
 		boolean cmdAssignPearl = epearlOwners && extractConfigValue(config, "command.assignpearl");
 		cmdExportMapImg = extractConfigValue(config, "command.exportmapimg");
@@ -163,9 +166,9 @@ public class Main{
 			LOGGER.error("Unrecognized config setting(s)!: "+config);
 		}
 
-		KeyCallbacks.remakeClickUtils(null);
+		KeyCallbacks.remakeClickUtils();
 		if(database){
-			KeyCallbacks.remakeRemoteServerSender(null);
+			KeyCallbacks.remakeRemoteServerSender();
 			remoteSender.sendBotMessage(Command.PING, /*udp=*/false, /*timeout=*/5000, /*msg=*/new byte[0], null);
 //			msg->LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg)))
 		}
@@ -177,11 +180,20 @@ public class Main{
 
 		if(serverJoinListener) new ServerJoinListener();
 		if(serverQuitListener) new ServerQuitListener();
-		if(gameMessageListener) new GameMessageListener(epearlLookup);
+		whisperPlaySound = mapArtFeaturesOnly ? null : new WhisperPlaySound();
+		if(gameMessageListener) new GameMessageListener(epearlLookup, whisperPlaySound);
 		gameMessageFilter = registerGameMessageFilter ? new GameMessageFilter() : null;
 
-		containerOpenCloseListener = registerContainerOpenListener ? new ContainerOpenCloseListener() : null;
-		if(inventoryRestockAuto) ClientTickEvents.END_CLIENT_TICK.register(containerOpenCloseListener::onUpdateTick);
+		kbInvOrgs = mapArtFeaturesOnly ? null : new KeybindInventoryOrganize[]{
+				new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_1.getStrings()),
+				new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_2.getStrings()),
+				new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_3.getStrings())
+		};
+		kbInvRestock = kbInvOrgs == null ? null : new KeybindInventoryRestock(kbInvOrgs);
+		if(containerOpenCloseListener){
+			ContainerOpenCloseListener cocl = new ContainerOpenCloseListener(kbInvRestock);
+			ClientTickEvents.END_CLIENT_TICK.register(cocl::onUpdateTick);
+		}
 
 		if(placementHelperIframe) new AutoPlaceItemFrames();
 		if(placementHelperMapArt) new MapHandRestock(placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove);
@@ -211,6 +223,6 @@ public class Main{
 		Registry.CONFIG_SCREEN.registerConfigScreenFactory(new ModInfo(MOD_ID, MOD_NAME, ConfigGui::new));
 
 		InputEventHandler.getKeybindManager().registerKeybindProvider(InputHandler.getInstance());
-		KeyCallbacks.init(MinecraftClient.getInstance());
+		KeyCallbacks.init(this);
 	}
 }

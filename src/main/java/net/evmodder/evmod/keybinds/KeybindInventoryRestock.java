@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import net.evmodder.evmod.Configs;
-import net.evmodder.evmod.KeyCallbacks;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
@@ -177,17 +176,17 @@ public final class KeybindInventoryRestock{
 			}
 		}
 	}
-	public void refreshLayouts(){
+	public void refreshLayouts(KeybindInventoryOrganize[] invOrganizations){
 		if(organizationLayouts == null) organizationLayouts = new ArrayList<>();
 		else organizationLayouts.clear();
 		// TODO: replace with ConfigOptionList, for named organization schemes
 		List<String> layouts = Configs.Generic.INV_RESTOCK_AUTO_FOR_INV_ORGS.getStrings();
-		if(layouts.contains("1")) organizationLayouts.add(KeyCallbacks.kbInvOrg1);
-		if(layouts.contains("2")) organizationLayouts.add(KeyCallbacks.kbInvOrg2);
-		if(layouts.contains("3")) organizationLayouts.add(KeyCallbacks.kbInvOrg3);
+		if(layouts.contains("1")) organizationLayouts.add(invOrganizations[0]);
+		if(layouts.contains("2")) organizationLayouts.add(invOrganizations[1]);
+		if(layouts.contains("3")) organizationLayouts.add(invOrganizations[2]);
 	}
-	public KeybindInventoryRestock(){
+	public KeybindInventoryRestock(KeybindInventoryOrganize[] invOrganizations){
 		refreshLists();
-		refreshLayouts();
+		refreshLayouts(invOrganizations);
 	}
 }

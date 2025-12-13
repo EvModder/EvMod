@@ -45,7 +45,7 @@ abstract class MixinHandledScreen<T extends ScreenHandler> extends Screen{
 
 		if(client.player == null || client.player.isCreative()) return; // Breaks creative middle-click drag (on other servers)
 		ItemStack cursorStack = handler.getCursorStack();
-		if(cursorStack == null || handler.getCursorStack().isEmpty()) return;
+		if(cursorStack == null || cursorStack.isEmpty()) return;
 		if(!cursorStack.isStackable() || cursorStack.getItem() instanceof FilledMapItem || cursorStack.getItem() instanceof BannerItem)
 			cir.setReturnValue(true); // Prevent initiating a drag
 	}

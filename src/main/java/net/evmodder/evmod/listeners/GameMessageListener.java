@@ -27,7 +27,7 @@ public class GameMessageListener{
 				/*udp=*/true, 2000, PacketHelper.toByteArray(client.player.getUuid(), ignoredUUID), /*recv=*/null);
 	}
 
-	public GameMessageListener(EpearlLookup epl){
+	public GameMessageListener(EpearlLookup epl, WhisperPlaySound wps){
 		final EpearlActivator pearlActivator = epl == null ? null : new EpearlActivator(epl);
 
 		ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {
@@ -38,7 +38,7 @@ public class GameMessageListener{
 
 			if(literal.matches("^\\w+ whispers: .*")){// TODO: per-server format support
 //				Main.LOGGER.info("GameMsgListener: whisper detected");
-				WhisperPlaySound.playSound();
+				if(wps != null) wps.playSound();
 
 				final String PEARL_PULL_TRIGGER = Configs.Generic.WHISPER_PEARL_PULL.getStringValue();
 				if(!PEARL_PULL_TRIGGER.isBlank() && pearlActivator != null){

@@ -53,7 +53,7 @@ abstract class MixinClientPlayerInteractionManager{
 	private void avoid_sending_too_many_clicks(int syncId, int slot, int button, SlotActionType action, PlayerEntity player, CallbackInfo ci){
 //		MinecraftClient.getInstance().player.sendMessage(Text.literal("clickSlot: syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
 		if(player.isCreative()) return;
-//		if(action == SlotActionType.THROW/* || action == SlotActionType.CLONE || action == SlotActionType.QUICK_CRAFT*/) return;
+//		if(action == SlotActionType.CLONE/* || action == SlotActionType.THROW || action == SlotActionType.QUICK_CRAFT*/) return;
 		if(slot == -999) return; // TODO: comment this out to test things
 		final boolean isBotted = Main.clickUtils.isThisClickBotted(/*friend*/);
 		if(Configs.Generic.CLICK_FILTER_USER_INPUT.getBooleanValue() && !isBotted && Main.clickUtils.hasOngoingClicks()){

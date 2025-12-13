@@ -74,7 +74,7 @@ public class CommandMapArtGroup{
 
 	private int runCompareCommand(final FabricClientCommandSource source, final String[] group1, final String[] group2){
 		if(group2 == null || group2.length == 0){
-			source.sendError(Text.translatable(Main.MOD_ID+".command.mapartgroup.compare.needsSecondGroup").withColor(ERROR_COLOR));
+			source.sendError(Text.translatable(PREFIX+".compare.needsSecondGroup").withColor(ERROR_COLOR));
 //			source.sendError(Text.literal("Specify a 2nd group to compare against").withColor(ERROR_COLOR));
 			return 1;
 		}
@@ -90,7 +90,7 @@ public class CommandMapArtGroup{
 		String groupName2 = Arrays.stream(group2).collect(Collectors.joining(","));
 
 		if(in1Not2.isEmpty() && in2Not1.isEmpty()){
-			source.sendError(Text.translatable(Main.MOD_ID+".command.mapartgroup.compare.identical", groupName1, groupName2).withColor(DONE_COLOR));
+			source.sendError(Text.translatable(PREFIX+".compare.identical", groupName1, groupName2).withColor(DONE_COLOR));
 //			source.sendFeedback(Text.literal("MapArtGroups "+groupName1+" and "+groupName2+" are identical").withColor(DONE_COLOR));
 			return 1;
 		}
@@ -103,7 +103,7 @@ public class CommandMapArtGroup{
 				colorIds1.removeIf(in1Not2::contains);
 				MapGroupUtils.setCurrentGroup(activeGroup = colorIds1);
 				activeGroupName = "in_"+groupName1+"_AND_IN_"+groupName2;
-				source.sendError(Text.translatable(Main.MOD_ID+".command.mapartgroup.compare.create",
+				source.sendError(Text.translatable(PREFIX+".compare.create",
 						activeGroupName, colorIds1.size()).withColor(CREATE_COLOR));
 //				source.sendFeedback(Text.literal("Created group '"+activeGroupName
 //						+"' and set as active (ids: "+colorIds1.size()+")").withColor(CREATE_COLOR));
@@ -124,14 +124,14 @@ public class CommandMapArtGroup{
 				MapGroupUtils.setCurrentGroup(activeGroup = colorIds2);
 				if(in1Not2.isEmpty()){
 					activeGroupName = "in_"+groupName2+"_AND_IN_"+groupName1;
-					source.sendError(Text.translatable(Main.MOD_ID+".command.mapartgroup.compare.create",
+					source.sendError(Text.translatable(PREFIX+".compare.create",
 							activeGroupName, colorIds2.size()).withColor(CREATE_COLOR));
 //					source.sendFeedback(Text.literal("Created group '"+activeGroupName
 //							+"' and set as active (ids: "+colorIds2.size()+")").withColor(CREATE_COLOR));
 				}
 				else{
 					activeGroupName = "intersection_"+groupName1+"_and_"+groupName2; // Set intersection
-					source.sendError(Text.translatable(Main.MOD_ID+".command.mapartgroup.compare.intersection",
+					source.sendError(Text.translatable(PREFIX+".compare.intersection",
 							colorIds1.size(), in1Not2.size(), colorIds2OriginalSize, in2Not1.size(), colorIds2.size())
 							.withColor(CREATE_COLOR));
 //					source.sendFeedback(Text.literal("Using set-intersection as active group "

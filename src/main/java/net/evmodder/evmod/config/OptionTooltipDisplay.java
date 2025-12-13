@@ -1,33 +1,13 @@
 package net.evmodder.evmod.config;
 
-import fi.dy.masa.malilib.config.IConfigOptionListEntry;
-import fi.dy.masa.malilib.util.StringUtils;
-import net.evmodder.evmod.Main;
+public enum OptionTooltipDisplay implements ConfigOptionEntry {
+	OFF("off"),
+	ON("on"),
+	ADVANCED_TOOLTIPS("advanced");
 
-public enum OptionTooltipDisplay implements IConfigOptionListEntry {
-	OFF("off", Main.MOD_ID+".gui.label.tooltipDisplay.off"),
-	ON("on", Main.MOD_ID+".gui.label.tooltipDisplay.on"),
-	ADVANCED_TOOLTIPS("advanced", Main.MOD_ID+".gui.label.tooltipDisplay.advanced");
+	private final String name;
+	OptionTooltipDisplay(String name){this.name = name;}
 
-	private final String configString;
-	private final String translationKey;
-
-	OptionTooltipDisplay(String configString, String translationKey){
-		this.configString = configString;
-		this.translationKey = translationKey;
-	}
-
-	@Override public String getStringValue(){return this.configString;}
-	@Override public String getDisplayName(){return StringUtils.translate(this.translationKey);}
-
-	@Override public IConfigOptionListEntry cycle(boolean forward){
-		int id = ordinal();
-		assert id >= 0 && id < values().length;
-		return values()[forward ? (++id==values().length ? 0 : id) : (--id==0 ? values().length-1 : id)];
-	}
-
-	@Override public IConfigOptionListEntry fromString(String name){
-		for(var v : values()) if(v.configString.equalsIgnoreCase(name)) return v;
-		throw new IllegalArgumentException(getClass().getName()+": Invalid argument provided to fromString(): "+name);
-	}
+	@Override public String getStringValue(){return this.name;}
+	@Override public String getOptionListName(){return "tooltipDisplay";}
 }

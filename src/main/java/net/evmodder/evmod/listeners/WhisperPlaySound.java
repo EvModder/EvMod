@@ -8,11 +8,13 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.Identifier;
 
 public class WhisperPlaySound{
-	private static float volume, pitch;
-	private static SoundEvent sound;
-	private static SoundCategory category;
+	private float volume, pitch;
+	private SoundEvent sound;
+	private SoundCategory category;
 
-	public static void recomputeSound(String soundData){
+//	public void recomputeSound(String soundData){
+	public void recomputeSound(){
+		final String soundData = Configs.Generic.WHISPER_PLAY_SOUND.getStringValue();
 		if(soundData == null || soundData.isBlank()) return;
 		if(soundData.lastIndexOf('{') != 0 || soundData.indexOf('}') != soundData.length()-1){
 			Main.LOGGER.warn("Unrecognized sound format: "+soundData+" (not wrapped in {})");
@@ -33,7 +35,9 @@ public class WhisperPlaySound{
 				((idx=parts[3].indexOf(':')) == -1 ? parts[3] : parts[3].substring(idx+1)).trim());
 	}
 
-	public static void playSound(){
+	public WhisperPlaySound(){recomputeSound();}
+
+	public void playSound(){
 		if(sound == null || category == null || volume == 0) return;
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(Configs.Generic.WHISPER_PLAY_SOUND_UNFOCUSED_ONLY.getBooleanValue() && client.isWindowFocused()) return;

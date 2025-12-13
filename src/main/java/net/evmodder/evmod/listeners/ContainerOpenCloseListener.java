@@ -2,9 +2,9 @@ package net.evmodder.evmod.listeners;
 
 import java.util.List;
 import net.evmodder.evmod.Configs;
-import net.evmodder.evmod.KeyCallbacks;
 import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.config.OptionMapStateCache;
+import net.evmodder.evmod.keybinds.KeybindInventoryRestock;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
@@ -14,9 +14,13 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.text.Text;
 
 public final class ContainerOpenCloseListener{
+	private final KeybindInventoryRestock kbInvRestock;
+	public ContainerOpenCloseListener(KeybindInventoryRestock kbInvRestock){this.kbInvRestock = kbInvRestock;}
+
 	private int syncId;
 	private boolean currentlyViewingEchest, currentlyViewingContainer;
 	private List<ItemStack> contents; // null until echest is opened
+
 	public static boolean echestCacheLoaded; // TODO: remove horrible public static var
 
 	public final void onUpdateTick(MinecraftClient client){
@@ -32,7 +36,7 @@ public final class ContainerOpenCloseListener{
 		syncId = newSyncId;
 		if(newSyncId != 0){
 //			Main.LOGGER.info("ContainerOpenCloseListener: container opened, syncId="+newSyncId+", name="+client.currentScreen.getTitle().toString());
-			if(Configs.Generic.INV_RESTOCK_AUTO.getBooleanValue()) KeyCallbacks.kbInvRestock.organizeThenRestock();
+			if(Configs.Generic.INV_RESTOCK_AUTO.getBooleanValue()) kbInvRestock.organizeThenRestock();
 
 			if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
 				currentlyViewingContainer = true;
