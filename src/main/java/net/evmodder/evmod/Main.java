@@ -13,12 +13,9 @@ strictfp
 
 */
 
-import java.io.InputStreamReader;
 import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import fi.dy.masa.malilib.config.ConfigManager;
 import fi.dy.masa.malilib.event.InputEventHandler;
 import fi.dy.masa.malilib.registry.Registry;
@@ -89,7 +86,7 @@ public class Main{
 //	}
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	// TODO: delete this
+	// TODO: ewww hacky
 	private static Main instance; static Main getInstance(){return instance;} // Accessors: Configs
 
 	// TODO: Worth finding a way to make these private+final+nonstatic?

@@ -183,6 +183,7 @@ public class AutoPlaceItemFrames{
 //			Main.LOGGER.info("iFramePlacer: dir="+dir.name()+", placeAgainstBlock="+placeAgainstBlock);
 			return ActionResult.PASS;
 		});
+		//TODO: prefer entity attack event? (like mapart autoplacer)
 		ClientEntityEvents.ENTITY_UNLOAD.register((entity, world) -> {
 			if(dir != null && entity instanceof ItemFrameEntity ife
 					&& ife.getFacing() == dir && distFromPlane(ife.getBlockPos().offset(dir.getOpposite())) == 0
