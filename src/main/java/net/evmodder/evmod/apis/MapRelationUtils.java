@@ -114,13 +114,13 @@ public abstract class MapRelationUtils{
 	// Output inclues input map
 	public static final RelatedMapsData getRelatedMapsByName(final List<ItemStack> slots, final String sourceName,
 			final int count, final Boolean locked, final World world){
-//		Main.LOGGER.info("getRelatedMapsByName() called, sourceName="+sourceName);
+//		Main.LOGGER.info("MapAdjUtil: getRelatedMapsByName() called, sourceName="+sourceName);
 		List<Integer> relatedMapSlots = new ArrayList<>();
 		if(sourceName == null) return new RelatedMapsData(-1, -1, relatedMapSlots);
 		final String sourceName2 = removeByArtist(sourceName);
+//		Main.LOGGER.info("MapAdjUtil: getRelatedMapsByName() called, sourceName2="+sourceName2);
 
 		int prefixLen = -1, suffixLen = -1;
-//		Main.LOGGER.info("MapAdjUtil: getRelatedMapsByName() called for name: "+sourceName);
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
 //			final int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
 		Iterator<ItemStack> it = slots.iterator();

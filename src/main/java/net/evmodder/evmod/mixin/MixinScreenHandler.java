@@ -1,7 +1,7 @@
 package net.evmodder.evmod.mixin;
 
 import net.evmodder.evmod.Configs;
-import net.evmodder.evmod.keybinds.MapClickMoveNeighbors;
+import net.evmodder.evmod.apis.MapClickMoveNeighbors;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;

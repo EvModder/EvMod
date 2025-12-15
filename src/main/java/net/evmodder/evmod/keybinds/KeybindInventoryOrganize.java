@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
+import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.config.OptionInventoryRestockLimit;
@@ -22,6 +23,7 @@ import net.minecraft.util.Identifier;
 
 public final class KeybindInventoryOrganize{
 	final boolean CLEAN_UNUSED_HOTBAR_SLOTS = true, RESTOCK_ONLY_1_SLOT_PER_TYPE = true, DONT_RESTOCK_IF_ALREADY_IN_INV = true;
+
 	record SlotAndItemName(int slot, String name){
 		@Override public boolean equals(Object o){
 			return o != null && o instanceof SlotAndItemName s && slot == s.slot && /*id==null?s.id==null:*/name.equals(s.name);
@@ -112,7 +114,7 @@ public final class KeybindInventoryOrganize{
 	private int depth; // TODO: instead of running up to 3 times, just sort things properly the first time
 	public void organizeInventory(final boolean RESTOCK_ONLY, Runnable onComplete){
 		//Main.LOGGER.info("InvOrganize: keybind pressed");
-		if(Main.clickUtils.hasOngoingClicks()) return;
+		if(ClickUtils.hasOngoingClicks()) return;
 
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof HandledScreen hs)){
@@ -401,8 +403,8 @@ public final class KeybindInventoryOrganize{
 			if(onComplete != null) onComplete.run();
 			return;
 		}
-		Main.clickUtils.executeClicks(_0->true,
-				//				_0->{
+		ClickUtils.executeClicks(_0->true,
+//				_0->{
 //					//client.player.sendMessage(Text.literal("click "+c.slotId()+" "+c.button()+" "+c.actionType()), false);
 //					return true;
 //				},
@@ -414,8 +416,7 @@ public final class KeybindInventoryOrganize{
 						depth = 0;
 						if(onComplete != null) onComplete.run();
 					}
-				},
-clicks);
+				}, clicks);
 	}
 
 	public void refreshLayout(List<String> strings){

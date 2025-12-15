@@ -15,19 +15,45 @@ import net.evmodder.EvLib.util.PacketHelper.MessageReceiver;
 
 public final class RemoteServerSender{
 	public static final int DEFAULT_PORT = 14441;
+
 	private final Logger LOGGER;
+	private final Supplier<Integer> CURR_SERVER_HASHCODE;
 
-	private final String REMOTE_ADDR;
-	private final Supplier<Integer> CURR_SERVER_ADDR_HASHCODE;
-	private final int PORT;
+	private final LinkedList<byte[]> tcpPackets, udpPackets;
+	private final LinkedList<MessageReceiver> tcpReceivers, udpReceivers;
+
+	private String REMOTE_ADDR;
 	private InetAddress addrResolved;
+	private int PORT;
 
-	private final int CLIENT_ID;
-	private final String CLIENT_KEY;
+	private int CLIENT_ID;
+	private String CLIENT_KEY;
 
 	private void resolveAddress(){
 		try{addrResolved = InetAddress.getByName(REMOTE_ADDR);}
 		catch(UnknownHostException e){LOGGER.warn("Server not found: "+REMOTE_ADDR);}
+	}
+
+	public void setConnectionDetails(String addr, int port, int clientId, String clientKey){
+		REMOTE_ADDR = addr; resolveAddress();
+		PORT = port;
+		CLIENT_ID = clientId;
+		CLIENT_KEY = clientKey;
+	}
+
+	public RemoteServerSender(Logger logger, Supplier<Integer> serverAddrGetter){
+		LOGGER = logger;
+//		REMOTE_ADDR = addr; resolveAddress();
+//		PORT = port;
+		CURR_SERVER_HASHCODE = serverAddrGetter;
+
+		tcpPackets = new LinkedList<>();
+		udpPackets = new LinkedList<>();
+		tcpReceivers = new LinkedList<>();
+		udpReceivers = new LinkedList<>();
+
+//		CLIENT_ID = clientId;
+//		CLIENT_KEY = clientKey;
 	}
 
 	// Returns a `4+message.length+16`-byte packet
@@ -35,7 +61,7 @@ public final class RemoteServerSender{
 		ByteBuffer bb1 = ByteBuffer.allocate(16+message.length);
 		bb1.putInt(CLIENT_ID);
 		bb1.putInt(command.ordinal());
-		final int addressCode = CURR_SERVER_ADDR_HASHCODE.get();
+		final int addressCode = CURR_SERVER_HASHCODE.get();
 		bb1.putInt(addressCode);
 		bb1.putInt((int)System.currentTimeMillis());//Truncate, since we assume ping < Integer.MAX anyway
 		bb1.put(message);
@@ -47,8 +73,6 @@ public final class RemoteServerSender{
 		return bb2.array();
 	}
 
-	private final LinkedList<byte[]> tcpPackets, udpPackets;
-	private final LinkedList<MessageReceiver> tcpReceivers, udpReceivers;
 	private final String formatTimeMillis(long latency){
 		// Output: 2s734ms
 //		return TextUtils.formatTime(latency, false, "", 2, new long[]{1000, 1}, new char[]{'s', ' '}).stripTrailing()+"ms";
@@ -95,28 +119,13 @@ public final class RemoteServerSender{
 		}
 	}
 
-	public RemoteServerSender(Logger logger, String addr, int port, int clientId, String clientKey, Supplier<Integer> serverAddrGetter){
-		LOGGER = logger;
-		REMOTE_ADDR = addr;
-		PORT = port;
-		CURR_SERVER_ADDR_HASHCODE = serverAddrGetter;
-		resolveAddress();
-
-		tcpPackets = new LinkedList<>();
-		udpPackets = new LinkedList<>();
-		tcpReceivers = new LinkedList<>();
-		udpReceivers = new LinkedList<>();
-
-		CLIENT_ID = clientId;
-		CLIENT_KEY = clientKey;
-	}
-
 	public static void main(String... args) throws IOException{
 		UUID pearlUUID = UUID.fromString("a8c5dd6e-5f95-4875-9494-7c1d519ba8c8");
 		UUID ownerUUID = UUID.fromString("34471e8d-d0c5-47b9-b8e1-b5b9472affa4");
 //		UUID loc = new UUID(Double.doubleToRawLongBits(x), Double.doubleToRawLongBits(z));
 
-		RemoteServerSender rss = new RemoteServerSender(LoggerFactory.getLogger("RMS"), "localhost", 14441, 1, "some_unique_key", ()->0);
+		RemoteServerSender rss = new RemoteServerSender(LoggerFactory.getLogger("RMS"), ()->0);
+		rss.setConnectionDetails("localhost", 14441, 1, "some_unique_key");
 
 		byte[] storePearlOwnerMsg = ByteBuffer.allocate(32)
 				.putLong(pearlUUID.getMostSignificantBits()).putLong(pearlUUID.getLeastSignificantBits())

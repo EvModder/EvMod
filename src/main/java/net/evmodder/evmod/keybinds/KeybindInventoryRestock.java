@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
+import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.config.OptionInventoryRestockLimit;
@@ -37,7 +38,7 @@ public final class KeybindInventoryRestock{
 //	}
 
 	public final void doRestock(){
-		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("InvRestock cancelled: Already ongoing"); return;}
+		if(ClickUtils.hasOngoingClicks()){Main.LOGGER.warn("InvRestock cancelled: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(client.player == null || client.world == null || !client.player.isAlive()) return;
@@ -141,7 +142,7 @@ public final class KeybindInventoryRestock{
 		if(clicks.isEmpty()) return;
 
 		Main.LOGGER.info("InvRestock: Scheduled with "+clicks.size()+" clicks");
-		Main.clickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("InvRestock: DONE!"), clicks);
+		ClickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("InvRestock: DONE!"), clicks);
 	}
 
 	private void organizeThenRestock(int i){

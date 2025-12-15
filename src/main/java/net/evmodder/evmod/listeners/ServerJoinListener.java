@@ -7,6 +7,7 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.apis.MiscUtils;
+import net.evmodder.evmod.apis.RemoteServerSender;
 import net.evmodder.evmod.config.OptionMapStateCache;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
@@ -27,7 +28,7 @@ public class ServerJoinListener{
 			MapStateCacher.loadMapStatesByPos(client.player.getInventory().main, MapStateCacher.Cache.BY_PLAYER_INV);
 	}
 
-	public ServerJoinListener(){
+	public ServerJoinListener(RemoteServerSender rms){
 		ClientPlayConnectionEvents.JOIN.register(
 				//ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server
 				(handler, _1, _2) ->
@@ -53,11 +54,10 @@ public class ServerJoinListener{
 					}}, 1l, 50l); // check 20 times per second
 				}
 			}
-			if(Configs.Database.SHARE_JOIN_QUIT.getBooleanValue() && Main.remoteSender != null){
+			if(Configs.Database.SHARE_JOIN_QUIT.getBooleanValue() && rms != null){
 				final String sessionName = client.getSession().getUsername(), playerName = client.player.getGameProfile().getName();
 				if(!sessionName.equals(playerName)); // TODO: separate type of packet? Proxy-joined EvDoc->EvModder
-				else Main.remoteSender.sendBotMessage(Command.DB_PLAYER_STORE_JOIN_TS,
-						/*udp=*/true, 5000, MiscUtils.getCurrentServerAndPlayerData(), /*recv=*/null);
+				else rms.sendBotMessage(Command.DB_PLAYER_STORE_JOIN_TS, /*udp=*/true, 5000, MiscUtils.getCurrentServerAndPlayerData(), /*recv=*/null);
 			}
 
 //			if(currServerHashCode != Main.HASHCODE_2B2T) return;

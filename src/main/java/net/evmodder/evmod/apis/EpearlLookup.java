@@ -14,7 +14,6 @@ import net.evmodder.EvLib.util.PearlDataClient;
 import net.evmodder.EvLib.util.TextUtils_New;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
-import net.evmodder.evmod.commands.CommandAssignPearl;
 import net.evmodder.evmod.mixin.AccessorProjectileEntity;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.minecraft.client.MinecraftClient;
@@ -32,6 +31,7 @@ public final class EpearlLookup{
 	private static final String DB_FILENAME_UUID = "epearl_cache_uuid";
 	private static final String DB_FILENAME_XZ = "epearl_cache_xz";
 
+	private final RemoteServerSender remoteSender;
 	private HashMap<Integer, UUID> updateKeyXZ; // Map of epearl.id -> epearl.pos (x.Double, z.Double, concatenated as UUID)
 	private final HashMap<UUID, XYZ> idToPos; // Map of epearl.uuid -> epearl.pos
 	private final HashMap<UUID, Long> requestStartTimes;
@@ -51,14 +51,14 @@ public final class EpearlLookup{
 		}
 		@Override protected PearlDataClient load(UUID key){
 			Main.LOGGER.debug("fetch ownerUUID called for pearlUUID: "+key+" at "+idToPos.get(key));
-			if(Main.remoteSender == null){
+			if(remoteSender == null){
 				Main.LOGGER.info("EpearLookup(Fetch): Database server is disabled/offline. Returning "+MojangProfileLookup.NAME_U_404);
 				return PD_404;
 			}
 
 			//Request UUID of epearl for <Server>,<ePearlPosEncrypted>
 			requestStartTimes.put(key, System.currentTimeMillis());
-			Main.remoteSender.sendBotMessage(DB_FETCH_COMMAND, /*udp=*/true, FETCH_TIMEOUT, PacketHelper.toByteArray(key),
+			remoteSender.sendBotMessage(DB_FETCH_COMMAND, /*udp=*/true, FETCH_TIMEOUT, PacketHelper.toByteArray(key),
 				msg->{
 					final XYZ xyz = idToPos.get(key);
 					final PearlDataClient pdc;
@@ -92,15 +92,6 @@ public final class EpearlLookup{
 		}
 	}
 	private RSLoadingCache cacheByUUID, cacheByXZ;
-
-	public final void assignPearlOwner(CommandAssignPearl.Friend _0, UUID key, PearlDataClient pdc, Command cmd){ // TODO: actual 'friend' enforcement
-//		assert MojangProfileLookup.nameLookup.get(pdc.owner(), null) != MojangProfileLookup.NAME_LOADING;
-//		Main.LOGGER.info("EpearLookup: assignPearlOwner() called, owner: "+MojangProfileLookup.nameLookup.get(pdc.owner(), null));
-		assert cmd == Command.DB_PEARL_STORE_BY_UUID || cmd == Command.DB_PEARL_STORE_BY_XZ;
-		final String DB_FILENAME = cmd == Command.DB_PEARL_STORE_BY_UUID ? DB_FILENAME_UUID : DB_FILENAME_XZ;
-		final RSLoadingCache cache = cmd == Command.DB_PEARL_STORE_BY_UUID ? cacheByUUID : cacheByXZ;
-		if(cache.putIfAbsent(key, pdc)) FileIO_New.appendToClientFile(DB_FILENAME, key, pdc);
-	}
 
 	private boolean recentChunkLoad = true;
 	private void runEpearlRemovalChecker(){
@@ -137,8 +128,8 @@ public final class EpearlLookup{
 						}
 						else if(!deletedKeys.isEmpty()){
 							Main.LOGGER.error("Num ePearls deleted from FileDB_UUID: "+deletedKeys.size()+" (current seen: "+pearlsSeen1+")");
-							if(Main.remoteSender != null) for(UUID deletedKey : deletedKeys){
-								Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(deletedKey),
+							if(remoteSender != null) for(UUID deletedKey : deletedKeys){
+								remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(deletedKey),
 								msg->{
 									if(msg != null && msg.length > 0 && msg[0] != 0) Main.LOGGER.info("Removed pearl UUID from remote DB!");
 									else Main.LOGGER.info("Failed to remove pearl UUID from remote DB!");
@@ -155,8 +146,8 @@ public final class EpearlLookup{
 						}
 						else if(!deletedKeys.isEmpty()){
 							Main.LOGGER.error("Num ePearls deleted from FileDB_XZ: "+deletedKeys.size()+" (current seen: "+pearlsSeen2+")");
-							if(Main.remoteSender != null) for(UUID deletedKey : deletedKeys){
-								Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_XZ, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(deletedKey),
+							if(remoteSender != null) for(UUID deletedKey : deletedKeys){
+								remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_XZ, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(deletedKey),
 								msg->{
 									if(msg != null && msg.length > 0 && msg[0] != 0) Main.LOGGER.info("Removed pearl XZ from remote DB!");
 									else Main.LOGGER.info("Failed to remove pearl XZ from remote DB!");
@@ -186,8 +177,9 @@ public final class EpearlLookup{
 		}
 	}
 
-	public EpearlLookup(){
-		if(Main.remoteSender != null){idToPos = new HashMap<>(); requestStartTimes = new HashMap<>();}
+	public EpearlLookup(RemoteServerSender rms){
+		remoteSender = rms;
+		if(rms != null){idToPos = new HashMap<>(); requestStartTimes = new HashMap<>();}
 		else{idToPos = null; requestStartTimes = null;}
 
 		if(Configs.Database.EPEARL_OWNERS_BY_UUID.getBooleanValue()) loadEpearlCacheUUID();
@@ -231,10 +223,10 @@ public final class EpearlLookup{
 			if(ownerUUID != null){
 				final PearlDataClient pdc = new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
 				if(cacheByUUID.putIfAbsent(key, pdc)){
-					if(Main.remoteSender == null) FileIO_New.appendToClientFile(DB_FILENAME_UUID, key, pdc);
+					if(remoteSender == null) FileIO_New.appendToClientFile(DB_FILENAME_UUID, key, pdc);
 					else{
 						Main.LOGGER.debug("EpearlLookup: Sending STORE_OWNER(uuid) '"+ownerName+"' for pearl at "+epearl.getBlockX()+","+epearl.getBlockZ());
-						Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, ownerUUID), msg->{
+						remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, ownerUUID), msg->{
 							if(msg != null && msg.length == 1){
 								if(msg[0] != 0) Main.LOGGER.info("EpearlLookup: Added pearl UUID to remote DB!");
 								else Main.LOGGER.info("EpearlLookup: Remote DB already contains pearl UUID");
@@ -272,10 +264,10 @@ public final class EpearlLookup{
 				if(oldKey == null){
 					final PearlDataClient pdc = new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
 					if(cacheByXZ.putIfAbsent(key, pdc)){
-						if(Main.remoteSender == null) FileIO_New.appendToClientFile(DB_FILENAME_XZ, key, pdc);
+						if(remoteSender == null) FileIO_New.appendToClientFile(DB_FILENAME_XZ, key, pdc);
 						else{
 							Main.LOGGER.debug("EpearlLookup: Sending STORE_OWNER(XZ) '"+ownerName+"' for pearl at "+epearl.getBlockX()+","+epearl.getBlockZ());
-							Main.remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_XZ, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, ownerUUID), msg->{
+							remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_XZ, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, ownerUUID), msg->{
 								if(msg != null && msg.length == 1){
 									if(msg[0] != 0) Main.LOGGER.info("EpearlLookup: Added pearl XZ to remote DB!");
 									else Main.LOGGER.info("EpearlLookup: Remote DB already contains pearl XZ (or rejected it for other reasons)");

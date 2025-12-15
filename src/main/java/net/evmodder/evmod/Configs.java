@@ -384,7 +384,7 @@ public class Configs implements IConfigHandler{
 
 						CHAT_MSG_1, CHAT_MSG_2, CHAT_MSG_3
 				));
-				if(Main.remoteSender != null) availableOptions.addAll(List.of(
+				if(Main.getInstance() != null) availableOptions.addAll(List.of(
 						REMOTE_MSG_1, REMOTE_MSG_2, REMOTE_MSG_3
 				));
 				if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(
@@ -418,7 +418,7 @@ public class Configs implements IConfigHandler{
 				Main main = Main.getInstance();
 				availableOptions = new ArrayList<>();
 				availableOptions.addAll(List.of(CLIENT_ID, CLIENT_KEY, ADDRESS, SHARE_MAPART));
-				if(Main.epearlLookup != null) availableOptions.addAll(List.of(EPEARL_OWNERS_BY_UUID, EPEARL_OWNERS_BY_XZ));
+				if(main.epearlLookup != null) availableOptions.addAll(List.of(EPEARL_OWNERS_BY_UUID, EPEARL_OWNERS_BY_XZ));
 				if(main.gameMessageListener) availableOptions.add(SHARE_IGNORES);
 				if(main.gameMessageFilter != null) availableOptions.add(BORROW_IGNORES);
 				if(main.serverJoinListener || main.serverQuitListener) availableOptions.add(SHARE_JOIN_QUIT);
@@ -434,7 +434,7 @@ public class Configs implements IConfigHandler{
 			allOptions.addAll(Generic.getOptions());
 			allOptions.addAll(Visuals.getOptions());
 			allOptions.addAll(Hotkeys.getOptions());
-			if(Main.remoteSender != null) allOptions.addAll(Database.getOptions());
+			if(Main.getInstance().remoteSender != null) allOptions.addAll(Database.getOptions());
 		}
 		return allOptions;
 	}
@@ -451,7 +451,7 @@ public class Configs implements IConfigHandler{
 				ConfigUtils.readConfigBase(root, "Generic", Generic.getOptions());
 				ConfigUtils.readConfigBase(root, "Visuals", Visuals.getOptions());
 				ConfigUtils.readConfigBase(root, "Hotkeys", Hotkeys.getOptions());
-				if(Main.remoteSender != null) ConfigUtils.readConfigBase(root, "Database", Database.getOptions());
+				if(Main.getInstance().remoteSender != null) ConfigUtils.readConfigBase(root, "Database", Database.getOptions());
 
 				// Main.debugLog("loadFromFile(): Successfully loaded config file '{}'.", configFile.toAbsolutePath());
 			}
@@ -473,7 +473,7 @@ public class Configs implements IConfigHandler{
 			ConfigUtils.writeConfigBase(root, "Generic", Generic.getOptions());
 			ConfigUtils.writeConfigBase(root, "Visuals", Visuals.getOptions());
 			ConfigUtils.writeConfigBase(root, "Hotkeys", Hotkeys.getOptions());
-			if(Main.remoteSender != null) ConfigUtils.writeConfigBase(root, "Database", Database.getOptions());
+			if(Main.getInstance() != null) ConfigUtils.writeConfigBase(root, "Database", Database.getOptions());
 
 			JsonUtils.writeJsonToFileAsPath(root, dir.resolve(CONFIG_FILE_NAME));
 		}

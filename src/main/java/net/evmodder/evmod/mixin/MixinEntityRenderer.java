@@ -41,12 +41,12 @@ abstract class MixinEntityRenderer{
 	// TODO: mixin onTick instead of hasLabel, or setName somehow
 	@Inject(method = "hasLabel", at = @At("HEAD"), cancellable = true)
 	public void test(Entity e, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
-		if(Main.epearlLookup == null) return; // Feature is disabled
+		if(Main.mixinAccess().epearlLookup == null) return; // Feature is disabled
 		if(client.options.hudHidden) return; // HUD is hidden
 		if(e instanceof ProjectileEntity == false) return;
 		if(e.getType() != EntityType.ENDER_PEARL) return;
 		//if(!isLookngAt(entity)) return;
-		String name = Main.epearlLookup.getOwnerName((ProjectileEntity)e);
+		String name = Main.mixinAccess().epearlLookup.getOwnerName((ProjectileEntity)e);
 		if(name == null) return;
 		//----------
 		XYZ xyz = new XYZ(e.getBlockX(), e.getBlockY()/4, e.getBlockZ());

@@ -11,6 +11,7 @@ import com.nimbusds.oauth2.sdk.util.StringUtils;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapRelationUtils;
+import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
@@ -262,7 +263,10 @@ public final class MapHandRestock{
 		final Boolean locked = state == null ? null : state.locked;
 		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, prevName, prevCount, locked, world);
 		data.slots().remove(Integer.valueOf(prevSlot));
-		if(data.slots().isEmpty()) return -1;
+		if(data.slots().isEmpty()){
+			Main.LOGGER.info("MapRestock: getNextSlotByName() found no related named maps ");
+			return -1;
+		}
 		if(data.prefixLen() == -1) return -1; // Indicates all related map slots have identical item names
 
 //		Main.LOGGER.info("prevSlot: "+prevSlot+", related slots: "+data.slots());
@@ -490,7 +494,7 @@ public final class MapHandRestock{
 //					clicks.add(new ClickEvent(restockFromSlotFinal, 0, SlotActionType.PICKUP)); // Putback bundle
 					clicks.add(new InvAction(restockFromSlotFinal, 1, ActionType.CLICK)); // Take last from bundle
 					clicks.add(new InvAction(36+player.getInventory().selectedSlot, 0, ActionType.CLICK)); // Place in active hb slot
-					Main.clickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("HandRestockFromBundle: DONE"), clicks);
+					ClickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("HandRestockFromBundle: DONE"), clicks);
 					Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlotFinal+" -> hb="+player.getInventory().selectedSlot);
 				}
 				else if(isHotbarSlot){

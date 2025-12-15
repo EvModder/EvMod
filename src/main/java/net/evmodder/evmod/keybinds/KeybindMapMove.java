@@ -10,6 +10,7 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MapRelationUtils;
+import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
@@ -37,7 +38,7 @@ public final class KeybindMapMove{
 	}
 
 	public final void moveMapArtToFromShulker(){
-		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapMove cancelled: Already ongoing"); return;}
+		if(ClickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapMove cancelled: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof HandledScreen hs)){/*Main.LOGGER.warn("MapMove cancelled: Not in ShulkerBoxScreen"); */return;}
@@ -143,18 +144,18 @@ public final class KeybindMapMove{
 				if(count == 2 || (count == 3 && numInShulk != 0)){
 					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // pickup half
 					if(numInShulk == 0){
-						if(Main.clickUtils.MAX_CLICKS >= 2) reserveClicks.put(clicks.peekLast(), 2);
+						if(ClickUtils.getMaxClicks() >= 2) reserveClicks.put(clicks.peekLast(), 2);
 						clicks.add(new InvAction(j, 0, ActionType.CLICK)); // place into next empty slot
 					}
 					else{
-						if(Main.clickUtils.MAX_CLICKS >= 3) reserveClicks.put(clicks.peekLast(), 3);
+						if(ClickUtils.getMaxClicks() >= 3) reserveClicks.put(clicks.peekLast(), 3);
 						clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK)); // shift-move remaining (1)
 						clicks.add(new InvAction(i, 0, ActionType.CLICK)); // place back
 					}
 				}
 				else{
 					clicks.add(new InvAction(i, 0, ActionType.CLICK)); // pickup all
-					if(Main.clickUtils.MAX_CLICKS >= 4) reserveClicks.put(clicks.peekLast(), 4);
+					if(ClickUtils.getMaxClicks() >= 4) reserveClicks.put(clicks.peekLast(), 4);
 					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // place one
 					clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK)); // shift-move the one
 					clicks.add(new InvAction(i, 0, ActionType.CLICK)); // place all (-1)
@@ -182,18 +183,18 @@ public final class KeybindMapMove{
 				if(count == 2 || (count == 3 && numInInv != 0)){
 					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // pickup half
 					if(numInInv == 0){
-						if(Main.clickUtils.MAX_CLICKS >= 2) reserveClicks.put(clicks.peekLast(), 2);
+						if(ClickUtils.getMaxClicks() >= 2) reserveClicks.put(clicks.peekLast(), 2);
 						clicks.add(new InvAction(j, 0, ActionType.CLICK)); // place into next empty slot
 					}
 					else{
-						if(Main.clickUtils.MAX_CLICKS >= 3) reserveClicks.put(clicks.peekLast(), 3);
+						if(ClickUtils.getMaxClicks() >= 3) reserveClicks.put(clicks.peekLast(), 3);
 						clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK)); // shift-move remaining (1)
 						clicks.add(new InvAction(i, 0, ActionType.CLICK)); // place back
 					}
 				}
 				else{
 					clicks.add(new InvAction(i, 0, ActionType.CLICK)); // pickup all
-					if(Main.clickUtils.MAX_CLICKS >= 4) reserveClicks.put(clicks.peekLast(), 4);
+					if(ClickUtils.getMaxClicks() >= 4) reserveClicks.put(clicks.peekLast(), 4);
 					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // place one
 					clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK)); // shift-move the one
 					clicks.add(new InvAction(i, 0, ActionType.CLICK)); // place all (-1)
@@ -203,10 +204,10 @@ public final class KeybindMapMove{
 		}
 
 		//Main.LOGGER.info("MapMove: STARTED");
-		Main.clickUtils.executeClicks(c->{
+		ClickUtils.executeClicks(c->{
 					// Don't start cursor-pickup move operation if we can't complete it in 1 go
 					final Integer clicksNeeded = reserveClicks.get(c);
-					if(clicksNeeded == null || clicksNeeded <= Main.clickUtils.calcAvailableClicks()) return true;
+					if(clicksNeeded == null || clicksNeeded <= ClickUtils.calcAvailableClicks()) return true;
 					return false; // Wait for clicks
 				}, ()->Main.LOGGER.info("MapMove: DONE!"),
 				clicks

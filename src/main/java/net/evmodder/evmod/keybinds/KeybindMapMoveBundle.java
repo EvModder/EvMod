@@ -7,6 +7,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.math.Fraction;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
+import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.minecraft.client.MinecraftClient;
@@ -38,7 +39,7 @@ public final class KeybindMapMoveBundle{
 	private long lastBundleOp = 0;
 	private final long bundleOpCooldown = 250l;
 	public final void moveMapArtToFromBundle(final boolean reverse){
-		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapBundleOp: Already ongoing"); return;}
+		if(ClickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapBundleOp: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof HandledScreen hs)) return;
@@ -151,7 +152,7 @@ public final class KeybindMapMoveBundle{
 		}
 		if(bundleSlot != -1 && !pickupHalf) clicks.add(new InvAction(bundleSlot, 0, ActionType.CLICK));
 
-		Main.clickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("MapBundleOp: DONE!"), clicks);
+		ClickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("MapBundleOp: DONE!"), clicks);
 	}
 
 	/*public KeybindMapMoveBundle(boolean regular, boolean reverse){

@@ -18,7 +18,7 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
-public class ClickUtils{
+public final class ClickUtils{
 	public enum ActionType{
 		CLICK(SlotActionType.PICKUP),
 		SHIFT_CLICK(SlotActionType.QUICK_MOVE),
@@ -31,22 +31,22 @@ public class ClickUtils{
 	}
 	public record InvAction(int slot, int button, ActionType action){}
 
-	public final int MAX_CLICKS;
-	private final int[] tickDurationArr;
-	private int tickDurIndex, sumClicksInDuration;
-	private long lastTick;
-	private final int OUTTA_CLICKS_COLOR = 15777300, SYNC_ID_CHANGED_COLOR = 16733525;
-//	private final double C_PER_T;
+	private static int MAX_CLICKS; public static int getMaxClicks(){return MAX_CLICKS;}
+	private static int[] tickDurationArr;
+	private static  int tickDurIndex, sumClicksInDuration;
+	private static  long lastTick;
+	private static final int OUTTA_CLICKS_COLOR = 15777300, SYNC_ID_CHANGED_COLOR = 16733525;
+//	private static final double C_PER_T;
 	public static long TICK_DURATION = 51l; // LOL!! TODO: estimate base off TPS/ping
 
-	private boolean thisClickIsBotted;
-	public boolean isThisClickBotted(/*MixinClientPlayerInteractionManager.Friend friend*/){return thisClickIsBotted;}
+	private static boolean thisClickIsBotted;
+	public static boolean isThisClickBotted(/*MixinClientPlayerInteractionManager.Friend friend*/){return thisClickIsBotted;}
 
-	public ClickUtils(final int MAX_CLICKS, int FOR_TICKS){
+	public static void refreshLimits(final int MAX_CLICKS, int FOR_TICKS){
 		if(MAX_CLICKS >= 100_000 || MAX_CLICKS <= 0){
 			if(MAX_CLICKS != 0) Main.LOGGER.error("InventoryUtils() initialized with "
 					+(MAX_CLICKS < 0 ? "invalid" : "insanely-large")+" click-limit: "+MAX_CLICKS+", treating it as limitless");
-			this.MAX_CLICKS = Integer.MAX_VALUE;
+			ClickUtils.MAX_CLICKS = Integer.MAX_VALUE;
 //			C_PER_T = Double.MAX_VALUE;
 			tickDurationArr = null;
 			return;
@@ -56,7 +56,7 @@ public class ClickUtils{
 			Main.LOGGER.error("InventoryUtils() initialized with insanely-large tick-limiter duration: "+FOR_TICKS+", ignoring and using 72k instead");
 			FOR_TICKS = 72_000;
 		}
-		this.MAX_CLICKS = MAX_CLICKS;
+		ClickUtils.MAX_CLICKS = MAX_CLICKS;
 //		C_PER_T = (double)MAX_CLICKS/(double)FOR_TICKS;
 		tickDurationArr = new int[FOR_TICKS];
 //		lastTick = System.currentTimeMillis()/TICK_DURATION; // Get recomputed by calcAvailableClicks() anyway
@@ -67,7 +67,7 @@ public class ClickUtils{
 //		return serverInfo == null ? 0 : serverInfo.ping; 
 //	}
 
-	public int calcAvailableClicks(){
+	public static int calcAvailableClicks(){
 		if(tickDurationArr == null) return MAX_CLICKS;
 		final long curTick = System.currentTimeMillis()/TICK_DURATION;
 		if(curTick != lastTick){
@@ -86,7 +86,7 @@ public class ClickUtils{
 		}
 		return MAX_CLICKS - sumClicksInDuration;
 	}
-	public void addClick(SlotActionType type){ // TODO: friend MixinClientPlayerInteractionManager?
+	public static void addClick(SlotActionType type){ // TODO: friend MixinClientPlayerInteractionManager?
 		assert type != null; //TODO: type is unused
 		if(tickDurationArr == null) return;
 //		calcAvailableClicks(); // TODO: anywhere addClick() is called, calcAvailableClicks() MUST be called immediately before
@@ -94,7 +94,7 @@ public class ClickUtils{
 		++sumClicksInDuration;
 	}
 
-	private void adjustTickRate(long msPerTick){
+	private static void adjustTickRate(long msPerTick){
 		// If TPS is degrading, don't clear old tick data (TODO: this isn't a perfect solution by any means)
 		if(msPerTick > TICK_DURATION) lastTick = System.currentTimeMillis()/TICK_DURATION;
 		else calcAvailableClicks();
@@ -102,7 +102,7 @@ public class ClickUtils{
 		lastTick = System.currentTimeMillis()/TICK_DURATION;
 	}
 
-	private int calcRemainingTicks(int clicksToExecute){
+	private static int calcRemainingTicks(int clicksToExecute){
 //		final int unusedCapacity = calcAvailableClicks();
 //		final double C_PER_T = (double)(MAX_CLICKS-unusedCapacity)/(double)tickDurationArr.length;
 //		int ticksLeft = 0;
@@ -121,8 +121,8 @@ public class ClickUtils{
 		return ticksIntoFuture;
 	}
 
-	final Pattern tpsPattern = Pattern.compile("(\\d{1,2}(?:\\.\\d+))\\s?tps", Pattern.CASE_INSENSITIVE);
-	private long /*getTPS*/getMillisPerTick(MinecraftClient client){
+	private static final Pattern tpsPattern = Pattern.compile("(\\d{1,2}(?:\\.\\d+))\\s?tps", Pattern.CASE_INSENSITIVE);
+	private static long /*getTPS*/getMillisPerTick(MinecraftClient client){
 		// Alternative: client.getNetworkHandler().onPlayerListHeader(PlayerListHeaderS2CPacket plhp)
 
 		final AccessorPlayerListHud playerListHudAccessor = (AccessorPlayerListHud)client.inGameHud.getPlayerListHud();
@@ -139,10 +139,10 @@ public class ClickUtils{
 		return Math.max(50, msPerTick); // Even if TPS>20, let's play it safe since packet-limiters might use real-time
 	}
 
-	private boolean clickOpOngoing/*, waitedForClicks*/;
-	private int estimatedMsLeft;
-	public final boolean hasOngoingClicks(){return clickOpOngoing;}
-	public final void executeClicks(Function<InvAction, Boolean> canProceed, Runnable onComplete, Queue<InvAction> clicks){
+	private static boolean clickOpOngoing/*, waitedForClicks*/;
+	private static int estimatedMsLeft;
+	public static boolean hasOngoingClicks(){return clickOpOngoing;}
+	public static void executeClicks(Function<InvAction, Boolean> canProceed, Runnable onComplete, Queue<InvAction> clicks){
 		final MinecraftClient client = MinecraftClient.getInstance();
 		if(clickOpOngoing){
 			Main.LOGGER.warn("executeClicks() already has an ongoing operation");
@@ -229,7 +229,7 @@ public class ClickUtils{
 			});
 		}}, 0l, 23l);//51l = just over a tick, 23l=just under half a tick
 	}
-	public final void executeClicks(Function<InvAction, Boolean> canProceed, Runnable onComplete, InvAction... clicks){
+	public static void executeClicks(Function<InvAction, Boolean> canProceed, Runnable onComplete, InvAction... clicks){
 		executeClicks(canProceed, onComplete, new ArrayDeque<>(List.of(clicks)));
 	}
 

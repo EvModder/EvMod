@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
+import net.evmodder.evmod.apis.ClickUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
@@ -55,18 +56,18 @@ abstract class MixinClientPlayerInteractionManager{
 		if(player.isCreative()) return;
 //		if(action == SlotActionType.CLONE/* || action == SlotActionType.THROW || action == SlotActionType.QUICK_CRAFT*/) return;
 		if(slot == -999) return; // TODO: comment this out to test things
-		final boolean isBotted = Main.clickUtils.isThisClickBotted(/*friend*/);
-		if(Configs.Generic.CLICK_FILTER_USER_INPUT.getBooleanValue() && !isBotted && Main.clickUtils.hasOngoingClicks()){
+		final boolean isBotted = ClickUtils.isThisClickBotted(/*friend*/);
+		if(Configs.Generic.CLICK_FILTER_USER_INPUT.getBooleanValue() && !isBotted && ClickUtils.hasOngoingClicks()){
 			ci.cancel();
 			if(syncId == 0 && slot == 0 && button == 0 && action == SlotActionType.QUICK_MOVE) return; // QUICK_CRAFT sometimes sends duplicate fake QUICK_MOVE?
 			MinecraftClient.getInstance().player.sendMessage(Text.literal("Discarding user click to protect an ongoing ClickOp").withColor(/*&c=*/16733525), false);
 //			MinecraftClient.getInstance().player.sendMessage(Text.literal("syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
 			return;
 		}
-		final int availableClicks = Main.clickUtils.calcAvailableClicks();
+		final int availableClicks = ClickUtils.calcAvailableClicks();
 		if(availableClicks > 0){
-			Main.clickUtils.addClick(action);
-			if(Configs.Hotkeys.CRAFT_RESTOCK.getKeybind().isValid()) Main.kbCraftRestock.checkIfCraftAction(player.currentScreenHandler, slot, button, action);
+			ClickUtils.addClick(action);
+			if(Configs.Hotkeys.CRAFT_RESTOCK.getKeybind().isValid()) Main.mixinAccess().kbCraftRestock.checkIfCraftAction(player.currentScreenHandler, slot, button, action);
 		}
 		else{
 			if(isBotted) Main.LOGGER.error("Botted click somehow triggered click limited! VERY BAD!!");

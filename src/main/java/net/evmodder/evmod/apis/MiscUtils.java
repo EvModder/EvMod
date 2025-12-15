@@ -4,18 +4,12 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.text.Normalizer;
-import java.util.Arrays;
 import java.util.UUID;
-import net.evmodder.EvLib.util.Command;
 import net.evmodder.EvLib.util.PacketHelper;
-import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerModelPart;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
 import net.minecraft.util.math.Vec3d;
 
 public class MiscUtils{
@@ -31,15 +25,6 @@ public class MiscUtils{
 		double e = vec3d.dotProduct(vec3d2);
 		return e > 1.0D - 0.03D / d ? /*client.player.canSee(entity)*/true : false;
 	}
-
-	/*public static String getModVersionString(String modId){
-		for(ModContainer container : FabricLoader.getInstance().getAllMods()){
-			if(container.getMetadata().getId().equals(modId)){
-				return container.getMetadata().getVersion().getFriendlyString();
-			}
-		}
-		return "?";
-	}*/
 
 	public static final int HASHCODE_2B2T = -437714968;//"2b2t.org".hashCode() // TODO: make mod more server-independent 
 	private static final int getRealServerAddressHashCode(String address){
@@ -82,45 +67,5 @@ public class MiscUtils{
 					.putInt(getCurrentServerAddressHashCode()).array()
 			)
 		);
-	}
-
-	public static final void sendChatMsg(String msg){
-		if(msg.isBlank()) return;
-		MinecraftClient mc = MinecraftClient.getInstance();
-		if(msg.charAt(0) == '/') mc.player.networkHandler.sendChatCommand(msg.substring(1));
-		else mc.player.networkHandler.sendChatMessage(msg);
-	}
-
-	public static final void sendRemoteMsg(String msg){
-		String[] arr = msg.split(",");
-		if(arr.length < 2){
-			Main.LOGGER.error("Invalid remote msg syntax, expected 'COMMAND,UUID...' got: "+msg);
-			return;
-		}
-		final Command command;
-		try{command = Command.valueOf(arr[0].toUpperCase());}
-		catch(IllegalArgumentException e){
-			Main.LOGGER.error("Invalid remote msg syntax, undefined command: "+arr[0]);
-			return;
-		}
-		final byte[] byteMsg;
-		try{byteMsg = PacketHelper.toByteArray(Arrays.stream(Arrays.copyOfRange(arr, 1, arr.length)).map(UUID::fromString).toArray(UUID[]::new));}
-		catch(IllegalArgumentException e){
-			Main.LOGGER.error("Invalid remote msg syntax, unable to parse UUID(s): "+msg.substring(msg.indexOf(',')+1));
-			return;
-		}
-		Main.remoteSender.sendBotMessage(command, /*udp=*/true, /*timeout=*/5000, byteMsg, /*recv=*/null);
-	}
-
-	public static final void toggleSkinLayer(PlayerModelPart part){
-		final MinecraftClient client = MinecraftClient.getInstance();
-		if(Configs.Hotkeys.SYNC_CAPE_WITH_ELYTRA.getBooleanValue() && part == PlayerModelPart.CAPE
-				&& client.player != null && client.options.isPlayerModelPartEnabled(part)){
-			ItemStack chestItem = client.player.getInventory().getArmorStack(2);
-			// Don't disable cape if we just switched to an elytra
-			if(Registries.ITEM.getId(chestItem.getItem()).getPath().equals("elytra")) return;
-		}
-		client.options.setPlayerModelPart(part, !client.options.isPlayerModelPartEnabled(part));
-		client.options.sendClientSettings();
 	}
 }

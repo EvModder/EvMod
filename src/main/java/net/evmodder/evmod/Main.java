@@ -17,14 +17,12 @@ import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import fi.dy.masa.malilib.config.ConfigManager;
-import fi.dy.masa.malilib.event.InputEventHandler;
 import fi.dy.masa.malilib.registry.Registry;
 import fi.dy.masa.malilib.util.data.ModInfo;
-import net.evmodder.EvLib.util.Command;
 import net.evmodder.EvLib.util.FileIO_New;
 import net.evmodder.evmod.apis.ChatBroadcaster;
-import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.EpearlLookup;
+import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.evmodder.evmod.apis.Tooltip;
 import net.evmodder.evmod.commands.*;
@@ -87,16 +85,18 @@ public class Main{
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
 	// TODO: ewww hacky
-	private static Main instance; static Main getInstance(){return instance;} // Accessors: Configs
+	private static Main instance; static Main getInstance(){return instance;} // Accessors: Configs, InitUtils
+	public static Main mixinAccess(){return instance;} // Accessors (mixins):
+	// MixinClientPlayerInteractionManager(kbCraftRestock),
+	// MixinClientWorld(remoteSender)
+	// MixinEntityRenderer(epearlLookup)
 
 	// TODO: Worth finding a way to make these private+final+nonstatic?
-	public static ClickUtils clickUtils; // Public accessors: virtually all keybinds
-	public static RemoteServerSender remoteSender; // Public accessors: EpearlLookup, MiscUtils
-	public static EpearlLookup epearlLookup; // Public accessors: MixinEntityRenderer
+	public final RemoteServerSender remoteSender; // Public accessors: EpearlLookup, MiscUtils
+	public final EpearlLookup epearlLookup; // Public accessors: MixinEntityRenderer
+	public final KeybindCraftingRestock kbCraftRestock = new KeybindCraftingRestock(); // Accessors: MixinClientPlayerInteractionManager
 
-	public static final KeybindCraftingRestock kbCraftRestock = new KeybindCraftingRestock(); // Public accessors: MixinClientPlayerInteractionManager
-
-	// TOOD: Worth finding a way to make these private?
+	// TODO: Worth finding a way to make these private?
 	final GameMessageFilter gameMessageFilter; // Accessors: Configs, KeyCallbacks
 	final WhisperPlaySound whisperPlaySound; // Accessors: KeyCallbacks
 	final KeybindInventoryOrganize[] kbInvOrgs;
@@ -166,23 +166,27 @@ public class Main{
 			LOGGER.error("Unrecognized config setting(s)!: "+config);
 		}
 
-		KeyCallbacks.remakeClickUtils();
-		if(database){
-			KeyCallbacks.remakeRemoteServerSender();
-			remoteSender.sendBotMessage(Command.PING, /*udp=*/false, /*timeout=*/5000, /*msg=*/new byte[0], null);
+		InitUtils.refreshClickLimits();
+
+		if(!database) remoteSender = null;
+		else{
+			remoteSender = new RemoteServerSender(LOGGER, MiscUtils::getCurrentServerAddressHashCode);
+			InitUtils.refreshRemoteServerSender();
+//			remoteSender.sendBotMessage(Command.PING, /*udp=*/false, /*timeout=*/5000, /*msg=*/new byte[0], null);
 //			msg->LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg)))
 		}
+
 		if(epearlOwners){
-			epearlLookup = new EpearlLookup(); // MUST be instantiated AFTER remoteSender
+			epearlLookup = new EpearlLookup(remoteSender);
 			if(cmdAssignPearl) new CommandAssignPearl(epearlLookup);
 		}
 		else epearlLookup = null;
 
-		if(serverJoinListener) new ServerJoinListener();
-		if(serverQuitListener) new ServerQuitListener();
+		if(serverJoinListener) new ServerJoinListener(remoteSender);
+		if(serverQuitListener) new ServerQuitListener(remoteSender);
 		whisperPlaySound = mapArtFeaturesOnly ? null : new WhisperPlaySound();
-		if(gameMessageListener) new GameMessageListener(epearlLookup, whisperPlaySound);
-		gameMessageFilter = registerGameMessageFilter ? new GameMessageFilter() : null;
+		if(gameMessageListener) new GameMessageListener(remoteSender, epearlLookup, whisperPlaySound);
+		gameMessageFilter = registerGameMessageFilter ? new GameMessageFilter(remoteSender) : null;
 
 		kbInvOrgs = mapArtFeaturesOnly ? null : new KeybindInventoryOrganize[]{
 				new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_1.getStrings()),
@@ -203,8 +207,8 @@ public class Main{
 		if(cmdExportMapImg) new CommandExportMapImg();
 		if(cmdMapArtGroup) new CommandMapArtGroup();
 		if(cmdSeen) new CommandSeen();
-		if(cmdSendAs) new CommandSendAs();
-		if(cmdTimeOnline) new CommandTimeOnline();
+		if(cmdSendAs) new CommandSendAs(remoteSender);
+		if(cmdTimeOnline) new CommandTimeOnline(remoteSender);
 
 		//new KeybindSpamclick();
 
@@ -222,7 +226,6 @@ public class Main{
 		ConfigManager.getInstance().registerConfigHandler(MOD_ID, new Configs());
 		Registry.CONFIG_SCREEN.registerConfigScreenFactory(new ModInfo(MOD_ID, MOD_NAME, ConfigGui::new));
 
-		InputEventHandler.getKeybindManager().registerKeybindProvider(InputHandler.getInstance());
-		KeyCallbacks.init(this);
+		new KeyCallbacks(this);
 	}
 }

@@ -1,10 +1,9 @@
-package net.evmodder.evmod.keybinds;
+package net.evmodder.evmod.apis;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashSet;
 import net.evmodder.evmod.Main;
-import net.evmodder.evmod.apis.MapRelationUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
@@ -22,8 +21,6 @@ import net.minecraft.world.World;
 public abstract class MapClickMoveNeighbors{
 	private static boolean ongoingClickMove;
 
-	record Rectangle(int tl, int w, int h){}
-
 	private static final byte[] getColors(World world, ItemStack stack){
 		if(stack.getItem() != Items.FILLED_MAP) return null;
 		MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
@@ -32,6 +29,7 @@ public abstract class MapClickMoveNeighbors{
 		return state == null ? null : state.colors;
 	}
 
+	// Only called by MixinScreenHandler
 	public static void moveNeighbors(PlayerEntity player, int destSlot, ItemStack mapMoved){
 		if(ongoingClickMove){Main.LOGGER.warn("MapMoveClick: Already ongoing"); return;}
 
@@ -176,7 +174,7 @@ public abstract class MapClickMoveNeighbors{
 
 		final int numClicks = clicks.size();
 		ongoingClickMove = true;
-		Main.clickUtils.executeClicks(/*canProceed=*/_0->true, ()->{
+		ClickUtils.executeClicks(/*canProceed=*/_0->true, ()->{
 			ongoingClickMove = false;
 			Main.LOGGER.info("MapMoveClick: DONE (clicks:"+numClicks+")");
 			player.sendMessage(Text.literal("MapMoveClick: DONE (clicks:"+numClicks+")"), true);

@@ -48,7 +48,7 @@ public class ConfigGui extends GuiConfigsBase{
 		x += createButton(x, y, -1, ConfigGuiTab.GENERIC);
 		x += createButton(x, y, -1, ConfigGuiTab.VISUALS);
 		x += createButton(x, y, -1, ConfigGuiTab.HOTKEYS);
-		if(Main.remoteSender != null) x += createButton(x, y, -1, ConfigGuiTab.DATABASE);
+		if(Main.getInstance().remoteSender != null) x += createButton(x, y, -1, ConfigGuiTab.DATABASE);
 		// x += this.createButton(x, y, -1, ConfigGuiTab.TEST);
 	}
 

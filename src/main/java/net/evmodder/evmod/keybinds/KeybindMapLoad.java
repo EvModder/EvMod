@@ -9,6 +9,7 @@ import java.util.OptionalInt;
 import java.util.stream.IntStream;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
+import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.minecraft.client.MinecraftClient;
@@ -131,7 +132,7 @@ public final class KeybindMapLoad{
 		}
 //		client.player.sendMessage(Text.literal("Scheduling clicks: "+clicks.size()), true);
 		Main.LOGGER.info("MapLoadBundle: STARTED");
-		Main.clickUtils.executeClicks(c->{
+		ClickUtils.executeClicks(c->{
 			if(client.player == null || client.world == null) return true;
 			Integer skipIfLoaded = ableToSkipClicks.get(c);
 //				Main.LOGGER.info("click for slot: "+c.slotId()+", clicksLeft: "+clicks.size());
@@ -170,7 +171,7 @@ public final class KeybindMapLoad{
 	private final long loadCooldown = 500L;
 	private int clickIndex;
 	public final void loadMapArtFromContainer(){
-		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapLoad cancelled: Already ongoing"); return;}
+		if(ClickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapLoad cancelled: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof HandledScreen hs)){Main.LOGGER.warn("MapLoad cancelled: not in HandledScreen"); return;}
@@ -191,7 +192,7 @@ public final class KeybindMapLoad{
 		int[] putBackSlots = new int[hbButtons.length];
 		ArrayDeque<InvAction> clicks = new ArrayDeque<>();
 		HashSet<Integer> mapIdsToLoad = new HashSet<>();
-		final int MAX_BATCH_SIZE = Math.min(hbButtons.length, Main.clickUtils.MAX_CLICKS/2);
+		final int MAX_BATCH_SIZE = Math.min(hbButtons.length, ClickUtils.getMaxClicks()/2);
 
 		int hbi = 0;
 		for(int i=0; i<slots.size(); ++i){
@@ -208,11 +209,11 @@ public final class KeybindMapLoad{
 		for(int j=0; j<hbi; ++j) clicks.add(new InvAction(putBackSlots[j], hbButtons[j], ActionType.HOTBAR_SWAP));
 
 		Main.LOGGER.info("MapLoad: STARTED, clicks: "+clicks.size()+", extraPutBackIndex: "+extraPutBackIndex);
-		Main.clickUtils.executeClicks(c->{
+		ClickUtils.executeClicks(c->{
 			if(client.player == null || client.world == null) return true;
 //				if(isUnloadedMapArt(/*client.player.clientWorld*/client.world, item)) return false;
 			if(clickIndex % hbButtons.length != 0 && clickIndex != extraPutBackIndex){++clickIndex; return true;}
-			if(Main.clickUtils.calcAvailableClicks() < MAX_BATCH_SIZE) return false; // Wait for clicks
+			if(ClickUtils.calcAvailableClicks() < MAX_BATCH_SIZE) return false; // Wait for clicks
 
 			if((clickIndex/hbButtons.length)%2 == 0 && clickIndex < extraPutBackIndex){++clickIndex; return true;} // Moving TO hotbar
 //				ItemStack item = client.player.getInventory().getStack(c.button());

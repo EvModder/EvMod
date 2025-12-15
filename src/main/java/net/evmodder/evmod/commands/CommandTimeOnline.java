@@ -4,8 +4,8 @@ import java.nio.ByteBuffer;
 import net.evmodder.EvLib.util.Command;
 import net.evmodder.EvLib.util.TextUtils_New;
 import net.evmodder.evmod.Configs;
-import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MiscUtils;
+import net.evmodder.evmod.apis.RemoteServerSender;
 import net.evmodder.evmod.listeners.ServerJoinListener;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -23,7 +23,7 @@ public class CommandTimeOnline{
 			source.sendFeedback(Text.literal("Time left on 2b2t (assuming 8h limit): "+TextUtils_New.formatTime(timeLeft)));
 		}
 	}
-	public CommandTimeOnline(){
+	public CommandTimeOnline(RemoteServerSender rms){
 		ClientCommandRegistrationCallback.EVENT.register(
 			(dispatcher, _0) -> dispatcher.register(
 				ClientCommandManager.literal("timeonline")
@@ -35,8 +35,8 @@ public class CommandTimeOnline{
 						return 1;
 					}
 
-					if(Configs.Database.SHARE_JOIN_QUIT.getBooleanValue() && Main.remoteSender != null){
-						Main.remoteSender.sendBotMessage(Command.DB_PLAYER_FETCH_JOIN_TS, /*udp=*/true, 1000, MiscUtils.getCurrentServerAndPlayerData(), (msg)->{
+					if(Configs.Database.SHARE_JOIN_QUIT.getBooleanValue() && rms != null){
+						rms.sendBotMessage(Command.DB_PLAYER_FETCH_JOIN_TS, /*udp=*/true, 1000, MiscUtils.getCurrentServerAndPlayerData(), (msg)->{
 							if(msg != null && msg.length == Long.BYTES){
 								tellTimeOnline(ctx.getSource(), ByteBuffer.wrap(msg).getLong());
 								return;

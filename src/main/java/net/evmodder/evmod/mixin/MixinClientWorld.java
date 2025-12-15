@@ -53,7 +53,7 @@ abstract class MixinClientWorld{
 		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.addMapStateById(id.id(), state);
 //		if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) MapStateCacher.saveMapStateByName(name, state);
 
-		if(!Configs.Database.SHARE_MAPART.getBooleanValue() && Main.remoteSender == null) return;
+		if(!Configs.Database.SHARE_MAPART.getBooleanValue() && Main.mixinAccess().remoteSender == null) return;
 		if(!state.locked) return; // TODO: supporting unlocked maps could waste a LOT of disk with 1-pixel changes while building
 		final String addr = client != null && client.getCurrentServerEntry() != null ? client.getCurrentServerEntry().address : null;
 		if(addr == null) return;
@@ -68,7 +68,7 @@ abstract class MixinClientWorld{
 		}
 		saveAddr = addr;
 
-		Main.remoteSender.sendBotMessage(Command.DB_MAPART_STORE, /*udp=*/false, MAPART_STORE_TIMEOUT, state.colors, msg->{
+		Main.mixinAccess().remoteSender.sendBotMessage(Command.DB_MAPART_STORE, /*udp=*/false, MAPART_STORE_TIMEOUT, state.colors, msg->{
 			synchronized(mapsSaved){
 				mapsInTransit.remove(uuid);
 				if(msg == null){

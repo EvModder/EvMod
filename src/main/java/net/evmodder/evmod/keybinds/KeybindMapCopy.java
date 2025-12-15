@@ -2,6 +2,7 @@ package net.evmodder.evmod.keybinds;
 
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
+import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.minecraft.client.MinecraftClient;
@@ -337,7 +338,7 @@ public final class KeybindMapCopy{
 		if(numEmptyMapsInGrid > 0) clicks.add(new InvAction(f.INPUT_START+1, 0, ActionType.SHIFT_CLICK));
 
 		//Main.LOGGER.info("MapCopyBundle: STARTED");
-		Main.clickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("MapCopyBundle: DONE"), clicks);
+		ClickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("MapCopyBundle: DONE"), clicks);
 	}
 
 	private boolean isMapArtBundle(ItemStack stack){
@@ -347,7 +348,7 @@ public final class KeybindMapCopy{
 
 	@SuppressWarnings("unused")
 	public void copyMapArtInInventory(){
-		if(Main.clickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapCopy: Already ongoing"); return;}
+		if(ClickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapCopy: Already ongoing"); return;}
 		//
 		MinecraftClient client = MinecraftClient.getInstance();
 		final boolean isCrafter = client.currentScreen instanceof CraftingScreen;
@@ -526,17 +527,17 @@ public final class KeybindMapCopy{
 				clicks.add(new InvAction(f.INPUT_START, 0, ActionType.SHIFT_CLICK)); // Move back leftover input maps
 			}
 			final int clicksUsed = clicks.size() - clicksAtStart;
-			if(clicksUsed <= Main.clickUtils.MAX_CLICKS) reserveClicks.put(firstClick, clicksUsed);
+			if(clicksUsed <= ClickUtils.getMaxClicks()) reserveClicks.put(firstClick, clicksUsed);
 		}// copy maps
 
 		// Seems like copy followed by bundle stow causes all empty maps in inv to get tossed?? Well, adding this final click fixes it apparently
 		if(numEmptyMapsInGrid > 0) clicks.add(new InvAction(f.INPUT_START+1, 0, ActionType.SHIFT_CLICK)); 
 
 		//Main.LOGGER.info("MapCopy: STARTED");
-		Main.clickUtils.executeClicks(c->{
+		ClickUtils.executeClicks(c->{
 			// Don't start individual copy operation unless we can fully knock it out (unless impossible to do in 1 go)
 			final Integer clicksNeeded = reserveClicks.get(c);
-			if(clicksNeeded == null || clicksNeeded <= Main.clickUtils.calcAvailableClicks()) return true;
+			if(clicksNeeded == null || clicksNeeded <= ClickUtils.calcAvailableClicks()) return true;
 			return false; // Wait for clicks
 		},
 			()->{
