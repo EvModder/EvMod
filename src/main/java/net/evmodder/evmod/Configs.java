@@ -25,8 +25,8 @@ public final class Configs implements IConfigHandler{
 
 	private static final String GENERIC_KEY = Main.MOD_ID+".config.generic";
 	public static class Generic{
-		public static final ConfigInteger CLICK_LIMIT_COUNT = new ConfigInteger("clickLimitCount", 74, 0, 100_000).apply(GENERIC_KEY);
-		public static final ConfigInteger CLICK_LIMIT_DURATION = new ConfigInteger("clickLimitWindow", 81, 1, 72_000).apply(GENERIC_KEY);
+		public static final ConfigInteger CLICK_LIMIT_COUNT = new ConfigInteger("clickLimitCount", 72, 0, 100_000).apply(GENERIC_KEY);
+		public static final ConfigInteger CLICK_LIMIT_DURATION = new ConfigInteger("clickLimitWindow", 89, 1, 72_000).apply(GENERIC_KEY);
 		public static final ConfigBoolean CLICK_LIMIT_USER_INPUT = new ConfigBoolean("clickLimitUserInputs", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean CLICK_FILTER_USER_INPUT = new ConfigBoolean("clickBlockUserInputsDuringOperation", true).apply(GENERIC_KEY);
 

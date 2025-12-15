@@ -42,6 +42,7 @@ public class MapStateCacher{
 	private static HashMap<String, HashMap<String, MapStateSerializable>> byName;
 	private static HashMap<String, HashSet<String>> unusableNames;
 	private static HashMap<String, HashMap<UUID, List<MapStateSerializable>>> bySlot;
+	private static boolean namesCacheUpdated, idCacheUpdated;
 
 //	public static abstract class Cache{
 //		final String filename;
@@ -340,6 +341,7 @@ public class MapStateCacher{
 			Configs.Generic.MAP_CACHE_BY_ID.setBooleanValue(false);
 			return false;
 		}
+		idCacheUpdated = true;
 		return true;
 	}
 	public static final boolean loadMapStatesById(){
@@ -354,6 +356,7 @@ public class MapStateCacher{
 		return true;
 	}
 	public static final boolean saveMapStatesByIdToFile(){
+		if(!idCacheUpdated) return false;
 		assert Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK;
 //		if(byId == null) return false;
 		final String server = getServerIp(MinecraftClient.getInstance());
@@ -386,6 +389,7 @@ public class MapStateCacher{
 		MapStateSerializable mss = MapStateSerializable.fromMapState(state);
 		MapStateSerializable oldMss = cache.put(name, mss);
 		if(mss.equals(oldMss)) return false; // No update
+		namesCacheUpdated = true;
 		if(oldMss != null && oldMss.locked){
 			Main.LOGGER.warn("MapStateCacher: Different MapStates found for same name! Unable to use cache-by-name for name: "+name);
 			cache.remove(name);
@@ -421,6 +425,7 @@ public class MapStateCacher{
 		return true;
 	}
 	public static final boolean saveMapStatesByNameToFile(){
+		if(!namesCacheUpdated) return false;
 		assert Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK;
 		final String server = getServerIp(MinecraftClient.getInstance());
 		boolean ret = saveCacheFile(server, Cache.BY_NAME);

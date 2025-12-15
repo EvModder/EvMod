@@ -43,6 +43,10 @@ public final class ClickUtils{
 	public static boolean isThisClickBotted(/*MixinClientPlayerInteractionManager.Friend friend*/){return thisClickIsBotted;}
 
 	public static void refreshLimits(final int MAX_CLICKS, int FOR_TICKS){
+		if(clickOpOngoing){
+			Main.LOGGER.error("ClickUtils.refreshLimits() called DURING AN ACTIVE CLICK-OPERATION!! May cause crash or incorrect result");
+		}
+		lastTick = tickDurIndex = sumClicksInDuration = 0;
 		if(MAX_CLICKS >= 100_000 || MAX_CLICKS <= 0){
 			if(MAX_CLICKS != 0) Main.LOGGER.error("InventoryUtils() initialized with "
 					+(MAX_CLICKS < 0 ? "invalid" : "insanely-large")+" click-limit: "+MAX_CLICKS+", treating it as limitless");

@@ -47,10 +47,19 @@ public final class ContainerOpenCloseListener{
 					MapStateCacher.loadMapStatesByPos(contents=sh.getStacks(), MapStateCacher.Cache.BY_PLAYER_EC);
 					echestCacheLoaded = true;
 				}
-//				else if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue()){
-//					MapStateCacher.loadMapStatesByPos(contents=sh.getStacks(), MapStateCacher.HolderType.CONTAINER);//TODO: holder-identifying data? xyz?
-//					holderXYZCacheLoaded = true;
-//				}
+				else{
+//					if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue()){
+//						MapStateCacher.loadMapStatesByPos(contents=sh.getStacks(), MapStateCacher.HolderType.CONTAINER);//TODO: holder-identifying data? xyz?
+//						holderXYZCacheLoaded = true;
+//					}
+					if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) (contents=sh.getStacks()).stream()
+						.filter(s -> s.getItem() == Items.FILLED_MAP && s.getCustomName() != null && s.getCustomName().getLiteralString() != null)
+						.forEach(s -> {
+							MapState state = FilledMapItem.getMapState(s, client.world);
+							if(state == null) MapStateCacher.loadMapStateByName(s, client.world);
+//							else MapStateCacher.addMapStateByName(s, state);
+						});
+				}
 			}
 		}
 		else{
@@ -70,8 +79,8 @@ public final class ContainerOpenCloseListener{
 							.filter(s -> s.getItem() == Items.FILLED_MAP && s.getCustomName() != null && s.getCustomName().getLiteralString() != null)
 							.forEach(s -> {
 								MapState state = FilledMapItem.getMapState(s, client.world);
-								if(state == null) MapStateCacher.loadMapStateByName(s, client.world);
-								else MapStateCacher.addMapStateByName(s, state);
+								if(state != null) MapStateCacher.addMapStateByName(s, state);
+//								else MapStateCacher.loadMapStateByName(s, client.world);
 							});
 					}
 				}
