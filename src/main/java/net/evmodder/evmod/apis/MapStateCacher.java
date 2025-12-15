@@ -157,7 +157,7 @@ public class MapStateCacher{
 	}
 
 	private static final Object readFile(String filename){
-		try(FileInputStream fis = new FileInputStream(FileIO_New.DIR+"map_cache/"+filename+".cache"); ObjectInputStream ois = new ObjectInputStream(fis)){
+		try(FileInputStream fis = new FileInputStream(filename); ObjectInputStream ois = new ObjectInputStream(fis)){
 			return ois.readObject();
 		}
 		catch(FileNotFoundException e){return null;}
@@ -166,27 +166,27 @@ public class MapStateCacher{
 		return null;
 	}
 	private static final void writeFile(String filename, Object obj){
-		try(FileOutputStream fos = new FileOutputStream(FileIO_New.DIR+"map_cache/"+filename+".cache"); ObjectOutputStream oos = new ObjectOutputStream(fos)){
+		try(FileOutputStream fos = new FileOutputStream(filename); ObjectOutputStream oos = new ObjectOutputStream(fos)){
 			oos.writeObject(obj);
 		}
 		catch(IOException e){e.printStackTrace();}
 	}
-	private static final String getCacheName(String server, Cache type){
-		File dir = new File(FileIO_New.DIR+"map_cache/"+server);
-		if(!dir.isDirectory()) dir.mkdir();
-		return FileIO_New.DIR+"map_cache/"+server+"/"+type.filename;
-	}
 	private static final boolean saveCacheFile(String server, Cache type){
 		if(getInMemCacheSpecific(server, type) == null) return false;
-		String filename = getCacheName(server, type);
+		String filename = FileIO_New.DIR+"map_cache/"+server+"/"+type.filename+".cache";
 		HashMap<?, ?> perServerCache = getInMemCachePerServer(server, type);
+
+		File dir = new File(FileIO_New.DIR+"map_cache/");
+		if(!dir.isDirectory()){Main.LOGGER.info("MapStateCacher: Creating dir '"+dir.getName()+"'"); dir.mkdir();}
+		dir = new File(FileIO_New.DIR+"map_cache/"+server);
+		if(!dir.isDirectory()){Main.LOGGER.info("MapStateCacher: Creating dir '"+dir.getName()+"'"); dir.mkdir();}
 		writeFile(filename, perServerCache);
 		return true;
 	}
 	@SuppressWarnings("unchecked")
 	private static final boolean loadCacheFile(String server, Cache type){
 //		if(getInMemCacheSpecific(client, type) != null) return false;
-		String filename = getCacheName(server, type);
+		String filename = FileIO_New.DIR+"map_cache/"+server+"/"+type.filename+".cache";
 		HashMap<?, ?> cache = (HashMap<?, ?>)readFile(filename);
 		if(cache == null) return false;
 //		HashMap<?, ?> oldCache = getInMemCacheServer(client, type);
@@ -259,7 +259,7 @@ public class MapStateCacher{
 		bySlot.get(server).put(type.getContainerId(), mapStates);
 		if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK) saveCacheFile(server, type);
 
-		Main.LOGGER.info("MapStateCacher: "+type.filename+" saved "+mapStates.size()+" mapstates");
+		Main.LOGGER.info("MapStateCacher: "+type.name()+" saved "+mapStates.size()+" mapstates");
 		return true;
 	}
 
@@ -354,11 +354,15 @@ public class MapStateCacher{
 		return true;
 	}
 	public static final boolean saveMapStatesByIdToFile(){
+		assert Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK;
 //		if(byId == null) return false;
 		final String server = getServerIp(MinecraftClient.getInstance());
 //		HashMap<Integer, MapStateSerializable> cache = byId.get(server);
 //		if(cache == null/* || cache.isEmpty()*/) return false;
-		return saveCacheFile(server, Cache.BY_ID); // All of the above checks are already handled by saveCacheFile()
+		boolean ret = saveCacheFile(server, Cache.BY_ID); // All of the above checks are already handled by saveCacheFile()
+		if(!ret) return false;
+		Main.LOGGER.info("MapStateCacher: saved "+getInMemCachePerServer(server, Cache.BY_ID).size()+" by id");
+		return true;
 	}
 
 	public static final boolean addMapStateByName(ItemStack stack, MapState state){
@@ -417,6 +421,11 @@ public class MapStateCacher{
 		return true;
 	}
 	public static final boolean saveMapStatesByNameToFile(){
-		return saveCacheFile(getServerIp(MinecraftClient.getInstance()), Cache.BY_NAME);
+		assert Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK;
+		final String server = getServerIp(MinecraftClient.getInstance());
+		boolean ret = saveCacheFile(server, Cache.BY_NAME);
+		if(!ret) return false;
+		Main.LOGGER.info("MapStateCacher: saved "+getInMemCachePerServer(server, Cache.BY_NAME).size()+" by name");
+		return true;
 	}
 }

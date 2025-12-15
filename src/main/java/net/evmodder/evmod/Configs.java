@@ -20,7 +20,7 @@ import fi.dy.masa.malilib.util.JsonUtils;
 import net.evmodder.evmod.config.*;
 import net.evmodder.evmod.config.ConfigPlayerList.NameAndUUID;
 
-public class Configs implements IConfigHandler{
+public final class Configs implements IConfigHandler{
 	private static final String CONFIG_FILE_NAME = Main.MOD_ID+"/"+Main.MOD_ID+".json";
 
 	private static final String GENERIC_KEY = Main.MOD_ID+".config.generic";
@@ -191,6 +191,7 @@ public class Configs implements IConfigHandler{
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_NOOBLINE = new ConfigBoolean("mapMetadataTooltipNoobline", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_PERCENT_CARPET = new ConfigBoolean("mapMetadataTooltipPercentCarpet", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_PERCENT_STAIRCASE = new ConfigBoolean("mapMetadataTooltipPercentStaircase", true).apply(VISUALS_KEY);
+		public static final ConfigBoolean MAP_METADATA_TOOLTIP_UUID = new ConfigBoolean("mapMetadataTooltipHashCode", false).apply(VISUALS_KEY);
 
 		public static final ConfigInteger EXPORT_MAP_IMG_UPSCALE = new ConfigInteger("exportMapImageUpscale", 128, 128, 1280).apply(VISUALS_KEY);
 		public static final ConfigBoolean EXPORT_MAP_IMG_BORDER = new ConfigBoolean("exportMapImageBorder", false).apply(VISUALS_KEY);
@@ -225,7 +226,7 @@ public class Configs implements IConfigHandler{
 						MAP_METADATA_TOOLTIP_STAIRCASE, MAP_METADATA_TOOLTIP_MATERIAL,
 						MAP_METADATA_TOOLTIP_NUM_COLORS, MAP_METADATA_TOOLTIP_NUM_COLOR_IDS,
 						MAP_METADATA_TOOLTIP_TRANSPARENCY, MAP_METADATA_TOOLTIP_NOOBLINE,
-						MAP_METADATA_TOOLTIP_PERCENT_CARPET, MAP_METADATA_TOOLTIP_PERCENT_STAIRCASE
+						MAP_METADATA_TOOLTIP_PERCENT_CARPET, MAP_METADATA_TOOLTIP_PERCENT_STAIRCASE, MAP_METADATA_TOOLTIP_UUID
 				));
 				if(main.cmdExportMapImg){
 					availableOptions.addAll(List.of(

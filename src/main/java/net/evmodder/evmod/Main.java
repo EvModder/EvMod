@@ -111,7 +111,7 @@ public class Main{
 
 	private HashMap<String, Boolean> loadConfig(){
 		HashMap<String, Boolean> config = new HashMap<>();
-		final String configContents = FileIO_New.loadFile("enabled_features.txt", getClass().getResourceAsStream("/"+internalConfigFile));
+		final String configContents = FileIO_New.loadFile("enabled_features.txt", getClass().getResourceAsStream("/assets/"+MOD_ID+"/"+internalConfigFile));
 		for(String line : configContents.split("\\r?\\n")){
 			final int sep = line.indexOf(':');
 			if(sep == -1) continue;

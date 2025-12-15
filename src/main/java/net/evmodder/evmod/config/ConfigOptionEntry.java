@@ -1,13 +1,14 @@
 package net.evmodder.evmod.config;
 
 import fi.dy.masa.malilib.config.IConfigOptionListEntry;
+import fi.dy.masa.malilib.util.StringUtils;
 import net.evmodder.evmod.Main;
 
 //interface ConfigOptionEntry<T extends Enum<T> & IConfigOptionListEntry> extends IConfigOptionListEntry{
 interface ConfigOptionEntry extends IConfigOptionListEntry{
 	public String getOptionListName();
 
-	default public String getDisplayName(){return Main.MOD_ID+".gui.label."+getOptionListName()+"."+getStringValue();}
+	default public String getDisplayName(){return StringUtils.translate(Main.MOD_ID+".gui.label."+getOptionListName()+"."+getStringValue());}
 
 //	default public IConfigOptionListEntry cycle(boolean forward){return cycle((T)this, forward);}
 	default public IConfigOptionListEntry cycle(boolean forward){return cycle((Enum<?>)this, forward);}

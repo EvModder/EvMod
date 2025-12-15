@@ -162,6 +162,7 @@
 	"evmod.config.visuals.name.mapMetadataTooltipNoobline": "mapMetadataTooltipNoobline",
 	"evmod.config.visuals.name.mapMetadataTooltipPercentCarpet": "mapMetadataTooltipPercentCarpet",
 	"evmod.config.visuals.name.mapMetadataTooltipPercentStaircase": "mapMetadataTooltipPercentStaircase",
+	"evmod.config.visuals.name.mapMetadataTooltipHashCode": "mapMetadataTooltipHashCode",
 	"evmod.config.visuals.name.exportMapImageUpscale": "exportMapImageUpscale",
 	"evmod.config.visuals.name.exportMapImageBorder": "exportMapImageBorder",
 	"evmod.config.visuals.name.exportMapImageBorderColor1": "exportMapImageBorderColor1",
