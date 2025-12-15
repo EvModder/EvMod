@@ -541,7 +541,7 @@ public final class MapHandRestock{
 		UseEntityCallback.EVENT.register((player, _0, hand, entity, _1) -> {
 			if(!(entity instanceof ItemFrameEntity ife)) return ActionResult.PASS;
 			//Main.LOGGER.info("clicked item frame");
-			if(allowAutoRemover){
+			if(allowAutoRemover && autoRemover.isActivelyRemoving()){
 				autoRemover.disableAndReset();
 				Main.LOGGER.info("MapRestock: Disabling AutoRemoveMapArt due to EntityInteractEvent");
 			}

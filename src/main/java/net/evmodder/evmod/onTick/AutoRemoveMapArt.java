@@ -39,6 +39,7 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 		world = null;
 		constAxis = numMatchingRemoved = 0;
 	}
+	public final boolean isActivelyRemoving(){return dir != null;}
 
 	private ItemFrameEntity lastIfe;
 	private ItemStack lastStack;

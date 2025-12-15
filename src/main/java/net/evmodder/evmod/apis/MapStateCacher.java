@@ -243,7 +243,7 @@ public class MapStateCacher{
 				.map(s -> FilledMapItem.getMapState(s, client.world))
 				.map(MapStateSerializable::fromMapState).toList();
 		if(mapStates.isEmpty() || mapStates.stream().allMatch(Objects::isNull)){
-			Main.LOGGER.info("MapStateCacher: "+type.filename+" has nothing to save");
+			Main.LOGGER.info("MapStateCacher: "+type.name()+" has nothing to save");
 			return false;
 		}
 		// Load old cache values (actually loads all slot-based container caches for the current server)
@@ -259,7 +259,7 @@ public class MapStateCacher{
 		bySlot.get(server).put(type.getContainerId(), mapStates);
 		if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK) saveCacheFile(server, type);
 
-		Main.LOGGER.info("MapStateCacher: "+type.name()+" saved "+mapStates.size()+" mapstates");
+		Main.LOGGER.info("MapStateCacher: saved "+mapStates.size()+" by "+type.name());
 		return true;
 	}
 
@@ -361,7 +361,7 @@ public class MapStateCacher{
 //		if(cache == null/* || cache.isEmpty()*/) return false;
 		boolean ret = saveCacheFile(server, Cache.BY_ID); // All of the above checks are already handled by saveCacheFile()
 		if(!ret) return false;
-		Main.LOGGER.info("MapStateCacher: saved "+getInMemCachePerServer(server, Cache.BY_ID).size()+" by id");
+		Main.LOGGER.info("MapStateCacher: saved "+getInMemCachePerServer(server, Cache.BY_ID).size()+" "+Cache.BY_ID.name());
 		return true;
 	}
 
@@ -425,7 +425,7 @@ public class MapStateCacher{
 		final String server = getServerIp(MinecraftClient.getInstance());
 		boolean ret = saveCacheFile(server, Cache.BY_NAME);
 		if(!ret) return false;
-		Main.LOGGER.info("MapStateCacher: saved "+getInMemCachePerServer(server, Cache.BY_NAME).size()+" by name");
+		Main.LOGGER.info("MapStateCacher: saved "+getInMemCachePerServer(server, Cache.BY_NAME).size()+" "+Cache.BY_NAME.name());
 		return true;
 	}
 }

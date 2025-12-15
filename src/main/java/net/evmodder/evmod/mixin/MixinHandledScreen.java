@@ -1,5 +1,6 @@
 package net.evmodder.evmod.mixin;
 
+import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.onTick.UpdateContainerHighlights;
 import net.minecraft.client.gui.DrawContext;
@@ -8,6 +9,7 @@ import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.item.BannerItem;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.map.MapState;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Final;
@@ -46,7 +48,8 @@ abstract class MixinHandledScreen<T extends ScreenHandler> extends Screen{
 		if(client.player == null || client.player.isCreative()) return; // Breaks creative middle-click drag (on other servers)
 		ItemStack cursorStack = handler.getCursorStack();
 		if(cursorStack == null || cursorStack.isEmpty()) return;
-		if(!cursorStack.isStackable() || cursorStack.getItem() instanceof FilledMapItem || cursorStack.getItem() instanceof BannerItem)
-			cir.setReturnValue(true); // Prevent initiating a drag
+		if(!cursorStack.isStackable() || cursorStack.getItem() instanceof BannerItem) cir.setReturnValue(true); // Prevent initiating a drag
+		MapState state = FilledMapItem.getMapState(cursorStack, client.world);
+		if(state != null && !MapColorUtils.isMonoColor(state.colors)) cir.setReturnValue(true); // Prevent initiating a drag
 	}
 }

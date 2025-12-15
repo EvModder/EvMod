@@ -96,9 +96,15 @@ public abstract class MapRelationUtils{
 		return score; // Maximum score = 3*128 = 384
 	}
 
-	private static final String posStrRegex = "(\\d+([^0-9]+\\d+)?)|\\p{L}\\d+|\\p{L}\\p{L}\\p{L}?";
+	private static final String attribRegex = "(?:by|-(?:\\s*by)?)";
+	private static final String posStrRegex = "(?:\\d+(?:[^0-9]+\\d+)?)|\\p{L}\\d+";
+	private static final String nameRegex = "(?:[\\s\\d]*[^\\s\\d]\\S*\\s*)";
+	private static final String nameSep = "(?:,|,?\\s*&|,?\\s*and)";
+	private static final String nameListRegex = nameRegex+"(?:"+nameSep+nameRegex+")*";
 	public static final String removeByArtist(String name){
-		return name.replaceAll("(?i)^(.*?("+posStrRegex+").*?)\\s*-\\s*(by)?.*$", "$1");
+		return name
+				.replaceAll("(?i)^(.*?(?:"+posStrRegex+").*?)"+attribRegex+nameListRegex+"(.*)$", "$1$2")
+				.replaceAll("(?i)^(.*)"+attribRegex+nameListRegex+"(.*?(?:"+posStrRegex+").*)$", "$1$2");
 	}
 
 	public static final boolean isMapArtWithCount(final ItemStack stack, final int count){
@@ -162,7 +168,7 @@ public abstract class MapRelationUtils{
 				if(keepFullNumberPrefix){
 					while(a > 0 && name2.charAt(a-1) >= '0' && name2.charAt(a-1) <= '9') --a;
 					if(a != prefixLen){
-						assert a < prefixLen;
+//						assert a < prefixLen : "a="+a+",prefixLen="+prefixLen;
 						Main.LOGGER.info("MapAdjUtil: decreasing prefix len from "+prefixLen+" to "+a+" to capture full number for name: "+name2);
 						prefixLen=a;
 					}
@@ -170,7 +176,7 @@ public abstract class MapRelationUtils{
 				if(keepFullNumberSuffix){
 					while(b > 0 && name2.charAt(name2.length()-b) >= '0' && name2.charAt(name2.length()-b) <= '9') --b;
 					if(b != suffixLen){
-						assert b < suffixLen;
+//						assert b < suffixLen : "b="+b+",suffixLen="+suffixLen;
 						Main.LOGGER.info("MapAdjUtil: decreasing suffix len from "+suffixLen+" to "+b+" to capture full number for name: "+name2);
 						suffixLen=b;
 					}

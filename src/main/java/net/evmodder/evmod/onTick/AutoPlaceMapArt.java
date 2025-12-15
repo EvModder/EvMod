@@ -275,7 +275,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			final int posOffset = (axisMatch ? posOffset2 : posOffset1);
 			final boolean isNeg = ifeOffset2 != posOffset;
 //			assert ifeOffset2 == posOffset*(isNeg ? -1 : +1);
-			if(ifeOffset1 != posOffset*(isNeg ? -1 : +1)){
+			if(ifeOffset2 != posOffset*(isNeg ? -1 : +1)){
 				Main.LOGGER.info("AutoPlaceMapArt: error ??2 "+axisMatch+","+posOffset+","+isNeg);
 				disableAndReset(); return false;
 			}
