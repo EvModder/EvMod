@@ -92,10 +92,14 @@ public class UpdateItemFrameHighlights{
 
 			final ItemStack stack = ife.getHeldItemStack();
 			final MapState state = FilledMapItem.getMapState(ife.getHeldItemStack(), ife.getWorld());
+			if(state == null) continue; // Can happen in creative worlds!
 
 			final Highlight highlight;
 			if(UpdateInventoryHighlights.isInInventory(colorsId) || UpdateInventoryHighlights.isNestedInInventory(colorsId)) highlight = Highlight.INV_OR_NESTED_INV;
-			else if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)) highlight = Highlight.NOT_IN_CURR_GROUP;
+			else if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)){
+				highlight = Highlight.NOT_IN_CURR_GROUP;
+				if(Configs.Generic.NEW_MAP_NOTIFIER_IFRAME.getBooleanValue()) MiscUtils.newMapNotify(ife, colorsId);
+			}
 			else if(isMultiHung) highlight = Highlight.MULTI_HUNG;
 			else if(!state.locked || stack.getCustomName() == null) highlight = Highlight.UNLOCKED_OR_UNNAMED;
 			else{

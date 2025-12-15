@@ -79,6 +79,7 @@
 	"evmod.config.generic.name.ignoreBlankMapsIndHighlightsAndKeybinds": "ignoreBlankMapsIndHighlightsAndKeybinds",
 	"evmod.config.generic.name.ignoreMonoColorMapsInHightlights": "ignoreMonoColorMapsInHightlights",
 	"evmod.config.generic.name.iFrameTrackingDist": "iFrameTrackingDist",
+	"evmod.config.generic.name.iFrameNewMapNotifier": "iFrameNewMapNotifier",
 	"evmod.config.generic.name.hotbarSlotItemTypeScrollOrder": "hotbarSlotItemTypeScrollOrder",
 	"evmod.config.generic.name.sendChatsOnServerJoin": "Envia Mensaje al Unirse",
 	"evmod.config.generic.name.logCoordsOnServerQuit": "Guarda Coordenadas al Salir en log",

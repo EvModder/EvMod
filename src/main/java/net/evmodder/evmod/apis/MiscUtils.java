@@ -10,6 +10,8 @@ import net.evmodder.evmod.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.decoration.ItemFrameEntity;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 
 public class MiscUtils{
@@ -24,6 +26,23 @@ public class MiscUtils{
 		vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d);//normalize
 		double e = vec3d.dotProduct(vec3d2);
 		return e > 1.0D - 0.03D / d ? /*client.player.canSee(entity)*/true : false;
+	}
+
+	private static long lastNewMapNotify;
+	private static final long mapNotifyCooldown = 5000;
+//	private static int lastNewMapIfeId;
+//	private static long lastNewMapColorId;
+	public static final void newMapNotify(ItemFrameEntity ife, UUID colorsId){ // Called by MixinItemFrameRenderer
+//		if(lastNewMapIfeId == ife.getId()) return;
+//		if(colorsId.getMostSignificantBits() == lastNewMapColorId) return;
+		if(System.currentTimeMillis() - lastNewMapNotify < mapNotifyCooldown) return;
+		lastNewMapNotify = System.currentTimeMillis();
+//		lastNewMapColorId = colorsId.getMostSignificantBits();
+//		lastNewMapIfeId = ife.getId();
+
+		// TODO: play sound?
+		Main.LOGGER.info("MiscUtils: New map "+colorsId+" ("+ife.getHeldItemStack().getName().getString()+") at "+ife.getBlockPos().toShortString());
+		MinecraftClient.getInstance().player.sendMessage(Text.literal("New mapart: "+ife.getBlockX()+" "+ife.getBlockY()+" "+ife.getBlockZ()), true);
 	}
 
 	public static final int HASHCODE_2B2T = -437714968;//"2b2t.org".hashCode() // TODO: make mod more server-independent 

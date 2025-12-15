@@ -50,6 +50,7 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigInteger MAX_IFRAME_TRACKING_DIST = new ConfigInteger("iFrameTrackingDist", /*default=*/128, 0, 10_000_000);
 		public static double MAX_IFRAME_TRACKING_DIST_SQ;
 		static{MAX_IFRAME_TRACKING_DIST.setValueChangeCallback(d -> MAX_IFRAME_TRACKING_DIST_SQ=Math.pow(d.getIntegerValue(), 2));}
+		public static final ConfigBoolean NEW_MAP_NOTIFIER_IFRAME = new ConfigBoolean("iFrameNewMapNotifier", true).apply(GENERIC_KEY);
 
 		public static final ConfigBooleanHotkeyed PLACEMENT_HELPER_IFRAME = new ConfigBooleanHotkeyed("placementHelperIFrame", false, "").apply(GENERIC_KEY);
 		public static final ConfigDouble PLACEMENT_HELPER_IFRAME_REACH = new ConfigDouble("placementHelperIFrameReach", 3.5d).apply(GENERIC_KEY);
@@ -118,7 +119,7 @@ public final class Configs implements IConfigHandler{
 				if(main.serverJoinListener && main.serverQuitListener) availableOptions.add(MAP_CACHE_BY_INV_POS);
 				if(main.containerOpenCloseListener) availableOptions.addAll(List.of(MAP_CACHE_BY_EC_POS/*, MAP_CACHE_BY_CONTAINER_POS*/));
 
-				if(main.mapHighlights) availableOptions.add(MAX_IFRAME_TRACKING_DIST);
+				if(main.mapHighlights) availableOptions.addAll(List.of(MAX_IFRAME_TRACKING_DIST, NEW_MAP_NOTIFIER_IFRAME));
 				if(main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME,
 						//PLACEMENT_HELPER_IFRAME_REACH, PLACEMENT_HELPER_IFRAME_RAYCAST,
 						PLACEMENT_HELPER_IFRAME_MUST_CONNECT, PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK));
