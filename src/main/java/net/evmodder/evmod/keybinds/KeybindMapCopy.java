@@ -233,7 +233,7 @@ public final class KeybindMapCopy{
 				final int s2 = slotsWithBundles[j];
 				if(!bundles[j].isEmpty()) continue;
 				if(name1 != null && getCustomNameOrNull(slots[s2]) != null && !name1.equals(getCustomNameOrNull(slots[s2]))) continue;
-				if(SRC_BUNDLES > 1 && slots[s1].getItem() != slots[s2].getItem()) continue; // Enforce at least matching color for N->M where N>1
+				if(SRC_BUNDLES != USABLE_EMPTY_BUNDLES && slots[s1].getItem() != slots[s2].getItem()) continue; // Enforce at least matching color for N->M
 				if(!usedDests.add(j)) continue;
 				Main.LOGGER.info("MapCopyBundle: valid copy dest "+s1+"->"+s2);
 				copyDests.add(j);
