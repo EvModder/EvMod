@@ -153,7 +153,8 @@ public class MapStateCacher{
 //				if(type instanceof CacheBySlot == false) Main.LOGGER.error("MapStateCacher: Unknown cache type!");
 //				assert type instanceof CacheBySlot;
 //				return bySlot == null ? null : bySlot.get(server).get(getSlotKey((CacheBySlot)type));
-				return bySlot == null ? null : bySlot.get(server).get(type.getContainerId());
+				HashMap<UUID, List<MapStateSerializable>> t;
+				return bySlot == null ? null : (t=bySlot.get(server)) == null ? null : t.get(type.getContainerId());
 		}
 	}
 
