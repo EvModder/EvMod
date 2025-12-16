@@ -2,7 +2,15 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
+    paths:
+      - 'uuid_tool/**' # Trigger only if files inside the uuid_tool/ folder change
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'uuid_tool/**'
 
 permissions:
   contents: read
