@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 220 20% 97%;
+  --foreground: 220 20% 10%;
+  --muted: 220 15% 94%;
+  --muted-foreground: 220 10% 45%;
+  --border: 220 15% 88%;
+  --accent: 220 70% 50%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: 220 20% 8%;
+    --foreground: 220 15% 95%;
+    --muted: 220 15% 16%;
+    --muted-foreground: 220 10% 55%;
+    --border: 220 15% 20%;
+    --accent: 220 70% 55%;
+  }
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
