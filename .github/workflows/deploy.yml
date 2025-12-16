@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - run cd uuid_tool
+      - run: cd uuid_tool
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
