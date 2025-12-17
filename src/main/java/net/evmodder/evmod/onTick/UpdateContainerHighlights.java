@@ -56,7 +56,7 @@ public class UpdateContainerHighlights{
 
 	private static int lastHash;
 
-	public static final void onUpdateTick(MinecraftClient client){
+	public static final void onTickStart(MinecraftClient client){
 		if(client.player == null || client.world == null || !client.player.isAlive() ||
 			client.currentScreen == null || !(client.currentScreen instanceof HandledScreen hs) ||
 			hs.getScreenHandler().syncId == 0 || // InventoryScreen/CreativeScreen/RecipeBookScreen (NOT a container)

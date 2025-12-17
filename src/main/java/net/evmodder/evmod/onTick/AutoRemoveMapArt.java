@@ -7,8 +7,8 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.Configs.Generic;
 import net.evmodder.evmod.apis.MapRelationUtils;
+import net.evmodder.evmod.apis.TickListener;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -31,7 +31,10 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 	public AutoRemoveMapArt(){
 		recentRemoveAttempts = new int[20];
 //		ClientTickEvents.END_CLIENT_TICK.register(client->{synchronized(dir){removeNearestMap(client);}});
-		ClientTickEvents.END_CLIENT_TICK.register(this::removeNearestMap);
+//		ClientTickEvents.END_CLIENT_TICK.register(this::removeNearestMap);
+		TickListener.register(new TickListener(){
+			@Override public void onTickEnd(MinecraftClient client){removeNearestMap(client);}
+		});
 	}
 
 	public final void disableAndReset(){

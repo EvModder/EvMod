@@ -11,6 +11,7 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.MapRelationUtils;
+import net.evmodder.evmod.apis.Tooltip;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.ItemStack;
@@ -21,7 +22,7 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
-public final class TooltipMapNameColor{
+public final class TooltipMapNameColor implements Tooltip{
 	private static final boolean mixedOnDisplayAndNotOnDisplay(List<UUID> nonFillerIds){
 		return nonFillerIds.stream().anyMatch(UpdateItemFrameHighlights::isInItemFrame)
 				&& nonFillerIds.stream().anyMatch(Predicate.not(UpdateItemFrameHighlights::isInItemFrame));
@@ -32,7 +33,7 @@ public final class TooltipMapNameColor{
 	private static final HashMap<ItemStack, List<Text>> tooltipCache = new HashMap<>();
 	private static int lastHash;
 
-	public static final void tooltipColors(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
+	@Override public final void get(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
 		if(!Configs.Visuals.MAP_HIGHLIGHT_TOOLTIP.getBooleanValue()) return;
 		final int MAP_COLOR_IN_INV = Configs.Visuals.MAP_COLOR_IN_INV.getIntegerValue();
 		final int MAP_COLOR_NOT_IN_GROUP = Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue();

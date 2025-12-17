@@ -7,6 +7,7 @@ import java.util.UUID;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.MiscUtils;
+import net.evmodder.evmod.apis.NewMapNotifier;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.FilledMapItem;
@@ -98,7 +99,7 @@ public class UpdateItemFrameHighlights{
 			if(UpdateInventoryHighlights.isInInventory(colorsId) || UpdateInventoryHighlights.isNestedInInventory(colorsId)) highlight = Highlight.INV_OR_NESTED_INV;
 			else if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)){
 				highlight = Highlight.NOT_IN_CURR_GROUP;
-				if(Configs.Generic.NEW_MAP_NOTIFIER_IFRAME.getBooleanValue()) MiscUtils.newMapNotify(ife, colorsId);
+				if(Configs.Generic.NEW_MAP_NOTIFIER_IFRAME.getBooleanValue()) NewMapNotifier.call(ife, colorsId);
 			}
 			else if(isMultiHung) highlight = Highlight.MULTI_HUNG;
 			else if(!state.locked || stack.getCustomName() == null) highlight = Highlight.UNLOCKED_OR_UNNAMED;
@@ -111,7 +112,7 @@ public class UpdateItemFrameHighlights{
 		return anyHighlightUpdate;
 	}
 	private static int lastGroupInvHash;
-	public static final void onUpdateTick(MinecraftClient client){
+	public static final void onTickStart(MinecraftClient client){
 		if(client.world == null) return;
 		Vec3d newClientRot = client.player.getRotationVec(1.0F).normalize();
 		if(!newClientRot.equals(clientRotationNormalized) || MiscUtils.hasMoved(client.player)){

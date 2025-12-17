@@ -117,7 +117,7 @@ public final class Configs implements IConfigHandler{
 				if(main.serverJoinListener) availableOptions.add(MAP_CACHE_BY_ID);
 				if(main.containerOpenCloseListener) availableOptions.add(MAP_CACHE_BY_NAME);
 				if(main.serverJoinListener && main.serverQuitListener) availableOptions.add(MAP_CACHE_BY_INV_POS);
-				if(main.containerOpenCloseListener) availableOptions.addAll(List.of(MAP_CACHE_BY_EC_POS/*, MAP_CACHE_BY_CONTAINER_POS*/));
+				if(main.containerOpenCloseListener) availableOptions.addAll(List.of(MAP_CACHE_BY_EC_POS, MAP_CACHE_BY_CONTAINER_POS));
 
 				if(main.mapHighlights) availableOptions.addAll(List.of(MAX_IFRAME_TRACKING_DIST, NEW_MAP_NOTIFIER_IFRAME));
 				if(main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME,

@@ -36,7 +36,7 @@ public class UpdateInventoryHighlights{
 		{
 //			currentlyBeingPlacedIntoItemFrameSlot = player.getInventory().selectedSlot;
 			currentlyBeingPlacedIntoItemFrame = stack.copy();
-			onUpdateTick(player);
+			onTickStart(player);
 			return true;
 		}
 		return false;
@@ -68,7 +68,7 @@ public class UpdateInventoryHighlights{
 //		newInvHash += colorsId.hashCode();
 		return false;
 	}
-	public static final void onUpdateTick(PlayerEntity player){
+	public static final void onTickStart(PlayerEntity player){
 		if(player == null || player.getWorld() == null || !player.isAlive()) return;
 
 		//TODO: this might make more sense in its own onTick() listener

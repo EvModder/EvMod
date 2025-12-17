@@ -3,6 +3,7 @@ package net.evmodder.evmod.listeners;
 import java.util.List;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapStateCacher;
+import net.evmodder.evmod.apis.TickListener;
 import net.evmodder.evmod.config.OptionMapStateCache;
 import net.evmodder.evmod.keybinds.KeybindInventoryRestock;
 import net.minecraft.client.MinecraftClient;
@@ -13,7 +14,7 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 
-public final class ContainerOpenCloseListener{
+public final class ContainerOpenCloseListener implements TickListener{
 	private final KeybindInventoryRestock kbInvRestock;
 	public ContainerOpenCloseListener(KeybindInventoryRestock kbInvRestock){this.kbInvRestock = kbInvRestock;}
 
@@ -24,7 +25,7 @@ public final class ContainerOpenCloseListener{
 
 	public static boolean echestCacheLoaded; // TODO: remove horrible public static var
 
-	public final void onUpdateTick(MinecraftClient client){
+	@Override public final void onTickEnd(MinecraftClient client){
 		if(client.player == null) return;
 		ScreenHandler sh = client.player.currentScreenHandler;
 		final int newSyncId = sh == null ? 0 : sh.syncId;

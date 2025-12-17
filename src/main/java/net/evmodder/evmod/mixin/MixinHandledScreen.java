@@ -28,7 +28,8 @@ abstract class MixinHandledScreen<T extends ScreenHandler> extends Screen{
 
 	MixinHandledScreen(Text title){
 		super(title);
-		throw new RuntimeException(); // Java requires we provide a constructor because of the <T>, but it should never be called
+		// Java requires we provide a constructor because of the <T>, but it should never be called
+		throw new RuntimeException("EvMod: unreachable (cnstr of MixinHandledScreen)");
 	}
 
 	@Inject(method="drawForeground", at=@At("TAIL"))

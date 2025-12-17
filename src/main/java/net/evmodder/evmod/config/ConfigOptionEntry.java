@@ -8,12 +8,7 @@ import net.evmodder.evmod.Main;
 interface ConfigOptionEntry extends IConfigOptionListEntry{
 	public String getOptionListName();
 
-	default public String getDisplayName(){return StringUtils.translate(Main.MOD_ID+".gui.label."+getOptionListName()+"."+getStringValue());}
-
-//	default public IConfigOptionListEntry cycle(boolean forward){return cycle((T)this, forward);}
-	default public IConfigOptionListEntry cycle(boolean forward){return cycle((Enum<?>)this, forward);}
-
-	default public IConfigOptionListEntry fromString(String name){return fromString(this.getClass(), name);}
+	public default String getDisplayName(){return StringUtils.translate(Main.MOD_ID+".gui.label."+getOptionListName()+"."+getStringValue());}
 
 //	private static <T extends Enum<T> & IConfigOptionListEntry> T cycle(T t, boolean forward){
 	private static IConfigOptionListEntry cycle(Enum<?> t, boolean forward){
@@ -28,4 +23,9 @@ interface ConfigOptionEntry extends IConfigOptionListEntry{
 		for(var v : clazz.getEnumConstants()) if(((IConfigOptionListEntry)v).getStringValue().equalsIgnoreCase(name)) return (IConfigOptionListEntry)v;
 		throw new IllegalArgumentException(clazz.getName()+": Invalid argument provided to fromString(): "+name);
 	}
+
+//	public default IConfigOptionListEntry cycle(boolean forward){return cycle((T)this, forward);}
+	public default IConfigOptionListEntry cycle(boolean forward){return cycle((Enum<?>)this, forward);}
+
+	public default IConfigOptionListEntry fromString(String name){return fromString(this.getClass(), name);}
 }

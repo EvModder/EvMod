@@ -14,7 +14,7 @@ import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.evmodder.evmod.apis.TickListener;
 import net.evmodder.evmod.apis.MapRelationUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -57,7 +57,13 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 		recentPlaceAttempts = new int[20];
 
-		ClientTickEvents.END_CLIENT_TICK.register(client->{synchronized(stacksHashesForCurrentData){placeNearestMap(client == null ? null : client.player);}});
+		TickListener.register(new TickListener(){
+			@Override public void onTickEnd(MinecraftClient client){
+				synchronized(stacksHashesForCurrentData){
+					placeNearestMap(client == null ? null : client.player);
+				}
+			}
+		});
 	}
 
 	private final record AxisData(int constAxis, int varAxis1, int varAxis2){}

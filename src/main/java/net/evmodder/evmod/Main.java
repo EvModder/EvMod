@@ -24,6 +24,7 @@ import net.evmodder.evmod.apis.ChatBroadcaster;
 import net.evmodder.evmod.apis.EpearlLookup;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.RemoteServerSender;
+import net.evmodder.evmod.apis.TickListener;
 import net.evmodder.evmod.apis.Tooltip;
 import net.evmodder.evmod.commands.*;
 import net.evmodder.evmod.keybinds.KeybindCraftingRestock;
@@ -37,8 +38,7 @@ import net.evmodder.evmod.onTick.TooltipRepairCost;
 import net.evmodder.evmod.onTick.UpdateContainerHighlights;
 import net.evmodder.evmod.onTick.UpdateInventoryHighlights;
 import net.evmodder.evmod.onTick.UpdateItemFrameHighlights;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
+import net.minecraft.client.MinecraftClient;
 
 //MC source code will be in ~/.gradle/caches/fabric-loom or ./.gradle/loom-cache
 // gradle tasks --all
@@ -194,10 +194,7 @@ public class Main{
 				new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_3.getStrings())
 		};
 		kbInvRestock = kbInvOrgs == null ? null : new KeybindInventoryRestock(kbInvOrgs);
-		if(containerOpenCloseListener){
-			ContainerOpenCloseListener cocl = new ContainerOpenCloseListener(kbInvRestock);
-			ClientTickEvents.END_CLIENT_TICK.register(cocl::onUpdateTick);
-		}
+		if(containerOpenCloseListener) TickListener.register(new ContainerOpenCloseListener(kbInvRestock));
 
 		if(placementHelperIframe) new AutoPlaceItemFrames();
 		if(placementHelperMapArt) new MapHandRestock(placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove);
@@ -213,13 +210,15 @@ public class Main{
 		//new KeybindSpamclick();
 
 		if(mapHighlights){
-			if(tooltipMapHighlights) ItemTooltipCallback.EVENT.register(TooltipMapNameColor::tooltipColors);
-			ClientTickEvents.START_CLIENT_TICK.register(client -> {
-				UpdateInventoryHighlights.onUpdateTick(client.player);
-				UpdateItemFrameHighlights.onUpdateTick(client);
-				if(mapHighlightsInGUIs) UpdateContainerHighlights.onUpdateTick(client);
+			TickListener.register(new TickListener(){
+				@Override public void onTickStart(MinecraftClient client){
+					UpdateInventoryHighlights.onTickStart(client.player);
+					UpdateItemFrameHighlights.onTickStart(client);
+					if(mapHighlightsInGUIs) UpdateContainerHighlights.onTickStart(client);
+				}
 			});
 		}
+		if(tooltipMapHighlights) Tooltip.register(new TooltipMapNameColor());
 		if(tooltipMapMetadata) Tooltip.register(new TooltipMapLoreMetadata());
 		if(tooltipRepairCost) Tooltip.register(new TooltipRepairCost());
 
