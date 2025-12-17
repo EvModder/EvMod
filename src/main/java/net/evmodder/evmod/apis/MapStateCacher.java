@@ -240,7 +240,7 @@ public class MapStateCacher{
 		if(loadedCache == null) return false;
 		List<ItemStack> mapItems = MapRelationUtils.getAllNestedItems(items.stream()).filter(s -> s.getItem() == Items.FILLED_MAP).toList();
 		if(mapItems.size() != loadedCache.size()){
-			Main.LOGGER.warn("MapStateCacher: type="+type+", mapItems.size ("+mapItems.size()+") != cache.size ("+loadedCache.size()+")");
+			Main.LOGGER.warn("MapStateCacher: type="+type+", mapItems.size ("+mapItems.size()+") != cache.size ("+loadedCache.size()+"), raw items.size="+items.size());
 			return false;
 		}
 //		Main.LOGGER.info("MapStateCacher: "+type.name()+" loading cached map states (size="+mapItems.size()+")");

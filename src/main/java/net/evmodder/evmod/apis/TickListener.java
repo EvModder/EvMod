@@ -9,9 +9,9 @@ public interface TickListener{
 
 	public static void register(TickListener tickListener){
 		try{
-			if(!tickListener.getClass().getMethod("onTickStart").getDeclaringClass().equals(TickListener.class))
+			if(!tickListener.getClass().getMethod("onTickStart", MinecraftClient.class).getDeclaringClass().equals(TickListener.class))
 				ClientTickEvents.START_CLIENT_TICK.register(tickListener::onTickStart);
-			if(!tickListener.getClass().getMethod("onTickEnd").getDeclaringClass().equals(TickListener.class))
+			if(!tickListener.getClass().getMethod("onTickEnd", MinecraftClient.class).getDeclaringClass().equals(TickListener.class))
 				ClientTickEvents.END_CLIENT_TICK.register(tickListener::onTickEnd);
 		}
 		catch(NoSuchMethodException | SecurityException e){

@@ -3,6 +3,7 @@ package net.evmodder.evmod.listeners;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.IntStream;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.apis.TickListener;
@@ -21,7 +22,7 @@ public final class ContainerOpenCloseListener implements TickListener{
 	public ContainerOpenCloseListener(KeybindInventoryRestock kbInvRestock){this.kbInvRestock = kbInvRestock;}
 
 	private int syncId;
-	private boolean currentlyViewingEchest, currentlyViewingContainer;
+	private boolean waitingForEcToLoad, currentlyViewingEchest, currentlyViewingContainer;
 //	private List<ItemStack> contents; // null until echest is opened
 	List<Slot> slots;
 
@@ -34,7 +35,14 @@ public final class ContainerOpenCloseListener implements TickListener{
 		final int newSyncId = sh == null ? 0 : sh.syncId;
 		if(newSyncId == syncId){
 			if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
-				if(currentlyViewingContainer) slots = sh.slots;
+				if(currentlyViewingContainer){
+					slots = sh.slots;
+					if(waitingForEcToLoad && IntStream.range(0, 27).anyMatch(i -> !slots.get(i).getStack().isEmpty())){
+						waitingForEcToLoad = false;
+						if(!echestCacheLoaded) MapStateCacher.loadMapStatesByPos(sh.getStacks(), MapStateCacher.BY_PLAYER_EC);
+						echestCacheLoaded = true;
+					}
+				}
 			}
 			return;
 		}
@@ -44,17 +52,17 @@ public final class ContainerOpenCloseListener implements TickListener{
 			if(Configs.Generic.INV_RESTOCK_AUTO.getBooleanValue()) kbInvRestock.organizeThenRestock();
 
 			if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
+				waitingForEcToLoad = false;
 				currentlyViewingContainer = true;
 				// Don't reload from echest-cache unless player leaves and rejoins server
-				if(Configs.Generic.MAP_CACHE_BY_EC_POS.getBooleanValue() && !echestCacheLoaded && (
+				if(Configs.Generic.MAP_CACHE_BY_EC_POS.getBooleanValue() && (
 					currentlyViewingEchest=client.currentScreen.getTitle().contains(Text.translatable("container.enderchest")))
 				){
-					MapStateCacher.loadMapStatesByPos(sh.getStacks(), MapStateCacher.sBY_PLAYER_EC);
-					echestCacheLoaded = true;
+					waitingForEcToLoad = true;
 				}
 				else{
 					if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue() && containerCachesLoaded.add(ContainerClickListener.lastClickedBlockHash)){
-						MapStateCacher.loadMapStatesByPos(sh.getStacks(), MapStateCacher.sBY_CONTAINER);
+						MapStateCacher.loadMapStatesByPos(sh.getStacks(), MapStateCacher.BY_CONTAINER);
 					}
 					if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) sh.getStacks().stream()
 						.filter(s -> s.getItem() == Items.FILLED_MAP && s.getCustomName() != null && s.getCustomName().getLiteralString() != null)
@@ -73,11 +81,11 @@ public final class ContainerOpenCloseListener implements TickListener{
 					currentlyViewingContainer = false;
 					if(currentlyViewingEchest){
 						currentlyViewingEchest = false;
-						MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getStack).toList(), MapStateCacher.sBY_PLAYER_EC);
+						if(!waitingForEcToLoad) MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getStack).toList(), MapStateCacher.BY_PLAYER_EC);
 					}
 					else{
 						if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue()){
-							MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getStack).toList(), MapStateCacher.sBY_CONTAINER);
+							MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getStack).toList(), MapStateCacher.BY_CONTAINER);
 						}
 						if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) slots.stream().map(Slot::getStack)
 							.filter(s -> s.getItem() == Items.FILLED_MAP && s.getCustomName() != null && s.getCustomName().getLiteralString() != null)
