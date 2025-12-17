@@ -1,6 +1,8 @@
 package net.evmodder.evmod.listeners;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.apis.TickListener;
@@ -23,7 +25,8 @@ public final class ContainerOpenCloseListener implements TickListener{
 //	private List<ItemStack> contents; // null until echest is opened
 	List<Slot> slots;
 
-	public static boolean echestCacheLoaded; // TODO: remove horrible public static var
+	public static boolean echestCacheLoaded; // TODO: remove horrible public static vars
+	public static HashSet<UUID> containerCachesLoaded = new HashSet<>();
 
 	@Override public final void onTickEnd(MinecraftClient client){
 		if(client.player == null) return;
@@ -46,14 +49,13 @@ public final class ContainerOpenCloseListener implements TickListener{
 				if(Configs.Generic.MAP_CACHE_BY_EC_POS.getBooleanValue() && !echestCacheLoaded && (
 					currentlyViewingEchest=client.currentScreen.getTitle().contains(Text.translatable("container.enderchest")))
 				){
-					MapStateCacher.loadMapStatesByPos(sh.getStacks(), MapStateCacher.Cache.BY_PLAYER_EC);
+					MapStateCacher.loadMapStatesByPos(sh.getStacks(), MapStateCacher.sBY_PLAYER_EC);
 					echestCacheLoaded = true;
 				}
 				else{
-//					if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue()){
-//						MapStateCacher.loadMapStatesByPos(contents=sh.getStacks(), MapStateCacher.HolderType.CONTAINER);//TODO: holder-identifying data? xyz?
-//						holderXYZCacheLoaded = true;
-//					}
+					if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue() && containerCachesLoaded.add(ContainerClickListener.lastClickedBlockHash)){
+						MapStateCacher.loadMapStatesByPos(sh.getStacks(), MapStateCacher.sBY_CONTAINER);
+					}
 					if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) sh.getStacks().stream()
 						.filter(s -> s.getItem() == Items.FILLED_MAP && s.getCustomName() != null && s.getCustomName().getLiteralString() != null)
 						.forEach(s -> {
@@ -71,12 +73,12 @@ public final class ContainerOpenCloseListener implements TickListener{
 					currentlyViewingContainer = false;
 					if(currentlyViewingEchest){
 						currentlyViewingEchest = false;
-						MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getStack).toList(), MapStateCacher.Cache.BY_PLAYER_EC);
+						MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getStack).toList(), MapStateCacher.sBY_PLAYER_EC);
 					}
 					else{
-//						if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue()){
-//							MapStateCacher.saveMapStatesByPos(contents, MapStateCacher.HolderType.CONTAINER);//TODO: holder-identifying data? xyz?
-//						}
+						if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue()){
+							MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getStack).toList(), MapStateCacher.sBY_CONTAINER);
+						}
 						if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) slots.stream().map(Slot::getStack)
 							.filter(s -> s.getItem() == Items.FILLED_MAP && s.getCustomName() != null && s.getCustomName().getLiteralString() != null)
 							.forEach(s -> {

@@ -25,7 +25,7 @@ public class ServerJoinListener{
 	private void loadMapStateCaches(MinecraftClient client){
 		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.loadMapStatesById();
 		if(Configs.Generic.MAP_CACHE_BY_INV_POS.getBooleanValue())
-			MapStateCacher.loadMapStatesByPos(client.player.getInventory().main, MapStateCacher.Cache.BY_PLAYER_INV);
+			MapStateCacher.loadMapStatesByPos(client.player.getInventory().main, MapStateCacher.sBY_PLAYER_INV);
 	}
 
 	public ServerJoinListener(RemoteServerSender rms){

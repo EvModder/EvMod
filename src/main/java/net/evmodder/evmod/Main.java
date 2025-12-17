@@ -194,7 +194,10 @@ public class Main{
 				new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_3.getStrings())
 		};
 		kbInvRestock = kbInvOrgs == null ? null : new KeybindInventoryRestock(kbInvOrgs);
-		if(containerOpenCloseListener) TickListener.register(new ContainerOpenCloseListener(kbInvRestock));
+		if(containerOpenCloseListener){
+			TickListener.register(new ContainerOpenCloseListener(kbInvRestock));
+			ContainerClickListener.register();
+		}
 
 		if(placementHelperIframe) new AutoPlaceItemFrames();
 		if(placementHelperMapArt) new MapHandRestock(placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove);
