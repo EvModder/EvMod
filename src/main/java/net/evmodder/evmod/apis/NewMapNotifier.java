@@ -25,13 +25,20 @@ public final class NewMapNotifier{
 		// TODO: play sound?
 		String pos = ife.getBlockX()+" "+ife.getBlockY()+" "+ife.getBlockZ();
 
-		Main.LOGGER.info("NewMapNotifier: "+colorsId+" ("+ife.getHeldItemStack().getName().getString()+") at "+pos);
-		MinecraftClient.getInstance().player.sendMessage(Text.literal("New mapart: "+pos)
-				.withColor(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue()), true);
-		if(notifyInChat){
-			MinecraftClient.getInstance().player.sendMessage(Text.literal("New mapart: "+pos+" \u2398") // unicode for symbol ⎘
-					.withColor(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue())
-					.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, pos))), false);
+		int color = Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue();
+		MinecraftClient.getInstance().player.sendMessage(Text.literal("New mapart: "+pos).withColor(color), true);
+
+		if(colorsId.getMostSignificantBits() != lastNewMapColorId){
+			Main.LOGGER.info("NewMapNotifier: "+colorsId+" ("+ife.getHeldItemStack().getName().getString()+") at "+pos);
+
+			if(notifyInChat){
+				MinecraftClient.getInstance().player.sendMessage(
+						Text.literal("New mapart: "+pos)
+						.append(Text.literal(" \u2398 ") // unicode for symbol ⎘
+							.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, pos))))
+						.append(ife.getHeldItemStack().getName()).withColor(color)
+						, false);
+			}
 		}
 	}
 }

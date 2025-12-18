@@ -20,6 +20,7 @@ public class UpdateItemFrameHighlights{
 	private record XYZD(int x, int y, int z, int d){}
 	private static final HashMap<XYZD, UUID> hangLocsReverse = new HashMap<>(); // XYZD -> colorsId
 	private static final HashMap<UUID, HashSet<XYZD>> iFrameMapGroup = new HashMap<>(); // colorsId -> {HangLocs}
+	private static int numLoadedIfes;
 
 	public static final HashMap<ItemFrameEntity, Boolean> hasLabelCache = new HashMap<>(); // TODO: remove? private?
 	public static final HashMap<ItemFrameEntity, Text> displayNameCache = new HashMap<>(); // TODO: remove? private?
@@ -129,7 +130,8 @@ public class UpdateItemFrameHighlights{
 
 		List<ItemFrameEntity> ifes = client.world.getEntitiesByClass(ItemFrameEntity.class, client.player.getBoundingBox().expand(200, 200, 200), _0->true);
 
-		anyHangLocUpdate = updateItemFrameEntities(ifes);
+		anyHangLocUpdate = updateItemFrameEntities(ifes) ||  ifes.size() > numLoadedIfes;
+		numLoadedIfes = ifes.size();
 		final int currGroupInvHash = MapGroupUtils.mapsInGroupHash + UpdateInventoryHighlights.mapsInInvHash;
 		if(!anyHangLocUpdate && lastGroupInvHash == currGroupInvHash) return;
 		lastGroupInvHash = currGroupInvHash;
