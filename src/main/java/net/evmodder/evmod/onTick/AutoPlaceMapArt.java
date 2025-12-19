@@ -23,11 +23,13 @@ import net.minecraft.component.type.BundleContentsComponent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
@@ -378,8 +380,22 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 //		client.player.interact(ife, Hand.MAIN_HAND);
 	}
 
+	private final Vec3d getPlaceAgainstSurface(BlockPos ifeBp){
+		Vec3d center = ifeBp.toCenterPos();
+		switch(dir){
+			case UP: return center.add(0, -.5, 0);
+			case DOWN: return center.add(0, .5, 0);
+			case EAST: return center.add(-.5, 0, 0);
+			case WEST: return center.add(.5, 0, 0);
+			case NORTH: return center.add(0, 0, .5);
+			case SOUTH: return center.add(0, 0, -.5);
+
+			default: assert(false) : "Unreachable"; return null;
+		}
+	}
+
 	boolean foundValidPosOnLastAttempt;
-	record MapPlacementData(int slot, int bundleSlot, ItemFrameEntity ife){}
+	record MapPlacementData(int slot, int bundleSlot, ItemFrameEntity ife, BlockPos bp){}
 	private final MapPlacementData getNearestMapPlacement(PlayerEntity player){
 		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).collect(Collectors.toList());
 
@@ -389,14 +405,15 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		Box box = player.getBoundingBox().expand(SCAN_DIST, SCAN_DIST, SCAN_DIST);
 		Predicate<ItemFrameEntity> filter = ife -> ifePosFilter(ife) && ife.getHeldItemStack().isEmpty();
 		List<ItemFrameEntity> ifes = player.getWorld().getEntitiesByClass(ItemFrameEntity.class, box, filter);
-		if(ifes.isEmpty()){
+		final boolean CAN_PLACE_IFRAMES = Configs.Generic.MAPART_AUTOPLACE_IFRAMES.getBooleanValue();
+		if(!CAN_PLACE_IFRAMES && ifes.isEmpty()){
 //			Main.LOGGER.warn("AutoPlaceMapArt: no nearby iframes");
 			return null;
 		}
-		
+
 		double nearestDistSq = Double.MAX_VALUE;
-//		BlockPos nearestBp;
 		ItemFrameEntity nearestIfe = null;
+		BlockPos nearestBp = null;
 		int nearestSlot = -1, bundleSlot = 0;
 		int numMaps = 0, numRelated = 0, numRelatedInRange = 0, numRelatedInRangeStrict = 0;
 		boolean nearestIsInHotbar = false;
@@ -418,23 +435,40 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				else mapStack = contents.get(j);
 				if(mapStack.getItem() != Items.FILLED_MAP) continue;
 				++numMaps;
-				BlockPos bp = getPlacement(mapStack);
-				if(bp == null) continue;
+				BlockPos ifeBp = getPlacement(mapStack);
+				if(ifeBp == null) continue;
 				++numRelated;
-				if(bp.getSquaredDistance(player.getEyePos()) > SCAN_DIST*SCAN_DIST) continue;
+				if(ifeBp.getSquaredDistance(player.getEyePos()) > SCAN_DIST*SCAN_DIST) continue;
 				++numRelatedInRange;
-				Optional<ItemFrameEntity> optionalIfe = ifes.stream().filter(ife -> ife.getBlockPos().equals(bp)).findAny();
-				if(optionalIfe.isEmpty()){
-					Main.LOGGER.warn("AutoPlaceMapArt: Missing iFrame at pos! "+bp.toShortString());
-					continue;
+				Optional<ItemFrameEntity> optionalIfe = ifes.stream().filter(ife -> ife.getBlockPos().equals(ifeBp)).findAny();
+				final ItemFrameEntity ife;
+				final double distSq;
+				{
+					final Vec3d ifeEyePos;
+					if(optionalIfe.isEmpty()){
+						if(!CAN_PLACE_IFRAMES){
+							Main.LOGGER.warn("AutoPlaceMapArt: Missing iFrame at pos! "+ifeBp.toShortString());
+							continue;
+						}
+						if(nearestIfe != null) continue;
+						ife = null;
+						ifeEyePos = getPlaceAgainstSurface(ifeBp);
+					}
+					else{
+						ife = optionalIfe.get();
+						ifeEyePos = ife.getEyePos(); //TODO: ife.getNearestCornerToPlayer
+					}
+					distSq = ifeEyePos.squaredDistanceTo(player.getEyePos());
 				}
-				ItemFrameEntity ife = optionalIfe.get();
-				final double distSq = ife.getEyePos().squaredDistanceTo(player.getEyePos());//TODO: ife.getNearestCornerToPlayer
 				if(distSq > MAX_REACH*MAX_REACH) continue;
 				++numRelatedInRangeStrict;
 
-				if(Arrays.stream(recentPlaceAttempts).anyMatch(id -> id == ife.getId())){
-					Main.LOGGER.warn("AutoPlaceMapArt: Cannot place into the same iFrame twice! "+bp.toShortString());
+				if(ife == null){
+					int bpHash = ifeBp.hashCode()+1;
+					if(Arrays.stream(recentPlaceAttempts).anyMatch(h -> h == bpHash)) continue;
+				}
+				else if(Arrays.stream(recentPlaceAttempts).anyMatch(id -> id == ife.getId())){
+					Main.LOGGER.warn("AutoPlaceMapArt: Cannot place into the same iFrame twice! "+ifeBp.toShortString());
 					continue;
 				}
 				final boolean isSelected = isInHotbar && i-36 == player.getInventory().selectedSlot;
@@ -444,6 +478,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					nearestSlot = i;
 					bundleSlot = j;
 					nearestIfe = ife;
+					nearestBp = ifeBp;
 					if(isSelected){
 						Main.LOGGER.info("AutoPlaceMapArt: Stack in hand is a valid candidate, using it!");
 						break invloop;
@@ -460,7 +495,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			return null;
 		}
 		foundValidPosOnLastAttempt = true;
-		return new MapPlacementData(nearestSlot, bundleSlot, nearestIfe);
+		return new MapPlacementData(nearestSlot, bundleSlot, nearestIfe, nearestBp);
 	}
 
 	private final void getMapIntoMainHand(ClientPlayerEntity player, int slot, int bundleSlot){
@@ -474,10 +509,17 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		final Runnable onDone = TICKS_BETWEEN_INV_ACTIONS == 0 ? ()->placeNearestMap(player) : ()->ticksSinceInvAction=0;
 		final int selectedSlot = player.getInventory().selectedSlot;
 		if(bundleSlot == -1){
+			final int nextHbSlot;
 			if(slot >= 36 && slot < 45){
 				player.getInventory().setSelectedSlot(slot - 36);
 				ticksSinceInvAction = 0;
 				Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to nearestMap: hb="+(slot-36));
+			}
+			else if(isIFrame(player.getMainHandStack().getItem()) &&
+					!isIFrame(player.getInventory().getStack(nextHbSlot = (player.getInventory().selectedSlot+1)%9).getItem()))
+			{
+				player.getInventory().setSelectedSlot(nextHbSlot);
+				Main.LOGGER.info("AutoPlaceMapArt: Changing selected hotbar slot to avoid losing iFrame stack");
 			}
 			else{
 				// Swap from upper inv to main hand
@@ -522,6 +564,8 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		double xzLengthSq = velocity.x*velocity.x + velocity.z*velocity.z;
 		return xzLengthSq > 0.0001 || Math.abs(velocity.y) > 0.08;
 	}
+
+	private boolean isIFrame(Item item){return item == Items.ITEM_FRAME || item == Items.GLOW_ITEM_FRAME;}
 
 	private final void placeNearestMap(ClientPlayerEntity player){
 		if(!hasKnownLayout()) return;
@@ -599,6 +643,28 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				return;
 			}
 			disableAndReset();
+			return;
+		}
+
+		if(data.ife == null){ // Implies placing iFrame, not map item
+			Main.LOGGER.warn("AutoPlaceMapArt: no ife found, checking for iframes in inv");
+			final Hand hand;
+			if(isIFrame(player.getMainHandStack().getItem())) hand = Hand.MAIN_HAND;
+			else if(isIFrame(player.getOffHandStack().getItem())) hand = Hand.OFF_HAND;
+			else{
+				for(int i=0; i<9; ++i){
+					if(isIFrame(player.getInventory().getStack(i).getItem())){
+						player.getInventory().setSelectedSlot(i);
+						return;
+					}
+				}
+				Main.LOGGER.warn("AutoPlaceMapArt: no iFrames found in offhand or hotbar");
+				return;
+			}
+			recentPlaceAttempts[attemptIdx] = data.bp.hashCode()+1;
+
+			BlockHitResult hitResult = new BlockHitResult(getPlaceAgainstSurface(data.bp), dir, data.bp.offset(dir.getOpposite()), /*insideBlock=*/false);
+			MinecraftClient.getInstance().interactionManager.interactBlock(player, hand, hitResult);
 			return;
 		}
 

@@ -52,22 +52,23 @@ public final class Configs implements IConfigHandler{
 		static{MAX_IFRAME_TRACKING_DIST.setValueChangeCallback(d -> MAX_IFRAME_TRACKING_DIST_SQ=Math.pow(d.getIntegerValue(), 2));}
 		public static final ConfigBoolean NEW_MAP_NOTIFIER_IFRAME = new ConfigBoolean("iFrameNewMapNotifier", true).apply(GENERIC_KEY);
 
-		public static final ConfigBooleanHotkeyed PLACEMENT_HELPER_IFRAME = new ConfigBooleanHotkeyed("placementHelperIFrame", false, "").apply(GENERIC_KEY);
-		public static final ConfigDouble PLACEMENT_HELPER_IFRAME_REACH = new ConfigDouble("placementHelperIFrameReach", 3.5d).apply(GENERIC_KEY);
-		public static final ConfigBoolean PLACEMENT_HELPER_IFRAME_RAYCAST = new ConfigBoolean("placementHelperIFrameRaycast", true).apply(GENERIC_KEY);
+		public static final ConfigBooleanHotkeyed IFRAME_AUTO_PLACER = new ConfigBooleanHotkeyed("iFrameAutoPlacer", false, "").apply(GENERIC_KEY);
+		public static final ConfigDouble IFRAME_AUTO_PLACER_REACH = new ConfigDouble("iFrameAutoPlacerReach", 3.5d).apply(GENERIC_KEY);
 		// ConfigOptionList: RaycastOnly, RaycastRotatePlayer, RaycastGrimRotate
-//		public static final ConfigBoolean PLACEMENT_HELPER_IFRAME_ROTATE_PLAYER = new ConfigBoolean("placementHelperIFrameRotatePlayer", false).apply(GENERIC_KEY);
-		public static final ConfigBoolean PLACEMENT_HELPER_IFRAME_MUST_CONNECT = new ConfigBoolean("placementHelperIFrameMustConnect", true).apply(GENERIC_KEY);
-		public static final ConfigBoolean PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK = new ConfigBoolean("placementHelperIFrameMustMatchBlock", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean IFRAME_AUTO_PLACER_RAYCAST = new ConfigBoolean("iFrameAutoPlacerRaycast", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean IFRAME_AUTO_PLACER_ROTATE_PLAYER = new ConfigBoolean("iFrameAutoPlacerRotatePlayer", false).apply(GENERIC_KEY);
+		public static final ConfigBoolean IFRAME_AUTO_PLACER_MUST_CONNECT = new ConfigBoolean("iFrameAutoPlacerMustConnect", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean IFRAME_AUTO_PLACER_MUST_MATCH_BLOCK = new ConfigBoolean("iFrameAutoPlacerMustMatchBlock", true).apply(GENERIC_KEY);
 
-		public static final ConfigBoolean PLACEMENT_HELPER_MAPART = new ConfigBoolean("placementHelperMapArt", true).apply(GENERIC_KEY);
-		public static final ConfigDouble PLACEMENT_HELPER_MAPART_REACH = new ConfigDouble("placementHelperMapArtReach", 3.9d).apply(GENERIC_KEY);
-		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_NAMES = new ConfigBoolean("placementHelperMapArtUseNames", true).apply(GENERIC_KEY);
-		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_IMAGE = new ConfigBoolean("placementHelperMapArtUseImage", true).apply(GENERIC_KEY);
-		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_FROM_BUNDLE = new ConfigBoolean("placementHelperMapArtFromBundle", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean PLACEMENT_HELPER_MAPART = new ConfigBoolean("mapArtPlacer", true).apply(GENERIC_KEY);
+		public static final ConfigDouble PLACEMENT_HELPER_MAPART_REACH = new ConfigDouble("mapArtPlacerReach", 3.9d).apply(GENERIC_KEY);
+		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_NAMES = new ConfigBoolean("mapArtPlacerUseNames", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_IMAGE = new ConfigBoolean("mapArtPlacerUseImage", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_FROM_BUNDLE = new ConfigBoolean("mapArtPlacerFromBundle", true).apply(GENERIC_KEY);
 		public static final ConfigBooleanHotkeyed MAPART_AUTOPLACE = new ConfigBooleanHotkeyed("mapArtAutoPlace", true, "").apply(GENERIC_KEY);
 		public static final ConfigInteger MAPART_AUTOPLACE_INV_DELAY = new ConfigInteger("mapArtAutoPlaceInvDelay", 3, 0, 20).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAPART_AUTOPLACE_ANTI_ROTATE = new ConfigBoolean("mapArtAutoPlaceAntiRotate", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAPART_AUTOPLACE_IFRAMES = new ConfigBoolean("mapArtAutoPlaceIFrames", true).apply(GENERIC_KEY);
 
 		public static final ConfigBooleanHotkeyed MAPART_AUTOREMOVE = new ConfigBooleanHotkeyed("mapArtAutoRemove", false, "").apply(GENERIC_KEY);
 		public static final ConfigInteger MAPART_AUTOREMOVE_AFTER = new ConfigInteger("mapArtAutoRemoveThreshold", 2, 1, 20, /*useSlider=*/true).apply(GENERIC_KEY);
@@ -120,17 +121,17 @@ public final class Configs implements IConfigHandler{
 				if(main.containerOpenCloseListener) availableOptions.addAll(List.of(MAP_CACHE_BY_EC_POS, MAP_CACHE_BY_CONTAINER_POS));
 
 				if(main.mapHighlights) availableOptions.addAll(List.of(MAX_IFRAME_TRACKING_DIST, NEW_MAP_NOTIFIER_IFRAME));
-				if(main.placementHelperIframe) availableOptions.addAll(List.of(PLACEMENT_HELPER_IFRAME,
+				if(main.placementHelperIframe) availableOptions.addAll(List.of(IFRAME_AUTO_PLACER,
 						//PLACEMENT_HELPER_IFRAME_REACH, PLACEMENT_HELPER_IFRAME_RAYCAST,
-						PLACEMENT_HELPER_IFRAME_MUST_CONNECT, PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK));
-				else PLACEMENT_HELPER_IFRAME.setBooleanValue(false);
+						IFRAME_AUTO_PLACER_MUST_CONNECT, IFRAME_AUTO_PLACER_MUST_MATCH_BLOCK));
+				else IFRAME_AUTO_PLACER.setBooleanValue(false);
 				if(main.placementHelperMapArt){
 					availableOptions.addAll(List.of(PLACEMENT_HELPER_MAPART,
 							//PLACEMENT_HELPER_MAPART_REACH
 							PLACEMENT_HELPER_MAPART_USE_NAMES, PLACEMENT_HELPER_MAPART_USE_IMAGE,
 							PLACEMENT_HELPER_MAPART_FROM_BUNDLE));
 					if(main.placementHelperMapArtAutoPlace) availableOptions.addAll(
-							List.of(MAPART_AUTOPLACE, MAPART_AUTOPLACE_INV_DELAY, MAPART_AUTOPLACE_ANTI_ROTATE));
+							List.of(MAPART_AUTOPLACE, MAPART_AUTOPLACE_INV_DELAY, MAPART_AUTOPLACE_ANTI_ROTATE, MAPART_AUTOPLACE_IFRAMES));
 					if(main.placementHelperMapArtAutoRemove) availableOptions.addAll(List.of(MAPART_AUTOREMOVE, MAPART_AUTOREMOVE_AFTER));
 					else MAPART_AUTOPLACE.setBooleanValue(false);
 				}
@@ -164,7 +165,7 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean REPAIR_COST_HOTBAR_HUD = new ConfigBoolean("repairCostInHotbarHUD", false).apply(VISUALS_KEY);
 		public static final ConfigOptionList REPAIR_COST_TOOLTIP = new ConfigOptionList("repairCostTooltip",
 				Main.mapArtFeaturesOnly ? OptionTooltipDisplay.OFF : OptionTooltipDisplay.ADVANCED_TOOLTIPS).apply(VISUALS_KEY);
-		public static final ConfigOptionList INVIS_IFRAMES = new ConfigOptionList("invisIFramesMapArt",
+		public static final ConfigOptionList INVIS_IFRAMES = new ConfigOptionList("invisIFrames",
 				OptionInvisIframes.SEMI_TRANSPARENT_MAPART).apply(VISUALS_KEY);
 
 		public static final ConfigBoolean MAP_HIGHLIGHT_IFRAME = new ConfigBoolean("mapHighlightInIFrame", true).apply(VISUALS_KEY);

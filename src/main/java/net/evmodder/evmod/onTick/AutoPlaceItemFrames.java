@@ -33,7 +33,6 @@ public class AutoPlaceItemFrames{
 	private Item iFrameItem;
 	private Direction dir;
 	private int axis;
-	private final boolean ROTATE_PLAYER = false; //TODO: config setting
 
 	private double distFromPlane(BlockPos bp){
 		switch(dir){
@@ -45,15 +44,15 @@ public class AutoPlaceItemFrames{
 		}
 	}
 
-	Vec3d getPlaceAgainstSurface(BlockPos bp){
-		Vec3d blockHit = bp.toCenterPos();
+	private Vec3d getPlaceAgainstSurface(BlockPos wallBp){
+		Vec3d center = wallBp.toCenterPos();
 		switch(dir){
-			case UP: return blockHit.add(0, .5, 0);
-			case DOWN: return blockHit.add(0, -.5, 0);
-			case EAST: return blockHit.add(.5, 0, 0);
-			case WEST: return blockHit.add(-.5, 0, 0);
-			case NORTH: return blockHit.add(0, 0, -.5);
-			case SOUTH: return blockHit.add(0, 0, .5);
+			case UP: return center.add(0, .5, 0);
+			case DOWN: return center.add(0, -.5, 0);
+			case EAST: return center.add(.5, 0, 0);
+			case WEST: return center.add(-.5, 0, 0);
+			case NORTH: return center.add(0, 0, -.5);
+			case SOUTH: return center.add(0, 0, .5);
 
 			default: assert(false) : "Unreachable"; return null;
 		}
@@ -63,7 +62,7 @@ public class AutoPlaceItemFrames{
 		if(distFromPlane(bp) != 0) return false;
 //		Main.LOGGER.info("iFramePlacer: wall block is on the plane");
 		BlockState bs = world.getBlockState(bp);
-		if(Configs.Generic.PLACEMENT_HELPER_IFRAME_MUST_MATCH_BLOCK.getBooleanValue() && bs.getBlock() != placeAgainstBlock) return false;
+		if(Configs.Generic.IFRAME_AUTO_PLACER_MUST_MATCH_BLOCK.getBooleanValue() && bs.getBlock() != placeAgainstBlock) return false;
 //		Main.LOGGER.info("iFramePlacer: wall block matches placeAgainstBlock");
 
 		BlockPos ifeBp = bp.offset(dir);
@@ -74,7 +73,7 @@ public class AutoPlaceItemFrames{
 
 		if(existingIfes.stream().anyMatch(ife -> ife.getBlockPos().equals(ifeBp))) return false; // Already iFrame here
 //		Main.LOGGER.info("iFramePlacer: ife spot is available");
-		if(Configs.Generic.PLACEMENT_HELPER_IFRAME_MUST_CONNECT.getBooleanValue()
+		if(Configs.Generic.IFRAME_AUTO_PLACER_MUST_CONNECT.getBooleanValue()
 				&& existingIfes.stream().noneMatch(ife -> ife.getBlockPos().getManhattanDistance(ifeBp) == 1)) return false; // No iFrame neighbor
 //		Main.LOGGER.info("iFramePlacer: ife spot has neighboring iframe");
 		return true;
@@ -85,13 +84,44 @@ public class AutoPlaceItemFrames{
 		return xzLengthSq > 0.0001 || Math.abs(velocity.y) > 0.08;
 	}
 
+	private final void placeIframe(MinecraftClient client, BlockPos bp, Hand hand){
+		// Do the clicky-clicky
+		if(Configs.Generic.IFRAME_AUTO_PLACER_RAYCAST.getBooleanValue()){
+			BlockHitResult hitResult = new BlockHitResult(getPlaceAgainstSurface(bp), dir, bp, /*insideBlock=*/false);
+			if(Configs.Generic.IFRAME_AUTO_PLACER_ROTATE_PLAYER.getBooleanValue()){
+//				Vec3d playerPos = client.player.getPos();
+//				float oldYaw = client.player.getYaw(), oldPitch = client.player.getPitch();
+				client.player.lookAt(EntityAnchor.EYES, hitResult.getPos());
+//				float grimYaw = client.player.getYaw(), grimPitch = client.player.getPitch();
+//				client.player.setAngles(oldYaw, oldPitch);
+//				client.getNetworkHandler().sendPacket(new PlayerInputC2SPacket(client.player.input.playerInput));
+//				client.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.Full(playerPos.x, playerPos.y, playerPos.z, grimYaw, grimPitch,
+//						client.player.isOnGround(), client.player.horizontalCollision));
+//				client.player.prevYaw = grimYaw;
+//				client.player.prevPitch = grimPitch;
+			}
+			client.interactionManager.interactBlock(client.player, hand, hitResult);
+//			client.player.swingHand(Hand.MAIN_HAND, false);
+//			client.getNetworkHandler().sendPacket(new HandSwingC2SPacket(hand));
+		}
+		else{
+			BlockHitResult hitResult = new BlockHitResult(Vec3d.ofCenter(bp), dir, bp, /*insideBlock=*/true);
+//			if(ROTATE_PLAYER) client.player.lookAt(EntityAnchor.EYES, hitResult.getPos());
+			client.interactionManager.interactBlock(client.player, hand, hitResult);
+			// Airplace, basically
+			client.player.swingHand(Hand.MAIN_HAND, false);
+			client.getNetworkHandler().sendPacket(new HandSwingC2SPacket(hand));
+			client.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ORIGIN, Direction.DOWN));
+		}
+	}
+
 	private final BlockPos[] recentPlaceAttempts;
 	private int attemptIdx;
 	public AutoPlaceItemFrames(){
 		recentPlaceAttempts = new BlockPos[20];
 		EndTick etl = (client) -> {
 			if(dir == null) return; // iFramePlacer is not currently active
-			if(!Configs.Generic.PLACEMENT_HELPER_IFRAME.getBooleanValue()){
+			if(!Configs.Generic.IFRAME_AUTO_PLACER.getBooleanValue()){
 				dir = null; iFrameItem = null; placeAgainstBlock = null;
 				return;
 			}
@@ -107,7 +137,7 @@ public class AutoPlaceItemFrames{
 
 			if(isMovingTooFast(client.player.getVelocity())) return; // Pause while player is moving
 
-			final double MAX_REACH = Configs.Generic.PLACEMENT_HELPER_IFRAME_REACH.getDoubleValue();
+			final double MAX_REACH = Configs.Generic.IFRAME_AUTO_PLACER_REACH.getDoubleValue();
 			final int SCAN_DIST = (int)(MAX_REACH+2);
 
 			BlockPos clientBp = client.player.getBlockPos();
@@ -134,35 +164,7 @@ public class AutoPlaceItemFrames{
 
 			BlockPos bp = closestValidPlacement.get();
 			recentPlaceAttempts[attemptIdx] = bp;
-
-			// Do the clicky-clicky
-			if(Configs.Generic.PLACEMENT_HELPER_IFRAME_RAYCAST.getBooleanValue()){
-				BlockHitResult hitResult = new BlockHitResult(getPlaceAgainstSurface(bp), dir, bp, /*insideBlock=*/false);
-				if(ROTATE_PLAYER){
-//					Vec3d playerPos = client.player.getPos();
-//					float oldYaw = client.player.getYaw(), oldPitch = client.player.getPitch();
-					client.player.lookAt(EntityAnchor.EYES, hitResult.getPos());
-//					float grimYaw = client.player.getYaw(), grimPitch = client.player.getPitch();
-//					client.player.setAngles(oldYaw, oldPitch);
-//					client.getNetworkHandler().sendPacket(new PlayerInputC2SPacket(client.player.input.playerInput));
-//					client.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.Full(playerPos.x, playerPos.y, playerPos.z, grimYaw, grimPitch,
-//							client.player.isOnGround(), client.player.horizontalCollision));
-//					client.player.prevYaw = grimYaw;
-//					client.player.prevPitch = grimPitch;
-				}
-				client.interactionManager.interactBlock(client.player, hand, hitResult);
-//				client.player.swingHand(Hand.MAIN_HAND, false);
-//				client.getNetworkHandler().sendPacket(new HandSwingC2SPacket(hand));
-			}
-			else{
-				BlockHitResult hitResult = new BlockHitResult(Vec3d.ofCenter(bp), dir, bp, /*insideBlock=*/true);
-//				if(ROTATE_PLAYER) client.player.lookAt(EntityAnchor.EYES, hitResult.getPos());
-				client.interactionManager.interactBlock(client.player, hand, hitResult);
-				// Airplace, basically
-				client.player.swingHand(Hand.MAIN_HAND, false);
-				client.getNetworkHandler().sendPacket(new HandSwingC2SPacket(hand));
-				client.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ORIGIN, Direction.DOWN));
-			}
+			placeIframe(client, bp, hand);
 		};
 		ClientTickEvents.END_CLIENT_TICK.register(etl);
 

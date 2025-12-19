@@ -10,5 +10,5 @@ public enum OptionInvisIframes implements ConfigOptionEntry {
 	OptionInvisIframes(String name){this.name = name;}
 
 	@Override public String getStringValue(){return this.name;}
-	@Override public String getOptionListName(){return "invisIFramesMapArt";}
+	@Override public String getOptionListName(){return "invisIFrames";}
 }
