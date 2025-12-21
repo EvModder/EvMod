@@ -573,10 +573,10 @@ public final class MapHandRestock{
 			UpdateInventoryHighlights.setCurrentlyBeingPlacedMapArt(player, stack);
 
 			if(allowAutoPlacer && autoPlacer.recalcLayout(player, ife, stack)){
-				Main.LOGGER.info("MapRestock: AutoPlaceMapArt is active, no need to handle restock");
+				Main.LOGGER.info("MapRestock: AutoPlaceMapArt is active");
 			}
-			else{
-				Main.LOGGER.info("MapRestock: AutoPlaceMapArt is not active, doing best-guess restock");
+			else if(Configs.Generic.PLACEMENT_HELPER_MAPART.getBooleanValue()){
+				Main.LOGGER.info("MapRestock: doing best-guess hand restock");
 				tryToStockNextMap(player);
 			}
 			return ActionResult.PASS;
