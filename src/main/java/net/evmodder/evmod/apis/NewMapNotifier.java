@@ -18,9 +18,6 @@ public final class NewMapNotifier{
 	public static final void call(ItemFrameEntity ife, UUID colorsId){ // Called by MixinItemFrameRenderer
 		if(ife.getId() != lastNewMapIfeId && colorsId.getMostSignificantBits() == lastNewMapColorId) return;
 		if(System.currentTimeMillis() - lastNewMapNotify < mapNotifyCooldown) return;
-		lastNewMapNotify = System.currentTimeMillis();
-		lastNewMapColorId = colorsId.getMostSignificantBits();
-		lastNewMapIfeId = ife.getId();
 
 		// TODO: play sound?
 		String pos = ife.getBlockX()+" "+ife.getBlockY()+" "+ife.getBlockZ();
@@ -40,5 +37,8 @@ public final class NewMapNotifier{
 						, false);
 			}
 		}
+		lastNewMapNotify = System.currentTimeMillis();
+		lastNewMapColorId = colorsId.getMostSignificantBits();
+		lastNewMapIfeId = ife.getId();
 	}
 }
