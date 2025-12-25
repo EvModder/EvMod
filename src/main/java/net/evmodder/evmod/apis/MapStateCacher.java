@@ -16,7 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import net.evmodder.EvLib.util.FileIO_New;
+import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.config.OptionMapStateCache;
@@ -137,20 +137,20 @@ public class MapStateCacher{
 		catch(IOException e){e.printStackTrace();}
 	}
 	private static final boolean saveCacheFile(String server, String cache){
-		String filename = FileIO_New.DIR+"map_cache/"+server+"/"+cache+".cache";
+		String filename = FileIO.DIR+"map_cache/"+server+"/"+cache+".cache";
 		HashMap<?, ?> perServerCache = getInMemCachePerServer(server, cache);
 		if(perServerCache == null || perServerCache.isEmpty()) return new File(filename).delete();
 
-		File dir = new File(FileIO_New.DIR+"map_cache/");
+		File dir = new File(FileIO.DIR+"map_cache/");
 		if(!dir.isDirectory()){Main.LOGGER.info("MapStateCacher: Creating dir '"+dir.getName()+"'"); dir.mkdir();}
-		dir = new File(FileIO_New.DIR+"map_cache/"+server);
+		dir = new File(FileIO.DIR+"map_cache/"+server);
 		if(!dir.isDirectory()){Main.LOGGER.info("MapStateCacher: Creating dir '"+dir.getName()+"'"); dir.mkdir();}
 		writeFile(filename, perServerCache);
 		return true;
 	}
 	@SuppressWarnings("unchecked")
 	private static final boolean loadCacheFile(String server, String cache){
-		String filename = FileIO_New.DIR+"map_cache/"+server+"/"+cache+".cache";
+		String filename = FileIO.DIR+"map_cache/"+server+"/"+cache+".cache";
 		HashMap<?, ?> loadedCache = (HashMap<?, ?>)readFile(filename);
 		if(loadedCache == null) return false;
 		switch(cache){

@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.evmodder.EvLib.util.Command;
-import net.evmodder.EvLib.util.FileIO_New;
+import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapStateCacher;
@@ -36,7 +36,7 @@ abstract class MixinClientWorld{
 		mapsSaved = new HashMap<>();
 		mapsInTransit = new HashSet<>();
 		mapsToSave = new HashSet<>();
-		final String data = FileIO_New.loadFile(DB_FILENAME, (String)null);
+		final String data = FileIO.loadFile(DB_FILENAME, (String)null);
 		if(data != null) Arrays.stream(data.split("\\r?\\n")).forEach(s -> {
 			String[] parts = s.split(":");
 			if(parts.length != 2) return;
@@ -97,7 +97,7 @@ abstract class MixinClientWorld{
 							.map(e -> e.getKey()+":"+e.getValue().stream()
 							.map(UUID::toString).collect(Collectors.joining(",")))
 							.collect(Collectors.joining("\n"));
-					if(!FileIO_New.saveFile(DB_FILENAME, str)){
+					if(!FileIO.saveFile(DB_FILENAME, str)){
 						mapsSaved.get(saveAddr).removeAll(mapsToSave);
 						Main.LOGGER.info("MapDB: Failed to save to maps file!");
 					}

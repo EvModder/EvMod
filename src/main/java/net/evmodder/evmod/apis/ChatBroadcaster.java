@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
-import net.evmodder.EvLib.util.FileIO_New;
+import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.minecraft.client.MinecraftClient;
@@ -27,7 +27,7 @@ public class ChatBroadcaster{
 			cal.setTimeInMillis(evt_ts);
 			final long evt_hr = cal.get(Calendar.HOUR_OF_DAY);
 			if(System.currentTimeMillis() > evt_ts) return;
-			msgIndex = Integer.parseInt(FileIO_New.loadFile("temp_event_index", "0"));
+			msgIndex = Integer.parseInt(FileIO.loadFile("temp_event_index", "0"));
 
 			Main.LOGGER.info("Chat Broadcaster initialized");
 

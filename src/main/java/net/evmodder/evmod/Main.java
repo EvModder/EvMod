@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory;
 import fi.dy.masa.malilib.config.ConfigManager;
 import fi.dy.masa.malilib.registry.Registry;
 import fi.dy.masa.malilib.util.data.ModInfo;
-import net.evmodder.EvLib.util.FileIO_New;
+import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.apis.ChatBroadcaster;
 import net.evmodder.evmod.apis.EpearlLookup;
 import net.evmodder.evmod.apis.MiscUtils;
@@ -38,6 +38,7 @@ import net.evmodder.evmod.onTick.TooltipRepairCost;
 import net.evmodder.evmod.onTick.UpdateContainerHighlights;
 import net.evmodder.evmod.onTick.UpdateInventoryHighlights;
 import net.evmodder.evmod.onTick.UpdateItemFrameHighlights;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 
 //MC source code will be in ~/.gradle/caches/fabric-loom or ./.gradle/loom-cache
@@ -69,19 +70,8 @@ public class Main{
 	// Low RC quest: auto enchant dia sword, auto grindstone, auto rename, auto anvil combine. auto enchant bulk misc items
 	// inv-keybind-craft-latest-item, also for enchant table and grindstone (eg. spam enchanting axes) via spacebar, like vanilla
 
-//	private static final String fabricModJsonStr = FileIO_New.loadResource(FabricEntryPoint.class, "fabric.mod.json", null);
-//	private static final JsonObject fabricModJsonObj = JsonParser.parseString(fabricModJsonStr).getAsJsonObject();
-	public static final String MOD_ID = "evmod";
-	public static final String MOD_NAME = "Ev's Mod";
-//	public static final String MOD_ID;
-//	public static final String MOD_NAME;
-//	static{
-//		InputStreamReader inputStreamReader = new InputStreamReader(Main.class.getResourceAsStream("/fabric.mod.json"));
-//		JsonObject fabricModJsonObj = JsonParser.parseReader(inputStreamReader).getAsJsonObject();
-//		LoggerFactory.getLogger("test").info("fabric mod json: "+fabricModJsonObj.toString());
-//		MOD_ID = fabricModJsonObj.get("id").getAsString();
-//		MOD_NAME = fabricModJsonObj.get("name").getAsString();
-//	}
+	public static final String MOD_ID = InitUtils.getModId();
+	public static final String MOD_NAME = FabricLoader.getInstance().getModContainer(MOD_ID).get().getMetadata().getName();
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
 	// TODO: ewww hacky
@@ -111,7 +101,7 @@ public class Main{
 
 	private HashMap<String, Boolean> loadConfig(){
 		HashMap<String, Boolean> config = new HashMap<>();
-		final String configContents = FileIO_New.loadFile("enabled_features.txt", getClass().getResourceAsStream("/assets/"+MOD_ID+"/"+internalConfigFile));
+		final String configContents = FileIO.loadFile("enabled_features.txt", getClass().getResourceAsStream("/assets/"+MOD_ID+"/"+internalConfigFile));
 		for(String line : configContents.split("\\r?\\n")){
 			final int sep = line.indexOf(':');
 			if(sep == -1) continue;

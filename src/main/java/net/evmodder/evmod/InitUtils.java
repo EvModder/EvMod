@@ -6,12 +6,38 @@ import net.evmodder.EvLib.util.Command;
 import net.evmodder.EvLib.util.PacketHelper;
 import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.RemoteServerSender;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerModelPart;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 
 final class InitUtils{
+//	public static final String MOD_ID;
+//	public static final String MOD_NAME;
+//	static{
+//		String fabricModJsonStr = FileIO.loadResource(FabricEntryPoint.class, "fabric.mod.json", null);
+//		JsonObject fabricModJsonObj = JsonParser.parseString(fabricModJsonStr).getAsJsonObject();
+//		InputStreamReader inputStreamReader = new InputStreamReader(Main.class.getResourceAsStream("/fabric.mod.json"));
+//		JsonObject fabricModJsonObj = JsonParser.parseReader(inputStreamReader).getAsJsonObject();
+//		LoggerFactory.getLogger("test").info("fabric mod json: "+fabricModJsonObj.toString());
+//		MOD_ID = fabricModJsonObj.get("id").getAsString();
+//		MOD_NAME = fabricModJsonObj.get("name").getAsString();
+//	}
+	static final String getModId(){
+		// Get the path of the current class
+		String classPath = Main.class.getName().replace('.', '/') + ".class";
+		String modId = FabricLoader.getInstance().getAllMods().stream()
+				.filter(container -> container.findPath(classPath).isPresent())
+				.map(container -> container.getMetadata().getId())
+				.findFirst()
+				.orElseThrow(() -> new IllegalStateException("Could not find current mod ID!"));
+
+		assert classPath.contains("/"+modId+"/") : "Class path does not contain mod id! "+classPath;
+		assert classPath.equals("net/evmodder/"+modId+"/Main.class");
+		return modId;
+	}
+
 	static final void refreshClickLimits(){
 		ClickUtils.refreshLimits(Configs.Generic.CLICK_LIMIT_COUNT.getIntegerValue(), Configs.Generic.CLICK_LIMIT_DURATION.getIntegerValue());
 	}

@@ -23,7 +23,7 @@ import javax.imageio.ImageIO;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import fi.dy.masa.malilib.util.StringUtils;
-import net.evmodder.EvLib.util.FileIO_New;
+import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapRelationUtils;
@@ -139,8 +139,8 @@ public class CommandExportMapImg{
 			final int w = combine && allMaps.size() > unnestedMaps.size() ? (int)Math.ceil(Math.sqrt(allMaps.size())) : Math.min(width, unnestedMaps.size());
 			final BufferedImage img = drawImgForMapStates(source, combine ? allMaps : unnestedMaps, w);
 
-			if(!new File(FileIO_New.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO_New.DIR+MAP_EXPORT_DIR).mkdir();
-			try{ImageIO.write(img, "png", new File(lastRelPath=(FileIO_New.DIR+MAP_EXPORT_DIR+name+".png")));}
+			if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdir();
+			try{ImageIO.write(img, "png", new File(lastRelPath=(FileIO.DIR+MAP_EXPORT_DIR+name+".png")));}
 			catch(IOException e){e.printStackTrace();}
 
 			if(combine || allMaps.size() == unnestedMaps.size()) return 1;
@@ -267,8 +267,8 @@ public class CommandExportMapImg{
 		imgName = imgName.trim().replaceAll("[.\\\\/]+", "_");
 
 		//16755200
-		if(!new File(FileIO_New.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO_New.DIR+MAP_EXPORT_DIR).mkdir();
-		final String relFilePath = FileIO_New.DIR+MAP_EXPORT_DIR+imgName+".png";
+		if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdir();
+		final String relFilePath = FileIO.DIR+MAP_EXPORT_DIR+imgName+".png";
 		File imgFile = new File(relFilePath);
 		try{ImageIO.write(img, "png", imgFile);}
 		catch(IOException e){e.printStackTrace();}
@@ -357,8 +357,8 @@ public class CommandExportMapImg{
 		}
 		if(numSaved > 1){
 			ctx.getSource().sendFeedback(Text.literal("Saved "+numSaved+" map shulk imgs to ").withColor(16755200).append(
-					Text.literal(FileIO_New.DIR+MAP_EXPORT_DIR).withColor(43520).formatted(Formatting.UNDERLINE)
-					.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, new File(FileIO_New.DIR+MAP_EXPORT_DIR).getAbsolutePath())))
+					Text.literal(FileIO.DIR+MAP_EXPORT_DIR).withColor(43520).formatted(Formatting.UNDERLINE)
+					.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, new File(FileIO.DIR+MAP_EXPORT_DIR).getAbsolutePath())))
 			));
 		}
 		return numSaved == 0 ? 1 : 0;
