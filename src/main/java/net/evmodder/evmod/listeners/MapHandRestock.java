@@ -285,9 +285,14 @@ public final class MapHandRestock{
 			final List<String> mapNames = Stream.concat(Stream.of(prevSlot), data.slots().stream())
 					.map(i -> slots.get(i).getCustomName().getLiteralString()).toList();
 			final String prefixStr = nameWoArtist.substring(0, data.prefixLen());
-			final String suffixStr = nameWoArtist.substring(nameWoArtist.length()-data.suffixLen()) + prevName.substring(nameWoArtist.length());
-			final String nonPosName = prefixStr + "[XY]" + suffixStr;
-			Main.LOGGER.info("MapRestock: finding posData2d for map '"+nonPosName+"', related names: "+mapNames.size());
+			final String suffixStr = nameWoArtist.substring(nameWoArtist.length()-data.suffixLen());
+			{
+				String nonPosName = prefixStr + "[XY]" + suffixStr;
+				if(prevName.startsWith(nameWoArtist)) nonPosName += prevName.substring(nameWoArtist.length());
+				else if(prevName.endsWith(nameWoArtist)) nonPosName = nonPosName + prevName.substring(0, prevName.length()-nameWoArtist.length());
+//				else Main.LOGGER.info("MapRestock: trouble re-attaching artist name (not at start or end)");
+				Main.LOGGER.info("MapRestock: finding posData2d for map '"+nonPosName+"', related names: "+mapNames.size());
+			}
 			final boolean hasSizeInName = suffixStr.matches("\\s*(of|/)\\s*\\d+.*");
 			if(hasSizeInName){
 				posData2d = null;

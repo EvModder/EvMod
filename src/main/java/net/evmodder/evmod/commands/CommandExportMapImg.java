@@ -181,7 +181,10 @@ public class CommandExportMapImg{
 		else{
 			String nameWithoutArtist = MapRelationUtils.removeByArtist(itemName0);
 			String prefixStr = nameWithoutArtist.substring(0, data.prefixLen());
-			String suffixStr = nameWithoutArtist.substring(nameWithoutArtist.length() - data.suffixLen()) + itemName0.substring(nameWithoutArtist.length());
+			String suffixStr = nameWithoutArtist.substring(nameWithoutArtist.length() - data.suffixLen());
+			if(itemName0.startsWith(nameWithoutArtist)) suffixStr += itemName0.substring(nameWithoutArtist.length());
+			else if(itemName0.endsWith(nameWithoutArtist)) prefixStr = prefixStr + itemName0.substring(0, itemName0.length()-nameWithoutArtist.length());
+			else Main.LOGGER.info("CmdExportImg: trouble re-attaching artist name (not at start or end)");
 			if(REMOVE_MAX_CNT){
 				final String szCntStr = ""+data.slots().size();
 				final int idx = suffixStr.indexOf(szCntStr);

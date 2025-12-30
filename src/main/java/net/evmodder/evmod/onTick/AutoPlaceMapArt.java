@@ -6,6 +6,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
@@ -37,6 +39,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
+	private final Pattern pOfSize;
 
 	private Direction dir;
 	private World world;
@@ -46,6 +49,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 	private int varAxis1Origin, varAxis2Origin;
 	private Boolean varAxis1Neg, varAxis2Neg, axisMatch;
 	private RelatedMapsData currentData;
+	private Integer ofSize, rowWidth;
 	private final ArrayList<ItemStack> allMapItems;
 	private final ArrayList<Integer> stacksHashesForCurrentData;
 
@@ -54,6 +58,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 	private int ticksSinceInvAction;
 
 	public AutoPlaceMapArt(){
+		pOfSize = Pattern.compile("^\\s*(?:of|/)\\s*(\\d+).*$");
 		allMapItems = new ArrayList<>();
 		stacksHashesForCurrentData = new ArrayList<>();
 
@@ -102,6 +107,15 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		}
 	}
 	private final Pos2DPair getRelativePosPair(final String posA, final String posB){
+		if(rowWidth != null){
+//			assert ofSize != null;
+			if(!posA.matches("[1-9][0-9]*") || !posB.matches("[1-9][0-9]*")){
+				Main.LOGGER.warn("AutoPlaceMapArt: error! pos strings X/SIZE are non-numeric-1d | posA:"+posA+",posB:"+posB);
+				return null;
+			}
+			int a = Integer.parseInt(posA)-1, b = Integer.parseInt(posB)-1;
+			return new Pos2DPair(a%rowWidth, a/rowWidth, b%rowWidth, b/rowWidth);
+		}
 		if(posA.matches("[TMB][LMR]") && posB.matches("[TMB][LMR]")){
 			assert currentData.slots().stream().allMatch(i -> getPosStrFromName(allMapItems.get(i)).matches("[TMB][LMR]"));
 			final boolean hasM1 =  currentData.slots().stream().anyMatch(i -> getPosStrFromName(allMapItems.get(i)).charAt(0) == 'M');
@@ -112,9 +126,6 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					intFromTLBR(posA.charAt(0), hasM1), intFromTLBR(posA.charAt(1), hasM2),
 					intFromTLBR(posB.charAt(0), hasM1), intFromTLBR(posB.charAt(1), hasM2)
 			);
-		}
-		if(posA.matches("[1-9][0-9]*") && posB.matches("[1-9][0-9]*")){
-			//TODO: support 1d posStr (e.g., 1/6 for a 3x2)
 		}
 		int cutA, cutB, cutSpaceA, cutSpaceB;
 		if(posA.length() == posB.length() && posA.length() == 2){cutA = cutB = 1; cutSpaceA = cutSpaceB = 0;}
@@ -144,6 +155,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			constAxis = varAxis1Origin = varAxis2Origin = 0;
 			varAxis1Neg = varAxis2Neg = axisMatch = null;
 			currentData = null;
+			ofSize = rowWidth = null;
 			allMapItems.clear();
 			stacksHashesForCurrentData.clear();
 		}
@@ -211,8 +223,68 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				disableAndReset(); return false;
 			}
 //			Main.LOGGER.info("AutoPlaceMapArt: related maps in inv: "+(currentData.slots().size()-2));
+			assert currStack.getCustomName() != null;
+			final String name = currStack.getCustomName().getString();
+			final String nameWoArtist = MapRelationUtils.removeByArtist(name);
+			final String suffixStr = nameWoArtist.substring(nameWoArtist.length()-data.suffixLen());
+			Matcher m = pOfSize.matcher(suffixStr);
+			if(m.find()){
+				ofSize = Integer.parseInt(m.group(1));
+				Main.LOGGER.info("AutoPlaceMapArt: Detected 'X/SIZE' posStr format, SIZE="+ofSize);
+			}
 		}
 		final String currPosStr = this.currPosStr=getPosStrFromName(currStack), lastPosStr = getPosStrFromName(lastStack);
+		if(ofSize != null && rowWidth == null){
+			final int a = Integer.parseInt(currPosStr)-1, b = Integer.parseInt(lastPosStr)-1;
+			if(a > ofSize || b > ofSize || a < 1 || b < 1 || a==b){
+				Main.LOGGER.warn("AutoPlaceMapArt: Invalid 1d X/SIZE pos! a="+a+",b="+b);
+				disableAndReset(); return false;
+			}
+			final int posOffsetAbs = Math.abs(a-b);
+			if(ifeOffset1 == 0 || ifeOffset2 == 0){
+				final int ifeOffsetAbs = Math.abs(ifeOffset1) + Math.abs(ifeOffset2);
+				final boolean isAxisMatch = (ifeOffset1 != 0) == (posOffsetAbs == ifeOffsetAbs);
+				if(axisMatch == null){
+//					Main.LOGGER.info("AutoPlaceMapArt: (1d pos) determined axisMatch");
+					axisMatch = isAxisMatch;
+				}
+				else if(axisMatch != isAxisMatch){
+					Main.LOGGER.warn("AutoPlaceMapArt: (1d pos) user appears to have placed mapart in invalid spot! axisMatch");
+					disableAndReset();
+					return false;
+				}
+				if(posOffsetAbs == ifeOffsetAbs){
+					// Still need to determine row width
+					return false;
+				}
+				if(posOffsetAbs % ifeOffsetAbs != 0){
+					Main.LOGGER.warn("AutoPlaceMapArt: (1d pos) user appears to have placed mapart in invalid spot! width is not whole number");
+					disableAndReset();
+					return false;
+				}
+				rowWidth = posOffsetAbs/ifeOffsetAbs;
+			}
+			else if(axisMatch == null) return false;
+			else{ // TODO: rewrite this entire block using neg/pos-aware logic (instead of abs-everything), to make x/SIZE actually decent
+				final int ifeOffset1Abs = Math.abs(axisMatch ? ifeOffset1 : ifeOffset2);
+				final int ifeOffset2Abs = Math.abs(axisMatch ? ifeOffset2 : ifeOffset1);
+				final int posWidthOffsetCandidateA = posOffsetAbs - ifeOffset1Abs;
+				final int posWidthOffsetCandidateB = posOffsetAbs + ifeOffset1Abs;
+				final boolean testA = posWidthOffsetCandidateA % ifeOffset2Abs == 0, testB = posWidthOffsetCandidateB % ifeOffset2Abs == 0;
+				if(!testA && !testB){
+					Main.LOGGER.warn("AutoPlaceMapArt: (1d pos) user appears to have placed mapart in invalid spot! width (adjusted) is not whole number");
+					disableAndReset();
+					return false;
+				}
+				if(testA && testB) return false; // Not enough data (since we are using abs)
+				rowWidth = (testA ? posWidthOffsetCandidateA : posWidthOffsetCandidateB)/ifeOffset2Abs;
+			}
+			if(ofSize % rowWidth != 0){
+				Main.LOGGER.warn("AutoPlaceMapArt: (1d pos) invalid width "+rowWidth+"! needs to be a divisor of SIZE");
+				disableAndReset();
+				return false;
+			}
+		}
 		final Pos2DPair pos2dPair = getRelativePosPair(currPosStr, lastPosStr);
 		if(pos2dPair == null){ // TODO: Support non-standard pos data (e.g., TL,TR,BL,BR)
 			Main.LOGGER.info("AutoPlaceMapArt: unable to parse pos2dPair from pos strs ("+currPosStr+","+lastPosStr+")");
@@ -335,7 +407,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			if(pos2dPair == null) return null;
 			int varAxis1 = varAxis1Origin+(axisMatch ? pos2dPair.b1 : pos2dPair.b2)*(varAxis1Neg?-1:+1);
 			int varAxis2 = varAxis2Origin+(axisMatch ? pos2dPair.b2 : pos2dPair.b1)*(varAxis2Neg?-1:+1);
-	
+
 			switch(dir){
 				case UP: case DOWN: return new BlockPos(varAxis1, constAxis, varAxis2);
 				case EAST: case WEST: return new BlockPos(constAxis, varAxis1, varAxis2);
