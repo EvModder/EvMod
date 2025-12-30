@@ -71,7 +71,7 @@ public final class KeybindInventoryRestock{
 			if(limits == OptionInventoryRestockLimit.LEAVE_UNLESS_ALL_RESUPPLY){
 				final String itemName = Registries.ITEM.getId(slots[i].getItem()).getPath();
 				if(!itemNamesInLayout.contains(itemName)){
-					Main.LOGGER.info("InvRestock: not a valid source (LEAVE_UNLESS_ALL_RESUPPLY: container has unlisted item type '"+itemName+"')");
+//					Main.LOGGER.info("InvRestock: not a valid source (LEAVE_UNLESS_ALL_RESUPPLY: container has unlisted item type '"+itemName+"')");
 					return;
 				}
 			}
@@ -81,7 +81,7 @@ public final class KeybindInventoryRestock{
 			}
 		}
 		if(supply.size() > 1 && limits == OptionInventoryRestockLimit.LEAVE_UNLESS_ONE_TYPE){
-			Main.LOGGER.info("InvRestock: not a valid source (LEAVE_UNLESS_ONE_TYPE: container has multiple item types)");
+//			Main.LOGGER.info("InvRestock: not a valid source (LEAVE_UNLESS_ONE_TYPE: container has multiple item types)");
 			return;
 		}
 
