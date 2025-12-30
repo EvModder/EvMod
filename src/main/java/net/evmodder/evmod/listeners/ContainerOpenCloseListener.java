@@ -81,11 +81,11 @@ public final class ContainerOpenCloseListener implements TickListener{
 					currentlyViewingContainer = false;
 					if(currentlyViewingEchest){
 						currentlyViewingEchest = false;
-						if(!waitingForEcToLoad) MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getStack).toList(), MapStateCacher.BY_PLAYER_EC);
+						if(!waitingForEcToLoad) MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getStack), MapStateCacher.BY_PLAYER_EC);
 					}
 					else{
 						if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue()){
-							MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getStack).toList(), MapStateCacher.BY_CONTAINER);
+							MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getStack), MapStateCacher.BY_CONTAINER);
 						}
 						if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) slots.stream().map(Slot::getStack)
 							.filter(s -> s.getItem() == Items.FILLED_MAP && s.getCustomName() != null && s.getCustomName().getLiteralString() != null)

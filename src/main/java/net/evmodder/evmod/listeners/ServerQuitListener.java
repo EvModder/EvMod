@@ -28,7 +28,7 @@ public class ServerQuitListener{
 					if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.saveMapStatesByIdToFile();
 					if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) MapStateCacher.saveMapStatesByNameToFile();
 				}
-				MapStateCacher.saveMapStatesByPos(client.player.getInventory().main, MapStateCacher.BY_PLAYER_INV);
+				MapStateCacher.saveMapStatesByPos(client.player.getInventory().main.stream(), MapStateCacher.BY_PLAYER_INV);
 				ContainerOpenCloseListener.echestCacheLoaded = false; // TODO: ewww
 				ContainerOpenCloseListener.containerCachesLoaded.clear(); // TODO: ewww
 			}

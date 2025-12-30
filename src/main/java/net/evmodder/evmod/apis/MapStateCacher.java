@@ -16,6 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
@@ -183,9 +184,9 @@ public class MapStateCacher{
 	}
 
 	//====================================================================================================
-	public static final boolean saveMapStatesByPos(List<ItemStack> items, String cache){
+	public static final boolean saveMapStatesByPos(Stream<ItemStack> items, String cache){
 		MinecraftClient client = MinecraftClient.getInstance();
-		final List<MapStateSerializable> mapStates = MapRelationUtils.getAllNestedItems(items.stream().sequential())
+		final List<MapStateSerializable> mapStates = MapRelationUtils.getAllNestedItems(items/*.sequential()*/)
 				.sequential()
 				.filter(s -> s.getItem() == Items.FILLED_MAP)
 				.map(s -> FilledMapItem.getMapState(s, client.world))
@@ -199,11 +200,13 @@ public class MapStateCacher{
 		HashMap<UUID, List<MapStateSerializable>> bySlotPerServer = (HashMap<UUID, List<MapStateSerializable>>)getInMemCachePerServer(server, cache);
 		@SuppressWarnings("unchecked")
 		final List<MapStateSerializable> oldCache = (List<MapStateSerializable>)getInMemCacheSpecific(server, cache);
-		if(oldCache == null && !deleteCache){
+		if(oldCache == null){
+			if(deleteCache) return false; // Already deleted
 			if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK) loadCacheFile(server, cache);
 			if(bySlot == null) bySlot = new HashMap<>();
 			if(bySlotPerServer == null) bySlot.put(server, bySlotPerServer=new HashMap<>());
 		}
+		else if(oldCache.equals(mapStates)) return false; // No cache update
 //		else if(keepOldCache(oldCache, mapStates)) return false; // No cache update needed
 		final UUID key;
 		switch(cache){
