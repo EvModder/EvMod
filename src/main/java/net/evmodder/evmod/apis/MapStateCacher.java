@@ -150,26 +150,27 @@ public class MapStateCacher{
 		return true;
 	}
 	@SuppressWarnings("unchecked")
-	private static final boolean loadCacheFile(String server, String cache){
+	private static final HashMap<?, ?> loadCacheFile(String server, String cache){
 		String filename = FileIO.DIR+"map_cache/"+server+"/"+cache+".cache";
 		HashMap<?, ?> loadedCache = (HashMap<?, ?>)readFile(filename);
-		if(loadedCache == null) return false;
+		if(loadedCache == null) return null;
 		switch(cache){
 			case BY_ID:
 				if(byId == null) byId = new HashMap<>();
 				byId.put(server, (HashMap<Integer, MapStateSerializable>)loadedCache);
-				return true;
+				return loadedCache;
 			case BY_NAME:
 				if(byName == null) byName = new HashMap<>();
 				byName.put(server, (HashMap<String, MapStateSerializable>)loadedCache);
-				return true;
+				return loadedCache;
 			case BY_PLAYER_INV:
 			case BY_PLAYER_EC:
 			case BY_CONTAINER:
 				if(bySlot == null) bySlot = new HashMap<>();
-				bySlot.putIfAbsent(server, new HashMap<>());
-				bySlot.get(server).putAll((HashMap<UUID, List<MapStateSerializable>>)loadedCache);
-				return true;
+				bySlot.put(server, (HashMap<UUID, List<MapStateSerializable>>)loadedCache);
+//				bySlot.putIfAbsent(server, new HashMap<>());
+//				bySlot.get(server).putAll((HashMap<UUID, List<MapStateSerializable>>)loadedCache);
+				return loadedCache;
 			default:
 				throw new RuntimeException("MapStateCacher: Unknown cache type in loadCacheFile()! "+cache);
 		}
@@ -184,6 +185,7 @@ public class MapStateCacher{
 	}
 
 	//====================================================================================================
+	@SuppressWarnings("unchecked")
 	public static final boolean saveMapStatesByPos(Stream<ItemStack> items, String cache){
 		MinecraftClient client = MinecraftClient.getInstance();
 		final List<MapStateSerializable> mapStates = MapRelationUtils.getAllNestedItems(items/*.sequential()*/)
@@ -196,15 +198,16 @@ public class MapStateCacher{
 
 		// Load old cache values
 		final String server = getServerIp(client);
-		@SuppressWarnings("unchecked")
 		HashMap<UUID, List<MapStateSerializable>> bySlotPerServer = (HashMap<UUID, List<MapStateSerializable>>)getInMemCachePerServer(server, cache);
-		@SuppressWarnings("unchecked")
 		final List<MapStateSerializable> oldCache = (List<MapStateSerializable>)getInMemCacheSpecific(server, cache);
 		if(oldCache == null){
 			if(deleteCache) return false; // Already deleted
-			if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK) loadCacheFile(server, cache);
-			if(bySlot == null) bySlot = new HashMap<>();
-			if(bySlotPerServer == null) bySlot.put(server, bySlotPerServer=new HashMap<>());
+			if(bySlotPerServer == null){
+				if(bySlot == null) bySlot = new HashMap<>();
+				if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK
+						&& (bySlotPerServer=(HashMap<UUID, List<MapStateSerializable>>)loadCacheFile(server, cache)) != null);
+				else bySlot.put(server, bySlotPerServer=new HashMap<>());
+			}
 		}
 		else if(oldCache.equals(mapStates)) return false; // No cache update
 //		else if(keepOldCache(oldCache, mapStates)) return false; // No cache update needed
@@ -229,10 +232,10 @@ public class MapStateCacher{
 		if(client == null || client.player == null || client.world == null) return null;
 		final String server = getServerIp(client);
 		final Object specificCache = getInMemCacheSpecific(server, cache);
-		if(specificCache == null){
-			if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK){
-				if(loadCacheFile(server, cache)) return getInMemCacheSpecific(server, cache);
-			}
+		if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK
+					&& specificCache == null && getInMemCachePerServer(server, cache) == null
+		){
+			return loadCacheFile(server, cache);
 		}
 		return specificCache;
 	}
