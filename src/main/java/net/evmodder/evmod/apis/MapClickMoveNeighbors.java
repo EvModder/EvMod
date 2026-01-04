@@ -61,9 +61,9 @@ public abstract class MapClickMoveNeighbors{
 		HashSet<Integer> slotsInvolved = new HashSet<>();
 		slotsInvolved.addAll(data.slots());
 
-		int tl = data.slots().stream().mapToInt(i->i.intValue()).min().getAsInt();
+		int tl = slotsInvolved.stream().mapToInt(i->i.intValue()).min().getAsInt();
 		if(tl%9 != 0 && slotsInvolved.contains(tl+8)) --tl;
-		int br = data.slots().stream().mapToInt(i->i.intValue()).max().getAsInt();
+		int br = slotsInvolved.stream().mapToInt(i->i.intValue()).max().getAsInt();
 		if(br%9 != 8 && slotsInvolved.contains(br-8)) ++br;
 		int h = (br/9)-(tl/9)+1;
 		int w = (br%9)-(tl%9)+1;
@@ -99,19 +99,26 @@ public abstract class MapClickMoveNeighbors{
 		//Main.LOGGER.info("MapMoveClick: tl="+tl+",br="+br+" | h="+h+",w="+w+" | x>"+destSlot);
 		if(h*w != data.slots().size()+1){Main.LOGGER.info("MapMoveClick: H*W not found (#maps:"+(data.slots().size()+1)+")");return;}
 
+//		HashSet<Integer> unaccounted = new HashSet<>(); unaccounted.addAll(slotsInvolved);
 		int fromSlot = -1;
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 			int s = tl + i*9 + j;
+//			unaccounted.remove(s);
 			if(slotsInvolved.contains(s)) continue;
-			if(fromSlot != -1){Main.LOGGER.info("MapMoveClick: Maps not in a rectangle");return;}
+			if(fromSlot != -1){Main.LOGGER.info("MapMoveClick: Maps not in a rectangle"); return;}
 			ItemStack stack = slots[i];
 			if(!stack.isEmpty() && stack.getItem() != Items.FILLED_MAP) Main.LOGGER.warn("MapMoveClick: moveFrom slot:"+s+" contains junk item: "+stack.getItem());
 			fromSlot = s;
 		}
+//		if(!unaccounted.isEmpty()){Main.LOGGER.info("MapMoveClick: Maps not in a rectangle (B)"); return;}
+
+		final int brDest = br + destSlot - fromSlot;
+		if(brDest > slots.length){Main.LOGGER.info("MapMoveClick: Destination is outside inv window"); return;}
+
 		Main.LOGGER.info("MapMoveClick: tl="+tl+",br="+br+" | h="+h+",w="+w+" | "+fromSlot+"->"+destSlot);
 		//player.sendMessage(Text.literal("MapMoveClick: tl="+tl+",br="+br+" | h="+h+",w="+w+" | "+fromSlot+"->"+destSlot), false);////
 
-		final int tlDest = destSlot-(fromSlot-tl);
+		final int tlDest = tl + destSlot - fromSlot;
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 			int d = tlDest + i*9 + j;
 			if(d == destSlot) continue;
@@ -121,7 +128,7 @@ public abstract class MapClickMoveNeighbors{
 			}
 			slotsInvolved.add(d);
 		}
-		final int brDest = tlDest + (br-tl);//equivalent: destSlot+(br-fromSlot);
+//		final int brDest = tlDest + (br-tl);//equivalent: destSlot+(br-fromSlot);//destSlot-(fromSlot-br);
 
 		final boolean isPlayerInv = player.currentScreenHandler instanceof PlayerScreenHandler;
 		final int hbStart = slots.length-(isPlayerInv ? 10 : 9); // extra slot at end to account for offhand
