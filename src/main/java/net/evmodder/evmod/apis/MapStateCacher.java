@@ -157,17 +157,20 @@ public class MapStateCacher{
 		switch(cache){
 			case BY_ID:
 				if(byId == null) byId = new HashMap<>();
-				byId.put(server, loadedCache == null ? new HashMap<>() : (HashMap<Integer, MapStateSerializable>)loadedCache);
+				if(loadedCache == null) loadedCache = new HashMap<Integer, MapStateSerializable>();
+				byId.put(server, (HashMap<Integer, MapStateSerializable>)loadedCache);
 				return loadedCache;
 			case BY_NAME:
 				if(byName == null) byName = new HashMap<>();
-				byName.put(server, loadedCache == null ? new HashMap<>() : (HashMap<String, MapStateSerializable>)loadedCache);
+				if(loadedCache == null) loadedCache = new HashMap<String, MapStateSerializable>();
+				byName.put(server, (HashMap<String, MapStateSerializable>)loadedCache);
 				return loadedCache;
 			case BY_PLAYER_INV:
 			case BY_PLAYER_EC:
 			case BY_CONTAINER:
 				if(bySlot == null) bySlot = new HashMap<>();
-				bySlot.put(server, loadedCache == null ? new HashMap<>() : (HashMap<UUID, List<MapStateSerializable>>)loadedCache);
+				if(loadedCache == null) loadedCache = new HashMap<UUID, List<MapStateSerializable>>();
+				bySlot.put(server, (HashMap<UUID, List<MapStateSerializable>>)loadedCache);
 //				bySlot.putIfAbsent(server, new HashMap<>());
 //				bySlot.get(server).putAll((HashMap<UUID, List<MapStateSerializable>>)loadedCache);
 				return loadedCache;
