@@ -254,7 +254,14 @@ public class MapStateCacher{
 				case BY_CONTAINER:
 					if(bySlot == null) bySlot = new HashMap<>();
 					bySlot.put(server, new HashMap<UUID, List<MapStateSerializable>>());
-					return bySlot.get(server);
+					final UUID key;
+					switch(cache){
+						case BY_PLAYER_INV: key = getIdForPlayer(true); break;
+						case BY_PLAYER_EC: key = getIdForPlayer(false); break;
+						case BY_CONTAINER: key = ContainerClickListener.lastClickedBlockHash; break;
+						default: throw new RuntimeException("MapStateCacher: Unreachable in commonCacheLoad()!");
+					}
+					return bySlot.get(server).get(key);
 				default:
 					throw new RuntimeException("MapStateCacher: Unknown cache type in commonCacheLoad()! "+cache);
 			}
