@@ -13,7 +13,7 @@ public class ServerQuitListener{
 	public ServerQuitListener(RemoteServerSender rms){
 		//ClientLoginNetworkHandler handler/_0
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client)->{
-			if(Configs.Generic.LOG_COORDS_ON_SERVER_QUIT.getBooleanValue()){
+			if(Configs.Generic.LOG_COORDS_ON_SERVER_QUIT.getBooleanValue() && client.player != null){
 				Main.LOGGER.info(client.player.getName().getString()+" logged out at: "+client.player.getBlockPos().toShortString());
 			}
 

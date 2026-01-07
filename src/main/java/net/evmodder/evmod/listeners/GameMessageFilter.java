@@ -50,7 +50,7 @@ public class GameMessageFilter{
 			lastFetchTs = 0;
 		}
 		@SuppressWarnings("unchecked")
-		HashSet<UUID> ignoreList = lastFetchTs == 0 ? new HashSet<UUID>() : (HashSet<UUID>)FileIO.readObject("ignores/"+uuid+".cache");
+		HashSet<UUID> ignoreList = lastFetchTs <= 0 ? new HashSet<UUID>() : (HashSet<UUID>)FileIO.readObject("ignores/"+uuid+".cache");
 
 		final byte[] args = PacketHelper.toByteArray(uuid, /*tsForDelta=*/new UUID(0, lastFetchTs));
 		remoteSender.sendBotMessage(Command.DB_PLAYER_FETCH_IGNORES, /*udp=*/false, /*timeout=*/5000, args, reply -> {
