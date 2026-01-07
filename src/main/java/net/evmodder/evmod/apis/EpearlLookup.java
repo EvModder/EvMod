@@ -1,5 +1,10 @@
 package net.evmodder.evmod.apis;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,7 +15,6 @@ import net.evmodder.EvLib.util.Command;
 import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.EvLib.util.LoadingCache;
 import net.evmodder.EvLib.util.PacketHelper;
-import net.evmodder.EvLib.util.PearlDataClient;
 import net.evmodder.EvLib.util.TextUtils_New;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
@@ -22,6 +26,7 @@ import net.minecraft.entity.EntityType;
 
 public final class EpearlLookup{
 	public record XYZ(int x, int y, int z){}
+	record PearlDataClient(UUID owner, int x, int y, int z){}//TODO: xyz + WORLD
 
 	private static final MinecraftClient client = MinecraftClient.getInstance();
 
@@ -41,11 +46,162 @@ public final class EpearlLookup{
 	private long lastUpdateXZ;
 	private static Timer removalChecker;
 
+
+
+	// element size = 16+16+4+4 = 40
+	/*public static final Tuple3<UUID, Integer, Integer> lookupInClientFile(String filename, UUID pearlUUID){
+		FileInputStream is = null;
+		try{is = new FileInputStream(FileIO.DIR+filename);}
+		catch(FileNotFoundException e){return null;}
+		final byte[] data;
+		try{data = is.readAllBytes(); is.close();}
+		catch(IOException e){e.printStackTrace(); return null;}
+		if(data.length % 40 != 0){
+			LOGGER.severe("Corrupted/invalid ePearlDB file!");
+			return null;
+		}
+		final long mostSig = pearlUUID.getMostSignificantBits(), leastSig = pearlUUID.getLeastSignificantBits();
+		final ByteBuffer bb = ByteBuffer.wrap(data);
+		int i = 0; while(i < data.length && bb.getLong(i) != mostSig && bb.getLong(i+8) != leastSig) i += 40;
+//		int lo = 0, hi = data.length/40;
+//		while(hi-lo > 1){
+//			int m = (lo + hi)/2;
+//			long v = bb.getLong(m*40);
+//			if(v > mostSig || (v == mostSig && bb.getLong(m*40+8) > pearlUUID.getLeastSignificantBits())) hi = m;
+//			else lo = m;
+//		}
+//		final int i = lo*40;
+//		final UUID keyUUID = new UUID(bb.getLong(i), bb.getLong(i+8));
+//		if(!keyUUID.equals(pearlUUID)){
+		if(i >= data.length){
+			LOGGER.fine("pearlUUID not found in localDB file: "+pearlUUID);
+			return null;
+		}
+		final UUID ownerUUID = new UUID(bb.getLong(i+16), bb.getLong(i+24));
+		final int x = bb.getInt(i+32), z = bb.getInt(i+36);
+		return new Tuple3<>(ownerUUID, x, z);
+	}*/
+
+	public static final synchronized boolean appendToClientFile(String filename, UUID pearlUUID, PearlDataClient pdc){
+		File file = new File(FileIO.DIR+filename);
+		try{
+			FileOutputStream fos = null;
+			try{fos = new FileOutputStream(file, true);}
+			catch(FileNotFoundException e){
+				Main.LOGGER.info("ePearlDB file not found, creating one");
+				file.createNewFile();
+				fos = new FileOutputStream(file, true);
+			}
+			ByteBuffer bb = ByteBuffer.allocate(16+16+4+4+4);
+			bb.putLong(pearlUUID.getMostSignificantBits());
+			bb.putLong(pearlUUID.getLeastSignificantBits());
+			bb.putLong(pdc.owner().getMostSignificantBits());
+			bb.putLong(pdc.owner().getLeastSignificantBits());
+			bb.putInt(pdc.x()).putInt(pdc.y()).putInt(pdc.z());
+			fos.write(bb.array());
+			fos.close();
+			Main.LOGGER.trace("saved pearlUUID->ownerUUID to file: "+pearlUUID+"->"+pdc.owner());
+		}
+		catch(IOException e){e.printStackTrace();return false;}
+		return true;
+	}
+
+	public static final synchronized HashMap<UUID, PearlDataClient> loadFromClientFile(String filename){
+		final byte[] data;
+		try{
+			FileInputStream fis = new FileInputStream(FileIO.DIR+filename);
+			data = fis.readAllBytes();
+			fis.close();
+		}
+		catch(FileNotFoundException e){
+			Main.LOGGER.warn("DB file not found, attempting to create it");
+			try{new File(filename).createNewFile();} catch(IOException e1){e1.printStackTrace();}
+			return new HashMap<>();
+		}
+		catch(IOException e){
+			e.printStackTrace();
+			return new HashMap<>();
+		}
+		if(data.length % 40 == 0){
+			final int numRows = data.length/40;
+			final ByteBuffer bb = ByteBuffer.wrap(data);
+			HashMap<UUID, PearlDataClient> entries = new HashMap<>(numRows);
+			for(int i=0; i<numRows; ++i){
+				UUID pearl = new UUID(bb.getLong(), bb.getLong());
+				UUID owner = new UUID(bb.getLong(), bb.getLong());
+				int x = bb.getInt(), z = bb.getInt();
+				entries.put(pearl, new PearlDataClient(owner, x, -999, z));
+			}
+			return entries;
+		}
+		if(data.length % 44 != 0){
+			Main.LOGGER.error("Corrupted/invalid ePearlDB file!");
+			return new HashMap<>();
+		}
+		final int numRows = data.length/44;
+		final ByteBuffer bb = ByteBuffer.wrap(data);
+		HashMap<UUID, PearlDataClient> entries = new HashMap<>(numRows);
+		for(int i=0; i<numRows; ++i){
+			UUID pearl = new UUID(bb.getLong(), bb.getLong());
+			UUID owner = new UUID(bb.getLong(), bb.getLong());
+			int x = bb.getInt(), y = bb.getInt(), z = bb.getInt();
+			entries.put(pearl, new PearlDataClient(owner, x, y, z));
+		}
+		return entries;
+	}
+
+	public static final synchronized HashSet<UUID> removeMissingFromClientFile(String filename, int playerX, int playerY, int playerZ,
+			double affectedDistSq, HashSet<UUID> keep){
+		FileInputStream is = null;
+		try{is = new FileInputStream(FileIO.DIR+filename);}
+		catch(FileNotFoundException e){/*e.printStackTrace(); */return null;}
+		final byte[] data;
+		try{data = is.readAllBytes(); is.close();}
+		catch(IOException e){e.printStackTrace(); return null;}
+		if(data.length % 44 != 0){
+			Main.LOGGER.error("Corrupted/invalid ePearlDB file!");
+			return null;
+		}
+		final ByteBuffer bbIn = ByteBuffer.wrap(data);
+		final ByteBuffer bbOut = ByteBuffer.allocate(data.length);
+		final HashSet<UUID> deletedKeys = new HashSet<>();
+		int kept = 0;
+		while(bbIn.hasRemaining()){
+			final long k1 = bbIn.getLong(), k2 = bbIn.getLong();//16
+			final long o1 = bbIn.getLong(), o2 = bbIn.getLong();//16
+			final int x = bbIn.getInt(), y = bbIn.getInt(), z = bbIn.getInt();//4+4+4
+
+			final double diffX = playerX-x, diffY = playerY-y, diffZ = playerZ-z; // Intentional use of double (to avoid overflow)
+			final double distSq = diffX*diffX + diffY*diffY + diffZ*diffZ;
+			if(distSq < affectedDistSq){
+				final UUID key = new UUID(k1, k2);
+				if(!keep.contains(key)){deletedKeys.add(key); continue;}
+			}
+			//else
+			++kept;
+			bbOut.putLong(k1).putLong(k2).putLong(o1).putLong(o2).putInt(x).putInt(z);
+		}
+		if(kept*44 == data.length) return deletedKeys; // Nothing was deleted
+
+		final byte[] rowsLeft = new byte[kept*44];
+		bbOut.get(0, rowsLeft);
+		try{
+			FileOutputStream fos = new FileOutputStream(FileIO.DIR+filename);
+			fos.write(rowsLeft);
+			fos.close();
+		}
+		catch(IOException e){e.printStackTrace(); deletedKeys.clear();}
+		return deletedKeys;
+	}
+
+
+
+
 	private class RSLoadingCache extends LoadingCache<UUID, PearlDataClient>{
 		final String DB_FILENAME;
 		final Command DB_FETCH_COMMAND;
 		RSLoadingCache(final String dbFilename, final Command fetchCommand){
-			super(FileIO.loadFromClientFile(dbFilename), PD_404, PD_LOADING);
+			super(loadFromClientFile(dbFilename), PD_404, PD_LOADING);
 			DB_FILENAME = dbFilename;
 			DB_FETCH_COMMAND = fetchCommand;
 		}
@@ -81,7 +237,7 @@ public final class EpearlLookup{
 						else{
 							Main.LOGGER.info("EpearLookup(Fetch): Got ownerUUID for pearlUUID: "+key+" at "+xyz+", appending to clientFile");
 							pdc = new PearlDataClient(fetchedUUID, xyz.x(), xyz.x(), xyz.z());
-							FileIO.appendToClientFile(DB_FILENAME, key, pdc);
+							appendToClientFile(DB_FILENAME, key, pdc);
 						}
 					}
 					putIfAbsent(key, pdc);
@@ -122,7 +278,7 @@ public final class EpearlLookup{
 				}
 				synchronized(removalChecker){ // Really this is just here to synchonize access to FileDBs
 					if(USE_DB_UUID){
-						HashSet<UUID> deletedKeys = FileIO.removeMissingFromClientFile(DB_FILENAME_UUID, playerX, playerY, playerZ, maxDistSq, pearlsSeen1);
+						HashSet<UUID> deletedKeys = removeMissingFromClientFile(DB_FILENAME_UUID, playerX, playerY, playerZ, maxDistSq, pearlsSeen1);
 						if(deletedKeys == null){
 //							Main.LOGGER.error("!! Delete failed because FileDB is null: "+DB_FILENAME_UUID);
 						}
@@ -140,7 +296,7 @@ public final class EpearlLookup{
 						}
 					}
 					if(USE_DB_XZ){
-						HashSet<UUID> deletedKeys = FileIO.removeMissingFromClientFile(DB_FILENAME_XZ, playerX, playerY, playerZ, maxDistSq, pearlsSeen2);
+						HashSet<UUID> deletedKeys = removeMissingFromClientFile(DB_FILENAME_XZ, playerX, playerY, playerZ, maxDistSq, pearlsSeen2);
 						if(deletedKeys == null){
 //							Main.LOGGER.error("!! Delete failed because FileDB is null: "+DB_FILENAME_XZ);
 						}
@@ -223,14 +379,14 @@ public final class EpearlLookup{
 			if(ownerUUID != null){
 				final PearlDataClient pdc = new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
 				if(cacheByUUID.putIfAbsent(key, pdc)){
-					if(remoteSender == null) FileIO.appendToClientFile(DB_FILENAME_UUID, key, pdc);
+					if(remoteSender == null) appendToClientFile(DB_FILENAME_UUID, key, pdc);
 					else{
 						Main.LOGGER.debug("EpearlLookup: Sending STORE_OWNER(uuid) '"+ownerName+"' for pearl at "+epearl.getBlockX()+","+epearl.getBlockZ());
 						remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, ownerUUID), msg->{
 							if(msg != null && msg.length == 1){
 								if(msg[0] != 0) Main.LOGGER.info("EpearlLookup: Added pearl UUID to remote DB!");
 								else Main.LOGGER.info("EpearlLookup: Remote DB already contains pearl UUID");
-								FileIO.appendToClientFile(DB_FILENAME_UUID, key, pdc);
+								appendToClientFile(DB_FILENAME_UUID, key, pdc);
 							}
 							else Main.LOGGER.info("EpearlLookup: Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_UUID: "+msg);
 						});
@@ -264,14 +420,14 @@ public final class EpearlLookup{
 				if(oldKey == null){
 					final PearlDataClient pdc = new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
 					if(cacheByXZ.putIfAbsent(key, pdc)){
-						if(remoteSender == null) FileIO.appendToClientFile(DB_FILENAME_XZ, key, pdc);
+						if(remoteSender == null) appendToClientFile(DB_FILENAME_XZ, key, pdc);
 						else{
 							Main.LOGGER.debug("EpearlLookup: Sending STORE_OWNER(XZ) '"+ownerName+"' for pearl at "+epearl.getBlockX()+","+epearl.getBlockZ());
 							remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_XZ, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, ownerUUID), msg->{
 								if(msg != null && msg.length == 1){
 									if(msg[0] != 0) Main.LOGGER.info("EpearlLookup: Added pearl XZ to remote DB!");
 									else Main.LOGGER.info("EpearlLookup: Remote DB already contains pearl XZ (or rejected it for other reasons)");
-									FileIO.appendToClientFile(DB_FILENAME_XZ, key, pdc);
+									appendToClientFile(DB_FILENAME_XZ, key, pdc);
 								}
 								else Main.LOGGER.info("EpearlLookup: Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_XZ: "+msg);
 							});
