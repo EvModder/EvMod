@@ -235,6 +235,10 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		}
 		final String currPosStr = this.currPosStr=getPosStrFromName(currStack), lastPosStr = getPosStrFromName(lastStack);
 		if(ofSize != null && rowWidth == null){
+			if(!currPosStr.matches("-?\\d+")){
+				Main.LOGGER.warn("AutoPlaceMapArt: Invalid 1d X/SIZE posStr! currPosStr="+currPosStr+",name="+currStack.getCustomName().getString());
+				disableAndReset(); return false;
+			}
 			final int a = Integer.parseInt(currPosStr)-1, b = Integer.parseInt(lastPosStr)-1;
 			if(a > ofSize || b > ofSize || a < 1 || b < 1 || a==b){
 				Main.LOGGER.warn("AutoPlaceMapArt: Invalid 1d X/SIZE pos! a="+a+",b="+b);
