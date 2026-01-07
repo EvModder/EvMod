@@ -73,4 +73,10 @@ public class MojangProfileLookup{
 		nameLookup.putIfAbsent(UUID_404, NAME_U_404);
 		nameLookup.putIfAbsent(UUID_LOADING, NAME_U_LOADING);
 	}
+
+	public static final void prefetchName(UUID uuid){nameLookup.get(uuid, null);}
+	public static final String nameOrUUID(UUID uuid){
+		final String name = nameLookup.get(uuid, null);
+		return name == NAME_404 || name == NAME_LOADING ? uuid.toString() : name;
+	}
 }

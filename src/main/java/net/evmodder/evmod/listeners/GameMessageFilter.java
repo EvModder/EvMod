@@ -1,9 +1,15 @@
 package net.evmodder.evmod.listeners;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.UUID;
 import net.evmodder.EvLib.util.Command;
+import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.EvLib.util.PacketHelper;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
@@ -15,32 +21,74 @@ import net.minecraft.text.Text;
 
 public class GameMessageFilter{
 	// TODO: cache to file. Also, limit reply size from server (to 1024 ids?), and allow bundling borrowLists into 1 request (limit to 8 ids?)
-	private HashSet<UUID> borrowedIgnoreList = new HashSet<>(0);
+	private HashMap<UUID, Integer> borrowedIgnoreList = new HashMap<>(0);
 	private final RemoteServerSender remoteSender;
 	private int currentServer;
 
+	private void incrIgnore(UUID u){
+		Integer i = borrowedIgnoreList.get(u);
+		if(i == null) borrowedIgnoreList.put(u, 1);
+		else ++i;
+	}
+	private void decrIgnore(UUID u){
+		Integer i = borrowedIgnoreList.get(u);
+		if(i == null) Main.LOGGER.warn("MsgFilter: Unignoring already-unignored player! "+MojangProfileLookup.nameOrUUID(u));
+		assert i > 0;
+		if(--i == 0) borrowedIgnoreList.remove(u);
+	}
+
+	public void fetchIgnoreList(UUID uuid){
+		MojangProfileLookup.prefetchName(uuid);
+
+		long lastFetchTs = 0;
+		try{
+			lastFetchTs = Files.getLastModifiedTime(Paths.get("ignores/"+uuid+".cache")).toMillis();
+			assert lastFetchTs >= 0 && lastFetchTs <= System.currentTimeMillis();
+		}
+		catch(IOException e){
+			e.printStackTrace();
+			lastFetchTs = 0;
+		}
+		@SuppressWarnings("unchecked")
+		HashSet<UUID> ignoreList = lastFetchTs == 0 ? new HashSet<UUID>() : (HashSet<UUID>)FileIO.readObject("ignores/"+uuid+".cache");
+
+		final byte[] args = PacketHelper.toByteArray(uuid, /*tsForDelta=*/new UUID(0, lastFetchTs));
+		remoteSender.sendBotMessage(Command.DB_PLAYER_FETCH_IGNORES, /*udp=*/false, /*timeout=*/5000, args, reply -> {
+			final String nameOrUUID = MojangProfileLookup.nameOrUUID(uuid);
+			if(reply == null || (reply.length != 1 && reply.length % 16 != 0)){
+				Main.LOGGER.error("MsgFilter: Fetch ignorelist for '"+nameOrUUID+"' got invalid response! "+(reply==null?"null":"len%16 != 0"));
+				return;
+			}
+			if(reply.length == 1){
+				assert reply[0] == 0;
+				Main.LOGGER.info("MsgFilter: Fetch ignorelist for '"+nameOrUUID+"' returned an empty list");
+				return;
+			}
+			Main.LOGGER.info("MsgFilter: Fetch ignorelist for '"+nameOrUUID+"' returned a list with "+reply.length/16+" accounts");
+			final ByteBuffer bb = ByteBuffer.wrap(reply);
+			if(ignoreList.isEmpty()) for(int i=0; i<reply.length/16; ++i) ignoreList.add(new UUID(bb.getLong(), bb.getLong()));
+			else for(int i=0; i<reply.length/16; ++i){
+				UUID u = new UUID(bb.getLong(), bb.getLong());
+				if(!ignoreList.remove(u)){
+					ignoreList.add(u); // Basically, toggle if set contains ignored uuid
+					incrIgnore(u);
+				}
+				else decrIgnore(u);
+			}
+
+			File dir = new File(FileIO.DIR+"ignores/");
+			if(!dir.isDirectory()){Main.LOGGER.info("MsgFilter: Creating dir '"+dir.getName()+"'"); dir.mkdir();}
+			FileIO.writeObject("ignores/"+uuid+".cache", ignoreList);
+		});
+	}
+
 	public void recomputeIgnoreLists(){
 		if(remoteSender == null/* || currentServer != Main.HASHCODE_2B2T*/) return;
-		Main.LOGGER.info("GameMessageFilter: Recomputing borrowed ignorelists");
+		Main.LOGGER.info("MsgFilter: Recomputing borrowed ignorelists");
 
 		for(UUID uuid : Configs.Database.BORROW_IGNORES.getUUIDs()){
 			if(uuid == null) continue;
-			remoteSender.sendBotMessage(Command.DB_PLAYER_FETCH_IGNORES, /*udp=*/false, 5000, PacketHelper.toByteArray(uuid), reply -> {
-				String name = MojangProfileLookup.nameLookup.get(uuid, null);
-				String nameOrUUID = name == MojangProfileLookup.NAME_404 || name == MojangProfileLookup.NAME_LOADING ? uuid.toString() : name;
-				if(reply == null || (reply.length != 1 && reply.length % 16 != 0)){
-					Main.LOGGER.error("MsgFilter: Fetch ignorelist for '"+nameOrUUID+"' got invalid response! "+(reply==null?"null":"len%16 != 0"));
-					return;
-				}
-				if(reply.length == 1){
-					assert reply[0] == 0;
-					Main.LOGGER.info("MsgFilter: Fetch ignorelist for '"+nameOrUUID+"' returned an empty list");
-					return;
-				}
-				Main.LOGGER.info("MsgFilter: Fetch ignorelist for '"+nameOrUUID+"' returned a list with "+reply.length/16+" accounts");
-				final ByteBuffer bb = ByteBuffer.wrap(reply);
-				for(int i=0; i<reply.length/16; ++i) borrowedIgnoreList.add(new UUID(bb.getLong(), bb.getLong()));
-			});
+			fetchIgnoreList(uuid);
 		}
 	}
 
@@ -64,7 +112,7 @@ public class GameMessageFilter{
 			if(overlay) return true;
 			final int onServer = MiscUtils.getCurrentServerAddressHashCode();
 			if(onServer != currentServer){currentServer = onServer; recomputeIgnoreLists();}
-			return !borrowedIgnoreList.contains(determineSender(msg));
+			return !borrowedIgnoreList.containsKey(determineSender(msg));
 		});
 	}
 }
