@@ -53,6 +53,7 @@
 	"evmod.config.generic.comment.clickLimitCount": "2b2t will kick you for sending >80 clicks in <80 ticks (Last checked: 2025-10-15)",
 	"evmod.config.generic.name.clickLimitWindow": "Ventana de limite",
 	"evmod.config.generic.comment.clickLimitWindow": "2b2t will kick you for sending >80 clicks in <80 ticks (Last checked: 2025-10-15)",
+	"evmod.config.generic.name.clickLimitAdjustForTPS": "clickLimitAdjustForTPS",
 	"evmod.config.generic.name.clickLimitUserInputs": "Limite a clicks de usuario",
 	"evmod.config.generic.name.clickBlockUserInputsDuringOperation": "blockUserInputsDuringClickOperation",
 	"evmod.config.generic.name.useBundlePacket": "useBundlePacket",

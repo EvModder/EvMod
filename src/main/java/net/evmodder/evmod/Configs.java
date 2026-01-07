@@ -27,6 +27,7 @@ public final class Configs implements IConfigHandler{
 	public static class Generic{
 		public static final ConfigInteger CLICK_LIMIT_COUNT = new ConfigInteger("clickLimitCount", 69, 0, 100_000).apply(GENERIC_KEY);
 		public static final ConfigInteger CLICK_LIMIT_DURATION = new ConfigInteger("clickLimitWindow", 95, 1, 72_000).apply(GENERIC_KEY);
+		public static final ConfigBoolean CLICK_LIMIT_ADJUST_FOR_TPS = new ConfigBoolean("clickLimitAdjustForTPS", false);
 		public static final ConfigBoolean CLICK_LIMIT_USER_INPUT = new ConfigBoolean("clickLimitUserInputs", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean CLICK_FILTER_USER_INPUT = new ConfigBoolean("clickBlockUserInputsDuringOperation", true).apply(GENERIC_KEY);
 
@@ -41,7 +42,7 @@ public final class Configs implements IConfigHandler{
 //				List.of(MapStateCacheOptionType.BY_INV_POS, MapStateCacheOptionType.BY_NAME)).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAP_CACHE_BY_ID = new ConfigBoolean("mapStateCacheById", false).apply(GENERIC_KEY);//TODO: currently does nothing!!
 		public static final ConfigBoolean MAP_CACHE_BY_NAME = new ConfigBoolean("mapStateCacheByName", true).apply(GENERIC_KEY);//TODO: currently does nothing!!
-		public static final ConfigBoolean MAP_CACHE_BY_INV_POS = new ConfigBoolean("mapStateCacheByInvPos", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAP_CACHE_BY_INV_POS = new ConfigBoolean("mapStateCacheByInvPos", false).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAP_CACHE_BY_EC_POS = new ConfigBoolean("mapStateCacheByEchestPos", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAP_CACHE_BY_CONTAINER_POS = new ConfigBoolean("mapStateCacheByContainerPos", false).apply(GENERIC_KEY);//TODO: currently does nothing!!
 
@@ -111,7 +112,7 @@ public final class Configs implements IConfigHandler{
 			if(availableOptions == null){
 				Main main = Main.getInstance();
 				availableOptions = new ArrayList<>();
-				availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT,
+				availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_ADJUST_FOR_TPS, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT,
 						USE_BUNDLE_PACKET, BUNDLES_ARE_REVERSED));
 				final boolean CAN_CACHE_MAPS = (main.serverJoinListener && main.serverQuitListener) || main.containerOpenCloseListener;
 				if(CAN_CACHE_MAPS) availableOptions.addAll(List.of(MAP_CACHE, MAP_CACHE_UNLOCKED));

@@ -10,6 +10,7 @@ import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import net.evmodder.EvLib.util.TextUtils_New;
+import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.mixin.AccessorPlayerListHud;
 import net.minecraft.client.MinecraftClient;
@@ -90,6 +91,7 @@ public final class ClickUtils{
 		}
 		return MAX_CLICKS - sumClicksInDuration;
 	}
+	// Can only be called DIRECTLY AFTER calling calcAvailableClicks()
 	public static void addClick(SlotActionType type){ // TODO: friend MixinClientPlayerInteractionManager?
 		assert type != null; //TODO: type is unused
 		if(tickDurationArr == null) return;
@@ -160,7 +162,7 @@ public final class ClickUtils{
 			onComplete.run();
 			return;
 		}
-		if(tickDurationArr != null){
+		if(Configs.Generic.CLICK_LIMIT_ADJUST_FOR_TPS.getBooleanValue() && tickDurationArr != null){
 			final long msPerTick = getMillisPerTick(client);
 			if(msPerTick != TICK_DURATION) adjustTickRate(msPerTick);
 		}
