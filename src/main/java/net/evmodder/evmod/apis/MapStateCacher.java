@@ -1,13 +1,6 @@
 package net.evmodder.evmod.apis;
 
-import java.io.EOFException;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -122,37 +115,22 @@ public class MapStateCacher{
 		}
 	}
 
-	private static final Object readFile(String filename){
-		try(FileInputStream fis = new FileInputStream(filename); ObjectInputStream ois = new ObjectInputStream(fis)){
-			return ois.readObject();
-		}
-		catch(FileNotFoundException e){return null;}
-		catch(EOFException e){} // Hasn't been cached yet
-		catch(IOException | ClassNotFoundException e){e.printStackTrace();}
-		return null;
-	}
-	private static final void writeFile(String filename, Object obj){
-		try(FileOutputStream fos = new FileOutputStream(filename); ObjectOutputStream oos = new ObjectOutputStream(fos)){
-			oos.writeObject(obj);
-		}
-		catch(IOException e){e.printStackTrace();}
-	}
 	private static final boolean saveCacheFile(String server, String cache){
-		String filename = FileIO.DIR+"map_cache/"+server+"/"+cache+".cache";
-		HashMap<?, ?> perServerCache = getInMemCachePerServer(server, cache);
+		final String filename = "map_cache/"+server+"/"+cache+".cache";
+		final HashMap<?, ?> perServerCache = getInMemCachePerServer(server, cache);
 		if(perServerCache == null || perServerCache.isEmpty()) return new File(filename).delete();
 
 		File dir = new File(FileIO.DIR+"map_cache/");
 		if(!dir.isDirectory()){Main.LOGGER.info("MapStateCacher: Creating dir '"+dir.getName()+"'"); dir.mkdir();}
 		dir = new File(FileIO.DIR+"map_cache/"+server);
 		if(!dir.isDirectory()){Main.LOGGER.info("MapStateCacher: Creating dir '"+dir.getName()+"'"); dir.mkdir();}
-		writeFile(filename, perServerCache);
+		FileIO.writeObject(filename, perServerCache);
 		return true;
 	}
 	@SuppressWarnings("unchecked")
 	private static final HashMap<?, ?> createInMemCacheFromFile(String server, String cache){
-		String filename = FileIO.DIR+"map_cache/"+server+"/"+cache+".cache";
-		HashMap<?, ?> loadedCache = (HashMap<?, ?>)readFile(filename);
+		final String filename = "map_cache/"+server+"/"+cache+".cache";
+		HashMap<?, ?> loadedCache = (HashMap<?, ?>)FileIO.readObject(filename);
 //		if(loadedCache == null) return null;
 		switch(cache){
 			case BY_ID:
