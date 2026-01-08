@@ -78,7 +78,7 @@ public final class Configs implements IConfigHandler{
 				Main.mapArtFeaturesOnly ? "" : "{sound:block.note_block.bass, category:PLAYERS, volume:.7, pitch:2}").apply(GENERIC_KEY);
 		public static final ConfigBoolean WHISPER_PLAY_SOUND_UNFOCUSED_ONLY = new ConfigBoolean("whisperPlaySoundUnfocusedOnly", false).apply(GENERIC_KEY);
 		public static final ConfigString WHISPER_PEARL_PULL = new ConfigString("whisperPearlPull",
-				Main.mapArtFeaturesOnly ? "" : "(?:e?p|e?pearl|([iI]'?m ?)?r(ea)?dy)").apply(GENERIC_KEY);
+				Main.mapArtFeaturesOnly ? "" : "(tp|teleport|e?p|e?pearl|([iI]'?m ?)?r(ea)?dy)( pl(ea)?se?)?.?").apply(GENERIC_KEY);
 
 		public static final ConfigBoolean MAPART_GROUP_INCLUDE_UNLOCKED = new ConfigBoolean("commandMapArtGroupIncludeUnlocked", false).apply(GENERIC_KEY);
 

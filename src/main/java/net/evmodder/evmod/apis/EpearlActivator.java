@@ -6,6 +6,7 @@ import com.google.common.collect.Streams;
 import net.evmodder.evmod.Main;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ButtonBlock;
+import net.minecraft.block.NoteBlock;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.projectile.thrown.EnderPearlEntity;
@@ -108,9 +109,12 @@ public class EpearlActivator{
 	private BlockPos findNearestButton/*OrNoteblock*/(MinecraftClient client, BlockPos startPos){ // TODO: trapdoor, noteblock
 		double closestDistSq = Double.MAX_VALUE;
 		BlockPos buttonPos = null;
+		final Vec3d centerPos = startPos.toCenterPos();
 		for(BlockPos pos : BlockPos.iterateOutwards(startPos, REACH, REACH, REACH)){
-			if(client.world.getBlockState(pos).getBlock() instanceof ButtonBlock){
-				final double distSq = pos.getSquaredDistance(startPos);
+			BlockState bs = client.world.getBlockState(pos);
+			if(bs.getBlock() instanceof ButtonBlock || bs.getBlock() instanceof NoteBlock){
+				Vec3d closestPoint = bs.getOutlineShape(client.world, pos).getClosestPointTo(centerPos).get();
+				final double distSq = closestPoint.squaredDistanceTo(centerPos);
 				if(distSq < closestDistSq){closestDistSq = distSq; buttonPos = pos.mutableCopy();}
 			}
 		}
@@ -124,24 +128,26 @@ public class EpearlActivator{
 			if(currTs-lastMsgTs < msgCooldown) return;
 			lastMsgTs = currTs;
 		}
-		client.getNetworkHandler().sendChatCommand("/w "+who+" "+msg);
+		client.getNetworkHandler().sendChatCommand("w "+who+" "+msg);
 	}
 
 	public void triggerPearl(final String who){
 		MinecraftClient client = MinecraftClient.getInstance();
 		BlockPos signPos = findSignWithName(client, who);
 		if(signPos == null && (signPos=findNearestPearlWithOwnerName(client, who)) == null){
-			sendFeedback(client, who, "[automated response] I do not recognize any pearl of yours nearby");
+//			sendFeedback(client, who, "[AutoPearl] I do not recognize any pearl of yours nearby");
+			Main.LOGGER.warn("[AutoPearl] no nearby pearl found for requester: "+who);
 			return;
 		}
-//		Main.LOGGER.info("AutoPearlActivator: found sign/pearl");// at "+signPos.toShortString());
+//		Main.LOGGER.info("[AutoPearl]: found sign/pearl");// at "+signPos.toShortString());
 
 		BlockPos buttonPos = findNearestButton(client, signPos);
 		if(buttonPos == null){
-//			sendFeedback(client, name, "[automated response] I see your pearl, but not how to activate it");
+			sendFeedback(client, who, "[AutoPearl] I see your pearl, but not how to activate it");
+			Main.LOGGER.warn("[AutoPearl] pearl found, but activation not found");
 			return;
 		}
-//		Main.LOGGER.info("AutoPearlActivator: found button at "+buttonPos.toShortString());
+		Main.LOGGER.info("[AutoPearl]: found button at "+buttonPos.toShortString());
 
 //		assert hitResult != null;
 //		if(hitResult == null) return;
