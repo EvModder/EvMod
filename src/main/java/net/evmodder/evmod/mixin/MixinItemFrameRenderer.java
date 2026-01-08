@@ -81,6 +81,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		}
 	}
 
+	private final boolean isMultiHung(MapState state){return UpdateItemFrameHighlights.isHungMultiplePlaces(MapGroupUtils.getIdForMapState(state));}
 
 	@Inject(method="getDisplayName", at=@At("INVOKE"), cancellable = true)
 	public void getDisplayName_Mixin(T itemFrameEntity, CallbackInfoReturnable<Text> cir){
@@ -104,14 +105,17 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 			name.withColor(Configs.Visuals.MAP_COLOR_IN_INV.getIntegerValue());
 			if(notInCurrGroup) name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue()));
 			if(!state.locked) name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue()));
-			if(UpdateItemFrameHighlights.isHungMultiplePlaces(MapGroupUtils.getIdForMapState(state)))
-				name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
+			if(isMultiHung(state)) name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
 		}
 		else if(hl == Highlight.NOT_IN_CURR_GROUP){
 			name.withColor(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue());
 			if(!state.locked) name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue()));
+			if(isMultiHung(state)) name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
 		}
-		else if(!state.locked) name.withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue());
+		else if(!state.locked){
+			name.withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue());
+			if(isMultiHung(state)) name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
+		}
 		else if(stack.getCustomName() == null) name.withColor(Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue());
 		else if(hl == Highlight.MULTI_HUNG){
 			if(Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue() && MapColorUtils.isMonoColor(state.colors))

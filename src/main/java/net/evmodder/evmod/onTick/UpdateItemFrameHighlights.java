@@ -25,26 +25,26 @@ public class UpdateItemFrameHighlights{
 	public static final HashMap<ItemFrameEntity, Boolean> hasLabelCache = new HashMap<>(); // TODO: remove? private?
 	public static final HashMap<ItemFrameEntity, Text> displayNameCache = new HashMap<>(); // TODO: remove? private?
 	public static Vec3d clientRotationNormalized; // TODO: remove? private?
-	public static boolean anyHangLocUpdate; // TODO: private?!
+	public static long lastIFrameMapGroupUpdateTs; // Only accessor: CommandExportMapImg::getNearbyMapNames
 
 	public enum Highlight{INV_OR_NESTED_INV, NOT_IN_CURR_GROUP, MULTI_HUNG, UNLOCKED_OR_UNNAMED};
 	private static final HashMap<Integer, Highlight> highlightedIFrames = new HashMap<>();
 
 	public static final boolean isHungMultiplePlaces(UUID colorsId){
 		final var l = iFrameMapGroup.get(colorsId);
-		if(l != null && Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ > 0){
-			l.removeIf(xyzd -> MinecraftClient.getInstance().player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ);
-			if(l.size() == 0) iFrameMapGroup.remove(colorsId);
-		}
+//		if(l != null && Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ > 0){
+//			l.removeIf(xyzd -> MinecraftClient.getInstance().player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ);
+//			if(l.size() == 0) iFrameMapGroup.remove(colorsId);
+//		}
 		return l != null && l.size() > 1;
 	}
 
 	public static final boolean isInItemFrame(final UUID colorsId){
 		final var l = iFrameMapGroup.get(colorsId);
-		if(l != null && Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ > 0){
-			l.removeIf(xyzd -> MinecraftClient.getInstance().player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ);
-			if(l.size() == 0) iFrameMapGroup.remove(colorsId);
-		}
+//		if(l != null && Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ > 0){
+//			l.removeIf(xyzd -> MinecraftClient.getInstance().player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ);
+//			if(l.size() == 0) iFrameMapGroup.remove(colorsId);
+//		}
 		return l != null && l.size() > 0;
 	}
 
@@ -52,33 +52,29 @@ public class UpdateItemFrameHighlights{
 		return highlightedIFrames.get(entityId);
 	}
 
-	private static final boolean updateItemFrameEntities(final List<ItemFrameEntity> ifes){
-		boolean anyHangLocUpdate = false;
+	private static final boolean scanIFrameContents(final List<ItemFrameEntity> ifes, final double trackingDistSq, final Vec3d centerPos){
+		boolean anyMapGroupUpdate = false;
 		for(ItemFrameEntity ife : ifes){
 			final ItemStack stack = ife.getHeldItemStack();
 			final MapState state = stack == null || stack.isEmpty() ? null : FilledMapItem.getMapState(stack, ife.getWorld());
 			final UUID colorsId = state == null ? null : MapGroupUtils.getIdForMapState(state);
 			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal());
-			final UUID oldColorsIdForXYZ = colorsId != null ? hangLocsReverse.put(xyzd, colorsId) : hangLocsReverse.remove(xyzd);
-			if(oldColorsIdForXYZ == null){
-				if(colorsId != null){
-					anyHangLocUpdate = true;
-//					Main.LOGGER.info("IFHU: Added map at xyzd");
+			final UUID oldColorsIdForXYZD = colorsId != null ? hangLocsReverse.put(xyzd, colorsId) : hangLocsReverse.remove(xyzd);
+			if(colorsId != null){
+				if(trackingDistSq == 0 || centerPos.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) <= trackingDistSq){
+					anyMapGroupUpdate |= iFrameMapGroup.computeIfAbsent(colorsId, _0 -> new HashSet<XYZD>()).add(xyzd);
 				}
+//				if(oldColorsIdForXYZ == null) Main.LOGGER.info("IFHU: Added map at xyzd");
 			}
-			else if(!oldColorsIdForXYZ.equals(colorsId)){
+			if(oldColorsIdForXYZD != null && !oldColorsIdForXYZD.equals(colorsId)){
 //				Main.LOGGER.info("IFHU: "+(colorsId == null ? "Removed" : "Replaced")+" map at xyzd");
-				anyHangLocUpdate = true;
-				final HashSet<XYZD> oldLocs = iFrameMapGroup.get(oldColorsIdForXYZ);
-				if(oldLocs != null && oldLocs.remove(xyzd) && oldLocs.isEmpty()) iFrameMapGroup.remove(oldColorsIdForXYZ);
-				if(colorsId == null){
-					highlightedIFrames.remove(ife.getId());
-//					Main.LOGGER.info("IFHU: Removed map at xyzd");
-				}
-//				else Main.LOGGER.info("IFHU: Replaced map at xyzd");
+				if(colorsId == null) highlightedIFrames.remove(ife.getId()); // IFHU: Removed map at xyzd
+				anyMapGroupUpdate = true;
+				final HashSet<XYZD> oldLocs = iFrameMapGroup.get(oldColorsIdForXYZD);
+				if(oldLocs != null && oldLocs.remove(xyzd) && oldLocs.isEmpty()) iFrameMapGroup.remove(oldColorsIdForXYZD);
 			}
 		}
-		return anyHangLocUpdate;
+		return anyMapGroupUpdate;
 	}
 	private static final boolean updateIframeHighlights(final List<ItemFrameEntity> ifes){
 		boolean anyHighlightUpdate = false;
@@ -86,11 +82,6 @@ public class UpdateItemFrameHighlights{
 			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal());
 			UUID colorsId = hangLocsReverse.get(xyzd);
 			if(colorsId == null) continue;
-
-			final HashSet<XYZD> locs = iFrameMapGroup.get(colorsId);
-			final boolean isMultiHung;
-			if(locs == null){iFrameMapGroup.put(colorsId, new HashSet<>(List.of(xyzd))); isMultiHung = false;}
-			else{locs.add(xyzd); isMultiHung = locs.size() > 1;}
 
 			final ItemStack stack = ife.getHeldItemStack();
 			final MapState state = FilledMapItem.getMapState(ife.getHeldItemStack(), ife.getWorld());
@@ -102,7 +93,7 @@ public class UpdateItemFrameHighlights{
 				highlight = Highlight.NOT_IN_CURR_GROUP;
 				if(Configs.Generic.NEW_MAP_NOTIFIER_IFRAME.getBooleanValue()) NewMapNotifier.call(ife, colorsId);
 			}
-			else if(isMultiHung) highlight = Highlight.MULTI_HUNG;
+			else if(isHungMultiplePlaces(colorsId)) highlight = Highlight.MULTI_HUNG;
 			else if(!state.locked || stack.getCustomName() == null) highlight = Highlight.UNLOCKED_OR_UNNAMED;
 			else{
 				anyHighlightUpdate |= (highlightedIFrames.remove(ife.getId()) != null);
@@ -130,14 +121,33 @@ public class UpdateItemFrameHighlights{
 
 		List<ItemFrameEntity> ifes = client.world.getEntitiesByClass(ItemFrameEntity.class, client.player.getBoundingBox().expand(200, 200, 200), _0->true);
 
-		anyHangLocUpdate = updateItemFrameEntities(ifes) ||  ifes.size() > numLoadedIfes;
-		numLoadedIfes = ifes.size();
+		final double TRACKING_DIST_SQ = Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ;
+		final Vec3d playerPos = /*TRACKING_DIST_SQ == 0 ? null : */client.player.getPos();
+		boolean anyMapGroupUpdate = false;
+		if(TRACKING_DIST_SQ > 0 && (ifes.size() != numLoadedIfes || TRACKING_DIST_SQ < 32)){
+			// Untrack maps which have gone out of range for iFrameMapGroup (for isInIFrame, isMultiHung)
+//			iFrameMapGroup.entrySet().removeIf(e -> {
+			for(var it = iFrameMapGroup.entrySet().iterator(); it.hasNext();) {
+				var e = it.next();
+				anyMapGroupUpdate |= e.getValue().removeIf(xyzd -> client.player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > TRACKING_DIST_SQ);
+				if(e.getValue().isEmpty()) it.remove();
+			}
+//			});
+		}
+		// Updates iFrameMapGroup, highlightedIFrames, hangLocsReverse, & anyTrackedIFrameUpdate
+		anyMapGroupUpdate |= scanIFrameContents(ifes,TRACKING_DIST_SQ, playerPos);
+
 		final int currGroupInvHash = MapGroupUtils.mapsInGroupHash + UpdateInventoryHighlights.mapsInInvHash;
-		if(!anyHangLocUpdate && lastGroupInvHash == currGroupInvHash) return;
-		lastGroupInvHash = currGroupInvHash;
+		try{
+			if(anyMapGroupUpdate) lastIFrameMapGroupUpdateTs = System.currentTimeMillis();
+			else if(currGroupInvHash == lastGroupInvHash) return;
+		}
+		finally{
+			lastGroupInvHash = currGroupInvHash;
+			numLoadedIfes = ifes.size();
+		}
 
 //		Main.LOGGER.info("IframeHighlighter: Recomputing highlight cache, due to "+(anyHangLocUpdate?"hung iframe update":"inv update"));
-
 		final boolean anyHighlightUpdate = updateIframeHighlights(ifes);
 		if(!anyHighlightUpdate) return;
 

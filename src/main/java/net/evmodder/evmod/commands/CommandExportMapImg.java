@@ -562,9 +562,11 @@ public class CommandExportMapImg{
 		}
 	}
 	private final boolean SHOW_ONLY_IF_HAS_AZ = true, REMOVE_MAX_CNT = true, REMOVE_BRACKET_SYMBOLS = true;
-	HashMap<String, String> cmdMapNames = new HashMap<>();
+	private final HashMap<String, String> cmdMapNames = new HashMap<>();
+	private long lastNameComputeTs;
 	private Set<String> getNearbyMapNames(ClientPlayerEntity player){
-		if(!cmdMapNames.isEmpty() && !UpdateItemFrameHighlights.anyHangLocUpdate) return cmdMapNames.keySet();
+		if(!cmdMapNames.isEmpty() && lastNameComputeTs >= UpdateItemFrameHighlights.lastIFrameMapGroupUpdateTs) return cmdMapNames.keySet();
+		lastNameComputeTs = System.currentTimeMillis();
 		cmdMapNames.clear();
 
 		final HashSet<String> seen = new HashSet<>();
