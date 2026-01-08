@@ -50,26 +50,6 @@ final class KeyCallbacks implements IKeybindProvider{
 	KeyCallbacks(Main main){
 		InputEventHandler.getKeybindManager().registerKeybindProvider(this);
 
-		KeybindMapCopy kbMapCopy = new KeybindMapCopy();
-		KeybindMapLoad kbMapLoad = new KeybindMapLoad();
-		KeybindMapMove kbMapMove = new KeybindMapMove();
-		KeybindMapMoveBundle kbMapMoveBundle = new KeybindMapMoveBundle();
-
-		valueChangeCallback(Configs.Generic.CLICK_LIMIT_COUNT, InitUtils::refreshClickLimits);
-		valueChangeCallback(Configs.Generic.CLICK_LIMIT_DURATION, InitUtils::refreshClickLimits);
-
-		keybindCallback(Configs.Hotkeys.OPEN_CONFIG_GUI, Objects::isNull, ()->GuiBase.openGui(new ConfigGui()));
-
-		keybindCallback(Configs.Hotkeys.MAP_COPY, s->s instanceof InventoryScreen
-				|| s instanceof CraftingScreen || s instanceof CartographyTableScreen, kbMapCopy::copyMapArtInInventory);
-		keybindCallback(Configs.Hotkeys.MAP_LOAD, HandledScreen.class::isInstance, kbMapLoad::loadMapArtFromContainer);
-		keybindCallback(Configs.Hotkeys.MAP_MOVE,
-				s->s instanceof HandledScreen && s instanceof InventoryScreen == false, kbMapMove::moveMapArtToFromShulker);
-		Function<Screen, Boolean> allowInScreenBundleMove = //InventoryScreen.class::isInstance
-				s->s instanceof InventoryScreen || s instanceof GenericContainerScreen || s instanceof ShulkerBoxScreen || s instanceof CraftingScreen;
-		keybindCallback(Configs.Hotkeys.MAP_MOVE_BUNDLE, allowInScreenBundleMove, ()->kbMapMoveBundle.moveMapArtToFromBundle(false));
-		keybindCallback(Configs.Hotkeys.MAP_MOVE_BUNDLE_REVERSE, allowInScreenBundleMove, ()->kbMapMoveBundle.moveMapArtToFromBundle(true));
-
 		if(!Main.mapArtFeaturesOnly){
 			KeybindAIETravelHelper kbAIE = new KeybindAIETravelHelper();
 			KeybindEjectJunk kbej = new KeybindEjectJunk();
@@ -133,5 +113,25 @@ final class KeyCallbacks implements IKeybindProvider{
 			keybindCallback(Configs.Hotkeys.SNAP_ANGLE_2, null,
 					()->MinecraftClient.getInstance().player.setAngles(Configs.Hotkeys.SNAP_ANGLE_2.getYaw(), Configs.Hotkeys.SNAP_ANGLE_2.getPitch()));
 		}
+
+		KeybindMapCopy kbMapCopy = new KeybindMapCopy();
+		KeybindMapLoad kbMapLoad = new KeybindMapLoad();
+		KeybindMapMove kbMapMove = new KeybindMapMove();
+		KeybindMapMoveBundle kbMapMoveBundle = new KeybindMapMoveBundle();
+
+		valueChangeCallback(Configs.Generic.CLICK_LIMIT_COUNT, InitUtils::refreshClickLimits);
+		valueChangeCallback(Configs.Generic.CLICK_LIMIT_DURATION, InitUtils::refreshClickLimits);
+
+		keybindCallback(Configs.Hotkeys.OPEN_CONFIG_GUI, Objects::isNull, ()->GuiBase.openGui(new ConfigGui()));
+
+		keybindCallback(Configs.Hotkeys.MAP_COPY, s->s instanceof InventoryScreen
+				|| s instanceof CraftingScreen || s instanceof CartographyTableScreen, kbMapCopy::copyMapArtInInventory);
+		keybindCallback(Configs.Hotkeys.MAP_LOAD, HandledScreen.class::isInstance, kbMapLoad::loadMapArtFromContainer);
+		keybindCallback(Configs.Hotkeys.MAP_MOVE,
+				s->s instanceof HandledScreen && s instanceof InventoryScreen == false, kbMapMove::moveMapArtToFromShulker);
+		Function<Screen, Boolean> allowInScreenBundleMove = //InventoryScreen.class::isInstance
+				s->s instanceof InventoryScreen || s instanceof GenericContainerScreen || s instanceof ShulkerBoxScreen || s instanceof CraftingScreen;
+		keybindCallback(Configs.Hotkeys.MAP_MOVE_BUNDLE, allowInScreenBundleMove, ()->kbMapMoveBundle.moveMapArtToFromBundle(false));
+		keybindCallback(Configs.Hotkeys.MAP_MOVE_BUNDLE_REVERSE, allowInScreenBundleMove, ()->kbMapMoveBundle.moveMapArtToFromBundle(true));
 	}
 }
