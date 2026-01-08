@@ -103,9 +103,11 @@ public final class ClickUtils{
 		if(tickDurationArr == null) return MAX_CLICKS;
 		synchronized(tickDurationArr){
 			updateAvailableClicks();
+			if(sumClicksInDuration == MAX_CLICKS) return 0;
+			assert sumClicksInDuration < MAX_CLICKS;
 			++tickDurationArr[tickDurIndex];
-			++sumClicksInDuration;
-			return MAX_CLICKS - sumClicksInDuration;
+//			++sumClicksInDuration;
+			return MAX_CLICKS - ++sumClicksInDuration;
 		}
 	}
 

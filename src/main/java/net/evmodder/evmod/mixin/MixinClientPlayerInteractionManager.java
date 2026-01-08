@@ -77,8 +77,9 @@ abstract class MixinClientPlayerInteractionManager{
 			Main.LOGGER.error("Discarded click in clickSlot() due to exceeding limit!"
 					+ " slot:"+slot+",button:"+button+",action:"+action.name()+",isShiftClick:"+Screen.hasShiftDown());
 			MinecraftClient.getInstance().player.sendMessage(
-					Text.literal("Discarding unsafe click!! > LIMIT:"+Configs.Generic.CLICK_LIMIT_COUNT.getIntegerValue()
-								+", available:"+hadClicks).withColor(/*&c=*/16733525), false);
+					Text.literal("Discarding unsafe click!"
+							+ " | limit:"+Configs.Generic.CLICK_LIMIT_COUNT.getIntegerValue()
+							+", duration:"+Configs.Generic.CLICK_LIMIT_DURATION.getIntegerValue()+"gt").withColor(/*&c=*/16733525), false);
 //			MinecraftClient.getInstance().player.sendMessage(Text.literal("syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
 		}
 	}

@@ -16,7 +16,7 @@ public final class NewMapNotifier{
 	private static long lastNewMapColorId;
 	private static boolean notifyInChat = true;
 
-	public static final void call(ItemFrameEntity ife, UUID colorsId){ // Called by MixinItemFrameRenderer
+	public static final void call(ItemFrameEntity ife, UUID colorsId){ // Called by UpdateItemFrameHighlights
 		if(ife.getId() != lastNewMapIfeId && colorsId.getMostSignificantBits() == lastNewMapColorId) return;
 		if(System.currentTimeMillis() - lastNewMapNotify < mapNotifyCooldown) return;
 
