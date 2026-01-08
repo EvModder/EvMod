@@ -1,6 +1,7 @@
 package net.evmodder.evmod.keybinds;
 
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -29,9 +30,6 @@ import net.minecraft.world.World;
 
 public final class KeybindMapLoad{
 	private boolean isUnloadedMapArt(World world, ItemStack stack){
-//		if(stack == null || stack.isEmpty()) return false;
-//		if(!Registries.ITEM.getId(stack.getItem()).getPath().equals("filled_map")) return false;
-//		return FilledMapItem.getMapState(stack, world) == null;
 		if(stack.getItem() != Items.FILLED_MAP) return false;
 		MapState state = FilledMapItem.getMapState(stack, world);
 		return state == null || state.colors == null || state.colors.length != 128*128;
@@ -63,7 +61,6 @@ public final class KeybindMapLoad{
 	private final long WAIT_FOR_STATE_UPDATE = 101, STATE_LOAD_TIMEOUT = 5*1000; // 50 = 1 tick
 	private long stateUpdateWaitStart, stateLoadWaitStart;
 	private final void loadMapArtFromBundles(){
-//		Main.LOGGER.warn("MapLoadBundle: in InventoryScreen");
 		final MinecraftClient client = MinecraftClient.getInstance();
 		final InventoryScreen is = (InventoryScreen)client.currentScreen;
 		final ItemStack[] slots = is.getScreenHandler().slots.stream().map(s -> s.getStack()).toArray(ItemStack[]::new);
@@ -166,20 +163,19 @@ public final class KeybindMapLoad{
 		);
 	}
 
-	//TODO: Consider shift-clicks instead of hotbar swaps (basically, MapMove but only for unloaded maps, and keep track of which)
 	private long lastLoad;
 	private final long loadCooldown = 500L;
 	private int clickIndex;
 	public final void loadMapArtFromContainer(){
 		if(ClickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapLoad cancelled: Already ongoing"); return;}
-		//
+
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(!(client.currentScreen instanceof HandledScreen hs)){Main.LOGGER.warn("MapLoad cancelled: not in HandledScreen"); return;}
-		//
+
 		final long ts = System.currentTimeMillis();
 		if(ts - lastLoad < loadCooldown){Main.LOGGER.warn("MapLoad cancelled: Cooldown"); return;}
 		lastLoad = ts;
-		//
+
 		if(hs instanceof InventoryScreen){loadMapArtFromBundles(); return;}
 		final DefaultedList<Slot> slots = hs.getScreenHandler().slots;
 		if(slots.stream().noneMatch(s -> isUnloadedMapArt(client.player.clientWorld, s.getStack()))){
@@ -188,11 +184,11 @@ public final class KeybindMapLoad{
 		}
 		int[] hbButtons = getUsableHotbarButtons(client);
 		if(hbButtons.length == 0){Main.LOGGER.warn("MapLoad cancelled: in shulker, and hotbar is full of shulkers"); return;}
-		//
+
 		int[] putBackSlots = new int[hbButtons.length];
 		ArrayDeque<InvAction> clicks = new ArrayDeque<>();
 		HashSet<Integer> mapIdsToLoad = new HashSet<>();
-		final int MAX_BATCH_SIZE = Math.min(hbButtons.length, ClickUtils.getMaxClicks()/2);
+		final int CLICK_BATCH_SIZE = Math.min(hbButtons.length, ClickUtils.getMaxClicks()/2);
 
 		int hbi = 0;
 		for(int i=0; i<slots.size(); ++i){
@@ -208,20 +204,22 @@ public final class KeybindMapLoad{
 		int extraPutBackIndex = clicks.size();
 		for(int j=0; j<hbi; ++j) clicks.add(new InvAction(putBackSlots[j], hbButtons[j], ActionType.HOTBAR_SWAP));
 
-		Main.LOGGER.info("MapLoad: STARTED, clicks: "+clicks.size()+", extraPutBackIndex: "+extraPutBackIndex);
+		final int numFullBatches = clicks.size()/(hbButtons.length*2);
+		Main.LOGGER.info("MapLoad: STARTED, clicks: "+clicks.size()+" == ("+hbButtons.length+"x"+numFullBatches+" + "+hbi+")x2");
+		clickIndex = 0;
 		ClickUtils.executeClicks(c->{
 			if(client.player == null || client.world == null) return true;
-//				if(isUnloadedMapArt(/*client.player.clientWorld*/client.world, item)) return false;
-			if(clickIndex % hbButtons.length != 0 && clickIndex != extraPutBackIndex){++clickIndex; return true;}
-			if(ClickUtils.calcAvailableClicks() < MAX_BATCH_SIZE) return false; // Wait for clicks
 
-			if((clickIndex/hbButtons.length)%2 == 0 && clickIndex < extraPutBackIndex){++clickIndex; return true;} // Moving TO hotbar
-//				ItemStack item = client.player.getInventory().getStack(c.button());
-			//if(!isLoadedMapArt(client.world, item)){ // Weird issue rn with non-maps getting moved around? (bundles?)
-			//if(isUnloadedMapArt(client.world, s){
-			// Ugh just wait if any unloaded map in hotbar(or inv)
-			if(client.player.getInventory().main.stream().anyMatch(s -> isUnloadedMapArt(client.world, s))){
-//					Main.LOGGER.info("MapLoad: still waiting for map state to load from hotbar slot: "+c.button());
+			// Not the start of a putback click sequence
+			if(clickIndex != extraPutBackIndex && (((clickIndex/hbButtons.length)&1) == 1 || clickIndex % hbButtons.length != 0)){
+				++clickIndex;
+				return true;
+			}
+			if(ClickUtils.calcAvailableClicks() < CLICK_BATCH_SIZE) return false; // Wait for clicks
+
+//			if(isUnloadedMapArt(client.world, client.player.getInventory().main.get(27+hbButtons[clickIndex % hbButtons.length]))) return false;
+			if(Arrays.stream(hbButtons).anyMatch(i -> isUnloadedMapArt(client.world, client.player.getInventory().main.get(27+i)))){
+//				Main.LOGGER.info("MapLoad: still waiting for map state to load from hotbar slot: "+c.button());
 				if(stateLoadWaitStart == 0) stateLoadWaitStart = System.currentTimeMillis();
 				if(System.currentTimeMillis() - stateLoadWaitStart < STATE_LOAD_TIMEOUT) return false;
 				stateUpdateWaitStart = stateLoadWaitStart = 0;
@@ -242,8 +240,4 @@ public final class KeybindMapLoad{
 			clicks
 		);
 	}
-
-//	public KeybindMapLoad(){
-//		new Keybind("mapart_load", ()->loadMapArtFromContainer(), _0->true, GLFW.GLFW_KEY_E);
-//	}
 }

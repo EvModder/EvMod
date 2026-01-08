@@ -64,10 +64,10 @@ abstract class MixinClientPlayerInteractionManager{
 //			MinecraftClient.getInstance().player.sendMessage(Text.literal("syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
 			return;
 		}
-		final int availableClicks = ClickUtils.calcAvailableClicks();
-		if(availableClicks > 0){
-			ClickUtils.addClick(action);
-			if(Configs.Hotkeys.CRAFT_RESTOCK.getKeybind().isValid()) Main.mixinAccess().kbCraftRestock.checkIfCraftAction(player.currentScreenHandler, slot, button, action);
+		final int hadClicks = ClickUtils.calcAvailableClicksAndAddOne(action);
+		if(hadClicks > 0){
+			if(Configs.Hotkeys.CRAFT_RESTOCK.getKeybind().isValid())
+				Main.mixinAccess().kbCraftRestock.checkIfCraftAction(player.currentScreenHandler, slot, button, action);
 		}
 		else{
 			if(isBotted) Main.LOGGER.error("Botted click somehow triggered click limited! VERY BAD!!");
@@ -78,7 +78,7 @@ abstract class MixinClientPlayerInteractionManager{
 					+ " slot:"+slot+",button:"+button+",action:"+action.name()+",isShiftClick:"+Screen.hasShiftDown());
 			MinecraftClient.getInstance().player.sendMessage(
 					Text.literal("Discarding unsafe click!! > LIMIT:"+Configs.Generic.CLICK_LIMIT_COUNT.getIntegerValue()
-								+", available:"+availableClicks).withColor(/*&c=*/16733525), false);
+								+", available:"+hadClicks).withColor(/*&c=*/16733525), false);
 //			MinecraftClient.getInstance().player.sendMessage(Text.literal("syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
 		}
 	}

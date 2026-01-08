@@ -34,8 +34,8 @@ public final class ClickUtils{
 
 	private static int MAX_CLICKS; public static int getMaxClicks(){return MAX_CLICKS;}
 	private static int[] tickDurationArr;
-	private static  int tickDurIndex, sumClicksInDuration;
-	private static  long lastTick;
+	private static int tickDurIndex, sumClicksInDuration;
+	private static long lastTick;
 	private static final int OUTTA_CLICKS_COLOR = 15777300, SYNC_ID_CHANGED_COLOR = 16733525;
 //	private static final double C_PER_T;
 	public static long TICK_DURATION = 51l; // LOL!! TODO: estimate base off TPS/ping
@@ -72,8 +72,7 @@ public final class ClickUtils{
 //		return serverInfo == null ? 0 : serverInfo.ping; 
 //	}
 
-	public static int calcAvailableClicks(){
-		if(tickDurationArr == null) return MAX_CLICKS;
+	private static void updateAvailableClicks(){
 		final long curTick = System.currentTimeMillis()/TICK_DURATION;
 		if(curTick != lastTick){
 //			final long pingTicks = (long)Math.ceil(getPing()/(double)TICK_DURATION);
@@ -89,15 +88,25 @@ public final class ClickUtils{
 				++lastTick;
 			}
 		}
-		return MAX_CLICKS - sumClicksInDuration;
 	}
-	// Can only be called DIRECTLY AFTER calling calcAvailableClicks()
-	public static void addClick(SlotActionType type){ // TODO: friend MixinClientPlayerInteractionManager?
+	public static int calcAvailableClicks(){
+		if(tickDurationArr == null) return MAX_CLICKS;
+		synchronized(tickDurationArr){
+			updateAvailableClicks();
+			return MAX_CLICKS - sumClicksInDuration;
+		}
+	}
+	// Enforces always calculating available ticks before adding a click
+	public static int calcAvailableClicksAndAddOne(SlotActionType type){ // TODO: friend MixinClientPlayerInteractionManager?
 		assert type != null; //TODO: type is unused
-		if(tickDurationArr == null) return;
-//		calcAvailableClicks(); // TODO: anywhere addClick() is called, calcAvailableClicks() MUST be called immediately before
-		++tickDurationArr[tickDurIndex];
-		++sumClicksInDuration;
+
+		if(tickDurationArr == null) return MAX_CLICKS;
+		synchronized(tickDurationArr){
+			updateAvailableClicks();
+			++tickDurationArr[tickDurIndex];
+			++sumClicksInDuration;
+			return MAX_CLICKS - sumClicksInDuration;
+		}
 	}
 
 	private static void adjustTickRate(long msPerTick){
@@ -109,22 +118,20 @@ public final class ClickUtils{
 	}
 
 	private static int calcRemainingTicks(int clicksToExecute){
-//		final int unusedCapacity = calcAvailableClicks();
-//		final double C_PER_T = (double)(MAX_CLICKS-unusedCapacity)/(double)tickDurationArr.length;
-//		int ticksLeft = 0;
-//		int simTickDurIndex = tickDurIndex;
-//		for(int i=0; clicksToExecute > 0; ++i){ // Do 1 loop around the array
-//			if(++simTickDurIndex == tickDurationArr.length) simTickDurIndex = 0;
-//			clicksToExecute -= tickDurationArr[simTickDurIndex];
-//			++ticksLeft;
-//		}
-//		ticksLeft += Math.ceil(clicksToExecute/C_PER_T);
-//		return ticksLeft;
-		int ticksIntoFuture;
-		for(ticksIntoFuture = 1; clicksToExecute > 0; ++ticksIntoFuture){
-			clicksToExecute -= tickDurationArr[(tickDurIndex + ticksIntoFuture) % tickDurationArr.length];
+		synchronized(tickDurationArr){
+			updateAvailableClicks();
+			final int availableNow = MAX_CLICKS - sumClicksInDuration;
+			if(availableNow >= clicksToExecute) return 0;
+			clicksToExecute -= availableNow;
+			tickDurationArr[tickDurIndex] += availableNow;
+	
+			int ticksIntoFuture;
+			for(ticksIntoFuture = 1; clicksToExecute > 0; ++ticksIntoFuture){
+				clicksToExecute -= tickDurationArr[(tickDurIndex + ticksIntoFuture) % tickDurationArr.length];
+			}
+			tickDurationArr[tickDurIndex] -= availableNow;
+			return ticksIntoFuture;
 		}
-		return ticksIntoFuture;
 	}
 
 	private static final Pattern tpsPattern = Pattern.compile("(\\d{1,2}(?:\\.\\d+))\\s?tps", Pattern.CASE_INSENSITIVE);
