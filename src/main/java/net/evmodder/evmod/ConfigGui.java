@@ -25,7 +25,7 @@ public class ConfigGui extends GuiConfigsBase{
 	private static ConfigGuiTab tab = ConfigGuiTab.HOTKEYS;
 
 	ConfigGui(){
-		super(10, 50, Main.MOD_ID, /*parent=*/null, Main.MOD_ID+".gui.title", StringUtils.getModVersionString(Main.MOD_ID));
+		super(10, 50, Main.MOD_ID, /*parent=*/null, Main.MOD_ID+".gui.title", Main.MOD_VERSION);
 		setConfigWidth(224);
 	}
 

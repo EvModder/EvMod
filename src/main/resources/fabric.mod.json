@@ -19,7 +19,7 @@
 	"mixins": [ "mixins.json" ],
 	"depends": {
 		"fabric-api": "*",
-		"malilib": ">=0.23.4-"
+		"malilib": ">=${malilib_version}-"
 	},
 	"suggests": {
 		"another-mod": "*"

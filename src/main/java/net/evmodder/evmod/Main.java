@@ -39,6 +39,7 @@ import net.evmodder.evmod.onTick.UpdateContainerHighlights;
 import net.evmodder.evmod.onTick.UpdateInventoryHighlights;
 import net.evmodder.evmod.onTick.UpdateItemFrameHighlights;
 import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.client.MinecraftClient;
 
 //MC source code will be in ~/.gradle/caches/fabric-loom or ./.gradle/loom-cache
@@ -71,7 +72,9 @@ public class Main{
 	// inv-keybind-craft-latest-item, also for enchant table and grindstone (eg. spam enchanting axes) via spacebar, like vanilla
 
 	public static final String MOD_ID = InitUtils.getModId();
-	public static final String MOD_NAME = FabricLoader.getInstance().getModContainer(MOD_ID).get().getMetadata().getName();
+	private static final ModMetadata metadata = FabricLoader.getInstance().getModContainer(MOD_ID).get().getMetadata();
+	public static final String MOD_NAME = metadata.getName();
+	public static final String MOD_VERSION = metadata.getVersion().getFriendlyString();
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
 	// TODO: ewww hacky
