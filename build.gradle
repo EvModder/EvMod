@@ -13,16 +13,22 @@ base {
 
 // These get passed to src/main/java/resources/fabric.mod.json
 processResources {
+	inputs.property("mod_id", mod_id)
+	inputs.property("mod_name", mod_name)
+	inputs.property("mod_version", mod_version)
+	inputs.property("loader_version", loader_version)
+	inputs.property("minecraft_version", minecraft_version)
+	inputs.property("malilib_version", malilib_version)
+
 	filesMatching("fabric.mod.json") {
-		def valueMap = [
-			"mod_id"			: project.mod_id,
-			"mod_name"			: project.mod_name,
-			"mod_version"		: project.mod_version,
-			"loader_version"	: project.loader_version,
-			"minecraft_version" : project.minecraft_version,
-			"malilib_version"	: project.malilib_version
-		]
-		expand valueMap
+		expand([
+			mod_id				: mod_id,
+			mod_name			: mod_name,
+			mod_version			: mod_version,
+			loader_version		: loader_version,
+			minecraft_version	: minecraft_version,
+			malilib_version		: malilib_version
+		])
 	}
 }
 
