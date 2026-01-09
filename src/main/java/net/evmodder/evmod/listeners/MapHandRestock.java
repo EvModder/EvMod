@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import com.nimbusds.oauth2.sdk.util.StringUtils;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapRelationUtils;
@@ -77,7 +76,7 @@ public final class MapHandRestock{
 			//pos2s = posStrs.stream();
 			return new PosData2D(isSideways, null, null);
 		}
-		Comparator<String> c = (a, b) -> StringUtils.isNumeric(a) && StringUtils.isNumeric(b) ? Integer.parseInt(a)-Integer.parseInt(b) : a.compareTo(b);
+		Comparator<String> c = (a, b) -> a.matches("-?[0-9]+") && b.matches("-?[0-9]+") ? Integer.parseInt(a)-Integer.parseInt(b) : a.compareTo(b);
 		String min = pos2s.stream().min(c).get();
 		String max = pos2s.stream().max(c).get();
 		if(min.length() == 1 && !min.matches("[A01TL]")) min = null;
@@ -411,9 +410,9 @@ public final class MapHandRestock{
 	}
 
 	private boolean isInNearbyItemFrame(final ItemStack stack, final PlayerEntity player, final int dist){
-		return !player.getWorld().getEntitiesByType(
+		return !player.getEntityWorld().getEntitiesByType(
 				TypeFilter.instanceOf(ItemFrameEntity.class),
-				Box.of(player.getPos(), dist, dist, dist),
+				Box.of(player.getEntityPos(), dist, dist, dist),
 				e -> ItemStack.areEqual(e.getHeldItemStack(), stack)).isEmpty();
 	}
 
@@ -454,20 +453,20 @@ public final class MapHandRestock{
 		if(Configs.Generic.PLACEMENT_HELPER_MAPART_USE_NAMES.getBooleanValue() && restockFromSlot == -1){
 			if(prevName != null){
 				Main.LOGGER.info("MapRestock: finding next map by name: "+prevName);
-				restockFromSlot = getNextSlotByName(slotsWithBundleSub, prevSlot, player.getWorld());
+				restockFromSlot = getNextSlotByName(slotsWithBundleSub, prevSlot, player.getEntityWorld());
 			}
 		}
-		final MapState state = FilledMapItem.getMapState(mapInHand, player.getWorld());
+		final MapState state = FilledMapItem.getMapState(mapInHand, player.getEntityWorld());
 
 		if(Configs.Generic.PLACEMENT_HELPER_MAPART_USE_IMAGE.getBooleanValue() && restockFromSlot == -1 && !posData2dForName.containsKey(prevName)){
 			if(state != null){
 				Main.LOGGER.info("MapRestock: finding next map by img-edge");
-				restockFromSlot = getNextSlotByImage(/*slotsWithBundleSub*/slots, prevSlot, player.getWorld());
+				restockFromSlot = getNextSlotByImage(/*slotsWithBundleSub*/slots, prevSlot, player.getEntityWorld());
 			}
 		}
 		if(JUST_PICK_A_MAP && restockFromSlot == -1){
 			Main.LOGGER.info("MapRestock: finding next map by ANY (count->locked->named->related)");
-			restockFromSlot = getNextSlotFirstMap(/*slotsWithBundleSub*/slots, prevSlot, player.getWorld());
+			restockFromSlot = getNextSlotFirstMap(/*slotsWithBundleSub*/slots, prevSlot, player.getEntityWorld());
 		}
 		if(restockFromSlot == -1){Main.LOGGER.info("MapRestock: unable to find next map"); return;}
 

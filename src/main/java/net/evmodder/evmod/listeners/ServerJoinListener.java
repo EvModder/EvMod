@@ -55,7 +55,7 @@ public class ServerJoinListener{
 				}
 			}
 			if(Configs.Database.SHARE_JOIN_QUIT.getBooleanValue() && rms != null){
-				final String sessionName = client.getSession().getUsername(), playerName = client.player.getGameProfile().getName();
+				final String sessionName = client.getSession().getUsername(), playerName = client.player.getGameProfile().name();
 				if(!sessionName.equals(playerName)); // TODO: separate type of packet? Proxy-joined EvDoc->EvModder
 				else rms.sendBotMessage(Command.DB_PLAYER_STORE_JOIN_TS, /*udp=*/true, 5000, MiscUtils.getCurrentServerAndPlayerData(), /*recv=*/null);
 			}
@@ -72,7 +72,7 @@ public class ServerJoinListener{
 
 				//Main.LOGGER.info("Server join detected, checking if stuff is loaded");
 				if(!client.isFinishedLoading() || client.player == null || client.world == null || client.getNetworkHandler() == null || !client.player.isAlive()
-					|| !client.player.isLoaded() || client.player.isSpectator() || client.player.isRegionUnloaded() || client.player.isInvisible()) return;
+					|| !client.player.isRegionUnloaded() || client.player.isSpectator() || client.player.isRegionUnloaded() || client.player.isInvisible()) return;
 				if(loadedAt == 0){
 					loadedAt = System.currentTimeMillis();
 					if(WAIT_FOR_MOVEMENT){loadedAtX = client.player.getX(); loadedAtZ = client.player.getZ();}

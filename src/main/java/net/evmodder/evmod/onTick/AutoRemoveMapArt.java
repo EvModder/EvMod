@@ -63,11 +63,11 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 					Main.LOGGER.info("AutoRemoveMapArt: currIfe and lastIfe are not facing the same dir");
 					disableAndReset(); return false;
 				}
-				if(ife.getWorld() != lastIfe.getWorld()){
+				if(ife.getEntityWorld() != lastIfe.getEntityWorld()){
 					Main.LOGGER.info("AutoRemoveMapArt: currIfe and lastIfe are not in the same world!");
 					disableAndReset(); return false;
 				}
-				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(ife.getHeldItemStack(), lastStack), ife.getWorld());
+				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(ife.getHeldItemStack(), lastStack), ife.getEntityWorld());
 				if(data.slots().size() != 2){ // TODO: support maps w/o custom name (related by edge detection)
 					Main.LOGGER.info("AutoRemoveMapArt: currIfe and lastIfe are not related");
 					disableAndReset(); return false;
@@ -78,7 +78,7 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 
 			// Update autoremover settings
 			dir = ife.getFacing();
-			world = ife.getWorld();
+			world = ife.getEntityWorld();
 			switch(dir){
 				case UP: case DOWN: constAxis = ife.getBlockY(); break;
 				case EAST: case WEST: constAxis = ife.getBlockX(); break;
@@ -90,7 +90,7 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 			lastStack = ife.getHeldItemStack();
 			Predicate<ItemFrameEntity> filter = oIfe -> oIfe.getFacing() == dir && distFromPlane(oIfe.getBlockPos()) == 0
 					&& oIfe.getHeldItemStack().getItem() == Items.FILLED_MAP && isRelated(oIfe.getHeldItemStack());
-			if(ife.getWorld().getEntitiesByClass(ItemFrameEntity.class, box, filter).isEmpty()){
+			if(ife.getEntityWorld().getEntitiesByClass(ItemFrameEntity.class, box, filter).isEmpty()){
 				Main.LOGGER.info("AutoRemoveMapArt: appears there are no remaining (related) maps to remove");
 				disableAndReset(); return false;
 			}
@@ -129,7 +129,7 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 				&& ife.getHeldItemStack().getItem() == Items.FILLED_MAP
 				&& ife.squaredDistanceTo(player.getEyePos()) <= MAX_REACH*MAX_REACH
 				&& isRelated(ife.getHeldItemStack());
-		List<ItemFrameEntity> ifes = player.getWorld().getEntitiesByClass(ItemFrameEntity.class, box, filter);
+		List<ItemFrameEntity> ifes = player.getEntityWorld().getEntitiesByClass(ItemFrameEntity.class, box, filter);
 		if(ifes.isEmpty()){
 //			Main.LOGGER.warn("AutoPlaceMapArt: no nearby iframes");
 			return null;

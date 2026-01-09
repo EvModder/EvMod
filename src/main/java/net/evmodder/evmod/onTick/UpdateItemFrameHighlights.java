@@ -56,7 +56,7 @@ public class UpdateItemFrameHighlights{
 		boolean anyMapGroupUpdate = false;
 		for(ItemFrameEntity ife : ifes){
 			final ItemStack stack = ife.getHeldItemStack();
-			final MapState state = stack == null || stack.isEmpty() ? null : FilledMapItem.getMapState(stack, ife.getWorld());
+			final MapState state = stack == null || stack.isEmpty() ? null : FilledMapItem.getMapState(stack, ife.getEntityWorld());
 			final UUID colorsId = state == null ? null : MapGroupUtils.getIdForMapState(state);
 			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal());
 			final UUID oldColorsIdForXYZD = colorsId != null ? hangLocsReverse.put(xyzd, colorsId) : hangLocsReverse.remove(xyzd);
@@ -84,7 +84,7 @@ public class UpdateItemFrameHighlights{
 			if(colorsId == null) continue;
 
 			final ItemStack stack = ife.getHeldItemStack();
-			final MapState state = FilledMapItem.getMapState(ife.getHeldItemStack(), ife.getWorld());
+			final MapState state = FilledMapItem.getMapState(ife.getHeldItemStack(), ife.getEntityWorld());
 			if(state == null) continue; // Can happen in creative worlds!
 
 			final Highlight highlight;
@@ -122,7 +122,7 @@ public class UpdateItemFrameHighlights{
 		List<ItemFrameEntity> ifes = client.world.getEntitiesByClass(ItemFrameEntity.class, client.player.getBoundingBox().expand(200, 200, 200), _0->true);
 
 		final double TRACKING_DIST_SQ = Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ;
-		final Vec3d playerPos = /*TRACKING_DIST_SQ == 0 ? null : */client.player.getPos();
+		final Vec3d playerPos = /*TRACKING_DIST_SQ == 0 ? null : */client.player.getEntityPos();
 		boolean anyMapGroupUpdate = false;
 		if(TRACKING_DIST_SQ > 0 && (ifes.size() != numLoadedIfes || TRACKING_DIST_SQ < 32)){
 			// Untrack maps which have gone out of range for iFrameMapGroup (for isInIFrame, isMultiHung)

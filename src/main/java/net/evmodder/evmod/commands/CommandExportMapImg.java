@@ -341,9 +341,9 @@ public class CommandExportMapImg{
 	}
 
 	private List<ItemFrameEntity> getItemFramesWithMaps(ClientPlayerEntity player){
-		Box everythingBox = Box.of(player.getPos(), RENDER_DIST, RENDER_DIST, RENDER_DIST);
+		Box everythingBox = Box.of(player.getEntityPos(), RENDER_DIST, RENDER_DIST, RENDER_DIST);
 
-		return player.getWorld().getEntitiesByType(TypeFilter.instanceOf(ItemFrameEntity.class), everythingBox,
+		return player.getEntityWorld().getEntitiesByType(TypeFilter.instanceOf(ItemFrameEntity.class), everythingBox,
 				e -> e.getHeldItemStack().getItem() == Items.FILLED_MAP);
 	}
 
@@ -581,9 +581,9 @@ public class CommandExportMapImg{
 			List<ItemStack> mapItems = mapWall.stream().map(ife -> ife.getHeldItemStack()).collect(Collectors.toCollection(LinkedList::new));
 			while(!mapItems.isEmpty()){
 				final String name = mapItems.getFirst().getCustomName().getString();
-				final MapState state = FilledMapItem.getMapState(mapItems.getFirst(), player.getWorld());
+				final MapState state = FilledMapItem.getMapState(mapItems.getFirst(), player.getEntityWorld());
 				final Boolean locked = state == null ? null : state.locked;
-				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(mapItems, name, 1, locked, player.getWorld());
+				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(mapItems, name, 1, locked, player.getEntityWorld());
 				final String nameKey = getCleanedName(name, data);
 				if(!SHOW_ONLY_IF_HAS_AZ || nameKey.matches(".*[a-zA-Z].*")) cmdMapNames.put(nameKey, name);
 //				assert data.slots().size() > 0; // Can be size=0 for mismatched pos data

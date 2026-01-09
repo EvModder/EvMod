@@ -15,7 +15,6 @@ import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
@@ -115,7 +114,7 @@ public final class KeybindMapMove{
 		if(numInShulk == 0 && cantMergeIntoShulk > emptySlotsShulk){Main.LOGGER.warn("MapMove cancelled: Not enough empty slots in shulker"); return;}
 
 		final boolean moveToShulk = numInShulk == 0 || cantMergeIntoInv > emptySlotsInv || (numInInv == numInShulk && cantMergeIntoShulk == 0);
-		final boolean isShiftClick = Screen.hasShiftDown();
+		final boolean isShiftClick = false;//TODO: Screen.hasShiftDown();
 		final boolean selectiveMove = !isShiftClick && (moveToShulk
 				? (countsInInv.size() == 2 && cantMergeIntoShulk == 0)
 				: (countsInShulk.size() == 2 && smallerSlotsAtStart && (cantMergeIntoInv == 0 || numInInv == 0)));

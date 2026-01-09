@@ -178,7 +178,7 @@ public final class KeybindMapLoad{
 
 		if(hs instanceof InventoryScreen){loadMapArtFromBundles(); return;}
 		final DefaultedList<Slot> slots = hs.getScreenHandler().slots;
-		if(slots.stream().noneMatch(s -> isUnloadedMapArt(client.player.clientWorld, s.getStack()))){
+		if(slots.stream().noneMatch(s -> isUnloadedMapArt(client.player.getEntityWorld(), s.getStack()))){
 			Main.LOGGER.warn("MapLoad cancelled: none to load");
 			return;
 		}
@@ -192,7 +192,7 @@ public final class KeybindMapLoad{
 
 		int hbi = 0;
 		for(int i=0; i<slots.size(); ++i){
-			if(!isUnloadedMapArt(client.player.clientWorld, slots.get(i).getStack())) continue;
+			if(!isUnloadedMapArt(client.player.getEntityWorld(), slots.get(i).getStack())) continue;
 			if(!mapIdsToLoad.add(slots.get(i).getStack().get(DataComponentTypes.MAP_ID).id())) continue;
 			clicks.add(new InvAction(i, hbButtons[hbi], ActionType.HOTBAR_SWAP));
 			putBackSlots[hbi] = i;

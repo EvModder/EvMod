@@ -184,7 +184,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not facing the same dir");
 			disableAndReset(); return false;
 		}
-		if((world=currIfe.getWorld()) != lastIfe.getWorld()){
+		if((world=currIfe.getEntityWorld()) != lastIfe.getEntityWorld()){
 			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not in the same world!");
 			disableAndReset(); return false;
 		}
@@ -217,7 +217,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			MapRelationUtils.getAllNestedItems(player.getInventory().getMainStacks().stream()).filter(s -> s.getItem() == Items.FILLED_MAP).forEach(allMapItems::add);
 //			Main.LOGGER.info("AutoPlaceMapArt: all maps in inv: "+(allMapItems.size()-2));
 
-			currentData = MapRelationUtils.getRelatedMapsByName0(allMapItems, player.getWorld());
+			currentData = MapRelationUtils.getRelatedMapsByName0(allMapItems, player.getEntityWorld());
 			if(currentData.slots().size() <= 3){
 				Main.LOGGER.info("AutoPlaceMapArt: not enough remaining maps in inv to justify enabling AutoPlace");
 				disableAndReset(); return false;
@@ -480,7 +480,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 		Box box = player.getBoundingBox().expand(SCAN_DIST, SCAN_DIST, SCAN_DIST);
 		Predicate<ItemFrameEntity> filter = ife -> ifePosFilter(ife) && ife.getHeldItemStack().isEmpty();
-		List<ItemFrameEntity> ifes = player.getWorld().getEntitiesByClass(ItemFrameEntity.class, box, filter);
+		List<ItemFrameEntity> ifes = player.getEntityWorld().getEntitiesByClass(ItemFrameEntity.class, box, filter);
 		final boolean CAN_PLACE_IFRAMES = Configs.Generic.MAPART_AUTOPLACE_IFRAMES.getBooleanValue();
 		if(!CAN_PLACE_IFRAMES && ifes.isEmpty()){
 //			Main.LOGGER.warn("AutoPlaceMapArt: no nearby iframes");
@@ -645,7 +645,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 	private final void placeNearestMap(ClientPlayerEntity player){
 		if(!hasKnownLayout()) return;
-		if(player == null || player.getWorld() == null){
+		if(player == null || player.getEntityWorld() == null){
 			Main.LOGGER.info("AutoPlaceMapArt: player disconnected mid-op");
 			disableAndReset();
 			return;
@@ -683,7 +683,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		recentPlaceAttempts[attemptIdx] = 0;
 
 		{
-			Entity e = player.getWorld().getEntityById(recentPlaceAttempts[lastAttemptIdx]);
+			Entity e = player.getEntityWorld().getEntityById(recentPlaceAttempts[lastAttemptIdx]);
 			if(e != null && e instanceof ItemFrameEntity ife && ItemStack.areEqual(player.getMainHandStack(), ife.getHeldItemStack())){
 				final int waited = lastAttemptIdx < attemptIdx ? attemptIdx-lastAttemptIdx : recentPlaceAttempts.length+attemptIdx-lastAttemptIdx;
 				Main.LOGGER.info("AutoPlaceMapArt: waiting for current map to vanish from mainhand ("+waited+"ticks)");
@@ -695,7 +695,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 //			assert 0 <= attemptIdx < recentPlaceAttempts.length;
 			int i = (attemptIdx + 1) % recentPlaceAttempts.length;
 			while(i != attemptIdx){
-				Entity e = player.getWorld().getEntityById(recentPlaceAttempts[i]);
+				Entity e = player.getEntityWorld().getEntityById(recentPlaceAttempts[i]);
 				if(e != null && e instanceof ItemFrameEntity ife && ife.getHeldItemStack().isEmpty()){
 //					final int rem = attemptIdx < i ? i-attemptIdx : recentPlaceAttempts.length+i-attemptIdx;
 					final int waited = i < attemptIdx ? attemptIdx-i : recentPlaceAttempts.length+attemptIdx-i;

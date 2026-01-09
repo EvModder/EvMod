@@ -20,20 +20,20 @@ public class MojangProfileLookup{
 			ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
 			if(networkHandler != null){
 				PlayerListEntry entry = networkHandler.getPlayerListEntry(key);
-				if(entry != null) return entry.getProfile().getName();
+				if(entry != null) return entry.getProfile().name();
 			}
 			return null;
 		}
 		@Override protected String load(UUID key){
 			//Main.LOGGER.info("oof, web request D:");
-			ProfileResult pr = client.getSessionService().fetchProfile(key, /*requireSecure=*/false);
-			if(pr == null || pr.profile() == null || pr.profile().getName() == null){
+			ProfileResult pr = client.getApiServices().sessionService().fetchProfile(key, /*requireSecure=*/false);
+			if(pr == null || pr.profile() == null || pr.profile().name() == null){
 				Main.LOGGER.error("Unable to find name for player UUID: "+key.toString());
 				return NAME_404;
 			}
 			else{
-				uuidLookup.putIfAbsent(pr.profile().getName().toLowerCase(), key);
-				return pr.profile().getName();
+				uuidLookup.putIfAbsent(pr.profile().name().toLowerCase(), key);
+				return pr.profile().name();
 			}
 		}
 	};
@@ -43,7 +43,7 @@ public class MojangProfileLookup{
 			ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
 			if(networkHandler != null){
 				for(PlayerListEntry entry : networkHandler.getPlayerList()){
-					if(entry.getProfile().getName().equalsIgnoreCase(key)) return entry.getProfile().getId();
+					if(entry.getProfile().name().equalsIgnoreCase(key)) return entry.getProfile().id();
 				}
 			}
 			return null;

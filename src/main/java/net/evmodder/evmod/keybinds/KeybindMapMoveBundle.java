@@ -11,7 +11,6 @@ import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
@@ -62,7 +61,8 @@ public final class KeybindMapMoveBundle{
 		final boolean pickupHalf = slotsWithMapArt.length > 0
 				&& Arrays.stream(slotsWithMapArt).anyMatch(i -> slots[i].getCount() == 2)
 				&& Arrays.stream(slotsWithMapArt).allMatch(i -> slots[i].getCount() <= 2)
-				&& (!Screen.hasShiftDown() || Arrays.stream(slotsWithMapArt).noneMatch(i -> slots[i].getCount() == 1));
+				;
+//			TODO	&& (!Screen.hasShiftDown() || Arrays.stream(slotsWithMapArt).noneMatch(i -> slots[i].getCount() == 1));
 		final boolean anyArtToPickup = Arrays.stream(slotsWithMapArt).anyMatch(i -> slots[i].getCount() == (pickupHalf ? 2 : 1));
 
 //		Main.LOGGER.info("MapBundleOp: begin bundle search");

@@ -37,10 +37,10 @@ public abstract class MapClickMoveNeighbors{
 		final ItemStack[] slots = player.currentScreenHandler.slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		final String movedName = mapMoved.getCustomName().getLiteralString();
 		final MapIdComponent mapId = mapMoved.get(DataComponentTypes.MAP_ID);
-		final MapState state = mapId == null ? null : player.getWorld().getMapState(mapId);
+		final MapState state = mapId == null ? null : player.getEntityWorld().getMapState(mapId);
 		final Boolean locked = state == null ? null : state.locked;
 		//Main.LOGGER.info("MapMoveClick: locked="+locked);
-		final RelatedMapsData data =  MapRelationUtils.getRelatedMapsByName(Arrays.asList(slots), movedName, mapMoved.getCount(), locked, player.getWorld());
+		final RelatedMapsData data =  MapRelationUtils.getRelatedMapsByName(Arrays.asList(slots), movedName, mapMoved.getCount(), locked, player.getEntityWorld());
 		if(data.prefixLen() == -1){
 			Main.LOGGER.info("MapMoveClick: related-name maps not found");
 			return;
@@ -72,8 +72,8 @@ public abstract class MapClickMoveNeighbors{
 			if(state == null){++w; br += 1;}
 			else{
 				final byte[] colors = state.colors;
-				final byte[] tlColors = getColors(player.getWorld(), slots[tl]);
-				final byte[] brColors = getColors(player.getWorld(), slots[br]);
+				final byte[] tlColors = getColors(player.getEntityWorld(), slots[tl]);
+				final byte[] brColors = getColors(player.getEntityWorld(), slots[br]);
 				int scoreLeft = -2, scoreRight = -2, scoreTop = -2, scoreBottom = -2;
 				if(h == 1){
 					scoreLeft = (tl%9==0||destSlot%9+w>8) ? -2 : MapRelationUtils.adjacentEdgeScore(colors, tlColors, true);

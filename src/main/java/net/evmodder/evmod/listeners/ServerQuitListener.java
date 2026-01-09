@@ -18,7 +18,7 @@ public class ServerQuitListener{
 			}
 
 			if(Configs.Database.SHARE_JOIN_QUIT.getBooleanValue() && rms != null){
-				final String sessionName = client.getSession().getUsername(), playerName = client.player.getGameProfile().getName();
+				final String sessionName = client.getSession().getUsername(), playerName = client.player.getGameProfile().name();
 				if(!sessionName.equals(playerName)); // TODO: separate type of packet? Proxy-joined EvDoc->EvModder
 				else rms.sendBotMessage(Command.DB_PLAYER_STORE_QUIT_TS, /*udp=*/true, 5000, MiscUtils.getCurrentServerAndPlayerData(), /*recv=*/null);
 			}

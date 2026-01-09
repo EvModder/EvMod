@@ -29,10 +29,10 @@ public class UpdateInventoryHighlights{
 	}
 
 	public static final boolean setCurrentlyBeingPlacedMapArt(PlayerEntity player, ItemStack stack){
-		final MapState state = FilledMapItem.getMapState(stack, player.getWorld());
+		final MapState state = FilledMapItem.getMapState(stack, player.getEntityWorld());
 		if(state != null && stack.getCount() == 1 &&
 				IntStream.range(0, 41).noneMatch(i -> i != player.getInventory().getSelectedSlot() &&
-				FilledMapItem.getMapState(player.getInventory().getStack(i), player.getWorld()) == state))
+				FilledMapItem.getMapState(player.getInventory().getStack(i), player.getEntityWorld()) == state))
 		{
 //			currentlyBeingPlacedIntoItemFrameSlot = player.getInventory().selectedSlot;
 			currentlyBeingPlacedIntoItemFrame = stack.copy();
@@ -69,19 +69,19 @@ public class UpdateInventoryHighlights{
 		return false;
 	}
 	public static final void onTickStart(PlayerEntity player){
-		if(player == null || player.getWorld() == null || !player.isAlive()) return;
+		if(player == null || player.getEntityWorld() == null || !player.isAlive()) return;
 
 		//TODO: this might make more sense in its own onTick() listener
-		MapState state = FilledMapItem.getMapState(player.getMainHandStack(), player.getWorld());
+		MapState state = FilledMapItem.getMapState(player.getMainHandStack(), player.getEntityWorld());
 		if(state != null && !state.locked) MapGroupUtils.getIdForMapState(state, /*evictUnlocked*/true);
 
 //		int newInvHash = inventoryMapGroup.size() * nestedInventoryMapGroup.size();
 		inventoryMapGroup.clear();
 		nestedInventoryMapGroup.clear();
 		boolean mapPlaceStillOngoing = false;
-		for(int i=0; i<41; ++i) mapPlaceStillOngoing |= addMapStateIds(player.getInventory().getStack(i), player.getWorld());
+		for(int i=0; i<41; ++i) mapPlaceStillOngoing |= addMapStateIds(player.getInventory().getStack(i), player.getEntityWorld());
 		if(player.currentScreenHandler != null){
-			mapPlaceStillOngoing |= addMapStateIds(player.currentScreenHandler.getCursorStack(), player.getWorld());
+			mapPlaceStillOngoing |= addMapStateIds(player.currentScreenHandler.getCursorStack(), player.getEntityWorld());
 		}
 
 		if(!mapPlaceStillOngoing){

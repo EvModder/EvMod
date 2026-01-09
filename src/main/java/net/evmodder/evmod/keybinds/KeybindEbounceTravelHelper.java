@@ -156,9 +156,9 @@ public final class KeybindEbounceTravelHelper{
 //		Block block = ((BlockItem)client.player.getStackInHand(hand).getItem()).getBlock();
 //		if(!useBlock.isInstance(block)) return false;
 
-		Vec3d vec = client.player.getPos().add(client.player.getVelocity()).add(0, -0.75, 0);
+		Vec3d vec = client.player.getEntityPos().add(client.player.getVelocity()).add(0, -0.75, 0);
 
-		Vec3d pos = client.player.getPos();
+		Vec3d pos = client.player.getEntityPos();
 		if(aheadDist != 0 && !client.world.getBlockState(client.player.getBlockPos().down())
 				.getCollisionShape(client.world, client.player.getBlockPos()).isEmpty()) {
 			Vec3d dir = Vec3d.fromPolar(0, client.player.getYaw()).multiply(aheadDist, 0, aheadDist);
@@ -175,7 +175,7 @@ public final class KeybindEbounceTravelHelper{
 		BlockPos targetBlock = bp.toImmutable();
 
 		if(getPlaceSide(bp) == null){
-			pos = client.player.getPos();
+			pos = client.player.getEntityPos();
 			pos = pos.add(0, -0.98f, 0);
 			pos.add(client.player.getVelocity());
 
@@ -209,7 +209,7 @@ public final class KeybindEbounceTravelHelper{
 
 	private Vec3d getEyesPos(){
 		float eyeHeight = client.player.getEyeHeight(client.player.getPose());
-		return client.player.getPos().add(0, eyeHeight, 0);
+		return client.player.getEntityPos().add(0, eyeHeight, 0);
 	}
 	private Direction getBlockBreakingSide(BlockPos bp){
 		Vec3d eyes = getEyesPos();
@@ -299,7 +299,7 @@ public final class KeybindEbounceTravelHelper{
 		if(client.player.lastX != client.player.getX() || client.player.lastZ != client.player.getZ()) return false;
 
 		ArrayList<BlockPos> mineSpots = new ArrayList<>();
-		Vec3d pos = client.player.getPos();
+		Vec3d pos = client.player.getEntityPos();
 		if(pos.getY() > targetY) pos = new Vec3d(pos.x, targetY, pos.z);
 		if(dx != 0){
 			mineSpots.add(bp.add(dx, 0, 0));

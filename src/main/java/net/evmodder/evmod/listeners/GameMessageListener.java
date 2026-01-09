@@ -20,7 +20,7 @@ public class GameMessageListener{
 		MinecraftClient client = MinecraftClient.getInstance();
 		PlayerListEntry ple = client.getNetworkHandler().getPlayerListEntry(name);
 		if(ple == null){Main.LOGGER.error("Unable to find PlayerListEntry for player name: "+name); return;}
-		final UUID ignoredUUID = ple.getProfile().getId();
+		final UUID ignoredUUID = ple.getProfile().id();
 
 		Main.LOGGER.info("Sending "+(ignored?"":"un")+"ignore packet to RMS");
 		rms.sendBotMessage(

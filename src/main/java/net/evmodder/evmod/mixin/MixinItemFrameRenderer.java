@@ -46,7 +46,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 
 		final ItemStack stack = itemFrameEntity.getHeldItemStack();
 		if(stack.isEmpty()) return;
-		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
+		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getEntityWorld());
 		if(state == null) return;
 		Highlight hl = UpdateItemFrameHighlights.iFrameGetHighlight(itemFrameEntity.getId());
 		if(hl == null) return;
@@ -88,7 +88,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(!Configs.Visuals.MAP_HIGHLIGHT_IFRAME.getBooleanValue()) return; // Feature is disabled
 		final ItemStack stack = itemFrameEntity.getHeldItemStack();
 		if(stack == null || stack.isEmpty());
-		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
+		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getEntityWorld());
 		if(state == null) return;
 		Highlight hl = UpdateItemFrameHighlights.iFrameGetHighlight(itemFrameEntity.getId());
 		if(hl == null) return;

@@ -41,6 +41,6 @@ public class WhisperPlaySound{
 		if(sound == null || category == null || volume == 0) return;
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(Configs.Generic.WHISPER_PLAY_SOUND_UNFOCUSED_ONLY.getBooleanValue() && client.isWindowFocused()) return;
-		client.player.playSoundToPlayer(sound, category, volume, pitch);
+		client.player.playSound(sound, /*TODO:category,*/ volume, pitch);
 	}
 }

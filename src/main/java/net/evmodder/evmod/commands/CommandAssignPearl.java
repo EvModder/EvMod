@@ -69,7 +69,7 @@ public class CommandAssignPearl{
 	private int assignPearl(CommandContext<FabricClientCommandSource> ctx){
 		final Entity player = ctx.getSource().getPlayer();
 		final Box box = player.getBoundingBox().expand(8, 6, 8);
-		List<EnderPearlEntity> epearls =  player.getWorld().getEntitiesByType(EntityType.ENDER_PEARL, box, e->{
+		List<EnderPearlEntity> epearls =  player.getEntityWorld().getEntitiesByType(EntityType.ENDER_PEARL, box, e->{
 			return MiscUtils.isLookingAt(e, player) && !epearlLookup.isLoadedOwnerName(epearlLookup.getOwnerName(e));
 		});
 		if(epearls.isEmpty()){
@@ -92,7 +92,7 @@ public class CommandAssignPearl{
 				ctx.getSource().sendError(Text.literal("Epearl disappeared while fetching player UUID!"));
 				return;
 			}
-			((AccessorProjectileEntity)epearl).setOwnerUUID(new LazyEntityReference<Entity>(uuid));
+			((AccessorProjectileEntity)epearl).setOwnerUUID(LazyEntityReference.ofUUID(uuid));
 			epearlLookup.getOwnerName(epearl);
 			ctx.getSource().sendFeedback(Text.literal("Assigned owner for epearl: "+epearl.getUuidAsString()+" <- "+name));
 		});

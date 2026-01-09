@@ -33,10 +33,10 @@ import fi.dy.masa.malilib.gui.interfaces.IKeybindConfigGui;
 import fi.dy.masa.malilib.gui.widgets.*;
 import fi.dy.masa.malilib.gui.widgets.WidgetConfigOption.ListenerSliderToggle;
 import fi.dy.masa.malilib.hotkeys.*;
+import fi.dy.masa.malilib.render.GuiContext;
 import net.evmodder.evmod.ConfigGui;
 import net.evmodder.evmod.config.ConfigStringHotkeyed;
 import net.evmodder.evmod.config.ConfigYawPitchHotkeyed;
-import net.minecraft.client.gui.DrawContext;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -103,8 +103,8 @@ public abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<Gui
 			{
 				addTextField(textFieldI, changeListener);
 			}
-			@Override public void render(DrawContext drawContext, int mouseX, int mouseY, boolean selected){
-				textFieldI.render(drawContext, mouseX, mouseY, 0f);
+			@Override public void render(GuiContext ctx, int mouseX, int mouseY, boolean selected){
+				textFieldI.render(ctx, mouseX, mouseY, 0f);
 			}
 
 			@Override public boolean wasConfigModified(){

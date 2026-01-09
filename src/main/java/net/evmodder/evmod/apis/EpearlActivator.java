@@ -79,15 +79,15 @@ public class EpearlActivator{
 	}
 
 	private BlockPos findNearestPearlWithOwnerName(MinecraftClient client, String name){
-		final Vec3d playerPos = client.player.getPos();
+		final Vec3d playerPos = client.player.getEyePos();
 		double closestDistSq = Double.MAX_VALUE;
 		Vec3d closestPos = null;
 		for(EnderPearlEntity pearl : client.world.getEntitiesByClass(EnderPearlEntity.class,
 				client.player.getBoundingBox().expand(REACH, REACH, REACH),
 				pearl->name.equalsIgnoreCase(epearlLookup.getOwnerName(pearl)))
 		){
-			final double distSq = pearl.getPos().squaredDistanceTo(playerPos);
-			if(distSq < closestDistSq){closestDistSq = distSq; closestPos = pearl.getPos();}
+			final double distSq = pearl.getEntityPos().squaredDistanceTo(playerPos);
+			if(distSq < closestDistSq){closestDistSq = distSq; closestPos = pearl.getEntityPos();}
 		}
 		return BlockPos.ofFloored(closestPos);
 	}
