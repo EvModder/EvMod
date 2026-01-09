@@ -3,7 +3,13 @@ plugins {
 	id 'maven-publish'
 }
 
-//loom { accessWidenerPath = file("src/main/resources/accesswidener") }
+loom {
+//	accessWidenerPath = file("src/main/resources/accesswidener")
+	runs {
+		remove server
+		remove client
+	}
+}
 
 base {
 	group = project.maven_group

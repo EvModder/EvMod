@@ -103,7 +103,7 @@ public abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<Gui
 			{
 				addTextField(textFieldI, changeListener);
 			}
-			@Override public void render(int mouseX, int mouseY, boolean selected, DrawContext drawContext){
+			@Override public void render(DrawContext drawContext, int mouseX, int mouseY, boolean selected){
 				textFieldI.render(drawContext, mouseX, mouseY, 0f);
 			}
 

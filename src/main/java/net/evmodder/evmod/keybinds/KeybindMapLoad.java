@@ -218,7 +218,7 @@ public final class KeybindMapLoad{
 			if(ClickUtils.calcAvailableClicks() < CLICK_BATCH_SIZE) return false; // Wait for clicks
 
 //			if(isUnloadedMapArt(client.world, client.player.getInventory().main.get(27+hbButtons[clickIndex % hbButtons.length]))) return false;
-			if(Arrays.stream(hbButtons).anyMatch(i -> isUnloadedMapArt(client.world, client.player.getInventory().main.get(27+i)))){
+			if(Arrays.stream(hbButtons).anyMatch(i -> isUnloadedMapArt(client.world, client.player.getInventory().getMainStacks().get(27+i)))){
 //				Main.LOGGER.info("MapLoad: still waiting for map state to load from hotbar slot: "+c.button());
 				if(stateLoadWaitStart == 0) stateLoadWaitStart = System.currentTimeMillis();
 				if(System.currentTimeMillis() - stateLoadWaitStart < STATE_LOAD_TIMEOUT) return false;

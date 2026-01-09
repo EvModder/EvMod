@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.screen.slot.SlotActionType;
@@ -36,7 +37,7 @@ public final class KeybindAIETravelHelper{
 				return;
 			}
 
-			ItemStack chestStack = client.player.getInventory().getArmorStack(2);
+			ItemStack chestStack = client.player.getEquippedStack(EquipmentSlot.CHEST);
 //			//Identifier chestItemId = Registries.ITEM.getId(chestStack.getItem()); // Not really needed thanks to 
 //			if(chestStack.getItem() != Items.ELYTRA){
 //				client.player.sendMessage(Text.literal("Not wearing elytra"), true);
@@ -63,9 +64,10 @@ public final class KeybindAIETravelHelper{
 					}
 					stoppedFlyingTs = 0;
 				}
-				Main.LOGGER.warn("Disconnecting player: "+(goingDownInEnd?"FALLING!":"no longer flying")+", y="+y+", dur="+dur);
+				String msg = (goingDownInEnd?"FALLING!":"no longer flying")+", y="+y+", dur="+dur;
+				Main.LOGGER.warn("Disconnecting player: "+msg);
 				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
-				client.world.disconnect();
+				client.world.disconnect(Text.of(msg));
 //				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false); // Will be done automatically once client.world == null
 			}
 
@@ -99,7 +101,7 @@ public final class KeybindAIETravelHelper{
 				}
 				Main.LOGGER.warn("Disconnecting player: y="+y+", dur="+dur);
 				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
-				client.world.disconnect();
+				client.world.disconnect(Text.of("y="+y+", dur="+dur));
 //				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false); // Will be done automatically once client.world == null
 			}
 			lastPitch = client.player.getPitch();

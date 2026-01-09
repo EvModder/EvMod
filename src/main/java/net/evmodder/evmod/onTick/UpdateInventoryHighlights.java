@@ -31,7 +31,7 @@ public class UpdateInventoryHighlights{
 	public static final boolean setCurrentlyBeingPlacedMapArt(PlayerEntity player, ItemStack stack){
 		final MapState state = FilledMapItem.getMapState(stack, player.getWorld());
 		if(state != null && stack.getCount() == 1 &&
-				IntStream.range(0, 41).noneMatch(i -> i != player.getInventory().selectedSlot &&
+				IntStream.range(0, 41).noneMatch(i -> i != player.getInventory().getSelectedSlot() &&
 				FilledMapItem.getMapState(player.getInventory().getStack(i), player.getWorld()) == state))
 		{
 //			currentlyBeingPlacedIntoItemFrameSlot = player.getInventory().selectedSlot;

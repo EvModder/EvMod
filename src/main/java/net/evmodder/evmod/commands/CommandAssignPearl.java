@@ -9,6 +9,7 @@ import net.evmodder.evmod.apis.MojangProfileLookup;
 import net.evmodder.evmod.mixin.AccessorProjectileEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LazyEntityReference;
 import net.minecraft.entity.projectile.thrown.EnderPearlEntity;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -91,7 +92,7 @@ public class CommandAssignPearl{
 				ctx.getSource().sendError(Text.literal("Epearl disappeared while fetching player UUID!"));
 				return;
 			}
-			((AccessorProjectileEntity)epearl).setOwnerUUID(uuid);
+			((AccessorProjectileEntity)epearl).setOwnerUUID(new LazyEntityReference<Entity>(uuid));
 			epearlLookup.getOwnerName(epearl);
 			ctx.getSource().sendFeedback(Text.literal("Assigned owner for epearl: "+epearl.getUuidAsString()+" <- "+name));
 		});

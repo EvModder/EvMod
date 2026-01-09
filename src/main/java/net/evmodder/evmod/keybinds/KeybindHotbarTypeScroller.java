@@ -50,8 +50,8 @@ public final class KeybindHotbarTypeScroller{
 	public void scrollHotbarSlot(boolean upOrDown){
 		final MinecraftClient client = MinecraftClient.getInstance();
 		PlayerInventory inventory = client.player.getInventory();
-		if(!PlayerInventory.isValidHotbarIndex(inventory.selectedSlot)) return;
-		ItemStack is = inventory.getMainHandStack();
+		if(!PlayerInventory.isValidHotbarIndex(inventory.getSelectedSlot())) return;
+		ItemStack is = client.player.getMainHandStack();
 		Identifier id = Registries.ITEM.getId(is.getItem());
 		if(!ItemStack.areItemsAndComponentsEqual(is, new ItemStack(Registries.ITEM.get(id)))) return;  // don't scroll if has custom NBT
 		String path = id.getPath();
@@ -69,15 +69,15 @@ public final class KeybindHotbarTypeScroller{
 		i = upOrDown ? (i == colors.length-1 ? 0 : i+1) : (i == 0 ? colors.length-1 : i-1);
 		id = Identifier.of(id.getNamespace(), id.getPath().replace(colors[original_i], colors[i]));
 		if(client.player.isInCreativeMode()){
-			inventory.setStack(inventory.selectedSlot, new ItemStack(Registries.ITEM.get(id), is.getCount()));//TODO: doesn't seem to work on servers (visually yes, but not when u place the block)
+			inventory.setStack(inventory.getSelectedSlot(), new ItemStack(Registries.ITEM.get(id), is.getCount()));//TODO: doesn't seem to work on servers (visually yes, but not when u place the block)
 			//client.interactionManager.clickCreativeStack(new ItemStack(Registries.ITEM.get(id)), inventory.selectedSlot);//TODO: this doesn't work either :sob:
 			//inventory.markDirty();
 		}
 		else{// survival mode
 			do{
 				int j = 0;
-				for(; j<inventory.main.size(); ++j){
-					ItemStack jis = inventory.main.get(j);
+				for(; j<inventory.getMainStacks().size(); ++j){
+					ItemStack jis = inventory.getMainStacks().get(j);
 					if(jis.isEmpty()) continue;
 					Identifier jid = Registries.ITEM.getId(jis.getItem());
 					if(!jid.equals(id)) continue;
@@ -85,13 +85,13 @@ public final class KeybindHotbarTypeScroller{
 					//found an item to use
 					break;
 				}
-				if(j != inventory.main.size()){
+				if(j != inventory.getMainStacks().size()){
 					//use the item (change selected hotbar slot or swap with main inv)
-					if(PlayerInventory.isValidHotbarIndex(j)) inventory.selectedSlot = j;
+					if(PlayerInventory.isValidHotbarIndex(j)) inventory.setSelectedSlot(j);
 					else{
-						inventory.main.set(inventory.selectedSlot, inventory.main.get(j));
-						inventory.main.set(j, is);
-						client.interactionManager.clickSlot(/*client.player.playerScreenHandler.syncId*/0, j, inventory.selectedSlot, SlotActionType.SWAP, client.player);
+						inventory.getMainStacks().set(inventory.getSelectedSlot(), inventory.getMainStacks().get(j));
+						inventory.getMainStacks().set(j, is);
+						client.interactionManager.clickSlot(/*client.player.playerScreenHandler.syncId*/0, j, inventory.getSelectedSlot(), SlotActionType.SWAP, client.player);
 					}
 					//Main.LOGGER.error("did swap");
 					break;

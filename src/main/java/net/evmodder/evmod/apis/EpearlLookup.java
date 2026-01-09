@@ -361,7 +361,7 @@ public final class EpearlLookup{
 
 	public String getOwnerName(Entity epearl){
 		//if(epearl.getType() != EntityType.ENDER_PEARL) throw IllegalArgumentException();
-		UUID ownerUUID = ((AccessorProjectileEntity)epearl).getOwnerUUID();
+		UUID ownerUUID = ((AccessorProjectileEntity)epearl).getOwner().getUuid();
 		String ownerName = getDynamicUsername(ownerUUID, epearl.getUuid());
 		final boolean USE_DB_UUID = Configs.Database.EPEARL_OWNERS_BY_UUID.getBooleanValue();
 		final boolean USE_DB_XZ= Configs.Database.EPEARL_OWNERS_BY_XZ.getBooleanValue();

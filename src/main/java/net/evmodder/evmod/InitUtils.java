@@ -8,6 +8,7 @@ import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerModelPart;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
@@ -84,7 +85,7 @@ final class InitUtils{
 		final MinecraftClient client = MinecraftClient.getInstance();
 		if(Configs.Hotkeys.SYNC_CAPE_WITH_ELYTRA.getBooleanValue() && part == PlayerModelPart.CAPE
 				&& client.player != null && client.options.isPlayerModelPartEnabled(part)){
-			ItemStack chestItem = client.player.getInventory().getArmorStack(2);
+			ItemStack chestItem = client.player.getEquippedStack(EquipmentSlot.CHEST);
 			// Don't disable cape if we just switched to an elytra
 			if(Registries.ITEM.getId(chestItem.getItem()).getPath().equals("elytra")) return;
 		}

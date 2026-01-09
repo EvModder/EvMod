@@ -35,10 +35,10 @@ public final class NewMapNotifier{
 				MinecraftClient.getInstance().player.sendMessage(
 						Text.literal("New mapart: "+pos)
 						// unicode for symbol ⎘
-						.append(Text.literal(" \u2398 ").styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, pos))))
+						.append(Text.literal(" \u2398 ").styled(style -> style.withClickEvent(new ClickEvent.CopyToClipboard(pos))))
 						// Hover shows map itemname
 						.withColor(color)
-						.styled(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, ife.getHeldItemStack().getName())))
+						.styled(style -> style.withHoverEvent(new HoverEvent.ShowText(ife.getHeldItemStack().getName())))
 						, /*actionbar=*/false);
 			}
 		}

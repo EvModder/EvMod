@@ -278,7 +278,7 @@ public class CommandExportMapImg{
 
 		final Text text = Text.literal("Saved mapwall to ").withColor(16755200).append(
 				Text.literal(relFilePath).withColor(43520).formatted(Formatting.UNDERLINE)
-				.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, imgFile.getAbsolutePath())))
+				.styled(style -> style.withClickEvent(new ClickEvent.OpenFile(imgFile.getAbsolutePath())))
 		);
 		source.sendFeedback(text);
 	}
@@ -349,19 +349,19 @@ public class CommandExportMapImg{
 
 	private int runCommandInInventory(final CommandContext<FabricClientCommandSource> ctx){
 		final int numSaved = genImgForMapsInInv(ctx.getSource(),
-				ctx.getSource().getPlayer().getInventory().main,
+				ctx.getSource().getPlayer().getInventory().getMainStacks(),
 				/*name=*/StringUtils.translate("container.inventory"), /*width=*/9, /*combine=*/false);
 		if(numSaved == 1){
 			final String absolutePath = new File(lastRelPath).getAbsolutePath();
 			ctx.getSource().sendFeedback(Text.literal("Saved map shulk img to ").withColor(16755200).append(
 					Text.literal(lastRelPath).withColor(43520).formatted(Formatting.UNDERLINE)
-					.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, absolutePath)))
+					.styled(style -> style.withClickEvent(new ClickEvent.OpenFile(absolutePath)))
 			));
 		}
 		if(numSaved > 1){
 			ctx.getSource().sendFeedback(Text.literal("Saved "+numSaved+" map shulk imgs to ").withColor(16755200).append(
 					Text.literal(FileIO.DIR+MAP_EXPORT_DIR).withColor(43520).formatted(Formatting.UNDERLINE)
-					.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, new File(FileIO.DIR+MAP_EXPORT_DIR).getAbsolutePath())))
+					.styled(style -> style.withClickEvent(new ClickEvent.OpenFile(new File(FileIO.DIR+MAP_EXPORT_DIR).getAbsolutePath())))
 			));
 		}
 		return numSaved == 0 ? 1 : 0;

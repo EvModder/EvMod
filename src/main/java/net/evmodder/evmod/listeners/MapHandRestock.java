@@ -442,7 +442,7 @@ public final class MapHandRestock{
 
 	private boolean waitingForRestock;
 	private final void tryToStockNextMap(PlayerEntity player){
-		final int prevSlot = player.getInventory().selectedSlot+36;
+		final int prevSlot = player.getInventory().getSelectedSlot()+36;
 		final ItemStack mapInHand = player.getMainHandStack();
 		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).toList();
 		assert slots.get(prevSlot) == mapInHand;
@@ -498,18 +498,18 @@ public final class MapHandRestock{
 //					clicks.add(new ClickEvent(36+player.getInventory().selectedSlot, 1, SlotActionType.PICKUP)); // Place in active hb slot
 //					clicks.add(new ClickEvent(restockFromSlotFinal, 0, SlotActionType.PICKUP)); // Putback bundle
 					clicks.add(new InvAction(restockFromSlotFinal, 1, ActionType.CLICK)); // Take last from bundle
-					clicks.add(new InvAction(36+player.getInventory().selectedSlot, 0, ActionType.CLICK)); // Place in active hb slot
+					clicks.add(new InvAction(36+player.getInventory().getSelectedSlot(), 0, ActionType.CLICK)); // Place in active hb slot
 					ClickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("HandRestockFromBundle: DONE"), clicks);
-					Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlotFinal+" -> hb="+player.getInventory().selectedSlot);
+					Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlotFinal+" -> hb="+player.getInventory().getSelectedSlot());
 				}
 				else if(isHotbarSlot){
 //					player.networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(restockFromSlotFinal - 36));
 //					player.getInventory().selectedSlot = restockFromSlotFinal - 36;
 					player.getInventory().setSelectedSlot(restockFromSlotFinal - 36);
-					Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().selectedSlot);
+					Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().getSelectedSlot());
 				}
 				else{
-					client.interactionManager.clickSlot(0, restockFromSlotFinal, player.getInventory().selectedSlot, SlotActionType.SWAP, player);
+					client.interactionManager.clickSlot(0, restockFromSlotFinal, player.getInventory().getSelectedSlot(), SlotActionType.SWAP, player);
 					Main.LOGGER.info("MapRestock: Swapped inv.selectedSlot to nextMap: s="+restockFromSlotFinal);
 				}
 				waitingForRestock = false;
