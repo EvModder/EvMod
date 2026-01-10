@@ -158,91 +158,100 @@ public final class ClickUtils{
 	private static int estimatedMsLeft;
 	public static boolean hasOngoingClicks(){return clickOpOngoing;}
 	public static void executeClicks(Function<InvAction, Boolean> canProceed, Runnable onComplete, Queue<InvAction> clicks){
-		final MinecraftClient client = MinecraftClient.getInstance();
-		if(clickOpOngoing){
-			Main.LOGGER.warn("executeClicks() already has an ongoing operation");
-			client.player.sendMessage(Text.literal("Clicks cancelled: current operation needs to finish before starting a new one"), true);
-			onComplete.run();
-			return;
-		}
-		final int syncId = client.player.currentScreenHandler.syncId;
 		if(clicks.isEmpty()){
 			Main.LOGGER.warn("executeClicks() called with an empty ClickEvent list");
 			onComplete.run();
 			return;
+		}
+
+		final MinecraftClient client = MinecraftClient.getInstance();
+		synchronized(tickDurationArr){
+			if(clickOpOngoing){
+				Main.LOGGER.warn("executeClicks() already has an ongoing operation");
+				client.player.sendMessage(Text.literal("Clicks cancelled: current operation needs to finish before starting a new one"), true);
+				onComplete.run();
+				return;
+			}
+			clickOpOngoing = true;
 		}
 		if(Configs.Generic.CLICK_LIMIT_ADJUST_FOR_TPS.getBooleanValue() && tickDurationArr != null){
 			final long msPerTick = getMillisPerTick(client);
 			if(msPerTick != TICK_DURATION) adjustTickRate(msPerTick);
 		}
 
+		final int syncId = client.player.currentScreenHandler.syncId;
 		estimatedMsLeft = Integer.MAX_VALUE;
-		clickOpOngoing = true;
-		new Timer().schedule(new TimerTask(){@Override public void run(){
-			if(client.player == null){
-				Main.LOGGER.error("executeClicks() failed due to null player! num clicks in arr: "+sumClicksInDuration);
-				cancel(); clickOpOngoing=false; onComplete.run(); return;
+
+		new Timer().schedule(new TimerTask(){
+			private void stopTask(){
+				synchronized(tickDurationArr){
+					cancel();
+					clickOpOngoing=false;
+					onComplete.run();
+				}
 			}
-			if(client.player.currentScreenHandler.syncId != syncId){
-				Main.LOGGER.error("executeClicks() failed due to syncId changing mid-operation ("+syncId+" -> "+client.player.currentScreenHandler.syncId+")");
-				client.player.sendMessage(Text.literal("Clicks cancelled: container ID changed").withColor(SYNC_ID_CHANGED_COLOR), true);
-				cancel(); clickOpOngoing=false; onComplete.run(); return;
-			}
-			if(clicks.isEmpty()){
-				if(estimatedMsLeft != Integer.MAX_VALUE) client.player.sendMessage(Text.literal("Clicks finished early!"), true);
-				cancel(); clickOpOngoing=false; onComplete.run(); return;
-			}
-			client.executeSync(()->{
-				while(calcAvailableClicks() > 0 && !clicks.isEmpty() && canProceed.apply(clicks.peek())){
-//					if(!canProceed.apply(clicks.peek())) break;//{waitedForClicks = true; return;}
-					if(calcAvailableClicks() <= 0){
-						Main.LOGGER.error("executeClicks() lost available click mid-op, seemingly due to click(s) occuring during check of canProceed()!");
-						break;
-					}
-					InvAction click = clicks.remove();
-					try{
-						//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
-						thisClickIsBotted = true;
-						if(click.action == ActionType.BUNDLE_SELECT){
-							client.player.networkHandler.sendPacket(new BundleItemSelectedC2SPacket(click.slot, click.button));
-						}
-						else client.interactionManager.clickSlot(syncId, click.slot, click.button, click.action.action, client.player);
-						thisClickIsBotted = false;
-					}
-					catch(NullPointerException e){
-						Main.LOGGER.error("executeClicks() failed due to null client. Clicks left: "+clicks.size()+", sumClicksInDuration: "+sumClicksInDuration);
-						clicks.clear();
-					}
+			@Override public void run(){
+				if(client.player == null){
+					Main.LOGGER.error("executeClicks() failed due to null player! num clicks in arr: "+sumClicksInDuration);
+					stopTask(); return;
+				}
+				if(client.player.currentScreenHandler.syncId != syncId){
+					Main.LOGGER.error("executeClicks() failed due to syncId changing mid-operation ("+syncId+" -> "+client.player.currentScreenHandler.syncId+")");
+					client.player.sendMessage(Text.literal("Clicks cancelled: container ID changed").withColor(SYNC_ID_CHANGED_COLOR), true);
+					stopTask(); return;
 				}
 				if(clicks.isEmpty()){
-					cancel();
-					if(clickOpOngoing){
-						clickOpOngoing=false;
-						if(estimatedMsLeft != Integer.MAX_VALUE) client.player.sendMessage(Text.translatable(Main.MOD_ID+".clickutils.clicksDone"), true);
-						onComplete.run();
+					if(estimatedMsLeft != Integer.MAX_VALUE) client.player.sendMessage(Text.literal("Clicks finished early!"), true);
+					stopTask(); return;
+				}
+				client.executeSync(()->{
+					while(calcAvailableClicks() > 0 && !clicks.isEmpty() && canProceed.apply(clicks.peek())){
+//						if(!canProceed.apply(clicks.peek())) break;//{waitedForClicks = true; return;}
+						if(calcAvailableClicks() <= 0){
+							Main.LOGGER.error("executeClicks() lost available click mid-op, seemingly due to click(s) occuring during check of canProceed()!");
+							break;
+						}
+						InvAction click = clicks.remove();
+						try{
+							//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
+							thisClickIsBotted = true;
+							if(click.action == ActionType.BUNDLE_SELECT){
+								client.player.networkHandler.sendPacket(new BundleItemSelectedC2SPacket(click.slot, click.button));
+							}
+							else client.interactionManager.clickSlot(syncId, click.slot, click.button, click.action.action, client.player);
+							thisClickIsBotted = false;
+						}
+						catch(NullPointerException e){
+							Main.LOGGER.error("executeClicks() failed due to null client. Clicks left: "+clicks.size()+", sumClicksInDuration: "+sumClicksInDuration);
+							clicks.clear();
+						}
 					}
-					return;
-				}
-				if(tickDurationArr != null){
-					// +1000 so it always says at least "1s left" and not "0s left"
-					final int msLeft = 1000 + calcRemainingTicks(clicks.size())*(int)TICK_DURATION;
-					estimatedMsLeft = Math.min(estimatedMsLeft, msLeft);
-//					StringUtils.translate("");
-					client.player.sendMessage(
-						Text.translatable(
-								Main.MOD_ID+".clickutils.waitingForClicks",
-								clicks.size(), TextUtils_New.formatTime(estimatedMsLeft)
-						).withColor(OUTTA_CLICKS_COLOR), true);
-//					client.player.sendMessage(
-//						Text.literal(
+					if(clicks.isEmpty()){
+						stopTask();
+						if(estimatedMsLeft != Integer.MAX_VALUE) client.player.sendMessage(Text.translatable(Main.MOD_ID+".clickutils.clicksDone"), true);
+						return;
+					}
+					if(tickDurationArr != null){
+						// +1000 so it always says at least "1s left" and not "0s left"
+						final int msLeft = 1000 + calcRemainingTicks(clicks.size())*(int)TICK_DURATION;
+						estimatedMsLeft = Math.min(estimatedMsLeft, msLeft);
+//						StringUtils.translate("");
+						client.player.sendMessage(
+							Text.translatable(
+									Main.MOD_ID+".clickutils.waitingForClicks",
+									clicks.size(), TextUtils_New.formatTime(estimatedMsLeft)
+							).withColor(OUTTA_CLICKS_COLOR), true);
+//						client.player.sendMessage(
+//							Text.literal(
 ////							"Waiting for available clicks... ("
-//							+clicks.size()+", ~"+TextUtils.formatTime(estimatedMsLeft)+") "
-//							+", ticksleft="+calcRemainingTicks(clicks.size())+",msLeft="+msLeft+", "
-//							+String.format("%02d", tickDurIndex)
-//						).withColor(OUTTA_CLICKS_COLOR), false);
-				}
-			});
-		}}, 0l, 23l);//51l = just over a tick, 23l=just under half a tick
+//								+clicks.size()+", ~"+TextUtils.formatTime(estimatedMsLeft)+") "
+//								+", ticksleft="+calcRemainingTicks(clicks.size())+",msLeft="+msLeft+", "
+//								+String.format("%02d", tickDurIndex)
+//							).withColor(OUTTA_CLICKS_COLOR), false);
+					}
+				});
+			}
+		}, 0l, 23l);//51l = just over a tick, 23l=just under half a tick
 	}
 	public static void executeClicks(Function<InvAction, Boolean> canProceed, Runnable onComplete, InvAction... clicks){
 		executeClicks(canProceed, onComplete, new ArrayDeque<>(List.of(clicks)));

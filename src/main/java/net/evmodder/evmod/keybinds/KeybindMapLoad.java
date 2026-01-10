@@ -211,7 +211,8 @@ public final class KeybindMapLoad{
 			if(client.player == null || client.world == null) return true;
 
 			// Not the start of a putback click sequence
-			if(clickIndex != extraPutBackIndex && (((clickIndex/hbButtons.length)&1) == 1 || clickIndex % hbButtons.length != 0)){
+			final int inBatch = clickIndex/hbButtons.length;
+			if(((inBatch&1) == 0 || inBatch*hbButtons.length != clickIndex) && clickIndex != extraPutBackIndex){
 				++clickIndex;
 				return true;
 			}
@@ -224,11 +225,12 @@ public final class KeybindMapLoad{
 				if(System.currentTimeMillis() - stateLoadWaitStart < STATE_LOAD_TIMEOUT) return false;
 				stateUpdateWaitStart = stateLoadWaitStart = 0;
 				Main.LOGGER.warn("MapLoad: Timed out while waiting for map state to load!");
+				++clickIndex;
 				return true;
 			}
 			else if(stateUpdateWaitStart == 0){stateUpdateWaitStart = System.currentTimeMillis(); return false;}
 			else if(System.currentTimeMillis() - stateUpdateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
-			Main.LOGGER.info("MapLoad: map state loaded and updated");
+			Main.LOGGER.info("MapLoad: map state loaded and updated, clickIndex="+clickIndex);
 			stateUpdateWaitStart = stateLoadWaitStart = 0;
 			++clickIndex;
 			return true;
