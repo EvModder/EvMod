@@ -114,6 +114,8 @@ public class GameMessageFilter{
 //		});
 		ClientReceiveMessageEvents.ALLOW_GAME.register((msg, overlay) -> {
 			if(overlay) return true;
+			if(!Configs.Database.SAVE_IGNORES.getDefaultBooleanValue()) return true;
+
 			final int onServer = MiscUtils.getCurrentServerAddressHashCode();
 			if(onServer != currentServer){currentServer = onServer; recomputeIgnoreLists();}
 			return !borrowedIgnoreList.containsKey(determineSender(msg));

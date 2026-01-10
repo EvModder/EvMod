@@ -245,6 +245,7 @@
 	"evmod.config.database.name.shareMapArt": "shareMapArtHashCodes*",
 	"evmod.config.database.name.epearlDatabaseUUID": "epearlDatabaseUUID*",
 	"evmod.config.database.name.epearlDatabaseXZ": "epearlDatabaseXZ*",
+	"evmod.config.database.name.saveIgnoreList": "saveIgnoreList*",
 	"evmod.config.database.name.shareIgnoreList": "shareIgnoreList*",
 	"evmod.config.database.name.borrowIgnoreLists": "borrowIgnoreLists*",
 	"evmod.config.database.name.shareJoinQuit": "shareJoinQuitMsgs*",
@@ -252,7 +253,8 @@
 	"evmod.config.database.comment.shareMapArtHashCodes": "Participate in MapArt Unique Id database",
 	"evmod.config.database.comment.epearlDatabaseUUID": "Participate in [Epearl.Id->Owner] database",
 	"evmod.config.database.comment.epearlDatabaseXZ": "Participate in [Epearl.X,Z->Owner] database",
+	"evmod.config.database.comment.saveIgnoreList": "Save ignorelists in ./configs/evmod/ignores/",
 	"evmod.config.database.comment.shareIgnoreList": "Share your /ignorehard list with the database",
-	"evmod.config.database.comment.borrowIgnoreLists": "Apply /ignorehard lists from other players in the database (doesn't affect your own list)",
+	"evmod.config.database.comment.borrowIgnoreLists": "Apply /ignorehard lists from other players in the database (doesn't affect your own list. Requires saveIgnoreList=true)",
 	"evmod.config.database.comment.shareJoinQuit": "Used to power /seen, /timeonline, etc."
 }

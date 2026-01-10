@@ -24,15 +24,16 @@ public class GameMessageListener{
 		if(ple == null){Main.LOGGER.error("Unable to find PlayerListEntry for player name: "+name); return;}
 		final UUID ignoredUUID = ple.getProfile().getId();
 
-		Main.LOGGER.info("Writing "+(ignored?"":"un")+"ignore update to local file cache");
-		final String filename = "ignores/"+client.player.getUuid()+".cache";
-		@SuppressWarnings("unchecked")
-		HashSet<UUID> ignoreList = (HashSet<UUID>)FileIO.readObject(filename);
-		if(ignoreList == null) ignoreList = new HashSet<>();
-		if(ignored) ignoreList.add(ignoredUUID);
-		else ignoreList.remove(ignoredUUID);
-		FileIO.writeObject(filename, ignoreList);
-
+		if(Configs.Database.SAVE_IGNORES.getBooleanValue()){
+			Main.LOGGER.info("Writing "+(ignored?"":"un")+"ignore update to local file cache");
+			final String filename = "ignores/"+client.player.getUuid()+".cache";
+			@SuppressWarnings("unchecked")
+			HashSet<UUID> ignoreList = (HashSet<UUID>)FileIO.readObject(filename);
+			if(ignoreList == null) ignoreList = new HashSet<>();
+			if(ignored) ignoreList.add(ignoredUUID);
+			else ignoreList.remove(ignoredUUID);
+			FileIO.writeObject(filename, ignoreList);
+		}
 		if(Configs.Database.SHARE_IGNORES.getBooleanValue() && rms != null){
 			Main.LOGGER.info("Sending "+(ignored?"":"un")+"ignore packet to RMS");
 			rms.sendBotMessage(
@@ -63,12 +64,13 @@ public class GameMessageListener{
 				}
 			}
 			//"Permanently ignoring ___. This is saved in /ignorelist."
-//			if(Configs.Database.SHARE_IGNORES.getBooleanValue() && rms != null /*&& MiscUtils.getCurrentServerAddressHashCode() == Main.HASHCODE_2B2T*/){
+			if(Configs.Database.SAVE_IGNORES.getBooleanValue() || Configs.Database.SHARE_IGNORES.getBooleanValue()
+					/*&& MiscUtils.getCurrentServerAddressHashCode() == Main.HASHCODE_2B2T*/){
 				if(literal.startsWith("Permanently ignoring ") && literal.endsWith(". This is saved in /ignorelist."))
 					updateIgnoreState(rms, literal.substring(21, literal.length()-31), true);
 				if(literal.startsWith("No longer permanently ignoring "))
 					updateIgnoreState(rms, literal.substring(31), false);
-//			}
+			}
 		});
 	}
 }
