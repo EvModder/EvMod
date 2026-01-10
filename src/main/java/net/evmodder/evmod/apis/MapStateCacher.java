@@ -173,7 +173,7 @@ public class MapStateCacher{
 				.sequential()
 				.filter(s -> s.getItem() == Items.FILLED_MAP)
 				.map(s -> FilledMapItem.getMapState(s, client.world));
-		if(!Configs.Generic.MAP_CACHE_UNLOCKED.getBooleanValue()) states = states.filter(s -> s.locked);
+		if(!Configs.Generic.MAP_CACHE_UNLOCKED.getBooleanValue()) states = states.map(s -> s == null || s.locked ? s : null);
 		final List<MapStateSerializable> serialStates = states.map(MapStateSerializable::fromMapState).toList();
 
 		final boolean deleteCache = serialStates.isEmpty() || serialStates.stream().allMatch(Objects::isNull);
