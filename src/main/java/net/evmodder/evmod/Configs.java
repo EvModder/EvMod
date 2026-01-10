@@ -37,14 +37,14 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigOptionList MAP_CACHE = new ConfigOptionList("mapStateCache",
 //				new SimpleStringOption(Main.MOD_ID+".gui.label.cache_mapstate.", "a", "b", "c")).apply(GENERIC_KEY);
 				OptionMapStateCache.MEMORY_AND_DISK).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAP_CACHE_UNLOCKED = new ConfigBoolean("mapStateCacheUnlocked", false).apply(GENERIC_KEY);//TODO: currently does nothing!!
+		public static final ConfigBoolean MAP_CACHE_UNLOCKED = new ConfigBoolean("mapStateCacheUnlocked", true).apply(GENERIC_KEY);//TODO: currently does nothing!!
 //		public static final ConfigMultiOptionList MAP_STATE_CACHE_TYPE = new ConfigMultiOptionList("mapStateCacheType",
 //				List.of(MapStateCacheOptionType.BY_INV_POS, MapStateCacheOptionType.BY_NAME)).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAP_CACHE_BY_ID = new ConfigBoolean("mapStateCacheById", false).apply(GENERIC_KEY);//TODO: currently does nothing!!
-		public static final ConfigBoolean MAP_CACHE_BY_NAME = new ConfigBoolean("mapStateCacheByName", true).apply(GENERIC_KEY);//TODO: currently does nothing!!
+		public static final ConfigBoolean MAP_CACHE_BY_ID = new ConfigBoolean("mapStateCacheById", false).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAP_CACHE_BY_NAME = new ConfigBoolean("mapStateCacheByName", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAP_CACHE_BY_INV_POS = new ConfigBoolean("mapStateCacheByInvPos", false).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAP_CACHE_BY_EC_POS = new ConfigBoolean("mapStateCacheByEchestPos", true).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAP_CACHE_BY_CONTAINER_POS = new ConfigBoolean("mapStateCacheByContainerPos", false).apply(GENERIC_KEY);//TODO: currently does nothing!!
+		public static final ConfigBoolean MAP_CACHE_BY_CONTAINER_POS = new ConfigBoolean("mapStateCacheByContainerPos", false).apply(GENERIC_KEY);
 
 		//ConfigOptionList MAP_CACHE_BY_NAME{UNIQUE, FIRST}
 
@@ -100,8 +100,8 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean LOG_COORDS_ON_SERVER_QUIT = new ConfigBoolean("logCoordsOnServerQuit", !Main.mapArtFeaturesOnly).apply(GENERIC_KEY);
 
 		public static final ConfigBoolean INV_RESTOCK_AUTO = new ConfigBoolean("inventoryRestockAuto", !Main.mapArtFeaturesOnly).apply(GENERIC_KEY);
-//		public static final ConfigOptionList INV_RESTOCK_AUTO_FOR_INV_ORGS = new ConfigOptionList("inventoryRestockAutoForOrganization", RestockAutoLayouts._2).apply(GENERIC_KEY);
-		public static final ConfigStringList INV_RESTOCK_AUTO_FOR_INV_ORGS = new ConfigStringList("inventoryRestockAutoForOrganization", ImmutableList.of("2")).apply(GENERIC_KEY);
+		public static final ConfigStringList INV_RESTOCK_AUTO_FOR_INV_ORGS = new ConfigStringList("inventoryRestockAutoForOrganization",
+				ImmutableList.of("2")).apply(GENERIC_KEY);
 
 		public static final ConfigString TEMP_BROADCAST_ACCOUNT = new ConfigString("broadcastAccount", "AccountNameHere").apply(GENERIC_KEY);
 		public static final ConfigString TEMP_BROADCAST_TIMESTAMP = new ConfigString("broadcastTimestamp", "1738990800").apply(GENERIC_KEY);
@@ -353,11 +353,13 @@ public final class Configs implements IConfigHandler{
 
 		public static final ConfigStringHotkeyed CHAT_MSG_1 = new ConfigStringHotkeyed("chatMessage1", "meow :3", "").apply(HOTKEYS_KEY);
 		public static final ConfigStringHotkeyed CHAT_MSG_2 = new ConfigStringHotkeyed("chatMessage2", "/home", "").apply(HOTKEYS_KEY);
-		public static final ConfigStringHotkeyed CHAT_MSG_3 = new ConfigStringHotkeyed("chatMessage3", "/cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost", "").apply(HOTKEYS_KEY);
+		public static final ConfigStringHotkeyed CHAT_MSG_3 = new ConfigStringHotkeyed("chatMessage3",
+				"/cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost", "").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TRIGGER_CHAT_MSG_3 = new ConfigHotkey("triggerChatMessage3",
 				Main.mapArtFeaturesOnly ? "" : "Z").apply(HOTKEYS_KEY);
 
-		public static final ConfigStringHotkeyed REMOTE_MSG_1 = new ConfigStringHotkeyed("remoteMessage1", "EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c", "").apply(HOTKEYS_KEY);
+		public static final ConfigStringHotkeyed REMOTE_MSG_1 = new ConfigStringHotkeyed("remoteMessage1",
+				"EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c", "").apply(HOTKEYS_KEY);
 		public static final ConfigStringHotkeyed REMOTE_MSG_2 = new ConfigStringHotkeyed("remoteMessage2", "", "").apply(HOTKEYS_KEY);
 		public static final ConfigStringHotkeyed REMOTE_MSG_3 = new ConfigStringHotkeyed("remoteMessage3", "", "").apply(HOTKEYS_KEY);
 

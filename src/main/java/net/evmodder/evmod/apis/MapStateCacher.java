@@ -169,13 +169,14 @@ public class MapStateCacher{
 	@SuppressWarnings("unchecked")
 	public static final boolean saveMapStatesByPos(Stream<ItemStack> items, String cache){
 		MinecraftClient client = MinecraftClient.getInstance();
-		final List<MapStateSerializable> mapStates = MapRelationUtils.getAllNestedItems(items/*.sequential()*/)
+		Stream<MapState> states = MapRelationUtils.getAllNestedItems(items/*.sequential()*/)
 				.sequential()
 				.filter(s -> s.getItem() == Items.FILLED_MAP)
-				.map(s -> FilledMapItem.getMapState(s, client.world))
-				.map(MapStateSerializable::fromMapState).toList();
+				.map(s -> FilledMapItem.getMapState(s, client.world));
+		if(!Configs.Generic.MAP_CACHE_UNLOCKED.getBooleanValue()) states = states.filter(s -> s.locked);
+		final List<MapStateSerializable> serialStates = states.map(MapStateSerializable::fromMapState).toList();
 
-		final boolean deleteCache = mapStates.isEmpty() || mapStates.stream().allMatch(Objects::isNull);
+		final boolean deleteCache = serialStates.isEmpty() || serialStates.stream().allMatch(Objects::isNull);
 
 		// Load old cache values
 		final String server = getServerIp(client);
@@ -191,7 +192,7 @@ public class MapStateCacher{
 				else bySlot.put(server, bySlotPerServer=new HashMap<>());
 			}
 		}
-		else if(oldCache.equals(mapStates)) return false; // No cache update
+		else if(oldCache.equals(serialStates)) return false; // No cache update
 //		else if(keepOldCache(oldCache, mapStates)) return false; // No cache update needed
 		final UUID key;
 		switch(cache){
@@ -200,12 +201,12 @@ public class MapStateCacher{
 			case BY_CONTAINER: key = ContainerClickListener.lastClickedBlockHash; break;
 			default: throw new RuntimeException("MapStateCacher: Unknown cache type in saveMapStatesByPos()! "+cache);
 		}
-		if(!deleteCache) bySlotPerServer.put(key, mapStates);
+		if(!deleteCache) bySlotPerServer.put(key, serialStates);
 		else if(bySlotPerServer != null) bySlotPerServer.remove(key);
 
 		boolean success = true;
 		if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK) success &= saveCacheFile(server, cache);
-		Main.LOGGER.info("MapStateCacher: type="+cache+",stored="+mapStates.size());
+		Main.LOGGER.info("MapStateCacher: type="+cache+",stored="+serialStates.size());
 		return success;
 	}
 
@@ -279,6 +280,7 @@ public class MapStateCacher{
 
 	public static final boolean addMapStateById(int id, MapState state){
 		if(state == null || state.colors == null) return false;
+		if(!state.locked && !Configs.Generic.MAP_CACHE_UNLOCKED.getBooleanValue()) return false;
 		@SuppressWarnings("unchecked")
 		HashMap<Integer, MapStateSerializable> cache = (HashMap<Integer, MapStateSerializable>) commonCacheLoad(BY_ID);
 		assert cache != null; // commonCacheLoad creates a server-level cache if one does not already exist
@@ -323,6 +325,7 @@ public class MapStateCacher{
 		assert stack != null && stack.getItem() == Items.FILLED_MAP;
 		assert state != null && state.colors != null;
 		assert FilledMapItem.getMapState(stack, MinecraftClient.getInstance().world) == state;
+		if(!state.locked && !Configs.Generic.MAP_CACHE_UNLOCKED.getBooleanValue()) return false;
 		final String name = stack.getCustomName().getLiteralString();
 		assert name != null;
 		final String server = getServerIp(MinecraftClient.getInstance());
