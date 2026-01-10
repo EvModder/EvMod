@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,12 +46,16 @@ public class GameMessageFilter{
 			lastFetchTs = Files.getLastModifiedTime(Paths.get("ignores/"+uuid+".cache")).toMillis();
 			assert lastFetchTs >= 0 && lastFetchTs <= System.currentTimeMillis();
 		}
-		catch(IOException e){
-			e.printStackTrace();
-			lastFetchTs = 0;
-		}
+		catch(NoSuchFileException e){lastFetchTs = 0;}
+		catch(IOException e){e.printStackTrace(); lastFetchTs = 0;}
+
 		@SuppressWarnings("unchecked")
 		HashSet<UUID> ignoreList = lastFetchTs <= 0 ? new HashSet<UUID>() : (HashSet<UUID>)FileIO.readObject("ignores/"+uuid+".cache");
+
+		if(remoteSender == null){
+			ignoreList.forEach(this::incrIgnore);
+			return;
+		}
 
 		final byte[] args = PacketHelper.toByteArray(uuid, /*tsForDelta=*/new UUID(0, lastFetchTs));
 		remoteSender.sendBotMessage(Command.DB_PLAYER_FETCH_IGNORES, /*udp=*/false, /*timeout=*/5000, args, reply -> {
@@ -83,7 +88,6 @@ public class GameMessageFilter{
 	}
 
 	public void recomputeIgnoreLists(){
-		if(remoteSender == null/* || currentServer != Main.HASHCODE_2B2T*/) return;
 		Main.LOGGER.info("MsgFilter: Recomputing borrowed ignorelists");
 
 		for(UUID uuid : Configs.Database.BORROW_IGNORES.getUUIDs()){
