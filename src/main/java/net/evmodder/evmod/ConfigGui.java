@@ -1,7 +1,6 @@
 package net.evmodder.evmod;
 
 import java.util.List;
-import java.util.Objects;
 import fi.dy.masa.malilib.gui.GuiConfigsBase;
 import fi.dy.masa.malilib.gui.button.ButtonBase;
 import fi.dy.masa.malilib.gui.button.ButtonGeneric;
@@ -33,7 +32,6 @@ public class ConfigGui extends GuiConfigsBase{
 		ButtonGeneric button = new ButtonGeneric(x, y, width, 20, tab.getDisplayName());
 		button.setEnabled(ConfigGui.tab != tab);
 		addButton(button, new ButtonListener(tab, this));
-
 		return button.getWidth() + 2;
 	}
 
@@ -48,8 +46,7 @@ public class ConfigGui extends GuiConfigsBase{
 		x += createButton(x, y, -1, ConfigGuiTab.GENERIC);
 		x += createButton(x, y, -1, ConfigGuiTab.VISUALS);
 		x += createButton(x, y, -1, ConfigGuiTab.HOTKEYS);
-		if(configs.getDatabaseOptions() != null) x += createButton(x, y, -1, ConfigGuiTab.DATABASE);
-		// x += this.createButton(x, y, -1, ConfigGuiTab.TEST);
+		if(!Main.mapArtFeaturesOnly) x += createButton(x, y, -1, ConfigGuiTab.DATABASE);
 	}
 
 	@Override protected boolean useKeybindSearch(){
@@ -70,8 +67,8 @@ public class ConfigGui extends GuiConfigsBase{
 	private record ButtonListener(ConfigGuiTab tab, ConfigGui parent) implements IButtonActionListener {
 		@Override public void actionPerformedWithButton(ButtonBase button, int mouseButton){
 			ConfigGui.tab = tab;
-			parent.reCreateListWidget(); // apply the new config width
-			Objects.requireNonNull(parent.getListWidget()).resetScrollbarPosition();
+			parent.reCreateListWidget();
+			parent.getListWidget().resetScrollbarPosition();
 			parent.initGui();
 		}
 	}

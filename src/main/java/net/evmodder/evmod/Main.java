@@ -70,18 +70,22 @@ public class Main{
 	// inv-keybind-craft-latest-item, also for enchant table and grindstone (eg. spam enchanting axes) via spacebar, like vanilla
 
 	public static final String MOD_ID = InitUtils.getModId();
-	private static final ModMetadata metadata = FabricLoader.getInstance().getModContainer(MOD_ID).get().getMetadata();
-	public static final String MOD_NAME = metadata.getName();
-	public static final String MOD_VERSION = metadata.getVersion().getFriendlyString();
-	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+	public static final String MOD_NAME;
+	public static final String MOD_VERSION;
+	public static final Logger LOGGER;
+	static{
+		ModMetadata metadata = FabricLoader.getInstance().getModContainer(MOD_ID).get().getMetadata();
+		MOD_NAME = metadata.getName();
+		MOD_VERSION = metadata.getVersion().getFriendlyString();
+		LOGGER = LoggerFactory.getLogger(MOD_ID);
+	}
 
 	static boolean mapArtFeaturesOnly = true; // TODO: eww hacky
 
-	private static Main instance; // TODO: eww hacky!
-	public static Main mixinAccess(){return instance;} // Accessors:
+	private static Main instance; public static Main mixinAccess(){return instance;} // TODO: eww hacky! Accessors:
 	public final RemoteServerSender remoteSender; // MixinClientWorld
 	public final EpearlLookup epearlLookup; // MixinEntityRenderer
-	public final KeybindCraftingRestock kbCraftRestock = new KeybindCraftingRestock(); // MixinClientPlayerInteractionManager
+	public final KeybindCraftingRestock kbCraftRestock; // MixinClientPlayerInteractionManager
 
 	Main(){
 		instance = this;
@@ -112,6 +116,7 @@ public class Main{
 			TickListener.register(new ContainerOpenCloseListener(kbInvRestock));
 			ContainerClickListener.register();
 		}
+		kbCraftRestock = new KeybindCraftingRestock();
 
 		if(settings.placementHelperIframe) new AutoPlaceItemFrames();
 		if(settings.placementHelperMapArt) new MapHandRestock(settings.placementHelperMapArtAutoPlace, settings.placementHelperMapArtAutoRemove);

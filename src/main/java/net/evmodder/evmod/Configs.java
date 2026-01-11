@@ -426,23 +426,33 @@ public final class Configs implements IConfigHandler{
 		private static final List<IConfigBase> getOptions(Settings settings){
 			if(options != null) return options;
 			options = new ArrayList<>();
-			options.addAll(List.of(CLIENT_ID, CLIENT_KEY, ADDRESS, SAVE_MAPART, SHARE_MAPART));
-			if(settings.epearlOwners) options.addAll(List.of(EPEARL_OWNERS_BY_UUID, EPEARL_OWNERS_BY_XZ, SHARE_EPEARL_OWNERS));
-			if(settings.gameMessageListener) options.addAll(List.of(SAVE_IGNORES, SHARE_IGNORES));
-			if(settings.gameMessageFilter) options.add(BORROW_IGNORES);
-			if(settings.serverJoinListener || settings.serverQuitListener) options.add(SHARE_JOIN_QUIT);
+			if(settings.database) options.addAll(List.of(CLIENT_ID, CLIENT_KEY, ADDRESS));
+			options.add(SAVE_MAPART);
+			if(settings.database) options.add(SHARE_MAPART);
+			if(settings.epearlOwners){
+				options.addAll(List.of(EPEARL_OWNERS_BY_UUID, EPEARL_OWNERS_BY_XZ));
+				if(settings.database) options.add(SHARE_EPEARL_OWNERS);
+			}
+			if(settings.gameMessageListener || settings.gameMessageFilter) options.add(SAVE_IGNORES);
+			if(settings.database && settings.gameMessageListener) options.add(SHARE_IGNORES);
+			if(settings.database && settings.gameMessageFilter) options.add(BORROW_IGNORES);
+			if(settings.database && (settings.serverJoinListener || settings.serverQuitListener)) options.add(SHARE_JOIN_QUIT);
 			return options;
 		}
 	}
 
+	//====================================================================================================
+	// Config option saving/loading/fetching
+	//====================================================================================================
 	private static final String CONFIG_FILE_NAME = Main.MOD_ID+"/"+Main.MOD_ID+".json";
+
 	private final Settings settings;
 	Configs(Settings settings){this.settings = settings;}
 
 	final List<IConfigBase> getGenericOptions(){return Generic.getOptions(settings);}
 	final List<IConfigBase> getVisualsOptions(){return Visuals.getOptions(settings);}
 	final List<IConfigBase> getHotkeysOptions(){return Hotkeys.getOptions(settings);}
-	final List<IConfigBase> getDatabaseOptions(){return settings.database ? Database.getOptions(settings) : null;}
+	final List<IConfigBase> getDatabaseOptions(){return Database.getOptions(settings);}
 
 	private static List<IConfigBase> allOptions;
 	final List<IConfigBase> getAllOptions(){
@@ -451,7 +461,7 @@ public final class Configs implements IConfigHandler{
 		allOptions.addAll(getGenericOptions());
 		allOptions.addAll(getVisualsOptions());
 		allOptions.addAll(getHotkeysOptions());
-		if(settings.database) allOptions.addAll(getDatabaseOptions());
+		allOptions.addAll(getDatabaseOptions());
 		return allOptions;
 	}
 
