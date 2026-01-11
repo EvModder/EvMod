@@ -84,7 +84,6 @@ public final class MapHandRestock{
 		return new PosData2D(isSideways, min, max);
 	}
 
-	//TODO: passing metadata, particularly NxM if known.
 	// Higher number = closer match
 	// 5 = definitely next (no doubt)
 	// 4 = likely next (but not 100%)
