@@ -96,18 +96,16 @@ public final class ClickUtils{
 			return MAX_CLICKS - sumClicksInDuration;
 		}
 	}
-	// Enforces always calculating available ticks before adding a click
-	public static int calcAvailableClicksAndAddOne(SlotActionType type){ // TODO: friend MixinClientPlayerInteractionManager?
+	public static boolean addClick(SlotActionType type){ // TODO: friend MixinClientPlayerInteractionManager?
 		assert type != null; //TODO: type is unused
 
-		if(tickDurationArr == null) return MAX_CLICKS;
 		synchronized(tickDurationArr){
+			if(tickDurationArr == null) return true;
 			updateAvailableClicks();
-			if(sumClicksInDuration == MAX_CLICKS) return 0;
-			assert sumClicksInDuration < MAX_CLICKS;
+			if(sumClicksInDuration >= MAX_CLICKS) return false;
 			++tickDurationArr[tickDurIndex];
-//			++sumClicksInDuration;
-			return MAX_CLICKS - ++sumClicksInDuration;
+			++sumClicksInDuration;
+			return true;
 		}
 	}
 
@@ -213,7 +211,7 @@ public final class ClickUtils{
 						}
 						InvAction click = clicks.remove();
 						try{
-							//Main.LOGGER.info("Executing click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
+//							Main.LOGGER.info("Executing click: "+click.slot+","+click.button+","+click.action+" | available="+calcAvailableClicks());
 							thisClickIsBotted = true;
 							if(click.action == ActionType.BUNDLE_SELECT){
 								client.player.networkHandler.sendPacket(new BundleItemSelectedC2SPacket(click.slot, click.button));

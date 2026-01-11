@@ -64,15 +64,15 @@ abstract class MixinClientPlayerInteractionManager{
 //			MinecraftClient.getInstance().player.sendMessage(Text.literal("syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
 			return;
 		}
-		final int hadClicks = ClickUtils.calcAvailableClicksAndAddOne(action);
-		if(hadClicks > 0){
+		if(ClickUtils.addClick(action)){
 			if(Configs.Hotkeys.CRAFT_RESTOCK.getKeybind().isValid())
 				Main.mixinAccess().kbCraftRestock.checkIfCraftAction(player.currentScreenHandler, slot, button, action);
 		}
 		else{
-			if(isBotted) Main.LOGGER.error("Botted click somehow triggered click limited! VERY BAD!!");
+			if(isBotted) Main.LOGGER.error("Botted click somehow triggered click limit! VERY BAD!!");
 			else if(!Configs.Generic.CLICK_LIMIT_USER_INPUT.getBooleanValue()) return;
-			ci.cancel(); // Throw out clicks that exceed the limit!!
+			else//TODO: remove else, always cancel here
+				ci.cancel(); // Throw out clicks that exceed the limit!!
 			if(syncId == 0 && slot == 0 && button == 0 && action == SlotActionType.QUICK_MOVE) return; // QUICK_CRAFT sometimes sends duplicate fake QUICK_MOVE?
 			Main.LOGGER.error("Discarded click in clickSlot() due to exceeding limit!"
 					+ " slot:"+slot+",button:"+button+",action:"+action.name()+",isShiftClick:"+Screen.hasShiftDown());
