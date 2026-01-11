@@ -2,8 +2,6 @@ package net.evmodder.evmod;
 
 import java.util.List;
 import java.util.Objects;
-
-import fi.dy.masa.malilib.config.IConfigBase;
 import fi.dy.masa.malilib.gui.GuiConfigsBase;
 import fi.dy.masa.malilib.gui.button.ButtonBase;
 import fi.dy.masa.malilib.gui.button.ButtonGeneric;
@@ -23,9 +21,11 @@ public class ConfigGui extends GuiConfigsBase{
 		public String getDisplayName(){return StringUtils.translate(this.translationKey);}
 	}
 	private static ConfigGuiTab tab = ConfigGuiTab.HOTKEYS;
+	private Configs configs;
 
-	ConfigGui(){
+	ConfigGui(Configs configs){
 		super(10, 50, Main.MOD_ID, /*parent=*/null, Main.MOD_ID+".gui.title", Main.MOD_VERSION);
+		this.configs = configs;
 		setConfigWidth(224);
 	}
 
@@ -48,7 +48,7 @@ public class ConfigGui extends GuiConfigsBase{
 		x += createButton(x, y, -1, ConfigGuiTab.GENERIC);
 		x += createButton(x, y, -1, ConfigGuiTab.VISUALS);
 		x += createButton(x, y, -1, ConfigGuiTab.HOTKEYS);
-		if(Main.getInstance().remoteSender != null) x += createButton(x, y, -1, ConfigGuiTab.DATABASE);
+		if(configs.getDatabaseOptions() != null) x += createButton(x, y, -1, ConfigGuiTab.DATABASE);
 		// x += this.createButton(x, y, -1, ConfigGuiTab.TEST);
 	}
 
@@ -57,16 +57,14 @@ public class ConfigGui extends GuiConfigsBase{
 	}
 
 	@Override public List<ConfigOptionWrapper> getConfigs(){
-		List<? extends IConfigBase> configs;
-		configs = switch(tab) {
-			case ALL -> Configs.allOptions();
-			case GENERIC -> Configs.Generic.getOptions();
-			case VISUALS -> Configs.Visuals.getOptions();
-			case HOTKEYS -> Configs.Hotkeys.getOptions();
-			case DATABASE -> Configs.Database.getOptions();
+		return ConfigOptionWrapper.createFor(switch(tab){
+			case ALL -> configs.getAllOptions();
+			case GENERIC -> configs.getGenericOptions();
+			case VISUALS -> configs.getVisualsOptions();
+			case HOTKEYS -> configs.getHotkeysOptions();
+			case DATABASE -> configs.getDatabaseOptions();
 //			case RENDER_LAYERS -> Collections.emptyList();
-		};
-		return ConfigOptionWrapper.createFor(configs);
+		});
 	}
 
 	private record ButtonListener(ConfigGuiTab tab, ConfigGui parent) implements IButtonActionListener {

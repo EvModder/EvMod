@@ -13,13 +13,11 @@ strictfp
 
 */
 
-import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import fi.dy.masa.malilib.config.ConfigManager;
 import fi.dy.masa.malilib.registry.Registry;
 import fi.dy.masa.malilib.util.data.ModInfo;
-import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.apis.ChatBroadcaster;
 import net.evmodder.evmod.apis.EpearlLookup;
 import net.evmodder.evmod.apis.MiscUtils;
@@ -77,146 +75,70 @@ public class Main{
 	public static final String MOD_VERSION = metadata.getVersion().getFriendlyString();
 	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-	// TODO: ewww hacky
-	private static Main instance; static Main getInstance(){return instance;} // Accessors: Configs, InitUtils
-	public static Main mixinAccess(){return instance;} // Accessors (mixins):
-	// MixinClientPlayerInteractionManager(kbCraftRestock),
-	// MixinClientWorld(remoteSender)
-	// MixinEntityRenderer(epearlLookup)
+	static boolean mapArtFeaturesOnly = true; // TODO: eww hacky
 
-	// TODO: Worth finding a way to make these private+final+nonstatic?
-	public final RemoteServerSender remoteSender; // Public accessors: EpearlLookup, MiscUtils
-	public final EpearlLookup epearlLookup; // Public accessors: MixinEntityRenderer
-	public final KeybindCraftingRestock kbCraftRestock = new KeybindCraftingRestock(); // Accessors: MixinClientPlayerInteractionManager
-
-	// TODO: Worth finding a way to make these private?
-	final GameMessageFilter gameMessageFilter; // Accessors: Configs, KeyCallbacks
-	final WhisperPlaySound whisperPlaySound; // Accessors: KeyCallbacks
-	final KeybindInventoryOrganize[] kbInvOrgs;
-	final KeybindInventoryRestock kbInvRestock;
-	final boolean inventoryRestockAuto, placementHelperIframe, placementHelperMapArt, placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove, broadcaster;
-	final boolean serverJoinListener, serverQuitListener, gameMessageListener/*, gameMessageFilter*/, containerOpenCloseListener;
-	final boolean cmdExportMapImg, cmdMapArtGroup;
-	final boolean mapHighlights, mapHighlightsInGUIs, tooltipMapHighlights, tooltipMapMetadata, tooltipRepairCost;
-
-	static boolean mapArtFeaturesOnly = true; //// TODO: ewww hacky
-	private final String internalConfigFile = mapArtFeaturesOnly ? "enabled_features_for_mapart_ver.txt" : "enabled_features.txt";
-
-	private HashMap<String, Boolean> loadConfig(){
-		HashMap<String, Boolean> config = new HashMap<>();
-		final String configContents = FileIO.loadFile("enabled_features.txt", getClass().getResourceAsStream("/assets/"+MOD_ID+"/"+internalConfigFile));
-		for(String line : configContents.split("\\r?\\n")){
-			final int sep = line.indexOf(':');
-			if(sep == -1) continue;
-			final String key = line.substring(0, sep).trim();
-			final String value = line.substring(sep+1).trim();
-			if(key.isEmpty() || value.isEmpty()) continue;
-			if(key.equals("mapart_features_only")) config.put(key, !value.equalsIgnoreCase("false")); // Prefer true when ambiguous
-			else config.put(key, value.equalsIgnoreCase("true")); // Prefer false when ambiguous
-		}
-		return config;
-	}
-
-	private boolean extractConfigValue(HashMap<String, Boolean> config, String key){
-		Boolean value = config.remove(key);
-		return value != null ? value : false;
-	}
+	private static Main instance; // TODO: eww hacky!
+	public static Main mixinAccess(){return instance;} // Accessors:
+	public final RemoteServerSender remoteSender; // MixinClientWorld
+	public final EpearlLookup epearlLookup; // MixinEntityRenderer
+	public final KeybindCraftingRestock kbCraftRestock = new KeybindCraftingRestock(); // MixinClientPlayerInteractionManager
 
 	Main(){
 		instance = this;
-		final HashMap<String, Boolean> config = loadConfig();
-
-		mapArtFeaturesOnly = config.getOrDefault("mapart_features_only", true); // Note: true instead of false
-		config.remove("mapart_features_only");
-
-		boolean database = extractConfigValue(config, "database");
-		boolean epearlOwners = extractConfigValue(config, "epearl_owners");
-		broadcaster = extractConfigValue(config, "broadcaster");
-		placementHelperIframe = extractConfigValue(config, "placement_helper.iframe");
-		placementHelperMapArt = extractConfigValue(config, "placement_helper.mapart");
-		placementHelperMapArtAutoPlace = placementHelperMapArt && extractConfigValue(config, "placement_helper.mapart.auto");
-		placementHelperMapArtAutoRemove = placementHelperMapArt && extractConfigValue(config, "placement_helper.mapart.autoremove");
-		serverJoinListener = extractConfigValue(config, "listener.server_join");
-		serverQuitListener = extractConfigValue(config, "listener.server_quit");
-		gameMessageListener = extractConfigValue(config, "listener.game_message.read");
-		boolean registerGameMessageFilter = extractConfigValue(config, "listener.game_message.filter");
-		containerOpenCloseListener = extractConfigValue(config, "listener.container_open");
-		mapHighlights = extractConfigValue(config, "map_highlights");
-		mapHighlightsInGUIs = extractConfigValue(config, "map_highlights.in_gui");
-		tooltipMapHighlights = mapHighlights && extractConfigValue(config, "tooltip.map_highlights");
-		tooltipMapMetadata = extractConfigValue(config, "tooltip.map_metadata");
-		tooltipRepairCost = extractConfigValue(config, "tooltip.repair_cost");
-		inventoryRestockAuto = containerOpenCloseListener && extractConfigValue(config, "inventory_restock.auto");
-
-		boolean cmdAssignPearl = epearlOwners && extractConfigValue(config, "command.assignpearl");
-		cmdExportMapImg = extractConfigValue(config, "command.exportmapimg");
-		cmdMapArtGroup = extractConfigValue(config, "command.mapartgroup");
-		boolean cmdSeen = database && extractConfigValue(config, "command.seen");
-		boolean cmdSendAs = database && extractConfigValue(config, "command.sendas");
-		boolean cmdTimeOnline = database && extractConfigValue(config, "command.timeonline");
-
-		if(!config.isEmpty()){
-			LOGGER.error("Unrecognized config setting(s)!: "+config);
-		}
+		final Settings settings = new Settings();
+		final Configs configs = new Configs(settings);
+		configs.load();
 
 		InitUtils.refreshClickLimits();
 
-		remoteSender = !database ? null : new RemoteServerSender(LOGGER, MiscUtils::getCurrentServerAddressHashCode);
+		remoteSender = settings.database ? new RemoteServerSender(LOGGER, MiscUtils::getCurrentServerAddressHashCode) : null;
+		if(settings.database) InitUtils.refreshRemoteServerSender(remoteSender);
 
-		if(epearlOwners){
-			epearlLookup = new EpearlLookup(remoteSender);
-			if(cmdAssignPearl) new CommandAssignPearl(epearlLookup);
-		}
-		else epearlLookup = null;
+		epearlLookup = settings.epearlOwners ? new EpearlLookup(remoteSender) : null;
 
-		if(serverJoinListener) new ServerJoinListener(remoteSender);
-		if(serverQuitListener) new ServerQuitListener(remoteSender);
-		whisperPlaySound = mapArtFeaturesOnly ? null : new WhisperPlaySound();
-		if(gameMessageListener) new GameMessageListener(remoteSender, epearlLookup, whisperPlaySound);
-		gameMessageFilter = registerGameMessageFilter ? new GameMessageFilter(remoteSender) : null;
+		if(settings.serverJoinListener) new ServerJoinListener(remoteSender);
+		if(settings.serverQuitListener) new ServerQuitListener(remoteSender);
+		final WhisperPlaySound whisperPlaySound = mapArtFeaturesOnly ? null : new WhisperPlaySound();
+		if(settings.gameMessageListener) new GameMessageListener(remoteSender, epearlLookup, whisperPlaySound);
+		final GameMessageFilter gameMessageFilter = settings.gameMessageFilter ? new GameMessageFilter(remoteSender) : null;
 
-		kbInvOrgs = mapArtFeaturesOnly ? null : new KeybindInventoryOrganize[]{
+		final KeybindInventoryOrganize[] kbInvOrgs = mapArtFeaturesOnly ? null : new KeybindInventoryOrganize[]{
 				new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_1.getStrings()),
 				new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_2.getStrings()),
 				new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_3.getStrings())
 		};
-		kbInvRestock = kbInvOrgs == null ? null : new KeybindInventoryRestock(kbInvOrgs);
-		if(containerOpenCloseListener){
+		final KeybindInventoryRestock kbInvRestock = kbInvOrgs == null ? null : new KeybindInventoryRestock(kbInvOrgs);
+		if(settings.containerOpenCloseListener){
 			TickListener.register(new ContainerOpenCloseListener(kbInvRestock));
 			ContainerClickListener.register();
 		}
 
-		if(placementHelperIframe) new AutoPlaceItemFrames();
-		if(placementHelperMapArt) new MapHandRestock(placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove);
-		if(broadcaster) ChatBroadcaster.refreshBroadcast();
+		if(settings.placementHelperIframe) new AutoPlaceItemFrames();
+		if(settings.placementHelperMapArt) new MapHandRestock(settings.placementHelperMapArtAutoPlace, settings.placementHelperMapArtAutoRemove);
+		if(settings.broadcaster) ChatBroadcaster.refreshBroadcast();
 
-		if(cmdAssignPearl) new CommandAssignPearl(epearlLookup);
-		if(cmdExportMapImg) new CommandExportMapImg();
-		if(cmdMapArtGroup) new CommandMapArtGroup();
-		if(cmdSeen) new CommandSeen();
-		if(cmdSendAs) new CommandSendAs(remoteSender);
-		if(cmdTimeOnline) new CommandTimeOnline(remoteSender);
+		if(settings.cmdAssignPearl) new CommandAssignPearl(epearlLookup);
+		if(settings.cmdExportMapImg) new CommandExportMapImg();
+		if(settings.cmdMapArtGroup) new CommandMapArtGroup();
+		if(settings.cmdSeen) new CommandSeen();
+		if(settings.cmdSendAs) new CommandSendAs(remoteSender);
+		if(settings.cmdTimeOnline) new CommandTimeOnline(remoteSender);
 
-		//new KeybindSpamclick();
-
-		if(mapHighlights){
+		if(settings.mapHighlights){
 			TickListener.register(new TickListener(){
 				@Override public void onTickStart(MinecraftClient client){
 					UpdateInventoryHighlights.onTickStart(client.player);
 					UpdateItemFrameHighlights.onTickStart(client);
-					if(mapHighlightsInGUIs) UpdateContainerHighlights.onTickStart(client);
+					if(settings.mapHighlightsInGUIs) UpdateContainerHighlights.onTickStart(client);
 				}
 			});
 		}
-		if(tooltipMapHighlights) Tooltip.register(new TooltipMapNameColor());
-		if(tooltipMapMetadata) Tooltip.register(new TooltipMapLoreMetadata());
-		if(tooltipRepairCost) Tooltip.register(new TooltipRepairCost());
+		if(settings.tooltipMapHighlights) Tooltip.register(new TooltipMapNameColor());
+		if(settings.tooltipMapMetadata) Tooltip.register(new TooltipMapLoreMetadata());
+		if(settings.tooltipRepairCost) Tooltip.register(new TooltipRepairCost());
 
-		ConfigManager.getInstance().registerConfigHandler(MOD_ID, new Configs());
-
-		if(remoteSender != null) InitUtils.refreshRemoteServerSender();
-
-		Registry.CONFIG_SCREEN.registerConfigScreenFactory(new ModInfo(MOD_ID, MOD_NAME, ConfigGui::new));
-		new KeyCallbacks(this);
+		ConfigManager.getInstance().registerConfigHandler(MOD_ID, configs);
+		Registry.CONFIG_SCREEN.registerConfigScreenFactory(new ModInfo(MOD_ID, MOD_NAME, ()->new ConfigGui(configs)));
+		new KeyCallbacks(configs, remoteSender, epearlLookup, kbCraftRestock, gameMessageFilter, whisperPlaySound, kbInvOrgs, kbInvRestock);
 	}
 }

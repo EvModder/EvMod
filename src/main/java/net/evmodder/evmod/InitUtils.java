@@ -43,8 +43,7 @@ final class InitUtils{
 	static final void refreshClickLimits(){
 		ClickUtils.refreshLimits(Configs.Generic.CLICK_LIMIT_COUNT.getIntegerValue(), Configs.Generic.CLICK_LIMIT_DURATION.getIntegerValue());
 	}
-	static final void refreshRemoteServerSender(){ // Accessor: KeybindCallbacks, Main
-		RemoteServerSender rms = Main.getInstance().remoteSender;
+	static final void refreshRemoteServerSender(RemoteServerSender rms){
 		assert rms != null;
 		String fullAddress = Configs.Database.ADDRESS.getStringValue();
 		final int sep = fullAddress.indexOf(':');

@@ -21,10 +21,12 @@ import net.evmodder.evmod.config.*;
 import net.evmodder.evmod.config.ConfigPlayerList.NameAndUUID;
 
 public final class Configs implements IConfigHandler{
-	private static final String CONFIG_FILE_NAME = Main.MOD_ID+"/"+Main.MOD_ID+".json";
+	//====================================================================================================
+	// Generic
+	//====================================================================================================
+	public static final class Generic{
+		private static final String GENERIC_KEY = Main.MOD_ID+".config.generic";
 
-	private static final String GENERIC_KEY = Main.MOD_ID+".config.generic";
-	public static class Generic{
 		public static final ConfigInteger CLICK_LIMIT_COUNT = new ConfigInteger("clickLimitCount", 69, 0, 100_000).apply(GENERIC_KEY);
 		public static final ConfigInteger CLICK_LIMIT_DURATION = new ConfigInteger("clickLimitWindow", 95, 1, 72_000).apply(GENERIC_KEY);
 		public static final ConfigBoolean CLICK_LIMIT_ADJUST_FOR_TPS = new ConfigBoolean("clickLimitAdjustForTPS", false);
@@ -38,11 +40,10 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean MAP_CACHE_UNLOCKED = new ConfigBoolean("mapStateCacheUnlocked", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAP_CACHE_BY_ID = new ConfigBoolean("mapStateCacheById", false).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAP_CACHE_BY_NAME = new ConfigBoolean("mapStateCacheByName", true).apply(GENERIC_KEY);
+		//ConfigOptionList MAP_CACHE_BY_NAME{UNIQUE, FIRST}
 		public static final ConfigBoolean MAP_CACHE_BY_INV_POS = new ConfigBoolean("mapStateCacheByInvPos", false).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAP_CACHE_BY_EC_POS = new ConfigBoolean("mapStateCacheByEchestPos", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAP_CACHE_BY_CONTAINER_POS = new ConfigBoolean("mapStateCacheByContainerPos", false).apply(GENERIC_KEY);
-
-		//ConfigOptionList MAP_CACHE_BY_NAME{UNIQUE, FIRST}
 
 		public static final ConfigInteger MAX_IFRAME_TRACKING_DIST = new ConfigInteger("iFrameTrackingDist", /*default=*/128, 0, 10_000_000);
 		public static double MAX_IFRAME_TRACKING_DIST_SQ;
@@ -103,60 +104,59 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigString TEMP_BROADCAST_TIMESTAMP = new ConfigString("broadcastTimestamp", "1738990800").apply(GENERIC_KEY);
 		public static final ConfigStringList TEMP_BROADCAST_MSGS = new ConfigStringList("broadcastMsgs", ImmutableList.of()).apply(GENERIC_KEY);
 
-		private static List<IConfigBase> availableOptions;
-		public static final List<IConfigBase> getOptions(){
-			if(availableOptions == null){
-				Main main = Main.getInstance();
-				availableOptions = new ArrayList<>();
-				availableOptions.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_ADJUST_FOR_TPS, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT,
-						USE_BUNDLE_PACKET, BUNDLES_ARE_REVERSED));
-				final boolean CAN_CACHE_MAPS = (main.serverJoinListener && main.serverQuitListener) || main.containerOpenCloseListener;
-				if(CAN_CACHE_MAPS) availableOptions.addAll(List.of(MAP_CACHE, MAP_CACHE_UNLOCKED));
-				if(main.serverJoinListener) availableOptions.add(MAP_CACHE_BY_ID);
-				if(main.containerOpenCloseListener) availableOptions.add(MAP_CACHE_BY_NAME);
-				if(main.serverJoinListener && main.serverQuitListener) availableOptions.add(MAP_CACHE_BY_INV_POS);
-				if(main.containerOpenCloseListener) availableOptions.addAll(List.of(MAP_CACHE_BY_EC_POS, MAP_CACHE_BY_CONTAINER_POS));
+		private static List<IConfigBase> options;
+		private static final List<IConfigBase> getOptions(Settings settings){
+			if(options != null) return options;
+			options = new ArrayList<>();
+			options.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_ADJUST_FOR_TPS, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT,
+					USE_BUNDLE_PACKET, BUNDLES_ARE_REVERSED));
+			final boolean CAN_CACHE_MAPS = (settings.serverJoinListener && settings.serverQuitListener) || settings.containerOpenCloseListener;
+			if(CAN_CACHE_MAPS) options.addAll(List.of(MAP_CACHE, MAP_CACHE_UNLOCKED));
+			if(settings.serverJoinListener) options.add(MAP_CACHE_BY_ID);
+			if(settings.containerOpenCloseListener) options.add(MAP_CACHE_BY_NAME);
+			if(settings.serverJoinListener && settings.serverQuitListener) options.add(MAP_CACHE_BY_INV_POS);
+			if(settings.containerOpenCloseListener) options.addAll(List.of(MAP_CACHE_BY_EC_POS, MAP_CACHE_BY_CONTAINER_POS));
 
-				if(main.mapHighlights) availableOptions.addAll(List.of(MAX_IFRAME_TRACKING_DIST, NEW_MAP_NOTIFIER_IFRAME));
-				if(main.placementHelperIframe) availableOptions.addAll(List.of(IFRAME_AUTO_PLACER,
-						//PLACEMENT_HELPER_IFRAME_REACH, PLACEMENT_HELPER_IFRAME_RAYCAST,
-						IFRAME_AUTO_PLACER_MUST_CONNECT, IFRAME_AUTO_PLACER_MUST_MATCH_BLOCK));
-				else IFRAME_AUTO_PLACER.setBooleanValue(false);
-				if(main.placementHelperMapArt){
-					availableOptions.addAll(List.of(PLACEMENT_HELPER_MAPART,
-							//PLACEMENT_HELPER_MAPART_REACH
-							PLACEMENT_HELPER_MAPART_USE_NAMES, PLACEMENT_HELPER_MAPART_USE_IMAGE,
-							PLACEMENT_HELPER_MAPART_FROM_BUNDLE));
-					if(main.placementHelperMapArtAutoPlace) availableOptions.addAll(
-							List.of(MAPART_AUTOPLACE, MAPART_AUTOPLACE_INV_DELAY, MAPART_AUTOPLACE_ANTI_ROTATE, MAPART_AUTOPLACE_IFRAMES));
-					if(main.placementHelperMapArtAutoRemove) availableOptions.addAll(List.of(MAPART_AUTOREMOVE, MAPART_AUTOREMOVE_AFTER));
-					else MAPART_AUTOPLACE.setBooleanValue(false);
-				}
-				if(main.gameMessageListener) availableOptions.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PLAY_SOUND_UNFOCUSED_ONLY, WHISPER_PEARL_PULL));
-				if(main.cmdMapArtGroup) availableOptions.add(MAPART_GROUP_INCLUDE_UNLOCKED);
-//				if(Main.keybindMapArtMoveBundle)
-					availableOptions.add(KEYBIND_BUNDLE_REMOVE_MAX);
-//				if(Main.keybindMapArtMove)
-					availableOptions.add(KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS);
-
-				if(!Main.mapArtFeaturesOnly) availableOptions.add(SCROLL_ORDER);
-//				if(Main.keybindMapArtMove || Main.keybindMapArtMoveBundle)
-					availableOptions.add(SKIP_TRANSPARENT_MAPS);
-				if(main.mapHighlights) availableOptions.add(SKIP_MONO_COLOR_MAPS);
-				if(main.serverJoinListener) availableOptions.add(SEND_ON_SERVER_JOIN);
-				if(main.serverQuitListener) availableOptions.add(LOG_COORDS_ON_SERVER_QUIT);
-				if(main.inventoryRestockAuto) availableOptions.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
-				if(main.broadcaster) availableOptions.addAll(List.of(TEMP_BROADCAST_ACCOUNT, TEMP_BROADCAST_TIMESTAMP, TEMP_BROADCAST_MSGS));
+			if(settings.mapHighlights) options.addAll(List.of(MAX_IFRAME_TRACKING_DIST, NEW_MAP_NOTIFIER_IFRAME));
+			if(settings.placementHelperIframe) options.addAll(List.of(IFRAME_AUTO_PLACER,
+					//PLACEMENT_HELPER_IFRAME_REACH, PLACEMENT_HELPER_IFRAME_RAYCAST,
+					IFRAME_AUTO_PLACER_MUST_CONNECT, IFRAME_AUTO_PLACER_MUST_MATCH_BLOCK));
+			else IFRAME_AUTO_PLACER.setBooleanValue(false);
+			if(settings.placementHelperMapArt){
+				options.addAll(List.of(PLACEMENT_HELPER_MAPART,
+						//PLACEMENT_HELPER_MAPART_REACH
+						PLACEMENT_HELPER_MAPART_USE_NAMES, PLACEMENT_HELPER_MAPART_USE_IMAGE,
+						PLACEMENT_HELPER_MAPART_FROM_BUNDLE));
+				if(settings.placementHelperMapArtAutoPlace) options.addAll(
+						List.of(MAPART_AUTOPLACE, MAPART_AUTOPLACE_INV_DELAY, MAPART_AUTOPLACE_ANTI_ROTATE, MAPART_AUTOPLACE_IFRAMES));
+				if(settings.placementHelperMapArtAutoRemove) options.addAll(List.of(MAPART_AUTOREMOVE, MAPART_AUTOREMOVE_AFTER));
+				else MAPART_AUTOPLACE.setBooleanValue(false);
 			}
-			return availableOptions;
+			if(settings.gameMessageListener) options.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PLAY_SOUND_UNFOCUSED_ONLY, WHISPER_PEARL_PULL));
+			if(settings.cmdMapArtGroup) options.add(MAPART_GROUP_INCLUDE_UNLOCKED);
+//			if(Main.keybindMapArtMoveBundle)
+				options.add(KEYBIND_BUNDLE_REMOVE_MAX);
+//			if(Main.keybindMapArtMove)
+				options.add(KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS);
+			if(!Main.mapArtFeaturesOnly) options.add(SCROLL_ORDER);
+//			if(Main.keybindMapArtMove || Main.keybindMapArtMoveBundle)
+			options.add(SKIP_TRANSPARENT_MAPS);
+			if(settings.mapHighlights) options.add(SKIP_MONO_COLOR_MAPS);
+			if(settings.serverJoinListener) options.add(SEND_ON_SERVER_JOIN);
+			if(settings.serverQuitListener) options.add(LOG_COORDS_ON_SERVER_QUIT);
+			if(settings.inventoryRestockAuto) options.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
+			if(settings.broadcaster) options.addAll(List.of(TEMP_BROADCAST_ACCOUNT, TEMP_BROADCAST_TIMESTAMP, TEMP_BROADCAST_MSGS));
+			return options;
 		}
-//		public static final List<IHotkey> HOTKEY_LIST = ImmutableList.of(
-//				PLACEMENT_HELPER_IFRAME
-//		);
 	}
 
-	private static final String VISUALS_KEY = Main.MOD_ID+".config.visuals";
-	public static class Visuals{
+
+	//====================================================================================================
+	// Visuals
+	//====================================================================================================
+	public static final class Visuals{
+		private static final String VISUALS_KEY = Main.MOD_ID+".config.visuals";
+
 //		public static final ConfigBoolean DISPLAY_TOTEM_COUNT = new ConfigBoolean("displayTotemCount", true).apply(VISUALS_KEY);
 //		public static final ConfigBoolean SPAWNER_ACTIVATION_HIGHLIGHT = new ConfigBoolean("spawnerActivationHighlight", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean REPAIR_COST_HOTBAR_HUD = new ConfigBoolean("repairCostInHotbarHUD", false).apply(VISUALS_KEY);
@@ -169,7 +169,7 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean MAP_HIGHLIGHT_TOOLTIP = new ConfigBoolean("mapHighlightInTooltip", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_HIGHLIGHT_HOTBAR_HUD = new ConfigBoolean("mapHighlightInHotbarHUD", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_HIGHLIGHT_CONTAINER_NAME = new ConfigBoolean("mapHighlightInContainerName", true).apply(VISUALS_KEY);
-	
+
 		public static final ConfigBoolean MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES = new ConfigBoolean("mapHighlightInInvIncludeBundles", false).apply(VISUALS_KEY);
 
 		public static final ConfigColor MAP_COLOR_UNLOADED = new ConfigColor("highlightColorUnloaded", "#FFC8AAD2").apply(VISUALS_KEY); // 13150930 Peach
@@ -197,49 +197,51 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigColor EXPORT_MAP_IMG_BORDER_COLOR1 = new ConfigColor("exportMapImageBorderColor1", "#FFFFC864").apply(VISUALS_KEY); // -14236 Yellow
 		public static final ConfigColor EXPORT_MAP_IMG_BORDER_COLOR2 = new ConfigColor("exportMapImageBorderColor2", "#00322D32").apply(VISUALS_KEY); // 3288370 Gray
 
-		private static List<IConfigBase> availableOptions;
-		public static final List<IConfigBase> getOptions(){
-			if(availableOptions == null){
-				Main main = Main.getInstance();
-				availableOptions = new ArrayList<>();
-				if(!Main.mapArtFeaturesOnly){
-					availableOptions.add(REPAIR_COST_HOTBAR_HUD);
-					if(main.tooltipRepairCost) availableOptions.add(REPAIR_COST_TOOLTIP);
-				}
-				availableOptions.add(INVIS_IFRAMES);
-				if(main.mapHighlights){
-					availableOptions.add(MAP_HIGHLIGHT_IFRAME);
-					if(main.tooltipMapHighlights) availableOptions.add(MAP_HIGHLIGHT_TOOLTIP);
-					availableOptions.add(MAP_HIGHLIGHT_HOTBAR_HUD);
-					if(main.mapHighlightsInGUIs) availableOptions.add(MAP_HIGHLIGHT_CONTAINER_NAME);
-					availableOptions.addAll(List.of(
-						MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES,
-
-						MAP_COLOR_IN_INV, MAP_COLOR_NOT_IN_GROUP, MAP_COLOR_UNLOCKED,
-						MAP_COLOR_UNLOADED, MAP_COLOR_UNNAMED, MAP_COLOR_IN_IFRAME,
-						MAP_COLOR_MULTI_IFRAME, MAP_COLOR_MULTI_CONTAINER
-					));
-				}
-				if(main.tooltipMapMetadata) availableOptions.addAll(List.of(
-//						MAP_METADATA_TOOLTIP,
-						MAP_METADATA_TOOLTIP_STAIRCASE, MAP_METADATA_TOOLTIP_MATERIAL,
-						MAP_METADATA_TOOLTIP_NUM_COLORS, MAP_METADATA_TOOLTIP_NUM_COLOR_IDS,
-						MAP_METADATA_TOOLTIP_TRANSPARENCY, MAP_METADATA_TOOLTIP_NOOBLINE,
-						MAP_METADATA_TOOLTIP_PERCENT_CARPET, MAP_METADATA_TOOLTIP_PERCENT_STAIRCASE, MAP_METADATA_TOOLTIP_UUID
-				));
-				if(main.cmdExportMapImg){
-					availableOptions.addAll(List.of(
-							EXPORT_MAP_IMG_UPSCALE,
-							EXPORT_MAP_IMG_BORDER,
-							EXPORT_MAP_IMG_BORDER_COLOR1, EXPORT_MAP_IMG_BORDER_COLOR2));
-				}
+		private static List<IConfigBase> options;
+		private static final List<IConfigBase> getOptions(Settings settings){
+			if(options != null) return options;
+			options = new ArrayList<>();
+			if(!Main.mapArtFeaturesOnly){
+				options.add(REPAIR_COST_HOTBAR_HUD);
+				if(settings.tooltipRepairCost) options.add(REPAIR_COST_TOOLTIP);
 			}
-			return availableOptions;
+			options.add(INVIS_IFRAMES);
+			if(settings.mapHighlights){
+				options.add(MAP_HIGHLIGHT_IFRAME);
+				if(settings.tooltipMapHighlights) options.add(MAP_HIGHLIGHT_TOOLTIP);
+				options.add(MAP_HIGHLIGHT_HOTBAR_HUD);
+				if(settings.mapHighlightsInGUIs) options.add(MAP_HIGHLIGHT_CONTAINER_NAME);
+				options.addAll(List.of(
+					MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES,
+					MAP_COLOR_IN_INV, MAP_COLOR_NOT_IN_GROUP, MAP_COLOR_UNLOCKED,
+					MAP_COLOR_UNLOADED, MAP_COLOR_UNNAMED, MAP_COLOR_IN_IFRAME,
+					MAP_COLOR_MULTI_IFRAME, MAP_COLOR_MULTI_CONTAINER
+				));
+			}
+			if(settings.tooltipMapMetadata) options.addAll(List.of(
+//					MAP_METADATA_TOOLTIP,
+					MAP_METADATA_TOOLTIP_STAIRCASE, MAP_METADATA_TOOLTIP_MATERIAL,
+					MAP_METADATA_TOOLTIP_NUM_COLORS, MAP_METADATA_TOOLTIP_NUM_COLOR_IDS,
+					MAP_METADATA_TOOLTIP_TRANSPARENCY, MAP_METADATA_TOOLTIP_NOOBLINE,
+					MAP_METADATA_TOOLTIP_PERCENT_CARPET, MAP_METADATA_TOOLTIP_PERCENT_STAIRCASE, MAP_METADATA_TOOLTIP_UUID
+			));
+			if(settings.cmdExportMapImg){
+				options.addAll(List.of(
+						EXPORT_MAP_IMG_UPSCALE,
+						EXPORT_MAP_IMG_BORDER,
+						EXPORT_MAP_IMG_BORDER_COLOR1, EXPORT_MAP_IMG_BORDER_COLOR2));
+			}
+			return options;
 		}
 	}
 
-	private static final String HOTKEYS_KEY = Main.MOD_ID+".config.hotkeys";
-	public static class Hotkeys{
+
+	//====================================================================================================
+	// Hotkeys
+	//====================================================================================================
+	public static final class Hotkeys{
+		private static final String HOTKEYS_KEY = Main.MOD_ID+".config.hotkeys";
+
 		private static final KeybindSettings GUI_OR_INGAME_SETTINGS = KeybindSettings.create(Context.ANY,
 				KeyAction.PRESS, /*allowExtraKeys=*/false, /*orderSensitive=*/true, /*exclusive=*/false, /*cancel=*/true);
 		private static final KeybindSettings GUI_ALLOW_EXTRA_KEYS = KeybindSettings.create(Context.GUI,
@@ -362,41 +364,44 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigYawPitchHotkeyed SNAP_ANGLE_1 = new ConfigYawPitchHotkeyed("snapAngle1", 148, -73, "").apply(HOTKEYS_KEY);
 		public static final ConfigYawPitchHotkeyed SNAP_ANGLE_2 = new ConfigYawPitchHotkeyed("snapAngle2", -159, -51, "").apply(HOTKEYS_KEY);
 
-		private static List<IConfigBase> availableOptions;
-		public static final List<IConfigBase> getOptions(){
-			if(availableOptions == null){
-				availableOptions = new ArrayList<>();
-				availableOptions.addAll(List.of(
-						OPEN_CONFIG_GUI,
-						MAP_COPY, MAP_LOAD, MAP_MOVE, MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE,
-						MAP_CLICK_MOVE_NEIGHBORS, MAP_CLICK_MOVE_NEIGHBORS_KEY
-				));
-				if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(
-						TOGGLE_CAPE, SYNC_CAPE_WITH_ELYTRA,
-						TOGGLE_HAT, TOGGLE_JACKET, TOGGLE_SLEEVE_LEFT, TOGGLE_SLEEVE_RIGHT, TOGGLE_PANTS_LEG_LEFT, TOGGLE_PANTS_LEG_RIGHT,
-						AIE_TRAVEL_HELPER,
-						EBOUNCE_TRAVEL_HELPER,
-						EJECT_JUNK_ITEMS,
-						CRAFT_RESTOCK,
-						HOTBAR_TYPE_INCR, HOTBAR_TYPE_DECR,
-						INV_ORGANIZE_1, TRIGGER_INV_ORGANIZE_1,
-						INV_ORGANIZE_2, TRIGGER_INV_ORGANIZE_2,
-						INV_ORGANIZE_3, TRIGGER_INV_ORGANIZE_3,
-						INV_RESTOCK, INV_RESTOCK_LIMITS, INV_RESTOCK_BLACKLIST, INV_RESTOCK_WHITELIST,
+		private static List<IConfigBase> options;
+		private static final List<IConfigBase> getOptions(Settings settings){
+			if(options != null) return options;
+			options = new ArrayList<>();
+			options.addAll(List.of(
+					OPEN_CONFIG_GUI,
+					MAP_COPY, MAP_LOAD, MAP_MOVE, MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE,
+					MAP_CLICK_MOVE_NEIGHBORS, MAP_CLICK_MOVE_NEIGHBORS_KEY
+			));
+			if(!Main.mapArtFeaturesOnly) options.addAll(List.of(
+					TOGGLE_CAPE, SYNC_CAPE_WITH_ELYTRA,
+					TOGGLE_HAT, TOGGLE_JACKET, TOGGLE_SLEEVE_LEFT, TOGGLE_SLEEVE_RIGHT, TOGGLE_PANTS_LEG_LEFT, TOGGLE_PANTS_LEG_RIGHT,
+					AIE_TRAVEL_HELPER,
+					EBOUNCE_TRAVEL_HELPER,
+					EJECT_JUNK_ITEMS,
+					CRAFT_RESTOCK,
+					HOTBAR_TYPE_INCR, HOTBAR_TYPE_DECR,
+					INV_ORGANIZE_1, TRIGGER_INV_ORGANIZE_1,
+					INV_ORGANIZE_2, TRIGGER_INV_ORGANIZE_2,
+					INV_ORGANIZE_3, TRIGGER_INV_ORGANIZE_3,
+					INV_RESTOCK, INV_RESTOCK_LIMITS, INV_RESTOCK_BLACKLIST, INV_RESTOCK_WHITELIST,
 
-						CHAT_MSG_1, CHAT_MSG_2, CHAT_MSG_3
-				));
-				if(Main.getInstance() != null) availableOptions.addAll(List.of(
-						REMOTE_MSG_1, REMOTE_MSG_2, REMOTE_MSG_3
-				));
-				if(!Main.mapArtFeaturesOnly) availableOptions.addAll(List.of(
-						SNAP_ANGLE_1, SNAP_ANGLE_2
-				));
-			}
-			return availableOptions;
+					CHAT_MSG_1, CHAT_MSG_2, CHAT_MSG_3
+			));
+			if(settings.database) options.addAll(List.of(
+					REMOTE_MSG_1, REMOTE_MSG_2, REMOTE_MSG_3
+			));
+			if(!Main.mapArtFeaturesOnly) options.addAll(List.of(
+					SNAP_ANGLE_1, SNAP_ANGLE_2
+			));
+			return options;
 		}
 	}
 
+
+	//====================================================================================================
+	// Database
+	//====================================================================================================
 	private static final String DATABASE_KEY = Main.MOD_ID+".config.database";
 	public static class Database{
 //		public static final ConfigOptionList PLACEMENT_WARN = new ConfigOptionList("placementWarn", MessageOutputType.ACTIONBAR).apply(DATABASE_KEY);
@@ -417,74 +422,69 @@ public final class Configs implements IConfigHandler{
 		)).apply(DATABASE_KEY);
 		public static final ConfigBoolean SHARE_JOIN_QUIT = new ConfigBoolean("shareJoinQuit", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
 
-		private static List<IConfigBase> availableOptions;
-		public static final List<IConfigBase> getOptions(){
-			if(availableOptions == null){
-				Main main = Main.getInstance();
-				availableOptions = new ArrayList<>();
-				availableOptions.addAll(List.of(CLIENT_ID, CLIENT_KEY, ADDRESS, SAVE_MAPART, SHARE_MAPART));
-				if(main.epearlLookup != null) availableOptions.addAll(List.of(EPEARL_OWNERS_BY_UUID, EPEARL_OWNERS_BY_XZ, SHARE_EPEARL_OWNERS));
-				if(main.gameMessageListener) availableOptions.addAll(List.of(SAVE_IGNORES, SHARE_IGNORES));
-				if(main.gameMessageFilter != null) availableOptions.add(BORROW_IGNORES);
-				if(main.serverJoinListener || main.serverQuitListener) availableOptions.add(SHARE_JOIN_QUIT);
-			}
-			return availableOptions;
+		private static List<IConfigBase> options;
+		private static final List<IConfigBase> getOptions(Settings settings){
+			if(options != null) return options;
+			options = new ArrayList<>();
+			options.addAll(List.of(CLIENT_ID, CLIENT_KEY, ADDRESS, SAVE_MAPART, SHARE_MAPART));
+			if(settings.epearlOwners) options.addAll(List.of(EPEARL_OWNERS_BY_UUID, EPEARL_OWNERS_BY_XZ, SHARE_EPEARL_OWNERS));
+			if(settings.gameMessageListener) options.addAll(List.of(SAVE_IGNORES, SHARE_IGNORES));
+			if(settings.gameMessageFilter) options.add(BORROW_IGNORES);
+			if(settings.serverJoinListener || settings.serverQuitListener) options.add(SHARE_JOIN_QUIT);
+			return options;
 		}
 	}
 
+	private static final String CONFIG_FILE_NAME = Main.MOD_ID+"/"+Main.MOD_ID+".json";
+	private final Settings settings;
+	Configs(Settings settings){this.settings = settings;}
+
+	final List<IConfigBase> getGenericOptions(){return Generic.getOptions(settings);}
+	final List<IConfigBase> getVisualsOptions(){return Visuals.getOptions(settings);}
+	final List<IConfigBase> getHotkeysOptions(){return Hotkeys.getOptions(settings);}
+	final List<IConfigBase> getDatabaseOptions(){return settings.database ? Database.getOptions(settings) : null;}
+
 	private static List<IConfigBase> allOptions;
-	static List<IConfigBase> allOptions(){
-		if(allOptions == null){
-			allOptions = new ArrayList<>();
-			allOptions.addAll(Generic.getOptions());
-			allOptions.addAll(Visuals.getOptions());
-			allOptions.addAll(Hotkeys.getOptions());
-			if(Main.getInstance().remoteSender != null) allOptions.addAll(Database.getOptions());
-		}
+	final List<IConfigBase> getAllOptions(){
+		if(allOptions != null) return allOptions;
+		allOptions = new ArrayList<>();
+		allOptions.addAll(getGenericOptions());
+		allOptions.addAll(getVisualsOptions());
+		allOptions.addAll(getHotkeysOptions());
+		if(settings.database) allOptions.addAll(getDatabaseOptions());
 		return allOptions;
 	}
 
-	public static void loadFromFile(){
+	@Override public void load(){
 		Path configFile = FileUtils.getConfigDirectoryAsPath().resolve(CONFIG_FILE_NAME);
-
 		if(Files.exists(configFile) && Files.isReadable(configFile)){
 			JsonElement element = JsonUtils.parseJsonFileAsPath(configFile);
-
 			if(element != null && element.isJsonObject()){
 				JsonObject root = element.getAsJsonObject();
-
-				ConfigUtils.readConfigBase(root, "Generic", Generic.getOptions());
-				ConfigUtils.readConfigBase(root, "Visuals", Visuals.getOptions());
-				ConfigUtils.readConfigBase(root, "Hotkeys", Hotkeys.getOptions());
-				if(Main.getInstance().remoteSender != null) ConfigUtils.readConfigBase(root, "Database", Database.getOptions());
-
+				ConfigUtils.readConfigBase(root, "Generic", getGenericOptions());
+				ConfigUtils.readConfigBase(root, "Visuals", getVisualsOptions());
+				ConfigUtils.readConfigBase(root, "Hotkeys", getHotkeysOptions());
+				if(settings.database) ConfigUtils.readConfigBase(root, "Database", getDatabaseOptions());
 				// Main.debugLog("loadFromFile(): Successfully loaded config file '{}'.", configFile.toAbsolutePath());
 			}
 			else Main.LOGGER.error("loadFromFile(): Failed to load config file '{}'.", configFile.toAbsolutePath());
 		}
 	}
 
-	public static void saveToFile(){
+	@Override public void save(){
 		Path dir = FileUtils.getConfigDirectoryAsPath();
-
 		if(!Files.exists(dir)){
 			FileUtils.createDirectoriesIfMissing(dir);
 			// Main.debugLog("saveToFile(): Creating directory '{}'.", dir.toAbsolutePath());
 		}
-
 		if(Files.isDirectory(dir)){
 			JsonObject root = new JsonObject();
-
-			ConfigUtils.writeConfigBase(root, "Generic", Generic.getOptions());
-			ConfigUtils.writeConfigBase(root, "Visuals", Visuals.getOptions());
-			ConfigUtils.writeConfigBase(root, "Hotkeys", Hotkeys.getOptions());
-			if(Main.getInstance() != null) ConfigUtils.writeConfigBase(root, "Database", Database.getOptions());
-
+			ConfigUtils.writeConfigBase(root, "Generic", getGenericOptions());
+			ConfigUtils.writeConfigBase(root, "Visuals", getVisualsOptions());
+			ConfigUtils.writeConfigBase(root, "Hotkeys", getHotkeysOptions());
+			if(settings.database) ConfigUtils.writeConfigBase(root, "Database", getDatabaseOptions());
 			JsonUtils.writeJsonToFileAsPath(root, dir.resolve(CONFIG_FILE_NAME));
 		}
 		else Main.LOGGER.error("saveToFile(): Config Folder '{}' does not exist!", dir.toAbsolutePath());
 	}
-
-	@Override public void load(){loadFromFile();}
-	@Override public void save(){saveToFile();}
 }
