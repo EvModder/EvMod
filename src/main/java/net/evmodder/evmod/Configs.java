@@ -403,9 +403,10 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigInteger CLIENT_ID = new ConfigInteger("clientId", 67, 0, 1000000).apply(DATABASE_KEY);
 		public static final ConfigString CLIENT_KEY = new ConfigString("clientKey", "yesyesyes").apply(DATABASE_KEY);
 		public static final ConfigString ADDRESS = new ConfigString("address", "evmodder.net:14441").apply(DATABASE_KEY);
-		public static final ConfigBoolean SHARE_MAPART = new ConfigBoolean("shareMapArt", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
-		public static final ConfigBoolean EPEARL_OWNERS_BY_UUID = new ConfigBoolean("epearlDatabaseUUID", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
-		public static final ConfigBoolean EPEARL_OWNERS_BY_XZ = new ConfigBoolean("epearlDatabaseXZ", false).apply(DATABASE_KEY);
+		public static final ConfigBoolean SAVE_MAPART = new ConfigBoolean("saveSeenMapart", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
+		public static final ConfigBoolean SHARE_MAPART = new ConfigBoolean("shareSeenMapArt", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
+		public static final ConfigBoolean EPEARL_OWNERS_BY_UUID = new ConfigBoolean("saveEpearlOwnersByUUID", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
+		public static final ConfigBoolean EPEARL_OWNERS_BY_XZ = new ConfigBoolean("saveEpearlOwnersByXZ", false).apply(DATABASE_KEY);
 		public static final ConfigBoolean SHARE_EPEARL_OWNERS = new ConfigBoolean("shareEpearlOwners", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
 		public static final ConfigBoolean SAVE_IGNORES = new ConfigBoolean("saveIgnoreList", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
 		public static final ConfigBoolean SHARE_IGNORES = new ConfigBoolean("shareIgnoreList", false).apply(DATABASE_KEY);
@@ -421,7 +422,7 @@ public final class Configs implements IConfigHandler{
 			if(availableOptions == null){
 				Main main = Main.getInstance();
 				availableOptions = new ArrayList<>();
-				availableOptions.addAll(List.of(CLIENT_ID, CLIENT_KEY, ADDRESS, SHARE_MAPART));
+				availableOptions.addAll(List.of(CLIENT_ID, CLIENT_KEY, ADDRESS, SAVE_MAPART, SHARE_MAPART));
 				if(main.epearlLookup != null) availableOptions.addAll(List.of(EPEARL_OWNERS_BY_UUID, EPEARL_OWNERS_BY_XZ, SHARE_EPEARL_OWNERS));
 				if(main.gameMessageListener) availableOptions.addAll(List.of(SAVE_IGNORES, SHARE_IGNORES));
 				if(main.gameMessageFilter != null) availableOptions.add(BORROW_IGNORES);

@@ -59,6 +59,8 @@ final class InitUtils{
 		final int DUMMY_CLIENT_ID = 67;
 
 		if(Configs.Database.CLIENT_ID.getIntegerValue() == DUMMY_CLIENT_ID){
+			Main.LOGGER.info("Missing valid CLIENT_ID for Database, requesting one from RMS");
+
 			Session session = MinecraftClient.getInstance().getSession();
 			UUID uuid = session.getUuidOrNull() != null ? session.getUuidOrNull() : UUID.nameUUIDFromBytes(session.getUsername().getBytes());
 			byte[] msg = PacketHelper.toByteArray(uuid);

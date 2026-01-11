@@ -38,6 +38,8 @@ public class MapStateCacher{
 	private static HashMap<String, HashMap</*hash=*/UUID, List<MapStateSerializable>>> bySlot;
 	private static boolean namesCacheUpdated, idCacheUpdated;
 
+	private static final String DIR = "map_cache/";
+
 	public static final String BY_ID = "map_ids",
 			BY_NAME = "item_names",
 			BY_PLAYER_INV = "player_invs",
@@ -116,20 +118,20 @@ public class MapStateCacher{
 	}
 
 	private static final boolean saveCacheFile(String server, String cache){
-		final String filename = "map_cache/"+server+"/"+cache+".cache";
+		final String filename = DIR+server+"/"+cache+".cache";
 		final HashMap<?, ?> perServerCache = getInMemCachePerServer(server, cache);
 		if(perServerCache == null || perServerCache.isEmpty()) return new File(filename).delete();
 
-		File dir = new File(FileIO.DIR+"map_cache/");
+		File dir = new File(FileIO.DIR+DIR);
 		if(!dir.isDirectory()){Main.LOGGER.info("MapStateCacher: Creating dir '"+dir.getName()+"'"); dir.mkdir();}
-		dir = new File(FileIO.DIR+"map_cache/"+server);
+		dir = new File(FileIO.DIR+DIR+server);
 		if(!dir.isDirectory()){Main.LOGGER.info("MapStateCacher: Creating dir '"+dir.getName()+"'"); dir.mkdir();}
 		FileIO.writeObject(filename, perServerCache);
 		return true;
 	}
 	@SuppressWarnings("unchecked")
 	private static final HashMap<?, ?> createInMemCacheFromFile(String server, String cache){
-		final String filename = "map_cache/"+server+"/"+cache+".cache";
+		final String filename = DIR+server+"/"+cache+".cache";
 		HashMap<?, ?> loadedCache = (HashMap<?, ?>)FileIO.readObject(filename);
 //		if(loadedCache == null) return null;
 		switch(cache){
@@ -157,14 +159,6 @@ public class MapStateCacher{
 		}
 	}
 
-	private static final String getServerIp(MinecraftClient client){
-		if(client == null) return "null0";
-		if(client.getCurrentServerEntry() == null){
-			return client.getServer() == null ? "null1" : client.getServer().getSaveProperties().getLevelName();
-		}
-		return client.getCurrentServerEntry().address;
-	}
-
 	//====================================================================================================
 	@SuppressWarnings("unchecked")
 	public static final boolean saveMapStatesByPos(Stream<ItemStack> items, String cache){
@@ -179,7 +173,7 @@ public class MapStateCacher{
 		final boolean deleteCache = serialStates.isEmpty() || serialStates.stream().allMatch(Objects::isNull);
 
 		// Load old cache values
-		final String server = getServerIp(client);
+		final String server = MiscUtils.getServerAddress();
 		HashMap<UUID, List<MapStateSerializable>> bySlotPerServer = (HashMap<UUID, List<MapStateSerializable>>)getInMemCachePerServer(server, cache);
 		final List<MapStateSerializable> oldCache = (List<MapStateSerializable>)getInMemCacheSpecific(server, cache);
 		if(oldCache == null){
@@ -213,7 +207,7 @@ public class MapStateCacher{
 	private static final Object commonCacheLoad(String cache){
 		MinecraftClient client = MinecraftClient.getInstance();
 		if(client == null || client.player == null || client.world == null) return null;
-		final String server = getServerIp(client);
+		final String server = MiscUtils.getServerAddress();
 		final Object specificCache = getInMemCacheSpecific(server, cache);
 		if(specificCache == null && getInMemCachePerServer(server, cache) == null){
 			if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK && !createInMemCacheFromFile(server, cache).isEmpty()){
@@ -313,7 +307,7 @@ public class MapStateCacher{
 	public static final boolean saveMapStatesByIdToFile(){
 		if(!idCacheUpdated) return false;
 		assert Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK;
-		final String server = getServerIp(MinecraftClient.getInstance());
+		final String server = MiscUtils.getServerAddress();
 		boolean ret = saveCacheFile(server, BY_ID); // All of the above checks are already handled by saveCacheFile()
 		if(!ret) return false;
 		Main.LOGGER.info("MapStateCacher: type="+BY_ID+",stored="+getInMemCachePerServer(server, BY_ID).size());
@@ -328,7 +322,7 @@ public class MapStateCacher{
 		if(!state.locked && !Configs.Generic.MAP_CACHE_UNLOCKED.getBooleanValue()) return false;
 		final String name = stack.getCustomName().getLiteralString();
 		assert name != null;
-		final String server = getServerIp(MinecraftClient.getInstance());
+		final String server = MiscUtils.getServerAddress();
 		HashSet<String> unusable = unusableNames == null ? null : unusableNames.get(server);
 		if(unusable != null && unusable.contains(name)) return false;
 
@@ -377,7 +371,7 @@ public class MapStateCacher{
 	public static final boolean saveMapStatesByNameToFile(){
 		if(!namesCacheUpdated) return false;
 		assert Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK;
-		final String server = getServerIp(MinecraftClient.getInstance());
+		final String server = MiscUtils.getServerAddress();
 		boolean ret = saveCacheFile(server, BY_NAME);
 		if(!ret) return false;
 		Main.LOGGER.info("MapStateCacher: type="+BY_NAME+",stored="+getInMemCachePerServer(server, BY_NAME).size());
