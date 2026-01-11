@@ -404,15 +404,16 @@ public final class Configs implements IConfigHandler{
 	private static final String DATABASE_KEY = Main.MOD_ID+".config.database";
 	public static class Database{
 //		public static final ConfigOptionList PLACEMENT_WARN = new ConfigOptionList("placementWarn", MessageOutputType.ACTIONBAR).apply(DATABASE_KEY);
-		public static final ConfigInteger CLIENT_ID = new ConfigInteger("clientId", 1, 0, 1000000).apply(DATABASE_KEY);
-		public static final ConfigString CLIENT_KEY = new ConfigString("clientKey", "some_unique_key").apply(DATABASE_KEY);
+		public static final ConfigInteger CLIENT_ID = new ConfigInteger("clientId", 67, 0, 1000000).apply(DATABASE_KEY);
+		public static final ConfigString CLIENT_KEY = new ConfigString("clientKey", "yesyesyes").apply(DATABASE_KEY);
 		public static final ConfigString ADDRESS = new ConfigString("address", "evmodder.net:14441").apply(DATABASE_KEY);
 		public static final ConfigBoolean SHARE_MAPART = new ConfigBoolean("shareMapArt", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY); //TODO: implement
 		public static final ConfigBoolean EPEARL_OWNERS_BY_UUID = new ConfigBoolean("epearlDatabaseUUID", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
 		public static final ConfigBoolean EPEARL_OWNERS_BY_XZ = new ConfigBoolean("epearlDatabaseXZ", false).apply(DATABASE_KEY);
-		//public static final ConfigBoolean SHARE_EPEARL_OWNERS = new ConfigBoolean("shareMapArt", true).apply(GENERIC_KEY); //TODO: implement
-		public static final ConfigBoolean SAVE_IGNORES = new ConfigBoolean("saveIgnoreList", false).apply(DATABASE_KEY); // is a dep. for BORROW_IGNORES
+		public static final ConfigBoolean SHARE_EPEARL_OWNERS = new ConfigBoolean("shareEpearlOwners", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
+		public static final ConfigBoolean SAVE_IGNORES = new ConfigBoolean("saveIgnoreList", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
 		public static final ConfigBoolean SHARE_IGNORES = new ConfigBoolean("shareIgnoreList", false).apply(DATABASE_KEY);
+		// Requires SAVE_IGNORES=true
 		public static final ConfigPlayerList BORROW_IGNORES = (ConfigPlayerList)new ConfigPlayerList("borrowIgnoreLists", List.of(
 				new NameAndUUID("EvDoc", UUID.fromString("34471e8d-d0c5-47b9-b8e1-b5b9472affa4")),
 				new NameAndUUID("EvModder", UUID.fromString("0e314b60-29c7-4e35-bef3-3c652c8fb467"))
@@ -425,7 +426,7 @@ public final class Configs implements IConfigHandler{
 				Main main = Main.getInstance();
 				availableOptions = new ArrayList<>();
 				availableOptions.addAll(List.of(CLIENT_ID, CLIENT_KEY, ADDRESS, SHARE_MAPART));
-				if(main.epearlLookup != null) availableOptions.addAll(List.of(EPEARL_OWNERS_BY_UUID, EPEARL_OWNERS_BY_XZ));
+				if(main.epearlLookup != null) availableOptions.addAll(List.of(EPEARL_OWNERS_BY_UUID, EPEARL_OWNERS_BY_XZ, SHARE_EPEARL_OWNERS));
 				if(main.gameMessageListener) availableOptions.addAll(List.of(SAVE_IGNORES, SHARE_IGNORES));
 				if(main.gameMessageFilter != null) availableOptions.add(BORROW_IGNORES);
 				if(main.serverJoinListener || main.serverQuitListener) availableOptions.add(SHARE_JOIN_QUIT);

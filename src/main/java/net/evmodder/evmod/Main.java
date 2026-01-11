@@ -161,13 +161,7 @@ public class Main{
 
 		InitUtils.refreshClickLimits();
 
-		if(!database) remoteSender = null;
-		else{
-			remoteSender = new RemoteServerSender(LOGGER, MiscUtils::getCurrentServerAddressHashCode);
-			InitUtils.refreshRemoteServerSender();
-//			remoteSender.sendBotMessage(Command.PING, /*udp=*/false, /*timeout=*/5000, /*msg=*/new byte[0], null);
-//			msg->LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg)))
-		}
+		remoteSender = !database ? null : new RemoteServerSender(LOGGER, MiscUtils::getCurrentServerAddressHashCode);
 
 		if(epearlOwners){
 			epearlLookup = new EpearlLookup(remoteSender);
@@ -219,8 +213,10 @@ public class Main{
 		if(tooltipRepairCost) Tooltip.register(new TooltipRepairCost());
 
 		ConfigManager.getInstance().registerConfigHandler(MOD_ID, new Configs());
-		Registry.CONFIG_SCREEN.registerConfigScreenFactory(new ModInfo(MOD_ID, MOD_NAME, ConfigGui::new));
 
+		if(remoteSender != null) InitUtils.refreshRemoteServerSender();
+
+		Registry.CONFIG_SCREEN.registerConfigScreenFactory(new ModInfo(MOD_ID, MOD_NAME, ConfigGui::new));
 		new KeyCallbacks(this);
 	}
 }

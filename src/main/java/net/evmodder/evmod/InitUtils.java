@@ -1,5 +1,6 @@
 package net.evmodder.evmod;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.UUID;
 import net.evmodder.EvLib.util.Command;
@@ -8,6 +9,7 @@ import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.session.Session;
 import net.minecraft.entity.player.PlayerModelPart;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
@@ -42,14 +44,40 @@ final class InitUtils{
 		ClickUtils.refreshLimits(Configs.Generic.CLICK_LIMIT_COUNT.getIntegerValue(), Configs.Generic.CLICK_LIMIT_DURATION.getIntegerValue());
 	}
 	static final void refreshRemoteServerSender(){ // Accessor: KeybindCallbacks, Main
+		RemoteServerSender rms = Main.getInstance().remoteSender;
+		assert rms != null;
 		String fullAddress = Configs.Database.ADDRESS.getStringValue();
 		final int sep = fullAddress.indexOf(':');
 		final String addr;
 		final int port;
 		if(sep == -1){addr = fullAddress; port = RemoteServerSender.DEFAULT_PORT;}
 		else{addr = fullAddress.substring(0, sep).trim(); port = Integer.parseInt(fullAddress.substring(sep+1).trim());}
-		Main.getInstance().remoteSender.setConnectionDetails(addr, port,
-				Configs.Database.CLIENT_ID.getIntegerValue(), Configs.Database.CLIENT_KEY.getStringValue());
+		rms.setConnectionDetails(addr, port, Configs.Database.CLIENT_ID.getIntegerValue(), Configs.Database.CLIENT_KEY.getStringValue());
+
+//		rms.sendBotMessage(Command.PING, /*udp=*/false, /*timeout=*/5000, /*msg=*/new byte[0], null);
+//		msg->LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg)))
+		final int DUMMY_CLIENT_ID = 67;
+
+		if(Configs.Database.CLIENT_ID.getIntegerValue() == DUMMY_CLIENT_ID){
+			Session session = MinecraftClient.getInstance().getSession();
+			UUID uuid = session.getUuidOrNull() != null ? session.getUuidOrNull() : UUID.nameUUIDFromBytes(session.getUsername().getBytes());
+			byte[] msg = PacketHelper.toByteArray(uuid);
+			rms.sendBotMessage(Command.REQUEST_CLIENT_KEY, /*udp=*/false, /*timeout=*/5000, msg, (response)->{
+				if(response == null || response.length <= 4+8){
+					Main.LOGGER.info("ClientAuth: null/invalid response from RMS for REQUEST_CLIENT_KEY: "+msg);
+					return;
+				}
+				ByteBuffer bb = ByteBuffer.wrap(response);
+				final int clientId = bb.getInt();
+				assert clientId != DUMMY_CLIENT_ID;
+				final byte[] strBytes = new byte[bb.remaining()]; bb.get(strBytes, response.length-bb.remaining(), bb.remaining());
+				final String clientKey = new String(strBytes);
+
+				Configs.Database.CLIENT_ID.setIntegerValue(clientId);
+				Configs.Database.CLIENT_KEY.setValueFromString(clientKey);
+				rms.setConnectionDetails(addr, port, clientId, clientKey);
+			});
+		}
 	}
 
 	static final void sendRemoteMsg(RemoteServerSender rms, String msg){ // Accessor: KeybindCallbacks
