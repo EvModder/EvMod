@@ -18,11 +18,13 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.evmodder.EvLib.util.FileIO;
+import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
 public class CommandMapArtGroup{
@@ -42,7 +44,18 @@ public class CommandMapArtGroup{
 		}
 	};
 
-	public final HashSet<UUID> getGroupIdsOrSendError(final FabricClientCommandSource source, final String... groups){
+	interface TextListener{
+		public void sendFeedback(Text message);
+		public void sendError(Text message);
+	}
+	TextListener asTextListener(FabricClientCommandSource fccs){
+		return new TextListener(){
+			@Override public void sendFeedback(Text message){fccs.sendFeedback(message);}
+			@Override public void sendError(Text message){fccs.sendError(message);}
+		};
+	}
+
+	public final HashSet<UUID> getGroupIdsOrSendError(final TextListener source, final String... groups){
 		final byte[][] data = new byte[groups.length][];
 		for(int i=0; i<groups.length; ++i) data[i] = FileIO.loadFileBytes(DIR+groups[i]);
 
@@ -72,7 +85,7 @@ public class CommandMapArtGroup{
 		return colorIds;
 	}
 
-	private int runCompareCommand(final FabricClientCommandSource source, final String[] group1, final String[] group2){
+	private int runCompareCommand(final TextListener source, final String[] group1, final String[] group2){
 		if(group2 == null || group2.length == 0){
 			source.sendError(Text.translatable(PREFIX+".compare.needsSecondGroup").withColor(ERROR_COLOR));
 //			source.sendError(Text.literal("Specify a 2nd group to compare against").withColor(ERROR_COLOR));
@@ -151,7 +164,7 @@ public class CommandMapArtGroup{
 //				+ "(ids: "+in1Not2.size()+"+"+in2Not1.size()+"="+merged.size()+")").withColor(CREATE_COLOR));
 		return 1;
 	}
-	/*private int runCompareCommand(final FabricClientCommandSource source, final String[] group1, final String[] group2){
+	/*private int runCompareCommand(final TextListener source, final String[] group1, final String[] group2){
 		if(group2 == null || group2.length == 0){
 			source.sendError(Text.literal("Specify a 2nd group to compare against").withColor(ERROR_COLOR));
 			return 1;
@@ -205,7 +218,7 @@ public class CommandMapArtGroup{
 				+ "(ids: "+in1Not2.size()+"+"+in2Not1.size()+"="+merged.size()+")").withColor(CREATE_COLOR));
 		return 1;
 	}*/
-	private int runCommand(final FabricClientCommandSource source, final Command cmd, final String[] groups, final String[] groups2){
+	private int runCommand(final TextListener source, final Command cmd, final String[] groups, final String[] groups2){
 		assert groups.length > 0;
 		if(cmd == Command.COMPARE) return runCompareCommand(source, groups, groups2);
 
@@ -233,7 +246,7 @@ public class CommandMapArtGroup{
 		final String newActiveGroup = String.join(",", groups);
 		if(cmd == Command.CREATE || cmd == Command.APPEND){
 			final int oldSize = mapsInGroup.size();
-			final HashSet<UUID> loadedMaps = MapGroupUtils.getLegitLoadedMaps(source.getWorld());
+			final HashSet<UUID> loadedMaps = MapGroupUtils.getLegitLoadedMaps(MinecraftClient.getInstance().player.clientWorld);
 			if(loadedMaps.isEmpty()){
 				source.sendError(Text.translatable(PREFIX+"create.noMapsFound").withColor(ERROR_COLOR));
 //				source.sendError(Text.literal("No maps found").withColor(ERROR_COLOR));
@@ -313,6 +326,16 @@ public class CommandMapArtGroup{
 
 	public CommandMapArtGroup(){
 		CONFIRM = Text.translatableWithFallback(PREFIX+"create.confirm", "confirm").getString();
+		final String defaultGroupName = Configs.Generic.MAPART_GROUP_DEFAULT.getStringValue();
+		if(!defaultGroupName.isBlank()){
+			final File defaultGroupFile = new File(FileIO.DIR+defaultGroupName);
+			if(defaultGroupFile.exists()){
+				runCommand(new TextListener(){
+					@Override public void sendFeedback(Text message){Main.LOGGER.info(message.getString());}
+					@Override public void sendError(Text message){Main.LOGGER.warn(message.getString());}
+				}, Command.SET, new String[]{defaultGroupName}, null);
+			}
+		}
 		ClientCommandRegistrationCallback.EVENT.register(
 //				new ClientCommandRegistrationCallback(){
 //				@Override public void register(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess){
@@ -344,7 +367,7 @@ public class CommandMapArtGroup{
 							final String cmdStr = ctx.getArgument("command", String.class);
 							final String[] groups = ctx.getArgument("group", String.class).split("[,+]");
 							for(Command cmd : Command.values()) if(cmd.translation.equalsIgnoreCase(cmdStr)){
-								return runCommand(ctx.getSource(), cmd, groups, /*groups2=*/null);
+								return runCommand(asTextListener(ctx.getSource()), cmd, groups, /*groups2=*/null);
 							}
 							ctx.getSource().sendError(Text.translatable(PREFIX+".invalidSubcommand", cmdStr).withColor(ERROR_COLOR));
 //							ctx.getSource().sendError(Text.literal("Invalid subcommand: "+cmdStr).withColor(ERROR_COLOR));
@@ -380,7 +403,7 @@ public class CommandMapArtGroup{
 								final String[] groups = ctx.getArgument("group", String.class).split("[,+]");
 								final String[] groups2 = ctx.getArgument("group2", String.class).split("[,+]");
 								for(Command cmd : Command.values()) if(cmd.translation.equalsIgnoreCase(cmdStr)){
-									return runCommand(ctx.getSource(), cmd, groups, groups2);
+									return runCommand(asTextListener(ctx.getSource()), cmd, groups, groups2);
 								}
 								ctx.getSource().sendError(Text.translatable(PREFIX+".invalidSubcommand", cmdStr).withColor(ERROR_COLOR));
 //								ctx.getSource().sendError(Text.literal("Invalid subcommand: "+cmdStr).withColor(ERROR_COLOR));

@@ -89,6 +89,7 @@
 
 	"evmod.config.generic.comment.whisperPlaySound": "emite un sonido al recibir un whisper",
 	"evmod.config.generic.comment.whisperPearlPull": "/w msg to trigger a pearl",
+	"evmod.config.generic.name.mapArtDefaultGroup": "mapArtDefaultGroup",
 	"evmod.config.generic.comment.commandMapArtGroupIncludeUnlocked": "Include unlocked maps in MapGroups (not recommended)",
 
 	"evmod.config.generic.comment.keybindMapArtBundleRemoveMax": "Limita el Maximo de mapas que obtienes de un Saco",

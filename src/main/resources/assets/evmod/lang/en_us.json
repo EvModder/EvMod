@@ -37,6 +37,12 @@
 	"evmod.gui.button.hotkeys": "Hotkeys",
 	"evmod.gui.button.database": "Database",
 
+	"evmod.gui.button.all.hover": ":O",
+	"evmod.gui.button.generic.hover": ":D",
+	"evmod.gui.button.visuals.hover": "o_o",
+	"evmod.gui.button.hotkeys.hover": ":3",
+	"evmod.gui.button.database.hover": ":]",
+
 	"evmod.gui.label.tooltipDisplay.off": "Off",
 	"evmod.gui.label.tooltipDisplay.on": "On",
 	"evmod.gui.label.tooltipDisplay.advanced": "Advanced tooltips",
@@ -84,6 +90,7 @@
 	"evmod.config.generic.name.whisperPlaySound": "whisperPlaySound",
 	"evmod.config.generic.name.whisperPlaySoundUnfocusedOnly": "whisperPlaySoundUnfocusedOnly",
 	"evmod.config.generic.name.whisperPearlPull": "whisperPearlPull",
+	"evmod.config.generic.name.mapArtDefaultGroup": "mapArtDefaultGroup",
 	"evmod.config.generic.name.commandMapArtGroupIncludeUnlocked": "commandMapArtGroupIncludeUnlocked",
 
 	"evmod.config.generic.name.keybindMapArtBundleRemoveMax": "keybindMapArtBundleRemoveMax",
