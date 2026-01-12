@@ -26,10 +26,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientPlayNetworkHandler.class)
 abstract class MixinClientPlayNetworkHandler{
-
 	// Saw this in https://github.com/red-stoned/client_maps/, and realized it's probably good to incorporate
 	@Redirect(method="onMapUpdate", at=@At(value="INVOKE",
 			target="Lnet/minecraft/client/world/ClientWorld;getMapState(Lnet/minecraft/component/type/MapIdComponent;)Lnet/minecraft/item/map/MapState;"))
@@ -84,30 +84,30 @@ abstract class MixinClientPlayNetworkHandler{
 	}
 
 	@Inject(method="onMapUpdate", at=@At("TAIL"))
-	private void updateSeenMaps(MapUpdateS2CPacket packet){
+	private void updateSeenMaps(MapUpdateS2CPacket packet, CallbackInfo ci){
 		final MapState state = MinecraftClient.getInstance().world.getMapState(packet.mapId());
 		final int id = packet.mapId().id();
 		assert !MapStateCacher.hasCacheMarker(state);
 		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.addMapStateById(id, state);
 
 		if(!Configs.Database.SAVE_MAPART.getBooleanValue()) return;
-		if(!state.locked) return; // Supporting unlocked maps would waste a LOT of disk with constant 1-pixel changes while building
+		if(!Configs.Generic.MAPART_GROUP_INCLUDE_UNLOCKED.getBooleanValue() && !state.locked) return;
 
 		final String addr = MiscUtils.getServerAddress();
-		final UUID oldColorsId = MapGroupUtils.getIdForMapState(state);
+		final UUID oldColorsId = MapGroupUtils.getCachedIdForMapStateOrNull(state);
 		final UUID colorsId = MapGroupUtils.getIdForMapState(state, /*evict=*/true);
 		final HashSet<UUID> seenForServer;
 		synchronized(mapsSaved){
 			seenForServer = mapsSaved.computeIfAbsent(addr, this::loadMapsForServer);
 			if(!seenForServer.add(colorsId)) return; // Already seen
-			if(!colorsId.equals(oldColorsId)){
+			if(oldColorsId != null && !oldColorsId.equals(colorsId)){
 				Main.LOGGER.info("[OnMapUpdate debug]: colordsId "+oldColorsId+" -> "+colorsId);
 				seenForServer.remove(oldColorsId);
 			}
 		}
 		scheduleSaveMapsForServer(addr, seenForServer);
 
-		if(!Configs.Database.SHARE_MAPART.getBooleanValue()) return;
+		if(!Configs.Database.SHARE_MAPART.getBooleanValue() || !state.locked) return;
 		Main.mixinAccess().remoteSender.sendBotMessage(Command.DB_MAPART_STORE, /*udp=*/false, /*timeout=*/15_000l, state.colors, reply->{
 			if(reply == null){
 				Main.LOGGER.info("MapDB: Null response from server");

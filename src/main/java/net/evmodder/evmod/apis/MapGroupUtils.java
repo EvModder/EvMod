@@ -14,12 +14,15 @@ public final class MapGroupUtils{
 	private static boolean ENFORCE_MATCHES_LOCKEDNESS = true; // TODO: config setting
 
 	private static final HashMap<MapState, UUID> stateToIdCache = new HashMap<MapState, UUID>(), unlockedStateToIdCache = new HashMap<MapState, UUID>();
+	// Only external caller: MixinClientPlayNetworkHandler
+	public static final UUID getCachedIdForMapStateOrNull(MapState state){return (state.locked ? stateToIdCache : unlockedStateToIdCache).get(state);}
 //	private static final Random rand = new Random();
 	public static final UUID getIdForMapState(MapState state, boolean evict){
 		UUID uuid;
 		if(!evict){
-			uuid = (state.locked ? stateToIdCache : unlockedStateToIdCache).get(state);
-			if(uuid != null/* && (state.locked || rand.nextFloat() < 0.99)*/) return uuid; // 1% chance of cache eviction for unlocked states
+			uuid = getCachedIdForMapStateOrNull(state);
+			if(uuid != null) return uuid;
+//			if(uuid != null && (state.locked || rand.nextFloat() < 0.99)) return uuid; // 1% chance of cache eviction for unlocked states
 		}
 
 		// Normalize all CLEAR/transparent colors

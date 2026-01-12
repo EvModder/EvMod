@@ -61,7 +61,7 @@ public class CommandMapArtGroup{
 
 		final String notFoundGroups = IntStream.range(0, groups.length).filter(i -> data[i] == null).mapToObj(i -> groups[i]).collect(Collectors.joining(","));
 		if(!notFoundGroups.isEmpty()){
-//			source.sendError(Text.literal("MapArtGroup file not found: "+FileIO.DIR+FILE_PATH+notFoundGroups).withColor(ERROR_COLOR));
+			source.sendError(Text.literal("MapArtGroup file(s) not found: "+FileIO.DIR+notFoundGroups).withColor(ERROR_COLOR));
 			String plural = notFoundGroups.indexOf(',') !=- 1 ? "s" : "";
 			source.sendError(Text.translatable(PREFIX+"notFound", plural, notFoundGroups).withColor(ERROR_COLOR));
 //			source.sendError(Text.literal("MapArtGroup"+plural+" not found: "+notFoundGroups).withColor(ERROR_COLOR));
@@ -330,6 +330,7 @@ public class CommandMapArtGroup{
 		if(!defaultGroupName.isBlank()){
 			final File defaultGroupFile = new File(FileIO.DIR+defaultGroupName);
 			if(defaultGroupFile.exists()){
+				Main.LOGGER.info("[MapArtGroup] Loading default group: "+defaultGroupName);
 				runCommand(new TextListener(){
 					@Override public void sendFeedback(Text message){Main.LOGGER.info(message.getString());}
 					@Override public void sendError(Text message){Main.LOGGER.warn(message.getString());}

@@ -80,7 +80,7 @@ public final class Configs implements IConfigHandler{
 				Main.mapArtFeaturesOnly ? "" : "(tp|teleport|e?p|e?pearl|([iI]'?m ?)?r(ea)?dy)( pl(ea)?se?)?.?").apply(GENERIC_KEY);
 
 		public static final ConfigString MAPART_GROUP_DEFAULT = new ConfigString("mapArtDefaultGroup", "mapart_groups/seen/2b2t.org").apply(GENERIC_KEY);
-		public static final ConfigBoolean MAPART_GROUP_INCLUDE_UNLOCKED = new ConfigBoolean("commandMapArtGroupIncludeUnlocked", false).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAPART_GROUP_INCLUDE_UNLOCKED = new ConfigBoolean("commandMapArtGroupIncludeUnlocked", true).apply(GENERIC_KEY);
 
 		public static final ConfigInteger KEYBIND_BUNDLE_REMOVE_MAX = new ConfigInteger("keybindMapArtBundleRemoveMax", 64, 1, 64).apply(GENERIC_KEY);
 		public static final ConfigBoolean KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS = new ConfigBoolean("keybindMapArtMoveIgnoreAirPockets", false).apply(GENERIC_KEY);
