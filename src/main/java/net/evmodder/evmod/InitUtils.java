@@ -43,6 +43,8 @@ final class InitUtils{
 	static final void refreshClickLimits(){
 		ClickUtils.refreshLimits(Configs.Generic.CLICK_LIMIT_COUNT.getIntegerValue(), Configs.Generic.CLICK_LIMIT_DURATION.getIntegerValue());
 	}
+	static final int DUMMY_CLIENT_ID = 67;
+	private static boolean requestedKey = false;
 	static final void refreshRemoteServerSender(RemoteServerSender rms){
 		assert rms != null;
 		String fullAddress = Configs.Database.ADDRESS.getStringValue();
@@ -55,9 +57,9 @@ final class InitUtils{
 
 //		rms.sendBotMessage(Command.PING, /*udp=*/false, /*timeout=*/5000, /*msg=*/new byte[0], null);
 //		msg->LOGGER.info("Remote server responded to ping: "+(msg == null ? null : new String(msg)))
-		final int DUMMY_CLIENT_ID = 67;
 
-		if(Configs.Database.CLIENT_ID.getIntegerValue() == DUMMY_CLIENT_ID){
+		if(Configs.Database.CLIENT_ID.getIntegerValue() == DUMMY_CLIENT_ID && !requestedKey){
+			requestedKey = true;
 			Main.LOGGER.info("Missing valid CLIENT_ID for Database, requesting one from RMS");
 
 			Session session = MinecraftClient.getInstance().getSession();
@@ -65,18 +67,22 @@ final class InitUtils{
 			byte[] msg = PacketHelper.toByteArray(uuid);
 			rms.sendBotMessage(Command.REQUEST_CLIENT_KEY, /*udp=*/false, /*timeout=*/5000, msg, (response)->{
 				if(response == null || response.length <= 4+8){
-					Main.LOGGER.info("ClientAuth: null/invalid response from RMS for REQUEST_CLIENT_KEY: "+msg);
+					Main.LOGGER.info("ClientAuth: null/invalid response from RMS for REQUEST_CLIENT_KEY: "+(msg == null ? null : new String(msg)));
 					return;
 				}
 				ByteBuffer bb = ByteBuffer.wrap(response);
 				final int clientId = bb.getInt();
 				assert clientId != DUMMY_CLIENT_ID;
-				final byte[] strBytes = new byte[bb.remaining()]; bb.get(strBytes, response.length-bb.remaining(), bb.remaining());
+				final byte[] strBytes = new byte[bb.remaining()]; bb.get(strBytes);
 				final String clientKey = new String(strBytes);
 
-				Configs.Database.CLIENT_ID.setIntegerValue(clientId);
-				Configs.Database.CLIENT_KEY.setValueFromString(clientKey);
-				rms.setConnectionDetails(addr, port, clientId, clientKey);
+				MinecraftClient.getInstance().executeSync(()->{
+					Main.LOGGER.info("ClientAuth: server granted credentials! id="+clientId+", key="+clientKey);
+					// TODO: these changes do not seem to be propogating properly
+					Configs.Database.CLIENT_ID.setIntegerValue(clientId);
+					Configs.Database.CLIENT_KEY.setValueFromString(clientKey);
+					rms.setConnectionDetails(addr, port, clientId, clientKey);
+				});
 			});
 		}
 	}

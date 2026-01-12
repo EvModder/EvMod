@@ -2,13 +2,11 @@ package net.evmodder.evmod;
 
 import java.util.List;
 import fi.dy.masa.malilib.gui.GuiConfigsBase;
-import fi.dy.masa.malilib.gui.button.ButtonBase;
 import fi.dy.masa.malilib.gui.button.ButtonGeneric;
-import fi.dy.masa.malilib.gui.button.IButtonActionListener;
 import fi.dy.masa.malilib.util.StringUtils;
 
 public class ConfigGui extends GuiConfigsBase{
-	enum ConfigGuiTab{
+	private enum ConfigGuiTab{
 		ALL(Main.MOD_ID+".gui.button.all"),
 		GENERIC(Main.MOD_ID+".gui.button.generic"),
 		VISUALS(Main.MOD_ID+".gui.button.visuals"),
@@ -17,22 +15,27 @@ public class ConfigGui extends GuiConfigsBase{
 
 		private final String translationKey;
 		private ConfigGuiTab(String translationKey){this.translationKey = translationKey;}
-		public String getDisplayName(){return StringUtils.translate(this.translationKey);}
+		public String getDisplayName(){return StringUtils.translate(translationKey);}
+		public String getDescription(){return StringUtils.translate(translationKey+".hover");}
 	}
-	private static ConfigGuiTab selectedTab;
-	private Configs configs;
 
+	private final Configs configs;
 	ConfigGui(Configs configs){
 		super(10, 50, Main.MOD_ID, /*parent=*/null, Main.MOD_ID+".gui.title", Main.MOD_VERSION);
 		this.configs = configs;
 		setConfigWidth(224);
-		selectedTab = Main.mapArtFeaturesOnly ? ConfigGuiTab.HOTKEYS : ConfigGuiTab.ALL;
 	}
 
-	private int createButton(int x, int y, int width, ConfigGuiTab tab){
-		ButtonGeneric button = new ButtonGeneric(x, y, width, 20, tab.getDisplayName());
-		button.setEnabled(selectedTab != tab);
-		addButton(button, new ButtonListener(tab, this));
+	private int createButton(int x, int y, ConfigGuiTab tab){
+		ButtonGeneric button = new ButtonGeneric(x, y, -1, 20, tab.getDisplayName(), tab.getDescription());
+		button.setEnabled(tab.ordinal() != configs.guiTab);
+		addButton(button, (b, mb)->{
+			if(configs.guiTab == tab.ordinal()) return;
+			configs.guiTab = tab.ordinal();
+			reCreateListWidget();
+			getListWidget().resetScrollbarPosition();
+			initGui();
+		});
 		return button.getWidth() + 2;
 	}
 
@@ -43,34 +46,25 @@ public class ConfigGui extends GuiConfigsBase{
 		int x = 10;
 		int y = 26;
 
-		if(!Main.mapArtFeaturesOnly) x += createButton(x, y, -1, ConfigGuiTab.ALL);
-		x += createButton(x, y, -1, ConfigGuiTab.GENERIC);
-		x += createButton(x, y, -1, ConfigGuiTab.VISUALS);
-		x += createButton(x, y, -1, ConfigGuiTab.HOTKEYS);
-		if(!Main.mapArtFeaturesOnly) x += createButton(x, y, -1, ConfigGuiTab.DATABASE);
+		if(!Main.mapArtFeaturesOnly) x += createButton(x, y, ConfigGuiTab.ALL);
+		x += createButton(x, y, ConfigGuiTab.GENERIC);
+		x += createButton(x, y, ConfigGuiTab.VISUALS);
+		x += createButton(x, y, ConfigGuiTab.HOTKEYS);
+		if(!Main.mapArtFeaturesOnly) x += createButton(x, y, ConfigGuiTab.DATABASE);
 	}
 
-	@Override protected boolean useKeybindSearch(){
-		return selectedTab == ConfigGuiTab.HOTKEYS;
-	}
+	@Override protected boolean useKeybindSearch(){return configs.guiTab == ConfigGuiTab.HOTKEYS.ordinal();}
 
 	@Override public List<ConfigOptionWrapper> getConfigs(){
-		return ConfigOptionWrapper.createFor(switch(selectedTab){
-			case ALL -> configs.getAllOptions();
-			case GENERIC -> configs.getGenericOptions();
-			case VISUALS -> configs.getVisualsOptions();
-			case HOTKEYS -> configs.getHotkeysOptions();
-			case DATABASE -> configs.getDatabaseOptions();
-//			case RENDER_LAYERS -> Collections.emptyList();
-		});
-	}
-
-	private record ButtonListener(ConfigGuiTab tab, ConfigGui parent) implements IButtonActionListener {
-		@Override public void actionPerformedWithButton(ButtonBase button, int mouseButton){
-			selectedTab = tab;
-			parent.reCreateListWidget();
-			parent.getListWidget().resetScrollbarPosition();
-			parent.initGui();
-		}
+		return ConfigOptionWrapper.createFor(
+			switch(ConfigGuiTab.values()[configs.guiTab]){
+				case ALL -> configs.getAllOptions();
+				case GENERIC -> configs.getGenericOptions();
+				case VISUALS -> configs.getVisualsOptions();
+				case HOTKEYS -> configs.getHotkeysOptions();
+				case DATABASE -> configs.getDatabaseOptions();
+//				case RENDER_LAYERS -> Collections.emptyList();
+			}
+		);
 	}
 }

@@ -21,6 +21,8 @@ import net.evmodder.evmod.config.*;
 import net.evmodder.evmod.config.ConfigPlayerList.NameAndUUID;
 
 public final class Configs implements IConfigHandler{
+	int guiTab; // used by ConfigGui
+
 	//====================================================================================================
 	// Generic
 	//====================================================================================================
@@ -77,6 +79,7 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigString WHISPER_PEARL_PULL = new ConfigString("whisperPearlPull",
 				Main.mapArtFeaturesOnly ? "" : "(tp|teleport|e?p|e?pearl|([iI]'?m ?)?r(ea)?dy)( pl(ea)?se?)?.?").apply(GENERIC_KEY);
 
+		public static final ConfigString MAPART_GROUP_DEFAULT = new ConfigString("mapArtDefaultGroup", "mapart_groups/seen/2b2t.org").apply(GENERIC_KEY);
 		public static final ConfigBoolean MAPART_GROUP_INCLUDE_UNLOCKED = new ConfigBoolean("commandMapArtGroupIncludeUnlocked", false).apply(GENERIC_KEY);
 
 		public static final ConfigInteger KEYBIND_BUNDLE_REMOVE_MAX = new ConfigInteger("keybindMapArtBundleRemoveMax", 64, 1, 64).apply(GENERIC_KEY);
@@ -91,9 +94,7 @@ public final class Configs implements IConfigHandler{
 				"tube, brain, bubble, fire, horn",
 				"oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry, bamboo, crimson, warped"
 		)).apply(GENERIC_KEY);
-		public static final ConfigStringList SEND_ON_SERVER_JOIN = new ConfigStringList("sendChatsOnServerJoin",
-				Main.mapArtFeaturesOnly ? ImmutableList.of() :ImmutableList.of("/mapartgroup set end_misc+end_big+end_square"
-		)).apply(GENERIC_KEY);
+		public static final ConfigStringList SEND_ON_SERVER_JOIN = new ConfigStringList("sendChatsOnServerJoin", ImmutableList.of()).apply(GENERIC_KEY);
 		public static final ConfigBoolean LOG_COORDS_ON_SERVER_QUIT = new ConfigBoolean("logCoordsOnServerQuit", !Main.mapArtFeaturesOnly).apply(GENERIC_KEY);
 
 		public static final ConfigBoolean INV_RESTOCK_AUTO = new ConfigBoolean("inventoryRestockAuto", !Main.mapArtFeaturesOnly).apply(GENERIC_KEY);
@@ -133,7 +134,7 @@ public final class Configs implements IConfigHandler{
 				else MAPART_AUTOPLACE.setBooleanValue(false);
 			}
 			if(settings.gameMessageListener) options.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PLAY_SOUND_UNFOCUSED_ONLY, WHISPER_PEARL_PULL));
-			if(settings.cmdMapArtGroup) options.add(MAPART_GROUP_INCLUDE_UNLOCKED);
+			if(settings.cmdMapArtGroup) options.addAll(List.of(MAPART_GROUP_DEFAULT, MAPART_GROUP_INCLUDE_UNLOCKED));
 //			if(Main.keybindMapArtMoveBundle)
 				options.add(KEYBIND_BUNDLE_REMOVE_MAX);
 //			if(Main.keybindMapArtMove)
@@ -405,10 +406,10 @@ public final class Configs implements IConfigHandler{
 	private static final String DATABASE_KEY = Main.MOD_ID+".config.database";
 	public static class Database{
 //		public static final ConfigOptionList PLACEMENT_WARN = new ConfigOptionList("placementWarn", MessageOutputType.ACTIONBAR).apply(DATABASE_KEY);
-		public static final ConfigInteger CLIENT_ID = new ConfigInteger("clientId", 67, 0, 1000000).apply(DATABASE_KEY);
-		public static final ConfigString CLIENT_KEY = new ConfigString("clientKey", "yesyesyes").apply(DATABASE_KEY);
+		public static final ConfigInteger CLIENT_ID = new ConfigInteger("clientId", InitUtils.DUMMY_CLIENT_ID, 0, 1000000).apply(DATABASE_KEY);
+		public static final ConfigString CLIENT_KEY = new ConfigString("clientKey", "").apply(DATABASE_KEY);
 		public static final ConfigString ADDRESS = new ConfigString("address", "evmodder.net:14441").apply(DATABASE_KEY);
-		public static final ConfigBoolean SAVE_MAPART = new ConfigBoolean("saveSeenMapart", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
+		public static final ConfigBoolean SAVE_MAPART = new ConfigBoolean("saveSeenMapArt", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
 		public static final ConfigBoolean SHARE_MAPART = new ConfigBoolean("shareSeenMapArt", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
 		public static final ConfigBoolean EPEARL_OWNERS_BY_UUID = new ConfigBoolean("saveEpearlOwnersByUUID", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
 		public static final ConfigBoolean EPEARL_OWNERS_BY_XZ = new ConfigBoolean("saveEpearlOwnersByXZ", false).apply(DATABASE_KEY);
@@ -471,6 +472,8 @@ public final class Configs implements IConfigHandler{
 			JsonElement element = JsonUtils.parseJsonFileAsPath(configFile);
 			if(element != null && element.isJsonObject()){
 				JsonObject root = element.getAsJsonObject();
+				JsonElement ele = root.get("guiTab");
+				if(ele != null) guiTab = ele.getAsInt();
 				ConfigUtils.readConfigBase(root, "Generic", getGenericOptions());
 				ConfigUtils.readConfigBase(root, "Visuals", getVisualsOptions());
 				ConfigUtils.readConfigBase(root, "Hotkeys", getHotkeysOptions());
@@ -489,6 +492,7 @@ public final class Configs implements IConfigHandler{
 		}
 		if(Files.isDirectory(dir)){
 			JsonObject root = new JsonObject();
+			root.addProperty("guiTab", guiTab);
 			ConfigUtils.writeConfigBase(root, "Generic", getGenericOptions());
 			ConfigUtils.writeConfigBase(root, "Visuals", getVisualsOptions());
 			ConfigUtils.writeConfigBase(root, "Hotkeys", getHotkeysOptions());
