@@ -4,7 +4,7 @@ import java.util.HashMap;
 import net.evmodder.EvLib.util.FileIO;
 
 class Settings{
-	private final String internalConfigFile = Main.mapArtFeaturesOnly ? "enabled_features_for_mapart_ver.txt" : "enabled_features.txt";
+	private final String internalSettingsFile = Main.mapArtFeaturesOnly ? "startup_settings_for_mapart_ver.txt" : "startup_settings.txt";
 
 	final boolean database, epearlOwners;
 	final boolean inventoryRestockAuto, placementHelperIframe, placementHelperMapArt, placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove, broadcaster;
@@ -14,7 +14,7 @@ class Settings{
 
 	private HashMap<String, Boolean> loadSettings(){
 		HashMap<String, Boolean> config = new HashMap<>();
-		final String configContents = FileIO.loadFile("enabled_features.txt", getClass().getResourceAsStream("/assets/"+Main.MOD_ID+"/"+internalConfigFile));
+		final String configContents = FileIO.loadFile("startup_settings.txt", getClass().getResourceAsStream("/assets/"+Main.MOD_ID+"/"+internalSettingsFile));
 		for(String line : configContents.split("\\r?\\n")){
 			final int sep = line.indexOf(':');
 			if(sep == -1) continue;

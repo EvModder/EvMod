@@ -19,18 +19,19 @@ public class ConfigGui extends GuiConfigsBase{
 		private ConfigGuiTab(String translationKey){this.translationKey = translationKey;}
 		public String getDisplayName(){return StringUtils.translate(this.translationKey);}
 	}
-	private static ConfigGuiTab tab = ConfigGuiTab.HOTKEYS;
+	private static ConfigGuiTab selectedTab;
 	private Configs configs;
 
 	ConfigGui(Configs configs){
 		super(10, 50, Main.MOD_ID, /*parent=*/null, Main.MOD_ID+".gui.title", Main.MOD_VERSION);
 		this.configs = configs;
 		setConfigWidth(224);
+		selectedTab = Main.mapArtFeaturesOnly ? ConfigGuiTab.HOTKEYS : ConfigGuiTab.ALL;
 	}
 
 	private int createButton(int x, int y, int width, ConfigGuiTab tab){
 		ButtonGeneric button = new ButtonGeneric(x, y, width, 20, tab.getDisplayName());
-		button.setEnabled(ConfigGui.tab != tab);
+		button.setEnabled(selectedTab != tab);
 		addButton(button, new ButtonListener(tab, this));
 		return button.getWidth() + 2;
 	}
@@ -42,7 +43,7 @@ public class ConfigGui extends GuiConfigsBase{
 		int x = 10;
 		int y = 26;
 
-		x += createButton(x, y, -1, ConfigGuiTab.ALL);
+		if(!Main.mapArtFeaturesOnly) x += createButton(x, y, -1, ConfigGuiTab.ALL);
 		x += createButton(x, y, -1, ConfigGuiTab.GENERIC);
 		x += createButton(x, y, -1, ConfigGuiTab.VISUALS);
 		x += createButton(x, y, -1, ConfigGuiTab.HOTKEYS);
@@ -50,11 +51,11 @@ public class ConfigGui extends GuiConfigsBase{
 	}
 
 	@Override protected boolean useKeybindSearch(){
-		return tab == ConfigGuiTab.HOTKEYS;
+		return selectedTab == ConfigGuiTab.HOTKEYS;
 	}
 
 	@Override public List<ConfigOptionWrapper> getConfigs(){
-		return ConfigOptionWrapper.createFor(switch(tab){
+		return ConfigOptionWrapper.createFor(switch(selectedTab){
 			case ALL -> configs.getAllOptions();
 			case GENERIC -> configs.getGenericOptions();
 			case VISUALS -> configs.getVisualsOptions();
@@ -66,7 +67,7 @@ public class ConfigGui extends GuiConfigsBase{
 
 	private record ButtonListener(ConfigGuiTab tab, ConfigGui parent) implements IButtonActionListener {
 		@Override public void actionPerformedWithButton(ButtonBase button, int mouseButton){
-			ConfigGui.tab = tab;
+			selectedTab = tab;
 			parent.reCreateListWidget();
 			parent.getListWidget().resetScrollbarPosition();
 			parent.initGui();
