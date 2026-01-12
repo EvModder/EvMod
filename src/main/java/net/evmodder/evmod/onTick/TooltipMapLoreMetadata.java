@@ -69,7 +69,7 @@ public final class TooltipMapLoreMetadata implements Tooltip{
 		final boolean showNoobline = Configs.Visuals.MAP_METADATA_TOOLTIP_NOOBLINE.getBooleanValue();
 		final boolean showColorsId = Configs.Visuals.MAP_METADATA_TOOLTIP_UUID.getBooleanValue();
 
-		if(showColorsId) lines.add(Text.literal(MapGroupUtils.getIdForMapState(state, true).toString()).formatted(Formatting.WHITE));
+		if(showColorsId) lines.add(Text.literal(MapGroupUtils.getIdForMapState(state, /*evict=*/true).toString()).formatted(Formatting.WHITE));
 		if(showStaircased){
 			lines.add(Text.translatable("advMode.type").formatted(Formatting.GRAY).append(": ").append(staircased));
 		}

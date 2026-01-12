@@ -15,9 +15,12 @@ public final class MapGroupUtils{
 
 	private static final HashMap<MapState, UUID> stateToIdCache = new HashMap<MapState, UUID>(), unlockedStateToIdCache = new HashMap<MapState, UUID>();
 //	private static final Random rand = new Random();
-	public static final UUID getIdForMapState(MapState state, boolean evictUnlocked){
-		UUID uuid = (state.locked || evictUnlocked ? stateToIdCache : unlockedStateToIdCache).get(state);
-		if(uuid != null/* && (state.locked || rand.nextFloat() < 0.99)*/) return uuid; // 1% chance of cache eviction for unlocked states
+	public static final UUID getIdForMapState(MapState state, boolean evict){
+		UUID uuid;
+		if(!evict){
+			uuid = (state.locked ? stateToIdCache : unlockedStateToIdCache).get(state);
+			if(uuid != null/* && (state.locked || rand.nextFloat() < 0.99)*/) return uuid; // 1% chance of cache eviction for unlocked states
+		}
 
 		// Normalize all CLEAR/transparent colors
 		for(int i=0; i<state.colors.length; ++i) if(state.colors[i] == 1 || state.colors[i] == 2) state.colors[i] = 0;
@@ -28,7 +31,7 @@ public final class MapGroupUtils{
 		(state.locked ? stateToIdCache : unlockedStateToIdCache).put(state, uuid);
 		return uuid;
 	}
-	public static final UUID getIdForMapState(MapState state){return getIdForMapState(state, /*evictUnlocked*/false);}
+	public static final UUID getIdForMapState(MapState state){return getIdForMapState(state, /*evict*/false);}
 
 	private static final int MAX_MAPS_IN_INV_AND_ECHEST = 64*27*(36+27); // 108864
 	public static final HashSet<UUID> getLegitLoadedMaps(final ClientWorld world){

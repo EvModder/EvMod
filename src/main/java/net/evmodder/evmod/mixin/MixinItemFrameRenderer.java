@@ -76,7 +76,7 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(squaredDistanceToCamera <= 20*20 && client.player.canSee(itemFrameEntity)){ // Show all other labels only if LOS and <= 20
 			cir.setReturnValue(true);
 			UpdateItemFrameHighlights.hasLabelCache.put(itemFrameEntity, true);
-			if(!state.locked) MapGroupUtils.getIdForMapState(state, /*evictUnlocked*/true); // Evict cached state for maps the player is directly looking at
+			if(!state.locked) MapGroupUtils.getIdForMapState(state, /*evict*/true); // Evict cached state for maps the player is directly looking at
 			return;
 		}
 	}
