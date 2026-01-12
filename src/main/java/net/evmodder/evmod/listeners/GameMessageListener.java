@@ -17,16 +17,10 @@ import net.minecraft.client.network.PlayerListEntry;
 public class GameMessageListener{
 	private final String MSG_MATCH_END = "";//"( .*)?"
 
-	private void updateIgnoreState(final RemoteServerSender rms, final String name, final boolean ignored){
-		Main.LOGGER.info("Ignore update: "+name+"="+ignored);
-		MinecraftClient client = MinecraftClient.getInstance();
-		PlayerListEntry ple = client.getNetworkHandler().getPlayerListEntry(name);
-		if(ple == null){Main.LOGGER.error("Unable to find PlayerListEntry for player name: "+name); return;}
-		final UUID ignoredUUID = ple.getProfile().getId();
-
+	private void saveMyIgnores(UUID myUUID, UUID ignoredUUID, boolean ignored){
 		if(Configs.Database.SAVE_IGNORES.getBooleanValue()){
 			Main.LOGGER.info("Writing "+(ignored?"":"un")+"ignore update to local file cache");
-			final String filename = "ignores/"+client.player.getUuid()+".cache";
+			final String filename = "ignores/"+myUUID+".cache";
 			@SuppressWarnings("unchecked")
 			HashSet<UUID> ignoreList = (HashSet<UUID>)FileIO.readObject(filename);
 			if(ignoreList == null) ignoreList = new HashSet<>();
@@ -34,12 +28,30 @@ public class GameMessageListener{
 			else ignoreList.remove(ignoredUUID);
 			FileIO.writeObject(filename, ignoreList);
 		}
+	}
+
+	private void updateIgnoreState(final RemoteServerSender rms, final String name, final boolean ignored){
+		Main.LOGGER.info("Ignore update: "+name+"="+ignored);
+		MinecraftClient client = MinecraftClient.getInstance();
+		PlayerListEntry ple = client.getNetworkHandler().getPlayerListEntry(name);
+		if(ple == null){Main.LOGGER.error("Unable to find PlayerListEntry for player name: "+name); return;}
+		final UUID ignoredUUID = ple.getProfile().getId();
+
 		if(Configs.Database.SHARE_IGNORES.getBooleanValue() && rms != null){
 			Main.LOGGER.info("Sending "+(ignored?"":"un")+"ignore packet to RMS");
-			rms.sendBotMessage(
-					ignored ? Command.DB_PLAYER_STORE_IGNORE : Command.DB_PLAYER_STORE_UNIGNORE,
-					/*udp=*/true, 2000, PacketHelper.toByteArray(client.player.getUuid(), ignoredUUID), /*recv=*/null);
+			rms.sendBotMessage(ignored ? Command.DB_PLAYER_STORE_IGNORE : Command.DB_PLAYER_STORE_UNIGNORE, /*udp=*/true, 2000,
+				PacketHelper.toByteArray(client.player.getUuid(), ignoredUUID),
+				msg->{
+					if(msg != null && msg.length == 1){
+						if(msg[0] != 0) Main.LOGGER.info("[IgnoreSync] Updated ignore="+ignored+" in remote DB");
+						else Main.LOGGER.info("[IgnoreSync] Remote DB reported ignoreState out of sync!");
+					}
+					else Main.LOGGER.info("[IgnoreSync] Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_UUID: "+msg);
+					// Important that we update local cache AFTER db, for cache-priority reasons (Note: assumes decent clock synchronization, eesh)
+					saveMyIgnores(client.player.getUuid(), ignoredUUID, ignored);
+				});
 		}
+		else saveMyIgnores(client.player.getUuid(), ignoredUUID, ignored);
 	}
 
 	public GameMessageListener(RemoteServerSender rms, EpearlLookup epl, WhisperPlaySound wps){
