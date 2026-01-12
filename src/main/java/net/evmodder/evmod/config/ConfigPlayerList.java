@@ -73,8 +73,7 @@ public class ConfigPlayerList extends ConfigStringList{
 			return;
 		}
 		JsonArray arr = element.getAsJsonArray();
-		final int size = arr.size();
-		Main.LOGGER.info("fromJson, arr.size="+size);
+//		Main.LOGGER.info("[ConfigPlayerList] fromJson, arr.size="+arr.size());
 		List<String> strings = getStrings();
 		players.clear();
 		strings.clear();

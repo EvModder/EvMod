@@ -57,7 +57,7 @@ public final class EpearlLookup{
 		try{data = is.readAllBytes(); is.close();}
 		catch(IOException e){e.printStackTrace(); return null;}
 		if(data.length % 40 != 0){
-			LOGGER.severe("Corrupted/invalid ePearlDB file!");
+			LOGGER.severe("[EpearlLookup] Corrupted/invalid ePearlDB file!");
 			return null;
 		}
 		final long mostSig = pearlUUID.getMostSignificantBits(), leastSig = pearlUUID.getLeastSignificantBits();
@@ -74,7 +74,7 @@ public final class EpearlLookup{
 //		final UUID keyUUID = new UUID(bb.getLong(i), bb.getLong(i+8));
 //		if(!keyUUID.equals(pearlUUID)){
 		if(i >= data.length){
-			LOGGER.fine("pearlUUID not found in localDB file: "+pearlUUID);
+			LOGGER.fine("[EpearlLookup] pearlUUID not found in localDB file: "+pearlUUID);
 			return null;
 		}
 		final UUID ownerUUID = new UUID(bb.getLong(i+16), bb.getLong(i+24));
@@ -88,7 +88,7 @@ public final class EpearlLookup{
 			FileOutputStream fos = null;
 			try{fos = new FileOutputStream(file, true);}
 			catch(FileNotFoundException e){
-				Main.LOGGER.info("ePearlDB file not found, creating one");
+				Main.LOGGER.info("[EpearlLookup] DB file not found, creating one");
 				file.createNewFile();
 				fos = new FileOutputStream(file, true);
 			}
@@ -100,7 +100,7 @@ public final class EpearlLookup{
 			bb.putInt(pdc.x()).putInt(pdc.y()).putInt(pdc.z());
 			fos.write(bb.array());
 			fos.close();
-			Main.LOGGER.trace("saved pearlUUID->ownerUUID to file: "+pearlUUID+"->"+pdc.owner());
+			Main.LOGGER.trace("[EpearlLookup] Saved pearlUUID->ownerUUID to file: "+pearlUUID+"->"+pdc.owner());
 		}
 		catch(IOException e){e.printStackTrace();return false;}
 		return true;
@@ -114,8 +114,8 @@ public final class EpearlLookup{
 			fis.close();
 		}
 		catch(FileNotFoundException e){
-			Main.LOGGER.warn("DB file not found, attempting to create it");
-			try{new File(filename).createNewFile();} catch(IOException e1){e1.printStackTrace();}
+//			Main.LOGGER.warn("[EpearlLookup] DB file not found, attempting to create it");
+//			try{new File(filename).createNewFile();} catch(IOException e1){e1.printStackTrace();}
 			return new HashMap<>();
 		}
 		catch(IOException e){
@@ -135,7 +135,7 @@ public final class EpearlLookup{
 			return entries;
 		}
 		if(data.length % 44 != 0){
-			Main.LOGGER.error("Corrupted/invalid ePearlDB file!");
+			Main.LOGGER.error("[EpearlLookup] Corrupted/invalid ePearlDB file! (A)");
 			return new HashMap<>();
 		}
 		final int numRows = data.length/44;
@@ -159,7 +159,7 @@ public final class EpearlLookup{
 		try{data = is.readAllBytes(); is.close();}
 		catch(IOException e){e.printStackTrace(); return null;}
 		if(data.length % 44 != 0){
-			Main.LOGGER.error("Corrupted/invalid ePearlDB file!");
+			Main.LOGGER.error("[EpearlLookup] Corrupted/invalid ePearlDB file! (B)");
 			return null;
 		}
 		final ByteBuffer bbIn = ByteBuffer.wrap(data);
@@ -206,13 +206,13 @@ public final class EpearlLookup{
 			DB_FETCH_COMMAND = fetchCommand;
 		}
 		@Override protected PearlDataClient load(UUID key){
-			Main.LOGGER.debug("fetch ownerUUID called for pearlUUID: "+key+" at "+idToPos.get(key));
+			Main.LOGGER.debug("[EpearlLookup] Fetch ownerUUID called for pearlUUID: "+key+" at "+idToPos.get(key));
 			if(!Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue()){
-				Main.LOGGER.info("EpearLookup(Fetch): Remote-Database for ePearls is disabled. Returning "+MojangProfileLookup.NAME_U_404);
+				Main.LOGGER.info("[EpearlLookup] Remote-Database for ePearls is disabled. Returning "+MojangProfileLookup.NAME_U_404);
 				return PD_404;
 			}
 			if(remoteSender == null){
-				Main.LOGGER.info("EpearLookup(Fetch): Database server is disabled/offline. Returning "+MojangProfileLookup.NAME_U_404);
+				Main.LOGGER.info("[EpearlLookup] Database server is disabled/offline. Returning "+MojangProfileLookup.NAME_U_404);
 				return PD_404;
 			}
 
@@ -223,11 +223,11 @@ public final class EpearlLookup{
 					final XYZ xyz = idToPos.get(key);
 					final PearlDataClient pdc;
 					if(msg == null || msg.length != 16){
-						if(msg == null) Main.LOGGER.warn("EpearLookup(Fetch): Timed out");
+						if(msg == null) Main.LOGGER.warn("[EpearlLookup] Fetch ownerUUID timed out");
 						else if(msg.length == 1 && msg[0] == 0){
-							Main.LOGGER.info("EpearLookup(Fetch): Server does not know ownerUUID for pearlUUID: "+key+(xyz==null ? "" : " at "+xyz));
+							Main.LOGGER.info("[EpearlLookup] Server does not know ownerUUID for pearlUUID: "+key+(xyz==null ? "" : " at "+xyz));
 						}
-						else Main.LOGGER.error("EpearLookup(Fetch): Invalid server response: "+new String(msg)+" ["+msg.length+"]");
+						else Main.LOGGER.error("[EpearlLookup] Invalid server response: "+new String(msg)+" ["+msg.length+"]");
 						pdc = PD_404;
 					}
 					else{
@@ -235,11 +235,11 @@ public final class EpearlLookup{
 						final UUID fetchedUUID = new UUID(bb.getLong(), bb.getLong());
 						assert !fetchedUUID.equals(MojangProfileLookup.UUID_404);
 						if(xyz == null){
-							Main.LOGGER.warn("EpearLookup(Fetch): Unable to find XZ of epearl for given key!: "+key);
+							Main.LOGGER.warn("[EpearlLookup] Unable to find XZ of epearl for given key!: "+key);
 							pdc = new PearlDataClient(fetchedUUID, 0, 0, 0);
 						}
 						else{
-							Main.LOGGER.info("EpearLookup(Fetch): Got ownerUUID for pearlUUID: "+key+" at "+xyz+", appending to clientFile");
+							Main.LOGGER.info("[EpearlLookup] Got ownerUUID for pearlUUID: "+key+" at "+xyz+", appending to clientFile");
 							pdc = new PearlDataClient(fetchedUUID, xyz.x(), xyz.x(), xyz.z());
 							appendToClientFile(DB_FILENAME, key, pdc);
 						}
@@ -284,17 +284,17 @@ public final class EpearlLookup{
 					if(USE_DB_UUID){
 						HashSet<UUID> deletedKeys = removeMissingFromClientFile(DB_FILENAME_UUID, playerX, playerY, playerZ, maxDistSq, pearlsSeen1);
 						if(deletedKeys == null){
-//							Main.LOGGER.error("!! Delete failed because FileDB is null: "+DB_FILENAME_UUID);
+//							Main.LOGGER.error("[EpearlLookup] !! Delete failed because FileDB is null: "+DB_FILENAME_UUID);
 						}
 						else if(!deletedKeys.isEmpty()){
-							Main.LOGGER.error("Num ePearls deleted from FileDB_UUID: "+deletedKeys.size()+" (current seen: "+pearlsSeen1+")");
+							Main.LOGGER.error("[EpearlLookup] Num ePearls deleted from UUID db: "+deletedKeys.size()+" (current seen: "+pearlsSeen1+")");
 							if(remoteSender != null && Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue()) for(UUID deletedKey : deletedKeys){
 								remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(deletedKey),
 								msg->{
-									if(msg != null && msg.length > 0 && msg[0] != 0) Main.LOGGER.info("Removed pearl UUID from remote DB!");
-									else Main.LOGGER.info("Failed to remove pearl UUID from remote DB!");
+									if(msg != null && msg.length > 0 && msg[0] != 0) Main.LOGGER.info("[EpearlLookup] Removed pearl UUID from remote DB");
+									else Main.LOGGER.warn("[EpearlLookup] Failed to remove pearl UUID from remote DB!");
 								});
-								Main.LOGGER.info("Deleted ePearl owner stored for UUID: "+deletedKey);
+								Main.LOGGER.info("[EpearlLookup] Deleted ePearl owner for UUID: "+deletedKey);
 							}
 							deletedKeys.forEach(cacheByUUID::remove);
 						}
@@ -305,14 +305,14 @@ public final class EpearlLookup{
 //							Main.LOGGER.error("!! Delete failed because FileDB is null: "+DB_FILENAME_XZ);
 						}
 						else if(!deletedKeys.isEmpty()){
-							Main.LOGGER.error("Num ePearls deleted from FileDB_XZ: "+deletedKeys.size()+" (current seen: "+pearlsSeen2+")");
+							Main.LOGGER.error("[EpearlLookup] Num ePearls deleted from XZ db: "+deletedKeys.size()+" (current seen: "+pearlsSeen2+")");
 							if(remoteSender != null && Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue()) for(UUID deletedKey : deletedKeys){
 								remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_XZ, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(deletedKey),
 								msg->{
-									if(msg != null && msg.length > 0 && msg[0] != 0) Main.LOGGER.info("Removed pearl XZ from remote DB!");
-									else Main.LOGGER.info("Failed to remove pearl XZ from remote DB!");
+									if(msg != null && msg.length > 0 && msg[0] != 0) Main.LOGGER.info("[EpearlLookup] Removed pearl XZ from remote DB");
+									else Main.LOGGER.warn("[EpearlLookup] Failed to remove pearl XZ from remote DB!");
 								});
-								Main.LOGGER.info("Deleted ePearl owner stored for XZ: "
+								Main.LOGGER.info("[EpearlLookup] Deleted ePearl owner for XZ: "
 										+ Double.longBitsToDouble(deletedKey.getMostSignificantBits())+","
 										+ Double.longBitsToDouble(deletedKey.getLeastSignificantBits()));
 							}
@@ -327,13 +327,13 @@ public final class EpearlLookup{
 	public void loadEpearlCacheUUID(){
 		if(cacheByUUID == null){
 			cacheByUUID = new RSLoadingCache(DB_FILENAME_UUID, Command.DB_PEARL_FETCH_BY_UUID);
-			Main.LOGGER.info("Epearls stored by UUID: "+cacheByUUID.size());
+			Main.LOGGER.info("[EpearlLookup] stored by UUID: "+cacheByUUID.size());
 		}
 	}
 	public void loadEpearlCacheXZ(){
 		if(cacheByXZ == null){
 			cacheByXZ = new RSLoadingCache(DB_FILENAME_XZ, Command.DB_PEARL_FETCH_BY_XZ);
-			Main.LOGGER.info("Epearls stored by XZ: "+cacheByXZ.size());
+			Main.LOGGER.info("[EpearlLookup] stored by XZ: "+cacheByXZ.size());
 		}
 	}
 
@@ -385,14 +385,14 @@ public final class EpearlLookup{
 				if(cacheByUUID.putIfAbsent(key, pdc)){
 					if(remoteSender == null || !Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue()) appendToClientFile(DB_FILENAME_UUID, key, pdc);
 					else{
-						Main.LOGGER.debug("EpearlLookup: Sending STORE_OWNER(uuid) '"+ownerName+"' for pearl at "+epearl.getBlockX()+","+epearl.getBlockZ());
+						Main.LOGGER.debug("[EpearlLookup] Sending STORE_OWNER(uuid) '"+ownerName+"' for pearl at "+epearl.getBlockX()+","+epearl.getBlockZ());
 						remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_UUID, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, ownerUUID), msg->{
 							if(msg != null && msg.length == 1){
-								if(msg[0] != 0) Main.LOGGER.info("EpearlLookup: Added pearl UUID to remote DB!");
-								else Main.LOGGER.info("EpearlLookup: Remote DB already contains pearl UUID");
+								if(msg[0] != 0) Main.LOGGER.info("[EpearlLookup] Added pearl UUID to remote DB!");
+								else Main.LOGGER.info("[EpearlLookup] Remote DB already contains pearl UUID");
 								appendToClientFile(DB_FILENAME_UUID, key, pdc);
 							}
-							else Main.LOGGER.info("EpearlLookup: Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_UUID: "+msg);
+							else Main.LOGGER.info("[EpearlLookup] Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_UUID: "+msg);
 						});
 					}
 				}
@@ -426,14 +426,14 @@ public final class EpearlLookup{
 					if(cacheByXZ.putIfAbsent(key, pdc)){
 						if(remoteSender == null || !Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue()) appendToClientFile(DB_FILENAME_XZ, key, pdc);
 						else{
-							Main.LOGGER.debug("EpearlLookup: Sending STORE_OWNER(XZ) '"+ownerName+"' for pearl at "+epearl.getBlockX()+","+epearl.getBlockZ());
+							Main.LOGGER.debug("[EpearlLookup] Sending STORE_OWNER(XZ) '"+ownerName+"' for pearl at "+epearl.getBlockX()+","+epearl.getBlockZ());
 							remoteSender.sendBotMessage(Command.DB_PEARL_STORE_BY_XZ, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, ownerUUID), msg->{
 								if(msg != null && msg.length == 1){
-									if(msg[0] != 0) Main.LOGGER.info("EpearlLookup: Added pearl XZ to remote DB!");
-									else Main.LOGGER.info("EpearlLookup: Remote DB already contains pearl XZ (or rejected it for other reasons)");
+									if(msg[0] != 0) Main.LOGGER.info("[EpearlLookup] Added pearl XZ to remote DB!");
+									else Main.LOGGER.info("[EpearlLookup] Remote DB already contains pearl XZ (or rejected it for other reasons)");
 									appendToClientFile(DB_FILENAME_XZ, key, pdc);
 								}
-								else Main.LOGGER.info("EpearlLookup: Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_XZ: "+msg);
+								else Main.LOGGER.info("[EpearlLookup] Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_XZ: "+msg);
 							});
 						}
 					}
@@ -446,8 +446,8 @@ public final class EpearlLookup{
 
 					// No need for this command; upon consideration, pearls with a shifted XZ will get added as new, and missing pearls will be deleted
 //					Main.remoteSender.sendBotMessage(Command.DB_PEARL_XZ_KEY_UPDATE, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(oldKey, key), msg->{
-//						if(msg != null && msg.length > 0 && msg[0] != 0) Main.LOGGER.info("EpearlLookup: Updated pearl XZ in remote DB!");
-//						else Main.LOGGER.info("EpearlLookup: Failed to update pearl XZ in remote DB!");
+//						if(msg != null && msg.length > 0 && msg[0] != 0) Main.LOGGER.info("[EpearlLookup] Updated pearl XZ in remote DB!");
+//						else Main.LOGGER.info("[EpearlLookup] Failed to update pearl XZ in remote DB!");
 //					});
 				}
 				updateKeyXZ.put(epearl.getId(), key);

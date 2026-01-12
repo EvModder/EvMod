@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import fi.dy.masa.malilib.config.ConfigManager;
 import fi.dy.masa.malilib.registry.Registry;
 import fi.dy.masa.malilib.util.data.ModInfo;
+import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.apis.ChatBroadcaster;
 import net.evmodder.evmod.apis.EpearlLookup;
 import net.evmodder.evmod.apis.MiscUtils;
@@ -74,6 +75,7 @@ public class Main{
 	public static final String MOD_VERSION;
 	public static final Logger LOGGER;
 	static{
+		FileIO.DIR = FabricLoader.getInstance().getConfigDir().toString()+"/"+Main.MOD_ID+"/";
 		ModMetadata metadata = FabricLoader.getInstance().getModContainer(MOD_ID).get().getMetadata();
 		MOD_NAME = metadata.getName();
 		MOD_VERSION = metadata.getVersion().getFriendlyString();
@@ -88,6 +90,7 @@ public class Main{
 	public final KeybindCraftingRestock kbCraftRestock; // MixinClientPlayerInteractionManager
 
 	Main(){
+		Main.LOGGER.info("Loading "+MOD_NAME+" "+MOD_VERSION);
 		instance = this;
 		final Settings settings = new Settings();
 		final Configs configs = new Configs(settings);

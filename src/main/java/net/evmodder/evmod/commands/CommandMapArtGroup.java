@@ -61,7 +61,7 @@ public class CommandMapArtGroup{
 
 		final String notFoundGroups = IntStream.range(0, groups.length).filter(i -> data[i] == null).mapToObj(i -> groups[i]).collect(Collectors.joining(","));
 		if(!notFoundGroups.isEmpty()){
-			source.sendError(Text.literal("MapArtGroup file(s) not found: "+FileIO.DIR+notFoundGroups).withColor(ERROR_COLOR));
+			source.sendError(Text.literal("MapArtGroup file(s) not found: "+DIR+notFoundGroups).withColor(ERROR_COLOR));
 			String plural = notFoundGroups.indexOf(',') !=- 1 ? "s" : "";
 			source.sendError(Text.translatable(PREFIX+"notFound", plural, notFoundGroups).withColor(ERROR_COLOR));
 //			source.sendError(Text.literal("MapArtGroup"+plural+" not found: "+notFoundGroups).withColor(ERROR_COLOR));
@@ -284,13 +284,13 @@ public class CommandMapArtGroup{
 				return 1;
 			}
 			else{
-				source.sendError(Text.translatable(PREFIX+"fileUpdate", activeGroupName, activeGroup.size(), mapsInGroup.size()).withColor(DONE_COLOR));
+				source.sendFeedback(Text.translatable(PREFIX+"fileUpdate", activeGroupName, activeGroup.size(), mapsInGroup.size()).withColor(DONE_COLOR));
 //				source.sendFeedback(Text.literal("Updated group from file: '"+activeGroupName
 //						+"' (ids: "+activeGroup.size()+"\u2192"+mapsInGroup.size()+").").withColor(DONE_COLOR));
 			}
 		}
 		else{
-			source.sendError(Text.translatable(PREFIX+"groupUpdate", newActiveGroup, mapsInGroup.size()).withColor(DONE_COLOR));
+			source.sendFeedback(Text.translatable(PREFIX+"groupUpdate", newActiveGroup, mapsInGroup.size()).withColor(DONE_COLOR));
 //			source.sendFeedback(Text.literal("Set active group: '"+newActiveGroup+"' (ids: "+mapsInGroup.size()+").").withColor(DONE_COLOR));
 		}
 		MapGroupUtils.setCurrentGroup(activeGroup = mapsInGroup);
@@ -328,7 +328,7 @@ public class CommandMapArtGroup{
 		CONFIRM = Text.translatableWithFallback(PREFIX+"create.confirm", "confirm").getString();
 		final String defaultGroupName = Configs.Generic.MAPART_GROUP_DEFAULT.getStringValue();
 		if(!defaultGroupName.isBlank()){
-			final File defaultGroupFile = new File(FileIO.DIR+defaultGroupName);
+			final File defaultGroupFile = new File(DIR+defaultGroupName);
 			if(defaultGroupFile.exists()){
 				Main.LOGGER.info("[MapArtGroup] Loading default group: "+defaultGroupName);
 				runCommand(new TextListener(){
