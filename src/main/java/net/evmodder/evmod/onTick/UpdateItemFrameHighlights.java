@@ -147,7 +147,7 @@ public class UpdateItemFrameHighlights{
 			numLoadedIfes = ifes.size();
 		}
 
-//		Main.LOGGER.info("IframeHighlighter: Recomputing highlight cache, due to "+(anyHangLocUpdate?"hung iframe update":"inv update"));
+//		Main.LOGGER.info("IframeHighlighter: Recomputing highlight cache, due to "+(anyMapGroupUpdate?"hung iframe update":"inv update"));
 		final boolean anyHighlightUpdate = updateIframeHighlights(ifes);
 		if(!anyHighlightUpdate) return;
 

@@ -328,14 +328,14 @@ public class CommandMapArtGroup{
 		CONFIRM = Text.translatableWithFallback(PREFIX+"create.confirm", "confirm").getString();
 		final String defaultGroupName = Configs.Generic.MAPART_GROUP_DEFAULT.getStringValue();
 		if(!defaultGroupName.isBlank()){
-			final File defaultGroupFile = new File(FileIO.DIR+DIR+defaultGroupName);
-			if(defaultGroupFile.exists()){
+//			final File defaultGroupFile = new File(FileIO.DIR+DIR+defaultGroupName);
+//			if(defaultGroupFile.exists()){
 				Main.LOGGER.info("[MapArtGroup] Loading default group: "+defaultGroupName);
 				runCommand(new TextListener(){
 					@Override public void sendFeedback(Text message){Main.LOGGER.info(message.getString());}
 					@Override public void sendError(Text message){Main.LOGGER.warn(message.getString());}
-				}, Command.SET, new String[]{defaultGroupName}, null);
-			}
+				}, Command.SET, defaultGroupName.split("[,+]"), null);
+//			}
 		}
 		ClientCommandRegistrationCallback.EVENT.register(
 //				new ClientCommandRegistrationCallback(){

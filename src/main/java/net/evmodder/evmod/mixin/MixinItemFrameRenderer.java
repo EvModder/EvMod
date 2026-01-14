@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.evmodder.evmod.Configs;
+import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.MapStateCacher;
@@ -55,30 +56,28 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(hasLabel != null){cir.setReturnValue(hasLabel); return;}
 
 		if(hl == Highlight.MULTI_HUNG && Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue() && MapColorUtils.isMonoColor(state.colors)){
-			UpdateItemFrameHighlights.hasLabelCache.put(itemFrameEntity, false);
-			return; // Don't do boosted hasLabel()
+			// no-op
 		}
-
-		if(hl == Highlight.INV_OR_NESTED_INV){ // Show this label even if not looking in general direction
+		else if(hl == Highlight.INV_OR_NESTED_INV){ // Show this label even if not looking in general direction
 			cir.setReturnValue(true);
-			UpdateItemFrameHighlights.hasLabelCache.put(itemFrameEntity, true);
-			return;
 		}
-		if(!isLookingInGeneralDirection(itemFrameEntity)){
-			UpdateItemFrameHighlights.hasLabelCache.put(itemFrameEntity, false);
-			return;
+		else if(!isLookingInGeneralDirection(itemFrameEntity)){
+			Main.LOGGER.info("not looking at: "+stack.getName().getString());
+			// no-op
 		}
-		if(hl == Highlight.NOT_IN_CURR_GROUP){ // Show this label even if no LOS and > 20 blocks away
+		// If right up in front of iFrame, use the vanilla label check
+		else if((squaredDistanceToCamera=MinecraftClient.getInstance().player.squaredDistanceTo(itemFrameEntity)) <= 16d/*4*4*/){
+			Main.LOGGER.info("right up in front: "+stack.getName().getString()+", squaredDistanceToCamera="+squaredDistanceToCamera);
+			// no-op
+			if(!state.locked) MapGroupUtils.getIdForMapState(state, /*evict*/true); // Evict cache for maps being directly looked at
+		}
+		else if(hl == Highlight.NOT_IN_CURR_GROUP){ // Show this label as long as dist >4
 			cir.setReturnValue(true);
-			UpdateItemFrameHighlights.hasLabelCache.put(itemFrameEntity, true);
-			return;
 		}
-		if(squaredDistanceToCamera <= 20*20 && client.player.canSee(itemFrameEntity)){ // Show all other labels only if LOS and <= 20
+		else if(squaredDistanceToCamera <= 400d/*20*20*/ && client.player.canSee(itemFrameEntity)){ // Show other labels only if LOS and dist <= 20
 			cir.setReturnValue(true);
-			UpdateItemFrameHighlights.hasLabelCache.put(itemFrameEntity, true);
-			if(!state.locked) MapGroupUtils.getIdForMapState(state, /*evict*/true); // Evict cached state for maps the player is directly looking at
-			return;
 		}
+		UpdateItemFrameHighlights.hasLabelCache.put(itemFrameEntity, cir.getReturnValue());
 	}
 
 	private final boolean isMultiHung(MapState state){return UpdateItemFrameHighlights.isHungMultiplePlaces(MapGroupUtils.getIdForMapState(state));}
