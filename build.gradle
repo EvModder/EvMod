@@ -1,15 +1,13 @@
 plugins {
-	id 'fabric-loom'
-	id 'maven-publish'
+	id "fabric-loom"
+	id "maven-publish"
 }
 
 //loom { accessWidenerPath = file("src/main/resources/accesswidener") }
 
-base {
-	group = project.maven_group
-	version = project.mod_version
-	archivesName = project.mod_name + '-' + project.minecraft_version
-}
+group = project.maven_group
+version = project.mod_version
+base { archivesName = project.mod_name + "-" + project.minecraft_version}
 
 // These get passed to src/main/java/resources/fabric.mod.json
 processResources {
@@ -37,9 +35,9 @@ repositories {
 	// You should only use this when depending on other mods.
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
 
-	maven { url = 'https://jitpack.io' } // New home of MaLiLib
+	maven { url = "https://jitpack.io" } // New home of MaLiLib
 //	maven { url = "https://masa.dy.fi/maven" }
-//	maven { url 'https://www.cursemaven.com' }
+//	maven { url "https://www.cursemaven.com" }
 }
 
 dependencies {
@@ -58,11 +56,7 @@ dependencies {
 }
 
 // https://github.com/EvModder/EvLib
-sourceSets { main { java { srcDirs 'src/main/java', '../../Plugins/EvLib/src/net/evmodder/EvLib/util/' } } }
-
-compileJava.options.encoding = 'UTF-8'
-
-tasks.withType(JavaCompile).configureEach { it.options.release = 21 }
+sourceSets { main { java { srcDirs "src/main/java", "../../Plugins/EvLib/src/net/evmodder/EvLib/util/" } } }
 
 java {
 	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and add to the "build" task.
@@ -73,16 +67,16 @@ java {
 	targetCompatibility = JavaVersion.VERSION_21
 }
 
-jar {
-	inputs.property "archivesName", project.base.archivesName
+compileJava.options.encoding = "UTF-8"
+tasks.withType(JavaCompile).configureEach { it.options.release = 21 }
 
-	from("LICENSE") { rename { "${it}_${inputs.properties.archivesName}"} }
+jar {
+	from("LICENSE") { rename { "${it}_${project.base.archivesName}"} }
 }
 
 
 publishing {
 	// https://docs.gradle.org/current/userguide/publishing_maven.html
-
 	publications {
 		create("mavenJava", MavenPublication) {
 			artifactId = project.base.archivesName

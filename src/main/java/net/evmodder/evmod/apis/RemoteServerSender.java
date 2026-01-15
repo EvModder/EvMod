@@ -125,7 +125,7 @@ public final class RemoteServerSender{
 //		UUID loc = new UUID(Double.doubleToRawLongBits(x), Double.doubleToRawLongBits(z));
 
 		RemoteServerSender rss = new RemoteServerSender(LoggerFactory.getLogger("RMS"), ()->0);
-		rss.setConnectionDetails("localhost", 14441, 1, "some_unique_key");
+		rss.setConnectionDetails("localhost", DEFAULT_PORT, 1, "some_unique_key");
 
 		byte[] storePearlOwnerMsg = ByteBuffer.allocate(32)
 				.putLong(pearlUUID.getMostSignificantBits()).putLong(pearlUUID.getLeastSignificantBits())
