@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import org.slf4j.Logger;
 import net.evmodder.EvLib.util.Command;
 import net.evmodder.EvLib.util.FileIO;
@@ -20,7 +21,7 @@ import static net.evmodder.evmod.apis.MojangProfileLookupConstants.*;
 
 public abstract class EpearlLookup{
 	public record XYZ(int x, int y, int z){}
-	record PearlDataClient(UUID owner, int x, int y, int z){} // TODO: xyz + WORLD
+	public record PearlDataClient(UUID owner, int x, int y, int z){} // TODO: xyz + WORLD
 
 	private final Logger LOGGER;
 
@@ -168,22 +169,24 @@ public abstract class EpearlLookup{
 	}
 
 
-
-	protected abstract boolean useRemoteDB();
+	protected abstract boolean enableRemoteDbUUID();
+	protected abstract boolean enableRemoteDbXZ();
 	protected abstract boolean enableKeyUUID();
 	protected abstract boolean enableKeyXZ();
 
 	private class RSLoadingCache extends LoadingCache<UUID, PearlDataClient>{
 		final String DB_FILENAME;
 		final Command DB_FETCH_COMMAND;
-		RSLoadingCache(final String dbFilename, final Command fetchCommand){
+		final Supplier<Boolean> USE_REMOTE_DB;
+		RSLoadingCache(final String dbFilename, final Command fetchCommand, final Supplier<Boolean> dbEnabledCheck){
 			super(loadFromClientFile(dbFilename), PD_404, PD_LOADING);
 			DB_FILENAME = dbFilename;
 			DB_FETCH_COMMAND = fetchCommand;
+			USE_REMOTE_DB = dbEnabledCheck;
 		}
 		@Override protected PearlDataClient load(UUID key){
 			LOGGER.debug("[EpearlLookup] Fetch ownerUUID called for pearlUUID: "+key+" at "+idToPos.get(key));
-			if(!useRemoteDB()){
+			if(!USE_REMOTE_DB.get()){
 				LOGGER.info("[EpearlLookup] Database server is disabled (A). Returning "+NAME_U_404);
 				return PD_404;
 			}
@@ -244,7 +247,7 @@ public abstract class EpearlLookup{
 		}
 		else LOGGER.info("[EPL] Removed "+removedInFile+" ePearls from MemDB/FileDB");
 
-		if(remoteSender == null || !useRemoteDB()) return;
+		if(remoteSender == null || !cache.USE_REMOTE_DB.get()) return;
 		keysToRemove.forEach(key->{
 			remoteSender.sendBotMessage(
 				DB_FILENAME == DB_FILENAME_UUID ? Command.DB_PEARL_STORE_BY_UUID : Command.DB_PEARL_STORE_BY_XZ,
@@ -256,7 +259,7 @@ public abstract class EpearlLookup{
 			);
 		});
 	}
-	final void runRemovalCheckUUID(Function<Entry<UUID, PearlDataClient>, Boolean> shouldRemove){
+	protected final void runRemovalCheckUUID(Function<Entry<UUID, PearlDataClient>, Boolean> shouldRemove){
 		assert enableKeyUUID();
 //		if(!Configs.Database.EPEARL_OWNERS_BY_UUID.getBooleanValue()) return;
 		HashSet<UUID> keysToRemove = new HashSet<>();
@@ -267,7 +270,7 @@ public abstract class EpearlLookup{
 			removeEpearls(cacheByUUID, DB_FILENAME_UUID, keysToRemove); // Remove from inMemDB, FileDB, and RemoteDB
 		}
 	}
-	final void runRemovalCheckXZ(Function<Entry<UUID, PearlDataClient>, Boolean> shouldRemove){
+	protected final void runRemovalCheckXZ(Function<Entry<UUID, PearlDataClient>, Boolean> shouldRemove){
 		assert enableKeyXZ();
 		HashSet<UUID> keysToRemove = new HashSet<>();
 		cacheByUUID.getCache().entrySet().forEach(entry -> {
@@ -280,14 +283,14 @@ public abstract class EpearlLookup{
 
 	public final void loadEpearlCacheUUID(){
 		if(cacheByUUID == null){
-			cacheByUUID = new RSLoadingCache(DB_FILENAME_UUID, Command.DB_PEARL_FETCH_BY_UUID);
+			cacheByUUID = new RSLoadingCache(DB_FILENAME_UUID, Command.DB_PEARL_FETCH_BY_UUID, this::enableRemoteDbUUID);
 			LOGGER.info("[EpearlLookup] stored by UUID: "+cacheByUUID.size());
 		}
 	}
 	public final void loadEpearlCacheXZ(){
 		if(cacheByXZ == null){
 			updateKeyXZ = new HashMap<Integer, UUID>();
-			cacheByXZ = new RSLoadingCache(DB_FILENAME_XZ, Command.DB_PEARL_FETCH_BY_XZ);
+			cacheByXZ = new RSLoadingCache(DB_FILENAME_XZ, Command.DB_PEARL_FETCH_BY_XZ, this::enableRemoteDbXZ);
 			LOGGER.info("[EpearlLookup] stored by XZ: "+cacheByXZ.size());
 		}
 	}
@@ -310,9 +313,11 @@ public abstract class EpearlLookup{
 	protected final void putPearlOwner(final UUID key, final PearlDataClient pdc, final boolean keyIsUUID){
 		assert key != null && pdc != null;
 		assert pdc.owner != null && pdc.owner != UUID_404 && pdc.owner != UUID_LOADING;
-		if(!(keyIsUUID ? cacheByUUID : cacheByXZ).putIfAbsent(key, pdc)) return;
+		final RSLoadingCache cache = keyIsUUID ? cacheByUUID : cacheByXZ;
+		assert cache != null;
+		if(!cache.putIfAbsent(key, pdc)) return;
 		final String DB_FILENAME = (keyIsUUID ? DB_FILENAME_UUID : DB_FILENAME_XZ);
-		if(remoteSender == null || !useRemoteDB()){
+		if(remoteSender == null || !cache.USE_REMOTE_DB.get()){
 			appendToClientFile(DB_FILENAME, key, pdc);
 			return;
 		}

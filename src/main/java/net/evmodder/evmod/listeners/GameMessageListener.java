@@ -13,6 +13,7 @@ import net.evmodder.evmod.apis.RemoteServerSender;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.text.Text;
 
 public class GameMessageListener{
 	private final String MSG_MATCH_END = "";//"( .*)?"
@@ -43,8 +44,14 @@ public class GameMessageListener{
 				PacketHelper.toByteArray(client.player.getUuid(), ignoredUUID),
 				msg->{
 					if(msg != null && msg.length == 1){
-						if(msg[0] != 0) Main.LOGGER.info("[IgnoreSync] Updated ignore="+ignored+" in remote DB");
-						else Main.LOGGER.info("[IgnoreSync] Remote DB reported ignoreState out of sync!");
+						if(msg[0] != 0){
+							Main.LOGGER.info("[IgnoreSync] Updated ignore="+ignored+" in remote DB");
+							client.player.sendMessage(Text.literal("Updated ignore="+ignored+" in remote DB"), /*overlay=*/true);
+						}
+						else{
+							Main.LOGGER.info("[IgnoreSync] Remote DB reported ignoreState out of sync!");
+							client.player.sendMessage(Text.literal("Remote DB reported ignoreState out of sync!"), /*overlay=*/true);
+						}
 					}
 					else Main.LOGGER.info("[IgnoreSync] Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_UUID: "+msg);
 					// Important that we update local cache AFTER db, for cache-priority reasons (Note: assumes decent clock synchronization, eesh)

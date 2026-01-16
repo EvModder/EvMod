@@ -1,9 +1,6 @@
 package net.evmodder.evmod.apis;
 
-import static net.evmodder.evmod.apis.MojangProfileLookupConstants.NAME_U_404;
-import static net.evmodder.evmod.apis.MojangProfileLookupConstants.NAME_U_LOADING;
-import static net.evmodder.evmod.apis.MojangProfileLookupConstants.UUID_404;
-import static net.evmodder.evmod.apis.MojangProfileLookupConstants.UUID_LOADING;
+import static net.evmodder.evmod.apis.MojangProfileLookupConstants.*;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -32,7 +29,8 @@ public final class EpearlLookupFabric extends EpearlLookup{
 	private List<EnderPearlEntity> loadedEpearls;
 	private int lastEpearlCount;
 
-	@Override protected boolean useRemoteDB(){return Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue();}
+	@Override protected boolean enableRemoteDbUUID(){return Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue();}
+	@Override protected boolean enableRemoteDbXZ(){return Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue();}
 	@Override protected boolean enableKeyUUID(){return Configs.Database.EPEARL_OWNERS_BY_UUID.getBooleanValue();}
 	@Override protected boolean enableKeyXZ(){return Configs.Database.EPEARL_OWNERS_BY_XZ.getBooleanValue();}
 	private boolean isDisabled(){return !enableKeyUUID() && !enableKeyXZ();}
@@ -47,12 +45,15 @@ public final class EpearlLookupFabric extends EpearlLookup{
 	private UUID toKeyXZ(Entity epearl){
 		return new UUID(Double.doubleToRawLongBits(epearl.getX()), Double.doubleToRawLongBits(epearl.getZ()));
 	}
+	private ChunkPos toChunkPos(PearlDataClient pdc){
+		return new ChunkPos(pdc.x()<<4, pdc.z()<<4);
+	}
 
 	public EpearlLookupFabric(RemoteServerSender rms){
 		super(rms, Main.LOGGER);
 		ClientChunkEvents.CHUNK_LOAD.register((phase, listener)->{
 			if(isDisabled()) return;
-			synchronized(loadedChunks){
+			synchronized(recentlyLoadedChunks){
 				recentlyLoadedChunks.put(listener.getPos(), System.currentTimeMillis()+CHUNK_LOAD_WAIT);
 				final boolean added = loadedChunks.add(listener.getPos());
 				assert added;
@@ -60,7 +61,7 @@ public final class EpearlLookupFabric extends EpearlLookup{
 		});
 		ClientChunkEvents.CHUNK_UNLOAD.register((phase, listener)->{
 			if(isDisabled()) return;
-			synchronized(loadedChunks){
+			synchronized(recentlyLoadedChunks){
 				recentlyLoadedChunks.remove(listener.getPos());
 				final boolean removed = loadedChunks.remove(listener.getPos());
 				assert removed;
@@ -70,7 +71,7 @@ public final class EpearlLookupFabric extends EpearlLookup{
 		TickListener.register(new TickListener(){
 			@Override public void onTickStart(MinecraftClient client){
 				if(isDisabled()) return;
-				synchronized(loadedChunks){
+				synchronized(recentlyLoadedChunks){
 					if(client == null || client.player == null || currWorld != client.world || client.world == null){
 						currWorld = client.world;
 						recentlyLoadedChunks.clear();
@@ -92,15 +93,19 @@ public final class EpearlLookupFabric extends EpearlLookup{
 					if(lastEpearlCount != loadedEpearls.size() || fullyLoadedChunk){
 						lastEpearlCount = loadedEpearls.size();
 						Main.LOGGER.info("Change to chunks/epearls loaded, calling runRemovalCheck()");
-						if(Configs.Database.EPEARL_OWNERS_BY_UUID.getBooleanValue()){
+						if(enableKeyUUID()){
 							final HashSet<UUID> seenKeyUUIDs = new HashSet<>(lastEpearlCount);
 							loadedEpearls.stream().map(EnderPearlEntity::getUuid).forEach(seenKeyUUIDs::add);
-							runRemovalCheckUUID(e -> isWithinDist(client.player, e.getValue()) && !seenKeyUUIDs.contains(e.getKey()));
+							runRemovalCheckUUID(e -> isWithinDist(client.player, e.getValue()) && !seenKeyUUIDs.contains(e.getKey())
+									&& loadedChunks.contains(toChunkPos(e.getValue())) // TODO: comment this line out
+									&& !recentlyLoadedChunks.containsKey(toChunkPos(e.getValue())));
 						}
-						if(Configs.Database.EPEARL_OWNERS_BY_XZ.getBooleanValue()){
+						if(enableKeyXZ()){
 							final HashSet<UUID> seenKeyXZs = new HashSet<>(lastEpearlCount);
 							loadedEpearls.stream().map(EpearlLookupFabric.this::toKeyXZ).forEach(seenKeyXZs::add);
-							runRemovalCheckXZ(e -> isWithinDist(client.player, e.getValue()) && !seenKeyXZs.contains(e.getKey()));
+							runRemovalCheckXZ(e -> isWithinDist(client.player, e.getValue()) && !seenKeyXZs.contains(e.getKey())
+									&& loadedChunks.contains(toChunkPos(e.getValue())) // TODO: comment this line out
+									&& !recentlyLoadedChunks.containsKey(toChunkPos(e.getValue())));
 						}
 					}
 				}
@@ -130,26 +135,24 @@ public final class EpearlLookupFabric extends EpearlLookup{
 	public final String updateOwner(Entity epearl){
 		UUID ownerUUID = ((AccessorProjectileEntity)epearl).getOwnerUUID();
 		String ownerName = getDynamicUsername(ownerUUID, epearl.getUuid());
-		final boolean USE_DB_UUID = Configs.Database.EPEARL_OWNERS_BY_UUID.getBooleanValue();
-		final boolean USE_DB_XZ = Configs.Database.EPEARL_OWNERS_BY_XZ.getBooleanValue();
-		if((!USE_DB_UUID && !USE_DB_XZ) || epearl.getVelocity().x != 0d || epearl.getVelocity().z != 0d || epearl.getVelocity().y > .1d
-				|| ownerUUID == MojangProfileLookupConstants.UUID_404 || ownerUUID == MojangProfileLookupConstants.UUID_LOADING
+		if(isDisabled() || epearl.getVelocity().x != 0d || epearl.getVelocity().z != 0d || epearl.getVelocity().y > .1d
+				|| ownerUUID == UUID_404 || ownerUUID == UUID_LOADING
 		){
 			return ownerName;
 		}
 		if(ownerUUID != null){
 			final PearlDataClient pdc = new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
-			if(USE_DB_UUID) putPearlOwner(epearl.getUuid(), pdc, /*keyIsUUID=*/true);
-			if(USE_DB_XZ) putPearlOwner(toKeyXZ(epearl), pdc, /*keyIsUUID=*/false);
+			if(enableKeyUUID()) putPearlOwner(epearl.getUuid(), pdc, /*keyIsUUID=*/true);
+			if(enableKeyXZ()) putPearlOwner(toKeyXZ(epearl), pdc, /*keyIsUUID=*/false);
 		}
 		else{
-			if(USE_DB_UUID){
+			if(enableKeyUUID()){
 				ownerUUID = getPearlOwnerUUID(epearl);
-				if(ownerUUID != null && ownerUUID != MojangProfileLookupConstants.UUID_404 && ownerUUID != MojangProfileLookupConstants.UUID_LOADING){
+				if(ownerUUID != null && ownerUUID != UUID_404 && ownerUUID != UUID_LOADING){
 					return getDynamicUsername(ownerUUID, epearl.getUuid());
 				}
 			}
-			if(USE_DB_XZ) ownerUUID = getPearlOwnerXZ(epearl);
+			if(enableKeyXZ()) ownerUUID = getPearlOwnerXZ(epearl);
 		}
 		return getDynamicUsername(ownerUUID, epearl.getUuid());
 	}
