@@ -20,7 +20,7 @@ import fi.dy.masa.malilib.registry.Registry;
 import fi.dy.masa.malilib.util.data.ModInfo;
 import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.apis.ChatBroadcaster;
-import net.evmodder.evmod.apis.EpearlLookup;
+import net.evmodder.evmod.apis.EpearlLookupFabric;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.evmodder.evmod.apis.TickListener;
@@ -86,7 +86,7 @@ public class Main{
 
 	private static Main instance; public static Main mixinAccess(){return instance;} // TODO: eww hacky! Accessors:
 	public final RemoteServerSender remoteSender; // MixinClientWorld
-	public final EpearlLookup epearlLookup; // MixinEntityRenderer
+	public final EpearlLookupFabric epearlLookup; // MixinEntityRenderer
 	public final KeybindCraftingRestock kbCraftRestock; // MixinClientPlayerInteractionManager
 
 	Main(){
@@ -101,7 +101,7 @@ public class Main{
 		remoteSender = settings.database ? new RemoteServerSender(LOGGER, MiscUtils::getCurrentServerAddressHashCode) : null;
 		if(settings.database) InitUtils.refreshRemoteServerSender(remoteSender);
 
-		epearlLookup = settings.epearlOwners ? new EpearlLookup(remoteSender) : null;
+		epearlLookup = settings.epearlOwners ? new EpearlLookupFabric(remoteSender) : null;
 
 		if(settings.serverJoinListener) new ServerJoinListener(remoteSender);
 		if(settings.serverQuitListener) new ServerQuitListener(remoteSender);

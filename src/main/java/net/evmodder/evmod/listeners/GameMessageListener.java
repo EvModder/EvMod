@@ -8,7 +8,7 @@ import net.evmodder.EvLib.util.PacketHelper;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.EpearlActivator;
-import net.evmodder.evmod.apis.EpearlLookup;
+import net.evmodder.evmod.apis.EpearlLookupFabric;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.MinecraftClient;
@@ -54,7 +54,7 @@ public class GameMessageListener{
 		else saveMyIgnores(client.player.getUuid(), ignoredUUID, ignored);
 	}
 
-	public GameMessageListener(RemoteServerSender rms, EpearlLookup epl, WhisperPlaySound wps){
+	public GameMessageListener(RemoteServerSender rms, EpearlLookupFabric epl, WhisperPlaySound wps){
 		final EpearlActivator pearlActivator = epl == null ? null : new EpearlActivator(epl);
 
 		ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {

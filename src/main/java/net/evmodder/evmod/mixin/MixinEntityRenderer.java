@@ -46,7 +46,7 @@ abstract class MixinEntityRenderer{
 		if(e instanceof ProjectileEntity == false) return;
 		if(e.getType() != EntityType.ENDER_PEARL) return;
 		//if(!isLookngAt(entity)) return;
-		String name = Main.mixinAccess().epearlLookup.getOwnerName((ProjectileEntity)e);
+		String name = Main.mixinAccess().epearlLookup.updateOwner((ProjectileEntity)e);
 		if(name == null) return;
 		//----------
 		XYZ xyz = new XYZ(e.getBlockX(), e.getBlockY()/4, e.getBlockZ());

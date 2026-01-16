@@ -13,6 +13,7 @@ import fi.dy.masa.malilib.config.options.ConfigStringList;
 import fi.dy.masa.malilib.util.StringUtils;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MojangProfileLookup;
+import net.evmodder.evmod.apis.MojangProfileLookupConstants;
 
 public class ConfigPlayerList extends ConfigStringList{
 	public static class NameAndUUID{ // Basically, a record but mutable :P
@@ -49,14 +50,14 @@ public class ConfigPlayerList extends ConfigStringList{
 		set.stream().filter(n -> n != null && !n.isBlank()).map(n -> {
 			NameAndUUID player = new NameAndUUID(n, null);
 			UUID uuid = MojangProfileLookup.uuidLookup.get(n, u->{
-				if(u != MojangProfileLookup.UUID_404) player.uuid=u;
+				if(u != MojangProfileLookupConstants.UUID_404) player.uuid=u;
 				else synchronized(players){ // Not a real player name
 //					strings.remove(n);
 					players.removeIf(p -> p.name == n);
 //					onValueChanged();
 				}
 			});
-			if(uuid != MojangProfileLookup.UUID_404 && uuid != MojangProfileLookup.UUID_LOADING) player.uuid = uuid;
+			if(uuid != MojangProfileLookupConstants.UUID_404 && uuid != MojangProfileLookupConstants.UUID_LOADING) player.uuid = uuid;
 			return player;
 		}).forEach(players::add);
 		super.onValueChanged();

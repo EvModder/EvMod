@@ -3,9 +3,10 @@ package net.evmodder.evmod.commands;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import java.util.List;
-import net.evmodder.evmod.apis.EpearlLookup;
+import net.evmodder.evmod.apis.EpearlLookupFabric;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.MojangProfileLookup;
+import net.evmodder.evmod.apis.MojangProfileLookupConstants;
 import net.evmodder.evmod.mixin.AccessorProjectileEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -17,7 +18,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.Box;
 
 public class CommandAssignPearl{
-	private final EpearlLookup epearlLookup;
+	private final EpearlLookupFabric epearlLookup;
 
 //	public static final class Friend{private Friend(){}}
 //	private static final Friend friend = new Friend();
@@ -69,7 +70,7 @@ public class CommandAssignPearl{
 		final Entity player = ctx.getSource().getPlayer();
 		final Box box = player.getBoundingBox().expand(8, 6, 8);
 		List<EnderPearlEntity> epearls =  player.getWorld().getEntitiesByType(EntityType.ENDER_PEARL, box, e->{
-			return MiscUtils.isLookingAt(e, player) && !epearlLookup.isLoadedOwnerName(epearlLookup.getOwnerName(e));
+			return MiscUtils.isLookingAt(e, player) && !epearlLookup.isLoadedOwnerName(epearlLookup.updateOwner(e));
 		});
 		if(epearls.isEmpty()){
 			ctx.getSource().sendError(Text.literal("Unable to detect target unassigned epearl"));
@@ -83,7 +84,7 @@ public class CommandAssignPearl{
 		final String name = ctx.getArgument("name", String.class);
 //		ctx.getSource().sendFeedback(Text.literal("Fetching UUID for name: "+name+"..."));
 		MojangProfileLookup.uuidLookup.get(name, (uuid)->{
-			if(uuid == MojangProfileLookup.UUID_404){
+			if(uuid == MojangProfileLookupConstants.UUID_404){
 				ctx.getSource().sendError(Text.literal("Invalid player name"));
 				return;
 			}
@@ -92,13 +93,13 @@ public class CommandAssignPearl{
 				return;
 			}
 			((AccessorProjectileEntity)epearl).setOwnerUUID(uuid);
-			epearlLookup.getOwnerName(epearl);
+			epearlLookup.updateOwner(epearl);
 			ctx.getSource().sendFeedback(Text.literal("Assigned owner for epearl: "+epearl.getUuidAsString()+" <- "+name));
 		});
 		return 1;
 	}
 
-	public CommandAssignPearl(EpearlLookup epl){
+	public CommandAssignPearl(EpearlLookupFabric epl){
 		epearlLookup = epl;
 		ClientCommandRegistrationCallback.EVENT.register(
 			(dispatcher, _0) -> dispatcher.register(

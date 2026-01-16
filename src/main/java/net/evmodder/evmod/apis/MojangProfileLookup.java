@@ -8,11 +8,9 @@ import net.evmodder.evmod.Main;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.PlayerListEntry;
+import static net.evmodder.evmod.apis.MojangProfileLookupConstants.*;
 
 public class MojangProfileLookup{
-	public static final String NAME_404 = "n[404]", NAME_U_404 = "u[404]", NAME_LOADING = "Loading name...", NAME_U_LOADING = "Loading UUID...";
-	public static final UUID UUID_404 = null, UUID_LOADING = new UUID(114141414, 282828282);
-
 	private static final MinecraftClient client = MinecraftClient.getInstance();
 
 	public static final LoadingCache<UUID, String> nameLookup = new LoadingCache<>(NAME_404, NAME_LOADING){

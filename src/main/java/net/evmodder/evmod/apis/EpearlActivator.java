@@ -23,13 +23,13 @@ import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.RaycastContext;
 
 public class EpearlActivator{
-	private final EpearlLookup epearlLookup;
+	private final EpearlLookupFabric epearlLookup;
 	private final int REACH = 10;
 	private final boolean msgFailureFeedback = true;
 	private final long msgCooldown = 1000*5;
 	private long lastMsgTs;
 
-	public EpearlActivator(EpearlLookup epl){epearlLookup = epl;}
+	public EpearlActivator(EpearlLookupFabric epl){epearlLookup = epl;}
 
 	public boolean hasLineOfSight(MinecraftClient client, Vec3d from, Vec3d to){
 		return client.world.raycast(
@@ -84,7 +84,7 @@ public class EpearlActivator{
 		Vec3d closestPos = null;
 		for(EnderPearlEntity pearl : client.world.getEntitiesByClass(EnderPearlEntity.class,
 				client.player.getBoundingBox().expand(REACH, REACH, REACH),
-				pearl->name.equalsIgnoreCase(epearlLookup.getOwnerName(pearl)))
+				pearl->name.equalsIgnoreCase(epearlLookup.updateOwner(pearl)))
 		){
 			final double distSq = pearl.getPos().squaredDistanceTo(playerPos);
 			if(distSq < closestDistSq){closestDistSq = distSq; closestPos = pearl.getPos();}
