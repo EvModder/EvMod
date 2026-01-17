@@ -26,9 +26,9 @@ public final class EpearlLookupFabric extends EpearlLookup{
 
 	private final HashMap<ChunkPos, Long> recentlyLoadedChunks = new HashMap<>();
 	private final HashSet<ChunkPos> loadedChunks = new HashSet<>();
-	private World currWorld;
+	private World world;
 	private List<EnderPearlEntity> loadedEpearls;
-	private int lastEpearlCount;
+	private int epearlCount;
 
 	@Override protected boolean enableRemoteDbUUID(){return Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue();}
 	@Override protected boolean enableRemoteDbXZ(){return Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue();}
@@ -43,10 +43,10 @@ public final class EpearlLookupFabric extends EpearlLookup{
 		return dx*dx + dz*dz < DIST_XZ_SQ && dy*dy < DIST_Y_SQ;
 	}
 
-	private UUID toKeyXZ(Entity epearl){
+	private final UUID toKeyXZ(Entity epearl){
 		return new UUID(Double.doubleToRawLongBits(epearl.getX()), Double.doubleToRawLongBits(epearl.getZ()));
 	}
-	private ChunkPos toChunkPos(PearlDataClient pdc){
+	private final ChunkPos toChunkPos(PearlDataClient pdc){
 		return new ChunkPos(pdc.x()<<4, pdc.z()<<4);
 	}
 
@@ -75,39 +75,42 @@ public final class EpearlLookupFabric extends EpearlLookup{
 			@Override public void onTickStart(MinecraftClient client){
 				if(isDisabled()) return;
 				synchronized(recentlyLoadedChunks){
-					if(client == null || client.player == null || currWorld != client.world || client.world == null){
-						currWorld = client.world;
+					if(client == null || client.player == null || world != client.world || client.world == null){
+						world = client.world;
 						recentlyLoadedChunks.clear();
 						loadedChunks.clear();
 						return;
 					}
 					final long now = System.currentTimeMillis();
+					// Update recentlyLoadedChunks
 					final boolean fullyLoadedChunk = recentlyLoadedChunks.entrySet().removeIf(entry -> now > entry.getValue());
 
 					final Box box = client.player.getBoundingBox().expand(DIST_XZ, DIST_Y, DIST_XZ);
-					loadedEpearls = client.world.getEntitiesByType(EntityType.ENDER_PEARL, box, _0->true);
+					loadedEpearls = world.getEntitiesByType(EntityType.ENDER_PEARL, box, _0->true);
 
-					final long epearlLoadShortcut = now+CHUNK_LOAD_WAIT_AFTER_EPEARL;
-					loadedEpearls.stream().map(ep -> client.world.getChunk(ep.getBlockPos()).getPos()).distinct().forEach(chunkPos -> {
-						final Long wait = recentlyLoadedChunks.get(chunkPos);
-						if(wait != null && epearlLoadShortcut < wait) recentlyLoadedChunks.put(chunkPos, epearlLoadShortcut);
+					// Schedule faster recentlyLoadedChunks updates if loaded epearls are detected
+					final long epearlLoadShortcut = now + CHUNK_LOAD_WAIT_AFTER_EPEARL;
+					loadedEpearls.stream().map(Entity::getChunkPos).distinct().forEach(chunk -> {
+						final Long wait = recentlyLoadedChunks.get(chunk);
+						if(wait != null && epearlLoadShortcut < wait) recentlyLoadedChunks.put(chunk, epearlLoadShortcut);
 					});
 
-					if(lastEpearlCount != loadedEpearls.size() || fullyLoadedChunk){
-						lastEpearlCount = loadedEpearls.size();
-						Main.LOGGER.info("Change to chunks/epearls loaded, calling runRemovalCheck()");
+					// If any epearl changes (or chunk is fully loaded), update owners for all loaded epearls
+					if(epearlCount != loadedEpearls.size() || fullyLoadedChunk){
+						epearlCount = loadedEpearls.size();
+						Main.LOGGER.info("Change to chunks/epearls loaded, calling getOwner() on all epearls and running removal check");
 						if(enableKeyUUID()){
-							final HashSet<UUID> seenKeyUUIDs = new HashSet<>(lastEpearlCount);
-							loadedEpearls.stream().map(EnderPearlEntity::getUuid).forEach(seenKeyUUIDs::add);
+							final HashSet<UUID> seenKeyUUIDs = new HashSet<>(epearlCount);
+							loadedEpearls.stream().map(Entity::getUuid).forEach(seenKeyUUIDs::add);
 							runRemovalCheckUUID(e -> isWithinDist(client.player, e.getValue()) && !seenKeyUUIDs.contains(e.getKey())
-									&& loadedChunks.contains(toChunkPos(e.getValue())) // TODO: comment this line out
+//									&& loadedChunks.contains(toChunkPos(e.getValue()))
 									&& !recentlyLoadedChunks.containsKey(toChunkPos(e.getValue())));
 						}
 						if(enableKeyXZ()){
-							final HashSet<UUID> seenKeyXZs = new HashSet<>(lastEpearlCount);
+							final HashSet<UUID> seenKeyXZs = new HashSet<>(epearlCount);
 							loadedEpearls.stream().map(EpearlLookupFabric.this::toKeyXZ).forEach(seenKeyXZs::add);
 							runRemovalCheckXZ(e -> isWithinDist(client.player, e.getValue()) && !seenKeyXZs.contains(e.getKey())
-									&& loadedChunks.contains(toChunkPos(e.getValue())) // TODO: comment this line out
+//									&& loadedChunks.contains(toChunkPos(e.getValue()))
 									&& !recentlyLoadedChunks.containsKey(toChunkPos(e.getValue())));
 						}
 					}
