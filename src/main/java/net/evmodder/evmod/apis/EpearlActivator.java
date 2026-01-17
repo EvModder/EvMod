@@ -84,7 +84,7 @@ public class EpearlActivator{
 		Vec3d closestPos = null;
 		for(EnderPearlEntity pearl : client.world.getEntitiesByClass(EnderPearlEntity.class,
 				client.player.getBoundingBox().expand(REACH, REACH, REACH),
-				pearl->name.equalsIgnoreCase(epearlLookup.updateOwner(pearl)))
+				pearl->name.equalsIgnoreCase(epearlLookup.getOwnerName(pearl)))
 		){
 			final double distSq = pearl.getPos().squaredDistanceTo(playerPos);
 			if(distSq < closestDistSq){closestDistSq = distSq; closestPos = pearl.getPos();}

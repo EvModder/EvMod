@@ -13,8 +13,7 @@ import net.evmodder.evmod.apis.EpearlLookup.XYZ;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.projectile.ProjectileEntity;
+import net.minecraft.entity.projectile.thrown.EnderPearlEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 
@@ -43,10 +42,10 @@ abstract class MixinEntityRenderer{
 	public void test(Entity e, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
 		if(Main.mixinAccess().epearlLookup == null) return; // Feature is disabled
 		if(client.options.hudHidden) return; // HUD is hidden
-		if(e instanceof ProjectileEntity == false) return;
-		if(e.getType() != EntityType.ENDER_PEARL) return;
+		if(e instanceof EnderPearlEntity == false) return;
+//		if(e.getType() != EntityType.ENDER_PEARL) return; // Redundant, due to above
 		//if(!isLookngAt(entity)) return;
-		String name = Main.mixinAccess().epearlLookup.updateOwner((ProjectileEntity)e);
+		String name = Main.mixinAccess().epearlLookup.getOwnerName((EnderPearlEntity)e);
 		if(name == null) return;
 		//----------
 		XYZ xyz = new XYZ(e.getBlockX(), e.getBlockY()/4, e.getBlockZ());

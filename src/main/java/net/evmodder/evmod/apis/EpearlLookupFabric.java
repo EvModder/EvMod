@@ -17,6 +17,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.thrown.EnderPearlEntity;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public final class EpearlLookupFabric extends EpearlLookup{
@@ -56,7 +57,8 @@ public final class EpearlLookupFabric extends EpearlLookup{
 			synchronized(recentlyLoadedChunks){
 				recentlyLoadedChunks.put(listener.getPos(), System.currentTimeMillis()+CHUNK_LOAD_WAIT);
 				final boolean added = loadedChunks.add(listener.getPos());
-				assert added;
+				if(!added) Main.LOGGER.error("Loading chunk "+listener.getPos().toString()+" before it was unloaded!");
+//				assert added;
 			}
 		});
 		ClientChunkEvents.CHUNK_UNLOAD.register((phase, listener)->{
@@ -64,7 +66,8 @@ public final class EpearlLookupFabric extends EpearlLookup{
 			synchronized(recentlyLoadedChunks){
 				recentlyLoadedChunks.remove(listener.getPos());
 				final boolean removed = loadedChunks.remove(listener.getPos());
-				assert removed;
+				if(!removed) Main.LOGGER.error("Unloading chunk "+listener.getPos().toString()+" before it was loaded!");
+//				assert removed;
 			}
 		});
 
@@ -113,13 +116,12 @@ public final class EpearlLookupFabric extends EpearlLookup{
 		});
 	}
 
-	private final UUID getPearlOwnerUUID(Entity epearl){
-		PearlDataClient pdc = getPearlOwner(epearl.getUuid(), -1,  epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ(), /*keyIsUUID=*/true);
-		return pdc == null ? null : pdc.owner();
-	}
-	private final UUID getPearlOwnerXZ(Entity epearl){
-		PearlDataClient pdc = getPearlOwner(toKeyXZ(epearl), epearl.getId(), epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ(), /*keyIsUUID=*/false);
-		return pdc == null ? null : pdc.owner();
+	private final UUID getOwnerFromDb(final Entity epearl, final boolean byUUID){
+		assert epearl != null;
+		final UUID key = byUUID ? epearl.getUuid() : toKeyXZ(epearl);
+		final PearlDataClient pdc = getPearlOwner(key, epearl.getId(), epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ(), byUUID);
+		assert pdc != null : "Expected PDC to be one of [404, LOADING, <result>]";
+		return pdc.owner();
 	}
 
 	public final String getDynamicUsername(UUID owner, UUID key){
@@ -132,27 +134,23 @@ public final class EpearlLookupFabric extends EpearlLookup{
 		return MojangProfileLookup.nameLookup.get(owner, /*callback=*/null);
 	}
 
-	public final String updateOwner(Entity epearl){
+	public final String getOwnerName(EnderPearlEntity epearl){
+		assert epearl != null;
 		UUID ownerUUID = ((AccessorProjectileEntity)epearl).getOwnerUUID();
-		String ownerName = getDynamicUsername(ownerUUID, epearl.getUuid());
-		if(isDisabled() || epearl.getVelocity().x != 0d || epearl.getVelocity().z != 0d || epearl.getVelocity().y > .1d
-				|| ownerUUID == UUID_404 || ownerUUID == UUID_LOADING
-		){
-			return ownerName;
+		final Vec3d vel = epearl.getVelocity();
+		if(isDisabled() || vel.x != 0d || vel.z != 0d || vel.y > .1d || ownerUUID == UUID_404 || ownerUUID == UUID_LOADING){
+			return getDynamicUsername(ownerUUID, epearl.getUuid());
 		}
-		if(ownerUUID != null){
+		if(ownerUUID == null){
+			if(enableKeyUUID()) ownerUUID = getOwnerFromDb(epearl, /*byUUID=*/true);
+			if(enableKeyXZ() && (ownerUUID == null || ownerUUID == UUID_404 && ownerUUID == UUID_LOADING)) ownerUUID = getOwnerFromDb(epearl, /*byUUID=*/false);
+			assert ownerUUID != null : "Expected at least one of [enableKeyUUID() or enableKeyXZ()] to be enabled, and return one of [404, LOADING, <result>]";
+			if(ownerUUID != UUID_404 && ownerUUID != UUID_LOADING) ((AccessorProjectileEntity)epearl).setOwnerUUID(ownerUUID);
+		}
+		else{
 			final PearlDataClient pdc = new PearlDataClient(ownerUUID, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
 			if(enableKeyUUID()) putPearlOwner(epearl.getUuid(), pdc, /*keyIsUUID=*/true);
 			if(enableKeyXZ()) putPearlOwner(toKeyXZ(epearl), pdc, /*keyIsUUID=*/false);
-		}
-		else{
-			if(enableKeyUUID()){
-				ownerUUID = getPearlOwnerUUID(epearl);
-				if(ownerUUID != null && ownerUUID != UUID_404 && ownerUUID != UUID_LOADING){
-					return getDynamicUsername(ownerUUID, epearl.getUuid());
-				}
-			}
-			if(enableKeyXZ()) ownerUUID = getPearlOwnerXZ(epearl);
 		}
 		return getDynamicUsername(ownerUUID, epearl.getUuid());
 	}

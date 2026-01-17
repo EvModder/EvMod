@@ -25,15 +25,15 @@ public abstract class EpearlLookup{
 
 	private final Logger LOGGER;
 
-	private static final PearlDataClient PD_404 = new PearlDataClient(UUID_404, 0, 0, 0);
-	private static final PearlDataClient PD_LOADING = new PearlDataClient(UUID_LOADING, 0, 0, 0);
+	private static final PearlDataClient PDC_404 = new PearlDataClient(UUID_404, 0, 0, 0);
+	private static final PearlDataClient PDC_LOADING = new PearlDataClient(UUID_LOADING, 0, 0, 0);
 
 	private static final String DB_FILENAME_UUID = "epearl_cache_uuid";
 	private static final String DB_FILENAME_XZ = "epearl_cache_xz";
 
 	private final RemoteServerSender remoteSender;
 	private HashMap<Integer, UUID> updateKeyXZ; // Map of epearl.id -> keyXZ
-	private final HashMap<UUID, XYZ> idToPos; // Map of epearl.uuid -> epearl.pos
+	private final HashMap<UUID, XYZ> idToPosTemp; // Map of epearl.uuid -> epearl.pos
 	protected final HashMap<UUID, Long> requestStartTimes;
 
 	private final long FETCH_TIMEOUT = 5_000, STORE_TIMEOUT = 15_000;
@@ -179,27 +179,29 @@ public abstract class EpearlLookup{
 		final Command DB_FETCH_COMMAND;
 		final Supplier<Boolean> USE_REMOTE_DB;
 		RSLoadingCache(final String dbFilename, final Command fetchCommand, final Supplier<Boolean> dbEnabledCheck){
-			super(loadFromClientFile(dbFilename), PD_404, PD_LOADING);
+			super(loadFromClientFile(dbFilename), PDC_404, PDC_LOADING);
 			DB_FILENAME = dbFilename;
 			DB_FETCH_COMMAND = fetchCommand;
 			USE_REMOTE_DB = dbEnabledCheck;
 		}
 		@Override protected PearlDataClient load(UUID key){
-			LOGGER.debug("[EpearlLookup] Fetch ownerUUID called for pearlUUID: "+key+" at "+idToPos.get(key));
+			LOGGER.debug("[EpearlLookup] Fetch ownerUUID called for pearlUUID: "+key+" at "+idToPosTemp.get(key));
 			if(!USE_REMOTE_DB.get()){
 				LOGGER.info("[EpearlLookup] Database server is disabled (A). Returning "+NAME_U_404);
-				return PD_404;
+				return PDC_404;
 			}
+			assert remoteSender != null : "[EPL] Caller indicated RemoteDB enabled, but remoteSender is null";
 			if(remoteSender == null){
 				LOGGER.info("[EpearlLookup] Database server is disabled (B). Returning "+NAME_U_404);
-				return PD_404;
+				return PDC_404;
 			}
 
 			//Request UUID of epearl for <Server>,<ePearlPosEncrypted>
 			requestStartTimes.put(key, System.currentTimeMillis());
 			remoteSender.sendBotMessage(DB_FETCH_COMMAND, /*udp=*/true, FETCH_TIMEOUT, PacketHelper.toByteArray(key),
 				msg->{
-					final XYZ xyz = idToPos.get(key);
+					final XYZ xyz = idToPosTemp.remove(key);
+					assert xyz != null;
 					final PearlDataClient pdc;
 					if(msg == null || msg.length != 16){
 						if(msg == null) LOGGER.warn("[EpearlLookup] Fetch ownerUUID timed out");
@@ -207,14 +209,18 @@ public abstract class EpearlLookup{
 							LOGGER.info("[EpearlLookup] Server does not know ownerUUID for pearlUUID: "+key+(xyz==null ? "" : " at "+xyz));
 						}
 						else LOGGER.error("[EpearlLookup] Invalid server response: "+new String(msg)+" ["+msg.length+"]");
-						pdc = PD_404;
+						pdc = PDC_404;
 					}
 					else{
 						final ByteBuffer bb = ByteBuffer.wrap(msg);
 						final UUID fetchedUUID = new UUID(bb.getLong(), bb.getLong());
 						assert !fetchedUUID.equals(UUID_404);
 						if(xyz == null){
-							LOGGER.warn("[EpearlLookup] Unable to find XZ of epearl for given key!: "+key);
+							LOGGER.error("[EpearlLookup] Unable to find XZ of epearl for given key!: "+key);
+							if(DB_FETCH_COMMAND == Command.DB_PEARL_FETCH_BY_XZ){ // Don't bother storing owner-by-XZ if XZ changed during lookup
+								requestStartTimes.remove(key);
+								return;
+							}
 							pdc = new PearlDataClient(fetchedUUID, 0, 0, 0);
 						}
 						else{
@@ -227,7 +233,7 @@ public abstract class EpearlLookup{
 					requestStartTimes.remove(key);
 				}
 			);
-			return PD_LOADING;
+			return PDC_LOADING;
 		}
 	}
 	private RSLoadingCache cacheByUUID, cacheByXZ;
@@ -298,16 +304,11 @@ public abstract class EpearlLookup{
 	public EpearlLookup(RemoteServerSender rms, Logger logger){
 		remoteSender = rms;
 		LOGGER = logger;
-		if(rms != null){idToPos = new HashMap<>(); requestStartTimes = new HashMap<>();}
-		else{idToPos = null; requestStartTimes = null;}
+		if(rms != null){idToPosTemp = new HashMap<>(); requestStartTimes = new HashMap<>();}
+		else{idToPosTemp = null; requestStartTimes = null;}
 
 		if(enableKeyUUID()) loadEpearlCacheUUID();
 		if(enableKeyXZ()) loadEpearlCacheXZ();
-	}
-
-	public final boolean isLoadedOwnerName(String ownerName){ // TODO: make private (only called by CommandAssignPearl)
-		return !ownerName.equals(NAME_404) && !ownerName.equals(NAME_U_404)
-			&& !ownerName.startsWith(NAME_LOADING) && !ownerName.startsWith(NAME_U_LOADING);
 	}
 
 	protected final void putPearlOwner(final UUID key, final PearlDataClient pdc, final boolean keyIsUUID){
@@ -315,7 +316,10 @@ public abstract class EpearlLookup{
 		assert pdc.owner != null && pdc.owner != UUID_404 && pdc.owner != UUID_LOADING;
 		final RSLoadingCache cache = keyIsUUID ? cacheByUUID : cacheByXZ;
 		assert cache != null;
-		if(!cache.putIfAbsent(key, pdc)) return;
+		if(!cache.putIfAbsent(key, pdc)){ // Owner already stored
+			assert cache.getSync(key).owner.equals(pdc.owner);
+			return;
+		}
 		final String DB_FILENAME = (keyIsUUID ? DB_FILENAME_UUID : DB_FILENAME_XZ);
 		if(remoteSender == null || !cache.USE_REMOTE_DB.get()){
 			appendToClientFile(DB_FILENAME, key, pdc);
@@ -340,18 +344,17 @@ public abstract class EpearlLookup{
 		final RSLoadingCache cache = (keyIsUUID ? cacheByUUID : cacheByXZ);
 		if(!keyIsUUID){
 			final UUID oldKey = updateKeyXZ.get(pearlId);
-			if(oldKey != null && !oldKey.equals(key) && cache.contains(oldKey)){
-				final PearlDataClient pdc = cache.getSync(oldKey);
-				assert pdc.owner != UUID_404 && pdc.owner != UUID_LOADING;
-//				if(pdc.owner != UUID_404 && pdc.owner != UUID_LOADING){
-					cache.putIfAbsent(key, pdc);
-					updateKeyXZ.put(pearlId, key);
-					return pdc;
-//				}
+			if(oldKey != null && !oldKey.equals(key)){
+				LOGGER.warn("[EPL] Detected that a pearl has changed position! Updating owner-by-XZ");
+				if(cache.contains(oldKey)){
+					final UUID owner = cache.getSync(oldKey).owner;
+					assert owner != UUID_LOADING;
+					if(owner != UUID_404) putPearlOwner(key, new PearlDataClient(owner, x, y, z), /*keyIsUUID=*/false);
+				}
 			}
 		}
 		if(cache.contains(key)) return cache.getSync(key);
-		if(idToPos != null) idToPos.put(key, new XYZ(x, y, z));
+		if(idToPosTemp != null) idToPosTemp.put(key, new XYZ(x, y, z)); // equivalent: if(DB_ENABLED)
 		return cache.get(key, pdc->{
 			if(!keyIsUUID && pdc.owner != UUID_404 && pdc.owner != UUID_LOADING){
 				updateKeyXZ.put(pearlId, key);

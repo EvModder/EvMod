@@ -16,8 +16,6 @@ import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.text.Text;
 
 public class GameMessageListener{
-	private final String MSG_MATCH_END = "";//"( .*)?"
-
 	private void saveMyIgnores(UUID myUUID, UUID ignoredUUID, boolean ignored){
 		if(Configs.Database.SAVE_IGNORES.getBooleanValue()){
 			Main.LOGGER.info("Writing "+(ignored?"":"un")+"ignore update to local file cache");
@@ -77,7 +75,7 @@ public class GameMessageListener{
 				final String PEARL_PULL_TRIGGER = Configs.Generic.WHISPER_PEARL_PULL.getStringValue();
 				if(!PEARL_PULL_TRIGGER.isBlank() && pearlActivator != null){
 					final String name = literal.substring(0, literal.indexOf(' '));
-					if(literal.substring(name.length()+" whispers: ".length()).matches(PEARL_PULL_TRIGGER+MSG_MATCH_END)){
+					if(literal.substring(name.length()+" whispers: ".length()).matches(PEARL_PULL_TRIGGER)){
 						pearlActivator.triggerPearl(name);
 					}
 				}

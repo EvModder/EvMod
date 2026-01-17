@@ -1,5 +1,7 @@
 package net.evmodder.evmod.commands;
 
+import static net.evmodder.evmod.apis.MojangProfileLookupConstants.NAME_404;
+import static net.evmodder.evmod.apis.MojangProfileLookupConstants.NAME_U_404;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import java.util.List;
@@ -66,11 +68,13 @@ public class CommandAssignPearl{
 //		return 1;
 //	}
 
-	private int assignPearl(CommandContext<FabricClientCommandSource> ctx){
+	private final boolean isOverwritableName(String name){return name == null || name.equals(NAME_404) || name.equals(NAME_U_404);}
+
+	private final int assignPearl(CommandContext<FabricClientCommandSource> ctx){
 		final Entity player = ctx.getSource().getPlayer();
 		final Box box = player.getBoundingBox().expand(8, 6, 8);
-		List<EnderPearlEntity> epearls =  player.getWorld().getEntitiesByType(EntityType.ENDER_PEARL, box, e->{
-			return MiscUtils.isLookingAt(e, player) && !epearlLookup.isLoadedOwnerName(epearlLookup.updateOwner(e));
+		List<EnderPearlEntity> epearls = player.getWorld().getEntitiesByType(EntityType.ENDER_PEARL, box, e->{
+			return MiscUtils.isLookingAt(e, player) && isOverwritableName(epearlLookup.getOwnerName(e));
 		});
 		if(epearls.isEmpty()){
 			ctx.getSource().sendError(Text.literal("Unable to detect target unassigned epearl"));
@@ -79,7 +83,7 @@ public class CommandAssignPearl{
 		if(epearls.size() > 1){
 			ctx.getSource().sendError(Text.literal("Warning: Command does not currently work with multiple (stacked) epearls"));
 		}
-		final Entity epearl = epearls.getFirst();
+		final EnderPearlEntity epearl = epearls.getFirst();
 
 		final String name = ctx.getArgument("name", String.class);
 //		ctx.getSource().sendFeedback(Text.literal("Fetching UUID for name: "+name+"..."));
@@ -93,7 +97,7 @@ public class CommandAssignPearl{
 				return;
 			}
 			((AccessorProjectileEntity)epearl).setOwnerUUID(uuid);
-			epearlLookup.updateOwner(epearl);
+			epearlLookup.getOwnerName(epearl); // Calling this updates EpearlOwners using the uuid we just provided
 			ctx.getSource().sendFeedback(Text.literal("Assigned owner for epearl: "+epearl.getUuidAsString()+" <- "+name));
 		});
 		return 1;
