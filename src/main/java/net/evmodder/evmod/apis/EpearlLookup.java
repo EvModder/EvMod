@@ -316,7 +316,9 @@ public abstract class EpearlLookup{
 		assert pdc.owner != null && pdc.owner != UUID_404 && pdc.owner != UUID_LOADING;
 		final RSLoadingCache cache = keyIsUUID ? cacheByUUID : cacheByXZ;
 		assert cache != null;
-		if(!cache.putIfAbsent(key, pdc)){ // Owner already stored
+		if(!cache.putIfAbsent(key, pdc) && cache.getSync(key) != PDC_404){ // Owner already stored
+//			LOGGER.info("Currently stored owner: "+key+" <- "+MojangProfileLookup.nameOrUUID(cache.getSync(key).owner));
+//			LOGGER.info("Requested update owner: "+key+" <- "+MojangProfileLookup.nameOrUUID(pdc.owner));
 			assert cache.getSync(key).owner.equals(pdc.owner);
 			return;
 		}

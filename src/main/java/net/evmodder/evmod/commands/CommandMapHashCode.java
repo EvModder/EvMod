@@ -28,7 +28,7 @@ public class CommandMapHashCode{
 		}
 
 		final String colorsId = MapGroupUtils.getIdForMapState(state, /*evict=*/true).toString();
-		ctx.getSource().sendError(Text.literal(colorsId+" \u2398")
+		ctx.getSource().sendFeedback(Text.literal(colorsId+" \u2398")
 				.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, colorsId))));
 		return 1;
 	}

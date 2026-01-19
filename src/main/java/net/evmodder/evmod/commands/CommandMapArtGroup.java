@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -13,6 +14,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
@@ -88,7 +90,7 @@ public class CommandMapArtGroup{
 
 	private int runCompareCommand(final TextListener source, final String[] group1, final String[] group2){
 		if(group2 == null || group2.length == 0){
-			source.sendError(Text.translatable(PREFIX+".compare.needsSecondGroup").withColor(ERROR_COLOR));
+			source.sendError(Text.translatable(PREFIX+"compare.needsSecondGroup").withColor(ERROR_COLOR));
 //			source.sendError(Text.literal("Specify a 2nd group to compare against").withColor(ERROR_COLOR));
 			return 1;
 		}
@@ -104,7 +106,7 @@ public class CommandMapArtGroup{
 		String groupName2 = Arrays.stream(group2).collect(Collectors.joining(","));
 
 		if(in1Not2.isEmpty() && in2Not1.isEmpty()){
-			source.sendError(Text.translatable(PREFIX+".compare.identical", groupName1, groupName2).withColor(DONE_COLOR));
+			source.sendError(Text.translatable(PREFIX+"compare.identical", groupName1, groupName2).withColor(DONE_COLOR));
 //			source.sendFeedback(Text.literal("MapArtGroups "+groupName1+" and "+groupName2+" are identical").withColor(DONE_COLOR));
 			return 1;
 		}
@@ -117,7 +119,7 @@ public class CommandMapArtGroup{
 				colorIds1.removeIf(in1Not2::contains);
 				MapGroupUtils.setCurrentGroup(activeGroup = colorIds1);
 				activeGroupName = "in_"+groupName1+"_AND_IN_"+groupName2;
-				source.sendError(Text.translatable(PREFIX+".compare.create",
+				source.sendError(Text.translatable(PREFIX+"compare.create",
 						activeGroupName, colorIds1.size()).withColor(CREATE_COLOR));
 //				source.sendFeedback(Text.literal("Created group '"+activeGroupName
 //						+"' and set as active (ids: "+colorIds1.size()+")").withColor(CREATE_COLOR));
@@ -138,14 +140,14 @@ public class CommandMapArtGroup{
 				MapGroupUtils.setCurrentGroup(activeGroup = colorIds2);
 				if(in1Not2.isEmpty()){
 					activeGroupName = "in_"+groupName2+"_AND_IN_"+groupName1;
-					source.sendError(Text.translatable(PREFIX+".compare.create",
+					source.sendError(Text.translatable(PREFIX+"compare.create",
 							activeGroupName, colorIds2.size()).withColor(CREATE_COLOR));
 //					source.sendFeedback(Text.literal("Created group '"+activeGroupName
 //							+"' and set as active (ids: "+colorIds2.size()+")").withColor(CREATE_COLOR));
 				}
 				else{
 					activeGroupName = "intersection_"+groupName1+"_and_"+groupName2; // Set intersection
-					source.sendError(Text.translatable(PREFIX+".compare.intersection",
+					source.sendError(Text.translatable(PREFIX+"compare.intersection",
 							colorIds1.size(), in1Not2.size(), colorIds2OriginalSize, in2Not1.size(), colorIds2.size())
 							.withColor(CREATE_COLOR));
 //					source.sendFeedback(Text.literal("Using set-intersection as active group "
@@ -339,17 +341,27 @@ public class CommandMapArtGroup{
 			builder.suggest(wipGroupArg.isEmpty() ? "test" : wipGroupArg);
 			return builder.buildFuture();
 		}
-		int i = wipGroupArg.lastIndexOf(',');
+		final int i = wipGroupArg.lastIndexOf(',');
 		final String lastArgLastPart = i == -1 ? wipGroupArg : wipGroupArg.substring(i+1);
 		final String lastArgFirstPart = i == -1 ? "" : wipGroupArg.substring(0, i+1);
 		final String lastArgWithCommasAround = ","+wipGroupArg+",";
 		try{
-			Files.list(Paths.get(FileIO.DIR+DIR))
-			.filter(p -> {File f = p.toFile(); return f.isFile() && !f.isHidden();})
-			.map(path -> path.getFileName().toString())
-			.filter(name -> name.startsWith(lastArgLastPart))
-			.filter(name -> !lastArgWithCommasAround.contains(","+name+","))
-			.forEach(name -> builder.suggest(lastArgFirstPart+name));
+			final Path dir = Paths.get(FileIO.DIR+DIR);
+			final boolean subDir = lastArgLastPart.indexOf('/') > 0;
+			final Stream<Path> paths = (subDir ? Files.walk(dir) : Files.list(dir))
+					.filter(p -> {File f = p.toFile(); return/* f.isFile() && */!f.isHidden();});
+			final Stream<String> names;
+			if(!subDir) names = paths.map(path -> path.getFileName().toString() + (path.toFile().isDirectory() ? "/" : ""));
+			else names = paths.map(path -> {
+				String name = path.getFileName().toString() + (path.toFile().isDirectory() ? "/" : "");
+				while((path=path.getParent()) != null && !path.equals(dir)){
+					name = path.getFileName().toString() + "/" + name;
+				}
+				return name;
+			});
+			names.filter(name -> name.startsWith(lastArgLastPart))
+				.filter(name -> !lastArgWithCommasAround.contains(","+name+","))
+				.forEach(name -> builder.suggest(lastArgFirstPart+name));
 		}
 		catch(IOException e){e.printStackTrace(); return null;}
 		return builder.buildFuture();
@@ -375,7 +387,7 @@ public class CommandMapArtGroup{
 			dispatcher.register(
 				ClientCommandManager.literal(getClass().getSimpleName().substring(7).toLowerCase())
 				.executes(ctx->{
-					ctx.getSource().sendError(Text.translatable(PREFIX+".missingSubcommand"));
+					ctx.getSource().sendError(Text.translatable(PREFIX+"missingSubcommand"));
 //					ctx.getSource().sendError(Text.literal("Missing subcommand: set/create/expand/add <g>, or compare <g1> <g2>"));
 					return 1;
 				})
@@ -388,7 +400,7 @@ public class CommandMapArtGroup{
 					.executes(ctx->{
 						final String cmd = ctx.getArgument("command", String.class);
 						if(cmd.equalsIgnoreCase(Command.RESET.translation)){MapGroupUtils.setCurrentGroup(activeGroup = null); activeGroupName = null;}
-						else ctx.getSource().sendError(Text.translatable(PREFIX+".needsGroup").withColor(ERROR_COLOR));
+						else ctx.getSource().sendError(Text.translatable(PREFIX+"needsGroup").withColor(ERROR_COLOR));
 //						else ctx.getSource().sendError(Text.literal("Command needs a group name").withColor(ERROR_COLOR));
 						return 1;
 					})
@@ -401,7 +413,7 @@ public class CommandMapArtGroup{
 							for(Command cmd : Command.values()) if(cmd.translation.equalsIgnoreCase(cmdStr)){
 								return runCommand(asTextListener(ctx.getSource()), cmd, groups, /*groups2=*/null);
 							}
-							ctx.getSource().sendError(Text.translatable(PREFIX+".invalidSubcommand", cmdStr).withColor(ERROR_COLOR));
+							ctx.getSource().sendError(Text.translatable(PREFIX+"invalidSubcommand", cmdStr).withColor(ERROR_COLOR));
 //							ctx.getSource().sendError(Text.literal("Invalid subcommand: "+cmdStr).withColor(ERROR_COLOR));
 							return 1;
 						})
@@ -437,7 +449,7 @@ public class CommandMapArtGroup{
 								for(Command cmd : Command.values()) if(cmd.translation.equalsIgnoreCase(cmdStr)){
 									return runCommand(asTextListener(ctx.getSource()), cmd, groups, groups2);
 								}
-								ctx.getSource().sendError(Text.translatable(PREFIX+".invalidSubcommand", cmdStr).withColor(ERROR_COLOR));
+								ctx.getSource().sendError(Text.translatable(PREFIX+"invalidSubcommand", cmdStr).withColor(ERROR_COLOR));
 //								ctx.getSource().sendError(Text.literal("Invalid subcommand: "+cmdStr).withColor(ERROR_COLOR));
 								return 1;
 							})

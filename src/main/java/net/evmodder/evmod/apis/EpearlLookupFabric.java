@@ -98,7 +98,7 @@ public final class EpearlLookupFabric extends EpearlLookup{
 					// If any epearl changes (or chunk is fully loaded), update owners for all loaded epearls
 					if(epearlCount != loadedEpearls.size() || fullyLoadedChunk){
 						epearlCount = loadedEpearls.size();
-						Main.LOGGER.info("Change to chunks/epearls loaded, calling getOwner() on all epearls and running removal check");
+//						Main.LOGGER.info("Change to chunks/epearls loaded, calling getOwner() on all epearls and running removal check");
 						if(enableKeyUUID()){
 							final HashSet<UUID> seenKeyUUIDs = new HashSet<>(epearlCount);
 							loadedEpearls.stream().map(Entity::getUuid).forEach(seenKeyUUIDs::add);

@@ -62,12 +62,12 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 			cir.setReturnValue(true);
 		}
 		else if(!isLookingInGeneralDirection(itemFrameEntity)){
-			Main.LOGGER.info("not looking at: "+stack.getName().getString());
+//			Main.LOGGER.info("not looking at: "+stack.getName().getString());
 			// no-op
 		}
 		// If right up in front of iFrame, use the vanilla label check
 		else if((squaredDistanceToCamera=MinecraftClient.getInstance().player.squaredDistanceTo(itemFrameEntity)) <= 16d/*4*4*/){
-			Main.LOGGER.info("right up in front: "+stack.getName().getString()+", squaredDistanceToCamera="+squaredDistanceToCamera);
+//			Main.LOGGER.info("right up in front: "+stack.getName().getString()+", squaredDistanceToCamera="+squaredDistanceToCamera);
 			// no-op
 			if(!state.locked) MapGroupUtils.getIdForMapState(state, /*evict*/true); // Evict cache for maps being directly looked at
 		}
