@@ -26,6 +26,7 @@ database: true
 command.assignpearl: true
 command.exportmapimg: true
 command.mapartgroup: true
+command.maphashcode: true
 command.seen: true
 command.sendas: true
 command.timeonline: true

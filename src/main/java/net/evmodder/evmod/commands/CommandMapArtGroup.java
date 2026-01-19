@@ -25,6 +25,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
 public class CommandMapArtGroup{
@@ -35,7 +36,7 @@ public class CommandMapArtGroup{
 	private final int ERROR_COLOR = 16733525/*&c*/, CREATE_COLOR = 5635925/*&a*/, DONE_COLOR = 16755200/*&6*/; // &2=43520
 	private static final String PREFIX = Main.MOD_ID+".command.mapartgroup.";
 	private enum Command{
-		SET, CREATE, APPEND, COMPARE, RESET;
+		SET, CREATE, EXPAND, ADD, COMPARE, RESET;
 
 		final String translation;
 		Command(){
@@ -225,9 +226,9 @@ public class CommandMapArtGroup{
 //		final byte[][] data = new byte[groups.length][];
 //		for(int i=0; i<groups.length; ++i) data[i] = FileIO.loadFileBytes(FILE_PATH+groups[i]);
 
-		HashSet<UUID> mapsInGroup = cmd == Command.CREATE ? new HashSet<>() : getGroupIdsOrSendError(source, groups);
+		final HashSet<UUID> mapsInGroup = cmd == Command.CREATE ? new HashSet<>() : getGroupIdsOrSendError(source, groups);
 		if(mapsInGroup == null) return 1;
-		if(groups.length != 1 && (cmd == Command.CREATE || cmd == Command.APPEND)){
+		if(groups.length != 1 && (cmd == Command.CREATE || cmd == Command.EXPAND || cmd == Command.ADD)){
 			source.sendError(Text.translatable(PREFIX+"create.needsName").withColor(CREATE_COLOR));
 //			source.sendError(Text.literal("Command requires a single MapArtGroup name (no commas)").withColor(ERROR_COLOR));
 			return 1;
@@ -238,25 +239,48 @@ public class CommandMapArtGroup{
 //			source.sendFeedback(Text.literal("To overwrite it, add 'confirm' to the end of the command"));
 			return 1;
 		}
-		if(groups2 != null && (cmd != Command.CREATE || !CONFIRM.equalsIgnoreCase(groups2[0]))){
-			source.sendError(Text.translatable(PREFIX+"create.tooManyArgs").withColor(ERROR_COLOR));
-//			source.sendError(Text.literal("Too many arguments provided").withColor(ERROR_COLOR));
+		if(groups2 != null){
+			if(groups2.length != 1 || (cmd != Command.ADD && (cmd != Command.CREATE || !CONFIRM.equalsIgnoreCase(groups2[0])))){
+				source.sendError(Text.translatable(PREFIX+"create.tooManyArgs").withColor(ERROR_COLOR));
+//				source.sendError(Text.literal("Too many arguments provided").withColor(ERROR_COLOR));
+				return 1;
+			}
+		}
+		else if(cmd == Command.ADD){//&& groups2 == null (also already implied groups2 len==1)
+			source.sendError(Text.translatable(PREFIX+"add.invalidArg").withColor(ERROR_COLOR));
+//			source.sendError(Text.literal("Must provide a hashcode (UUID)").withColor(ERROR_COLOR));
 			return 1;
 		}
 		final String newActiveGroup = String.join(",", groups);
-		if(cmd == Command.CREATE || cmd == Command.APPEND){
+		if(cmd == Command.CREATE || cmd == Command.EXPAND || cmd == Command.ADD){
 			final int oldSize = mapsInGroup.size();
-			final HashSet<UUID> loadedMaps = MapGroupUtils.getLegitLoadedMaps(MinecraftClient.getInstance().player.clientWorld);
-			if(loadedMaps.isEmpty()){
+			final HashSet<UUID> mapsToAdd;
+			if(cmd == Command.ADD){
+				mapsToAdd = new HashSet<>();
+				try{mapsToAdd.add(UUID.fromString(groups2[0]));}
+				catch(IllegalArgumentException e){
+					source.sendError(Text.translatable(PREFIX+"add.invalidArg").withColor(ERROR_COLOR));
+//					source.sendError(Text.literal("Must provide a hashcode (UUID)").withColor(ERROR_COLOR));
+					return 1;
+				}
+			}
+			else mapsToAdd = MapGroupUtils.getLegitLoadedMaps(MinecraftClient.getInstance().player.clientWorld);
+
+			if(mapsToAdd.isEmpty()){
 				source.sendError(Text.translatable(PREFIX+"create.noMapsFound").withColor(ERROR_COLOR));
 //				source.sendError(Text.literal("No maps found").withColor(ERROR_COLOR));
-				if(cmd == Command.CREATE) return 1;
+				if(cmd != Command.EXPAND) return 1;
 			}
-			else if(!mapsInGroup.addAll(loadedMaps)/*mapsInGroup.size() == oldSize*/){
+			else if(!mapsInGroup.addAll(mapsToAdd)/*mapsInGroup.size() == oldSize*/){
 				assert mapsInGroup.size() == oldSize;
-				source.sendError(Text.translatable(PREFIX+"create.noNewMapsFound", newActiveGroup).withColor(ERROR_COLOR));
+				final MutableText errorText = cmd == Command.ADD
+						? Text.translatable(PREFIX+"add.noUpdate", newActiveGroup, mapsToAdd.iterator().next().toString())
+						: Text.translatable(PREFIX+"create.noNewMapsFound", newActiveGroup);
+				source.sendError(errorText.withColor(ERROR_COLOR));
 //				source.sendError(Text.literal("No new maps found for group '"+newActiveGroup+"'").withColor(DONE_COLOR));
-				if(cmd == Command.CREATE) return 1;
+//				source.sendError(Text.literal("Group '"+newActiveGroup+"' already contains "+mapsToAdd.iterator().next()).withColor(DONE_COLOR));
+				if(cmd != Command.EXPAND) return 1;
+				// Otherwise: Fallthrough (set as current active group)
 			}
 			else{
 				assert mapsInGroup.size() > oldSize;
@@ -265,16 +289,23 @@ public class CommandMapArtGroup{
 				File dir = new File(FileIO.DIR+DIR);
 				if(!dir.exists()) dir.mkdir();
 				FileIO.saveFileBytes(DIR+groups[0], bb.array());
-				if(cmd == Command.CREATE) source.sendFeedback(Text.translatable(
-						PREFIX+"create.newGroup",
-						groups[0], mapsInGroup.size()).withColor(CREATE_COLOR));
-				else source.sendFeedback(Text.translatable(
-						PREFIX+"create.expanded" + (newActiveGroup.equals(activeGroupName) ? "Group" : "OtherGroup"),
-						groups[0], oldSize, mapsInGroup.size()).withColor(CREATE_COLOR));
+				source.sendFeedback(switch(cmd){
+					case Command.CREATE -> Text.translatable(
+							PREFIX+"create.newGroup",
+							groups[0], mapsInGroup.size()).withColor(CREATE_COLOR);
+					case Command.EXPAND -> Text.translatable(
+							PREFIX+"create.expanded" + (newActiveGroup.equals(activeGroupName) ? "Group" : "OtherGroup"),
+							groups[0], oldSize, mapsInGroup.size()).withColor(CREATE_COLOR);
+					case Command.ADD -> Text.translatable(
+							PREFIX+"add.updated",
+							groups[0], mapsToAdd.iterator().next().toString()).withColor(CREATE_COLOR);
+					default -> throw new RuntimeException("Unreachable");
+				});
 //				source.sendFeedback(Text.literal((cmd == Command.CREATE ? "Created group" : "Expanded") + " '"+groups[0]
 //						+"' (ids: "+ (oldSize==0 ? "" : oldSize+"\u2192") + mapsInGroup.size()+")"
 //						+(newActiveGroup.equals(activeGroupName) ? "" : " and set as active.")
 //						).withColor(CREATE_COLOR));
+				if(cmd == Command.ADD) return 1; // Don't update current active group
 			}
 		}
 		else if(newActiveGroup.equals(activeGroupName)){
@@ -345,7 +376,7 @@ public class CommandMapArtGroup{
 				ClientCommandManager.literal(getClass().getSimpleName().substring(7).toLowerCase())
 				.executes(ctx->{
 					ctx.getSource().sendError(Text.translatable(PREFIX+".missingSubcommand"));
-//					ctx.getSource().sendError(Text.literal("Missing subcommand: set/create/append <g>, or compare <g1> <g2>"));
+//					ctx.getSource().sendError(Text.literal("Missing subcommand: set/create/expand/add <g>, or compare <g1> <g2>"));
 					return 1;
 				})
 				.then(

@@ -128,6 +128,7 @@ public class Main{
 		if(settings.cmdAssignPearl) new CommandAssignPearl(epearlLookup);
 		if(settings.cmdExportMapImg) new CommandExportMapImg();
 		if(settings.cmdMapArtGroup) new CommandMapArtGroup();
+		if(settings.cmdMapHashCode) new CommandMapHashCode();
 		if(settings.cmdSeen) new CommandSeen();
 		if(settings.cmdSendAs) new CommandSendAs(remoteSender);
 		if(settings.cmdTimeOnline) new CommandTimeOnline(remoteSender);

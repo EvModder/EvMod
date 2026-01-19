@@ -13,11 +13,11 @@ public final class NewMapNotifier{
 	private static long lastNewMapNotify;
 	private static final long mapNotifyCooldown = 5000;
 	private static int lastNewMapIfeId;
-	private static long lastNewMapColorId;
+	private static long lastNewMapColorsId;
 	private static boolean notifyInChat = true;
 
 	public static final void call(ItemFrameEntity ife, UUID colorsId){ // Called by UpdateItemFrameHighlights
-		if(ife.getId() != lastNewMapIfeId && colorsId.getMostSignificantBits() == lastNewMapColorId) return;
+		if(ife.getId() != lastNewMapIfeId && colorsId.getMostSignificantBits() == lastNewMapColorsId) return;
 		if(System.currentTimeMillis() - lastNewMapNotify < mapNotifyCooldown) return;
 
 		// TODO: play sound?
@@ -28,7 +28,7 @@ public final class NewMapNotifier{
 		int color = Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue();
 		MinecraftClient.getInstance().player.sendMessage(Text.literal("New mapart: "+pos).withColor(color), true);
 
-		if(colorsId.getMostSignificantBits() != lastNewMapColorId){
+		if(colorsId.getMostSignificantBits() != lastNewMapColorsId){
 			Main.LOGGER.info("NewMapNotifier: "+colorsId+" ("+ife.getHeldItemStack().getName().getString()+") at "+pos);
 
 			if(notifyInChat){
@@ -43,7 +43,7 @@ public final class NewMapNotifier{
 			}
 		}
 		lastNewMapNotify = System.currentTimeMillis();
-		lastNewMapColorId = colorsId.getMostSignificantBits();
+		lastNewMapColorsId = colorsId.getMostSignificantBits();
 		lastNewMapIfeId = ife.getId();
 	}
 }

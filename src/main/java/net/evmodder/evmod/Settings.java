@@ -9,7 +9,7 @@ class Settings{
 	final boolean database, epearlOwners;
 	final boolean inventoryRestockAuto, placementHelperIframe, placementHelperMapArt, placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove, broadcaster;
 	final boolean serverJoinListener, serverQuitListener, gameMessageListener, gameMessageFilter, containerOpenCloseListener;
-	final boolean cmdAssignPearl, cmdExportMapImg, cmdMapArtGroup, cmdSeen, cmdSendAs, cmdTimeOnline;
+	final boolean cmdAssignPearl, cmdExportMapImg, cmdMapArtGroup, cmdMapHashCode, cmdSeen, cmdSendAs, cmdTimeOnline;
 	final boolean mapHighlights, mapHighlightsInGUIs, tooltipMapHighlights, tooltipMapMetadata, tooltipRepairCost;
 
 	private HashMap<String, Boolean> loadSettings(){
@@ -60,6 +60,7 @@ class Settings{
 		cmdAssignPearl = epearlOwners && extractConfigValue(settings, "command.assignpearl");
 		cmdExportMapImg = extractConfigValue(settings, "command.exportmapimg");
 		cmdMapArtGroup = extractConfigValue(settings, "command.mapartgroup");
+		cmdMapHashCode = extractConfigValue(settings, "command.maphashcode");
 		cmdSeen = database && extractConfigValue(settings, "command.seen");
 		cmdSendAs = database && extractConfigValue(settings, "command.sendas");
 		cmdTimeOnline = database && extractConfigValue(settings, "command.timeonline");

@@ -18,4 +18,5 @@ listener.container_open: true
 
 command.exportmapimg: true
 command.mapartgroup: true
+command.maphashcode: true
 command.timeonline: true
