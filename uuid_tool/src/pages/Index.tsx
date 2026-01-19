@@ -35,6 +35,41 @@ export default function Index() {
   const [isDragging, setIsDragging] = useState(false);
   const [activeTab, setActiveTab] = useState<"binary" | "image">("binary");
   const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState("");
+
+  const uuidsToBytes = (uuidList: string[]): Uint8Array => {
+    const bytes = new Uint8Array(uuidList.length * 16);
+    uuidList.forEach((uuid, i) => {
+      const hex = uuid.replace(/-/g, "");
+      for (let j = 0; j < 16; j++) {
+        bytes[i * 16 + j] = parseInt(hex.slice(j * 2, j * 2 + 2), 16);
+      }
+    });
+    return bytes;
+  };
+
+  const handleEdit = () => {
+    setEditText(uuids.join("\n"));
+    setIsEditing(true);
+  };
+
+  const handleSave = () => {
+    const lines = editText.split("\n").map(l => l.trim()).filter(l => l.length > 0);
+    
+    const bytes = uuidsToBytes(lines);
+    const blob = new Blob([bytes.buffer as ArrayBuffer], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "uuids.bin";
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    setUuids(lines);
+    setIsEditing(false);
+    setError(null);
+  };
 
   const bytesToHex = (bytes: Uint8Array): string =>
     Array.from(bytes).map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -206,13 +241,64 @@ export default function Index() {
         {uuids.length > 0 && (
           <div className="mt-6 border border-border rounded-lg p-4">
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">{uuids.length} UUID{uuids.length !== 1 && "s"}</span>
-              <button onClick={copyToClipboard} className="px-3 py-1 text-sm rounded hover:bg-muted transition-colors">
-                {copied ? "✓ Copied" : "Copy All"}
-              </button>
+              <span className="text-sm text-muted-foreground">
+                {(() => {
+                  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                  if (!isEditing) {
+                    const uniqueCount = new Set(uuids.map(u => u.toLowerCase())).size;
+                    return `${uniqueCount} UUID${uniqueCount !== 1 ? "s" : ""}`;
+                  }
+                  const lines = editText.split("\n").map(l => l.trim().toLowerCase()).filter(l => l.length > 0);
+                  const invalidCount = lines.filter(l => !uuidRegex.test(l)).length;
+                  if (invalidCount > 0) return <span className="text-red-500">{invalidCount} invalid UUID{invalidCount !== 1 ? "s" : ""}</span>;
+                  const uniqueCount = new Set(lines).size;
+                  return `${uniqueCount} UUID${uniqueCount !== 1 ? "s" : ""}`;
+                })()}
+              </span>
+              <div className="flex gap-2">
+                <button onClick={copyToClipboard} className="px-3 py-1 text-sm rounded hover:bg-muted transition-colors">
+                  {copied ? "✓ Copied" : "Copy All"}
+                </button>
+                {isEditing ? (
+                  (() => {
+                    const lines = editText.split("\n").map(l => l.trim().toLowerCase()).filter(l => l.length > 0);
+                    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+                    const hasInvalid = lines.some(l => !uuidRegex.test(l));
+                    const editSet = new Set(lines);
+                    const originalSet = new Set(uuids.map(u => u.toLowerCase()));
+                    const setsEqual = editSet.size === originalSet.size && [...editSet].every(u => originalSet.has(u));
+                    const isDisabled = setsEqual || hasInvalid;
+                    return (
+                      <button
+                        onClick={handleSave}
+                        disabled={isDisabled}
+                        className={`px-3 py-1 text-sm rounded transition-colors ${
+                          isDisabled
+                            ? "bg-muted text-muted-foreground cursor-not-allowed"
+                            : "bg-accent text-white hover:bg-accent/80"
+                        }`}
+                      >
+                        Save
+                      </button>
+                    );
+                  })()
+                ) : (
+                  <button onClick={handleEdit} className="px-3 py-1 text-sm rounded hover:bg-muted transition-colors">
+                    Edit
+                  </button>
+                )}
+              </div>
             </div>
             <div className="max-h-96 overflow-auto rounded bg-muted p-4">
-              <pre className="font-mono text-sm whitespace-pre-wrap break-all">{uuids.join("\n")}</pre>
+              {isEditing ? (
+                <textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  className="w-full h-64 font-mono text-sm bg-transparent border-none outline-none resize-none"
+                />
+              ) : (
+                <pre className="font-mono text-sm whitespace-pre-wrap break-all">{uuids.join("\n")}</pre>
+              )}
             </div>
           </div>
         )}
