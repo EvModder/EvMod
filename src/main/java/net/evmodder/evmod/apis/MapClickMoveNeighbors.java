@@ -7,39 +7,28 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.MapIdComponent;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
-import net.minecraft.world.World;
 
 public abstract class MapClickMoveNeighbors{
 	private static boolean ongoingClickMove;
 
-	private static final byte[] getColors(World world, ItemStack stack){
-		if(stack.getItem() != Items.FILLED_MAP) return null;
-		MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
-		if(mapId == null) return null;
-		MapState state = world.getMapState(mapId);
-		return state == null ? null : state.colors;
-	}
-
 	// Only called by MixinScreenHandler
-	public static void moveNeighbors(PlayerEntity player, int destSlot, ItemStack mapMoved){
+	public static void moveNeighbors(final PlayerEntity player, final int destSlot, final ItemStack mapMoved){
 		if(ongoingClickMove){Main.LOGGER.warn("MapMoveClick: Already ongoing"); return;}
-
 		Main.LOGGER.info("MapMoveClick: moveNeighbors() called");
+
 		final ItemStack[] slots = player.currentScreenHandler.slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		final String movedName = mapMoved.getCustomName().getLiteralString();
-		final MapIdComponent mapId = mapMoved.get(DataComponentTypes.MAP_ID);
-		final MapState state = mapId == null ? null : player.getWorld().getMapState(mapId);
+		final MapState state = FilledMapItem.getMapState(mapMoved, player.getWorld());
 		final Boolean locked = state == null ? null : state.locked;
-		//Main.LOGGER.info("MapMoveClick: locked="+locked);
 		final RelatedMapsData data =  MapRelationUtils.getRelatedMapsByName(Arrays.asList(slots), movedName, mapMoved.getCount(), locked, player.getWorld());
 		if(data.prefixLen() == -1){
 			Main.LOGGER.info("MapMoveClick: related-name maps not found");
@@ -72,8 +61,8 @@ public abstract class MapClickMoveNeighbors{
 			if(state == null){++w; br += 1;}
 			else{
 				final byte[] colors = state.colors;
-				final byte[] tlColors = getColors(player.getWorld(), slots[tl]);
-				final byte[] brColors = getColors(player.getWorld(), slots[br]);
+				final byte[] tlColors = FilledMapItem.getMapState(slots[tl], player.getWorld()).colors;
+				final byte[] brColors = FilledMapItem.getMapState(slots[br], player.getWorld()).colors;
 				int scoreLeft = -2, scoreRight = -2, scoreTop = -2, scoreBottom = -2;
 				if(h == 1){
 					scoreLeft = (tl%9==0||destSlot%9+w>8) ? -2 : MapRelationUtils.adjacentEdgeScore(colors, tlColors, true);
@@ -110,6 +99,7 @@ public abstract class MapClickMoveNeighbors{
 			if(!stack.isEmpty() && stack.getItem() != Items.FILLED_MAP) Main.LOGGER.warn("MapMoveClick: moveFrom slot:"+s+" contains junk item: "+stack.getItem());
 			fromSlot = s;
 		}
+		assert fromSlot != -1;
 //		if(!unaccounted.isEmpty()){Main.LOGGER.info("MapMoveClick: Maps not in a rectangle (B)"); return;}
 
 		final int brDest = br + destSlot - fromSlot;
@@ -129,6 +119,8 @@ public abstract class MapClickMoveNeighbors{
 			slotsInvolved.add(d);
 		}
 //		final int brDest = tlDest + (br-tl);//equivalent: destSlot+(br-fromSlot);//destSlot-(fromSlot-br);
+
+		final boolean moveHalf = mapMoved.getCount() > 1 && (tl > brDest || br < tlDest) && !Screen.hasShiftDown();;
 
 		final boolean isPlayerInv = player.currentScreenHandler instanceof PlayerScreenHandler;
 		final int hbStart = slots.length-(isPlayerInv ? 10 : 9); // extra slot at end to account for offhand
@@ -153,29 +145,22 @@ public abstract class MapClickMoveNeighbors{
 		final ArrayDeque<InvAction> clicks = new ArrayDeque<>();
 		if(tempSlot != -1) clicks.add(new InvAction(tempSlot, hotbarButton, ActionType.HOTBAR_SWAP));
 
-		if(tl > tlDest){
-			Main.LOGGER.info("MapMoveClick: Moving all, starting from TL");
-			for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
-				int s = tl + i*9 + j, d = tlDest + i*9 + j;
-				if(d == destSlot) continue;
-				//Main.LOGGER.warn("MapMoveClick: adding 2 clicks: "+s+"->"+d+", hb:"+hotbarButton);
+		final int reverse = tl > tlDest ? 1 : -1;
+		Main.LOGGER.info("MapMoveClick: Moving all, starting from "+(tl > tlDest ? "TL" : "BR"));
+		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
+			int s = tl + i*9 + j*reverse, d = tlDest + i*9 + j*reverse;
+			if(d == destSlot) continue;
+			//Main.LOGGER.warn("MapMoveClick: adding 2 clicks: "+s+"->"+d+", hb:"+hotbarButton);
+			if(moveHalf){
+				clicks.add(new InvAction(s, 1, ActionType.CLICK));
+				clicks.add(new InvAction(d, 0, ActionType.CLICK));
+			}
+			else{
 				clicks.add(new InvAction(s, hotbarButton, ActionType.HOTBAR_SWAP));
 				clicks.add(new InvAction(d, hotbarButton, ActionType.HOTBAR_SWAP));
-//				client.interactionManager.clickSlot(syncId, s, hotbarButton, ClickAction.HOTBAR_SWAP, player);
-//				client.interactionManager.clickSlot(syncId, d, hotbarButton, ClickAction.HOTBAR_SWAP, player);
 			}
-		}
-		else{
-			Main.LOGGER.info("MapMoveClick: Moving all, starting from BR");
-			for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
-				int s = br - i*9 - j, d = brDest - i*9 - j;
-				if(d == destSlot) continue;
-				//Main.LOGGER.warn("MapMoveClick: adding 2 clicks: "+s+"->"+d+", hb:"+hotbarButton);
-				clicks.add(new InvAction(s, hotbarButton, ActionType.HOTBAR_SWAP));
-				clicks.add(new InvAction(d, hotbarButton, ActionType.HOTBAR_SWAP));
-//				client.interactionManager.clickSlot(syncId, s, hotbarButton, ClickAction.HOTBAR_SWAP, player);
-//				client.interactionManager.clickSlot(syncId, d, hotbarButton, ClickAction.HOTBAR_SWAP, player);
-			}
+//			client.interactionManager.clickSlot(syncId, s, hotbarButton, ClickAction.HOTBAR_SWAP, player);
+//			client.interactionManager.clickSlot(syncId, d, hotbarButton, ClickAction.HOTBAR_SWAP, player);
 		}
 		if(tempSlot != -1) clicks.add(new InvAction(tempSlot, hotbarButton, ActionType.HOTBAR_SWAP));
 
