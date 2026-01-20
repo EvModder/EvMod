@@ -159,9 +159,9 @@ public abstract class EpearlLookup{
 		}
 		if(removed == 0) return 0;
 
-		assert bbOut.limit() == data.length - removed*44;
+		assert bbOut.position() == data.length - removed*44;
 		try(FileOutputStream fos = new FileOutputStream(FileIO.DIR+filename)){
-			fos.write(bbOut.array(), 0, bbOut.limit());
+			fos.write(bbOut.array(), 0, bbOut.position());
 			fos.close();
 		}
 		catch(IOException e){e.printStackTrace();}
