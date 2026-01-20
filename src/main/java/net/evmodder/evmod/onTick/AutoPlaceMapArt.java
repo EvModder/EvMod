@@ -338,11 +338,6 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axisDiff1");
 				disableAndReset(); return false;
 			}
-//			if(pos2dPair.a1 == pos2dPair.a2/* && pos2dPair.b1 == pos2dPair.b2*/){
-//				assert pos2dPair.b1 == pos2dPair.b2;
-//				varAxis1Origin = currAxisData.varAxis1-pos2dPair.a1*(isNeg?-1:+1);
-//				varAxis2Origin = currAxisData.varAxis2-pos2dPair.a1*(isNeg?-1:+1);
-//			}
 		}
 		else{
 			if(ifeOffset1 != 0){
@@ -353,10 +348,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					Main.LOGGER.info("AutoPlaceMapArt: error ??1 "+axisMatch+","+posOffset+","+isNeg);
 					disableAndReset(); return false;
 				}
-				if(varAxis1Neg == null){
-					varAxis1Neg = isNeg;
-//					varAxis1Origin = currAxisData.varAxis1-(axisMatch ? pos2dPair.a1 : pos2dPair.a2)*(varAxis1Neg?-1:+1);
-				}
+				if(varAxis1Neg == null) varAxis1Neg = isNeg;
 				else if(varAxis1Neg != isNeg){
 					Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axis1");
 					disableAndReset(); return false;
@@ -370,10 +362,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					Main.LOGGER.info("AutoPlaceMapArt: error ??2 "+axisMatch+","+posOffset+","+isNeg);
 					disableAndReset(); return false;
 				}
-				if(varAxis2Neg == null){
-					varAxis2Neg = isNeg;
-//					varAxis2Origin = currAxisData.varAxis2-(axisMatch ? pos2dPair.a2 : pos2dPair.a1)*(varAxis2Neg?-1:+1);
-				}
+				if(varAxis2Neg == null) varAxis2Neg = isNeg;
 				else if(varAxis2Neg != isNeg){
 					Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axis2");
 					disableAndReset(); return false;
@@ -385,11 +374,6 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 						+" (axis"+(foundAxis1?"1="+(varAxis1Neg?"-":"+"):"2="+(varAxis2Neg?"-":"+"))
 						+"), just need to get the other offset");
 			}
-//			else/* if(varAxis1Origin == null || varAxis2Origin == null)*/{
-//				// These are *usually* already defined by this point
-//				varAxis1Origin = currAxisData.varAxis1-(axisMatch ? pos2dPair.a1 : pos2dPair.a2)*(varAxis1Neg?-1:+1);
-//				varAxis2Origin = currAxisData.varAxis2-(axisMatch ? pos2dPair.a2 : pos2dPair.a1)*(varAxis2Neg?-1:+1);
-//			}
 		}
 
 		if(!stacksHashesForCurrentData.isEmpty()) return true; // Already ongoing and all values are defined
@@ -400,9 +384,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		currentData.slots().stream().map(i -> ItemStack.hashCode(allMapItems.get(i))).forEach(stacksHashesForCurrentData::add);
 		assert !stacksHashesForCurrentData.isEmpty();
 
-		Main.LOGGER.info("AutoPlaceMapArt: activated! "
-//				+ "varAxis1o="+varAxis1Origin+",varAxis2o="+varAxis2Origin+","
-				+ "varAxis1Neg="+varAxis1Neg+",varAxis2Neg="+varAxis2Neg);
+		Main.LOGGER.info("AutoPlaceMapArt: activated! varAxis1Neg="+varAxis1Neg+",varAxis2Neg="+varAxis2Neg);
 		return true;
 		}
 		finally{
@@ -435,13 +417,6 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				axisOffset1 = pos2dPair.a2 - pos2dPair.b2; axisOffset2 = pos2dPair.a1 - pos2dPair.b1;
 			}
 
-//			final int varAxis1 = varAxis1Origin+posAxis1*(varAxis1Neg?-1:+1);
-//			final int varAxis2 = varAxis2Origin+posAxis2*(varAxis2Neg?-1:+1);
-//			switch(dir){
-//				case UP: case DOWN: return new BlockPos(varAxis1, constAxis, varAxis2);
-//				case EAST: case WEST: return new BlockPos(constAxis, varAxis1, varAxis2);
-//				case NORTH: case SOUTH: return new BlockPos(varAxis1, varAxis2, constAxis);
-//			}
 			if(varAxis1Neg == null && axisOffset1 != 0) return null;
 			if(varAxis2Neg == null && axisOffset2 != 0) return null;
 			final AxisData data = getAxisData(lastIfe);
@@ -752,13 +727,15 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				// Place stack on cursor
 				ClickUtils.executeClicks(_0->true, ()->{}, new InvAction(i, 0, ActionType.CLICK));
 				return;
-			}
+			} 
 			disableAndReset();
 			return;
 		}
 
 		if(data.ife == null){ // Implies placing iFrame, not map item
-			if(!hasWarnedMissingIfe) Main.LOGGER.warn("AutoPlaceMapArt: no ife found at "+data.bp.toShortString()+", checking for iframes in inv");
+			if(!hasWarnedMissingIfe) Main.LOGGER.warn("AutoPlaceMapArt: no ife found"
+//					+ " at "+data.bp.toShortString()
+					+ ", checking for iframes in inv");
 			final Hand hand;
 			if(isIFrame(player.getMainHandStack().getItem())) hand = Hand.MAIN_HAND;
 			else if(isIFrame(player.getOffHandStack().getItem())) hand = Hand.OFF_HAND;
