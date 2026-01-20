@@ -43,10 +43,9 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 	private Direction dir;
 	private World world;
-	private ItemStack currStack;
-	private String currPosStr;
-	private int constAxis;
-	private int varAxis1Origin, varAxis2Origin;
+	private ItemFrameEntity lastIfe;
+	private ItemStack lastStack;
+	private String lastPosStr;
 	private Boolean varAxis1Neg, varAxis2Neg, axisMatch;
 	private RelatedMapsData currentData;
 	private Integer ofSize, rowWidth;
@@ -56,6 +55,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 	private final int[] recentPlaceAttempts;
 	private int attemptIdx, lastAttemptIdx;
 	private int ticksSinceInvAction;
+	private boolean hasWarnedMissingIfe;
 
 	public AutoPlaceMapArt(){
 		pOfSize = Pattern.compile("^\\s*(?:of|/)\\s*(\\d+).*$");
@@ -150,9 +150,9 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		if(dir != null){
 			dir = null;
 			world = null;
-			currStack = null;
-			currPosStr = null;
-			constAxis = varAxis1Origin = varAxis2Origin = 0;
+			lastIfe = null;
+			lastStack = null;
+			lastPosStr = null;
 			varAxis1Neg = varAxis2Neg = axisMatch = null;
 			currentData = null;
 			ofSize = rowWidth = null;
@@ -167,10 +167,9 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		return MapRelationUtils.simplifyPosStr(nameWithoutArtist.substring(currentData.prefixLen(), nameWithoutArtist.length()-currentData.suffixLen()));
 	}
 
-	private ItemFrameEntity lastIfe;
-	private ItemStack lastStack;
 	public final boolean recalcLayout(PlayerEntity player, ItemFrameEntity currIfe, ItemStack currStack){
 		synchronized(stacksHashesForCurrentData){
+		String currPosStr = null;
 		try{
 		if(!Generic.MAPART_AUTOPLACE.getBooleanValue()
 			|| currIfe == null || currStack == null || currStack.getCount() != 1)
@@ -189,7 +188,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			disableAndReset(); return false;
 		}
 		AxisData currAxisData = getAxisData(currIfe), lastAxisData = getAxisData(lastIfe);
-		if((constAxis=currAxisData.constAxis) != lastAxisData.constAxis){
+		if(currAxisData.constAxis != lastAxisData.constAxis){
 			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not on the same const axis");
 			disableAndReset(); return false;
 		}
@@ -201,7 +200,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			disableAndReset(); return false;
 		}
 
-		RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(this.currStack=currStack, lastStack), world);
+		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(currStack, lastStack), world);
 		if(data.slots().size() != 2){ // TODO: support maps w/o custom name (related by edge detection)
 			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not related");
 			disableAndReset(); return false;
@@ -233,7 +232,8 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				Main.LOGGER.info("AutoPlaceMapArt: Detected 'X/SIZE' posStr format, SIZE="+ofSize);
 			}
 		}
-		final String currPosStr = this.currPosStr=getPosStrFromName(currStack), lastPosStr = getPosStrFromName(lastStack);
+		currPosStr = getPosStrFromName(currStack);
+		if(lastPosStr == null) lastPosStr = getPosStrFromName(lastStack);
 		if(ofSize != null && rowWidth == null){
 			if(!currPosStr.matches("-?\\d+")){
 				Main.LOGGER.warn("AutoPlaceMapArt: Invalid 1d X/SIZE posStr! currPosStr="+currPosStr+",name="+currStack.getCustomName().getString());
@@ -321,67 +321,78 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			axisMatch = axisMatches;
 		}
 		if(axisMatch == null){
+			Main.LOGGER.info("AutoPlaceMapArt: unable to distinguish the 2 variable axes from eachother");
+
 			// At this point, we know abs(posOffset1) == abs(posOffset2) == abs(ifeOffset1) == abs(ifeOffset2);
 			final boolean sameSign = ((ifeOffset1 == posOffset1) == (ifeOffset1 == posOffset2)) && ((ifeOffset2 == posOffset1) == (ifeOffset2 == posOffset2));
-			if(sameSign){
-				final boolean isNeg = ifeOffset1 != posOffset1;
-				if(varAxis1Neg == null) varAxis1Neg = isNeg;
-				else if(varAxis1Neg != isNeg){
-					Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axisDiff1");
-					disableAndReset(); return false;
-				}
-				if(varAxis2Neg == null) varAxis2Neg = isNeg;
-				else if(varAxis2Neg != isNeg){
-					Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axisDiff1");
-					disableAndReset(); return false;
-				}
-//				Main.LOGGER.info("AutoPlaceMapArt: determined both axes offsets are "+(isNeg?"-":"+"));
-			}
-			Main.LOGGER.info("AutoPlaceMapArt: unable to distinguish the 2 variable axes from eachother");
-			return false;
-		}
-
-		if(ifeOffset1 != 0){
-			final int posOffset = (axisMatch ? posOffset1 : posOffset2);
-			final boolean isNeg = ifeOffset1 != posOffset;
-//			assert ifeOffset1 == posOffset*(isNeg ? -1 : +1) : "?? "+axisMatch+","+posOffset+","+isNeg;
-			if(ifeOffset1 != posOffset*(isNeg ? -1 : +1)){
-				Main.LOGGER.info("AutoPlaceMapArt: error ??1 "+axisMatch+","+posOffset+","+isNeg);
-				disableAndReset(); return false;
-			}
+			if(!sameSign) return false;
+			final boolean isNeg = ifeOffset1 != posOffset1;
+//			Main.LOGGER.info("AutoPlaceMapArt: determined both axes offsets are "+(isNeg?"-":"+"));
 			if(varAxis1Neg == null) varAxis1Neg = isNeg;
 			else if(varAxis1Neg != isNeg){
-				Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axis1");
-				disableAndReset(); return false;
-			}
-		}
-		if(ifeOffset2 != 0){
-			final int posOffset = (axisMatch ? posOffset2 : posOffset1);
-			final boolean isNeg = ifeOffset2 != posOffset;
-//			assert ifeOffset2 == posOffset*(isNeg ? -1 : +1);
-			if(ifeOffset2 != posOffset*(isNeg ? -1 : +1)){
-				Main.LOGGER.info("AutoPlaceMapArt: error ??2 "+axisMatch+","+posOffset+","+isNeg);
+				Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axisDiff1");
 				disableAndReset(); return false;
 			}
 			if(varAxis2Neg == null) varAxis2Neg = isNeg;
 			else if(varAxis2Neg != isNeg){
-				Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axis2");
+				Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axisDiff1");
 				disableAndReset(); return false;
 			}
+//			if(pos2dPair.a1 == pos2dPair.a2/* && pos2dPair.b1 == pos2dPair.b2*/){
+//				assert pos2dPair.b1 == pos2dPair.b2;
+//				varAxis1Origin = currAxisData.varAxis1-pos2dPair.a1*(isNeg?-1:+1);
+//				varAxis2Origin = currAxisData.varAxis2-pos2dPair.a1*(isNeg?-1:+1);
+//			}
+		}
+		else{
+			if(ifeOffset1 != 0){
+				final int posOffset = (axisMatch ? posOffset1 : posOffset2);
+				final boolean isNeg = ifeOffset1 != posOffset;
+//				assert ifeOffset1 == posOffset*(isNeg ? -1 : +1) : "?? "+axisMatch+","+posOffset+","+isNeg;
+				if(ifeOffset1 != posOffset*(isNeg ? -1 : +1)){
+					Main.LOGGER.info("AutoPlaceMapArt: error ??1 "+axisMatch+","+posOffset+","+isNeg);
+					disableAndReset(); return false;
+				}
+				if(varAxis1Neg == null){
+					varAxis1Neg = isNeg;
+//					varAxis1Origin = currAxisData.varAxis1-(axisMatch ? pos2dPair.a1 : pos2dPair.a2)*(varAxis1Neg?-1:+1);
+				}
+				else if(varAxis1Neg != isNeg){
+					Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axis1");
+					disableAndReset(); return false;
+				}
+			}
+			if(ifeOffset2 != 0){
+				final int posOffset = (axisMatch ? posOffset2 : posOffset1);
+				final boolean isNeg = ifeOffset2 != posOffset;
+//				assert ifeOffset2 == posOffset*(isNeg ? -1 : +1);
+				if(ifeOffset2 != posOffset*(isNeg ? -1 : +1)){
+					Main.LOGGER.info("AutoPlaceMapArt: error ??2 "+axisMatch+","+posOffset+","+isNeg);
+					disableAndReset(); return false;
+				}
+				if(varAxis2Neg == null){
+					varAxis2Neg = isNeg;
+//					varAxis2Origin = currAxisData.varAxis2-(axisMatch ? pos2dPair.a2 : pos2dPair.a1)*(varAxis2Neg?-1:+1);
+				}
+				else if(varAxis2Neg != isNeg){
+					Main.LOGGER.warn("AutoPlaceMapArt: user appears to have placed mapart in invalid spot! +-axis2");
+					disableAndReset(); return false;
+				}
+			}
+			if(varAxis1Neg == null || varAxis2Neg == null){
+				boolean foundAxis1 = varAxis1Neg != null;
+				Main.LOGGER.warn("AutoPlaceMapArt: determined axisMatch="+axisMatch+" and 1 of 2 axis offsets"
+						+" (axis"+(foundAxis1?"1="+(varAxis1Neg?"-":"+"):"2="+(varAxis2Neg?"-":"+"))
+						+"), just need to get the other offset");
+			}
+//			else/* if(varAxis1Origin == null || varAxis2Origin == null)*/{
+//				// These are *usually* already defined by this point
+//				varAxis1Origin = currAxisData.varAxis1-(axisMatch ? pos2dPair.a1 : pos2dPair.a2)*(varAxis1Neg?-1:+1);
+//				varAxis2Origin = currAxisData.varAxis2-(axisMatch ? pos2dPair.a2 : pos2dPair.a1)*(varAxis2Neg?-1:+1);
+//			}
 		}
 
 		if(!stacksHashesForCurrentData.isEmpty()) return true; // Already ongoing and all values are defined
-
-		if(varAxis1Neg == null || varAxis2Neg == null){
-			boolean foundAxis1 = varAxis1Neg != null;
-			Main.LOGGER.warn("AutoPlaceMapArt: determined axisMatch="+axisMatch+" and 1 of 2 axis offsets"
-					+" (axis"+(foundAxis1?"1="+(varAxis1Neg?"-":"+"):"2="+(varAxis2Neg?"-":"+"))
-					+"), just need to get the other offset before enabling");
-			return false;
-		}
-
-		varAxis1Origin = currAxisData.varAxis1-(axisMatch ? pos2dPair.a1 : pos2dPair.a2)*(varAxis1Neg?-1:+1);
-		varAxis2Origin = currAxisData.varAxis2-(axisMatch ? pos2dPair.a2 : pos2dPair.a1)*(varAxis2Neg?-1:+1);
 
 		assert !allMapItems.isEmpty();
 		assert stacksHashesForCurrentData.isEmpty();
@@ -389,12 +400,15 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		currentData.slots().stream().map(i -> ItemStack.hashCode(allMapItems.get(i))).forEach(stacksHashesForCurrentData::add);
 		assert !stacksHashesForCurrentData.isEmpty();
 
-		Main.LOGGER.info("AutoPlaceMapArt: activated! varAxis1o="+varAxis1Origin+",varAxis2o="+varAxis2Origin+",varAxis1Neg="+varAxis1Neg+",varAxis2Neg="+varAxis2Neg);
+		Main.LOGGER.info("AutoPlaceMapArt: activated! "
+//				+ "varAxis1o="+varAxis1Origin+",varAxis2o="+varAxis2Origin+","
+				+ "varAxis1Neg="+varAxis1Neg+",varAxis2Neg="+varAxis2Neg);
 		return true;
 		}
 		finally{
 			lastIfe = currIfe;
 			lastStack = currStack;
+			lastPosStr = currPosStr;
 		}
 		}
 	}
@@ -402,20 +416,41 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 	public final BlockPos getPlacement(ItemStack stack){
 		synchronized(stacksHashesForCurrentData){
 			if(!stacksHashesForCurrentData.contains(ItemStack.hashCode(stack))){
-				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(currStack, stack), world);
+				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(lastStack, stack), world);
 				if(data.slots().size() != 2 || data.prefixLen() == -1) return null; // Not part of the map being autoplaced
 				Main.LOGGER.info("AutoPlaceMapArt: Added map itemstack to currentData"+(stack.getCustomName()==null?"":", name="+stack.getCustomName().getString()));
 				stacksHashesForCurrentData.add(ItemStack.hashCode(stack));
 			}
-			final Pos2DPair pos2dPair = getRelativePosPair(currPosStr, getPosStrFromName(stack));
+			final Pos2DPair pos2dPair = getRelativePosPair(getPosStrFromName(stack), lastPosStr);
 			if(pos2dPair == null) return null;
-			int varAxis1 = varAxis1Origin+(axisMatch ? pos2dPair.b1 : pos2dPair.b2)*(varAxis1Neg?-1:+1);
-			int varAxis2 = varAxis2Origin+(axisMatch ? pos2dPair.b2 : pos2dPair.b1)*(varAxis2Neg?-1:+1);
+			final int axisOffset1, axisOffset2;
+			if(axisMatch == null){
+				if(pos2dPair.a1 - pos2dPair.b1 != pos2dPair.a2 - pos2dPair.b2) return null;
+				axisOffset1 = axisOffset2 = pos2dPair.a1 - pos2dPair.b1;
+			}
+			else if(axisMatch){
+				axisOffset1 = pos2dPair.a1 - pos2dPair.b1; axisOffset2 = pos2dPair.a2 - pos2dPair.b2;
+			}
+			else{
+				axisOffset1 = pos2dPair.a2 - pos2dPair.b2; axisOffset2 = pos2dPair.a1 - pos2dPair.b1;
+			}
 
+//			final int varAxis1 = varAxis1Origin+posAxis1*(varAxis1Neg?-1:+1);
+//			final int varAxis2 = varAxis2Origin+posAxis2*(varAxis2Neg?-1:+1);
+//			switch(dir){
+//				case UP: case DOWN: return new BlockPos(varAxis1, constAxis, varAxis2);
+//				case EAST: case WEST: return new BlockPos(constAxis, varAxis1, varAxis2);
+//				case NORTH: case SOUTH: return new BlockPos(varAxis1, varAxis2, constAxis);
+//			}
+			if(varAxis1Neg == null && axisOffset1 != 0) return null;
+			if(varAxis2Neg == null && axisOffset2 != 0) return null;
+			final AxisData data = getAxisData(lastIfe);
+			final int varAxis1 = axisOffset1 == 0 ? data.varAxis1 : data.varAxis1+axisOffset1*(varAxis1Neg?-1:+1);
+			final int varAxis2 = axisOffset2 == 0 ? data.varAxis2 : data.varAxis2+axisOffset2*(varAxis2Neg?-1:+1);
 			switch(dir){
-				case UP: case DOWN: return new BlockPos(varAxis1, constAxis, varAxis2);
-				case EAST: case WEST: return new BlockPos(constAxis, varAxis1, varAxis2);
-				case NORTH: case SOUTH: return new BlockPos(varAxis1, varAxis2, constAxis);
+				case UP: case DOWN: return new BlockPos(varAxis1, data.constAxis, varAxis2);
+				case EAST: case WEST: return new BlockPos(data.constAxis, varAxis1, varAxis2);
+				case NORTH: case SOUTH: return new BlockPos(varAxis1, varAxis2, data.constAxis);
 			}
 			Main.LOGGER.info("AutoPlaceMapArt: Unreachable!!!");
 			assert false;
@@ -425,9 +460,9 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 	private final double distFromPlane(BlockPos bp){
 		switch(dir){
-			case UP: case DOWN: return Math.abs(bp.getY() - constAxis);
-			case EAST: case WEST: return Math.abs(bp.getX() - constAxis);
-			case NORTH: case SOUTH: return Math.abs(bp.getZ() - constAxis);
+			case UP: case DOWN: return Math.abs(bp.getY() - lastIfe.getBlockY());
+			case EAST: case WEST: return Math.abs(bp.getX() - lastIfe.getBlockX());
+			case NORTH: case SOUTH: return Math.abs(bp.getZ() - lastIfe.getBlockZ());
 
 			default: assert(false) : "Unreachable"; return -1;
 		}
@@ -556,7 +591,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					nearestIfe = ife;
 					nearestBp = ifeBp;
 					if(isSelected){
-						Main.LOGGER.info("AutoPlaceMapArt: Stack in hand is a valid candidate, using it!");
+						if(!hasWarnedMissingIfe) Main.LOGGER.info("AutoPlaceMapArt: Stack in hand is a valid candidate, using it!");
 						break invloop;
 					}
 				}
@@ -708,7 +743,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 		if(isMovingTooFast(player.getVelocity())) return; // Pause while player is moving
 
-		MapPlacementData data = getNearestMapPlacement(player);
+		final MapPlacementData data = getNearestMapPlacement(player);
 		if(data == null) return;
 
 		if(player.playerScreenHandler != null && !player.playerScreenHandler.getCursorStack().isEmpty()){
@@ -723,7 +758,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		}
 
 		if(data.ife == null){ // Implies placing iFrame, not map item
-			Main.LOGGER.warn("AutoPlaceMapArt: no ife found, checking for iframes in inv");
+			if(!hasWarnedMissingIfe) Main.LOGGER.warn("AutoPlaceMapArt: no ife found at "+data.bp.toShortString()+", checking for iframes in inv");
 			final Hand hand;
 			if(isIFrame(player.getMainHandStack().getItem())) hand = Hand.MAIN_HAND;
 			else if(isIFrame(player.getOffHandStack().getItem())) hand = Hand.OFF_HAND;
@@ -734,7 +769,8 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 						return;
 					}
 				}
-				Main.LOGGER.warn("AutoPlaceMapArt: no iFrames found in offhand or hotbar");
+				if(!hasWarnedMissingIfe) Main.LOGGER.warn("AutoPlaceMapArt: no iFrames found in offhand or hotbar");
+				hasWarnedMissingIfe = true;
 				return;
 			}
 			recentPlaceAttempts[attemptIdx] = data.bp.hashCode()+1;
@@ -743,6 +779,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			MinecraftClient.getInstance().interactionManager.interactBlock(player, hand, hitResult);
 			return;
 		}
+		else hasWarnedMissingIfe = false;
 
 		if(data.slot != player.getInventory().selectedSlot+36 || data.bundleSlot != -1){
 //			Main.LOGGER.warn("AutoPlaceMapArt: calling getMapIntoMainHand(), data.slot="+data.slot+",hb="+client.player.getInventory().selectedSlot);
