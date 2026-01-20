@@ -19,6 +19,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import fi.dy.masa.malilib.util.StringUtils;
 import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
@@ -43,7 +44,10 @@ public class CommandMapArtGroup{
 		final String translation;
 		Command(){
 			final String name = name().toLowerCase();
-			translation = Text.translatableWithFallback(PREFIX+"subcommand."+name, name).getString();
+//			translation = Text.translatableWithFallback(PREFIX+"subcommand."+name, name).getString();
+//			translation = StringUtils.getTranslatedOrFallback(PREFIX+"subcommand."+name, name);
+			translation = StringUtils.getTranslatedOrFallback(PREFIX+"subcommand."+name,
+					name.equals("expand") ? "append" : name.equals("add") ? "insert" : name);//TODO: omg remove this hack
 		}
 	};
 
