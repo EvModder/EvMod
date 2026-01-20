@@ -4,7 +4,7 @@
 
 	"evmod.command.mapartgroup.subcommand.set": "set",
 	"evmod.command.mapartgroup.subcommand.create": "create",
-	"evmod.command.mapartgroup.subcommand.expand": "expand",
+	"evmod.command.mapartgroup.subcommand.expand": "append",
 	"evmod.command.mapartgroup.subcommand.add": "add_hashcode",
 	"evmod.command.mapartgroup.subcommand.compare": "compare",
 	"evmod.command.mapartgroup.subcommand.reset": "reset",
