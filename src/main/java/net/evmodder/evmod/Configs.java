@@ -66,7 +66,7 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_IMAGE = new ConfigBoolean("mapArtPlacerUseImage", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_FROM_BUNDLE = new ConfigBoolean("mapArtPlacerFromBundle", true).apply(GENERIC_KEY);
 		public static final ConfigBooleanHotkeyed MAPART_AUTOPLACE = new ConfigBooleanHotkeyed("mapArtAutoPlace", true, "").apply(GENERIC_KEY);
-		public static final ConfigInteger MAPART_AUTOPLACE_INV_DELAY = new ConfigInteger("mapArtAutoPlaceInvDelay", 3, 0, 20).apply(GENERIC_KEY);
+		public static final ConfigInteger MAPART_AUTOPLACE_INV_DELAY = new ConfigInteger("mapArtAutoPlaceInvDelay", 5, 0, 20).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAPART_AUTOPLACE_ANTI_ROTATE = new ConfigBoolean("mapArtAutoPlaceAntiRotate", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAPART_AUTOPLACE_IFRAMES = new ConfigBoolean("mapArtAutoPlaceIFrames", true).apply(GENERIC_KEY);
 

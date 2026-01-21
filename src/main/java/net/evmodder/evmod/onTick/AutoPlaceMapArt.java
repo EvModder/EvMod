@@ -28,6 +28,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.Hand;
@@ -39,6 +40,8 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
+	private final boolean SWING_HAND = true; // TODO: config?
+
 	private final Pattern pOfSize;
 
 	private Direction dir;
@@ -459,9 +462,9 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		recentPlaceAttempts[attemptIdx] = ife.getId();
 		lastAttemptIdx = attemptIdx;
 
-//		client.player.networkHandler.sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
-		player.networkHandler.sendPacket(PlayerInteractEntityC2SPacket.interactAt(ife, player.isSneaking(), Hand.MAIN_HAND, ife.getEyePos()));
+		player.networkHandler.sendPacket(PlayerInteractEntityC2SPacket.interactAt(ife, player.isSneaking(), Hand.MAIN_HAND, ife.getPos().add(0, 0.0625, 0)));
 		MinecraftClient.getInstance().interactionManager.interactEntity(player, ife, Hand.MAIN_HAND);
+		if(SWING_HAND) player.networkHandler.sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
 //		nearestIfe.interactAt(client.player, ife.getEyePos(), Hand.MAIN_HAND);
 //		client.player.interact(ife, Hand.MAIN_HAND);
 	}
@@ -584,10 +587,14 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		return new MapPlacementData(nearestSlot, bundleSlot, nearestIfe, nearestBp);
 	}
 
-	private final void getMapIntoMainHand(ClientPlayerEntity player, int slot, int bundleSlot){
-//		assert slot != client.player.getInventory().selectedSlot+36 || bundleSlot != -1;
+	private final boolean test=true;// TODO: Test to confirm, but changing hotbar slots shouldn't count as an inv action
 
-		int TICKS_BETWEEN_INV_ACTIONS = Configs.Generic.MAPART_AUTOPLACE_INV_DELAY.getIntegerValue();
+	private final void getMapIntoMainHand(ClientPlayerEntity player, int slot, int bundleSlot){
+		assert slot != player.getInventory().selectedSlot+36 || bundleSlot != -1;
+		assert player.getMainHandStack() == player.getInventory().getMainHandStack();
+		assert player.getMainHandStack() == player.getInventory().getStack(player.getInventory().selectedSlot);
+
+		final int TICKS_BETWEEN_INV_ACTIONS = Configs.Generic.MAPART_AUTOPLACE_INV_DELAY.getIntegerValue();
 		if(ticksSinceInvAction < TICKS_BETWEEN_INV_ACTIONS){
 			Main.LOGGER.info("AutoPlaceMapArt: waiting for inv action cooldown ("+ticksSinceInvAction+"ticks)");
 			return;
@@ -598,16 +605,18 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			final int nextHbSlot;
 			if(slot >= 36 && slot < 45){
 				player.getInventory().setSelectedSlot(slot - 36);
-				ticksSinceInvAction = 0;
 				Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to nearestMap: hb="+(slot-36));
-			}
-			else if(isIFrame(player.getMainHandStack().getItem()) &&
-					!isIFrame(player.getInventory().getStack(nextHbSlot = (player.getInventory().selectedSlot+1)%9).getItem()))
-			{
-				player.getInventory().setSelectedSlot(nextHbSlot);
-				Main.LOGGER.info("AutoPlaceMapArt: Changing selected hotbar slot to avoid losing iFrame stack");
+				if(test) placeNearestMap(player);
+				else ticksSinceInvAction = 0;
 			}
 			else{
+				if(isIFrame(player.getInventory().getStack(selectedSlot).getItem()) &&
+					!isIFrame(player.getInventory().getStack(nextHbSlot=(selectedSlot+1)%9).getItem()))
+				{
+					player.getInventory().setSelectedSlot(nextHbSlot);
+					Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to avoid losing iFrame stack");
+					if(!test) return;
+				}
 				// Swap from upper inv to main hand
 				ClickUtils.executeClicks(_0->true, onDone, new InvAction(slot, selectedSlot, ActionType.HOTBAR_SWAP));
 				Main.LOGGER.info("AutoPlaceMapArt: Swapped nextMap to inv.selectedSlot: s="+slot+"->hb="+(selectedSlot));
@@ -622,15 +631,15 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				while(hbSlot < 9 && !player.getInventory().main.get(hbSlot).isEmpty()) ++hbSlot;
 				if(hbSlot != 9){
 					player.getInventory().setSelectedSlot(hbSlot);
-					ticksSinceInvAction = 0;
 					Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to empty slot: hb="+hbSlot);
+					if(!test){ticksSinceInvAction = 0; return;}
 				}
 				else{
 					// Try to move item out of main hand
 					ClickUtils.executeClicks(_0->true, onDone, new InvAction(selectedSlot+36, 0, ActionType.SHIFT_CLICK));
 					Main.LOGGER.info("AutoPlaceMapArt: Shift-clicking item out of mainhand (to upper inv), hb="+selectedSlot);
+					return;
 				}
-				return;
 			}
 			BundleContentsComponent contents = player.playerScreenHandler.slots.get(slot).getStack().get(DataComponentTypes.BUNDLE_CONTENTS);
 			assert contents != null && contents.size() > bundleSlot;
@@ -640,7 +649,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				clicks.add(new InvAction(slot, bundleSlotUsed, ActionType.BUNDLE_SELECT)); // Select bundle slot
 			}
 			clicks.add(new InvAction(slot, 1, ActionType.CLICK)); // Take from bundle
-			clicks.add(new InvAction(selectedSlot+36, 0, ActionType.CLICK)); // Place in main hand
+			clicks.add(new InvAction(player.getInventory().selectedSlot+36, 0, ActionType.CLICK)); // Place in hand (intentionally using inv.selectedSlot here)
 			ClickUtils.executeClicks(_0->true, onDone, clicks);
 			Main.LOGGER.info("AutoPlaceMapArt: Extracted map from bundle into mainhand");
 		}
