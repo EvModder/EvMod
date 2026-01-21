@@ -11,7 +11,6 @@ import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
@@ -62,19 +61,22 @@ public final class KeybindMapMoveBundle{
 		final boolean pickupHalf = slotsWithMapArt.length > 0
 				&& Arrays.stream(slotsWithMapArt).anyMatch(i -> slots[i].getCount() == 2)
 				&& Arrays.stream(slotsWithMapArt).allMatch(i -> slots[i].getCount() <= 2)
-				&& (!Screen.hasShiftDown() || Arrays.stream(slotsWithMapArt).noneMatch(i -> slots[i].getCount() == 1));
-		final boolean anyArtToPickup = Arrays.stream(slotsWithMapArt).anyMatch(i -> slots[i].getCount() == (pickupHalf ? 2 : 1));
+//				&& (!Screen.hasShiftDown() || Arrays.stream(slotsWithMapArt).noneMatch(i -> slots[i].getCount() == 1))
+				;
+		final long numArtToPickup = Arrays.stream(slotsWithMapArt).filter(i -> slots[i].getCount() == (pickupHalf ? 2 : 1)).count();
 
 //		Main.LOGGER.info("MapBundleOp: begin bundle search");
-		ArrayDeque<InvAction> clicks = new ArrayDeque<>();
+		final ArrayDeque<InvAction> clicks = new ArrayDeque<>();
 		final ItemStack cursorStack = hs.getScreenHandler().getCursorStack();
-		int bundleSlot = -1, mostEmpty = Integer.MAX_VALUE, mostFull = 0;
+		int bundleSlot = -1;
 		final Fraction occupancy;
+		final boolean pickedUpBundle;
 		if(isBundle(cursorStack)){
 			if(pickupHalf){
 				Main.LOGGER.warn("MapBundleOp: Cannot use cursor-bundle when splitting stacked maps");
 				return;
 			}
+			pickedUpBundle = true;
 			occupancy = cursorStack.get(DataComponentTypes.BUNDLE_CONTENTS).getOccupancy();
 		}
 		else if(!cursorStack.isEmpty()){
@@ -83,16 +85,17 @@ public final class KeybindMapMoveBundle{
 			//clicks.add(new ClickEvent(ScreenHandler.EMPTY_SPACE_SLOT_INDEX, 0, SlotActionType.PICKUP));//Toss cursor stack
 		}
 		else{
+			int mostEmpty = Integer.MAX_VALUE, mostFull = 0;
 			for(int i=0; i<slots.length; ++i){ // Hmm, allow using bundles from outside the container screen
 				if(!isBundle(slots[i])) continue;
 				BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
 				Fraction occ = contents.getOccupancy();
-				if(anyArtToPickup && occ.intValue() == 1) continue; // Skip full bundles
-				if(!anyArtToPickup && occ.getNumerator() == 0) continue; // Skip empty bundles
+				if(numArtToPickup != 0 && occ.intValue() == 1) continue; // Skip full bundles
+				if(numArtToPickup == 0 && occ.getNumerator() == 0) continue; // Skip empty bundles
 				if(contents.stream().anyMatch(s -> s.getItem() != Items.FILLED_MAP)) continue; // Skip bundles with non-mapart contents
 				int stored = getNumStored(occ);
 				//Hacky prefer not fully empty bundles but otherwise prefer more empty
-				if(anyArtToPickup){if((stored < mostEmpty || mostEmpty == 0) && (stored != 0 || bundleSlot == -1)){mostEmpty = stored; bundleSlot = i;}}
+				if(numArtToPickup != 0){if((stored < mostEmpty || mostEmpty == 0) && (stored != 0 || bundleSlot == -1)){mostEmpty = stored; bundleSlot = i;}}
 				else if(stored > mostFull){mostFull = stored; bundleSlot = i;}
 				//if(mode == FIRST) break;
 			}
@@ -100,15 +103,14 @@ public final class KeybindMapMoveBundle{
 				Main.LOGGER.warn("MapBundleOp: No usable bundle found");
 				return;
 			}
-			if(!pickupHalf){
-				Main.LOGGER.warn("MapBundleOp: using bundle in slot: "+bundleSlot);
-				clicks.add(new InvAction(bundleSlot, 0, ActionType.CLICK));
-			}
+			Main.LOGGER.warn("MapBundleOp: using bundle in slot: "+bundleSlot);
+			pickedUpBundle = !pickupHalf && (numArtToPickup != 0 ? numArtToPickup : slots[bundleSlot].get(DataComponentTypes.BUNDLE_CONTENTS).size()) > 2;
+			if(pickedUpBundle) clicks.add(new InvAction(bundleSlot, 0, ActionType.CLICK));
 			occupancy = slots[bundleSlot].get(DataComponentTypes.BUNDLE_CONTENTS).getOccupancy();
 		}
 //		Main.LOGGER.info("MapBundleOp: contents: "+occupancy.getNumerator()+"/"+occupancy.getDenominator());
 
-		if(anyArtToPickup){
+		if(numArtToPickup != 0){
 			final int space = 64 - getNumStored(occupancy);
 //			Main.LOGGER.warn("MapBundleOp: space in bundle: "+space);
 			int suckedUp = 0;
@@ -117,11 +119,11 @@ public final class KeybindMapMoveBundle{
 			for(int i : slotsWithMapArt){
 				if(slots[i].getItem() != Items.FILLED_MAP) continue;
 				if(slots[i].getCount() != (pickupHalf ? 2 : 1)) continue;
-				if(pickupHalf){
-					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // Pickup half
+				if(pickedUpBundle) clicks.add(new InvAction(i, 0, ActionType.CLICK)); // Suck up item with bundle on cursor
+				else{
+					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // Pickup half (or all, if count=1)
 					clicks.add(new InvAction(bundleSlot, 0, ActionType.CLICK)); // Put into bundle
 				}
-				else clicks.add(new InvAction(i, 0, ActionType.CLICK)); // Suck up item with bundle on cursor
 				if(++suckedUp == space) break;
 			}
 			Main.LOGGER.info("MapBundleOp: stored "+suckedUp+" maps in bundle");
@@ -133,6 +135,11 @@ public final class KeybindMapMoveBundle{
 			if(reverse){
 				for(int i=SLOT_START; i<SLOT_END && withdrawn < stored; ++i){
 					if(!slots[i].isEmpty()) continue;
+					if(!pickedUpBundle) clicks.add(new InvAction(i, 1, ActionType.CLICK)); // Place from bundle
+					else{
+						clicks.add(new InvAction(bundleSlot, 1, ActionType.CLICK)); // Take top from bundle
+						clicks.add(new InvAction(i, 0, ActionType.CLICK)); // Place
+					}
 					clicks.add(new InvAction(i, 1, ActionType.CLICK));
 					++withdrawn;
 				}
@@ -144,7 +151,11 @@ public final class KeybindMapMoveBundle{
 				for(; emptySlots > stored; --i) if(slots[i].isEmpty()) --emptySlots;
 				for(; i>=SLOT_START && withdrawn < stored; --i){
 					if(!slots[i].isEmpty()) continue;
-					clicks.add(new InvAction(i, 1, ActionType.CLICK));
+					if(!pickedUpBundle) clicks.add(new InvAction(i, 1, ActionType.CLICK)); // Place from bundle
+					else{
+						clicks.add(new InvAction(bundleSlot, 1, ActionType.CLICK)); // Take top from bundle
+						clicks.add(new InvAction(i, 0, ActionType.CLICK)); // Place
+					}
 					++withdrawn;
 				}
 			}
