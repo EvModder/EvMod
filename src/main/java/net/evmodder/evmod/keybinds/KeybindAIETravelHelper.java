@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.MessageScreen;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.screen.slot.SlotActionType;
@@ -32,6 +33,11 @@ public final class KeybindAIETravelHelper{
 			if(!Configs.Hotkeys.AIE_TRAVEL_HELPER.getBooleanValue()) return;
 			if(client.player == null || client.world == null){
 				Main.LOGGER.info("AIE Helper: disabled due to client disconnect");
+				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
+				return;
+			}
+			if(!client.player.isAlive() || client.player.isOnGround()){
+				Main.LOGGER.info("AIE Helper: disabled due to player dead/onGround");
 				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
 				return;
 			}
@@ -63,10 +69,12 @@ public final class KeybindAIETravelHelper{
 					}
 					stoppedFlyingTs = 0;
 				}
-				Main.LOGGER.warn("Disconnecting player: "+(goingDownInEnd?"FALLING!":"no longer flying")+", y="+y+", dur="+dur);
-				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
+				String disconnectMsg = (goingDownInEnd?"FALLING!":"no longer flying")+", y="+y+", dur="+dur;
+				Main.LOGGER.warn("AIE Helper: Disconnecting player: "+disconnectMsg);
 				client.world.disconnect();
-//				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false); // Will be done automatically once client.world == null
+				client.disconnect(new MessageScreen(Text.literal("[AIE Helper] "+disconnectMsg))); 
+				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
+				return;
 			}
 
 			if(atUnsafeY || tooLowDur){
@@ -97,10 +105,11 @@ public final class KeybindAIETravelHelper{
 						return;
 					}
 				}
-				Main.LOGGER.warn("Disconnecting player: y="+y+", dur="+dur);
-				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
+				Main.LOGGER.warn("AIE Helper: Disconnecting player: y="+y+", dur="+dur);
 				client.world.disconnect();
-//				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false); // Will be done automatically once client.world == null
+				client.disconnect(new MessageScreen(Text.literal("[AIE Helper] y="+y+", dur="+dur))); 
+				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
+				return;
 			}
 			lastPitch = client.player.getPitch();
 			lastY = client.player.getY();
@@ -110,9 +119,9 @@ public final class KeybindAIETravelHelper{
 	public void updateEnabled(final boolean enable){
 //		Main.LOGGER.info("aie_travel_helper key pressed");
 		if(client == null){
-			Main.LOGGER.info("AIE Helper: registered");
 			client = MinecraftClient.getInstance();
 			registerClientTickListener();
+			Main.LOGGER.info("AIE Helper: registered");
 		}
 		if(enable){
 			if(!client.player.isGliding()){

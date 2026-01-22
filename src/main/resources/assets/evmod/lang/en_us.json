@@ -222,6 +222,7 @@
 	"evmod.config.hotkeys.name.togglePantsLegRight": "togglePantsLegRight",
 
 	"evmod.config.hotkeys.name.automaticInfiniteElytraTravelHelper": "autoInfElytraTravelHelper",
+	"evmod.config.hotkeys.prettyName.automaticInfiniteElytraTravelHelper": "AIE Travel Helper",
 	"evmod.config.hotkeys.comment.automaticInfiniteElytraTravelHelper": "https://modrinth.com/mod/automatic-infinite-elytra",
 	"evmod.config.hotkeys.name.eBounceTravelHelper": "eBounceTravelHelper",
 	"evmod.config.hotkeys.name.ejectJunkItems": "ejectJunkItems",
