@@ -73,14 +73,20 @@ public class MiscUtils{
 		return getServerAddress(client.getCurrentServerEntry(), /*useCanonical=*/true).hashCode();
 	}
 
-	public static final byte[] getCurrentServerAndPlayerData(){
-		UUID playerUUID = MinecraftClient.getInstance().player.getUuid();
-		return PacketHelper.toByteArray(
-			UUID.nameUUIDFromBytes(
-				ByteBuffer.allocate(16 + Integer.BYTES)
-					.putLong(playerUUID.getMostSignificantBits()).putLong(playerUUID.getLeastSignificantBits())
-					.putInt(getCurrentServerAddressHashCode()).array()
-			)
-		);
+	// TODO: on db-side, create a function that can reverse uuid -> username
+	private static final UUID encodeAsUUID(final String str){
+		assert str.length() <= 16;
+		assert str.length() == str.getBytes().length;
+		final byte[] bytes = (str+" ".repeat(16-str.length())).getBytes();
+		assert bytes.length == 16;
+		final ByteBuffer bb = ByteBuffer.wrap(bytes);
+		return new UUID(bb.getLong(), bb.getLong());
+	}
+
+	public static final byte[] getEncodedPlayerIds(MinecraftClient client){
+		final String sessionName = client.getSession().getUsername(), playerName = client.player.getGameProfile().getName();
+		final UUID sessionUUID = client.getSession().getUuidOrNull(), playerUUID = client.player.getGameProfile().getId();
+		final UUID usableSessionUUID = sessionUUID != null ? sessionUUID : MiscUtils.encodeAsUUID(sessionName);
+		return sessionName.equals(playerName) ? PacketHelper.toByteArray(usableSessionUUID) : PacketHelper.toByteArray(usableSessionUUID, playerUUID);
 	}
 }

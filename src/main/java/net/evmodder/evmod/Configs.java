@@ -421,7 +421,8 @@ public final class Configs implements IConfigHandler{
 				new NameAndUUID("EvDoc", UUID.fromString("34471e8d-d0c5-47b9-b8e1-b5b9472affa4")),
 				new NameAndUUID("EvModder", UUID.fromString("0e314b60-29c7-4e35-bef3-3c652c8fb467"))
 		)).apply(DATABASE_KEY);
-		public static final ConfigBoolean SHARE_JOIN_QUIT = new ConfigBoolean("shareJoinQuit", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
+		// Note: I decided to disable this by default, and hide it, because running a single proxy/bot is much better suited for collecting this data
+		public static final ConfigBoolean SHARE_JOIN_QUIT = new ConfigBoolean("shareJoinQuit", false).apply(DATABASE_KEY);
 
 		private static List<IConfigBase> options;
 		private static final List<IConfigBase> getOptions(Settings settings){
@@ -437,7 +438,7 @@ public final class Configs implements IConfigHandler{
 			if(settings.gameMessageListener || settings.gameMessageFilter) options.add(SAVE_IGNORES);
 			if(settings.database && settings.gameMessageListener) options.add(SHARE_IGNORES);
 			if(settings.database && settings.gameMessageFilter) options.add(BORROW_IGNORES);
-			if(settings.database && (settings.serverJoinListener || settings.serverQuitListener)) options.add(SHARE_JOIN_QUIT);
+//			if(settings.database && (settings.serverJoinListener || settings.serverQuitListener)) options.add(SHARE_JOIN_QUIT);
 			return options;
 		}
 	}
