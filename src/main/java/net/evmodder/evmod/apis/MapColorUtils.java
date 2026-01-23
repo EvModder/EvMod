@@ -9,6 +9,12 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
 
 public abstract class MapColorUtils{
+	public static final boolean isSemiTransparent(final byte[] colors){
+		assert colors != null && colors.length == 128*128;
+		boolean trans = false, notTrans = false, t;
+		for(byte b : colors){t = (0<=b && b<=3); trans |= t; notTrans |= !t;}
+		return trans && notTrans;
+	}
 	public static final boolean isFullyTransparent(final byte[] colors){
 		assert colors != null && colors.length == 128*128;
 		// This is faster apparently (less branching beats short-circuit)

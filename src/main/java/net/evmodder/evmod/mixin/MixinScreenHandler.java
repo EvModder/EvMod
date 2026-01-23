@@ -4,7 +4,6 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapClickMoveNeighbors;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ScreenHandler.class)
 abstract class MixinScreenHandler{
 
-//	// Also handled in MixinClientPlayerInteractionManager
+//	// Now handled by MixinClientPlayerInteractionManager
 //	@Inject(method = "internalOnSlotClick", at = @At("HEAD"), cancellable = true)
 //	private void avoid_sending_too_many_clicks(int slot, int button, SlotActionType action, PlayerEntity player, CallbackInfo ci){
 //		if(Main.clickUtils.addClick(action) > Main.clickUtils.MAX_CLICKS){
@@ -34,11 +33,11 @@ abstract class MixinScreenHandler{
 		if(slotIndex < 0 || slotIndex >= player.currentScreenHandler.slots.size()) return;
 //		if(!Screen.hasShiftDown() && !Screen.hasControlDown() && !Screen.hasAltDown()) return;
 		if(!Configs.Hotkeys.MAP_CLICK_MOVE_NEIGHBORS_KEY.getKeybind().isKeybindHeld()) return;
+
 		final ItemStack itemPlaced = player.currentScreenHandler.getSlot(slotIndex).getStack();
-		if(itemPlaced.getItem() != Items.FILLED_MAP) return;
-		if(itemPlaced.getCustomName() == null || itemPlaced.getCustomName().getLiteralString() == null) return; // TODO: support unnamed maps
-
-
+		// These checks have been moved to MapClickMoveNeighbors
+//		if(itemPlaced.getItem() != Items.FILLED_MAP) return;
+//		if(itemPlaced.getCustomName() == null || itemPlaced.getCustomName().getLiteralString() == null) return;
 		MapClickMoveNeighbors.moveNeighbors(player, slotIndex, itemPlaced);
 	}
 }

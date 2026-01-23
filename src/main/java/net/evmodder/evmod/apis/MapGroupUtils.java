@@ -9,9 +9,8 @@ import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.map.MapState;
 
 public final class MapGroupUtils{
-	public static int mapsInGroupHash; // TODO: private
+	private static int mapsInGroupHash;
 	private static HashSet<UUID> currentMapGroup;
-	private static boolean ENFORCE_MATCHES_LOCKEDNESS = true; // TODO: config setting
 
 	private static final HashMap<MapState, UUID> stateToIdCache = new HashMap<MapState, UUID>(), unlockedStateToIdCache = new HashMap<MapState, UUID>();
 	// Only external caller: MixinClientPlayNetworkHandler
@@ -37,7 +36,7 @@ public final class MapGroupUtils{
 	public static final UUID getIdForMapState(MapState state){return getIdForMapState(state, /*evict*/false);}
 
 	private static final int MAX_MAPS_IN_INV_AND_ECHEST = 64*27*(36+27); // 108864
-	public static final HashSet<UUID> getLegitLoadedMaps(final ClientWorld world){
+	public static final HashSet<UUID> getLegitLoadedMaps(final ClientWorld world){ // Only caller: CommandMapArtGroup
 		final HashSet<UUID> loadedMaps = new HashSet<UUID>();
 		MapState state;
 		final boolean INCLUDE_UNLOCKED = Configs.Generic.MAPART_GROUP_INCLUDE_UNLOCKED.getBooleanValue();
@@ -50,6 +49,8 @@ public final class MapGroupUtils{
 		currentMapGroup = newGroup;
 		mapsInGroupHash = newGroup == null ? 0 : newGroup.hashCode();
 	}
+	public static final int getCurrentGroupHash(){return mapsInGroupHash;} // Currently only called by UpdateItemFrameHighlights
+
 	public static final boolean isMapNotInCurrentGroup(final UUID colorsUUID){
 		return currentMapGroup != null && !currentMapGroup.contains(colorsUUID);
 	}
@@ -59,7 +60,7 @@ public final class MapGroupUtils{
 
 		UUID uuid = getIdForMapState(state);
 		if(currentMapGroup.contains(uuid)) return false;
-		if(ENFORCE_MATCHES_LOCKEDNESS) return true;
+		if(Configs.Generic.MAPART_GROUP_ENFORCE_LOCKEDNESS_MATCH.getBooleanValue()) return true;
 		// toggle 1st bit on/off
 		uuid = new UUID(uuid.getMostSignificantBits() ^ 1l, uuid.getLeastSignificantBits());
 		return !currentMapGroup.contains(uuid);

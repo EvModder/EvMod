@@ -45,7 +45,7 @@ public final class KeybindSpamclick{
 			}
 		});
 
-		// TODO: since EvKeybind is dead, this is using vanilla clicks now, which means it can't actually run in the InventoryScreen!!
+		// Since EvKeybind is dead, this is using vanilla clicks now, which means it can't actually run in the InventoryScreen!!
 		KeyBindingHelper.registerKeyBinding(spamClick=new KeyBinding("key."+Main.MOD_ID+".spam_click", Type.KEYSYM, -1, "key_categories.misc"){
 			@Override public void setPressed(boolean setPressed){
 				if(setPressed && isPressed()){

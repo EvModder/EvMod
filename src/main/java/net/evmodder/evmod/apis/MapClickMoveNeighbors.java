@@ -21,7 +21,11 @@ public abstract class MapClickMoveNeighbors{
 	private static boolean ongoingClickMove;
 
 	// Only called by MixinScreenHandler
-	public static void moveNeighbors(final PlayerEntity player, final int destSlot, final ItemStack mapMoved){
+	public static final void moveNeighbors(final PlayerEntity player, final int destSlot, final ItemStack mapMoved){
+		if(mapMoved.getItem() != Items.FILLED_MAP) return;
+		// No need for this check: Handled by MapRelationUtils.getRelatedMapsByName()
+//		if(mapMoved.getCustomName() == null || mapMoved.getCustomName().getLiteralString() == null) return;
+
 		if(ongoingClickMove){Main.LOGGER.warn("MapMoveClick: Already ongoing"); return;}
 		Main.LOGGER.info("MapMoveClick: moveNeighbors() called");
 
@@ -37,7 +41,7 @@ public abstract class MapClickMoveNeighbors{
 		data.slots().removeIf(i -> {
 			if(i == destSlot) return true;
 			if(ItemStack.areItemsAndComponentsEqual(slots[i], mapMoved)){
-				Main.LOGGER.warn("MapMoveClick: multiple copies of same map not yet support (i:"+i+",dest"+destSlot);
+				Main.LOGGER.warn("MapMoveClick: multiple copies of same map not yet supported (i:"+i+",dest"+destSlot);
 				return true;
 			}
 			return false;

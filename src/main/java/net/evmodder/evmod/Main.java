@@ -66,7 +66,7 @@ public class Main{
 	// Maps - make item count font smaller, cuz it kinda covers img in slot
 	// Buff MapRelationUtils- HandRestock/MoveNeighbor/AutoPlace/AutoSort assembling items into NxM. rn it's greedy; can make it DFS + DP (img ver as well)
 
-	// /msgas EvDoc <target> <msg> - send msgs as another acc (TODO: also make as a zenithproxy plugin)
+	// /msgas EvDoc <target> <msg> - send msgs as another acc (also make as a zenithproxy plugin)
 	// add time left on 2b (8h-time online) infoline to miniHUD settings
 	// Low RC quest: auto enchant dia sword, auto grindstone, auto rename, auto anvil combine. auto enchant bulk misc items
 	// inv-keybind-craft-latest-item, also for enchant table and grindstone (eg. spam enchanting axes) via spacebar, like vanilla

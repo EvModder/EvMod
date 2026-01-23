@@ -13,7 +13,8 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
-import net.evmodder.evmod.config.OptionInventoryRestockLimit;
+import net.evmodder.evmod.config.OptionInventoryRestockIf;
+import net.evmodder.evmod.config.OptionInventoryRestockLeave;
 import net.evmodder.evmod.keybinds.KeybindInventoryOrganize.SlotAndItemName;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.AnvilScreen;
@@ -48,14 +49,17 @@ public final class KeybindInventoryRestock{
 		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(s -> s.getStack().copy()).toArray(ItemStack[]::new);
 
 		ArrayDeque<InvAction> clicks = new ArrayDeque<>();
+		// if leave.ONE_STACK: map of item->#slots
+		// else map of item->sum(stack sz)
 		HashMap<Item, Integer> supply = new HashMap<>();
 
 
-		OptionInventoryRestockLimit limits = (OptionInventoryRestockLimit)Configs.Hotkeys.INV_RESTOCK_LIMITS.getOptionListValue();
+		OptionInventoryRestockIf limits = (OptionInventoryRestockIf)Configs.Hotkeys.INV_RESTOCK_IF.getOptionListValue();
+		OptionInventoryRestockLeave leave = (OptionInventoryRestockLeave)Configs.Hotkeys.INV_RESTOCK_LEAVE.getOptionListValue();
 //		Main.LOGGER.info("InvRestock: restock limits: "+limits.name());
-		final boolean LEAVE_ONE = limits == OptionInventoryRestockLimit.LEAVE_ONE_ITEM || limits == OptionInventoryRestockLimit.LEAVE_ONE_STACK;
+		final boolean LEAVE_ONE = leave == OptionInventoryRestockLeave.ONE_ITEM || leave == OptionInventoryRestockLeave.ONE_STACK;
 		HashSet<String> itemNamesInLayout;
-		if(limits == OptionInventoryRestockLimit.LEAVE_UNLESS_ALL_RESUPPLY){
+		if(limits == OptionInventoryRestockIf.RESUPPLY){
 			if(organizationLayouts == null){
 				Main.LOGGER.warn("InvRestock: Restriction to only take resupply items, but no items are defined! (InvOrganizeLayout is empty)");
 				return;
@@ -68,19 +72,17 @@ public final class KeybindInventoryRestock{
 		// TODO: hardcoded assumption that slots < len-36 are from the currently viewed container
 		for(int i=slots.length-37; i>=0; --i){
 			if(slots[i].isEmpty()) continue;
-			if(limits == OptionInventoryRestockLimit.LEAVE_UNLESS_ALL_RESUPPLY){
+			if(limits == OptionInventoryRestockIf.RESUPPLY){
 				final String itemName = Registries.ITEM.getId(slots[i].getItem()).getPath();
 				if(!itemNamesInLayout.contains(itemName)){
 //					Main.LOGGER.info("InvRestock: not a valid source (LEAVE_UNLESS_ALL_RESUPPLY: container has unlisted item type '"+itemName+"')");
 					return;
 				}
 			}
-			else{
-				final int amt = limits == OptionInventoryRestockLimit.LEAVE_ONE_STACK ? 1 : slots[i].getCount();
-				supply.put(slots[i].getItem(), supply.getOrDefault(slots[i].getItem(), 0) + amt);
-			}
+			final int amt = leave == OptionInventoryRestockLeave.ONE_STACK ? 1 : slots[i].getCount();
+			supply.put(slots[i].getItem(), supply.getOrDefault(slots[i].getItem(), 0) + amt);
 		}
-		if(supply.size() > 1 && limits == OptionInventoryRestockLimit.LEAVE_UNLESS_ONE_TYPE){
+		if(supply.size() > 1 && limits == OptionInventoryRestockIf.ONE_TYPE){
 //			Main.LOGGER.info("InvRestock: not a valid source (LEAVE_UNLESS_ONE_TYPE: container has multiple item types)");
 			return;
 		}
@@ -104,7 +106,7 @@ public final class KeybindInventoryRestock{
 //				Main.LOGGER.info("Adding clicks to restock "+slots[i].getItem().getName().getString()+" from slot "+j+" -> "+i);
 
 				int combinedCount = slots[i].getCount() + slots[j].getCount();
-				final boolean needToLeave1 = limits == OptionInventoryRestockLimit.LEAVE_ONE_ITEM
+				final boolean needToLeave1 = leave == OptionInventoryRestockLeave.ONE_ITEM
 						&& combinedCount <= maxCount && (totalInContainer -= slots[j].getCount()) == 0;
 
 				if(needToLeave1 || combinedCount != maxCount) clicks.add(new InvAction(j, 0, ActionType.CLICK)); // Pickup all

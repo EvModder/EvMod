@@ -9,6 +9,7 @@ import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.NewMapNotifier;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
@@ -21,14 +22,27 @@ public class UpdateItemFrameHighlights{
 	private static final HashMap<XYZD, UUID> hangLocsReverse = new HashMap<>(); // XYZD -> colorsId
 	private static final HashMap<UUID, HashSet<XYZD>> iFrameMapGroup = new HashMap<>(); // colorsId -> {HangLocs}
 	private static int numLoadedIfes;
+	private static Vec3d clientRotationNormalized; // cached for performance
 
-	public static final HashMap<ItemFrameEntity, Boolean> hasLabelCache = new HashMap<>(); // TODO: remove? private?
-	public static final HashMap<ItemFrameEntity, Text> displayNameCache = new HashMap<>(); // TODO: remove? private?
-	public static Vec3d clientRotationNormalized; // TODO: remove? private?
+	public static final HashMap<ItemFrameEntity, Boolean> hasLabelCache = new HashMap<>(); // TODO: Friend MixinItemFrameRenderer?
+	public static final HashMap<ItemFrameEntity, Text> displayNameCache = new HashMap<>(); // TODO: Friend MixinItemFrameRenderer?
 	public static long lastIFrameMapGroupUpdateTs; // Only accessor: CommandExportMapImg::getNearbyMapNames
 
 	public enum Highlight{INV_OR_NESTED_INV, NOT_IN_CURR_GROUP, MULTI_HUNG, UNLOCKED_OR_UNNAMED};
 	private static final HashMap<Integer, Highlight> highlightedIFrames = new HashMap<>();
+
+	public static final boolean isLookingInGeneralDirection(Entity entity){ // TODO: Friend MixinItemFrameRenderer?
+//		Entity player = MinecraftClient.getInstance().player;
+//		Vec3d vec3d2 = new Vec3d(entity.getX() - player.getX(), entity.getEyeY() - player.getEyeY(), entity.getZ() - player.getZ());
+		// maybe use entity.getCenterPos() instead?
+		Vec3d vec3d2 = entity.getEyePos().subtract(MinecraftClient.getInstance().player.getEyePos());
+		double d = vec3d2.length(); // Calls Math.sqrt()
+		vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d); // normalize
+		double e = UpdateItemFrameHighlights.clientRotationNormalized.dotProduct(vec3d2);
+//		final double asdf = player.squaredDistanceTo(entity) > 5*5 ? 0.3d : 0.1d;
+		final double asdf = vec3d2.lengthSquared() > 5*5 ? 0.3d : 0.1d;
+		return e > 1.0d - asdf / d;
+	}
 
 	public static final boolean isHungMultiplePlaces(UUID colorsId){
 		final var l = iFrameMapGroup.get(colorsId);
@@ -137,7 +151,7 @@ public class UpdateItemFrameHighlights{
 		// Updates iFrameMapGroup, highlightedIFrames, hangLocsReverse, & anyTrackedIFrameUpdate
 		anyMapGroupUpdate |= scanIFrameContents(ifes,TRACKING_DIST_SQ, playerPos);
 
-		final int currGroupInvHash = MapGroupUtils.mapsInGroupHash + UpdateInventoryHighlights.mapsInInvHash;
+		final int currGroupInvHash = MapGroupUtils.getCurrentGroupHash() + UpdateInventoryHighlights.getMapInInvHash();
 		try{
 			if(anyMapGroupUpdate) lastIFrameMapGroupUpdateTs = System.currentTimeMillis();
 			else if(currGroupInvHash == lastGroupInvHash) return;

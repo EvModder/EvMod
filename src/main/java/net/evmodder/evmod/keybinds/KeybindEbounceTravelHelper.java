@@ -398,7 +398,7 @@ public final class KeybindEbounceTravelHelper{
 			}
 //			if(y == 118){
 //				client.player.jump();
-//				//TODO: temporarily turn off meteor efly, then turn it back on
+//				// temporarily turn off meteor efly, then turn it back on (after getting out of the hole)
 //			}
 //			if(y != 119 && y != 120) return;
 

@@ -8,9 +8,9 @@ import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import net.evmodder.evmod.Configs;
+import net.evmodder.evmod.apis.InvUtils;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
-import net.evmodder.evmod.apis.MapRelationUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.AnvilScreen;
 import net.minecraft.client.gui.screen.ingame.CartographyTableScreen;
@@ -45,7 +45,7 @@ public class UpdateContainerHighlights{
 
 	private static final List<ItemStack> getAllMapItemsInContainer(List<Slot> slots){
 		final List<Slot> containerSlots = slots.subList(0, slots.size()-36);
-		return MapRelationUtils.getAllNestedItems(containerSlots.stream().map(Slot::getStack)).filter(s -> s.getItem() == Items.FILLED_MAP).toList();
+		return InvUtils.getAllNestedItems(containerSlots.stream().map(Slot::getStack)).filter(s -> s.getItem() == Items.FILLED_MAP).toList();
 	}
 	private static final boolean mixedOnDisplayAndNotOnDisplay(List<UUID> nonFillerIds){
 		return nonFillerIds.stream().anyMatch(UpdateItemFrameHighlights::isInItemFrame)
@@ -74,7 +74,7 @@ public class UpdateContainerHighlights{
 		final List<ItemStack> items = getAllMapItemsInContainer(hs.getScreenHandler().slots);
 
 		mapsInContainerHash = hs.getScreenHandler().syncId + items.hashCode();
-		final int currHash = UpdateInventoryHighlights.mapsInInvHash + mapsInContainerHash;
+		final int currHash = UpdateInventoryHighlights.getMapInInvHash() + mapsInContainerHash;
 		if(lastHash == currHash) return;
 		lastHash = currHash;
 //		Main.LOGGER.info("ContainerHighlighter: Recomputing cache");

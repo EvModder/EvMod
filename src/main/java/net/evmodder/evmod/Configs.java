@@ -47,10 +47,12 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean MAP_CACHE_BY_EC_POS = new ConfigBoolean("mapStateCacheByEchestPos", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAP_CACHE_BY_CONTAINER_POS = new ConfigBoolean("mapStateCacheByContainerPos", false).apply(GENERIC_KEY);
 
+//		public static final ConfigBoolean NEW_MAP_NOTIFIER_ITEM_ENTITY = new ConfigBoolean("itemEntityNewMapNotifier", false).apply(GENERIC_KEY);
+		public static final ConfigBoolean NEW_MAP_NOTIFIER_IFRAME = new ConfigBoolean("iFrameNewMapNotifier", false).apply(GENERIC_KEY);
+
 		public static final ConfigInteger MAX_IFRAME_TRACKING_DIST = new ConfigInteger("iFrameTrackingDist", /*default=*/128, 0, 10_000_000);
 		public static double MAX_IFRAME_TRACKING_DIST_SQ;
 		static{MAX_IFRAME_TRACKING_DIST.setValueChangeCallback(d -> MAX_IFRAME_TRACKING_DIST_SQ=Math.pow(d.getIntegerValue(), 2));}
-		public static final ConfigBoolean NEW_MAP_NOTIFIER_IFRAME = new ConfigBoolean("iFrameNewMapNotifier", false).apply(GENERIC_KEY);
 
 		public static final ConfigBooleanHotkeyed IFRAME_AUTO_PLACER = new ConfigBooleanHotkeyed("iFrameAutoPlacer", false, "").apply(GENERIC_KEY);
 		public static final ConfigDouble IFRAME_AUTO_PLACER_REACH = new ConfigDouble("iFrameAutoPlacerReach", 3.5d).apply(GENERIC_KEY);
@@ -80,7 +82,9 @@ public final class Configs implements IConfigHandler{
 				Main.mapArtFeaturesOnly ? "" : "(tp|teleport|e?p|e?pearl|([iI]'?m ?)?r(ea)?dy)( pl(ea)?se?)?.?").apply(GENERIC_KEY);
 
 		public static final ConfigString MAPART_GROUP_DEFAULT = new ConfigString("mapArtDefaultGroup", "seen/2b2t.org").apply(GENERIC_KEY);
-		public static final ConfigBoolean MAPART_GROUP_INCLUDE_UNLOCKED = new ConfigBoolean("commandMapArtGroupIncludeUnlocked", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAPART_GROUP_INCLUDE_UNLOCKED = new ConfigBoolean("mapArtGroupIncludeUnlocked", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAPART_GROUP_ENFORCE_LOCKEDNESS_MATCH = new ConfigBoolean("mapArtGroupTreatUnlockedAsUnique",
+				!Main.mapArtFeaturesOnly).apply(GENERIC_KEY);
 
 		public static final ConfigInteger KEYBIND_BUNDLE_REMOVE_MAX = new ConfigInteger("keybindMapArtBundleRemoveMax", 64, 1, 64).apply(GENERIC_KEY);
 		public static final ConfigBoolean KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS = new ConfigBoolean("keybindMapArtMoveIgnoreAirPockets", false).apply(GENERIC_KEY);
@@ -118,7 +122,7 @@ public final class Configs implements IConfigHandler{
 			if(settings.serverJoinListener && settings.serverQuitListener) options.add(MAP_CACHE_BY_INV_POS);
 			if(settings.containerOpenCloseListener) options.addAll(List.of(MAP_CACHE_BY_EC_POS, MAP_CACHE_BY_CONTAINER_POS));
 
-			if(settings.mapHighlights) options.addAll(List.of(MAX_IFRAME_TRACKING_DIST, NEW_MAP_NOTIFIER_IFRAME));
+			if(settings.mapHighlights) options.addAll(List.of(NEW_MAP_NOTIFIER_IFRAME, MAX_IFRAME_TRACKING_DIST));
 			if(settings.placementHelperIframe) options.addAll(List.of(IFRAME_AUTO_PLACER,
 					//PLACEMENT_HELPER_IFRAME_REACH, PLACEMENT_HELPER_IFRAME_RAYCAST,
 					IFRAME_AUTO_PLACER_MUST_CONNECT, IFRAME_AUTO_PLACER_MUST_MATCH_BLOCK));
@@ -134,7 +138,7 @@ public final class Configs implements IConfigHandler{
 				else MAPART_AUTOPLACE.setBooleanValue(false);
 			}
 			if(settings.gameMessageListener) options.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PLAY_SOUND_UNFOCUSED_ONLY, WHISPER_PEARL_PULL));
-			if(settings.cmdMapArtGroup) options.addAll(List.of(MAPART_GROUP_DEFAULT, MAPART_GROUP_INCLUDE_UNLOCKED));
+			if(settings.cmdMapArtGroup) options.addAll(List.of(MAPART_GROUP_DEFAULT, MAPART_GROUP_INCLUDE_UNLOCKED, MAPART_GROUP_ENFORCE_LOCKEDNESS_MATCH));
 //			if(Main.keybindMapArtMoveBundle)
 				options.add(KEYBIND_BUNDLE_REMOVE_MAX);
 //			if(Main.keybindMapArtMove)
@@ -253,6 +257,8 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigHotkey MAP_COPY = new ConfigHotkey("mapCopy", "T", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_LOAD = new ConfigHotkey("mapLoad", "E", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_MOVE = new ConfigHotkey("mapMove", "T", GUI_ALLOW_EXTRA_KEYS).apply(HOTKEYS_KEY);
+		public static final ConfigHotkey MAP_MOVE_ALL_MODIFIER = new ConfigHotkey("mapMoveAllModifier", "SHIFT",
+				KeybindSettings.MODIFIER_GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_MOVE_BUNDLE = new ConfigHotkey("mapMoveBundle", "D", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_MOVE_BUNDLE_REVERSE = new ConfigHotkey("mapMoveBundleReverse", "", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 
@@ -283,8 +289,8 @@ public final class Configs implements IConfigHandler{
 		//TODO: ConfigSlotList, ConfigSlotListHotkeyed
 		public static final ConfigHotkey INV_RESTOCK = new ConfigHotkey("inventoryRestock",
 				Main.mapArtFeaturesOnly ? "" : "R", KeybindSettings.GUI).apply(HOTKEYS_KEY);
-		public static final ConfigOptionList INV_RESTOCK_LIMITS = new ConfigOptionList("inventoryRestockLimits",
-				OptionInventoryRestockLimit.LEAVE_UNLESS_ALL_RESUPPLY).apply(HOTKEYS_KEY);
+		public static final ConfigOptionList INV_RESTOCK_IF = new ConfigOptionList("inventoryRestockIf", OptionInventoryRestockIf.RESUPPLY).apply(HOTKEYS_KEY);
+		public static final ConfigOptionList INV_RESTOCK_LEAVE = new ConfigOptionList("inventoryRestockLeave", OptionInventoryRestockLeave.ONE_ITEM).apply(HOTKEYS_KEY);
 		public static final ConfigStringList INV_RESTOCK_BLACKLIST = new ConfigStringList("inventoryRestockBlacklist", ImmutableList.of(
 //				"ender_chest", "filled_map"
 		)).apply(HOTKEYS_KEY);
@@ -371,7 +377,8 @@ public final class Configs implements IConfigHandler{
 			options = new ArrayList<>();
 			options.addAll(List.of(
 					OPEN_CONFIG_GUI,
-					MAP_COPY, MAP_LOAD, MAP_MOVE, MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE,
+					MAP_COPY, MAP_LOAD, MAP_MOVE, MAP_MOVE_ALL_MODIFIER,
+					MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE,
 					MAP_CLICK_MOVE_NEIGHBORS, MAP_CLICK_MOVE_NEIGHBORS_KEY
 			));
 			if(!Main.mapArtFeaturesOnly) options.addAll(List.of(
@@ -385,7 +392,7 @@ public final class Configs implements IConfigHandler{
 					INV_ORGANIZE_1, TRIGGER_INV_ORGANIZE_1,
 					INV_ORGANIZE_2, TRIGGER_INV_ORGANIZE_2,
 					INV_ORGANIZE_3, TRIGGER_INV_ORGANIZE_3,
-					INV_RESTOCK, INV_RESTOCK_LIMITS, INV_RESTOCK_BLACKLIST, INV_RESTOCK_WHITELIST,
+					INV_RESTOCK, INV_RESTOCK_IF, INV_RESTOCK_LEAVE, INV_RESTOCK_BLACKLIST, INV_RESTOCK_WHITELIST,
 
 					CHAT_MSG_1, CHAT_MSG_2, CHAT_MSG_3
 			));

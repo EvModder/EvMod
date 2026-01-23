@@ -17,27 +17,16 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.ItemFrameEntityRenderer;
 import net.minecraft.client.render.entity.state.ItemFrameEntityRenderState;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.map.MapState;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
-import net.minecraft.util.math.Vec3d;
 
 @Mixin(ItemFrameEntityRenderer.class)
 public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 	private final MinecraftClient client = MinecraftClient.getInstance();
-
-	private boolean isLookingInGeneralDirection(Entity entity){
-		Vec3d vec3d2 = new Vec3d(entity.getX() - client.player.getX(), entity.getEyeY() - client.player.getEyeY(), entity.getZ() - client.player.getZ());
-		double d = vec3d2.length(); // Calls Math.sqrt()
-		vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d);//normalize
-		double e = UpdateItemFrameHighlights.clientRotationNormalized.dotProduct(vec3d2);
-		final double asdf = client.player.squaredDistanceTo(entity) > 5*5 ? 0.3d : 0.1d;
-		return e > 1.0d - asdf / d;
-	}
 
 	@Inject(method="hasLabel", at=@At("HEAD"), cancellable=true)
 	public void hasLabel_Mixin(T itemFrameEntity, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
@@ -60,12 +49,12 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		else if(hl == Highlight.INV_OR_NESTED_INV){ // Show this label even if not looking in general direction
 			cir.setReturnValue(true);
 		}
-		else if(!isLookingInGeneralDirection(itemFrameEntity)){
+		else if(!UpdateItemFrameHighlights.isLookingInGeneralDirection(itemFrameEntity)){
 //			Main.LOGGER.info("not looking at: "+stack.getName().getString());
 			// no-op
 		}
 		// If right up in front of iFrame, use the vanilla label check
-		else if((squaredDistanceToCamera=MinecraftClient.getInstance().player.squaredDistanceTo(itemFrameEntity)) <= 16d/*4*4*/){
+		else if((squaredDistanceToCamera=client.player.squaredDistanceTo(itemFrameEntity)) <= 16d/*4*4*/){
 //			Main.LOGGER.info("right up in front: "+stack.getName().getString()+", squaredDistanceToCamera="+squaredDistanceToCamera);
 			// no-op
 			if(!state.locked) MapGroupUtils.getIdForMapState(state, /*evict*/true); // Evict cache for maps being directly looked at
@@ -128,15 +117,10 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		cir.setReturnValue(name);
 	}
 
-	// TODO: move to MapColorUtils?
-	private boolean isSemiTransparent(MapState state){
-		if(state == null || state.colors == null) return false;
-		boolean trans = false, notTrans = false, t;
-		for(byte b : state.colors){t = (0<=b && b<=3); trans |= t; notTrans |= !t;}
-		return trans && notTrans;
+	private final boolean isSemiTransparent(MapState state){
+		return state != null && state.colors != null && MapColorUtils.isSemiTransparent(state.colors);
 	}
-
-	private boolean shouldBeInvis(ItemFrameEntityRenderState ifers){
+	private final boolean shouldBeInvis(ItemFrameEntityRenderState ifers){
 		switch((OptionInvisIframes)Configs.Visuals.INVIS_IFRAMES.getOptionListValue()){
 			case ANY_ITEM: return !ifers.itemRenderState.isEmpty();
 			case MAPART: return ifers.mapId != null;

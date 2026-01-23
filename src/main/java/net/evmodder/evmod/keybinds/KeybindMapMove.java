@@ -15,7 +15,6 @@ import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
@@ -113,12 +112,12 @@ public final class KeybindMapMove{
 		if(numInShulk == 0 && cantMergeIntoShulk > emptySlotsShulk){Main.LOGGER.warn("MapMove cancelled: Not enough empty slots in shulker"); return;}
 
 		final boolean moveToShulk = numInShulk == 0 || cantMergeIntoInv > emptySlotsInv || (numInInv == numInShulk && cantMergeIntoShulk == 0);
-		final boolean isShiftClick = Screen.hasShiftDown();
-		final boolean selectiveMove = !isShiftClick && (moveToShulk
+		final boolean moveAll = Configs.Hotkeys.MAP_MOVE_ALL_MODIFIER.getKeybind().isKeybindHeld();
+		final boolean selectiveMove = !moveAll && (moveToShulk
 				? (countsInInv.size() == 2 && cantMergeIntoShulk == 0)
 				: (countsInShulk.size() == 2 && smallerSlotsAtStart && (cantMergeIntoInv == 0 || numInInv == 0)));
 
-		Main.LOGGER.info("MapMove: moveToShulk="+moveToShulk+", isShiftClick="+isShiftClick+", selectiveMove="+selectiveMove);
+		Main.LOGGER.info("MapMove: moveToShulk="+moveToShulk+", isShiftClick="+moveAll+", selectiveMove="+selectiveMove);
 //		client.player.sendMessage(Text.literal("MapMove: moveToShulk="+moveToShulk+", isShiftClick="+isShiftClick+", selectiveMove="+selectiveMove), false);
 
 		ArrayDeque<InvAction> clicks = new ArrayDeque<>();
@@ -135,7 +134,7 @@ public final class KeybindMapMove{
 					break;
 				}
 			}
-			if(count == 1 || isShiftClick){
+			if(count == 1 || moveAll){
 				clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK));
 			}
 			else{ // put 1 into shulk
@@ -174,7 +173,7 @@ public final class KeybindMapMove{
 					break;
 				}
 			}
-			if(count == 1 || isShiftClick){
+			if(count == 1 || moveAll){
 				clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK));
 			}
 			else{ // take 1 from shulk

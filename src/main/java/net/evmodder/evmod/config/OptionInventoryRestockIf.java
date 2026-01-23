@@ -1,14 +1,13 @@
 package net.evmodder.evmod.config;
 
-public enum OptionInventoryRestockLimit implements ConfigOptionEntry {
-	LEAVE_ONE_ITEM("leaveOneItem"), //TODO: leaveOne + leaveUnlessResupply
-	LEAVE_ONE_STACK("leaveOneStack"),
-	LEAVE_UNLESS_ONE_TYPE("leaveUnlessOneType"),
-	LEAVE_UNLESS_ALL_RESUPPLY("leaveUnlessAllResupply");
+public enum OptionInventoryRestockIf implements ConfigOptionEntry {
+	ANY("any"),
+	ONE_TYPE("allOneType"),
+	RESUPPLY("allResupply");
 
 	private final String name;
-	OptionInventoryRestockLimit(String name){this.name = name;}
+	OptionInventoryRestockIf(String name){this.name = name;}
 
 	@Override public String getStringValue(){return this.name;}
-	@Override public String getOptionListName(){return "inventoryRestock";}
+	@Override public String getOptionListName(){return "inventoryRestockIf";}
 }

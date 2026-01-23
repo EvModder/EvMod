@@ -21,7 +21,7 @@ import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.text.Text;
 
 public class GameMessageFilter{
-	// TODO: cache to file. Also, limit reply size from server (to 1024 ids?), and allow bundling borrowLists into 1 request (limit to 8 ids?)
+	// TODO: limit reply size from server (to 1024 ids?), and allow bundling borrowLists into 1 request (limit to 8 ids?)
 	private HashMap<UUID, Integer> borrowedIgnoreList = new HashMap<>(0);
 	private final RemoteServerSender remoteSender;
 	private int currentServer;

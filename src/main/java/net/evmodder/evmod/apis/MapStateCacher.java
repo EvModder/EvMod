@@ -163,7 +163,7 @@ public class MapStateCacher{
 	@SuppressWarnings("unchecked")
 	public static final boolean saveMapStatesByPos(Stream<ItemStack> items, String cache){
 		MinecraftClient client = MinecraftClient.getInstance();
-		Stream<MapState> states = MapRelationUtils.getAllNestedItems(items/*.sequential()*/)
+		Stream<MapState> states = InvUtils.getAllNestedItems(items/*.sequential()*/)
 				.sequential()
 				.filter(s -> s.getItem() == Items.FILLED_MAP)
 				.map(s -> FilledMapItem.getMapState(s, client.world));
@@ -243,7 +243,7 @@ public class MapStateCacher{
 	}
 
 	public static final boolean loadMapStatesByPos(List<ItemStack> items, String type){
-		List<ItemStack> mapItems = MapRelationUtils.getAllNestedItems(items.stream()).filter(s -> s.getItem() == Items.FILLED_MAP).toList();
+		List<ItemStack> mapItems = InvUtils.getAllNestedItems(items.stream()).filter(s -> s.getItem() == Items.FILLED_MAP).toList();
 		ClientWorld world = MinecraftClient.getInstance().world;
 		if(mapItems.stream().allMatch(s -> FilledMapItem.getMapState(s, world) != null)) return false; // All states already loaded
 

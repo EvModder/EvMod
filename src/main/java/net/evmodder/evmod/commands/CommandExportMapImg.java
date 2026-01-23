@@ -26,6 +26,7 @@ import fi.dy.masa.malilib.util.StringUtils;
 import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
+import net.evmodder.evmod.apis.InvUtils;
 import net.evmodder.evmod.apis.MapRelationUtils;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
 import net.evmodder.evmod.onTick.UpdateItemFrameHighlights;
@@ -130,7 +131,7 @@ public class CommandExportMapImg{
 	private String lastRelPath = null;
 	private int genImgForMapsInInv(FabricClientCommandSource source, List<ItemStack> inventory, final String name, final int width, final boolean combine){
 		final List<MapState> unnestedMaps = inventory.stream().map(s -> FilledMapItem.getMapState(s, source.getWorld())).filter(Objects::nonNull).toList();
-		List<MapState> allMaps = MapRelationUtils.getAllNestedItems(inventory.stream())
+		List<MapState> allMaps = InvUtils.getAllNestedItems(inventory.stream())
 				.map(s -> FilledMapItem.getMapState(s, source.getWorld()))
 				.filter(Objects::nonNull).toList();
 

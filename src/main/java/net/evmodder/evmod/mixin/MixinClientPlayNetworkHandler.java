@@ -30,6 +30,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientPlayNetworkHandler.class)
 abstract class MixinClientPlayNetworkHandler{
+
 	// Saw this in https://github.com/red-stoned/client_maps/, and realized it's probably good to incorporate
 	@Redirect(method="onMapUpdate", at=@At(value="INVOKE",
 			target="Lnet/minecraft/client/world/ClientWorld;getMapState(Lnet/minecraft/component/type/MapIdComponent;)Lnet/minecraft/item/map/MapState;"))

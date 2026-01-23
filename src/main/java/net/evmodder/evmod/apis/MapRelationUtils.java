@@ -4,11 +4,8 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Stream;
 import net.evmodder.evmod.Main;
 import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.BundleContentsComponent;
-import net.minecraft.component.type.ContainerComponent;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
@@ -17,24 +14,6 @@ import net.minecraft.item.map.MapState;
 import net.minecraft.world.World;
 
 public abstract class MapRelationUtils{
-	public static final Stream<ItemStack> getAllNestedItems(ItemStack item){
-		BundleContentsComponent contents = item.get(DataComponentTypes.BUNDLE_CONTENTS);
-		if(contents != null) return getAllNestedItems(contents.stream()/*.sequential()*/);
-		ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
-		if(container != null) return getAllNestedItems(container.streamNonEmpty()/*.sequential()*/);
-		return Stream.of(item);
-	}
-	public static final Stream<ItemStack> getAllNestedItems(Stream<ItemStack> items){//TODO: Move to a generic ItemUtils.class
-		return items.flatMap(MapRelationUtils::getAllNestedItems);
-	}
-	public static final Stream<ItemStack> getAllNestedItemsExcludingBundles(Stream<ItemStack> items){//TODO: Move to a generic ItemUtils.class
-		return items.flatMap(s -> {
-			ContainerComponent container = s.get(DataComponentTypes.CONTAINER);
-			if(container != null) return getAllNestedItemsExcludingBundles(container.streamNonEmpty());
-			return Stream.of(s);
-		});
-	}
-
 	public record RelatedMapsData(int prefixLen, int suffixLen, List<Integer> slots){}
 
 	public static final int commonPrefixLen(String a, String b){

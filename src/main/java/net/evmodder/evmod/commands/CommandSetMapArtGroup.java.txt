@@ -40,7 +40,7 @@ public class CommandSetMapArtGroup{
 //		return minIdsToCheck;
 //	}
 
-	//TODO: /mapartgroup <set/create/compare> <g1> [g2]
+	// /mapartgroup <set/create/compare> <g1> [g2]
 	private int setActiveGroupFromLoadedMaps(final ClientWorld world){
 		if(MapGroupUtils.mapsInGroup == null) MapGroupUtils.mapsInGroup = new HashSet<>();
 		else MapGroupUtils.mapsInGroup.clear();
@@ -136,7 +136,7 @@ public class CommandSetMapArtGroup{
 							}
 							catch(IOException e){e.printStackTrace(); return null;}
 							// Lock the suggestions after we've modified them.
-							return builder.buildFuture();//TODO: why not .build() ?
+							return builder.buildFuture();// why not .build() ?
 					})
 					.executes(this::runCommandWithGroupName)
 					.then(

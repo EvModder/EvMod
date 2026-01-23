@@ -46,7 +46,7 @@ public final class KeybindMapCopy{
 	// Shift-click in crafting output -> BR of inv
 	// Shift-click in InventoryScreen -> TL hotbar <-> TL inv
 	// Shift-click in CraftingScreen -> TL input
-	//TODO: remove these two functions (move to some utils file and comment out)
+	//TODO: move these two functions to InvUtils?
 	private final void swap(final ItemStack[] slots, final int i, final int j){
 		ItemStack t = slots[i];
 		slots[i] = slots[j];

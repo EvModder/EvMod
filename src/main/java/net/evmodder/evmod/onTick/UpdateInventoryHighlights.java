@@ -7,8 +7,8 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import net.evmodder.evmod.Configs;
+import net.evmodder.evmod.apis.InvUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
-import net.evmodder.evmod.apis.MapRelationUtils;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
@@ -16,10 +16,12 @@ import net.minecraft.item.map.MapState;
 import net.minecraft.world.World;
 
 public class UpdateInventoryHighlights{
-//	private static int invHash;
 	private static HashSet<UUID> inventoryMapGroup = new HashSet<>(), nestedInventoryMapGroup = new HashSet<>();
 	private static ItemStack currentlyBeingPlacedIntoItemFrame;
-	public static int mapsInInvHash;
+//	private static int itemsInInvHash;
+	private static int mapsInInvHash;
+
+	public static final int getMapInInvHash(){return mapsInInvHash;}
 
 	public static final boolean isInInventory(/*final int id, */final UUID colorsUUID){
 		return inventoryMapGroup.contains(colorsUUID);
@@ -49,13 +51,12 @@ public class UpdateInventoryHighlights{
 		if(state == null){
 			List<UUID> colorIds = 
 					(Configs.Visuals.MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES.getBooleanValue()
-							? MapRelationUtils.getAllNestedItems(Stream.of(stack))
-							: MapRelationUtils.getAllNestedItemsExcludingBundles(Stream.of(stack)))
+							? InvUtils.getAllNestedItems(Stream.of(stack))
+							: InvUtils.getAllNestedItemsExcludingBundles(Stream.of(stack)))
 					.map(s -> FilledMapItem.getMapState(s, world)).filter(Objects::nonNull)
 					.map(MapGroupUtils::getIdForMapState).toList();
 			if(!colorIds.isEmpty()){
 				nestedInventoryMapGroup.addAll(colorIds);
-//				newInvHash += colorIds.hashCode();
 			}
 			return false;
 		}
@@ -65,17 +66,18 @@ public class UpdateInventoryHighlights{
 			return true;
 		}
 		inventoryMapGroup.add(MapGroupUtils.getIdForMapState(state));
-//		newInvHash += colorsId.hashCode();
 		return false;
 	}
 	public static final void onTickStart(PlayerEntity player){
 		if(player == null || player.getWorld() == null || !player.isAlive()) return;
 
-		//TODO: this might make more sense in its own onTick() listener
-		MapState state = FilledMapItem.getMapState(player.getMainHandStack(), player.getWorld());
-		if(state != null && !state.locked) MapGroupUtils.getIdForMapState(state, /*evict*/true);
+		{
+			// Constantly force-refresh mapstate-colorsId cache for held unlocked maps
+			// Might deserve its own onTick listener tbh
+			MapState state = FilledMapItem.getMapState(player.getMainHandStack(), player.getWorld());
+			if(state != null && !state.locked) MapGroupUtils.getIdForMapState(state, /*evict*/true);
+		}
 
-//		int newInvHash = inventoryMapGroup.size() * nestedInventoryMapGroup.size();
 		inventoryMapGroup.clear();
 		nestedInventoryMapGroup.clear();
 		boolean mapPlaceStillOngoing = false;
@@ -88,12 +90,12 @@ public class UpdateInventoryHighlights{
 			currentlyBeingPlacedIntoItemFrame = null;
 //			currentlyBeingPlacedIntoItemFrameSlot = -1;
 		}
-//		else if(ItemFrameHighlightUpdater.isInItemFrame(currentlyBeingPlacedIntoItemFrame)){
-//			Main.LOGGER.info("MapGroupUtils: Aha, yes, map is placed in itemframe and yet still in inventory. Thanks Minecraft");
+//		else if(UpdateItemFrameHighlights.isInItemFrame(currentlyBeingPlacedIntoItemFrame)){
+//			Main.LOGGER.info("MapGroupUtils: Ah yes, map is placed in itemframe and yet still in inventory. Thanks Minecraft");
 //		}
 //		if(newInvHash != invHash){
 //			invHash = newInvHash;
-//			ItemFrameHighlightUpdater.highlightedIFrames.clear();
+//			ItemFrameHighlightUpdater.highlightedIFrames.clear(); // Push vs pull?
 //		}
 		final int syncId = player.currentScreenHandler != null ? player.currentScreenHandler.syncId : 0;
 		mapsInInvHash = syncId + inventoryMapGroup.hashCode() + nestedInventoryMapGroup.hashCode();// * (mapPlaceStillOngoing ? 7 : 1);

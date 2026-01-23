@@ -68,7 +68,7 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 					disableAndReset(); return false;
 				}
 				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(ife.getHeldItemStack(), lastStack), ife.getWorld());
-				if(data.slots().size() != 2){ // TODO: support maps w/o custom name (related by edge detection)
+				if(data.slots().size() != 2){
 					Main.LOGGER.info("AutoRemoveMapArt: currIfe and lastIfe are not related");
 					disableAndReset(); return false;
 				}
@@ -135,9 +135,9 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 			return null;
 		}
 
-		// TODO: further considerations:
+		// Further considerations:
 		// * Remove only connected/adjacent
-		// * Remove only maps in same layout as maps already removed
+		// * with MapLayoutFinder, don't remove adjacent duplicate map if it is in a different layout/rotation from this one.
 
 		ifes.sort((a, b) -> Double.compare(a.squaredDistanceTo(player.getEyePos()), b.squaredDistanceTo(player.getEyePos())));
 		for(ItemFrameEntity ife : ifes){
