@@ -50,6 +50,7 @@ import net.minecraft.client.MinecraftClient;
 public class Main{
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
+	// map-click-move: work multiple copies of same NxM map in inventory(s)
 	// map load from bundle skip loaded maps
 	// support non-QWERTY?
 	// GUI: StringHotkeyed, SlotListHotkeyed, ServerAddress(addr:port)

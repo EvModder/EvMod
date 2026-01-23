@@ -523,10 +523,6 @@ public class CommandExportMapImg{
 //		ctx.getSource().sendError(Text.literal("This version of the command is not yet implemented (try without a param)"));
 		return 1;
 	}
-	private final boolean isWithinBox(Vec3i pos, Vec3i minPos, Vec3i maxPos){//Todo: MiscUtils
-		return pos.getX() >= minPos.getX() && pos.getY() >= minPos.getY() && pos.getZ() >= minPos.getZ()
-			&& pos.getX() <= maxPos.getX() && pos.getY() <= maxPos.getY() && pos.getZ() <= maxPos.getZ();
-	}
 	private int runCommandForPos1AndPos2(CommandContext<FabricClientCommandSource> ctx){
 		final Vec3i pos1 = ClientBlockPosArgumentType.getBlockPos(ctx, "pos1");
 		final Vec3i pos2 = ClientBlockPosArgumentType.getBlockPos(ctx, "pos2");
@@ -534,10 +530,9 @@ public class CommandExportMapImg{
 			ctx.getSource().sendError(Text.literal("iFrame selection area must be 2D (flat surface)"));
 			return -1;
 		}
-		final Vec3i minPos = new Vec3i(Math.min(pos1.getX(), pos2.getX()), Math.min(pos1.getY(), pos2.getY()), Math.min(pos1.getZ(), pos2.getZ()));
-		final Vec3i maxPos = new Vec3i(Math.max(pos1.getX(), pos2.getX()), Math.max(pos1.getY(), pos2.getY()), Math.max(pos1.getZ(), pos2.getZ()));
+		final Box box = new Box(new Vec3d(pos1), new Vec3d(pos2));
 		final List<ItemFrameEntity> iFrames = getItemFramesWithMaps(ctx.getSource().getPlayer());
-		iFrames.removeIf(ife -> !isWithinBox(ife.getBlockPos(), minPos, maxPos));
+		iFrames.removeIf(ife -> !box.contains(ife.getPos()));
 		if(iFrames.isEmpty()){
 			ctx.getSource().sendError(Text.literal("No iFrames found within the given selection"));
 			return -1;

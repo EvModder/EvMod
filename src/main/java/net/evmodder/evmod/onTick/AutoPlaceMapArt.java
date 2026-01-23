@@ -242,10 +242,84 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				Main.LOGGER.warn("AutoPlaceMapArt: Invalid 1d X/SIZE posStr! currPosStr="+currPosStr+",name="+currStack.getCustomName().getString());
 				disableAndReset(); return false;
 			}
+			if(Math.abs(ifeOffset1) > ofSize || Math.abs(ifeOffset2) > ofSize){
+				Main.LOGGER.warn("AutoPlaceMapArt: Invalid ife offsets ("+ifeOffset1+","+ifeOffset2+") for map X/SIZE="+ofSize);
+				disableAndReset(); return false;
+			}
 			final int a = Integer.parseInt(currPosStr)-1, b = Integer.parseInt(lastPosStr)-1;
 			if(a > ofSize || b > ofSize || a < 1 || b < 1 || a==b){
 				Main.LOGGER.warn("AutoPlaceMapArt: Invalid 1d X/SIZE pos! a="+a+",b="+b);
 				disableAndReset(); return false;
+			}
+			if(ifeOffset1 == 0 || ifeOffset2 == 0){
+				final int ifeOffset = ifeOffset1 + ifeOffset2; // one of them is 0
+				final int ifeOffsetAbs = Math.abs(ifeOffset);
+				final int posOffsetAbs = Math.abs(a-b); // "a/SIZE", "b/SIZE" => a-b
+				final boolean onSameRow = posOffsetAbs == ifeOffsetAbs;
+				final boolean isAxisMatch = (ifeOffset1 != 0) == onSameRow;
+				if(axisMatch == null){
+					Main.LOGGER.info("AutoPlaceMapArt: (1d pos) determined axisMatch");
+					axisMatch = isAxisMatch;
+				}
+				else if(axisMatch != isAxisMatch){
+					Main.LOGGER.warn("AutoPlaceMapArt: (1d pos) user appears to have placed mapart in invalid spot! axisMatch");
+					disableAndReset();
+					return false;
+				}
+				final boolean isNeg = (ifeOffset < 0 == a < b); // Equivalent: LHS == a-b < 0
+				if(axisMatch){
+					if(varAxis1Neg == null) varAxis1Neg = isNeg;
+					else if(varAxis1Neg != isNeg){
+						Main.LOGGER.warn("AutoPlaceMapArt: (1d pos) user appears to have placed mapart in invalid spot! varAxis1Neg");
+						disableAndReset();
+						return false;
+					}
+				}
+				else{
+					if(varAxis2Neg == null) varAxis2Neg = isNeg;
+					else if(varAxis2Neg != isNeg){
+						Main.LOGGER.warn("AutoPlaceMapArt: (1d pos) user appears to have placed mapart in invalid spot! varAxis2Neg");
+						disableAndReset();
+						return false;
+					}
+				}
+			}
+			if(axisMatch == null) return false;
+			final int colOffset = axisMatch ? ifeOffset2 : ifeOffset1;
+			if(colOffset == 0) return false;
+			final int rowOffset = axisMatch ? ifeOffset1 : ifeOffset2;
+			if(rowOffset == 0) rowWidth = Math.abs(a-b)/Math.abs(colOffset);
+			else{
+				if(varAxis1Neg == null && varAxis2Neg == null) return false;
+				final Boolean rowNeg = axisMatch ? varAxis1Neg : varAxis2Neg;
+				final Boolean colNeg = axisMatch ? varAxis2Neg : varAxis1Neg;
+				if(rowNeg != null){
+					final int test1 = Math.abs(a-b - rowOffset*(rowNeg ? -1 : +1));
+					assert test1 % Math.abs(colOffset) == 0;
+					rowWidth = test1/Math.abs(colOffset);
+				}
+				else if(colNeg != null){
+					//Solve for: a + rowOffset*rowNeg + colOffset*colNeg*rowWidth = b;
+					// a-b = rowOffset*rowNeg + colOffset*colNeg*rowWidth
+					// (a-b - rowOffset*rowNeg)/(colOffset*colNeg) = rowWidth
+					final int test1 = Math.abs(a-b - rowOffset);
+					final int test2 = Math.abs(a-b + rowOffset);
+					final int off = colOffset*(colNeg ? -1 : +1);
+					final boolean posWorks = test1 % off == 0, negWorks = test2 % off == 0;
+					assert posWorks || negWorks;
+					if(posWorks && negWorks){
+						Main.LOGGER.info("AutoPlaceMapArt: (1d pos) unable to determine rowWidth from current offsets");
+						return false;
+					}
+					if(posWorks){
+						rowWidth = test1/off;
+//						rowNeg = false;
+					}
+					if(negWorks){
+						rowWidth = test2/off;
+//						colNeg = true;
+					}
+				}
 			}
 			final int posOffsetAbs = Math.abs(a-b);
 			if(ifeOffset1 == 0 || ifeOffset2 == 0){
@@ -346,7 +420,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			if(ifeOffset1 != 0){
 				final int posOffset = (axisMatch ? posOffset1 : posOffset2);
 				final boolean isNeg = ifeOffset1 != posOffset;
-//				assert ifeOffset1 == posOffset*(isNeg ? -1 : +1) : "?? "+axisMatch+","+posOffset+","+isNeg;
+				assert ifeOffset1 == posOffset*(isNeg ? -1 : +1);
 				if(ifeOffset1 != posOffset*(isNeg ? -1 : +1)){
 					Main.LOGGER.info("AutoPlaceMapArt: error ??1 "+axisMatch+","+posOffset+","+isNeg);
 					disableAndReset(); return false;
@@ -360,7 +434,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			if(ifeOffset2 != 0){
 				final int posOffset = (axisMatch ? posOffset2 : posOffset1);
 				final boolean isNeg = ifeOffset2 != posOffset;
-//				assert ifeOffset2 == posOffset*(isNeg ? -1 : +1);
+				assert ifeOffset2 == posOffset*(isNeg ? -1 : +1);
 				if(ifeOffset2 != posOffset*(isNeg ? -1 : +1)){
 					Main.LOGGER.info("AutoPlaceMapArt: error ??2 "+axisMatch+","+posOffset+","+isNeg);
 					disableAndReset(); return false;

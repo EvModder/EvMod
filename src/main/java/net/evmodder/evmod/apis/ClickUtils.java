@@ -38,7 +38,7 @@ public final class ClickUtils{
 	private static long lastTick;
 	private static final int OUTTA_CLICKS_COLOR = 15777300, SYNC_ID_CHANGED_COLOR = 16733525;
 //	private static final double C_PER_T;
-	public static long TICK_DURATION = 51l; // LOL!! TODO: estimate base off TPS/ping
+	public static long TICK_DURATION = 51l; // In millis
 
 	private static boolean thisClickIsBotted;
 	public static boolean isThisClickBotted(/*MixinClientPlayerInteractionManager.Friend friend*/){return thisClickIsBotted;}
@@ -96,8 +96,8 @@ public final class ClickUtils{
 			return MAX_CLICKS - sumClicksInDuration;
 		}
 	}
-	public static boolean addClick(SlotActionType type){ // TODO: friend MixinClientPlayerInteractionManager?
-		assert type != null; //TODO: type is unused
+	public static boolean addClick(/*SlotActionType type*/){ // TODO: friend MixinClientPlayerInteractionManager?
+//		assert type != null; // unused
 
 		synchronized(tickDurationArr){
 			if(tickDurationArr == null) return true;
@@ -110,7 +110,7 @@ public final class ClickUtils{
 	}
 
 	private static void adjustTickRate(long msPerTick){
-		// If TPS is degrading, don't clear old tick data (TODO: this isn't a perfect solution by any means)
+		// If TPS is degrading, don't clear old tick data (this isn't a perfect solution by any means)
 		if(msPerTick > TICK_DURATION) lastTick = System.currentTimeMillis()/TICK_DURATION;
 		else calcAvailableClicks();
 		TICK_DURATION = msPerTick;

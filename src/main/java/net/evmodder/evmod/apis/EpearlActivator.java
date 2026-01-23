@@ -5,11 +5,11 @@ import java.util.Objects;
 import com.google.common.collect.Streams;
 import net.evmodder.evmod.Main;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.ButtonBlock;
 import net.minecraft.block.NoteBlock;
 import net.minecraft.block.entity.SignBlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.projectile.thrown.EnderPearlEntity;
+import net.minecraft.registry.tag.BlockTags;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -106,13 +106,16 @@ public class EpearlActivator{
 		}
 		return null;
 	}
-	private BlockPos findNearestButton/*OrNoteblock*/(MinecraftClient client, BlockPos startPos){ // TODO: trapdoor, noteblock
+	private final boolean isClickableTrigger(BlockState bs){
+		return bs.getBlock() instanceof NoteBlock || bs.isIn(BlockTags.BUTTONS) || bs.isIn(BlockTags.WOODEN_TRAPDOORS);
+	}
+	private final BlockPos findNearestTrigger(MinecraftClient client, BlockPos startPos){
 		double closestDistSq = Double.MAX_VALUE;
 		BlockPos buttonPos = null;
 		final Vec3d centerPos = startPos.toCenterPos();
 		for(BlockPos pos : BlockPos.iterateOutwards(startPos, REACH, REACH, REACH)){
 			BlockState bs = client.world.getBlockState(pos);
-			if(bs.getBlock() instanceof ButtonBlock || bs.getBlock() instanceof NoteBlock){
+			if(isClickableTrigger(bs)){
 				Vec3d closestPoint = bs.getOutlineShape(client.world, pos).getClosestPointTo(centerPos).get();
 				final double distSq = closestPoint.squaredDistanceTo(centerPos);
 				if(distSq < closestDistSq){closestDistSq = distSq; buttonPos = pos.mutableCopy();}
@@ -141,7 +144,7 @@ public class EpearlActivator{
 		}
 //		Main.LOGGER.info("[AutoPearl]: found sign/pearl");// at "+signPos.toShortString());
 
-		BlockPos buttonPos = findNearestButton(client, signPos);
+		BlockPos buttonPos = findNearestTrigger(client, signPos);
 		if(buttonPos == null){
 			sendFeedback(client, who, "[AutoPearl] I see your pearl, but not how to activate it");
 			Main.LOGGER.warn("[AutoPearl] pearl found, but activation not found");

@@ -24,10 +24,10 @@ public abstract class MapRelationUtils{
 		if(container != null) return getAllNestedItems(container.streamNonEmpty()/*.sequential()*/);
 		return Stream.of(item);
 	}
-	public static final Stream<ItemStack> getAllNestedItems(Stream<ItemStack> items){//TODO: Move to a generic MapUtils.class
+	public static final Stream<ItemStack> getAllNestedItems(Stream<ItemStack> items){//TODO: Move to a generic ItemUtils.class
 		return items.flatMap(MapRelationUtils::getAllNestedItems);
 	}
-	public static final Stream<ItemStack> getAllNestedItemsExcludingBundles(Stream<ItemStack> items){//TODO: Move to a generic MapUtils.class
+	public static final Stream<ItemStack> getAllNestedItemsExcludingBundles(Stream<ItemStack> items){//TODO: Move to a generic ItemUtils.class
 		return items.flatMap(s -> {
 			ContainerComponent container = s.get(DataComponentTypes.CONTAINER);
 			if(container != null) return getAllNestedItemsExcludingBundles(container.streamNonEmpty());
@@ -253,7 +253,7 @@ public abstract class MapRelationUtils{
 	private PosData2D getPosData2D(final List<String> posStrs, final boolean isSideways){
 		assert posStrs.size() >= 2;
 		final boolean hasSpace = posStrs.stream().anyMatch(n -> n.indexOf(' ') != -1);
-		final boolean cutMid = !hasSpace && posStrs.stream().allMatch(n -> n.length() == 2); // TODO: A9->A10 support
+		final boolean cutMid = !hasSpace && posStrs.stream().allMatch(n -> n.length() == 2); // what about A9->A10 support
 		final boolean someSpace = hasSpace && posStrs.stream().anyMatch(n -> n.indexOf(' ') == -1);
 		final List<String> pos2s;
 		if(cutMid){

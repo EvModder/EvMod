@@ -64,7 +64,7 @@ abstract class MixinClientPlayerInteractionManager{
 //			MinecraftClient.getInstance().player.sendMessage(Text.literal("syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
 			return;
 		}
-		if(ClickUtils.addClick(action)){
+		if(ClickUtils.addClick()){
 			if(Configs.Hotkeys.CRAFT_RESTOCK.getKeybind().isValid())
 				Main.mixinAccess().kbCraftRestock.checkIfCraftAction(player.currentScreenHandler, slot, button, action);
 		}

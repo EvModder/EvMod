@@ -37,7 +37,7 @@ public abstract class MapClickMoveNeighbors{
 		data.slots().removeIf(i -> {
 			if(i == destSlot) return true;
 			if(ItemStack.areItemsAndComponentsEqual(slots[i], mapMoved)){
-				Main.LOGGER.info("MapMoveClick: TODO:support multiple copies (i:"+i+",dest"+destSlot);
+				Main.LOGGER.warn("MapMoveClick: multiple copies of same map not yet support (i:"+i+",dest"+destSlot);
 				return true;
 			}
 			return false;

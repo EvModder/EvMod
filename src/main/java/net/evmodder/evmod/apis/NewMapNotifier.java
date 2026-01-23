@@ -20,7 +20,6 @@ public final class NewMapNotifier{
 		if(ife.getId() != lastNewMapIfeId && colorsId.getMostSignificantBits() == lastNewMapColorsId) return;
 		if(System.currentTimeMillis() - lastNewMapNotify < mapNotifyCooldown) return;
 
-		// TODO: play sound?
 		boolean isFar = ife.getBlockPos().getSquaredDistance(0, 0, 0) > 20_000d*20_000d;
 		int x = ife.getBlockX(), z = ife.getBlockZ();
 		String pos = (isFar ? ".."+Math.abs(x%1000) : x)+" "+ife.getBlockY()+" "+(isFar ? ".."+Math.abs(z%1000) : z);
@@ -41,6 +40,8 @@ public final class NewMapNotifier{
 						.styled(style -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, ife.getHeldItemStack().getName())))
 						, /*actionbar=*/false);
 			}
+//			if(playSound){
+//			}
 		}
 		lastNewMapNotify = System.currentTimeMillis();
 		lastNewMapColorsId = colorsId.getMostSignificantBits();

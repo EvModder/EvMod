@@ -36,7 +36,7 @@ public class CommandTimeOnline{
 					}
 
 					if(Configs.Database.SHARE_JOIN_QUIT.getBooleanValue() && rms != null){
-						rms.sendBotMessage(Command.DB_PLAYER_FETCH_JOIN_TS, /*udp=*/true, 1000, MiscUtils.getCurrentServerAndPlayerData(), (msg)->{
+						rms.sendBotMessage(Command.DB_PLAYER_FETCH_JOIN_TS, /*udp=*/true, 1000, MiscUtils.getEncodedPlayerIds(client), (msg)->{
 							if(msg != null && msg.length == Long.BYTES){
 								tellTimeOnline(ctx.getSource(), ByteBuffer.wrap(msg).getLong());
 								return;
