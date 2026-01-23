@@ -155,11 +155,20 @@ public class AutoPlaceItemFrames{
 				.findFirst();
 			if(closestValidPlacement.isEmpty()) return; // No valid spot in range to place an iFrame
 
-			Hand hand = Hand.MAIN_HAND;
+			final Hand hand;
 			if(client.player.getOffHandStack().getItem() == iFrameItem) hand = Hand.OFF_HAND;
-			else if(client.player.getMainHandStack().getItem() != iFrameItem){
-				// TODO: swap iFrame item into main hand (or switch to hb slot)
-				return;
+			else{
+				hand = Hand.MAIN_HAND;
+				if(client.player.getMainHandStack().getItem() != iFrameItem){
+					int hbSlot = 0;
+					while(hbSlot < 9 && client.player.getInventory().main.get(hbSlot).getItem() != iFrameItem) ++hbSlot;
+					if(hbSlot == 9){
+//						Main.LOGGER.info("iFramePlacer: Out of iFrames in hotbar/offhand");
+						return;
+					}
+					client.player.getInventory().setSelectedSlot(hbSlot);
+					/*if(!test)*/ return; // TODO: remove once test outcome is known (in AutoPlaceMapArt as well)
+				}
 			}
 
 			BlockPos bp = closestValidPlacement.get();

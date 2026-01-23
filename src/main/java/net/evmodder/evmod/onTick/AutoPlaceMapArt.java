@@ -15,6 +15,7 @@ import net.evmodder.evmod.Configs.Generic;
 import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
+import net.evmodder.evmod.apis.InvUtils;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
 import net.evmodder.evmod.apis.TickListener;
 import net.evmodder.evmod.apis.MapRelationUtils;
@@ -204,11 +205,11 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		}
 
 		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(currStack, lastStack), world);
-		if(data.slots().size() != 2){ // TODO: support maps w/o custom name (related by edge detection)
+		if(data.slots().size() != 2){
 			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not related");
 			disableAndReset(); return false;
 		}
-		if(data.prefixLen() == -1){ // TODO: support related maps without pos data (same name, no pos data)
+		if(data.prefixLen() == -1){
 			Main.LOGGER.info("AutoPlaceMapArt: unable to predict placement for map names lacking pos data");
 			disableAndReset(); return false;
 		}
@@ -216,7 +217,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		if(currentData == null){
 			assert allMapItems.isEmpty();
 			allMapItems.add(currStack); allMapItems.add(lastStack);
-			MapRelationUtils.getAllNestedItems(player.getInventory().main.stream()).filter(s -> s.getItem() == Items.FILLED_MAP).forEach(allMapItems::add);
+			InvUtils.getAllNestedItems(player.getInventory().main.stream()).filter(s -> s.getItem() == Items.FILLED_MAP).forEach(allMapItems::add);
 //			Main.LOGGER.info("AutoPlaceMapArt: all maps in inv: "+(allMapItems.size()-2));
 
 			currentData = MapRelationUtils.getRelatedMapsByName0(allMapItems, player.getWorld());
@@ -321,45 +322,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					}
 				}
 			}
-			final int posOffsetAbs = Math.abs(a-b);
-			if(ifeOffset1 == 0 || ifeOffset2 == 0){
-				final int ifeOffsetAbs = Math.abs(ifeOffset1) + Math.abs(ifeOffset2);
-				final boolean isAxisMatch = (ifeOffset1 != 0) == (posOffsetAbs == ifeOffsetAbs);
-				if(axisMatch == null){
-//					Main.LOGGER.info("AutoPlaceMapArt: (1d pos) determined axisMatch");
-					axisMatch = isAxisMatch;
-				}
-				else if(axisMatch != isAxisMatch){
-					Main.LOGGER.warn("AutoPlaceMapArt: (1d pos) user appears to have placed mapart in invalid spot! axisMatch");
-					disableAndReset();
-					return false;
-				}
-				if(posOffsetAbs == ifeOffsetAbs){
-					// Still need to determine row width
-					return false;
-				}
-				if(posOffsetAbs % ifeOffsetAbs != 0){
-					Main.LOGGER.warn("AutoPlaceMapArt: (1d pos) user appears to have placed mapart in invalid spot! width is not whole number");
-					disableAndReset();
-					return false;
-				}
-				rowWidth = posOffsetAbs/ifeOffsetAbs;
-			}
-			else if(axisMatch == null) return false;
-			else{ // TODO: rewrite this entire block using neg/pos-aware logic (instead of abs-everything), to make x/SIZE actually decent
-				final int ifeOffset1Abs = Math.abs(axisMatch ? ifeOffset1 : ifeOffset2);
-				final int ifeOffset2Abs = Math.abs(axisMatch ? ifeOffset2 : ifeOffset1);
-				final int posWidthOffsetCandidateA = posOffsetAbs - ifeOffset1Abs;
-				final int posWidthOffsetCandidateB = posOffsetAbs + ifeOffset1Abs;
-				final boolean testA = posWidthOffsetCandidateA % ifeOffset2Abs == 0, testB = posWidthOffsetCandidateB % ifeOffset2Abs == 0;
-				if(!testA && !testB){
-					Main.LOGGER.warn("AutoPlaceMapArt: (1d pos) user appears to have placed mapart in invalid spot! width (adjusted) is not whole number");
-					disableAndReset();
-					return false;
-				}
-				if(testA && testB) return false; // Not enough data (since we are using abs)
-				rowWidth = (testA ? posWidthOffsetCandidateA : posWidthOffsetCandidateB)/ifeOffset2Abs;
-			}
+			assert rowWidth != null;
 			if(ofSize % rowWidth != 0){
 				Main.LOGGER.warn("AutoPlaceMapArt: (1d pos) invalid width "+rowWidth+"! needs to be a divisor of SIZE");
 				disableAndReset();
@@ -367,7 +330,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			}
 		}
 		final Pos2DPair pos2dPair = getRelativePosPair(currPosStr, lastPosStr);
-		if(pos2dPair == null){ // TODO: Support non-standard pos data (e.g., TL,TR,BL,BR)
+		if(pos2dPair == null){
 			Main.LOGGER.info("AutoPlaceMapArt: unable to parse pos2dPair from pos strs ("+currPosStr+","+lastPosStr+")");
 			disableAndReset(); return false;
 		}
@@ -823,15 +786,16 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			if(isIFrame(player.getMainHandStack().getItem())) hand = Hand.MAIN_HAND;
 			else if(isIFrame(player.getOffHandStack().getItem())) hand = Hand.OFF_HAND;
 			else{
-				for(int i=0; i<9; ++i){
-					if(isIFrame(player.getInventory().getStack(i).getItem())){
-						player.getInventory().setSelectedSlot(i);
-						return;
-					}
+				int hbSlot = 0;
+				while(hbSlot < 9 && !isIFrame(player.getInventory().main.get(hbSlot).getItem())) ++hbSlot;
+				if(hbSlot == 9){
+					if(!hasWarnedMissingIfe) Main.LOGGER.warn("AutoPlaceMapArt: no iFrames found in offhand or hotbar");
+					hasWarnedMissingIfe = true;
+					return;
 				}
-				if(!hasWarnedMissingIfe) Main.LOGGER.warn("AutoPlaceMapArt: no iFrames found in offhand or hotbar");
-				hasWarnedMissingIfe = true;
-				return;
+				player.getInventory().setSelectedSlot(hbSlot);
+				if(!test){ticksSinceInvAction = 0; return;}
+				else hand = Hand.MAIN_HAND;
 			}
 			recentPlaceAttempts[attemptIdx] = data.bp.hashCode()+1;
 
