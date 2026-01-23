@@ -24,8 +24,6 @@ import net.minecraft.item.map.MapState;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;
 
-//TODO: Maybe preserve relative position of maps (eg., in a 3x3, keep them in a 3x3 in result GUI)?
-
 public final class KeybindMapMove{
 	static final boolean isFillerMap(ItemStack[] slots, ItemStack stack, World world){
 		if(!Configs.Generic.SKIP_TRANSPARENT_MAPS.getBooleanValue()) return false;

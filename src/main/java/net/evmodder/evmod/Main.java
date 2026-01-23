@@ -98,8 +98,12 @@ public class Main{
 
 		InitUtils.refreshClickLimits();
 
-		remoteSender = settings.database ? new RemoteServerSender(LOGGER, MiscUtils::getCurrentServerAddressHashCode) : null;
-		if(settings.database) InitUtils.refreshRemoteServerSender(remoteSender);
+		if(!settings.database) remoteSender = null;
+		else{
+			remoteSender = new RemoteServerSender(LOGGER, MiscUtils::getCurrentServerAddressHashCode);
+			InitUtils.refreshRemoteServerSender(remoteSender); // Potentially using DUMMY_CLIENT_ID
+			InitUtils.checkValidClientKeyAndRequestIfNot(remoteSender, configs); // Request a real clientId if needed
+		}
 
 		epearlLookup = settings.epearlOwners ? new EpearlLookupFabric(remoteSender) : null;
 

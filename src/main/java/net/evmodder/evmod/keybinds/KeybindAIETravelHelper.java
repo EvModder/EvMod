@@ -36,8 +36,8 @@ public final class KeybindAIETravelHelper{
 				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
 				return;
 			}
-			if(!client.player.isAlive() || client.player.isOnGround()){
-				Main.LOGGER.info("AIE Helper: disabled due to player dead/onGround");
+			if(!client.player.isAlive() || client.player.isOnGround() || client.player.isSpectator()){
+				Main.LOGGER.info("AIE Helper: disabled due to player dead/onGround/isSpectator");
 				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
 				return;
 			}
