@@ -13,6 +13,7 @@ import net.evmodder.EvLib.util.TextUtils_New;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.mixin.AccessorPlayerListHud;
+import net.evmodder.evmod.mixin.MixinClientPlayerInteractionManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.network.packet.c2s.play.BundleItemSelectedC2SPacket;
 import net.minecraft.screen.slot.SlotActionType;
@@ -41,7 +42,7 @@ public final class ClickUtils{
 	public static long TICK_DURATION = 51l; // In millis
 
 	private static boolean thisClickIsBotted;
-	public static boolean isThisClickBotted(/*MixinClientPlayerInteractionManager.Friend friend*/){return thisClickIsBotted;}
+	public static boolean isThisClickBotted(MixinClientPlayerInteractionManager.Friend friend){return thisClickIsBotted;}
 
 	public static void refreshLimits(final int MAX_CLICKS, int FOR_TICKS){
 		if(clickOpOngoing){
