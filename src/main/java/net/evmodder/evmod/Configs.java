@@ -87,6 +87,8 @@ public final class Configs implements IConfigHandler{
 				!Main.mapArtFeaturesOnly).apply(GENERIC_KEY);
 
 		public static final ConfigInteger KEYBIND_BUNDLE_REMOVE_MAX = new ConfigInteger("keybindMapArtBundleRemoveMax", 64, 1, 64).apply(GENERIC_KEY);
+		public static final ConfigBoolean KEYBIND_BUNDLE_PREFER_STOW = new ConfigBoolean("keybindMapArtBundlePreferStow", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean KEYBIND_BUNDLE_STOW_NON_SINGLE_MAPS = new ConfigBoolean("keybindMapArtBundleStowNonSingleMaps", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS = new ConfigBoolean("keybindMapArtMoveIgnoreAirPockets", false).apply(GENERIC_KEY);
 		public static final ConfigBoolean SKIP_TRANSPARENT_MAPS = new ConfigBoolean("ignoreBlankMapsIndHighlightsAndKeybinds", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean SKIP_MONO_COLOR_MAPS = new ConfigBoolean("ignoreMonoColorMapsInHightlights", false).apply(GENERIC_KEY);
@@ -139,13 +141,14 @@ public final class Configs implements IConfigHandler{
 			}
 			if(settings.gameMessageListener) options.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PLAY_SOUND_UNFOCUSED_ONLY, WHISPER_PEARL_PULL));
 			if(settings.cmdMapArtGroup) options.addAll(List.of(MAPART_GROUP_DEFAULT, MAPART_GROUP_INCLUDE_UNLOCKED, MAPART_GROUP_ENFORCE_LOCKEDNESS_MATCH));
-//			if(Main.keybindMapArtMoveBundle)
-				options.add(KEYBIND_BUNDLE_REMOVE_MAX);
-//			if(Main.keybindMapArtMove)
+//			if(settings.keybindMapArtMoveBundle)
+				// Note: These settings are hidden because I don't think they should be changed.
+//				options.addAll(KEYBIND_BUNDLE_REMOVE_MAX, KEYBIND_BUNDLE_PREFER_STOW, KEYBIND_BUNDLE_STOW_NON_SINGLE_MAPS);
+//			if(settings.keybindMapArtMove)
 				options.add(KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS);
 			if(!Main.mapArtFeaturesOnly) options.add(SCROLL_ORDER);
-//			if(Main.keybindMapArtMove || Main.keybindMapArtMoveBundle)
-			options.add(SKIP_TRANSPARENT_MAPS);
+//			if(settings.keybindMapArtMove || settings.keybindMapArtMoveBundle)
+				options.add(SKIP_TRANSPARENT_MAPS);
 			if(settings.mapHighlights) options.add(SKIP_MONO_COLOR_MAPS);
 			if(settings.serverJoinListener) options.add(SEND_ON_SERVER_JOIN);
 			if(settings.serverQuitListener) options.add(LOG_COORDS_ON_SERVER_QUIT);
