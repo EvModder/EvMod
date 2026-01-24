@@ -30,7 +30,7 @@ public final class KeybindMapMoveBundle{
 		EMPTIEST, EMPTIEST_NOT_EMPTY
 	}
 	// Can be: EMPTIEST_NOT_EMPTY or FULLEST
-	private final BundleSelectionPriority BUNDLE_TAKE = BundleSelectionPriority.EMPTIEST_NOT_EMPTY; // TODO: config settings for these
+	private final BundleSelectionPriority BUNDLE_EXTRACT = BundleSelectionPriority.EMPTIEST_NOT_EMPTY; // TODO: config settings for these
 	// Can be: FULLEST_NOT_FULL or EMPTIEST
 	private final BundleSelectionPriority BUNDLE_STOW = BundleSelectionPriority.FULLEST_NOT_FULL;
 
@@ -105,18 +105,19 @@ public final class KeybindMapMoveBundle{
 		}
 		else if(!cursorStack.isEmpty()){Main.LOGGER.warn("MapBundleOp: Non-bundle item on cursor"); return;}
 		else{
-			final BundleSelectionPriority pickBy = doStow ? BUNDLE_STOW : BUNDLE_TAKE;
+			final BundleSelectionPriority pickBy = doStow ? BUNDLE_STOW : BUNDLE_EXTRACT;
 			int bestBundleSlot = -1;
 			int bestStored = switch(pickBy){
-				case FULLEST, FULLEST_NOT_FULL -> 0;
+				case FULLEST, FULLEST_NOT_FULL -> -1;
 				case EMPTIEST, EMPTIEST_NOT_EMPTY -> Integer.MAX_VALUE;
 			};
 			for(int i=0; i<slots.length; ++i){ // Hmm, allow using bundles from outside the container screen
-				BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
+				final BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
 				if(contents == null) continue;
-				Fraction occ = contents.getOccupancy();
-				if(doStow && occ.intValue() == 1) continue; // Skip full bundles
-				if(!doStow && occ.getNumerator() == 0) continue; // Skip empty bundles
+				final Fraction occ = contents.getOccupancy();
+//				if(doStow && occ.intValue() == 1) continue; // Skip full bundles
+//				if(!doStow && occ.getNumerator() == 0) continue; // Skip empty bundles
+				if(doStow ? occ.intValue() == 1 : occ.getNumerator() == 0) continue; // Same logic as above
 				if(!contents.stream().allMatch(this::isMapItem)) continue; // Skip bundles with non-mapart contents
 				final int storedI = getNumStored(occ);
 				final boolean updatePick = switch(pickBy){
@@ -136,10 +137,12 @@ public final class KeybindMapMoveBundle{
 			}
 			bundleSlot = bestBundleSlot;
 			stored = bestStored;
-			Main.LOGGER.warn("MapBundleOp: using bundle in slot: "+bundleSlot);
+//			Main.LOGGER.warn("MapBundleOp: using bundle in slot="+bundleSlot
+//					+", doStow="+doStow+", stored="+stored+", numToStow="+numToStow+", pickup1of2="+pickup1of2
+//			);
 			pickedUpBundle = !pickup1of2 && (doStow ? numToStow : stored) > 2;
 			if(pickedUpBundle){
-				Main.LOGGER.warn("MapBundleOp: picking up bundle ");
+//				Main.LOGGER.warn("MapBundleOp: picking up bundle ");
 				clicks.add(new InvAction(bundleSlot, 0, ActionType.CLICK));
 			}
 		}
@@ -162,7 +165,7 @@ public final class KeybindMapMoveBundle{
 				}
 				if(++suckedUp == space) break;
 			}
-			Main.LOGGER.info("MapBundleOp: stored "+suckedUp+" maps in bundle");
+			Main.LOGGER.info("MapBundleOp: storing "+suckedUp+" maps in bundle");
 		}
 		else{
 			final int MOVE_LIMIT = Configs.Generic.KEYBIND_BUNDLE_REMOVE_MAX.getIntegerValue();
@@ -186,7 +189,7 @@ public final class KeybindMapMoveBundle{
 				for(; emptySlots > withdrawable; --i) if(slots[i].isEmpty()) --emptySlots;
 				for(; i>=SLOT_START && withdrawn < withdrawable; --i){
 					if(!slots[i].isEmpty()) continue;
-					if(!pickedUpBundle) clicks.add(new InvAction(i, 1, ActionType.CLICK)); // Place from bundle
+					if(pickedUpBundle) clicks.add(new InvAction(i, 1, ActionType.CLICK)); // Place from bundle
 					else{
 						clicks.add(new InvAction(bundleSlot, 1, ActionType.CLICK)); // Take top from bundle
 						clicks.add(new InvAction(i, 0, ActionType.CLICK)); // Place
@@ -194,9 +197,12 @@ public final class KeybindMapMoveBundle{
 					++withdrawn;
 				}
 			}
-			Main.LOGGER.info("MapBundleOp: withdrew "+withdrawn+" maps from bundle");
+			Main.LOGGER.info("MapBundleOp: withdrawing "+withdrawn+" maps from bundle");
 		}
-		if(pickedUpBundle && bundleSlot != -1) clicks.add(new InvAction(bundleSlot, 0, ActionType.CLICK)); // Put back bundle in src slot
+		if(pickedUpBundle && bundleSlot != -1){
+			Main.LOGGER.info("MapBundleOp: Placed bundle back in starting slot");
+			clicks.add(new InvAction(bundleSlot, 0, ActionType.CLICK)); // Put back bundle in src slot
+		}
 
 		ClickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("MapBundleOp: DONE!"), clicks);
 	}
