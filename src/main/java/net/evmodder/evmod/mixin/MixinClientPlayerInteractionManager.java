@@ -17,8 +17,8 @@ import net.minecraft.text.Text;
 @Mixin(ClientPlayerInteractionManager.class)
 public abstract class MixinClientPlayerInteractionManager{
 
-	public static final class Friend{private Friend(){}}
-	private static final Friend friend = new Friend();
+//	public static final class Friend{private Friend(){}}
+//	private static final Friend friend = new Friend();
 
 	@Inject(method = "clickSlot", at = @At("HEAD"), cancellable = true)
 	private void avoid_sending_too_many_clicks(int syncId, int slot, int button, SlotActionType action, PlayerEntity player, CallbackInfo ci){
@@ -26,7 +26,7 @@ public abstract class MixinClientPlayerInteractionManager{
 		if(player.isCreative()) return;
 //		if(action == SlotActionType.CLONE/* || action == SlotActionType.THROW || action == SlotActionType.QUICK_CRAFT*/) return;
 		if(slot == -999) return; // comment this out to test things
-		final boolean isBotted = ClickUtils.isThisClickBotted(friend);
+		final boolean isBotted = ClickUtils.isThisClickBotted(/*friend*/);
 		if(Configs.Generic.CLICK_FILTER_USER_INPUT.getBooleanValue() && !isBotted && ClickUtils.hasOngoingClicks()){
 			ci.cancel();
 			if(syncId == 0 && slot == 0 && button == 0 && action == SlotActionType.QUICK_MOVE) return; // QUICK_CRAFT sometimes sends duplicate fake QUICK_MOVE?
