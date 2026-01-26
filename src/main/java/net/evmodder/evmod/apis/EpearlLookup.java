@@ -1,10 +1,5 @@
 package net.evmodder.evmod.apis;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -72,75 +67,51 @@ public abstract class EpearlLookup{
 		return new Tuple3<>(ownerUUID, x, z);
 	}*/
 
-	private final synchronized boolean appendToClientFile(String filename, UUID pearlUUID, PearlDataClient pdc){
-		File file = new File(FileIO.DIR+filename);
-		try{
-			FileOutputStream fos = null;
-			try{fos = new FileOutputStream(file, true);}
-			catch(FileNotFoundException e){
-				LOGGER.info("[EpearlLookup] DB file not found, creating one");
-				file.createNewFile();
-				fos = new FileOutputStream(file, true);
-			}
-			ByteBuffer bb = ByteBuffer.allocate(16+16+4+4+4);
-			bb.putLong(pearlUUID.getMostSignificantBits());
-			bb.putLong(pearlUUID.getLeastSignificantBits());
-			bb.putLong(pdc.owner().getMostSignificantBits());
-			bb.putLong(pdc.owner().getLeastSignificantBits());
-			bb.putInt(pdc.x()).putInt(pdc.y()).putInt(pdc.z());
-			fos.write(bb.array());
-			fos.close();
-			LOGGER.trace("[EpearlLookup] Saved pearlUUID->ownerUUID to file: "+pearlUUID+"->"+pdc.owner());
+	private final synchronized void appendToClientFile(String filename, UUID pearlUUID, PearlDataClient pdc){
+		final ByteBuffer bb = ByteBuffer.allocate(16+16+4+4+4);
+		bb.putLong(pearlUUID.getMostSignificantBits());
+		bb.putLong(pearlUUID.getLeastSignificantBits());
+		bb.putLong(pdc.owner().getMostSignificantBits());
+		bb.putLong(pdc.owner().getLeastSignificantBits());
+		bb.putInt(pdc.x()).putInt(pdc.y()).putInt(pdc.z());
+		if(!FileIO.saveFileBytes(filename, bb.array(), /*append=*/true)){
+			LOGGER.error("[EpearlLookup] Error occured while trying to append pdc to local cache");
 		}
-		catch(IOException e){e.printStackTrace();return false;}
-		return true;
 	}
 
 	private final synchronized HashMap<UUID, PearlDataClient> loadFromClientFile(String filename){
-		final byte[] data;
-		try(FileInputStream fis = new FileInputStream(FileIO.DIR+filename)){
-			data = fis.readAllBytes();
-			fis.close();
-		}
-		catch(FileNotFoundException e){return new HashMap<>();}
-		catch(IOException e){e.printStackTrace(); return new HashMap<>();}
-
-		if(data.length % 40 == 0){
-			final int numRows = data.length/40;
-			final ByteBuffer bb = ByteBuffer.wrap(data);
-			HashMap<UUID, PearlDataClient> entries = new HashMap<>(numRows);
-			for(int i=0; i<numRows; ++i){
-				UUID pearl = new UUID(bb.getLong(), bb.getLong());
-				UUID owner = new UUID(bb.getLong(), bb.getLong());
-				int x = bb.getInt(), z = bb.getInt();
-				entries.put(pearl, new PearlDataClient(owner, x, -999, z));
-			}
-			return entries;
-		}
+		final byte[] data = FileIO.loadFileBytes(filename);
+//		// Old data format
+//		if(data.length % 40 == 0){
+//			final int numRows = data.length/40;
+//			final ByteBuffer bb = ByteBuffer.wrap(data);
+//			HashMap<UUID, PearlDataClient> entries = new HashMap<>(numRows);
+//			for(int i=0; i<numRows; ++i){
+//				UUID pearl = new UUID(bb.getLong(), bb.getLong());
+//				UUID owner = new UUID(bb.getLong(), bb.getLong());
+//				int x = bb.getInt(), z = bb.getInt();
+//				entries.put(pearl, new PearlDataClient(owner, x, -999, z));
+//			}
+//			return entries;
+//		}
 		if(data.length % 44 != 0){
 			LOGGER.error("[EpearlLookup] Corrupted/invalid ePearlDB file! (A)");
 			return new HashMap<>();
 		}
 		final int numRows = data.length/44;
 		final ByteBuffer bb = ByteBuffer.wrap(data);
-		HashMap<UUID, PearlDataClient> entries = new HashMap<>(numRows);
+		final HashMap<UUID, PearlDataClient> entries = new HashMap<>(numRows);
 		for(int i=0; i<numRows; ++i){
-			UUID pearl = new UUID(bb.getLong(), bb.getLong());
-			UUID owner = new UUID(bb.getLong(), bb.getLong());
-			int x = bb.getInt(), y = bb.getInt(), z = bb.getInt();
+			final UUID pearl = new UUID(bb.getLong(), bb.getLong());
+			final UUID owner = new UUID(bb.getLong(), bb.getLong());
+			final int x = bb.getInt(), y = bb.getInt(), z = bb.getInt();
 			entries.put(pearl, new PearlDataClient(owner, x, y, z));
 		}
 		return entries;
 	}
 
 	private final synchronized int removeFromClientFile(String filename, HashSet<UUID> keysToRemove){
-		final byte[] data;
-		try(FileInputStream fis = new FileInputStream(FileIO.DIR+filename)){
-			data = fis.readAllBytes();
-			fis.close();
-		}
-		catch(FileNotFoundException e){return 0;}
-		catch(IOException e){e.printStackTrace(); return -1;}
+		final byte[] data = FileIO.loadFileBytes(filename);
 
 		if(data.length % 44 != 0){
 			LOGGER.error("[EpearlLookup] Corrupted/invalid ePearlDB file! (B)");
@@ -158,13 +129,18 @@ public abstract class EpearlLookup{
 			else ++removed;
 		}
 		if(removed == 0) return 0;
-
 		assert bbOut.position() == data.length - removed*44;
-		try(FileOutputStream fos = new FileOutputStream(FileIO.DIR+filename)){
-			fos.write(bbOut.array(), 0, bbOut.position());
-			fos.close();
-		}
-		catch(IOException e){e.printStackTrace();}
+		//A
+		FileIO.saveFileBytes(filename, bbOut.array(), 0, bbOut.position(), /*append=*/false);
+		//B
+//		final byte[] remData = Arrays.copyOfRange(bbOut.array(), 0, bbOut.position());
+//		FileIO.saveFileBytes(filename, remData, /*append=*/false);
+		//C
+//		try(FileOutputStream fos = new FileOutputStream(FileIO.DIR+filename)){
+//			fos.write(bbOut.array(), 0, bbOut.position());
+//			fos.close();
+//		}
+//		catch(IOException e){e.printStackTrace();}
 		return removed;
 	}
 
