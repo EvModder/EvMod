@@ -52,19 +52,24 @@ public final class KeybindMapMoveBundle{
 		if(ts - lastBundleOp < bundleOpCooldown){Main.LOGGER.warn("MapBundleOp: in cooldown"); return;}
 		lastBundleOp = ts;
 		//
+		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
+
 		final int SLOT_START = hs instanceof InventoryScreen ? 9 : hs instanceof CraftingScreen ? 10 : 0;
 		final int SLOT_END =
-				hs instanceof InventoryScreen ? 45 :
+					// Ignore player inventory slots
+				hs instanceof ShulkerBoxScreen ? 27 :
 				hs.getScreenHandler() instanceof GenericContainerScreenHandler gcsh ? gcsh.getRows()*9 :
-				hs instanceof CraftingScreen ? 46 :
-				hs instanceof ShulkerBoxScreen ? 27 : 0/*unreachable?*/;
+					// Use all available slots
+				hs instanceof InventoryScreen ? slots.length :
+				hs instanceof CraftingScreen ? slots.length :
+					slots.length; // unreachable?
+		final int BUNDLE_SLOT_START = SLOT_END < slots.length ? SLOT_END : 0;
 		assert SLOT_END != 0;
-		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		final int[] slotsWithMapArt = IntStream.range(SLOT_START, SLOT_END)
 				.filter(i -> slots[i].getItem() == Items.FILLED_MAP
 					&& !KeybindMapMove.isFillerMap(slots, slots[i], client.world))
 				.toArray();
-		final int[] slotsWithBundles = IntStream.range(SLOT_START, SLOT_END).filter(i -> {
+		final int[] slotsWithBundles = IntStream.range(BUNDLE_SLOT_START, slots.length).filter(i -> {
 			BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
 			return contents != null && contents.stream().allMatch(this::isMapItem);
 		}).toArray();
