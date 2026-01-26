@@ -216,7 +216,7 @@ public class CommandExportMapImg{
 	}
 
 	private void buildMapImgFile(final FabricClientCommandSource source, final Map<Vec3i, ItemFrameEntity> ifeLookup,
-			final ArrayList<Vec3i> mapWall, final int w, final int h){
+			final ArrayList<Vec3i> mapWall, final int w, final int h, final String namePrefix){
 		final boolean BLOCK_BORDER = Configs.Visuals.EXPORT_MAP_IMG_BORDER.getBooleanValue();
 		final int border = BLOCK_BORDER ? 8 : 0;
 		BufferedImage img = new BufferedImage(128*w+border*2, 128*h+border*2, BufferedImage.TYPE_INT_ARGB);
@@ -226,13 +226,19 @@ public class CommandExportMapImg{
 			ItemFrameEntity ife = ifeLookup.get(mapWall.get(i*w+j));
 			if(ife == null){
 //				if(!nonRectangularWarningShown){
-//					source.sendError(Text.literal("Non-rectangular MapArt wall is not fully supported"));
+					source.sendError(Text.literal("Non-rectangular MapArt wall is not fully supported"));
 //					nonRectangularWarningShown = true;
 //				}
-				//return false;
+//				return;
 				continue;
 			}
-			final byte[] colors = FilledMapItem.getMapState(ife.getHeldItemStack(), source.getWorld()).colors;
+			final MapState state = FilledMapItem.getMapState(ife.getHeldItemStack(), source.getWorld());
+			if(state == null){
+				source.sendError(Text.literal("state == null in buildMapImgFile()!"));
+				Main.LOGGER.error("ExportMapImg: state == null in buildMapImgFile()!");
+				continue;
+			}
+			final byte[] colors = state.colors;
 			switch(ife.getRotation()%4){
 				case 1: rotate90(colors); break;
 				case 2: rotate180(colors); break;
@@ -268,7 +274,7 @@ public class CommandExportMapImg{
 			RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(sampleStacks, source.getWorld());
 			imgName = getCleanedName(nameStr, data);
 		}
-		imgName = imgName.trim().replaceAll("[.\\\\/]+", "_");
+		imgName = namePrefix + imgName.trim().replaceAll("[.\\\\/]+", "_");
 
 		//16755200
 		if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdir();
@@ -285,7 +291,7 @@ public class CommandExportMapImg{
 	}
 
 //	private boolean ongoingExport;
-	private boolean genImgForMapsInItemFrames(FabricClientCommandSource source, final List<ItemFrameEntity> ifes){
+	private boolean genImgForMapsInItemFrames(FabricClientCommandSource source, final List<ItemFrameEntity> ifes, final String namePrefix){
 		Direction facing = ifes.getFirst().getFacing();
 		int minX = facing.getAxis() == Axis.X ? ifes.getFirst().getBlockX() : ifes.stream().mapToInt(ItemFrameEntity::getBlockX).min().getAsInt();
 		int maxX = facing.getAxis() == Axis.X ? ifes.getFirst().getBlockX() : ifes.stream().mapToInt(ItemFrameEntity::getBlockX).max().getAsInt();
@@ -317,9 +323,9 @@ public class CommandExportMapImg{
 			source.sendFeedback(Text.literal("Large image detected, may take a moment..."));
 //			if(ongoingExport) return false;
 //			ongoingExport = true;
-			new Thread(){@Override public void run(){buildMapImgFile(source, ifeLookup, mapWall, w, h);/* ongoingExport = false;*/}}.run();
+			new Thread(){@Override public void run(){buildMapImgFile(source, ifeLookup, mapWall, w, h, namePrefix);/* ongoingExport = false;*/}}.run();
 		}
-		else buildMapImgFile(source, ifeLookup, mapWall, w, h);
+		else buildMapImgFile(source, ifeLookup, mapWall, w, h, namePrefix);
 		return true;
 	}
 
@@ -401,7 +407,7 @@ public class CommandExportMapImg{
 //		Main.LOGGER.info("ExportMapImg: Same-direction iFrames: "+iFrames.size());
 		List<ItemFrameEntity> ifes = getConnectedFrames(ifeLookup, targetIFrame);
 		Main.LOGGER.info("ExportMapImg: Connected iFrames: "+ifes.size());
-		return genImgForMapsInItemFrames(ctx.getSource(), ifes) ? 0 : 1;
+		return genImgForMapsInItemFrames(ctx.getSource(), ifes, "") ? 0 : 1;
 	}
 
 	private record MapWall(Direction dir, int axis){}
@@ -423,7 +429,7 @@ public class CommandExportMapImg{
 			while(!ifeLookup.isEmpty()){
 				List<ItemFrameEntity> ifes = getConnectedFrames(ifeLookup, ifeLookup.values().iterator().next());
 //				Main.LOGGER.info("CmdImgExport: size of connected mapWall section: "+ifes.size());
-				if(!genImgForMapsInItemFrames(ctx.getSource(), ifes)){
+				if(!genImgForMapsInItemFrames(ctx.getSource(), ifes, "walls_")){
 					Main.LOGGER.error("CmdImgExport: Encountered an error while exporting a "+ifes.size()+"-id mapwall");
 					ctx.getSource().sendError(Text.literal("Encountered an error while exporting a "+ifes.size()+"-id mapwall"));
 					return -1;
@@ -462,12 +468,14 @@ public class CommandExportMapImg{
 				List<ItemStack> mapItems = new LinkedList<>(stackToIfe.keySet());
 				while(!mapItems.isEmpty()){
 					final String name = mapItems.getFirst().getCustomName().getString();
-					final boolean locked = FilledMapItem.getMapState(mapItems.getFirst(), ctx.getSource().getWorld()).locked;
+					final MapState state = FilledMapItem.getMapState(mapItems.getFirst(), ctx.getSource().getWorld());
+					if(state == null) Main.LOGGER.error("ExportMapImg: State is null! in runCommandForAllMaps()");
+					final Boolean locked = state == null ? null : state.locked;
 					RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(mapItems, name, 1, locked, ctx.getSource().getWorld());
 					assert !data.slots().isEmpty();
 					final boolean success;
 					if(data.slots().size() <= 1){
-						success = genImgForMapsInItemFrames(ctx.getSource(), List.of(stackToIfe.get(mapItems.getFirst())));
+						success = genImgForMapsInItemFrames(ctx.getSource(), List.of(stackToIfe.get(mapItems.getFirst())), "named_");
 						mapItems.removeFirst();
 					}
 					else{
@@ -478,7 +486,7 @@ public class CommandExportMapImg{
 							relatedStacks.add(it.next());
 							it.remove();
 						}
-						success = genImgForMapsInItemFrames(ctx.getSource(), relatedStacks.stream().map(stackToIfe::get).toList());
+						success = genImgForMapsInItemFrames(ctx.getSource(), relatedStacks.stream().map(stackToIfe::get).toList(), "named_");
 					}
 					if(!success){
 						ctx.getSource().sendError(Text.literal("Encountered an error while exporting map img: "+name));
@@ -515,7 +523,7 @@ public class CommandExportMapImg{
 		}
 //		if(data.prefixLen() != -1) Main.LOGGER.info("CmdImgExport: prefix/suffix len: "+data.prefixLen()+", "+data.suffixLen());
 
-		if(!genImgForMapsInItemFrames(ctx.getSource(), data.slots().stream().map(i -> stackToIfe.get(slots.get(i))).toList())){
+		if(!genImgForMapsInItemFrames(ctx.getSource(), data.slots().stream().map(i -> stackToIfe.get(slots.get(i))).toList(), "named_")){
 			ctx.getSource().sendError(Text.literal("Encountered an error while exporting map img"));
 			Main.LOGGER.error("CmdImgExport: Encountered error while exporting map img for name: "+mapName);
 			return -1;
@@ -543,7 +551,7 @@ public class CommandExportMapImg{
 				.entrySet().stream().max(Map.Entry.comparingByValue()).get().getKey();
 		iFrames.removeIf(ife -> ife.getFacing() != facing);
 
-		return genImgForMapsInItemFrames(ctx.getSource(), iFrames) ? 0 : 1;
+		return genImgForMapsInItemFrames(ctx.getSource(), iFrames, "area_") ? 0 : 1;
 	}
 
 	private final boolean isReflectedChar(char l, char r){
