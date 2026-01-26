@@ -63,7 +63,7 @@ public final class KeybindMapMoveBundle{
 				hs instanceof InventoryScreen ? slots.length :
 				hs instanceof CraftingScreen ? slots.length :
 					slots.length; // unreachable?
-		final int BUNDLE_SLOT_START = SLOT_END < slots.length ? SLOT_END : 0;
+		final int BUNDLE_SLOT_START = SLOT_END < slots.length ? SLOT_END : SLOT_START;
 		assert SLOT_END != 0;
 		final int[] slotsWithMapArt = IntStream.range(SLOT_START, SLOT_END)
 				.filter(i -> slots[i].getItem() == Items.FILLED_MAP
