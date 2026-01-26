@@ -41,16 +41,16 @@ import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
 
 public final class MapHandRestock{
-	final boolean JUST_PICK_A_MAP = true;
+	private final boolean JUST_PICK_A_MAP = true;
 	private final PosData2D POS_DATA_404 = new PosData2D(false, null, null);
 
 	//Friend: AutoPlaceMapArt
-	record PosData2D(boolean isSideways, String minPos2, String maxPos2){}
-	record Pos2DPair(String posA1, String posA2, String posB1, String posB2){}
+	private final record PosData2D(boolean isSideways, String minPos2, String maxPos2){}
+	private final record Pos2DPair(String posA1, String posA2, String posB1, String posB2){}
 	private final HashMap<String, PosData2D> posData2dForName = new HashMap<>(0);
 
 	// For 2D maps, figure out the largest A2/B2 (2nd pos) in the available collection
-	private PosData2D getPosData2D(final List<String> posStrs, final boolean isSideways){
+	private final PosData2D getPosData2D(final List<String> posStrs, final boolean isSideways){
 		assert posStrs.size() >= 2 : "PosData2D requires at least 2 related maps";
 		final boolean hasSpace = posStrs.stream().anyMatch(n -> n.indexOf(' ') != -1);
 		final boolean cutMid = !hasSpace && posStrs.stream().allMatch(n -> n.length() == 2); // TODO: A9->A10 support
@@ -208,12 +208,12 @@ public final class MapHandRestock{
 		return checkComesAfterAnyOrder(posA, posB, regular2dData, /*infoLogs=*/false) != 0
 			|| checkComesAfterAnyOrder(posA, posB, rotated2dData, /*infoLogs=*/false) != 0;
 	}
-	private String getPosStrFromName(String name, final RelatedMapsData data){
+	private final String getPosStrFromName(String name, final RelatedMapsData data){
 		if(data.prefixLen() == -1) return name;
 		name = MapRelationUtils.removeByArtist(name);
 		return MapRelationUtils.simplifyPosStr(name.substring(data.prefixLen(), name.length()-data.suffixLen()));
 	}
-	private int getNextSlotByNameUsingPosData2d(final List<ItemStack> slots, final RelatedMapsData data,
+	private final int getNextSlotByNameUsingPosData2d(final List<ItemStack> slots, final RelatedMapsData data,
 			final String prevPosStr, final PosData2D posData2d, final boolean infoLogs){
 		assert !data.slots().isEmpty() : "getNextSlotByNameUsingPosData2d() must be called with non-empty slot list!";
 		int bestSlot = data.slots().getFirst(), bestConfidence=0;
@@ -230,8 +230,8 @@ public final class MapHandRestock{
 		if(bestConfidence == 0 && infoLogs) Main.LOGGER.warn("MapRestock: bestConfidence==0! Likely skipping a map");
 		return bestSlot * (bestConfidence < 0 ? -1 : 1);//TODO: remove horrible hack
 	}
-	private record TrailLenAndScore(int len, long score){}
-	private TrailLenAndScore getTrailLengthAndScore(final List<ItemStack> slots, final RelatedMapsData data, int prevSlot,
+	private final record TrailLenAndScore(int len, long score){}
+	private final TrailLenAndScore getTrailLengthAndScore(final List<ItemStack> slots, final RelatedMapsData data, int prevSlot,
 			final PosData2D posData2d, final World world){
 		int trailLength = 0;
 		long scoreSum = 0;
@@ -409,14 +409,14 @@ public final class MapHandRestock{
 		return bestSlot;
 	}
 
-	private boolean isInNearbyItemFrame(final ItemStack stack, final PlayerEntity player, final int dist){
+	private final boolean isInNearbyItemFrame(final ItemStack stack, final PlayerEntity player, final int dist){
 		return !player.getWorld().getEntitiesByType(
 				TypeFilter.instanceOf(ItemFrameEntity.class),
 				Box.of(player.getPos(), dist, dist, dist),
 				e -> ItemStack.areEqual(e.getHeldItemStack(), stack)).isEmpty();
 	}
 
-	private List<ItemStack> getSlotsWithBundleSub(List<ItemStack> slots, PlayerEntity player, String prevName){
+	private final List<ItemStack> getSlotsWithBundleSub(List<ItemStack> slots, PlayerEntity player, String prevName){
 		if(!Configs.Generic.PLACEMENT_HELPER_MAPART_FROM_BUNDLE.getBooleanValue()) return slots;
 		if(!slots.stream().map(s -> s.get(DataComponentTypes.BUNDLE_CONTENTS))
 				.anyMatch(b -> b != null && !b.isEmpty() && b.stream().allMatch(s -> s.getItem() == Items.FILLED_MAP))) return slots;
@@ -440,9 +440,9 @@ public final class MapHandRestock{
 	}
 
 	private boolean waitingForRestock;
-	private final void tryToStockNextMap(PlayerEntity player){
-		final int prevSlot = player.getInventory().selectedSlot+36;
-		final ItemStack mapInHand = player.getMainHandStack();
+	private final void tryToStockNextMap(PlayerEntity player, Hand hand){
+		final int prevSlot = hand == Hand.MAIN_HAND ? player.getInventory().selectedSlot+36 : PlayerScreenHandler.OFFHAND_ID;
+		final ItemStack mapInHand = player.getStackInHand(hand);
 		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).toList();
 		assert slots.get(prevSlot) == mapInHand;
 		final String prevName = mapInHand.getCustomName() == null ? null : mapInHand.getCustomName().getLiteralString();
@@ -482,7 +482,7 @@ public final class MapHandRestock{
 		waitingForRestock = true;
 		new Thread(){@Override public void run(){
 //			Main.LOGGER.info("MapRestock: waiting for currently placed map to load");
-			while(player != null && !player.isInCreativeMode() && UpdateInventoryHighlights.hasCurrentlyBeingPlaceMapArt()) Thread.yield();
+			while(player != null && !player.isInCreativeMode() && UpdateInventoryHighlights.hasCurrentlyBeingPlacedMapArt()) Thread.yield();
 			if(player == null){waitingForRestock = false; return;}
 
 //			Main.LOGGER.info("MapRestock: ok, sync client execution");
@@ -516,6 +516,7 @@ public final class MapHandRestock{
 		}}.start();
 	}
 
+	private boolean hasAutoPlaceableMapInInv;
 	public MapHandRestock(final boolean allowAutoPlacer, final boolean allowAutoRemover){
 		final AutoPlaceMapArt autoPlacer = allowAutoPlacer ? new AutoPlaceMapArt() : null;
 		final AutoRemoveMapArt autoRemover = allowAutoRemover ? new AutoRemoveMapArt() : null;
@@ -555,7 +556,8 @@ public final class MapHandRestock{
 			}
 			//Main.LOGGER.info("placed item from mainhand");
 			if(!ife.getHeldItemStack().isEmpty()){
-				if(allowAutoPlacer && Configs.Generic.MAPART_AUTOPLACE_ANTI_ROTATE.getBooleanValue() && autoPlacer.hasKnownLayout()
+				if(allowAutoPlacer && Configs.Generic.MAPART_AUTOPLACE_ANTI_ROTATE.getBooleanValue()
+						&& autoPlacer.hasKnownLayout() && hasAutoPlaceableMapInInv
 						&& ife.getHeldItemStack().getItem() == Items.FILLED_MAP){
 					Main.LOGGER.warn("AutoPlaceMapArt: Discarding a (likely accidental) map-rotation click");
 					return ActionResult.FAIL;
@@ -563,7 +565,8 @@ public final class MapHandRestock{
 				return ActionResult.PASS;
 			}
 			//Main.LOGGER.info("item frame is empty");
-			ItemStack stack = player.getMainHandStack();
+
+			final ItemStack stack = player.getStackInHand(hand);
 			if(waitingForRestock && (stack.isEmpty() || stack.getItem() == Items.FILLED_MAP)){
 				// Little safety net to keep player from placing offhand item into iFrame if right-clicking faster than hand restock can handle
 				Main.LOGGER.warn("MapRestock: Player right-clicking iFrame before previous tryToStockNextMap() has finished!");
@@ -574,14 +577,18 @@ public final class MapHandRestock{
 			if(stack.getCount() > 2) return ActionResult.PASS;
 			//Main.LOGGER.info("item in hand is filled_map [1or2]");
 
-			UpdateInventoryHighlights.setCurrentlyBeingPlacedMapArt(player, stack);
+			final int shSlot = hand == Hand.MAIN_HAND ? player.getInventory().selectedSlot : 40;
+//			assert ItemStack.areEqual(player.getStackInHand(hand), player.getInventory().getStack(player.getInventory().selectedSlot));
+			UpdateInventoryHighlights.setCurrentlyBeingPlacedMapArt(stack, shSlot);
 
-			if(allowAutoPlacer && autoPlacer.recalcLayout(player, ife, stack)){
+			if(allowAutoPlacer && autoPlacer.recalcLayout(player, ife, stack) && (hasAutoPlaceableMapInInv=
+					(autoPlacer.getNearestMapPlacement(player, /*allowOutsideReach=*/true, /*allowMapInHand=*/false) != null))
+			){
 				Main.LOGGER.info("MapRestock: AutoPlaceMapArt is active");
 			}
 			else if(Configs.Generic.PLACEMENT_HELPER_MAPART.getBooleanValue()){
 				Main.LOGGER.info("MapRestock: doing best-guess hand restock");
-				tryToStockNextMap(player);
+				tryToStockNextMap(player, hand);
 			}
 			return ActionResult.PASS;
 		});

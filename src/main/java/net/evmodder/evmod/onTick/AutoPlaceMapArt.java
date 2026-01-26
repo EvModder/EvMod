@@ -171,6 +171,11 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		return MapRelationUtils.simplifyPosStr(nameWithoutArtist.substring(currentData.prefixLen(), nameWithoutArtist.length()-currentData.suffixLen()));
 	}
 
+	private final int getSmallestFactor(final int n){
+		for(int i=2; i*i <= n; ++i) if(n % i == 0) return i;
+		return n;
+	}
+
 	public final boolean recalcLayout(PlayerEntity player, ItemFrameEntity currIfe, ItemStack currStack){
 		synchronized(stacksHashesForCurrentData){
 		String currPosStr = null;
@@ -248,14 +253,16 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				disableAndReset(); return false;
 			}
 			final int a = Integer.parseInt(currPosStr)-1, b = Integer.parseInt(lastPosStr)-1;
-			if(a > ofSize || b > ofSize || a < 1 || b < 1 || a==b){
+			if(a >= ofSize || b >= ofSize || a < 0 || b < 0 || a==b){
 				Main.LOGGER.warn("AutoPlaceMapArt: Invalid 1d X/SIZE pos! a="+a+",b="+b);
 				disableAndReset(); return false;
 			}
+//			Main.LOGGER.info("AutoPlaceMapArt: for X/SIZE, a="+a+", b="+b+", ifeOffset1="+ifeOffset1+", ifeOffset2="+ifeOffset2);
+			final int posOffset = a-b;
 			if(ifeOffset1 == 0 || ifeOffset2 == 0){
 				final int ifeOffset = ifeOffset1 + ifeOffset2; // one of them is 0
 				final int ifeOffsetAbs = Math.abs(ifeOffset);
-				final int posOffsetAbs = Math.abs(a-b); // "a/SIZE", "b/SIZE" => a-b
+				final int posOffsetAbs = Math.abs(posOffset); // "a/SIZE", "b/SIZE" => a-b
 				final boolean onSameRow = posOffsetAbs == ifeOffsetAbs;
 				final boolean isAxisMatch = (ifeOffset1 != 0) == onSameRow;
 				if(axisMatch == null){
@@ -267,7 +274,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					disableAndReset();
 					return false;
 				}
-				final boolean isNeg = (ifeOffset < 0 == a < b); // Equivalent: LHS == a-b < 0
+				final boolean isNeg = (ifeOffset > 0 != posOffset > 0); // Equivalent: LHS == a-b < 0
 				if(axisMatch){
 					if(varAxis1Neg == null) varAxis1Neg = isNeg;
 					else if(varAxis1Neg != isNeg){
@@ -287,25 +294,41 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			}
 			if(axisMatch == null) return false;
 			final int colOffset = axisMatch ? ifeOffset2 : ifeOffset1;
-			if(colOffset == 0) return false;
 			final int rowOffset = axisMatch ? ifeOffset1 : ifeOffset2;
-			if(rowOffset == 0) rowWidth = Math.abs(a-b)/Math.abs(colOffset);
+//			Main.LOGGER.info("AutoPlaceMapArt: rowOffset="+rowOffset+", colOffset="+colOffset);
+			if(colOffset == 0){
+				if((rowOffset+1)*getSmallestFactor(ofSize) == ofSize){
+					Main.LOGGER.info("AutoPlaceMapArt: rowOffset==smallestFactorOfSize, so it must equal rowWidth");
+					rowWidth = rowOffset+1;
+				}
+				else{
+					// A little hack: store the smaller-col-index map, to help out the logic above by maximizing future rowOffset
+					if(a > b){currIfe = lastIfe; currStack = lastStack; currPosStr = lastPosStr;}
+					return false;
+				}
+			}
+			else if(rowOffset == 0){
+				Main.LOGGER.info("AutoPlaceMapArt: rowOffset==0, so (a-b)/colOffset will give rowWidth");
+				rowWidth = Math.abs(posOffset)/Math.abs(colOffset);
+			}
 			else{
 				if(varAxis1Neg == null && varAxis2Neg == null) return false;
 				final Boolean rowNeg = axisMatch ? varAxis1Neg : varAxis2Neg;
 				final Boolean colNeg = axisMatch ? varAxis2Neg : varAxis1Neg;
 				if(rowNeg != null){
-					final int test1 = Math.abs(a-b - rowOffset*(rowNeg ? -1 : +1));
+					final int test1 = Math.abs(posOffset + rowOffset*(rowNeg ? -1 : +1));
 					assert test1 % Math.abs(colOffset) == 0;
+					Main.LOGGER.info("AutoPlaceMapArt: rowNeg is known, solving sys-of-eqs, test1="+test1);
 					rowWidth = test1/Math.abs(colOffset);
 				}
 				else if(colNeg != null){
 					//Solve for: a + rowOffset*rowNeg + colOffset*colNeg*rowWidth = b;
 					// a-b = rowOffset*rowNeg + colOffset*colNeg*rowWidth
 					// (a-b - rowOffset*rowNeg)/(colOffset*colNeg) = rowWidth
-					final int test1 = Math.abs(a-b - rowOffset);
-					final int test2 = Math.abs(a-b + rowOffset);
+					final int test1 = Math.abs(posOffset + rowOffset);
+					final int test2 = Math.abs(posOffset - rowOffset);
 					final int off = colOffset*(colNeg ? -1 : +1);
+					Main.LOGGER.info("AutoPlaceMapArt: a-b="+posOffset+", rowOffset="+rowOffset+", test1="+test1+", test2="+test2+", off="+off);
 					final boolean posWorks = test1 % off == 0, negWorks = test2 % off == 0;
 					assert posWorks || negWorks;
 					if(posWorks && negWorks){
@@ -313,10 +336,12 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 						return false;
 					}
 					if(posWorks){
+						Main.LOGGER.info("AutoPlaceMapArt: (1d pos) using test1");
 						rowWidth = test1/off;
 //						rowNeg = false;
 					}
 					if(negWorks){
+						Main.LOGGER.info("AutoPlaceMapArt: (1d pos) using test2");
 						rowWidth = test2/off;
 //						colNeg = true;
 					}
@@ -336,7 +361,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		}
 
 		final int posOffset1 = pos2dPair.a1 - pos2dPair.b1, posOffset2 = pos2dPair.a2 - pos2dPair.b2;
-		Main.LOGGER.info("AutoPlaceMapArt: posOffset1="+posOffset1+",posOffset2="+posOffset2);
+//		Main.LOGGER.info("AutoPlaceMapArt: posOffset1="+posOffset1+",posOffset2="+posOffset2);
 
 //		assert(
 //			(Math.abs(posOffset1) == Math.abs(ifeOffset1) && Math.abs(posOffset2) == Math.abs(ifeOffset2)) ||
@@ -522,10 +547,11 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 	boolean foundValidPosOnLastAttempt;
 	record MapPlacementData(int slot, int bundleSlot, ItemFrameEntity ife, BlockPos bp){}
-	private final MapPlacementData getNearestMapPlacement(PlayerEntity player){
+	public final MapPlacementData getNearestMapPlacement(PlayerEntity player, final boolean allowOutsideMaxReach, final boolean allowMapInHand){
 		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).collect(Collectors.toList());
 
 		final double MAX_REACH = Configs.Generic.PLACEMENT_HELPER_MAPART_REACH.getDoubleValue();
+		final double MAX_REACH_SQ = MAX_REACH*MAX_REACH;
 		final double SCAN_DIST = MAX_REACH+2;
 
 		Box box = player.getBoundingBox().expand(SCAN_DIST, SCAN_DIST, SCAN_DIST);
@@ -546,6 +572,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		invloop: for(int i=slots.size()-1; i>=0; --i){
 			final boolean isInHotbar = i >= 36 && i < 45 && slots.get(i).getItem() == Items.FILLED_MAP;
 			if(nearestIsInHotbar && !isInHotbar) continue;
+			if(!allowMapInHand && i-36 == player.getInventory().selectedSlot) continue;
 //			ItemStack mapItem = slots.get(i);
 			BundleContentsComponent contents = slots.get(i).get(DataComponentTypes.BUNDLE_CONTENTS);
 			if(bundleSlot == -1 && contents != null) continue; // Prefer to avoid bundles when we have an alterantive itemstack
@@ -586,8 +613,10 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					}
 					distSq = ifeEyePos.squaredDistanceTo(player.getEyePos());
 				}
-				if(distSq > MAX_REACH*MAX_REACH) continue;
-				++numRelatedInRangeStrict;
+				if(distSq > MAX_REACH_SQ){
+					if(!allowOutsideMaxReach || nearestDistSq <= MAX_REACH_SQ) continue;
+				}
+				else ++numRelatedInRangeStrict;
 
 				if(ife == null){
 					int bpHash = ifeBp.hashCode()+1;
@@ -597,16 +626,16 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					Main.LOGGER.warn("AutoPlaceMapArt: Cannot place into the same iFrame twice! "+ifeBp.toShortString());
 					continue;
 				}
-				final boolean isSelected = isInHotbar && i-36 == player.getInventory().selectedSlot;
-				if(isSelected || distSq < nearestDistSq || (isInHotbar && !nearestIsInHotbar)){
+				final boolean justUseIt = isInHotbar && i-36 == player.getInventory().selectedSlot && distSq <= MAX_REACH_SQ;
+				if(justUseIt || distSq < nearestDistSq || (isInHotbar && !nearestIsInHotbar)){
 					nearestIsInHotbar = isInHotbar;
 					nearestDistSq = distSq;
 					nearestSlot = i;
 					bundleSlot = j;
 					nearestIfe = ife;
 					nearestBp = ifeBp;
-					if(isSelected){
-						if(!hasWarnedMissingIfe) Main.LOGGER.info("AutoPlaceMapArt: Stack in hand is a valid candidate, using it!");
+					if(justUseIt){
+//						if(!hasWarnedMissingIfe) Main.LOGGER.info("AutoPlaceMapArt: Stack in hand is a valid candidate, using it!");
 						break invloop;
 					}
 				}
@@ -614,7 +643,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		}
 //		Main.LOGGER.info("AutoPlaceMapArt: distance to place-loc for itemstack in slot"+nearestSlot+": "+Math.sqrt(nearestDistSq));
 //		return nearestSlot == -1 ? null : new MapPlacementData(nearestSlot, bundleSlot, nearestStack, nearestIfe);
-		if(nearestSlot == -1){
+		if(nearestBp == null){
 			if(foundValidPosOnLastAttempt) Main.LOGGER.info("AutoPlaceMapArt: No viable itemstack->iframe found. #nearby_ifes="+ifes.size()
 				+",#maps="+numMaps+",#related="+numRelated+",#in_range="+numRelatedInRange+",#in_range_strict(ife)="+numRelatedInRangeStrict);
 			foundValidPosOnLastAttempt = false;
@@ -729,7 +758,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 		// Sadly this doesn't work after the last manual map, since UseEntityCallback.EVENT isn't triggered for some reason.
 		// And yeah, I tried setting it manually, but since the code can't guarantee a map gets placed, it can get it stuck.
-		if(!player.isInCreativeMode() && UpdateInventoryHighlights.hasCurrentlyBeingPlaceMapArt()){
+		if(!player.isInCreativeMode() && UpdateInventoryHighlights.hasCurrentlyBeingPlacedMapArt()){
 			Main.LOGGER.info("AutoPlaceMapArt: waiting for last manually-placed mapart to vanish from mainhand");
 			return;
 		}
@@ -764,7 +793,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 		if(isMovingTooFast(player.getVelocity())) return; // Pause while player is moving
 
-		final MapPlacementData data = getNearestMapPlacement(player);
+		final MapPlacementData data = getNearestMapPlacement(player, /*allowOutsideReach=*/false, /*allowMapInHand=*/true);
 		if(data == null) return;
 
 		if(player.playerScreenHandler != null && !player.playerScreenHandler.getCursorStack().isEmpty()){

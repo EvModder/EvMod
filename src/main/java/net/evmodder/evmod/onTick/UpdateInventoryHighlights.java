@@ -4,20 +4,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.InvUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.map.MapState;
+import net.minecraft.screen.ScreenHandler;
 import net.minecraft.world.World;
 
 public class UpdateInventoryHighlights{
 	private static HashSet<UUID> inventoryMapGroup = new HashSet<>(), nestedInventoryMapGroup = new HashSet<>();
 	private static ItemStack currentlyBeingPlacedIntoItemFrame;
+	private static int slotUsedForCurrentlyBeingPlacedItem;
 //	private static int itemsInInvHash;
 	private static int mapsInInvHash;
 
@@ -30,20 +32,12 @@ public class UpdateInventoryHighlights{
 		return nestedInventoryMapGroup.contains(colorsUUID);
 	}
 
-	public static final boolean setCurrentlyBeingPlacedMapArt(PlayerEntity player, ItemStack stack){
-		final MapState state = FilledMapItem.getMapState(stack, player.getWorld());
-		if(state != null && stack.getCount() == 1 &&
-				IntStream.range(0, 41).noneMatch(i -> i != player.getInventory().selectedSlot &&
-				FilledMapItem.getMapState(player.getInventory().getStack(i), player.getWorld()) == state))
-		{
-//			currentlyBeingPlacedIntoItemFrameSlot = player.getInventory().selectedSlot;
-			currentlyBeingPlacedIntoItemFrame = stack.copy();
-			onTickStart(player);
-			return true;
-		}
-		return false;
+	public static final void setCurrentlyBeingPlacedMapArt(ItemStack stack, int slot){
+		assert ItemStack.areEqual(MinecraftClient.getInstance().player.getInventory().getStack(slot), stack);
+		currentlyBeingPlacedIntoItemFrame = stack.copy();
+		slotUsedForCurrentlyBeingPlacedItem = slot;
 	}
-	public static final boolean hasCurrentlyBeingPlaceMapArt(){return currentlyBeingPlacedIntoItemFrame != null;}
+	public static final boolean hasCurrentlyBeingPlacedMapArt(){return currentlyBeingPlacedIntoItemFrame != null;}
 
 	private static final boolean addMapStateIds(final ItemStack stack, final World world){
 		if(stack.isEmpty()) return false;
@@ -55,18 +49,9 @@ public class UpdateInventoryHighlights{
 							: InvUtils.getAllNestedItemsExcludingBundles(Stream.of(stack)))
 					.map(s -> FilledMapItem.getMapState(s, world)).filter(Objects::nonNull)
 					.map(MapGroupUtils::getIdForMapState).toList();
-			if(!colorIds.isEmpty()){
-				nestedInventoryMapGroup.addAll(colorIds);
-			}
-			return false;
+			return nestedInventoryMapGroup.addAll(colorIds);
 		}
-		//if(i == currentlyBeingPlacedIntoItemFrameSlot &&
-		if(currentlyBeingPlacedIntoItemFrame != null && ItemStack.areEqual(stack, currentlyBeingPlacedIntoItemFrame)){
-//			mapPlaceStillOngoing = true; continue;
-			return true;
-		}
-		inventoryMapGroup.add(MapGroupUtils.getIdForMapState(state));
-		return false;
+		return inventoryMapGroup.add(MapGroupUtils.getIdForMapState(state));
 	}
 	public static final void onTickStart(PlayerEntity player){
 		if(player == null || player.getWorld() == null || !player.isAlive()) return;
@@ -77,27 +62,27 @@ public class UpdateInventoryHighlights{
 			MapState state = FilledMapItem.getMapState(player.getMainHandStack(), player.getWorld());
 			if(state != null && !state.locked) MapGroupUtils.getIdForMapState(state, /*evict*/true);
 		}
+		{
+			// Check if the currentlyBeingPlacedIntoItemFrame slot has changed value (indicates it's done being placed)
+			if(currentlyBeingPlacedIntoItemFrame != null && 
+					!ItemStack.areEqual(player.getInventory().getStack(slotUsedForCurrentlyBeingPlacedItem), currentlyBeingPlacedIntoItemFrame)){
+//				MapState state = FilledMapItem.getMapState(currentlyBeingPlacedIntoItemFrame, player.getWorld());
+//				UUID colorsId = MapGroupUtils.getIdForMapState(state);
+//				if(UpdateItemFrameHighlights.isInItemFrame(colorsId)){
+//					Main.LOGGER.info("UpdateInv.onTickStart: Map appeared in iFrame before disappearing from inv");
+//				}
+				currentlyBeingPlacedIntoItemFrame = null;
+			}
+		}
 
 		inventoryMapGroup.clear();
 		nestedInventoryMapGroup.clear();
-		boolean mapPlaceStillOngoing = false;
-		for(int i=0; i<41; ++i) mapPlaceStillOngoing |= addMapStateIds(player.getInventory().getStack(i), player.getWorld());
-		if(player.currentScreenHandler != null){
-			mapPlaceStillOngoing |= addMapStateIds(player.currentScreenHandler.getCursorStack(), player.getWorld());
-		}
+		final ScreenHandler sh = player.currentScreenHandler;
+//		boolean anyNewMap = false;
+		for(int i=0; i<41; ++i) /*anyNewMap |=*/ addMapStateIds(player.getInventory().getStack(i), player.getWorld());
+		if(sh != null) /*anyNewMap |=*/ addMapStateIds(sh.getCursorStack(), player.getWorld());
 
-		if(!mapPlaceStillOngoing){
-			currentlyBeingPlacedIntoItemFrame = null;
-//			currentlyBeingPlacedIntoItemFrameSlot = -1;
-		}
-//		else if(UpdateItemFrameHighlights.isInItemFrame(currentlyBeingPlacedIntoItemFrame)){
-//			Main.LOGGER.info("MapGroupUtils: Ah yes, map is placed in itemframe and yet still in inventory. Thanks Minecraft");
-//		}
-//		if(newInvHash != invHash){
-//			invHash = newInvHash;
-//			ItemFrameHighlightUpdater.highlightedIFrames.clear(); // Push vs pull?
-//		}
-		final int syncId = player.currentScreenHandler != null ? player.currentScreenHandler.syncId : 0;
+		final int syncId = sh == null ? 0 : sh.syncId;
 		mapsInInvHash = syncId + inventoryMapGroup.hashCode() + nestedInventoryMapGroup.hashCode();// * (mapPlaceStillOngoing ? 7 : 1);
 	}
 }

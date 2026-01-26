@@ -59,8 +59,10 @@ abstract class MixinClientPlayNetworkHandler{
 	}
 
 	private void saveMapsForServer(String address, HashSet<UUID> colorIds){
+		Main.LOGGER.info("MapDB: saveMapsForServer()");
 		final ByteBuffer bb = ByteBuffer.allocate(colorIds.size()*16);
 		for(UUID uuid : colorIds) bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
+//		colorIds.forEach(uuid -> bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits()));
 		File dir = new File(FileIO.DIR+DIR);
 		if(!dir.exists()){
 			File parent = new File(FileIO.DIR+CommandMapArtGroup.DIR);
@@ -102,7 +104,7 @@ abstract class MixinClientPlayNetworkHandler{
 			seenForServer = mapsSaved.computeIfAbsent(addr, this::loadMapsForServer);
 			if(!seenForServer.add(colorsId)) return; // Already seen
 			if(oldColorsId != null && !oldColorsId.equals(colorsId)){
-				Main.LOGGER.info("[OnMapUpdate debug]: colordsId "+oldColorsId+" -> "+colorsId);
+//				Main.LOGGER.info("MapDB: MapUpdateS2CPacket packet changed state.colors for id"+id+", colordsId "+oldColorsId+" -> "+colorsId);
 				seenForServer.remove(oldColorsId);
 			}
 		}
