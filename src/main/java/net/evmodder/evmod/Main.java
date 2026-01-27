@@ -72,12 +72,13 @@ public class Main{
 	// inv-keybind-craft-latest-item, also for enchant table and grindstone (eg. spam enchanting axes) via spacebar, like vanilla
 
 	public static final String MOD_ID = InitUtils.getModId();
-	public static final String MOD_NAME;
-	public static final String MOD_VERSION;
+	public static final String MOD_NAME; // Only accessor: KeyCallbacks
+	public static final String MOD_VERSION; // Only accessor: ConfigGui
+	public static final String CONFIG_DIR; // Only accessor: Configs
 	public static final Logger LOGGER;
 	static{
-		FileIO.DIR = FabricLoader.getInstance().getConfigDir().toString()+"/"+Main.MOD_ID+"/";
-		ModMetadata metadata = FabricLoader.getInstance().getModContainer(MOD_ID).get().getMetadata();
+		FileIO.DIR = CONFIG_DIR = FabricLoader.getInstance().getConfigDir().toString()+"/"+MOD_ID+"/";
+		final ModMetadata metadata = FabricLoader.getInstance().getModContainer(MOD_ID).get().getMetadata();
 		MOD_NAME = metadata.getName();
 		MOD_VERSION = metadata.getVersion().getFriendlyString();
 		LOGGER = LoggerFactory.getLogger(MOD_ID);
@@ -94,6 +95,7 @@ public class Main{
 		Main.LOGGER.info("Loading "+MOD_NAME+" "+MOD_VERSION);
 		instance = this;
 		final Settings settings = new Settings();
+		if(!settings.storeDataInConfigFolder) FileIO.DIR = FabricLoader.getInstance().getGameDir()+"/"+MOD_ID+"/";
 		final Configs configs = new Configs(settings);
 		configs.load();
 
@@ -126,7 +128,7 @@ public class Main{
 		}
 		kbCraftRestock = new KeybindCraftingRestock();
 
-		if(settings.placementHelperIframe) new AutoPlaceItemFrames();
+		if(settings.placementHelperIframeAutoPlace) new AutoPlaceItemFrames();
 		if(settings.placementHelperMapArt) new MapHandRestock(settings.placementHelperMapArtAutoPlace, settings.placementHelperMapArtAutoRemove);
 		if(settings.broadcaster) ChatBroadcaster.refreshBroadcast();
 

@@ -50,7 +50,7 @@ public class ConfigGui extends GuiConfigsBase{
 		x += createButton(x, y, ConfigGuiTab.GENERIC);
 		x += createButton(x, y, ConfigGuiTab.VISUALS);
 		x += createButton(x, y, ConfigGuiTab.HOTKEYS);
-		if(!Main.mapArtFeaturesOnly) x += createButton(x, y, ConfigGuiTab.DATABASE);
+		if(configs.getDatabaseConfigs() != null) x += createButton(x, y, ConfigGuiTab.DATABASE);
 	}
 
 	@Override protected boolean useKeybindSearch(){return configs.guiTab == ConfigGuiTab.HOTKEYS.ordinal();}
@@ -58,11 +58,11 @@ public class ConfigGui extends GuiConfigsBase{
 	@Override public List<ConfigOptionWrapper> getConfigs(){
 		return ConfigOptionWrapper.createFor(
 			switch(ConfigGuiTab.values()[configs.guiTab]){
-				case ALL -> configs.getAllOptions();
-				case GENERIC -> configs.getGenericOptions();
-				case VISUALS -> configs.getVisualsOptions();
-				case HOTKEYS -> configs.getHotkeysOptions();
-				case DATABASE -> configs.getDatabaseOptions();
+				case ALL -> configs.getAllConfigs();
+				case GENERIC -> configs.getGenericConfigs();
+				case VISUALS -> configs.getVisualsConfigs();
+				case HOTKEYS -> configs.getHotkeysConfigs();
+				case DATABASE -> configs.getDatabaseConfigs();
 //				case RENDER_LAYERS -> Collections.emptyList();
 			}
 		);

@@ -121,7 +121,7 @@ public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 		return data.slots().size() == 2;
 	}
 	private final ItemFrameEntity getNearestMapToRemove(PlayerEntity player){
-		final double MAX_REACH = Configs.Generic.PLACEMENT_HELPER_MAPART_REACH.getDoubleValue();
+		final double MAX_REACH = Configs.Generic.MAPART_AUTOREMOVE_REACH.getDoubleValue();
 		final double SCAN_DIST = MAX_REACH+2;
 
 		Box box = player.getBoundingBox().expand(SCAN_DIST, SCAN_DIST, SCAN_DIST);

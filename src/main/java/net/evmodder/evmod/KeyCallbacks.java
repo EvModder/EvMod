@@ -43,16 +43,16 @@ final class KeyCallbacks{
 	){
 		InputEventHandler.getKeybindManager().registerKeybindProvider(new IKeybindProvider(){
 			@Override public void addKeysToMap(IKeybindManager manager){
-//				configs.getHotkeysOptions().stream().filter(IHotkey.class::isInstance)
+//				configs.getHotkeysConfigs().stream().filter(IHotkey.class::isInstance)
 //						.map(IHotkey.class::cast).map(IHotkey::getKeybind).forEach(manager::addKeybindToMap);
-				configs.getHotkeysOptions().forEach(opt ->{if(opt instanceof IHotkey hotkey) manager.addKeybindToMap(hotkey.getKeybind());});
-				configs.getGenericOptions().forEach(opt ->{if(opt instanceof IHotkey hotkey) manager.addKeybindToMap(hotkey.getKeybind());});
+				configs.getHotkeysConfigs().forEach(opt ->{if(opt instanceof IHotkey hotkey) manager.addKeybindToMap(hotkey.getKeybind());});
+				configs.getGenericConfigs().forEach(opt ->{if(opt instanceof IHotkey hotkey) manager.addKeybindToMap(hotkey.getKeybind());});
 			}
 			@Override public void addHotkeys(IKeybindManager manager){
 				manager.addHotkeysForCategory(Main.MOD_NAME, Main.MOD_ID + ".hotkeys.category.hotkeys",
-						configs.getHotkeysOptions().stream().filter(IHotkey.class::isInstance).map(IHotkey.class::cast).toList());
+						configs.getHotkeysConfigs().stream().filter(IHotkey.class::isInstance).map(IHotkey.class::cast).toList());
 				manager.addHotkeysForCategory(Main.MOD_NAME, Main.MOD_ID + ".hotkeys.category.misc_hotkeys",
-						configs.getGenericOptions().stream().filter(IHotkey.class::isInstance).map(IHotkey.class::cast).toList());
+						configs.getGenericConfigs().stream().filter(IHotkey.class::isInstance).map(IHotkey.class::cast).toList());
 			}
 		});
 

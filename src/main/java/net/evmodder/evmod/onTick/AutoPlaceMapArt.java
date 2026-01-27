@@ -550,7 +550,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 	public final MapPlacementData getNearestMapPlacement(PlayerEntity player, final boolean allowOutsideMaxReach, final boolean allowMapInHand){
 		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).collect(Collectors.toList());
 
-		final double MAX_REACH = Configs.Generic.PLACEMENT_HELPER_MAPART_REACH.getDoubleValue();
+		final double MAX_REACH = Configs.Generic.MAPART_AUTOPLACE_REACH.getDoubleValue();
 		final double MAX_REACH_SQ = MAX_REACH*MAX_REACH;
 		final double SCAN_DIST = MAX_REACH+2;
 

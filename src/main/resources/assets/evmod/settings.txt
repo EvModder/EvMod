@@ -1,0 +1,41 @@
+# EvMod expanded feature settings
+
+# What separates these from configs.json?
+# The settings controlled by this file either cannot be easily changed while the game is running, or doing so incurs a performance hit. Hence, they are here.
+# Anything in configs.json can be configured ingame (default keybind for GUI is M+N).
+# Any changes you make to *this* file will require a game restart to take effect.
+
+enable_non_mapart_features: true
+show_niche_config_settings: false
+store_data_in_instance_folder: true
+
+placement_helper.mapart: true #(registers: onTick() + listener.entityInteractEvent)
+placement_helper.mapart.autoplace: true #(registers: onTick() + listener.entityAttackEvent)
+placement_helper.mapart.autoremove: true #(registers: onTick() + listener.entityAttackEvent)
+placement_helper.iframe.autoplace: true #(registers: onTick())
+
+map_highlights: true
+map_highlights.in_gui: true
+tooltip.map_highlights: true
+tooltip.map_metadata: true
+tooltip.repair_cost: true
+
+listener.server_join: true  # depends: mapstate_cache.inv, send_on_srvr_join
+listener.server_quit: true  # depends: mapstate_cache.inv, log_logout_coords
+listener.container_open: true  # depends: inventory_restock.auto, mapstate_cache.echest
+
+database: true
+
+listener.game_message.read: true  # depends: share_ignores, whisper_sound, whisper_pearl_pull
+listener.game_message.filter: true  # depends: borrow_ignores
+inventory_restock.auto: false
+broadcaster: false
+epearl_owners: false  # depends: uuid/xz, softdepends: database
+
+command.assignpearl: true
+command.exportmapimg: true
+command.mapartgroup: true
+command.maphashcode: true
+command.seen: true
+command.sendas: true
+command.timeonline: true
