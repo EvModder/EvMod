@@ -1,7 +1,7 @@
 package net.evmodder.evmod.mixin;
 
+import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapColorUtils;
-import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.onTick.UpdateContainerHighlights;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -43,8 +43,8 @@ abstract class MixinHandledScreen<T extends ScreenHandler> extends Screen{
 	// MIT License, so I borrowed his logic.
 	@Inject(method="mouseDragged", at=@At("HEAD"), cancellable=true)
 	private final void disableMouseDragForBundlesAndMapsSinceItIsBuggyOn2b2t(CallbackInfoReturnable<Boolean> cir){
-		if(MiscUtils.getCurrentServerAddressHashCode() != MiscUtils.HASHCODE_2B2T) return;
-//		if(!Configs.Generic.FIX_2B2T_GHOST_ITEMS.getBooleanValue()) return;
+//		if(MiscUtils.getCurrentServerAddressHashCode() != MiscUtils.HASHCODE_2B2T) return;
+		if(!Configs.Generic.DISABLE_DRAG_CLICK_ON_MAPS_AND_BUNDLES.getBooleanValue()) return;
 
 		if(client.player == null || client.player.isCreative()) return; // Breaks creative middle-click drag (on other servers)
 		final ItemStack cursorStack = handler.getCursorStack();

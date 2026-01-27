@@ -111,6 +111,8 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigString TEMP_BROADCAST_TIMESTAMP = new ConfigString("broadcastTimestamp", "1738990800").apply(GENERIC_KEY);
 		public static final ConfigStringList TEMP_BROADCAST_MSGS = new ConfigStringList("broadcastMsgs", ImmutableList.of()).apply(GENERIC_KEY);
 
+		public static final ConfigBoolean DISABLE_DRAG_CLICK_ON_MAPS_AND_BUNDLES = new ConfigBoolean("fix2b2tGhostItems", true).apply(GENERIC_KEY);
+
 		private static List<IConfigBase> options;
 		private static final List<IConfigBase> getOptions(Settings settings){
 			if(options != null) return options;
@@ -154,6 +156,7 @@ public final class Configs implements IConfigHandler{
 			if(settings.serverQuitListener) options.add(LOG_COORDS_ON_SERVER_QUIT);
 			if(settings.inventoryRestockAuto) options.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
 			if(settings.broadcaster) options.addAll(List.of(TEMP_BROADCAST_ACCOUNT, TEMP_BROADCAST_TIMESTAMP, TEMP_BROADCAST_MSGS));
+//			options.add(DISABLE_DRAG_CLICK_ON_MAPS_AND_BUNDLES); // Note: hidden
 			return options;
 		}
 	}
