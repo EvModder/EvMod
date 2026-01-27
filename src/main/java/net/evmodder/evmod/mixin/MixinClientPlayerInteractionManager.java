@@ -15,13 +15,13 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
 
 @Mixin(ClientPlayerInteractionManager.class)
-public abstract class MixinClientPlayerInteractionManager{
+abstract class MixinClientPlayerInteractionManager{
 
 //	public static final class Friend{private Friend(){}}
 //	private static final Friend friend = new Friend();
 
-	@Inject(method = "clickSlot", at = @At("HEAD"), cancellable = true)
-	private void avoid_sending_too_many_clicks(int syncId, int slot, int button, SlotActionType action, PlayerEntity player, CallbackInfo ci){
+	@Inject(method="clickSlot", at=@At("HEAD"), cancellable=true)
+	private final void avoidSendingTooManyClicks(int syncId, int slot, int button, SlotActionType action, PlayerEntity player, CallbackInfo ci){
 //		MinecraftClient.getInstance().player.sendMessage(Text.literal("clickSlot: syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
 		if(player.isCreative()) return;
 //		if(action == SlotActionType.CLONE/* || action == SlotActionType.THROW || action == SlotActionType.QUICK_CRAFT*/) return;
@@ -36,7 +36,7 @@ public abstract class MixinClientPlayerInteractionManager{
 		}
 		if(ClickUtils.addClick()){
 			if(Configs.Hotkeys.CRAFT_RESTOCK.getKeybind().isValid())
-				Main.mixinAccess().kbCraftRestock.checkIfCraftAction(player.currentScreenHandler, slot, button, action);
+				AccessorMain.getInstance().kbCraftRestock.checkIfCraftAction(player.currentScreenHandler, slot, button, action);
 		}
 		else{
 			if(isBotted){

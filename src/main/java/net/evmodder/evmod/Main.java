@@ -85,8 +85,8 @@ public class Main{
 
 	static boolean mapArtFeaturesOnly = true; // TODO: eww hacky
 
-	private static Main instance; public static Main mixinAccess(){return instance;} // TODO: eww hacky! Accessors:
-	public final RemoteServerSender remoteSender; // MixinClientWorld
+	@SuppressWarnings("unused") private static Main instance; // Mixin Accessors:
+	public final RemoteServerSender remoteSender; // MixinClientPlayNetworkHandler
 	public final EpearlLookupFabric epearlLookup; // MixinEntityRenderer
 	public final KeybindCraftingRestock kbCraftRestock; // MixinClientPlayerInteractionManager
 

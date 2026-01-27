@@ -19,14 +19,14 @@ abstract class MixinItemRenderer{
 	/*@Inject(at=@At("HEAD"), method="renderItem(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/item/ItemStack;"
 			+ "Lnet/minecraft/client/render/model/json/ModelTransformationMode;ZLnet/minecraft/client/util/math/MatrixStack;"
 			+ "Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/world/World;III)V")
-	public void renderItemMixin(LivingEntity entity, ItemStack stack,
+	private final void renderItemMixin(LivingEntity entity, ItemStack stack,
 			ModelTransformationMode transformationMode, boolean leftHanded, MatrixStack matrices,
 			VertexConsumerProvider vertexConsumers, @Nullable World world, int light, int overlay, int seed, CallbackInfo ci
 	){*/
 
 	/*@Inject(at=@At("HEAD"), method="renderItem(Lnet/minecraft/item/ItemStack;Lnet/minecraft/client/render/model/json/ModelTransformationMode;II"
 			+ "Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;Lnet/minecraft/world/World;I)V")
-	public void renderItemMixin(ItemStack stack, ModelTransformationMode transformationMode, int light, int overlay,
+	private final void renderItemMixin(ItemStack stack, ModelTransformationMode transformationMode, int light, int overlay,
 			MatrixStack matrices, VertexConsumerProvider vertexConsumers, @Nullable World world, int seed
 	){*/
 
@@ -43,7 +43,7 @@ abstract class MixinItemRenderer{
 			+ "III)V")*/
 
 	@ModifyVariable(method="update", at=@At("HEAD"))
-	public ItemStack editFirstItemStackParam(ItemStack stack){
+	private final ItemStack editFirstItemStackParam(ItemStack stack){
 		if(Main.totemShowTotalCount && stack.getItem() == Items.TOTEM_OF_UNDYING){
 			Main.LOGGER.info("holding totem");
 			final int numberOfTotems = client.player.getInventory().count(Items.TOTEM_OF_UNDYING);

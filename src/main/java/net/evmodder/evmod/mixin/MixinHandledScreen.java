@@ -22,35 +22,35 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(HandledScreen.class)
 abstract class MixinHandledScreen<T extends ScreenHandler> extends Screen{
-	@Shadow @Final protected T handler;
-	@Final @Shadow protected int titleX;
-	@Final @Shadow protected int titleY;
+	@Shadow @Final private final T handler;
+	@Shadow @Final private final int titleX;
+	@Shadow @Final private final int titleY;
 
-	MixinHandledScreen(Text title){
+	// Java requires we provide a constructor because of the <T>, but it'll never be called
+	private MixinHandledScreen(Text title){
 		super(title);
-		// Java requires we provide a constructor because of the <T>, but it should never be called
 		throw new RuntimeException("EvMod: unreachable (cnstr of MixinHandledScreen)");
 	}
 
 	@Inject(method="drawForeground", at=@At("TAIL"))
-	public void mixinFor_drawForeground_overwriteInvTitle(DrawContext context, int mouseX, int mouseY, CallbackInfo ci){
+	private final void replaceScreenTitleForCurrentContainer(DrawContext context, int _mouseX, int _mouseY, CallbackInfo _ci){
 		if(UpdateContainerHighlights.customTitle == null) return;
 		context.drawText(textRenderer, UpdateContainerHighlights.customTitle, titleX, titleY, 4210752, false);
 	}
 
-	// Pretty much copied from Enderkill's mod:
+	// Credit to Enderkill for the idea:
 	// https://github.com/EnderKill98/EnderSpecimina/blob/main/src/main/java/me/enderkill98/enderspecimina/mixin/FixGhostItemsMixin.java
-	// MIT License
+	// MIT License, so I borrowed his logic.
 	@Inject(method="mouseDragged", at=@At("HEAD"), cancellable=true)
-	public void mouseDragged(CallbackInfoReturnable<Boolean> cir){
+	private final void disableMouseDragForBundlesAndMapsSinceItIsBuggyOn2b2t(CallbackInfoReturnable<Boolean> cir){
 		if(MiscUtils.getCurrentServerAddressHashCode() != MiscUtils.HASHCODE_2B2T) return;
 //		if(!Configs.Generic.FIX_2B2T_GHOST_ITEMS.getBooleanValue()) return;
 
 		if(client.player == null || client.player.isCreative()) return; // Breaks creative middle-click drag (on other servers)
-		ItemStack cursorStack = handler.getCursorStack();
+		final ItemStack cursorStack = handler.getCursorStack();
 		if(cursorStack == null || cursorStack.isEmpty()) return;
 		if(!cursorStack.isStackable() || cursorStack.getItem() instanceof BannerItem) cir.setReturnValue(true); // Prevent initiating a drag
-		MapState state = FilledMapItem.getMapState(cursorStack, client.world);
+		final MapState state = FilledMapItem.getMapState(cursorStack, client.world);
 		if(state != null && !MapColorUtils.isMonoColor(state.colors)) cir.setReturnValue(true); // Prevent initiating a drag
 	}
 }

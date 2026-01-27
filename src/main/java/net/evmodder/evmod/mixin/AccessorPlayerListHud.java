@@ -7,6 +7,6 @@ import net.minecraft.client.gui.hud.PlayerListHud;
 
 @Mixin(PlayerListHud.class)
 public interface AccessorPlayerListHud{
-	@Accessor("header") Text getHeader();
+//	@Accessor("header") Text getHeader();
 	@Accessor("footer") Text getFooter();
 }

@@ -13,19 +13,18 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(WidgetListConfigOptions.class)
-public abstract class WidgetListConfigOptionsMixin extends WidgetListConfigOptionsBase<GuiConfigsBase.ConfigOptionWrapper, WidgetConfigOption>{
-	@Shadow(remap = false)
-	@Final
-	protected GuiConfigsBase parent;
+@Mixin(value=WidgetListConfigOptions.class, remap=false)
+abstract class WidgetListConfigOptionsMixin extends WidgetListConfigOptionsBase<GuiConfigsBase.ConfigOptionWrapper, WidgetConfigOption>{
+	@Shadow @Final protected final GuiConfigsBase parent;
 
 	public WidgetListConfigOptionsMixin(int x, int y, int width, int height, int configWidth){
 		super(x, y, width, height, configWidth);
+		throw new RuntimeException();
 	}
 
-	@Inject(method = "reCreateListEntryWidgets", at = @At(value = "INVOKE",
-			target = "Lfi/dy/masa/malilib/gui/widgets/WidgetListConfigOptionsBase;reCreateListEntryWidgets()V", remap = false), remap = false)
-	private void adjustConfigAndOptionPanelWidth(CallbackInfo ci){
+	@Inject(method="reCreateListEntryWidgets", at=@At(value="INVOKE",
+			target="Lfi/dy/masa/malilib/gui/widgets/WidgetListConfigOptionsBase;reCreateListEntryWidgets()V"))
+	private final void adjustConfigAndOptionPanelWidth(CallbackInfo ci){
 		if(parent instanceof ConfigGui cg){
 			Pair<Integer, Integer> result = cg.adjustWidths(totalWidth, maxLabelWidth);
 			maxLabelWidth = result.getFirst();

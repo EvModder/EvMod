@@ -25,11 +25,31 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
 @Mixin(ItemFrameEntityRenderer.class)
-public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
+abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 	private final MinecraftClient client = MinecraftClient.getInstance();
 
+	private final boolean isSemiTransparent(MapState state){
+		return state != null && state.colors != null && MapColorUtils.isSemiTransparent(state.colors);
+	}
+	private final boolean shouldBeInvis(ItemFrameEntityRenderState ifers){
+		switch((OptionInvisIframes)Configs.Visuals.INVIS_IFRAMES.getOptionListValue()){
+			case ANY_ITEM: return !ifers.itemRenderState.isEmpty();
+			case MAPART: return ifers.mapId != null;
+			case SEMI_TRANSPARENT_MAPART: return ifers.mapId != null && isSemiTransparent(client.world.getMapState(ifers.mapId));
+			case OFF:
+			default:
+				return false;
+		}
+	}
+
+	@Inject(method="render", at=@At("HEAD"))
+	private final void disableItemFrameFrameRenderingWhenHoldingMaps(
+			ItemFrameEntityRenderState ifers, MatrixStack _0, VertexConsumerProvider _1, int _2, CallbackInfo _3){
+		ifers.invisible |= shouldBeInvis(ifers);
+	}
+
 	@Inject(method="hasLabel", at=@At("HEAD"), cancellable=true)
-	public void hasLabel_Mixin(T itemFrameEntity, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
+	private final void modifyHasLableBasedOnMapState(T itemFrameEntity, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
 		if(!Configs.Visuals.MAP_HIGHLIGHT_IFRAME.getBooleanValue()) return; // Feature is disabled
 		if(!MinecraftClient.isHudEnabled()) return;
 
@@ -37,10 +57,10 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(stack.isEmpty()) return;
 		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
 		if(state == null) return;
-		Highlight hl = UpdateItemFrameHighlights.iFrameGetHighlight(itemFrameEntity.getId());
+		final Highlight hl = UpdateItemFrameHighlights.iFrameGetHighlight(itemFrameEntity.getId());
 		if(hl == null) return;
 
-		Boolean hasLabel = UpdateItemFrameHighlights.hasLabelCache.get(itemFrameEntity);
+		final Boolean hasLabel = UpdateItemFrameHighlights.hasLabelCache.get(itemFrameEntity);
 		if(hasLabel != null){cir.setReturnValue(hasLabel); return;}
 
 		if(hl == Highlight.MULTI_HUNG && Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue() && MapColorUtils.isMonoColor(state.colors)){
@@ -77,16 +97,16 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(stack == null || stack.isEmpty());
 		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
 		if(state == null) return;
-		Highlight hl = UpdateItemFrameHighlights.iFrameGetHighlight(itemFrameEntity.getId());
+		final Highlight hl = UpdateItemFrameHighlights.iFrameGetHighlight(itemFrameEntity.getId());
 		if(hl == null) return;
 
-		Text cachedName = UpdateItemFrameHighlights.displayNameCache.get(itemFrameEntity);
+		final Text cachedName = UpdateItemFrameHighlights.displayNameCache.get(itemFrameEntity);
 		if(cachedName != null){cir.setReturnValue(cachedName); return;}
 
 		if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue() && stack.getCustomName() != null && stack.getCustomName().getLiteralString() != null)
 			MapStateCacher.addMapStateByName(stack, state);
 
-		MutableText name = stack.getName().copy();
+		final MutableText name = stack.getName().copy();
 		if(hl == Highlight.INV_OR_NESTED_INV){
 			final boolean notInCurrGroup = MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
 			name.withColor(Configs.Visuals.MAP_COLOR_IN_INV.getIntegerValue());
@@ -115,24 +135,5 @@ public class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		}
 		UpdateItemFrameHighlights.displayNameCache.put(itemFrameEntity, name);
 		cir.setReturnValue(name);
-	}
-
-	private final boolean isSemiTransparent(MapState state){
-		return state != null && state.colors != null && MapColorUtils.isSemiTransparent(state.colors);
-	}
-	private final boolean shouldBeInvis(ItemFrameEntityRenderState ifers){
-		switch((OptionInvisIframes)Configs.Visuals.INVIS_IFRAMES.getOptionListValue()){
-			case ANY_ITEM: return !ifers.itemRenderState.isEmpty();
-			case MAPART: return ifers.mapId != null;
-			case SEMI_TRANSPARENT_MAPART: return ifers.mapId != null && isSemiTransparent(client.world.getMapState(ifers.mapId));
-			case OFF:
-			default:
-				return false;
-		}
-	}
-
-	@Inject(method="render", at=@At("HEAD"))
-	private void disableItemFrameFrameRenderingWhenHoldingMaps(ItemFrameEntityRenderState ifers, MatrixStack _0, VertexConsumerProvider _1, int _2, CallbackInfo _3){
-		ifers.invisible |= shouldBeInvis(ifers);
 	}
 }

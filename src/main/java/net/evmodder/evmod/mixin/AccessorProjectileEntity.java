@@ -7,6 +7,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(ProjectileEntity.class)
 public interface AccessorProjectileEntity{
-	@Accessor(value="ownerUuid") UUID getOwnerUUID();
-	@Accessor(value="ownerUuid") void setOwnerUUID(UUID uuid);
+	@Accessor("ownerUuid") UUID getOwnerUUID();
+	@Accessor("ownerUuid") void setOwnerUUID(UUID uuid);
 }

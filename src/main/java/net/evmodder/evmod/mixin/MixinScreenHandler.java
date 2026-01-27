@@ -25,8 +25,8 @@ abstract class MixinScreenHandler{
 //		}
 //	}
 
-	@Inject(method = "internalOnSlotClick", at = @At("TAIL"))
-	private void click_move_neighbors_caller(int slotIndex, int button, SlotActionType actionType, PlayerEntity player, CallbackInfo ci){
+	@Inject(method="internalOnSlotClick", at=@At("TAIL"))
+	private final void clickMoveNeighborTriggerDetector(int slotIndex, int button, SlotActionType actionType, PlayerEntity player, CallbackInfo ci){
 		if(!Configs.Hotkeys.MAP_CLICK_MOVE_NEIGHBORS.getBooleanValue()) return;
 		if(button != 0 || actionType != SlotActionType.PICKUP) return;
 		if(!player.currentScreenHandler.getCursorStack().isEmpty()) return;

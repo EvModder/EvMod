@@ -34,20 +34,18 @@ abstract class MixinClientPlayNetworkHandler{
 	// Saw this in https://github.com/red-stoned/client_maps/, and realized it's probably good to incorporate
 	@Redirect(method="onMapUpdate", at=@At(value="INVOKE",
 			target="Lnet/minecraft/client/world/ClientWorld;getMapState(Lnet/minecraft/component/type/MapIdComponent;)Lnet/minecraft/item/map/MapState;"))
-	private MapState replaceIfClientMaps(ClientWorld instance, MapIdComponent id){
+	private final MapState replaceIfClientMaps(ClientWorld instance, MapIdComponent id){
 		final MapState s = instance.getMapState(id);
 		if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.MEMORY_AND_DISK) return s;
 		return s == null || MapStateCacher.hasCacheMarker(s) ? null : s;
 	}
 
 
+	// Rest of this file: Seen map db
+	private final String DIR = CommandMapArtGroup.DIR + "seen/";
+	private final HashMap<String, HashSet<UUID>> mapsSaved = new HashMap<>(0);
 
-
-	private static final String DIR = CommandMapArtGroup.DIR + "seen/";
-
-	private static HashMap<String, HashSet<UUID>> mapsSaved = new HashMap<>(0);
-
-	private HashSet<UUID> loadMapsForServer(String address){
+	private final HashSet<UUID> loadMapsForServer(String address){
 		final byte[] data = FileIO.loadFileBytes(DIR+address);
 		if(data == null) return new HashSet<>(0);
 		assert data.length % 16 == 0;
@@ -58,7 +56,7 @@ abstract class MixinClientPlayNetworkHandler{
 		return colorIds;
 	}
 
-	private void saveMapsForServer(String address, HashSet<UUID> colorIds){
+	private final void saveMapsForServer(String address, HashSet<UUID> colorIds){
 		Main.LOGGER.info("MapDB: saveMapsForServer()");
 		final ByteBuffer bb = ByteBuffer.allocate(colorIds.size()*16);
 		for(UUID uuid : colorIds) bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
@@ -72,8 +70,8 @@ abstract class MixinClientPlayNetworkHandler{
 		FileIO.saveFileBytes(DIR+address, bb.array());
 	}
 
-	private static boolean pendingFileSave = false;
-	private void scheduleSaveMapsForServer(String addr, HashSet<UUID> seenForServer){
+	private boolean pendingFileSave = false;
+	private final void scheduleSaveMapsForServer(String addr, HashSet<UUID> seenForServer){
 		synchronized(mapsSaved){
 			if(pendingFileSave) return;
 			pendingFileSave = true;
@@ -87,7 +85,7 @@ abstract class MixinClientPlayNetworkHandler{
 	}
 
 	@Inject(method="onMapUpdate", at=@At("TAIL"))
-	private void updateSeenMaps(MapUpdateS2CPacket packet, CallbackInfo ci){
+	private final void updateSeenMaps(MapUpdateS2CPacket packet, CallbackInfo _ci){
 		final MapState state = MinecraftClient.getInstance().world.getMapState(packet.mapId());
 		final int id = packet.mapId().id();
 		assert !MapStateCacher.hasCacheMarker(state);
@@ -111,7 +109,7 @@ abstract class MixinClientPlayNetworkHandler{
 		scheduleSaveMapsForServer(addr, seenForServer);
 
 		if(!Configs.Database.SHARE_MAPART.getBooleanValue() || !state.locked) return;
-		Main.mixinAccess().remoteSender.sendBotMessage(Command.DB_MAPART_STORE, /*udp=*/false, /*timeout=*/15_000l, state.colors, reply->{
+		AccessorMain.getInstance().remoteSender.sendBotMessage(Command.DB_MAPART_STORE, /*udp=*/false, /*timeout=*/15_000l, state.colors, reply->{
 			if(reply == null){
 				Main.LOGGER.info("MapDB: Null response from server");
 			}

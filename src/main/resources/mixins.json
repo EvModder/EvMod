@@ -3,22 +3,27 @@
 	"package": "net.evmodder.evmod.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		// Main.instance mixin:
+		"AccessorMain",
+
+		// Minecraft mixins:
 		"AccessorAnvilScreen",
 		"AccessorPlayerListHud",
 		"AccessorProjectileEntity",
 		"MixinClientPlayerInteractionManager",
 		"MixinClientPlayNetworkHandler",
-		//"MixinClientWorld",
+//		"MixinClientWorld",
 		"MixinEntityRenderer",
 		"MixinHandledScreen",
 		"MixinInGameHud",
 		"MixinItemFrameRenderer",
-		//"MixinItemRenderer",
+//		"MixinItemRenderer",
 		"MixinScreenHandler",
 
 		// MaLiLib mixins:
-		"AccessorWidgetListConfigOptions",
+//		"AccessorWidgetListConfigOptions",
 		"MixinWidgetConfigOption"
+//		"MixinWidgetListConfigOptions"
 	],
 	"injectors": { "defaultRequire": 1 }
 }

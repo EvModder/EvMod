@@ -8,44 +8,35 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.EpearlLookup.XYZ;
+import net.evmodder.evmod.apis.MiscUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.projectile.thrown.EnderPearlEntity;
 import net.minecraft.text.Text;
-import net.minecraft.util.math.Vec3d;
 
 @Mixin(EntityRenderer.class)
 abstract class MixinEntityRenderer{
-//	@Final @Shadow protected EntityRenderDispatcher dispatcher;
+//	@Shadow @Final private EntityRenderDispatcher dispatcher;
 //	@Shadow public abstract TextRenderer getTextRenderer();
 
-	private static final MinecraftClient client = MinecraftClient.getInstance();
-	private static final HashMap<XYZ, HashMap<String, HashSet<Integer>>> pearlsAtXYZ = new HashMap<>();
-	private static long renderedOnTick = 0;
-	private static long lastRenderedId;
-	private static long lastClear = 0;
-
-	private boolean isLookngAt(Entity entity){
-		Vec3d vec3d = client.player.getRotationVec(1.0F).normalize();
-		Vec3d vec3d2 = new Vec3d(entity.getX() - client.player.getX(), entity.getEyeY() - client.player.getEyeY(), entity.getZ() - client.player.getZ());
-		double d = vec3d2.length();
-		vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d);//normalize
-		double e = vec3d.dotProduct(vec3d2);
-		return e > 1.0D - 0.03D / d ? /*client.player.canSee(entity)*/true : false;
-	}
+	private final MinecraftClient client = MinecraftClient.getInstance();
+	private final HashMap<XYZ, HashMap<String, HashSet<Integer>>> pearlsAtXYZ = new HashMap<>();
+	private long renderedOnTick = 0;
+	private long lastRenderedId;
+	private long lastClear = 0;
 
 	// TODO: mixin onTick instead of hasLabel, or setName somehow
-	@Inject(method = "hasLabel", at = @At("HEAD"), cancellable = true)
-	public void test(Entity e, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
-		if(Main.mixinAccess().epearlLookup == null) return; // Feature is disabled
+	@Inject(method="hasLabel", at=@At("HEAD"), cancellable=true)
+	private final void fetchPearlOwnerNameInHasLabel_shouldDoThisInOnTickTBH(Entity e, double _distSqToCamera, CallbackInfoReturnable<Boolean> cir){
+		if(AccessorMain.getInstance().epearlLookup == null) return; // Feature is disabled
 		if(client.options.hudHidden) return; // HUD is hidden
 		if(e instanceof EnderPearlEntity == false) return;
 //		if(e.getType() != EntityType.ENDER_PEARL) return; // Redundant, due to above
-		//if(!isLookngAt(entity)) return;
-		String name = Main.mixinAccess().epearlLookup.getOwnerName((EnderPearlEntity)e);
+		//if(!isLookngAt(entity)) return; // Computationally expensive, so we do it later
+
+		String name = AccessorMain.getInstance().epearlLookup.getOwnerName((EnderPearlEntity)e);
 		if(name == null) return;
 		//----------
 		XYZ xyz = new XYZ(e.getBlockX(), e.getBlockY()/4, e.getBlockZ());
@@ -79,7 +70,7 @@ abstract class MixinEntityRenderer{
 		pearlsForName.add(e.getId());
 		final boolean alreadyRenderedThisTick = renderedOnTick == client.world.getTime();
 		if(alreadyRenderedThisTick && e.getId() != lastRenderedId) return;
-		if(!isLookngAt(e)) return;
+		if(!MiscUtils.isLookingAt(e, client.player)) return;
 		renderedOnTick = client.world.getTime();
 		lastRenderedId = e.getId();
 		//if(pearlsForName.iterator().next() != e.getId()) return; // Only render the name for 1 pearl in a stack
@@ -93,7 +84,7 @@ abstract class MixinEntityRenderer{
 		}
 		//----------
 		e.setCustomName(Text.literal(name));
-		if(!isLookngAt(e)) return;
+		if(!MiscUtils.isLookingAt(e, client.player)) return;
 		cir.setReturnValue(true);
 //		cir.cancel();
 	}

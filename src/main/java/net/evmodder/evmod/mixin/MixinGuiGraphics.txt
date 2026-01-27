@@ -8,9 +8,9 @@ import net.minecraft.component.type.BundleContentsComponent;
 import net.minecraft.item.ItemStack;
 
 @Mixin(GuiGraphics.class)
-public abstract class MixinGuiGraphics{
-	@Redirect(method = "renderItemCount", at=@At(value="INVOKE", target="Lnet/minecraft/world/item/ItemStack;getCount()I"))
-	private int getCount(ItemStack stack){
+abstract class MixinGuiGraphics{
+	@Redirect(method="renderItemCount", at=@At(value="INVOKE", target="Lnet/minecraft/world/item/ItemStack;getCount()I"))
+	private final int getCount(ItemStack stack){
 //		if(!Main.shouldRenderOnItem) return instance.getCount();
 		if(stack.getCount() != 1) return stack.getCount();
 

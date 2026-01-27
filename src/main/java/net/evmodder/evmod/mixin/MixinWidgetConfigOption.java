@@ -44,23 +44,25 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Objects;
 
-@Mixin(WidgetConfigOption.class)
+@Mixin(value=WidgetConfigOption.class, remap=false)
 public abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigsBase.ConfigOptionWrapper>{
-	@Shadow(remap = false) @Final protected IKeybindConfigGui host;
-	@Shadow(remap = false) @Final protected GuiConfigsBase.ConfigOptionWrapper wrapper;
-	@Shadow(remap = false) @Final @Mutable protected KeybindSettings initialKeybindSettings;
+	@Shadow @Final private final IKeybindConfigGui host;
+	@Shadow @Final private final GuiConfigsBase.ConfigOptionWrapper wrapper;
+	@Shadow @Final @Mutable private KeybindSettings initialKeybindSettings;
 
-	@Shadow(remap = false) protected abstract void addKeybindResetButton(int x, int y, IKeybind keybind, ConfigButtonKeybind buttonHotkey);
+	@Shadow protected abstract void addKeybindResetButton(int x, int y, IKeybind keybind, ConfigButtonKeybind buttonHotkey);
 
 	@Unique private String initialString$OURS;
 	@Unique private float initialYaw$OURS, initialPitch$OURS;
 //	@Unique private IConfigOptionListEntry initialOptionListEntry$OURS;
 
-	public MixinWidgetConfigOption(int x, int y, int width, int height, WidgetListConfigOptionsBase<?, ?> parent, GuiConfigsBase.ConfigOptionWrapper entry, int listIndex){
+	// Java requires we provide a constructor because of the <T>, but it'll never be called
+	private MixinWidgetConfigOption(int x, int y, int width, int height, WidgetListConfigOptionsBase<?, ?> parent, GuiConfigsBase.ConfigOptionWrapper entry, int listIndex){
 		super(x, y, width, height, parent, entry, listIndex);
+		throw new RuntimeException("EvMod: unreachable (cnstr of MixinWidgetConfigOption)");
 	}
 
-	@Unique private void addStringWithHotkey(int x, int y, int configWidth, ConfigStringHotkeyed config){
+	@Unique private final void addStringWithHotkey(int x, int y, int configWidth, ConfigStringHotkeyed config){
 		int textFieldWidth = (configWidth - 24) * 3 / 5;
 		int configHeight = 20;
 		GuiTextFieldGeneric textField = createTextField(x, y + 1, textFieldWidth, configHeight - 3);
@@ -91,7 +93,7 @@ public abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<Gui
 
 	}
 
-	private void goofyAddFloatWidget(GuiTextFieldGeneric textFieldI, ButtonGeneric resetButton, ConfigYawPitchHotkeyed config, boolean yaw){
+	private final void goofyAddFloatWidget(GuiTextFieldGeneric textFieldI, ButtonGeneric resetButton, ConfigYawPitchHotkeyed config, boolean yaw){
 		ConfigOptionChangeListenerTextField changeListener = new ConfigOptionChangeListenerTextField(config, textFieldI, resetButton){
 			@Override public boolean onTextChange(GuiTextFieldGeneric textField){
 				if(textFieldI.getText().isBlank()) resetButton.setEnabled(true);
@@ -121,7 +123,7 @@ public abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<Gui
 		};
 		addWidget(fakeChildWidget);
 	}
-	@Unique private void addYawPitchWithHotkey(int x, int y, int configWidth, ConfigYawPitchHotkeyed config){
+	@Unique private final void addYawPitchWithHotkey(int x, int y, int configWidth, ConfigYawPitchHotkeyed config){
 //		if(config.shouldUseSlider()){
 //			addConfigSliderEntry(x, y, resetX, configWidth, configHeight, (IConfigSlider) config);//WidgetConfigOption
 //		}
@@ -171,14 +173,14 @@ public abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<Gui
 
 	}
 
-	@Unique private boolean isOurConfigGui(){
-//		return parent instanceof WidgetListConfigOptions wlco && wlco.parent instanceof ConfigGui;
-		return parent instanceof WidgetListConfigOptions && ((AccessorWidgetListConfigOptions)parent).getParent() instanceof ConfigGui;
+	@Unique private final boolean isOurConfigGui(){
+		return parent instanceof WidgetListConfigOptions wlco && wlco.getParent() instanceof ConfigGui;
+//		return parent instanceof WidgetListConfigOptions && ((AccessorWidgetListConfigOptions)parent).getParent() instanceof ConfigGui;
 	}
 
 	@Inject(method="addConfigOption", at=@At(value="FIELD",
-			target="Lfi/dy/masa/malilib/config/ConfigType;BOOLEAN:Lfi/dy/masa/malilib/config/ConfigType;", remap=false), remap=false, cancellable=true)
-	private void customConfigGui(int x, int y, float zLevel, int labelWidth, int configWidth, IConfigBase config, CallbackInfo ci){
+			target="Lfi/dy/masa/malilib/config/ConfigType;BOOLEAN:Lfi/dy/masa/malilib/config/ConfigType;"), cancellable=true)
+	private final void customConfigGui(int x, int y, float zLevel, int labelWidth, int configWidth, IConfigBase config, CallbackInfo ci){
 		if(!isOurConfigGui() || !(config instanceof IHotkey)) return;
 
 		boolean modified = true;
@@ -211,8 +213,8 @@ public abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<Gui
 //		addValueWithKeybindWidgets(x, y, configWidth, config, optionButton);
 //	}
 
-	@Inject(method = "<init>", at = @At("TAIL"), remap = false)
-	private void initInitialState(CallbackInfo ci){
+	@Inject(method="<init>", at=@At("TAIL"))
+	private final void initInitialState(CallbackInfo ci){
 		if(!isOurConfigGui() || wrapper.getType() != GuiConfigsBase.ConfigOptionWrapper.Type.CONFIG) return;
 
 		IConfigBase config = wrapper.getConfig();
@@ -234,10 +236,10 @@ public abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<Gui
 //		}
 	}
 
-	@Inject(method = "wasConfigModified", at=@At(value="INVOKE",
+	@Inject(method="wasConfigModified", at=@At(value="INVOKE",
 			target="Lfi/dy/masa/malilib/gui/GuiConfigsBase$ConfigOptionWrapper;getConfig()Lfi/dy/masa/malilib/config/IConfigBase;",
-			ordinal=0, remap=false), cancellable=true, remap=false)
-	private void specialJudgeCustomConfigValueHotkeyed(CallbackInfoReturnable<Boolean> cir){
+			ordinal=0), cancellable=true)
+	private final void specialJudgeCustomConfigValueHotkeyed(CallbackInfoReturnable<Boolean> cir){
 		IConfigBase config = wrapper.getConfig();
 //		if(!OurConfigs.hasConfig(config)) return;
 
