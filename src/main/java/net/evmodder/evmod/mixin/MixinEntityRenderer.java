@@ -18,9 +18,6 @@ import net.minecraft.text.Text;
 
 @Mixin(EntityRenderer.class)
 abstract class MixinEntityRenderer{
-//	@Shadow @Final private EntityRenderDispatcher dispatcher;
-//	@Shadow public abstract TextRenderer getTextRenderer();
-
 	private final MinecraftClient client = MinecraftClient.getInstance();
 	private final HashMap<XYZ, HashMap<String, HashSet<Integer>>> pearlsAtXYZ = new HashMap<>();
 	private long renderedOnTick = 0;
@@ -33,7 +30,6 @@ abstract class MixinEntityRenderer{
 		if(AccessorMain.getInstance().epearlLookup == null) return; // Feature is disabled
 		if(client.options.hudHidden) return; // HUD is hidden
 		if(e instanceof EnderPearlEntity == false) return;
-//		if(e.getType() != EntityType.ENDER_PEARL) return; // Redundant, due to above
 		//if(!isLookngAt(entity)) return; // Computationally expensive, so we do it later
 
 		String name = AccessorMain.getInstance().epearlLookup.getOwnerName((EnderPearlEntity)e);

@@ -57,33 +57,4 @@ abstract class MixinClientPlayerInteractionManager{
 							+", duration:"+Configs.Generic.CLICK_LIMIT_DURATION.getIntegerValue()+"gt").withColor(/*&c=*/16733525), false);
 		}
 	}
-
-	// Now handled by MapHandRestock via UseEntityCallback (Fabric API)
-	/*@Inject(method="interactItem", at=@At(value="INVOKE", target="Lnet/minecraft/client/network/ClientPlayerInteractionManager;syncSelectedSlot()V"))
-	private void onProcessRightClickFirst(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir){
-	//private void onProcessRightClickFirst(PlayerEntity player, Hand hand){
-		Main.LOGGER.info("onProcessRightClickPre");
-		//if(MapHandRestock.isEnabled) MapHandRestock.onProcessRightClickPre(player, hand);
-	}
-
-	@Inject(method="interactItem", at=@At("TAIL"))
-	private void onProcessRightClickPost(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir){
-		Main.LOGGER.info("onProcessRightClickPost");
-		//if(MapHandRestock.isEnabled) MapHandRestock.onProcessRightClickPost(player, hand);
-	}*/
-
-
-	// Now handled by MixinScreenHandler
-	/*@Inject(method = "clickSlot", at = @At("TAIL"))
-	private void click_move_neighbors_caller(int syncId, int slot, int button, SlotActionType actionType, PlayerEntity player, CallbackInfo ci){
-		if(syncId != player.currentScreenHandler.syncId) return;
-		if(button != 0 || actionType != SlotActionType.PICKUP) return;
-		if(!Screen.hasShiftDown()) return;
-		if(!player.currentScreenHandler.getCursorStack().isEmpty()) return;
-		final ItemStack itemPlaced = player.currentScreenHandler.getSlot(slot).getStack();
-		if(itemPlaced.getItem() != Items.FILLED_MAP) return;
-		//new Timer().schedule(new TimerTask(){@Override public void run(){
-			MapClickMoveNeighbors.moveNeighbors(player, slot, itemPlaced);
-		//}}, 10l);
-	}*/
 }
