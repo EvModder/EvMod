@@ -215,7 +215,8 @@ public class CommandExportMapImg{
 		}
 	}
 
-	private void buildMapImgFile(final FabricClientCommandSource source, final Map<Vec3i, ItemFrameEntity> ifeLookup,
+	private int overwritten;
+	private final void buildMapImgFile(final FabricClientCommandSource source, final Map<Vec3i, ItemFrameEntity> ifeLookup,
 			final ArrayList<Vec3i> mapWall, final int w, final int h, final String namePrefix){
 		final boolean BLOCK_BORDER = Configs.Visuals.EXPORT_MAP_IMG_BORDER.getBooleanValue();
 		final int border = BLOCK_BORDER ? 8 : 0;
@@ -279,7 +280,8 @@ public class CommandExportMapImg{
 		//16755200
 		if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdir();
 		final String relFilePath = FileIO.DIR+MAP_EXPORT_DIR+imgName+".png";
-		File imgFile = new File(relFilePath);
+		final File imgFile = new File(relFilePath);
+		if(imgFile.exists()) ++overwritten;
 		try{ImageIO.write(img, "png", imgFile);}
 		catch(IOException e){e.printStackTrace();}
 
@@ -417,6 +419,7 @@ public class CommandExportMapImg{
 		));
 		Main.LOGGER.info("CmdImgExport: runCommandWithAllMapWalls() num mapwalls: "+mapWalls.size());
 		int numMapsSaved = 0;
+		overwritten = 0;
 		for(List<ItemFrameEntity> mapWall : mapWalls.values()){
 //			Main.LOGGER.info("CmdImgExport: mapWall size A: "+mapWall.size());
 			final Map<Vec3i, ItemFrameEntity> ifeLookup = mapWall.stream().collect(Collectors.toMap(
@@ -438,7 +441,9 @@ public class CommandExportMapImg{
 				ifes.stream().map(ItemFrameEntity::getBlockPos).forEach(ifeLookup::remove);
 			}
 		}
-		if(numMapsSaved > 5) ctx.getSource().sendFeedback(Text.literal(numMapsSaved+" images saved"));
+		numMapsSaved -= overwritten;
+		if(numMapsSaved > 5) ctx.getSource().sendFeedback(Text.literal(numMapsSaved+(overwritten>0?" new":"")+" images saved"));
+		if(overwritten > 0) ctx.getSource().sendFeedback(Text.literal(overwritten+" images overwritten"));
 		return 1;
 	}
 	private int runCommandForAllMaps(CommandContext<FabricClientCommandSource> ctx){
