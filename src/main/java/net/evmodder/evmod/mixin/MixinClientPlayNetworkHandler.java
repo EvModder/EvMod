@@ -88,6 +88,7 @@ abstract class MixinClientPlayNetworkHandler{
 	private final void updateSeenMaps(MapUpdateS2CPacket packet, CallbackInfo _ci){
 		final MapState state = MinecraftClient.getInstance().world.getMapState(packet.mapId());
 		final int id = packet.mapId().id();
+		AccessorMapGroupUtils.loadedMapIds().add(id);
 		assert !MapStateCacher.hasCacheMarker(state);
 		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.addMapStateById(id, state);
 
@@ -102,7 +103,7 @@ abstract class MixinClientPlayNetworkHandler{
 			seenForServer = mapsSaved.computeIfAbsent(addr, this::loadMapsForServer);
 			if(!seenForServer.add(colorsId)) return; // Already seen
 			if(oldColorsId != null && !oldColorsId.equals(colorsId)){
-//				Main.LOGGER.info("MapDB: MapUpdateS2CPacket packet changed state.colors for id"+id+", colordsId "+oldColorsId+" -> "+colorsId);
+				Main.LOGGER.info("MapDB: MapUpdateS2CPacket packet changed state.colors for id"+id+", colordsId "+oldColorsId+" -> "+colorsId);
 				seenForServer.remove(oldColorsId);
 			}
 		}

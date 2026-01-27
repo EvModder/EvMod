@@ -2,7 +2,9 @@ package net.evmodder.evmod.apis;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 import net.evmodder.evmod.Configs;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.component.type.MapIdComponent;
@@ -11,6 +13,7 @@ import net.minecraft.item.map.MapState;
 public final class MapGroupUtils{
 	private static int mapsInGroupHash;
 	private static HashSet<UUID> currentMapGroup;
+	private static final HashSet<Integer> loadedMapIds = new HashSet<>(); // Accessor: MixinClientPlayNetworkHandler
 
 	private static final HashMap<MapState, UUID> stateToIdCache = new HashMap<MapState, UUID>(), unlockedStateToIdCache = new HashMap<MapState, UUID>();
 	// Only external caller: MixinClientPlayNetworkHandler
@@ -35,14 +38,22 @@ public final class MapGroupUtils{
 	}
 	public static final UUID getIdForMapState(MapState state){return getIdForMapState(state, /*evict*/false);}
 
-	private static final int MAX_MAPS_IN_INV_AND_ECHEST = 64*27*(36+27); // 108864
+	/*private static final int MAX_MAPS_IN_INV_AND_ECHEST = 64*27*(36+27); // 108864
 	public static final HashSet<UUID> getLegitLoadedMaps(final ClientWorld world){ // Only caller: CommandMapArtGroup
 		final HashSet<UUID> loadedMaps = new HashSet<UUID>();
 		MapState state;
 		final boolean INCLUDE_UNLOCKED = Configs.Generic.MAPART_GROUP_INCLUDE_UNLOCKED.getBooleanValue();
-		for(int i=0; (state=world.getMapState(new MapIdComponent(i))) != null || i < MAX_MAPS_IN_INV_AND_ECHEST; ++i){
+		for(int i=0; (state=world.getMapState(new MapIdComponent(i))) != null || i < MAX_SEEN_MAP_ID; ++i){
 			if(state != null && (INCLUDE_UNLOCKED || state.locked) && !MapStateCacher.hasCacheMarker(state)) loadedMaps.add(getIdForMapState(state));
 		}
+		return loadedMaps;
+	}*/
+	public static final HashSet<UUID> getLegitLoadedMaps(final ClientWorld world){ // Only caller: CommandMapArtGroup
+		final HashSet<UUID> loadedMaps = new HashSet<UUID>(loadedMapIds.size());
+		Stream<MapState> states = loadedMapIds.stream().map(i -> world.getMapState(new MapIdComponent(i)))
+				.filter(Objects::nonNull).filter(s -> !MapStateCacher.hasCacheMarker(s));
+		if(!Configs.Generic.MAPART_GROUP_INCLUDE_UNLOCKED.getBooleanValue()) states = states.filter(s -> s.locked);
+		states.map(MapGroupUtils::getIdForMapState).forEach(loadedMaps::add);
 		return loadedMaps;
 	}
 	public static final void setCurrentGroup(HashSet<UUID> newGroup){

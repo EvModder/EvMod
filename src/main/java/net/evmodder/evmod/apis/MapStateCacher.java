@@ -286,7 +286,7 @@ public class MapStateCacher{
 		MapStateSerializable mss = MapStateSerializable.fromMapState(state);
 		MapStateSerializable oldMss = cache.put(id, mss);
 		if(mss.equals(oldMss)) return false; // No update
-		if(oldMss != null && oldMss.locked){
+		if(oldMss != null && oldMss.locked && !MapColorUtils.sameMapExceptForMissingPixels(mss.colors, oldMss.colors)){
 			Main.LOGGER.error("MapStateCacher: Different MapStates found for same ID! Unable to use cache-by-id on current server, disabling it");
 			Configs.Generic.MAP_CACHE_BY_ID.setBooleanValue(false);
 			return false;

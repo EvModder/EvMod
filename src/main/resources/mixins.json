@@ -5,6 +5,7 @@
 	"mixins": [
 		// Main.instance mixin:
 		"AccessorMain",
+		"AccessorMapGroupUtils",
 
 		// Minecraft mixins:
 		"AccessorAnvilScreen",

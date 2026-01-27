@@ -34,6 +34,10 @@ public abstract class MapColorUtils{
 		for(int i=1; i<colors.length; ++i) if(colors[i] != colors[i-1] && (notTransparent || colors[i]<0 || colors[i]>3)) return false;
 		return true;
 	}
+	public static final boolean sameMapExceptForMissingPixels(final byte[] a, final byte[] b){
+		for(int i=0; i<a.length; ++i) if(a[i] != b[i] && (b[i]<0 || b[i]>3)) return false;
+		return true;
+	}
 
 	private static final boolean isCarpetColor(MapColor color){
 //		switch(color.id){
