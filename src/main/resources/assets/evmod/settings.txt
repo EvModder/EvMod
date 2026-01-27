@@ -30,7 +30,7 @@ listener.game_message.read: true  # depends: share_ignores, whisper_sound, whisp
 listener.game_message.filter: true  # depends: borrow_ignores
 inventory_restock.auto: false
 broadcaster: false
-epearl_owners: false  # depends: uuid/xz, softdepends: database
+epearl_owners: true  # depends: uuid/xz, softdepends: database
 
 command.assignpearl: true
 command.exportmapimg: true

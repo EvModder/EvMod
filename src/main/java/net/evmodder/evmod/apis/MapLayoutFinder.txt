@@ -76,7 +76,7 @@ public class MapLayoutFinder{
 			);
 		}
 		if(posA.matches("[1-9][0-9]*") && posB.matches("[1-9][0-9]*")){
-			//TODO: support 1d posStr (e.g., 1/6 for a 3x2)
+			//t0d0: support 1d posStr (e.g., 1/6 for a 3x2)
 		}
 		int cutA, cutB, cutSpaceA, cutSpaceB;
 		if(posA.length() == posB.length() && posA.length() == 2){cutA = cutB = 1; cutSpaceA = cutSpaceB = 0;}
@@ -146,11 +146,11 @@ public class MapLayoutFinder{
 		}
 
 		RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(this.currStack=currStack, lastStack), world);
-		if(data.slots().size() != 2){ // TODO: support maps w/o custom name (related by edge detection)
+		if(data.slots().size() != 2){ // t0d0: support maps w/o custom name (related by edge detection)
 			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not related");
 			disableAndReset(); return false;
 		}
-		if(data.prefixLen() == -1){ // TODO: support related maps without pos data (same name, no pos data)
+		if(data.prefixLen() == -1){ // t0d0: support related maps without pos data (same name, no pos data)
 			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not facing the same dir");
 			disableAndReset(); return false;
 		}
@@ -170,7 +170,7 @@ public class MapLayoutFinder{
 		}
 		final String currPosStr = this.currPosStr=getPosStrFromName(currStack), lastPosStr = getPosStrFromName(lastStack);
 		final Pos2DPair pos2dPair = getRelativePosPair(currPosStr, lastPosStr);
-		if(pos2dPair == null){ // TODO: Support non-standard pos data (e.g., TL,TR,BL,BR)
+		if(pos2dPair == null){ // t0d0: Support non-standard pos data (e.g., TL,TR,BL,BR)
 			Main.LOGGER.info("AutoPlaceMapArt: unable to parse pos2dPair from pos strs ("+currPosStr+","+lastPosStr+")");
 			disableAndReset(); return false;
 		}
