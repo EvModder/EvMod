@@ -260,7 +260,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				Main.LOGGER.warn("AutoPlaceMapArt: Invalid 1d X/SIZE pos! a="+a+",b="+b);
 				disableAndReset(); return false;
 			}
-//			Main.LOGGER.info("AutoPlaceMapArt: for X/SIZE, a="+a+", b="+b+", ifeOffset1="+ifeOffset1+", ifeOffset2="+ifeOffset2);
+			Main.LOGGER.info("AutoPlaceMapArt: for X/SIZE, a="+a+", b="+b+", ifeOffset1="+ifeOffset1+", ifeOffset2="+ifeOffset2);
 			final int posOffset = a-b;
 			if(ifeOffset1 == 0 || ifeOffset2 == 0){
 				final int ifeOffset = ifeOffset1 + ifeOffset2; // one of them is 0
@@ -298,7 +298,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			if(axisMatch == null) return false;
 			final int colOffset = axisMatch ? ifeOffset2 : ifeOffset1;
 			final int rowOffset = axisMatch ? ifeOffset1 : ifeOffset2;
-//			Main.LOGGER.info("AutoPlaceMapArt: rowOffset="+rowOffset+", colOffset="+colOffset);
+			Main.LOGGER.info("AutoPlaceMapArt: rowOffset="+rowOffset+", colOffset="+colOffset);
 			if(colOffset == 0){
 				if((rowOffset+1)*getSmallestFactor(ofSize) == ofSize){
 					Main.LOGGER.info("AutoPlaceMapArt: rowOffset==smallestFactorOfSize, so it must equal rowWidth");
@@ -319,7 +319,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				final Boolean rowNeg = axisMatch ? varAxis1Neg : varAxis2Neg;
 				final Boolean colNeg = axisMatch ? varAxis2Neg : varAxis1Neg;
 				if(rowNeg != null){
-					final int test1 = Math.abs(posOffset + rowOffset*(rowNeg ? -1 : +1));
+					final int test1 = Math.abs(posOffset - rowOffset*(rowNeg ? -1 : +1));
 					assert test1 % Math.abs(colOffset) == 0;
 					Main.LOGGER.info("AutoPlaceMapArt: rowNeg is known, solving sys-of-eqs, test1="+test1);
 					rowWidth = test1/Math.abs(colOffset);
@@ -328,8 +328,8 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					//Solve for: a + rowOffset*rowNeg + colOffset*colNeg*rowWidth = b;
 					// a-b = rowOffset*rowNeg + colOffset*colNeg*rowWidth
 					// (a-b - rowOffset*rowNeg)/(colOffset*colNeg) = rowWidth
-					final int test1 = Math.abs(posOffset + rowOffset);
-					final int test2 = Math.abs(posOffset - rowOffset);
+					final int test1 = Math.abs(posOffset - rowOffset);
+					final int test2 = Math.abs(posOffset + rowOffset);
 					final int off = colOffset*(colNeg ? -1 : +1);
 					Main.LOGGER.info("AutoPlaceMapArt: a-b="+posOffset+", rowOffset="+rowOffset+", test1="+test1+", test2="+test2+", off="+off);
 					final boolean posWorks = test1 % off == 0, negWorks = test2 % off == 0;
