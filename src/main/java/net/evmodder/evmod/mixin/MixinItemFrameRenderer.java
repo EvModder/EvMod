@@ -103,7 +103,7 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		final Text cachedName = UpdateItemFrameHighlights.displayNameCache.get(itemFrameEntity);
 		if(cachedName != null){cir.setReturnValue(cachedName); return;}
 
-		if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue() && stack.getCustomName() != null && stack.getCustomName().getLiteralString() != null)
+		if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue() && stack.getCustomName() != null)
 			MapStateCacher.addMapStateByName(stack, state);
 
 		final MutableText name = stack.getName().copy();

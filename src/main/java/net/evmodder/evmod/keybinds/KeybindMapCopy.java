@@ -170,7 +170,8 @@ public final class KeybindMapCopy{
 		return (64/fraction.getDenominator())*fraction.getNumerator();
 	}
 	private final String getCustomNameOrNull(ItemStack stack){
-		return stack.getCustomName() == null ? null : stack.getCustomName().getString();
+		final Text text = stack.getCustomName();
+		return text == null ? null : text.getString();
 	}
 
 	private record PrioAndSlot(int p, int slot) implements Comparable<PrioAndSlot> {

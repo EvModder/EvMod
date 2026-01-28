@@ -112,7 +112,8 @@ public final class KeybindCraftingRestock{
 			if(restockFrom[1] != -1) client.interactionManager.clickSlot(syncId, restockFrom[1], 0, SlotActionType.QUICK_MOVE, client.player);
 
 			ItemStack input0 = slots.get(restockFrom[0]).getStack();
-			final String input0Name = input0.getCustomName() == null ? null : input0.getCustomName().getLiteralString();
+			final Text input0NameText = input0.getCustomName();
+			final String input0Name = input0NameText == null ? null : input0NameText.getLiteralString();
 			if(anvilName != null && !anvilName.equals(input0Name)){
 				updateAnvilName(as);
 //				Main.LOGGER.info("assigned name!");
@@ -133,7 +134,8 @@ public final class KeybindCraftingRestock{
 						}
 
 						ItemStack result = as.getScreenHandler().getSlot(AnvilScreenHandler.OUTPUT_ID).getStack();
-						String resultName = result.getCustomName() == null ? null : result.getCustomName().getLiteralString();
+						final Text resultNameText = result.getCustomName();
+						String resultName = resultNameText == null ? null : resultNameText.getLiteralString();
 						if(!anvilName.equals(resultName) && (input0Name == null ? resultName == null : input0Name.equals(resultName))){
 //							Main.LOGGER.info("assigned name in thread! attempt="+attempts);
 							updateAnvilName(as);

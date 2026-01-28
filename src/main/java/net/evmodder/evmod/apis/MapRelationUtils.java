@@ -11,6 +11,7 @@ import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
+import net.minecraft.text.Text;
 import net.minecraft.world.World;
 
 public abstract class MapRelationUtils{
@@ -112,10 +113,11 @@ public abstract class MapRelationUtils{
 		Iterator<ItemStack> it = slots.iterator();
 		for(int i=0; i<slots.size(); ++i){
 			final ItemStack item = it.next();
-			if(item.getCustomName() == null || !isMapArtWithCount(item, count)) continue;
+			final Text nameText = item.getCustomName();
+			if(nameText == null || !isMapArtWithCount(item, count)) continue;
 			if(differentLockedState(locked, item, world)) continue;
 
-			final String name = item.getCustomName().getLiteralString();
+			final String name = nameText.getString();
 			if(name == null) continue;
 			if(name.equals(sourceName)){relatedMapSlots.add(i); continue;}
 //			final String nameMinusArtist = removeByArtist(name);
@@ -190,11 +192,12 @@ public abstract class MapRelationUtils{
 //			final int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
 		it = slots.iterator();
 		for(int i=0; i<slots.size(); ++i){
-			ItemStack item = it.next();
-			if(!isMapArtWithCount(item, count) || item.getCustomName() == null) continue;
+			final ItemStack item = it.next();
+			final Text nameText = item.getCustomName();
+			if(!isMapArtWithCount(item, count) || nameText == null) continue;
 			if(differentLockedState(locked, item, world)) continue;
 
-			final String name = item.getCustomName().getString();
+			final String name = nameText.getString();
 			if(name == null) continue;
 			final String name2 = removeByArtist(name);
 			if(name2.length() < prefixLen+suffixLen+1 || name2.equals(sourceName2)) continue;
@@ -218,7 +221,8 @@ public abstract class MapRelationUtils{
 
 	public static final RelatedMapsData getRelatedMapsByName0(final List<ItemStack> slots, final World world){
 		assert slots != null && !slots.isEmpty();
-		final String name = slots.getFirst().getCustomName() == null ? null : slots.getFirst().getCustomName().getString();
+		final Text nameText = slots.getFirst().getCustomName();
+		final String name = nameText == null ? null : nameText.getString();
 		if(name == null) return new RelatedMapsData(-1, -1, new ArrayList<>());
 		final MapState state = FilledMapItem.getMapState(slots.getFirst(), world);
 		final Boolean locked = state == null ? null : state.locked;

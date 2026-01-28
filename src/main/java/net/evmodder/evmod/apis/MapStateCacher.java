@@ -319,9 +319,10 @@ public class MapStateCacher{
 		assert stack != null && stack.getItem() == Items.FILLED_MAP;
 		assert state != null && state.colors != null;
 		assert FilledMapItem.getMapState(stack, MinecraftClient.getInstance().world) == state;
+		assert stack.getCustomName() != null;
+
 		if(!state.locked && !Configs.Generic.MAP_CACHE_UNLOCKED.getBooleanValue()) return false;
-		final String name = stack.getCustomName().getLiteralString();
-		assert name != null;
+		final String name = stack.getCustomName().getString();
 		final String server = MiscUtils.getServerAddress();
 		HashSet<String> unusable = unusableNames == null ? null : unusableNames.get(server);
 		if(unusable != null && unusable.contains(name)) return false;
@@ -350,9 +351,9 @@ public class MapStateCacher{
 	public static final boolean loadMapStateByName(ItemStack stack, ClientWorld world){
 		assert stack != null && stack.getItem() == Items.FILLED_MAP;
 		assert world.getMapState(stack.get(DataComponentTypes.MAP_ID)) == null; // Already loaded
+		assert stack.getCustomName() != null;
 
-		final String name = stack.getCustomName().getLiteralString();
-		assert name != null;
+		final String name = stack.getCustomName().getString();
 
 		@SuppressWarnings("unchecked")
 		HashMap<String, MapStateSerializable> cache = (HashMap<String, MapStateSerializable>) commonCacheLoad(BY_NAME);

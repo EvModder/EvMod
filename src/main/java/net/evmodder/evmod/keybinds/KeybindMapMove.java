@@ -29,9 +29,8 @@ public final class KeybindMapMove{
 		final MapState state = FilledMapItem.getMapState(stack, world);
 		if(state == null || !MapColorUtils.isFullyTransparent(state.colors)) return false;
 		if(stack.getCustomName() == null) return true;
-		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(
-				Arrays.asList(slots), stack.getCustomName().getString(), stack.getCount(), state.locked, world);
-		return data.slots().stream().map(i -> slots[i].getCustomName().getLiteralString()).distinct().count() <= 1;
+		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(Arrays.asList(slots), stack.getName().getString(), stack.getCount(), state.locked, world);
+		return data.slots().stream().map(i -> slots[i].getName().getString()).distinct().count() <= 1;
 	}
 
 	public final void moveMapArtToFromShulker(){

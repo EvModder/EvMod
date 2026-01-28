@@ -112,7 +112,7 @@ public class MapLayoutFinder{
 	}
 
 	private final String getPosStrFromName(final ItemStack stack){
-		final String name = stack.getCustomName().getString();
+		final String name = stack.getName().getString();
 		return MapRelationUtils.simplifyPosStr(name.substring(currentData.prefixLen(), name.length()-currentData.suffixLen()));
 	}
 	public final boolean recalcLayout(PlayerEntity player, ItemFrameEntity lastIfe, ItemStack lastStack, ItemFrameEntity currIfe, ItemStack currStack){
@@ -269,7 +269,7 @@ public class MapLayoutFinder{
 		if(!stacksHashesForCurrentData.contains(ItemStack.hashCode(stack))){
 			RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(currStack, stack), world);
 			if(data.slots().size() != 2 || data.prefixLen() == -1) return null; // Not part of the map being autoplaced
-			Main.LOGGER.info("AutoPlaceMapArt: Added map itemstack to currentData"+(stack.getCustomName()==null?"":", name="+stack.getCustomName().getString()));
+			Main.LOGGER.info("AutoPlaceMapArt: Added map itemstack to currentData, name="+stack.getName().getString());
 			stacksHashesForCurrentData.add(ItemStack.hashCode(stack));
 		}
 		final Pos2DPair pos2dPair = getRelativePosPair(currPosStr, getPosStrFromName(stack));

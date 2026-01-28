@@ -152,8 +152,8 @@ public class CommandExportMapImg{
 			final ContainerComponent container = stack.get(DataComponentTypes.CONTAINER);
 			final BundleContentsComponent contents = stack.get(DataComponentTypes.BUNDLE_CONTENTS);
 			if(container == null && contents == null) continue;
-			final String containerName = stack.getCustomName() != null ? stack.getCustomName().getString()
-					: name+"-slot"+i+":"+stack.getItemName().getString();
+			final Text nameText = stack.getCustomName();
+			final String containerName = nameText != null ? nameText.getString() : name+"-slot"+i+":"+stack.getItemName().getString();
 			if(container != null){
 				List<ItemStack> subItems = com.google.common.collect.Streams.stream(container.iterateNonEmpty()).toList();
 				boolean subCombine = subItems.stream().noneMatch(s -> FilledMapItem.getMapState(s, source.getWorld()) != null);
@@ -262,7 +262,7 @@ public class CommandExportMapImg{
 
 		final ItemStack tlMapItemStack = ifeLookup.get(mapWall.stream().filter(ifeLookup::containsKey).findFirst().get()).getHeldItemStack();
 		final Text nameText = tlMapItemStack.getCustomName();
-		final String nameStr = nameText == null ? null : nameText.getLiteralString();
+		final String nameStr = nameText == null ? null : nameText.getString();
 		String imgName;
 		if(mapWall.size() == 1 || nameStr == null){
 			imgName = nameStr == null ? tlMapItemStack.get(DataComponentTypes.MAP_ID).asString() : nameStr;
@@ -472,7 +472,7 @@ public class CommandExportMapImg{
 				));
 				List<ItemStack> mapItems = new LinkedList<>(stackToIfe.keySet());
 				while(!mapItems.isEmpty()){
-					final String name = mapItems.getFirst().getCustomName().getString();
+					final String name = mapItems.getFirst().getName().getString();
 					final MapState state = FilledMapItem.getMapState(mapItems.getFirst(), ctx.getSource().getWorld());
 					if(state == null) Main.LOGGER.error("ExportMapImg: State is null! in runCommandForAllMaps()");
 					final Boolean locked = state == null ? null : state.locked;

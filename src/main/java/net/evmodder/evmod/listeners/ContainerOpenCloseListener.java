@@ -65,7 +65,7 @@ public final class ContainerOpenCloseListener implements TickListener{
 						MapStateCacher.loadMapStatesByPos(sh.getStacks(), MapStateCacher.BY_CONTAINER);
 					}
 					if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) sh.getStacks().stream()
-						.filter(s -> s.getItem() == Items.FILLED_MAP && s.getCustomName() != null && s.getCustomName().getLiteralString() != null)
+						.filter(s -> s.getItem() == Items.FILLED_MAP && s.getCustomName() != null)
 						.forEach(s -> {
 							MapState state = FilledMapItem.getMapState(s, client.world);
 							if(state == null) MapStateCacher.loadMapStateByName(s, client.world);
@@ -88,7 +88,7 @@ public final class ContainerOpenCloseListener implements TickListener{
 							MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getStack), MapStateCacher.BY_CONTAINER);
 						}
 						if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) slots.stream().map(Slot::getStack)
-							.filter(s -> s.getItem() == Items.FILLED_MAP && s.getCustomName() != null && s.getCustomName().getLiteralString() != null)
+							.filter(s -> s.getItem() == Items.FILLED_MAP && s.getCustomName() != null)
 							.forEach(s -> {
 								MapState state = FilledMapItem.getMapState(s, client.world);
 								if(state != null) MapStateCacher.addMapStateByName(s, state);
