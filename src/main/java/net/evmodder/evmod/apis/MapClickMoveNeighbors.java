@@ -3,11 +3,11 @@ package net.evmodder.evmod.apis;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
@@ -29,11 +29,24 @@ public abstract class MapClickMoveNeighbors{
 
 		final ItemStack[] slots = player.currentScreenHandler.slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
 		final MapState state = FilledMapItem.getMapState(mapMoved, player.getWorld());
-		final RelatedMapsData data =  MapRelationUtils.getRelatedMapsByName(Arrays.asList(slots),
-				mapMoved.getName().getString(), mapMoved.getCount(), state == null ? null : state.locked, player.getWorld());
-		if(data.prefixLen() == -1){
-			Main.LOGGER.info("MapMoveClick: related-name maps not found");
-			return;
+		RelatedMapsData data;
+		final boolean moveHalf;
+		{
+			final List<ItemStack> slotList = Arrays.asList(slots);
+			final String name = mapMoved.getName().getString();
+			final int count = mapMoved.getCount();
+			final Boolean locked = state == null ? null : state.locked;
+			data = MapRelationUtils.getRelatedMapsByName(slotList, name, count, locked, player.getWorld());
+			if(data.prefixLen() == -1){
+				data = MapRelationUtils.getRelatedMapsByName(slotList, name, count*2, locked, player.getWorld());
+				if(data.prefixLen() == -1) data = MapRelationUtils.getRelatedMapsByName(slotList, name, count*2-1, locked, player.getWorld());
+				if(data.prefixLen() == -1){
+					Main.LOGGER.info("MapMoveClick: related-name maps not found");
+					return;
+				}
+				else moveHalf = true;
+			}
+			else moveHalf = false;
 		}
 		data.slots().removeIf(i -> {
 			if(i == destSlot) return true;
@@ -103,13 +116,14 @@ public abstract class MapClickMoveNeighbors{
 		assert fromSlot != -1;
 //		if(!unaccounted.isEmpty()){Main.LOGGER.info("MapMoveClick: Maps not in a rectangle (B)"); return;}
 
+		final int tlDest = tl + destSlot - fromSlot;
 		final int brDest = br + destSlot - fromSlot;
+//		final int brDest = tlDest + (br-tl);//equivalent: destSlot+(br-fromSlot);//destSlot-(fromSlot-br);
 		if(brDest > slots.length){Main.LOGGER.info("MapMoveClick: Destination is outside inv window"); return;}
 
-		Main.LOGGER.info("MapMoveClick: tl="+tl+",br="+br+" | h="+h+",w="+w+" | "+fromSlot+"->"+destSlot);
+		Main.LOGGER.info("MapMoveClick: "+w+"x"+h+" [tl="+tl+",br="+br+"] -> [tl="+tlDest+",br="+brDest+"], "+fromSlot+"->"+destSlot);
 		//player.sendMessage(Text.literal("MapMoveClick: tl="+tl+",br="+br+" | h="+h+",w="+w+" | "+fromSlot+"->"+destSlot), false);////
 
-		final int tlDest = tl + destSlot - fromSlot;
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
 			int d = tlDest + i*9 + j;
 			if(d == destSlot) continue;
@@ -119,17 +133,16 @@ public abstract class MapClickMoveNeighbors{
 			}
 			slotsInvolved.add(d);
 		}
-//		final int brDest = tlDest + (br-tl);//equivalent: destSlot+(br-fromSlot);//destSlot-(fromSlot-br);
 
-		final boolean moveHalf = mapMoved.getCount() > 1 && (tl > brDest || br < tlDest) && !Screen.hasShiftDown();;
+//		final boolean moveHalf = mapMoved.getCount() > 1 && (tl > brDest || br < tlDest) && !Screen.hasShiftDown();;
 
-		final boolean isPlayerInv = player.currentScreenHandler instanceof PlayerScreenHandler;
-		final int hbStart = slots.length-(isPlayerInv ? 10 : 9); // extra slot at end to account for offhand
-		final boolean fromHotbar = br >= hbStart, toHotbar = brDest >= hbStart;
-		//Main.LOGGER.warn("MapMoveClick: fromHotbar:"+fromHotbar+", toHotbar:"+toHotbar+", brDest:"+brDest+", last  hotbar if to: "+(brDest-hbStart));
 		//if(PREFER_HOTBAR_SWAPS){
 		int hotbarButton = 40;
 		if(!moveHalf){
+			final boolean isPlayerInv = player.currentScreenHandler instanceof PlayerScreenHandler;
+			final int hbStart = slots.length-(isPlayerInv ? 10 : 9); // extra slot at end to account for offhand
+			final boolean fromHotbar = br >= hbStart, toHotbar = brDest >= hbStart;
+			//Main.LOGGER.warn("MapMoveClick: fromHotbar:"+fromHotbar+", toHotbar:"+toHotbar+", brDest:"+brDest+", last  hotbar if to: "+(brDest-hbStart));
 			for(int i=0; i<9; ++i){
 				if(fromHotbar && (tl-hbStart)%9 <= i && i <= (br-hbStart)%9) continue;		// Avoid hotbar slots the map might be moving from
 				if(toHotbar && (tlDest-hbStart)%9 <= i && i <= (brDest-hbStart)%9) continue;// Avoid hotbar slots the map might be moving into
@@ -148,10 +161,14 @@ public abstract class MapClickMoveNeighbors{
 		final ArrayDeque<InvAction> clicks = new ArrayDeque<>();
 		if(tempSlot != -1) clicks.add(new InvAction(tempSlot, hotbarButton, ActionType.HOTBAR_SWAP));
 
-		final int reverse = tl > tlDest ? 1 : -1;
+		final int mult, sStart, dStart;
+		if(tl > tlDest){mult = 1; sStart = tl; dStart = tlDest;}
+		else{mult = -1; sStart = br; dStart = brDest;}
 		Main.LOGGER.info("MapMoveClick: Moving all, starting from "+(tl > tlDest ? "TL" : "BR"));
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
-			int s = tl + (i*9 + j)*reverse, d = tlDest + (i*9 + j)*reverse;
+			int s = sStart + (i*9 + j)*mult, d = dStart + (i*9 + j)*mult;
+//			int s = tl + i*9 + j, d = tlDest + i*9 + j;
+//			int s = br - i*9 - j, d = brDest - i*9 - j;
 			if(d == destSlot) continue;
 			//Main.LOGGER.warn("MapMoveClick: adding 2 clicks: "+s+"->"+d+", hb:"+hotbarButton);
 			if(moveHalf){
