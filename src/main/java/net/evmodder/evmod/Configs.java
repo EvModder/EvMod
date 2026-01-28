@@ -68,6 +68,7 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigInteger MAPART_AUTOPLACE_INV_DELAY = new ConfigInteger("mapArtAutoPlaceInvDelay", 5, 0, 20).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAPART_AUTOPLACE_ANTI_ROTATE = new ConfigBoolean("mapArtAutoPlaceAntiRotate", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAPART_AUTOPLACE_IFRAMES = new ConfigBoolean("mapArtAutoPlaceIFrames", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean MAPART_AUTOPLACE_SWING_HAND = new ConfigBoolean("mapArtAutoPlaceSendSwingHandPacket", true).apply(GENERIC_KEY);
 		public static final ConfigDouble MAPART_AUTOPLACE_REACH = new ConfigDouble("mapArtAutoPlaceReach", 3.9d).apply(GENERIC_KEY);
 
 		public static final ConfigBooleanHotkeyed MAPART_AUTOREMOVE = new ConfigBooleanHotkeyed("mapArtAutoRemove", false, "").apply(GENERIC_KEY);
@@ -136,7 +137,7 @@ public final class Configs implements IConfigHandler{
 						PLACEMENT_HELPER_MAPART_FROM_BUNDLE));
 				if(settings.placementHelperMapArtAutoPlace){
 					configs.addAll(List.of(MAPART_AUTOPLACE, MAPART_AUTOPLACE_INV_DELAY, MAPART_AUTOPLACE_ANTI_ROTATE, MAPART_AUTOPLACE_IFRAMES));
-					if(settings.showNicheConfigs) configs.add(MAPART_AUTOPLACE_REACH);
+					if(settings.showNicheConfigs) configs.addAll(List.of(MAPART_AUTOPLACE_SWING_HAND, MAPART_AUTOPLACE_REACH));
 				}
 				else MAPART_AUTOPLACE.setBooleanValue(false);
 				if(settings.placementHelperMapArtAutoRemove){

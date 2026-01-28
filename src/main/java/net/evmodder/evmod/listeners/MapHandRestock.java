@@ -44,6 +44,11 @@ public final class MapHandRestock{
 	private final boolean JUST_PICK_A_MAP = true;
 	private final PosData2D POS_DATA_404 = new PosData2D(false, null, null);
 
+	private final String getCustomNameOrNull(ItemStack stack){
+		final Text text = stack.getCustomName();
+		return text == null ? null : text.getString();
+	}
+
 	//Friend: AutoPlaceMapArt
 	private final record PosData2D(boolean isSideways, String minPos2, String maxPos2){}
 	private final record Pos2DPair(String posA1, String posA2, String posB1, String posB2){}
@@ -219,7 +224,7 @@ public final class MapHandRestock{
 		int bestSlot = data.slots().getFirst(), bestConfidence=0;
 		//String bestName = prevName;
 		for(int i : data.slots()){
-			final String posStr = getPosStrFromName(slots.get(i).getCustomName().getLiteralString(), data);
+			final String posStr = getPosStrFromName(getCustomNameOrNull(slots.get(i)), data);
 			//if(infoLogs) Main.LOGGER.info("MapRestock: checkComesAfter for name: "+name);
 			final int confidence = checkComesAfterAnyOrder(prevPosStr, posStr, posData2d, infoLogs);
 			if(Math.abs(confidence) > Math.abs(bestConfidence)/* || (confidence==bestConfidence && name.compareTo(bestName) < 0)*/){
@@ -231,18 +236,18 @@ public final class MapHandRestock{
 		return bestSlot * (bestConfidence < 0 ? -1 : 1);//TODO: remove horrible hack
 	}
 	private final record TrailLenAndScore(int len, long score){}
-	private final TrailLenAndScore getTrailLengthAndScore(final List<ItemStack> slots, final RelatedMapsData data, int prevSlot,
+	private final TrailLenAndScore getTrailLengthAndScore(final List<ItemStack> slots, final RelatedMapsData data, ItemStack prevMap, int prevSlot,
 			final PosData2D posData2d, final World world){
 		int trailLength = 0;
 		long scoreSum = 0;
 		final RelatedMapsData copiedData = new RelatedMapsData(data.prefixLen(), data.suffixLen(), new ArrayList<>(data.slots()));
 		while(!copiedData.slots().isEmpty()){
-			final String prevName = slots.get(prevSlot).getCustomName().getLiteralString();
+			final String prevName = getCustomNameOrNull(prevMap);
 			final String prevPosStr = getPosStrFromName(prevName, data);
 			final int i = getNextSlotByNameUsingPosData2d(slots, copiedData, prevPosStr, posData2d, /*infoLogs=*/false);
 			final int currSlot = Math.abs(i);
-			MapState prevState = FilledMapItem.getMapState(slots.get(prevSlot), world);
-			MapState currState = FilledMapItem.getMapState(slots.get(currSlot), world);
+			MapState prevState = FilledMapItem.getMapState(prevMap, world);
+			MapState currState = FilledMapItem.getMapState(prevMap=slots.get(currSlot), world);
 			if(prevState != null && currState != null && i > 0){
 				//TODO: for up/down, need to look further back in the trail (last leftmost map)
 				//TODO: might as well check up/down for every map in inv once we have the arrangement finder
@@ -255,12 +260,11 @@ public final class MapHandRestock{
 		}
 		return new TrailLenAndScore(trailLength, scoreSum);
 	}
-	private final int getNextSlotByName(final List<ItemStack> slots, final int prevSlot, final World world){
-		final String prevName = slots.get(prevSlot).getCustomName().getLiteralString();
-		final int prevCount = slots.get(prevSlot).getCount();
-		final MapState state = FilledMapItem.getMapState(slots.get(prevSlot), world);
+	private final int getNextSlotByName(final List<ItemStack> slots, final ItemStack prevMap, final int prevSlot, final World world){
+		final String prevName = getCustomNameOrNull(prevMap);
+		final MapState state = FilledMapItem.getMapState(prevMap, world);
 		final Boolean locked = state == null ? null : state.locked;
-		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, prevName, prevCount, locked, world);
+		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, prevName, prevMap.getCount(), locked, world);
 		data.slots().remove(Integer.valueOf(prevSlot));
 		if(data.slots().isEmpty()){
 			Main.LOGGER.info("MapRestock: getNextSlotByName() found no related named maps ");
@@ -281,8 +285,8 @@ public final class MapHandRestock{
 
 		PosData2D posData2d = posData2dForName.getOrDefault(prevName, POS_DATA_404);
 		if(posData2d == POS_DATA_404){
-			final List<String> mapNames = Stream.concat(Stream.of(prevSlot), data.slots().stream())
-					.map(i -> slots.get(i).getCustomName().getLiteralString()).toList();
+			final List<String> mapNames = Stream.concat(Stream.of(prevName),
+					data.slots().stream().map(i -> getCustomNameOrNull(slots.get(i)))).toList();
 			final String prefixStr = nameWoArtist.substring(0, data.prefixLen());
 			final String suffixStr = nameWoArtist.substring(nameWoArtist.length()-data.suffixLen());
 			{
@@ -301,8 +305,8 @@ public final class MapHandRestock{
 				final List<String> mapPosStrs = mapNames.stream().map(name -> getPosStrFromName(name, data)).toList();
 				final PosData2D sidewaysPos2dData = getPosData2D(mapPosStrs, true);
 				final PosData2D regularPos2dData = getPosData2D(mapPosStrs, false);
-				final TrailLenAndScore sidewaysTrail = getTrailLengthAndScore(slots, data, prevSlot, sidewaysPos2dData, world);
-				final TrailLenAndScore regularTrail = getTrailLengthAndScore(slots, data, prevSlot, regularPos2dData, world);
+				final TrailLenAndScore sidewaysTrail = getTrailLengthAndScore(slots, data, prevMap, prevSlot, sidewaysPos2dData, world);
+				final TrailLenAndScore regularTrail = getTrailLengthAndScore(slots, data, prevMap, prevSlot, regularPos2dData, world);
 				final boolean isSideways = sidewaysTrail.len > regularTrail.len || (sidewaysTrail.len == regularTrail.len && sidewaysTrail.score > regularTrail.score);
 				posData2d = isSideways ? sidewaysPos2dData : regularPos2dData;
 				//TODO: if sidewaysLen == regularLen, determine which has better ImgEdgeStitching sum
@@ -319,14 +323,14 @@ public final class MapHandRestock{
 			Main.LOGGER.info("MapRestock: getNextSlotByName() failed");
 			return -1;
 		}
-		Main.LOGGER.info("MapRestock: getNextSlotByName() succeeded, slot="+i+", name="+slots.get(Math.abs(i)).getCustomName().getString());
+		Main.LOGGER.info("MapRestock: getNextSlotByName() succeeded, slot="+i+", name="+getCustomNameOrNull(slots.get(Math.abs(i))));
 		return Math.abs(i);//i != -999 ? i : getNextSlotAny(slots, prevSlot, world);
 	}
 
-	private final int getNextSlotByImage(final List<ItemStack> slots, final int prevSlot, final World world){
-		final String prevName = slots.get(prevSlot).getCustomName() == null ? null : slots.get(prevSlot).getCustomName().getLiteralString();
-		final int prevCount = slots.get(prevSlot).getCount();
-		final MapState prevState = FilledMapItem.getMapState(slots.get(prevSlot), world);
+	private final int getNextSlotByImage(final List<ItemStack> slots, final ItemStack prevMap, final int prevSlot, final World world){
+		final String prevName = getCustomNameOrNull(prevMap);
+		final int prevCount = prevMap.getCount();
+		final MapState prevState = FilledMapItem.getMapState(prevMap, world);
 		assert prevState != null;
 
 		final List<Integer> relatedSlots = MapRelationUtils.getRelatedMapsByName(slots, prevName, prevCount, prevState.locked, world).slots();
@@ -338,7 +342,7 @@ public final class MapHandRestock{
 			if(!MapRelationUtils.isMapArtWithCount(slots.get(i), prevCount) || i == prevSlot) continue;
 			final MapState state = FilledMapItem.getMapState(slots.get(i), world);
 			if(state == null) continue;
-			final String name = slots.get(i).getCustomName() == null ? null : slots.get(i).getCustomName().getLiteralString();
+			final String name = getCustomNameOrNull(slots.get(i));
 			if(!simpleCanComeAfter(prevName, name)) continue;
 
 			//TODO: up/down & sideways hint
@@ -361,15 +365,15 @@ public final class MapHandRestock{
 	//2=map with same count & locked state, has name
 	//3=map with same count & locked state, has name, matches multi-map group
 	//4=map with same count & locked state, has name, matches multi-map group, is start index
-	private final int getNextSlotFirstMap(final List<ItemStack> slots, final int prevSlot, final World world){
-		final int prevCount = slots.get(prevSlot).getCount();
+	private final int getNextSlotFirstMap(final List<ItemStack> slots, final ItemStack prevMap, final int prevSlot, final World world){
+		final int prevCount = prevMap.getCount();
 //		assert prevState != null; // Only possible if map IDs get corrupted (or a player in creative spawns an id that doesn't exist yet)
 		final Boolean prevLocked;
 		{
-			final MapState prevState = FilledMapItem.getMapState(slots.get(prevSlot), world);
+			final MapState prevState = FilledMapItem.getMapState(prevMap, world);
 			prevLocked = prevState == null ? null : prevState.locked;
 		}
-		final String prevName = slots.get(prevSlot).getCustomName() == null ? null : slots.get(prevSlot).getCustomName().getLiteralString();
+		final String prevName = getCustomNameOrNull(prevMap);
 		final boolean prevWas1x1 = MapRelationUtils.getRelatedMapsByName(slots, prevName, prevCount, prevLocked, world).slots().size() < 2;
 
 		int bestSlot = -1, bestScore = 0;
@@ -391,8 +395,7 @@ public final class MapHandRestock{
 			if(state == null) continue; // Only possible if map IDs get corrupted (or a player in creative spawns an id that doesn't exist yet)
 			if(prevLocked != null && state.locked != prevLocked) continue;
 			if(bestScore < 2){bestScore = 2; bestSlot = i;} // It's a map with the same locked state
-			if(slots.get(i).getCustomName() == null) continue;
-			final String name = slots.get(i).getCustomName().getLiteralString();
+			final String name = getCustomNameOrNull(slots.get(i));
 			if(name == null) continue;
 			if(bestScore < 3){bestScore = 3; bestSlot = i;} // It's a named map
 			final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(slots, name, prevCount, prevLocked, world);
@@ -430,7 +433,7 @@ public final class MapHandRestock{
 			if(slots.stream().anyMatch(s -> ItemStack.areItemsAndComponentsEqual(s, stack))) continue; // If map is also present unbundled in inv
 			if(stack.getCount() == 1 && isInNearbyItemFrame(stack, player, 20)) continue;
 
-			final String name = stack.getCustomName() == null ? null : stack.getCustomName().getLiteralString();
+			final String name = getCustomNameOrNull(stack);
 			if((prevName == null) != (name == null) || (prevName != null && prevName.equals(name))) continue;
 
 			Main.LOGGER.info("MapRestock: available from bundle slot="+i+",name="+name);
@@ -440,12 +443,14 @@ public final class MapHandRestock{
 	}
 
 	private boolean waitingForRestock;
-	private final void tryToStockNextMap(PlayerEntity player, Hand hand){
+	private final void tryToStockNextMap(ItemStack prevMap, Hand hand){
+		assert prevMap != null && prevMap.getItem() == Items.FILLED_MAP;
+
+		final MinecraftClient client = MinecraftClient.getInstance();
+		final PlayerEntity player = client.player;
 		final int prevSlot = hand == Hand.MAIN_HAND ? player.getInventory().selectedSlot+36 : PlayerScreenHandler.OFFHAND_ID;
-		final ItemStack mapInHand = player.getStackInHand(hand);
 		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).toList();
-		assert slots.get(prevSlot) == mapInHand;
-		final String prevName = mapInHand.getCustomName() == null ? null : mapInHand.getCustomName().getLiteralString();
+		final String prevName = getCustomNameOrNull(prevMap);
 
 		final List<ItemStack> slotsWithBundleSub = getSlotsWithBundleSub(slots, player, prevName);
 
@@ -453,26 +458,25 @@ public final class MapHandRestock{
 		if(Configs.Generic.PLACEMENT_HELPER_MAPART_USE_NAMES.getBooleanValue() && restockFromSlot == -1){
 			if(prevName != null){
 				Main.LOGGER.info("MapRestock: finding next map by name: "+prevName);
-				restockFromSlot = getNextSlotByName(slotsWithBundleSub, prevSlot, player.getWorld());
+				restockFromSlot = getNextSlotByName(slotsWithBundleSub, prevMap, prevSlot, player.getWorld());
 			}
 		}
-		final MapState state = FilledMapItem.getMapState(mapInHand, player.getWorld());
-
 		if(Configs.Generic.PLACEMENT_HELPER_MAPART_USE_IMAGE.getBooleanValue() && restockFromSlot == -1 && !posData2dForName.containsKey(prevName)){
+			final MapState state = FilledMapItem.getMapState(prevMap, player.getWorld());
 			if(state != null){
 				Main.LOGGER.info("MapRestock: finding next map by img-edge");
-				restockFromSlot = getNextSlotByImage(/*slotsWithBundleSub*/slots, prevSlot, player.getWorld());
+				restockFromSlot = getNextSlotByImage(/*slotsWithBundleSub*/slots, prevMap, prevSlot, player.getWorld());
 			}
 		}
 		if(JUST_PICK_A_MAP && restockFromSlot == -1){
 			Main.LOGGER.info("MapRestock: finding next map by ANY (count->locked->named->related)");
-			restockFromSlot = getNextSlotFirstMap(/*slotsWithBundleSub*/slots, prevSlot, player.getWorld());
+			restockFromSlot = getNextSlotFirstMap(/*slotsWithBundleSub*/slots, prevMap, prevSlot, player.getWorld());
 		}
 		if(restockFromSlot == -1){Main.LOGGER.info("MapRestock: unable to find next map"); return;}
 
 		//PlayerScreenHandler.HOTBAR_START=36
 		final boolean isHotbarSlot = restockFromSlot >= 36 && restockFromSlot < 45;
-		if(mapInHand.getCount() > 2 && !isHotbarSlot){
+		if(prevMap.getCount() > 2 && !isHotbarSlot){
 			Main.LOGGER.warn("MapRestock: Won't swap with inventory since prevMap count > 2");
 			return;
 		}
@@ -486,7 +490,6 @@ public final class MapHandRestock{
 			if(player == null){waitingForRestock = false; return;}
 
 //			Main.LOGGER.info("MapRestock: ok, sync client execution");
-			MinecraftClient client = MinecraftClient.getInstance();
 			client.executeSync(()->{
 //				try{sleep(50l);}catch(InterruptedException e){e.printStackTrace();waitingForRestock=false;} // 50ms = 1tick
 //				Main.LOGGER.info("MapRestock: ok, doing restock click(s)");
@@ -518,7 +521,8 @@ public final class MapHandRestock{
 
 	private boolean hasAutoPlaceableMapInInv;
 	public MapHandRestock(final boolean allowAutoPlacer, final boolean allowAutoRemover){
-		final AutoPlaceMapArt autoPlacer = allowAutoPlacer ? new AutoPlaceMapArt() : null;
+		final AutoPlaceMapArt autoPlacer = allowAutoPlacer ? new AutoPlaceMapArt(
+				stack->tryToStockNextMap(stack, Hand.MAIN_HAND)) : null;
 		final AutoRemoveMapArt autoRemover = allowAutoRemover ? new AutoRemoveMapArt() : null;
 		if(allowAutoPlacer || allowAutoRemover){
 			AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
@@ -588,7 +592,10 @@ public final class MapHandRestock{
 			}
 			else if(Configs.Generic.PLACEMENT_HELPER_MAPART.getBooleanValue()){
 				Main.LOGGER.info("MapRestock: doing best-guess hand restock");
-				tryToStockNextMap(player, hand);
+				final int prevSlot = hand == Hand.MAIN_HAND ? player.getInventory().selectedSlot+36 : PlayerScreenHandler.OFFHAND_ID;
+				final ItemStack mapInHand = player.getStackInHand(hand);
+				assert mapInHand == player.playerScreenHandler.slots.get(prevSlot).getStack();
+				tryToStockNextMap(mapInHand, hand);
 			}
 			return ActionResult.PASS;
 		});

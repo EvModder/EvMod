@@ -5,10 +5,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.Configs.Generic;
@@ -32,6 +32,7 @@ import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -41,14 +42,12 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
-	private final boolean SWING_HAND = true; // TODO: config?
-
 	private final Pattern pOfSize;
 
 	private Direction dir;
 	private World world;
 	private ItemFrameEntity lastIfe;
-	private ItemStack lastStack;
+	private ItemStack lastStack, lastAutoPlacedStack;
 	private String lastPosStr;
 	private Boolean varAxis1Neg, varAxis2Neg, axisMatch;
 	private RelatedMapsData currentData;
@@ -60,8 +59,11 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 	private int attemptIdx, lastAttemptIdx;
 	private int ticksSinceInvAction;
 	private boolean hasWarnedMissingIfe;
+	private final Consumer<ItemStack> handRestockFallback;
+	private boolean calledHandRestockFallback;
 
-	public AutoPlaceMapArt(){
+	public AutoPlaceMapArt(Consumer<ItemStack> moveNextMapToMainHand){
+		handRestockFallback = moveNextMapToMainHand;
 		pOfSize = Pattern.compile("^\\s*(?:of|/)\\s*(\\d+).*$");
 		allMapItems = new ArrayList<>();
 		stacksHashesForCurrentData = new ArrayList<>();
@@ -121,9 +123,9 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			return new Pos2DPair(a%rowWidth, a/rowWidth, b%rowWidth, b/rowWidth);
 		}
 		if(posA.matches("[TMB][LMR]") && posB.matches("[TMB][LMR]")){
-			assert currentData.slots().stream().allMatch(i -> getPosStrFromName(allMapItems.get(i)).matches("[TMB][LMR]"));
-			final boolean hasM1 =  currentData.slots().stream().anyMatch(i -> getPosStrFromName(allMapItems.get(i)).charAt(0) == 'M');
-			final boolean hasM2 =  currentData.slots().stream().anyMatch(i -> getPosStrFromName(allMapItems.get(i)).charAt(1) == 'M');
+			assert currentData.slots().stream().allMatch(i -> getPosStrFromItem(allMapItems.get(i)).matches("[TMB][LMR]"));
+			final boolean hasM1 =  currentData.slots().stream().anyMatch(i -> getPosStrFromItem(allMapItems.get(i)).charAt(0) == 'M');
+			final boolean hasM2 =  currentData.slots().stream().anyMatch(i -> getPosStrFromItem(allMapItems.get(i)).charAt(1) == 'M');
 //			final boolean hasM1 = posA.charAt(0) == 'M' || posB.charAt(0) == 'M';
 //			final boolean hasM2 = posA.charAt(1) == 'M' || posB.charAt(1) == 'M';
 			return new Pos2DPair(
@@ -155,7 +157,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			dir = null;
 			world = null;
 			lastIfe = null;
-			lastStack = null;
+			lastStack = lastAutoPlacedStack = null;
 			lastPosStr = null;
 			varAxis1Neg = varAxis2Neg = axisMatch = null;
 			currentData = null;
@@ -165,11 +167,11 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		}
 	}
 
-	private final String getPosStrFromName(final ItemStack stack){
-		final String name = stack.getCustomName().getString();
+	private final String getPosStrFromName(final String name){
 		final String nameWithoutArtist = MapRelationUtils.removeByArtist(name);
 		return MapRelationUtils.simplifyPosStr(nameWithoutArtist.substring(currentData.prefixLen(), nameWithoutArtist.length()-currentData.suffixLen()));
 	}
+	private final String getPosStrFromItem(final ItemStack stack){return getPosStrFromName(stack.getName().getString());}
 
 	private final int getSmallestFactor(final int n){
 		for(int i=2; i*i <= n; ++i) if(n % i == 0) return i;
@@ -178,6 +180,9 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 	public final boolean recalcLayout(PlayerEntity player, ItemFrameEntity currIfe, ItemStack currStack){
 		synchronized(stacksHashesForCurrentData){
+		final Text currNameText = currStack.getCustomName();
+		if(currNameText == null) return false;
+		final String currName = currNameText.getString();
 		String currPosStr = null;
 		try{
 		if(!Generic.MAPART_AUTOPLACE.getBooleanValue()
@@ -231,9 +236,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				disableAndReset(); return false;
 			}
 //			Main.LOGGER.info("AutoPlaceMapArt: related maps in inv: "+(currentData.slots().size()-2));
-			assert currStack.getCustomName() != null;
-			final String name = currStack.getCustomName().getString();
-			final String nameWoArtist = MapRelationUtils.removeByArtist(name);
+			final String nameWoArtist = MapRelationUtils.removeByArtist(currName);
 			final String suffixStr = nameWoArtist.substring(nameWoArtist.length()-data.suffixLen());
 			Matcher m = pOfSize.matcher(suffixStr);
 			if(m.find()){
@@ -241,11 +244,11 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				Main.LOGGER.info("AutoPlaceMapArt: Detected 'X/SIZE' posStr format, SIZE="+ofSize);
 			}
 		}
-		currPosStr = getPosStrFromName(currStack);
-		if(lastPosStr == null) lastPosStr = getPosStrFromName(lastStack);
+		currPosStr = getPosStrFromName(currName);
+		if(lastPosStr == null) lastPosStr = getPosStrFromItem(lastStack);
 		if(ofSize != null && rowWidth == null){
 			if(!currPosStr.matches("-?\\d+")){
-				Main.LOGGER.warn("AutoPlaceMapArt: Invalid 1d X/SIZE posStr! currPosStr="+currPosStr+",name="+currStack.getCustomName().getString());
+				Main.LOGGER.warn("AutoPlaceMapArt: Invalid 1d X/SIZE posStr! currPosStr="+currPosStr+",name="+currName);
 				disableAndReset(); return false;
 			}
 			if(Math.abs(ifeOffset1) > ofSize || Math.abs(ifeOffset2) > ofSize){
@@ -462,13 +465,14 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 	public final BlockPos getPlacement(ItemStack stack){
 		synchronized(stacksHashesForCurrentData){
+			final String name = stack.getName().getString();
 			if(!stacksHashesForCurrentData.contains(ItemStack.hashCode(stack))){
 				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(List.of(lastStack, stack), world);
 				if(data.slots().size() != 2 || data.prefixLen() == -1) return null; // Not part of the map being autoplaced
-				Main.LOGGER.info("AutoPlaceMapArt: Added map itemstack to currentData"+(stack.getCustomName()==null?"":", name="+stack.getCustomName().getString()));
+				Main.LOGGER.info("AutoPlaceMapArt: Added map itemstack to currentData, name="+name);
 				stacksHashesForCurrentData.add(ItemStack.hashCode(stack));
 			}
-			final Pos2DPair pos2dPair = getRelativePosPair(getPosStrFromName(stack), lastPosStr);
+			final Pos2DPair pos2dPair = getRelativePosPair(getPosStrFromName(name), lastPosStr);
 			if(pos2dPair == null) return null;
 			final int axisOffset1, axisOffset2;
 			if(axisMatch == null){
@@ -524,11 +528,13 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		recentPlaceAttempts[attemptIdx] = ife.getId();
 		lastAttemptIdx = attemptIdx;
 
+		lastAutoPlacedStack = player.getInventory().getMainHandStack().copy();
+
 		player.networkHandler.sendPacket(PlayerInteractEntityC2SPacket.interactAt(ife, player.isSneaking(), Hand.MAIN_HAND, ife.getPos().add(0, 0.0625, 0)));
 		MinecraftClient.getInstance().interactionManager.interactEntity(player, ife, Hand.MAIN_HAND);
-		if(SWING_HAND) player.networkHandler.sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
-//		nearestIfe.interactAt(client.player, ife.getEyePos(), Hand.MAIN_HAND);
-//		client.player.interact(ife, Hand.MAIN_HAND);
+		if(Configs.Generic.MAPART_AUTOPLACE_SWING_HAND.getBooleanValue()) player.networkHandler.sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+//		nearestIfe.interactAt(player, ife.getEyePos(), Hand.MAIN_HAND);
+//		player.interact(ife, Hand.MAIN_HAND);
 	}
 
 	private final Vec3d getPlaceAgainstSurface(BlockPos ifeBp){
@@ -548,7 +554,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 	boolean foundValidPosOnLastAttempt;
 	record MapPlacementData(int slot, int bundleSlot, ItemFrameEntity ife, BlockPos bp){}
 	public final MapPlacementData getNearestMapPlacement(PlayerEntity player, final boolean allowOutsideMaxReach, final boolean allowMapInHand){
-		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).collect(Collectors.toList());
+		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).toList();
 
 		final double MAX_REACH = Configs.Generic.MAPART_AUTOPLACE_REACH.getDoubleValue();
 		final double MAX_REACH_SQ = MAX_REACH*MAX_REACH;
@@ -653,6 +659,11 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		return new MapPlacementData(nearestSlot, bundleSlot, nearestIfe, nearestBp);
 	}
 
+	private final boolean isMovingTooFast(Vec3d velocity){
+		double xzLengthSq = velocity.x*velocity.x + velocity.z*velocity.z;
+		return xzLengthSq > 0.0001 || Math.abs(velocity.y) > 0.08;
+	}
+
 	private final boolean test=true;// TODO: Test to confirm, but changing hotbar slots shouldn't count as an inv action
 
 	private final void getMapIntoMainHand(ClientPlayerEntity player, int slot, int bundleSlot){
@@ -683,6 +694,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to avoid losing iFrame stack");
 					if(!test) return;
 				}
+				if(isMovingTooFast(player.getVelocity())) return; // TODO: Pause while player is moving... keep or nah?
 				// Swap from upper inv to main hand
 				ClickUtils.executeClicks(_0->true, onDone, new InvAction(slot, selectedSlot, ActionType.HOTBAR_SWAP));
 				Main.LOGGER.info("AutoPlaceMapArt: Swapped nextMap to inv.selectedSlot: s="+slot+"->hb="+(selectedSlot));
@@ -701,12 +713,14 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					if(!test){ticksSinceInvAction = 0; return;}
 				}
 				else{
+					if(isMovingTooFast(player.getVelocity())) return; // TODO: Pause while player is moving... keep or nah?
 					// Try to move item out of main hand
 					ClickUtils.executeClicks(_0->true, onDone, new InvAction(selectedSlot+36, 0, ActionType.SHIFT_CLICK));
 					Main.LOGGER.info("AutoPlaceMapArt: Shift-clicking item out of mainhand (to upper inv), hb="+selectedSlot);
 					return;
 				}
 			}
+			if(isMovingTooFast(player.getVelocity())) return; // TODO: Pause while player is moving... keep or nah?
 			BundleContentsComponent contents = player.playerScreenHandler.slots.get(slot).getStack().get(DataComponentTypes.BUNDLE_CONTENTS);
 			assert contents != null && contents.size() > bundleSlot;
 			ArrayDeque<InvAction> clicks = new ArrayDeque<>();
@@ -719,11 +733,6 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			ClickUtils.executeClicks(_0->true, onDone, clicks);
 			Main.LOGGER.info("AutoPlaceMapArt: Extracted map from bundle into mainhand");
 		}
-	}
-
-	private boolean isMovingTooFast(Vec3d velocity){
-		double xzLengthSq = velocity.x*velocity.x + velocity.z*velocity.z;
-		return xzLengthSq > 0.0001 || Math.abs(velocity.y) > 0.08;
 	}
 
 	private boolean isIFrame(Item item){return item == Items.ITEM_FRAME || item == Items.GLOW_ITEM_FRAME;}
@@ -791,10 +800,15 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			}
 		}
 
-		if(isMovingTooFast(player.getVelocity())) return; // Pause while player is moving
-
 		final MapPlacementData data = getNearestMapPlacement(player, /*allowOutsideReach=*/false, /*allowMapInHand=*/true);
-		if(data == null) return;
+		if(data == null){
+			if(player.getMainHandStack().getItem() != Items.FILLED_MAP && handRestockFallback != null && !calledHandRestockFallback){
+				handRestockFallback.accept(lastAutoPlacedStack);
+				calledHandRestockFallback = true;
+			}
+			return;
+		}
+		calledHandRestockFallback = false;
 
 		if(player.playerScreenHandler != null && !player.playerScreenHandler.getCursorStack().isEmpty()){
 			Main.LOGGER.warn("AutoPlaceMapArt: item stuck on cursor! attempting to place into empty slot");
