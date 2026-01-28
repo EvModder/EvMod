@@ -32,7 +32,7 @@ public class UpdateInventoryHighlights{
 		return nestedInventoryMapGroup.contains(colorsUUID);
 	}
 
-	public static final void setCurrentlyBeingPlacedMapArt(ItemStack stack, int slot){
+	public static final void setCurrentlyBeingPlacedMapArt(ItemStack stack, int slot){ // Accessor: MapHandRestock
 		assert ItemStack.areEqual(MinecraftClient.getInstance().player.getInventory().getStack(slot), stack);
 		currentlyBeingPlacedIntoItemFrame = stack.copy();
 		slotUsedForCurrentlyBeingPlacedItem = slot;

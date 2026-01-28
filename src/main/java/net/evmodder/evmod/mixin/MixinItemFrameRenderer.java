@@ -74,7 +74,7 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 			// no-op
 		}
 		// If right up in front of iFrame, use the vanilla label check
-		else if((squaredDistanceToCamera=client.player.squaredDistanceTo(itemFrameEntity)) <= 16d/*4*4*/){
+		else if((squaredDistanceToCamera=client.player.squaredDistanceTo(itemFrameEntity)) <= 16d/*4*4*/ && stack.getCustomName() != null){
 //			Main.LOGGER.info("right up in front: "+stack.getName().getString()+", squaredDistanceToCamera="+squaredDistanceToCamera);
 			// no-op
 			if(!state.locked) MapGroupUtils.getIdForMapState(state, /*evict*/true); // Evict cache for maps being directly looked at

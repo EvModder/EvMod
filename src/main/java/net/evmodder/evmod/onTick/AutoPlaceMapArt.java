@@ -42,6 +42,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
 public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
+	private final int MANUAL_CLICK_WAIT_TIMEOUT = 60;
 	private final Pattern pOfSize;
 
 	private Direction dir;
@@ -57,7 +58,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 	private final int[] recentPlaceAttempts;
 	private int attemptIdx, lastAttemptIdx;
-	private int ticksSinceInvAction;
+	private int ticksSinceInvAction, ticksWaitingForManualClick;
 	private boolean hasWarnedMissingIfe;
 	private final Consumer<ItemStack> handRestockFallback;
 	private boolean calledHandRestockFallback;
@@ -765,12 +766,13 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			return;
 		}
 
-		// Sadly this doesn't work after the last manual map, since UseEntityCallback.EVENT isn't triggered for some reason.
+		// Sadly this doesn't work after the last manual map, since UseEntityCallback.EVENT isn't triggered by AutoMapArtPlace for some reason.
 		// And yeah, I tried setting it manually, but since the code can't guarantee a map gets placed, it can get it stuck.
-		if(!player.isInCreativeMode() && UpdateInventoryHighlights.hasCurrentlyBeingPlacedMapArt()){
-			Main.LOGGER.info("AutoPlaceMapArt: waiting for last manually-placed mapart to vanish from mainhand");
+		if(!player.isInCreativeMode() && UpdateInventoryHighlights.hasCurrentlyBeingPlacedMapArt() && ++ticksWaitingForManualClick <= MANUAL_CLICK_WAIT_TIMEOUT){
+			Main.LOGGER.info("AutoPlaceMapArt: waiting for last manually-placed mapart to vanish from mainhand ("+ticksWaitingForManualClick+"ticks)");
 			return;
 		}
+		ticksWaitingForManualClick = 0;
 
 		// Don't spam-place in the same blockpos, give iframe entity a chance to load
 		if(++attemptIdx >= recentPlaceAttempts.length) attemptIdx = 0;
