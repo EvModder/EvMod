@@ -23,17 +23,14 @@ public abstract class MapClickMoveNeighbors{
 	// Only called by MixinScreenHandler
 	public static final void moveNeighbors(final PlayerEntity player, final int destSlot, final ItemStack mapMoved){
 		if(mapMoved.getItem() != Items.FILLED_MAP) return;
-		// No need for this check: Handled by MapRelationUtils.getRelatedMapsByName()
-//		if(mapMoved.getCustomName() == null || mapMoved.getCustomName().getLiteralString() == null) return;
 
 		if(ongoingClickMove){Main.LOGGER.warn("MapMoveClick: Already ongoing"); return;}
 		Main.LOGGER.info("MapMoveClick: moveNeighbors() called");
 
 		final ItemStack[] slots = player.currentScreenHandler.slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
-		final String movedName = mapMoved.getCustomName().getLiteralString();
 		final MapState state = FilledMapItem.getMapState(mapMoved, player.getWorld());
-		final Boolean locked = state == null ? null : state.locked;
-		final RelatedMapsData data =  MapRelationUtils.getRelatedMapsByName(Arrays.asList(slots), movedName, mapMoved.getCount(), locked, player.getWorld());
+		final RelatedMapsData data =  MapRelationUtils.getRelatedMapsByName(Arrays.asList(slots),
+				mapMoved.getName().getString(), mapMoved.getCount(), state == null ? null : state.locked, player.getWorld());
 		if(data.prefixLen() == -1){
 			Main.LOGGER.info("MapMoveClick: related-name maps not found");
 			return;
@@ -47,7 +44,7 @@ public abstract class MapClickMoveNeighbors{
 			return false;
 		});
 		if(data.slots().isEmpty()){
-			Main.LOGGER.info("MapMoveClick: no connected moveable maps found");
+			Main.LOGGER.info("MapMoveClick: no related moveable maps found");
 			return;
 		}
 
@@ -132,15 +129,17 @@ public abstract class MapClickMoveNeighbors{
 		//Main.LOGGER.warn("MapMoveClick: fromHotbar:"+fromHotbar+", toHotbar:"+toHotbar+", brDest:"+brDest+", last  hotbar if to: "+(brDest-hbStart));
 		//if(PREFER_HOTBAR_SWAPS){
 		int hotbarButton = 40;
-		for(int i=0; i<9; ++i){
-			if(fromHotbar && (tl-hbStart)%9 <= i && i <= (br-hbStart)%9) continue;		// Avoid hotbar slots the map might be moving from
-			if(toHotbar && (tlDest-hbStart)%9 <= i && i <= (brDest-hbStart)%9) continue;// Avoid hotbar slots the map might be moving into
-			if(player.getInventory().getStack(i).isEmpty()){hotbarButton = i; break;}
+		if(!moveHalf){
+			for(int i=0; i<9; ++i){
+				if(fromHotbar && (tl-hbStart)%9 <= i && i <= (br-hbStart)%9) continue;		// Avoid hotbar slots the map might be moving from
+				if(toHotbar && (tlDest-hbStart)%9 <= i && i <= (brDest-hbStart)%9) continue;// Avoid hotbar slots the map might be moving into
+				if(player.getInventory().getStack(i).isEmpty()){hotbarButton = i; break;}
+			}
+			if(hotbarButton == 40) Main.LOGGER.warn("MapMoveClick: Using offhand for swaps");
 		}
-		if(hotbarButton == 40) Main.LOGGER.warn("MapMoveClick: Using offhand for swaps");
 
 		int tempSlot = -1;
-		if(!player.getInventory().getStack(hotbarButton).isEmpty()){
+		if(!moveHalf && !player.getInventory().getStack(hotbarButton).isEmpty()){
 			for(int i=0; i<slots.length; ++i) if(slots[i].isEmpty() && !slotsInvolved.contains(i)){tempSlot = i; break;}
 			if(tempSlot == -1) Main.LOGGER.warn("MapMoveClick: No available slot with which to free up offhand");
 		}
@@ -152,7 +151,7 @@ public abstract class MapClickMoveNeighbors{
 		final int reverse = tl > tlDest ? 1 : -1;
 		Main.LOGGER.info("MapMoveClick: Moving all, starting from "+(tl > tlDest ? "TL" : "BR"));
 		for(int i=0; i<h; ++i) for(int j=0; j<w; ++j){
-			int s = tl + i*9 + j*reverse, d = tlDest + i*9 + j*reverse;
+			int s = tl + (i*9 + j)*reverse, d = tlDest + (i*9 + j)*reverse;
 			if(d == destSlot) continue;
 			//Main.LOGGER.warn("MapMoveClick: adding 2 clicks: "+s+"->"+d+", hb:"+hotbarButton);
 			if(moveHalf){
