@@ -16,7 +16,7 @@
 	"entrypoints": {
 		"client": [ "net.evmodder.${mod_id}.FabricEntryPoint" ]
 	},
-	"mixins": [ "mixins.json" ],
+	"mixins": [ "mixins.${mod_id}.json" ],
 	"depends": {
 		"fabric-api": "*",
 		"malilib": ">=${malilib_version}-"
