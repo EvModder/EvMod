@@ -805,7 +805,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 		final MapPlacementData data = getNearestMapPlacement(player, /*allowOutsideReach=*/false, /*allowMapInHand=*/true);
 		if(data == null){
-			if(player.getMainHandStack().getItem() != Items.FILLED_MAP && handRestockFallback != null && !calledHandRestockFallback){
+			if(player.getMainHandStack().getItem() != Items.FILLED_MAP && handRestockFallback != null && !calledHandRestockFallback && lastAutoPlacedStack != null){
 				handRestockFallback.accept(lastAutoPlacedStack);
 				calledHandRestockFallback = true;
 			}
