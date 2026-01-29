@@ -2,6 +2,8 @@ package net.evmodder.evmod;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 import net.evmodder.EvLib.util.Command;
 import net.evmodder.EvLib.util.PacketHelper;
@@ -13,6 +15,7 @@ import net.minecraft.client.session.Session;
 import net.minecraft.entity.player.PlayerModelPart;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
+import net.minecraft.text.Text;
 
 final class InitUtils{
 //	public static final String MOD_ID;
@@ -42,6 +45,25 @@ final class InitUtils{
 
 	static final void refreshClickLimits(){
 		ClickUtils.refreshLimits(Configs.Generic.CLICK_LIMIT_COUNT.getIntegerValue(), Configs.Generic.CLICK_LIMIT_DURATION.getIntegerValue());
+	}
+
+	private static Timer clickRenderTimer;
+	private static boolean lastClickRenderWasMax;
+	static final void refreshClickRenderer(){
+		if(clickRenderTimer != null) clickRenderTimer.cancel();
+		if(!Configs.Generic.CLICK_DISPLAY_AVAILABLE_PERSISTENT.getBooleanValue()) return;
+		clickRenderTimer = new Timer(/*isDaemon=*/true);
+		clickRenderTimer.scheduleAtFixedRate(new TimerTask(){@Override public void run(){
+			MinecraftClient client = MinecraftClient.getInstance();
+			if(client.player == null){cancel(); return;}
+			final int clicks = ClickUtils.calcAvailableClicks();
+			if(clicks == ClickUtils.getMaxClicks()){
+				if(lastClickRenderWasMax) return;
+				lastClickRenderWasMax = true;
+			}
+			else lastClickRenderWasMax = false;
+			client.player.sendMessage(Text.literal("Clicks available: "+clicks+"/"+ClickUtils.getMaxClicks()).withColor(15777300), true);
+		}}, 1l, 50l); // Runs every tick
 	}
 
 	static final void refreshRemoteServerSender(RemoteServerSender rms){

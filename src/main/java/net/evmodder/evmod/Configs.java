@@ -32,6 +32,7 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean CLICK_LIMIT_ADJUST_FOR_TPS = new ConfigBoolean("clickLimitAdjustForTPS", false);
 		public static final ConfigBoolean CLICK_LIMIT_USER_INPUT = new ConfigBoolean("clickLimitUserInputs", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean CLICK_FILTER_USER_INPUT = new ConfigBoolean("clickBlockUserInputsDuringOperation", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean CLICK_DISPLAY_AVAILABLE_PERSISTENT = new ConfigBoolean("clickDisplayAvailablePersistent", false).apply(GENERIC_KEY);
 
 		public static final ConfigBoolean USE_BUNDLE_PACKET = new ConfigBoolean("useBundlePacket", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean BUNDLES_ARE_REVERSED = new ConfigBoolean("bundlesAreReversed", true).apply(GENERIC_KEY);
@@ -116,8 +117,9 @@ public final class Configs implements IConfigHandler{
 		private static final List<IConfigBase> getConfigs(Settings settings){
 			if(configs != null) return configs;
 			configs = new ArrayList<>();
-			configs.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_ADJUST_FOR_TPS, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT,
-					USE_BUNDLE_PACKET, BUNDLES_ARE_REVERSED));
+			configs.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_ADJUST_FOR_TPS, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT));
+			if(settings.showNicheConfigs) configs.add(CLICK_DISPLAY_AVAILABLE_PERSISTENT);
+			configs.addAll(List.of(USE_BUNDLE_PACKET, BUNDLES_ARE_REVERSED));
 			final boolean CAN_CACHE_MAPS = (settings.serverJoinListener && settings.serverQuitListener) || settings.containerOpenCloseListener;
 			if(CAN_CACHE_MAPS) configs.addAll(List.of(MAP_CACHE, MAP_CACHE_UNLOCKED));
 			if(settings.serverJoinListener) configs.add(MAP_CACHE_BY_ID);

@@ -127,6 +127,7 @@ final class KeyCallbacks{
 
 		valueChangeCallback(Configs.Generic.CLICK_LIMIT_COUNT, InitUtils::refreshClickLimits);
 		valueChangeCallback(Configs.Generic.CLICK_LIMIT_DURATION, InitUtils::refreshClickLimits);
+		valueChangeCallback(Configs.Generic.CLICK_DISPLAY_AVAILABLE_PERSISTENT, InitUtils::refreshClickRenderer);
 
 		keybindCallback(Configs.Hotkeys.OPEN_CONFIG_GUI, Objects::isNull, ()->GuiBase.openGui(new ConfigGui(configs)));
 
