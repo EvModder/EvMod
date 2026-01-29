@@ -247,6 +247,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		}
 		currPosStr = getPosStrFromName(currName);
 		if(lastPosStr == null) lastPosStr = getPosStrFromItem(lastStack);
+//		Main.LOGGER.info("AutoPlaceMapArt: currPosStr="+currPosStr+", lastPosStr="+lastPosStr);
 		if(ofSize != null && rowWidth == null){
 			if(!currPosStr.matches("-?\\d+")){
 				Main.LOGGER.warn("AutoPlaceMapArt: Invalid 1d X/SIZE posStr! currPosStr="+currPosStr+",name="+currName);
@@ -279,7 +280,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					return false;
 				}
 				final boolean isNeg = (ifeOffset > 0 != posOffset > 0); // Equivalent: LHS == a-b < 0
-				if(axisMatch){
+				if(ifeOffset1 != 0){
 					if(varAxis1Neg == null) varAxis1Neg = isNeg;
 					else if(varAxis1Neg != isNeg){
 						Main.LOGGER.warn("AutoPlaceMapArt: (1d pos) user appears to have placed mapart in invalid spot! varAxis1Neg");
