@@ -73,6 +73,7 @@
 	"evmod.config.generic.name.clickLimitAdjustForTPS": "clickLimitAdjustForTPS",
 	"evmod.config.generic.name.clickLimitUserInputs": "clickLimitAlsoApplyToUserInputs",
 	"evmod.config.generic.name.clickBlockUserInputsDuringOperation": "blockUserInputsDuringClickOperation",
+	"evmod.config.generic.name.clickDisplayAvailablePersistent": "clickDisplayAvailablePersistent",
 	"evmod.config.generic.name.useBundlePacket": "useBundlePacket",
 	"evmod.config.generic.comment.useBundlePacket": "Enable internal bundle select packets (makes bundle copy faster)",
 	"evmod.config.generic.name.bundlesAreReversed": "bundlesAreReversed",
@@ -100,6 +101,8 @@
 	"evmod.config.generic.name.mapArtGroupTreatUnlockedAsUnique": "mapArtGroupEnforceLockedMatch",
 
 	"evmod.config.generic.name.keybindMapArtBundleRemoveMax": "keybindMapArtBundleRemoveMax",
+	"evmod.config.generic.name.keybindMapArtBundlePreferStow": "keybindMapArtBundlePreferStow",
+	"evmod.config.generic.name.keybindMapArtBundleStowNonSingleMaps": "keybindMapArtBundleStowNonSingleMaps",
 	"evmod.config.generic.name.keybindMapArtMoveIgnoreAirPockets": "keybindMapArtMoveIgnoreAirPockets",
 	"evmod.config.generic.name.ignoreBlankMapsIndHighlightsAndKeybinds": "ignoreBlankMapsIndHighlightsAndKeybinds",
 	"evmod.config.generic.name.ignoreMonoColorMapsInHightlights": "ignoreMonoColorMapsInHightlights",
@@ -123,7 +126,9 @@
 	"evmod.config.generic.comment.iFrameTrackingDist": "Set to 0 to disable recalculating nearby iFrames (slightly better performance)",
 
 	"evmod.config.generic.name.iFrameAutoPlacer": "iFrameAutoPlacer",
+	"evmod.config.generic.name.iFrameAutoPlacerReach": "iFrameAutoPlacerReach",
 	"evmod.config.generic.name.iFrameAutoPlacerRaycast": "iFrameAutoPlacerRaycast",
+	"evmod.config.generic.name.iFrameAutoPlacerRotatePlayer": "iFrameAutoPlacerRotatePlayer",
 	"evmod.config.generic.name.iFrameAutoPlacerMustConnect": "iFrameAutoPlacerMustConnect",
 	"evmod.config.generic.name.iFrameAutoPlacerMustMatchBlock": "iFrameAutoPlacerMustMatchBlock",
 	"evmod.config.generic.comment.iFrameAutoPlacer": "Spam places item_frames",
@@ -138,7 +143,10 @@
 	"evmod.config.generic.name.mapArtAutoPlaceInvDelay": "mapArtAutoPlaceInvDelay",
 	"evmod.config.generic.name.mapArtAutoPlaceAntiRotate": "mapArtAutoPlaceAntiRotate",
 	"evmod.config.generic.name.mapArtAutoPlaceIFrames": "mapArtAutoPlaceIFrames",
+	"evmod.config.generic.name.mapArtAutoPlaceSendSwingHandPacket": "mapArtAutoPlaceSendSwingHandPacket",
+	"evmod.config.generic.name.mapArtAutoPlaceReach": "mapArtAutoPlaceReach",
 	"evmod.config.generic.name.mapArtAutoRemove": "mapArtAutoRemove (req:mapArtPlacer)",
+	"evmod.config.generic.name.mapArtAutoRemoveReach": "mapArtAutoRemoveReach",
 	"evmod.config.generic.name.mapArtAutoRemoveThreshold": "mapArtAutoRemoveThreshold",
 
 	"evmod.config.generic.comment.mapArtPlacer": "MapArt Placement Helper",
@@ -156,6 +164,7 @@
 	"evmod.config.generic.name.broadcastAccount": "broadcastAccount",
 	"evmod.config.generic.name.broadcastTimestamp": "broadcastTimestamp",
 	"evmod.config.generic.name.broadcastMsgs": "broadcastMsgs*",
+	"evmod.config.generic.name.fix2b2tGhostItems": "fix2b2tGhostItems*",
 
 	"evmod.config.visuals.name.displayTotemCount": "displayTotemCount",
 	"evmod.config.visuals.name.repairCostInHotbarHUD": "repairCostInHotbarHUD",

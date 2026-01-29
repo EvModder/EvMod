@@ -56,6 +56,7 @@ final class InitUtils{
 		clickRenderTimer.scheduleAtFixedRate(new TimerTask(){@Override public void run(){
 			MinecraftClient client = MinecraftClient.getInstance();
 			if(client.player == null){cancel(); return;}
+			if(ClickUtils.hasOngoingClicks()) return; // Don't stomp actionbar statuses from click-ops
 			final int clicks = ClickUtils.calcAvailableClicks();
 			if(clicks == ClickUtils.getMaxClicks()){
 				if(lastClickRenderWasMax) return;
