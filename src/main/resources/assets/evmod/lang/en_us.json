@@ -104,7 +104,8 @@
 	"evmod.config.generic.name.keybindMapArtBundlePreferStow": "keybindMapArtBundlePreferStow",
 	"evmod.config.generic.name.keybindMapArtBundleStowNonSingleMaps": "keybindMapArtBundleStowNonSingleMaps",
 	"evmod.config.generic.name.keybindMapArtMoveIgnoreAirPockets": "keybindMapArtMoveIgnoreAirPockets",
-	"evmod.config.generic.name.ignoreBlankMapsIndHighlightsAndKeybinds": "ignoreBlankMapsIndHighlightsAndKeybinds",
+	"evmod.config.generic.name.ignoreTransparentMapsInHighlightsAndKeybinds": "ignoreTransparentMapsInHighlightsAndKeybinds",
+	"evmod.config.generic.name.ignoreNullMapsInHighlightsAndKeybinds": "ignoreNullMapsInHighlightsAndKeybinds",
 	"evmod.config.generic.name.ignoreMonoColorMapsInHightlights": "ignoreMonoColorMapsInHightlights",
 	"evmod.config.generic.name.iFrameTrackingDist": "iFrameTrackingDist",
 	"evmod.config.generic.name.iFrameNewMapNotifier": "iFrameNewMapNotifier",
@@ -121,7 +122,8 @@
 
 	"evmod.config.generic.comment.keybindMapArtBundleRemoveMax": "Maximum maps to pull from a bundle at once",
 	"evmod.config.generic.comment.keybindMapArtMoveIgnoreAirPockets": "Disregard empty space in containers",
-	"evmod.config.generic.comment.skipTransparentMapsInKeybinds": "Treat fully transparent map as a filler item (this is very useful)",
+	"evmod.config.generic.comment.ignoreNullMapsInHighlightsAndKeybinds": "Treat unloaded maps as filler items",
+	"evmod.config.generic.comment.ignoreTransparentMapsInHighlightsAndKeybinds": "Treat fully transparent maps as filler items (this is very useful)",
 	"evmod.config.generic.comment.ignoreMonoColorMapsInHightlights": "Ignore Monocolor maps in highlights (they are almost always highlighted as duplicates)",
 	"evmod.config.generic.comment.iFrameTrackingDist": "Set to 0 to disable recalculating nearby iFrames (slightly better performance)",
 

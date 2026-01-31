@@ -1,17 +1,19 @@
 package net.evmodder.evmod.onTick;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Stream;
 import net.evmodder.evmod.Configs;
+import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.InvUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.world.World;
@@ -41,17 +43,29 @@ public class UpdateInventoryHighlights{
 
 	private static final boolean addMapStateIds(final ItemStack stack, final World world){
 		if(stack.isEmpty()) return false;
-		final MapState state = FilledMapItem.getMapState(stack, world);
-		if(state == null){
-			List<UUID> colorIds = 
-					(Configs.Visuals.MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES.getBooleanValue()
-							? InvUtils.getAllNestedItems(Stream.of(stack))
-							: InvUtils.getAllNestedItemsExcludingBundles(Stream.of(stack)))
-					.map(s -> FilledMapItem.getMapState(s, world)).filter(Objects::nonNull)
-					.map(MapGroupUtils::getIdForMapState).toList();
-			return nestedInventoryMapGroup.addAll(colorIds);
+		if(stack.getItem() == Items.FILLED_MAP){
+			final MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
+			if(mapId == null){
+				Main.LOGGER.warn("UpdateInv: mapId is null! stack="+stack.getName().getString());
+				return false;
+			}
+			final MapState state = world.getMapState(mapId);
+			if(state != null){
+				MapGroupUtils.nullMapIds.remove(mapId.id());
+				return inventoryMapGroup.add(MapGroupUtils.getIdForMapState(state));
+			}
+			else{
+				MapGroupUtils.nullMapIds.add(mapId.id());
+				return false;
+			}
 		}
-		return inventoryMapGroup.add(MapGroupUtils.getIdForMapState(state));
+		//else
+		return nestedInventoryMapGroup.addAll(
+				(Configs.Visuals.MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES.getBooleanValue()
+						? InvUtils.getAllNestedItems(stack)
+						: InvUtils.getAllNestedItemsExcludingBundles(stack))
+				.map(s -> FilledMapItem.getMapState(s, world)).filter(Objects::nonNull)
+				.map(MapGroupUtils::getIdForMapState).toList());
 	}
 	public static final void onTickStart(PlayerEntity player){
 		if(player == null || player.getWorld() == null || !player.isAlive()) return;

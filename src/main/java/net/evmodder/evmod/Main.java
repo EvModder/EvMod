@@ -100,6 +100,7 @@ public class Main{
 		configs.load();
 
 		InitUtils.refreshClickLimits();
+		InitUtils.refreshClickRenderer();
 
 		if(!settings.database) remoteSender = null;
 		else{

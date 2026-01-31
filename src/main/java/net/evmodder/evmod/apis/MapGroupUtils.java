@@ -14,10 +14,11 @@ public final class MapGroupUtils{
 	private static int mapsInGroupHash;
 	private static HashSet<UUID> currentMapGroup;
 	private static final HashSet<Integer> loadedMapIds = new HashSet<>(); // Accessor: MixinClientPlayNetworkHandler
+	public static final HashSet<Integer> nullMapIds = new HashSet<>(); // Accessors: MixinClientPlayNetworkHandler, UpdateContainerHighlights
 
-	private static final HashMap<MapState, UUID> stateToIdCache = new HashMap<MapState, UUID>(), unlockedStateToIdCache = new HashMap<MapState, UUID>();
+	private static final HashMap<byte[], UUID> stateToIdCache = new HashMap<>(), unlockedStateToIdCache = new HashMap<>();
 	// Only external caller: MixinClientPlayNetworkHandler
-	public static final UUID getCachedIdForMapStateOrNull(MapState state){return (state.locked ? stateToIdCache : unlockedStateToIdCache).get(state);}
+	public static final UUID getCachedIdForMapStateOrNull(MapState state){return (state.locked ? stateToIdCache : unlockedStateToIdCache).get(state.colors);}
 //	private static final Random rand = new Random();
 	public static final UUID getIdForMapState(MapState state, boolean evict){
 		UUID uuid;
@@ -27,13 +28,15 @@ public final class MapGroupUtils{
 //			if(uuid != null && (state.locked || rand.nextFloat() < 0.99)) return uuid; // 1% chance of cache eviction for unlocked states
 		}
 
-		// Normalize all CLEAR/transparent colors
-		for(int i=0; i<state.colors.length; ++i) if(state.colors[i] == 1 || state.colors[i] == 2) state.colors[i] = 0;
+		// Normalize all transparent colors
+		for(int i=0; i<state.colors.length; ++i){
+			if(1 <= state.colors[i] && state.colors[i] <= 3) state.colors[i] = 0;
+		}
 
 		uuid = UUID.nameUUIDFromBytes(state.colors);
 		// set 1st bit = state.locked
 		uuid = new UUID((uuid.getMostSignificantBits() & ~1l) | (state.locked ? 1l : 0l), uuid.getLeastSignificantBits());
-		(state.locked ? stateToIdCache : unlockedStateToIdCache).put(state, uuid);
+		(state.locked ? stateToIdCache : unlockedStateToIdCache).put(state.colors, uuid);
 		return uuid;
 	}
 	public static final UUID getIdForMapState(MapState state){return getIdForMapState(state, /*evict*/false);}
@@ -76,4 +79,5 @@ public final class MapGroupUtils{
 		uuid = new UUID(uuid.getMostSignificantBits() ^ 1l, uuid.getLeastSignificantBits());
 		return !currentMapGroup.contains(uuid);
 	}
+	public static final boolean isConfirmedNull(int id){return nullMapIds.contains(id);}
 }

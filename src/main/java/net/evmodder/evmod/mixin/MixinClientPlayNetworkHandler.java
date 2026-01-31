@@ -87,8 +87,10 @@ abstract class MixinClientPlayNetworkHandler{
 	@Inject(method="onMapUpdate", at=@At("TAIL"))
 	private final void updateSeenMaps(MapUpdateS2CPacket packet, CallbackInfo _ci){
 		final MapState state = MinecraftClient.getInstance().world.getMapState(packet.mapId());
+		assert state != null;
 		final int id = packet.mapId().id();
 		AccessorMapGroupUtils.loadedMapIds().add(id);
+		AccessorMapGroupUtils.nullMapIds().remove(id);
 		assert !MapStateCacher.hasCacheMarker(state);
 		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.addMapStateById(id, state);
 

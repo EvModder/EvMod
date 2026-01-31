@@ -17,11 +17,12 @@ public final class InvUtils{
 	public static final Stream<ItemStack> getAllNestedItems(Stream<ItemStack> items){
 		return items.flatMap(InvUtils::getAllNestedItems);
 	}
+	public static final Stream<ItemStack> getAllNestedItemsExcludingBundles(ItemStack item){
+		ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
+		if(container != null) return getAllNestedItemsExcludingBundles(container.streamNonEmpty());
+		return Stream.of(item);
+	}
 	public static final Stream<ItemStack> getAllNestedItemsExcludingBundles(Stream<ItemStack> items){
-		return items.flatMap(s -> {
-			ContainerComponent container = s.get(DataComponentTypes.CONTAINER);
-			if(container != null) return getAllNestedItemsExcludingBundles(container.streamNonEmpty());
-			return Stream.of(s);
-		});
+		return items.flatMap(InvUtils::getAllNestedItemsExcludingBundles);
 	}
 }

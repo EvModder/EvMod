@@ -16,6 +16,8 @@ import net.minecraft.client.gui.screen.ingame.AnvilScreen;
 import net.minecraft.client.gui.screen.ingame.CartographyTableScreen;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -45,7 +47,9 @@ public class UpdateContainerHighlights{
 
 	private static final List<ItemStack> getAllMapItemsInContainer(List<Slot> slots){
 		final List<Slot> containerSlots = slots.subList(0, slots.size()-36);
-		return InvUtils.getAllNestedItems(containerSlots.stream().map(Slot::getStack)).filter(s -> s.getItem() == Items.FILLED_MAP).toList();
+		return InvUtils.getAllNestedItems(containerSlots.stream().map(Slot::getStack))
+				.filter(s -> s.getItem() == Items.FILLED_MAP)
+				.toList();
 	}
 	private static final boolean mixedOnDisplayAndNotOnDisplay(List<UUID> nonFillerIds){
 		return nonFillerIds.stream().anyMatch(UpdateItemFrameHighlights::isInItemFrame)
@@ -81,7 +85,7 @@ public class UpdateContainerHighlights{
 
 		if(items.isEmpty()) return;
 		final List<MapState> states = items.stream().map(i -> FilledMapItem.getMapState(i, client.world)).filter(Objects::nonNull).toList();
-		final List<UUID> nonTransparentIds = (!Configs.Generic.SKIP_TRANSPARENT_MAPS.getBooleanValue() ? states.stream() :
+		final List<UUID> nonTransparentIds = (!Configs.Generic.SKIP_VOID_MAPS.getBooleanValue() ? states.stream() :
 			states.stream().filter(s -> !MapColorUtils.isFullyTransparent(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
 
 		nonTransparentIds.stream().filter(UpdateInventoryHighlights::isInInventory).forEach(inContainerAndInInv::add);
@@ -90,7 +94,14 @@ public class UpdateContainerHighlights{
 			if(!inContainerAndInInv.isEmpty()) asterisks.add(Configs.Visuals.MAP_COLOR_IN_INV.getIntegerValue());
 			if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue());
 			if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue());
-			if(items.size() > states.size()) asterisks.add(Configs.Visuals.MAP_COLOR_UNLOADED.getIntegerValue());
+			if(items.size() > states.size() + (!Configs.Generic.SKIP_NULL_MAPS.getBooleanValue() ? 0 : items.stream().filter(stack -> {
+//					assert mapId != null;
+					MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
+					return mapId != null && MapGroupUtils.nullMapIds.contains(mapId.id());
+				}).count()
+			)){
+				asterisks.add(Configs.Visuals.MAP_COLOR_UNLOADED.getIntegerValue());
+			}
 			else if(mixedOnDisplayAndNotOnDisplay(nonTransparentIds)) asterisks.add(Configs.Visuals.MAP_COLOR_IN_IFRAME.getIntegerValue());
 		}
 //		if(!nonFillerIds.stream().allMatch(new HashSet<>(nonFillerIds.size())::add)) asterisks.add(Main.MAP_COLOR_MULTI_INV); // Check duplicates within the container

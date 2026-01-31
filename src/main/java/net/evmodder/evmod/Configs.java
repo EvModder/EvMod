@@ -90,7 +90,8 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean KEYBIND_BUNDLE_PREFER_STOW = new ConfigBoolean("keybindMapArtBundlePreferStow", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean KEYBIND_BUNDLE_STOW_NON_SINGLE_MAPS = new ConfigBoolean("keybindMapArtBundleStowNonSingleMaps", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS = new ConfigBoolean("keybindMapArtMoveIgnoreAirPockets", false).apply(GENERIC_KEY);
-		public static final ConfigBoolean SKIP_TRANSPARENT_MAPS = new ConfigBoolean("ignoreBlankMapsIndHighlightsAndKeybinds", true).apply(GENERIC_KEY);
+		public static final ConfigBoolean SKIP_NULL_MAPS = new ConfigBoolean("ignoreNullMapsInHighlightsAndKeybinds", false).apply(GENERIC_KEY);
+		public static final ConfigBoolean SKIP_VOID_MAPS = new ConfigBoolean("ignoreTransparentMapsInHighlightsAndKeybinds", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean SKIP_MONO_COLOR_MAPS = new ConfigBoolean("ignoreMonoColorMapsInHightlights", false).apply(GENERIC_KEY);
 
 		public static final ConfigStringList SCROLL_ORDER = new ConfigStringList("hotbarSlotItemTypeScrollOrder", ImmutableList.of(
@@ -156,7 +157,7 @@ public final class Configs implements IConfigHandler{
 				configs.add(KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS);
 			if(!Main.mapArtFeaturesOnly) configs.add(SCROLL_ORDER);
 //			if(settings.keybindMapArtMove || settings.keybindMapArtMoveBundle)
-				configs.add(SKIP_TRANSPARENT_MAPS);
+				configs.addAll(List.of(SKIP_NULL_MAPS, SKIP_VOID_MAPS));
 			if(settings.mapHighlights) configs.add(SKIP_MONO_COLOR_MAPS);
 			if(settings.serverJoinListener) configs.add(SEND_ON_SERVER_JOIN);
 			if(settings.serverQuitListener) configs.add(LOG_COORDS_ON_SERVER_QUIT);

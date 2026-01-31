@@ -2,10 +2,12 @@ package net.evmodder.evmod.apis;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.UUID;
 import java.util.stream.IntStream;
 import net.minecraft.block.MapColor;
 import net.minecraft.block.MapColor.Brightness;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.item.map.MapState;
 import net.minecraft.text.Text;
 
 public abstract class MapColorUtils{
@@ -14,6 +16,12 @@ public abstract class MapColorUtils{
 		boolean trans = false, notTrans = false, t;
 		for(byte b : colors){t = (0<=b && b<=3); trans |= t; notTrans |= !t;}
 		return trans && notTrans;
+	}
+	public static final UUID FULLY_TRANSPARENT_COLORS_ID;
+	static{
+		final MapState ms = MapState.of((byte)0, true, null);
+		ms.colors = new byte[128*128];
+		FULLY_TRANSPARENT_COLORS_ID = MapGroupUtils.getIdForMapState(ms);
 	}
 	public static final boolean isFullyTransparent(final byte[] colors){
 		assert colors != null && colors.length == 128*128;

@@ -9,6 +9,8 @@ import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.NewMapNotifier;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.FilledMapItem;
@@ -70,7 +72,15 @@ public class UpdateItemFrameHighlights{
 		boolean anyMapGroupUpdate = false;
 		for(ItemFrameEntity ife : ifes){
 			final ItemStack stack = ife.getHeldItemStack();
-			final MapState state = stack == null || stack.isEmpty() ? null : FilledMapItem.getMapState(stack, ife.getWorld());
+			assert stack != null;
+			final MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
+			final MapState state;
+			if(mapId == null) state = null;
+			else{
+				state = ife.getWorld().getMapState(mapId);
+				if(state == null) MapGroupUtils.nullMapIds.add(mapId.id());
+				else MapGroupUtils.nullMapIds.remove(mapId.id());
+			}
 			final UUID colorsId = state == null ? null : MapGroupUtils.getIdForMapState(state);
 			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal());
 			final UUID oldColorsIdForXYZD = colorsId != null ? hangLocsReverse.put(xyzd, colorsId) : hangLocsReverse.remove(xyzd);

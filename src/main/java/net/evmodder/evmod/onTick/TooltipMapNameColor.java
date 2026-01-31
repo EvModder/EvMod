@@ -53,14 +53,14 @@ public final class TooltipMapNameColor implements Tooltip{
 		if(cachedLines != null){lines.clear(); lines.addAll(cachedLines); return;}
 
 		if(item.getItem() != Items.FILLED_MAP){
-			final List<ItemStack> mapItems = InvUtils.getAllNestedItems(item).filter(i -> i.getItem() == Items.FILLED_MAP).toList();
+			final List<ItemStack> mapItems = InvUtils.getAllNestedItems(item).filter(i -> i.get(DataComponentTypes.MAP_ID) != null).toList();
 			if(mapItems.isEmpty()) return;
 			final List<MapState> states = mapItems.stream().map(i -> context.getMapState(i.get(DataComponentTypes.MAP_ID))).filter(Objects::nonNull).toList();
 //			final List<UUID> nonFillerIds = states.stream().filter(Predicate.not(MapRelationUtils::isFillerMap)).map(MapGroupUtils::getIdForMapState).toList();
 			final List<UUID> colorIds = states.stream().map(MapGroupUtils::getIdForMapState).toList();
 			final List<UUID> unskippedIds = (
 					Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue() ? states.stream().filter(s -> !MapColorUtils.isMonoColor(s.colors)) :
-					Configs.Generic.SKIP_TRANSPARENT_MAPS.getBooleanValue() ? states.stream().filter(s -> !MapColorUtils.isFullyTransparent(s.colors)) :
+					Configs.Generic.SKIP_VOID_MAPS.getBooleanValue() ? states.stream().filter(s -> !MapColorUtils.isFullyTransparent(s.colors)) :
 					states.stream()).map(MapGroupUtils::getIdForMapState).toList();
 
 			List<Integer> asterisks = new ArrayList<>(4);
@@ -68,7 +68,11 @@ public final class TooltipMapNameColor implements Tooltip{
 			if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(MAP_COLOR_NOT_IN_GROUP);
 			if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(MAP_COLOR_UNLOCKED);
 			if(unskippedIds.stream().anyMatch(UpdateContainerHighlights::hasDuplicateInContainer)) asterisks.add(MAP_COLOR_MULTI_CONTAINER);
-			if(mapItems.size() > states.size()) asterisks.add(MAP_COLOR_UNLOADED);
+			if(mapItems.size() > states.size() + (!Configs.Generic.SKIP_NULL_MAPS.getBooleanValue() ? 0
+					: mapItems.stream().filter(stack -> MapGroupUtils.nullMapIds.contains(stack.get(DataComponentTypes.MAP_ID).id())).count()
+			)){
+				asterisks.add(MAP_COLOR_UNLOADED);
+			}
 			else if(mixedOnDisplayAndNotOnDisplay(unskippedIds)) asterisks.add(MAP_COLOR_IN_IFRAME);
 			if(mapItems.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(MAP_COLOR_UNNAMED);
 
@@ -84,6 +88,7 @@ public final class TooltipMapNameColor implements Tooltip{
 		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
 		MapState state = id == null ? null : context.getMapState(id);
 		if(state == null){
+			if(Configs.Generic.SKIP_NULL_MAPS.getBooleanValue() && id != null && MapGroupUtils.isConfirmedNull(id.id())) return;
 			if(item.getCustomName() == null) lines.addFirst(lines.removeFirst().copy().withColor(MAP_COLOR_UNNAMED));
 			tooltipCache.put(item, lines);
 			return;
@@ -91,7 +96,8 @@ public final class TooltipMapNameColor implements Tooltip{
 		UUID colorsId = MapGroupUtils.getIdForMapState(state);
 		final boolean isSkipped =
 				Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue() ? MapColorUtils.isMonoColor(state.colors) :
-				Configs.Generic.SKIP_TRANSPARENT_MAPS.getBooleanValue() ? MapColorUtils.isFullyTransparent(state.colors) :
+				Configs.Generic.SKIP_VOID_MAPS.getBooleanValue() ?
+						MapColorUtils.FULLY_TRANSPARENT_COLORS_ID.equals(colorsId)/*MapColorUtils.isFullyTransparent(state.colors)*/ :
 				false;
 		List<Integer> asterisks = new ArrayList<>();
 		if(UpdateContainerHighlights.isInInvAndContainer(colorsId)) asterisks.add(MAP_COLOR_IN_INV);

@@ -8,4 +8,5 @@ import net.evmodder.evmod.apis.MapGroupUtils;
 @Mixin(value=MapGroupUtils.class, remap=false)
 interface AccessorMapGroupUtils{
 	@Accessor("loadedMapIds") static HashSet<Integer> loadedMapIds(){throw new AssertionError();}
+	@Accessor("nullMapIds") static HashSet<Integer> nullMapIds(){throw new AssertionError();}
 }
