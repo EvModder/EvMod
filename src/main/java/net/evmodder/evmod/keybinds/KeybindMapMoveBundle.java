@@ -188,9 +188,10 @@ public final class KeybindMapMoveBundle{
 				}
 			}
 			else{
-				int emptySlots = (int)IntStream.range(SLOT_START, SLOT_END).filter(i -> slots[i].isEmpty()).count();
+				final int SKIP_LAST_SLOT = hs instanceof InventoryScreen ? 1 : 0; // Don't extract mapart into empty offhand, ick!
+				int emptySlots = (int)IntStream.range(SLOT_START, SLOT_END-SKIP_LAST_SLOT).filter(i -> slots[i].isEmpty()).count();
 //				Main.LOGGER.info("MapBundleOp: emptySlots: "+emptySlots+", stored: "+stored);
-				int i=SLOT_END-1;
+				int i=SLOT_END-1-SKIP_LAST_SLOT;
 				for(; emptySlots > withdrawable; --i) if(slots[i].isEmpty()) --emptySlots;
 				for(; i>=SLOT_START && withdrawn < withdrawable; --i){
 					if(!slots[i].isEmpty()) continue;
