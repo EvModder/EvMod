@@ -109,7 +109,7 @@ public final class MapHandRestock{
 			return 5; // 4->5, E->F
 		}
 		if((sameLen || posA.length()+1 == posB.length()) && posA.matches("\\d{1,3}") && (""+(Integer.parseInt(posA)+1)).equals(posB)){
-			if(infoLogs) Main.LOGGER.info("MapRestock: confidence=4. i->i+1");
+			if(infoLogs) Main.LOGGER.info("MapRestock: i4. i->i+1");
 			return 4; // 4->5, 9->10
 		}
 //		if(infoLogs) Main.LOGGER.info("MapRestock: confidence=0. A:"+posA+", B:"+posB);
@@ -318,7 +318,7 @@ public final class MapHandRestock{
 				+(posData2d == null ? ", posData2d=null" : ", minPos2="+posData2d.minPos2+", maxPos2="+posData2d.maxPos2+", sideways="+posData2d.isSideways)
 				+", name: "+prevName);
 
-		final int i = getNextSlotByNameUsingPosData2d(slots, data, prevPosStr, posData2d, /*infoLogs=*/true);//TODO: set to true for debugging
+		final int i = getNextSlotByNameUsingPosData2d(slots, data, prevPosStr, posData2d, /*infoLogs=*/false);//TODO: set to true for debugging
 		if(i == -999){
 			Main.LOGGER.info("MapRestock: getNextSlotByName() failed");
 			return -1;
@@ -519,7 +519,6 @@ public final class MapHandRestock{
 		}}.start();
 	}
 
-	private boolean hasAutoPlaceableMapInInv;
 	public MapHandRestock(final boolean allowAutoPlacer, final boolean allowAutoRemover){
 		final AutoPlaceMapArt autoPlacer = allowAutoPlacer ? new AutoPlaceMapArt(
 				stack->tryToStockNextMap(stack, Hand.MAIN_HAND)) : null;
@@ -556,13 +555,15 @@ public final class MapHandRestock{
 			}
 			if(hand != Hand.MAIN_HAND){
 				Main.LOGGER.info("MapHandRestock: not main hand: "+hand.name());
-//				return ActionResult.FAIL;
+				if(Configs.Generic.IFRAME_DISALLOW_OFFHAND.getBooleanValue()) return ActionResult.FAIL;
 			}
 			//Main.LOGGER.info("placed item from mainhand");
 			if(!ife.getHeldItemStack().isEmpty()){
 				if(allowAutoPlacer && Configs.Generic.MAPART_AUTOPLACE_ANTI_ROTATE.getBooleanValue()
-						&& autoPlacer.hasKnownLayout() && hasAutoPlaceableMapInInv
-						&& ife.getHeldItemStack().getItem() == Items.FILLED_MAP){
+						&& autoPlacer.hasKnownLayout()
+						&& ife.getHeldItemStack().getItem() == Items.FILLED_MAP
+						&& autoPlacer.getNearestMapPlacement(player, /*allowOutsideReach=*/true, /*allowMapInHand=*/true) != null
+				){
 					Main.LOGGER.warn("AutoPlaceMapArt: Discarding a (likely accidental) map-rotation click");
 					return ActionResult.FAIL;
 				}
@@ -585,13 +586,13 @@ public final class MapHandRestock{
 //			assert ItemStack.areEqual(player.getStackInHand(hand), player.getInventory().getStack(player.getInventory().selectedSlot));
 			UpdateInventoryHighlights.setCurrentlyBeingPlacedMapArt(stack, shSlot);
 
-			if(allowAutoPlacer && autoPlacer.recalcLayout(player, ife, stack) && (hasAutoPlaceableMapInInv=
-					(autoPlacer.getNearestMapPlacement(player, /*allowOutsideReach=*/true, /*allowMapInHand=*/false) != null))
+			if(allowAutoPlacer && autoPlacer.recalcLayout(player, ife, stack)
+					&& autoPlacer.getNearestMapPlacement(player, /*allowOutsideReach=*/true, /*allowMapInHand=*/false) != null
 			){
 				Main.LOGGER.info("MapRestock: AutoPlaceMapArt is active");
 			}
 			else if(Configs.Generic.PLACEMENT_HELPER_MAPART.getBooleanValue()){
-				Main.LOGGER.info("MapRestock: doing best-guess hand restock");
+//				Main.LOGGER.info("MapRestock: doing best-guess hand restock");
 				final int prevSlot = hand == Hand.MAIN_HAND ? player.getInventory().selectedSlot+36 : PlayerScreenHandler.OFFHAND_ID;
 				final ItemStack mapInHand = player.getStackInHand(hand);
 				assert mapInHand == player.playerScreenHandler.slots.get(prevSlot).getStack();

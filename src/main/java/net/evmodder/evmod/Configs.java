@@ -61,6 +61,8 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean IFRAME_AUTO_PLACER_RAYCAST = new ConfigBoolean("iFrameAutoPlacerRaycast", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean IFRAME_AUTO_PLACER_ROTATE_PLAYER = new ConfigBoolean("iFrameAutoPlacerRotatePlayer", false).apply(GENERIC_KEY);
 
+		public static final ConfigBoolean IFRAME_DISALLOW_OFFHAND = new ConfigBoolean("iFrameDisallowOffhand", true).apply(GENERIC_KEY);
+
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART = new ConfigBoolean("mapArtPlacer", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_NAMES = new ConfigBoolean("mapArtPlacerUseNames", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean PLACEMENT_HELPER_MAPART_USE_IMAGE = new ConfigBoolean("mapArtPlacerUseImage", true).apply(GENERIC_KEY);
@@ -134,6 +136,7 @@ public final class Configs implements IConfigHandler{
 				if(settings.showNicheConfigs) configs.addAll(List.of(IFRAME_AUTO_PLACER_REACH, IFRAME_AUTO_PLACER_RAYCAST, IFRAME_AUTO_PLACER_ROTATE_PLAYER));
 			}
 			else IFRAME_AUTO_PLACER.setBooleanValue(false);
+			configs.add(IFRAME_DISALLOW_OFFHAND);
 			if(settings.placementHelperMapArt){
 				configs.addAll(List.of(PLACEMENT_HELPER_MAPART,
 						PLACEMENT_HELPER_MAPART_USE_NAMES, PLACEMENT_HELPER_MAPART_USE_IMAGE,

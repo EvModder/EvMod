@@ -133,9 +133,11 @@
 	"evmod.config.generic.name.iFrameAutoPlacerRotatePlayer": "iFrameAutoPlacerRotatePlayer",
 	"evmod.config.generic.name.iFrameAutoPlacerMustConnect": "iFrameAutoPlacerMustConnect",
 	"evmod.config.generic.name.iFrameAutoPlacerMustMatchBlock": "iFrameAutoPlacerMustMatchBlock",
+	"evmod.config.generic.name.iFrameDisallowOffhand": "iFrameDisallowOffhand",
 	"evmod.config.generic.comment.iFrameAutoPlacer": "Spam places item_frames",
 	"evmod.config.generic.comment.iFrameAutoPlacerMustConnect": "Only place iFrames adjacent to other iFrames",
 	"evmod.config.generic.comment.iFrameAutoPlacerMustMatchBlock": "Only place iFrames against matching blocks",
+	"evmod.config.generic.comment.iFrameDisallowOffhand": "Disable placing items into iFrames from the offhand (I don't need to display my offhand totem)",
 
 	"evmod.config.generic.name.mapArtPlacer": "mapArtPlacer",
 	"evmod.config.generic.name.mapArtPlacerUseNames": "mapArtPlacer: UseItemName",
