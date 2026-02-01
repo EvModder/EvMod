@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -220,6 +221,7 @@ public final class CommandExportMapImg{
 		}
 	}
 
+//	private int atomic = 0;
 	private int overwritten;
 	private final void buildMapImgFile(final FabricClientCommandSource source, final Map<Vec3i, ItemFrameEntity> ifeLookup,
 			final ArrayList<Vec3i> mapWall, final int w, final int h, final String namePrefix){
@@ -265,6 +267,7 @@ public final class CommandExportMapImg{
 			img = upscaledImg;
 		}
 
+//		final String imgName =  namePrefix + ++atomic;
 		final ItemStack tlMapItemStack = ifeLookup.get(mapWall.stream().filter(ifeLookup::containsKey).findFirst().get()).getHeldItemStack();
 		final Text nameText = tlMapItemStack.getCustomName();
 		final String nameStr = nameText == null ? null : nameText.getString();
@@ -334,7 +337,7 @@ public final class CommandExportMapImg{
 			}
 			final int SUB_WALL_SIZE = shape.a*shape.b;
 			assert WALL_SIZE % SUB_WALL_SIZE == 0;
-			final ArrayList<Vec3i> subMapWall = new ArrayList<>(SUB_WALL_SIZE);
+			final ArrayList<Vec3i> subMapWall = new ArrayList<>(Collections.nCopies(SUB_WALL_SIZE, null));
 			int numMapsSaved = 0;
 			for(int a0=0; a0<w; a0+=shape.a) for(int b0=0; b0<h; b0+=shape.b){
 				boolean anyIfe = false;
