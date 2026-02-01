@@ -57,7 +57,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.math.Direction.Axis;
 
-public class CommandExportMapImg{
+public final class CommandExportMapImg{
 	final int RENDER_DIST = 10*16;
 	final String MAP_EXPORT_DIR = "mapart_exports/";
 
@@ -97,7 +97,7 @@ public class CommandExportMapImg{
 	}
 	// </Matrix math from the internet>
 
-	private void drawBorder(BufferedImage img){
+	private final void drawBorder(final BufferedImage img){
 		final int border = 8;
 		final int BORDER_1 = Configs.Visuals.EXPORT_MAP_IMG_BORDER_COLOR1.getIntegerValue();
 		final int BORDER_2 = Configs.Visuals.EXPORT_MAP_IMG_BORDER_COLOR1.getIntegerValue();
@@ -115,7 +115,7 @@ public class CommandExportMapImg{
 		}
 	}
 
-	private BufferedImage drawImgForMapStates(final FabricClientCommandSource source, final List<MapState> states, final int width){
+	private final BufferedImage drawImgForMapStates(final FabricClientCommandSource source, final List<MapState> states, final int width){
 		final int height = (states.size()-1)/width + 1;
 		final int border = Configs.Visuals.EXPORT_MAP_IMG_BORDER.getBooleanValue() ? 8 : 0;
 		BufferedImage img = new BufferedImage(128*width + border*2, 128*height + border*2, BufferedImage.TYPE_INT_ARGB);
@@ -133,7 +133,8 @@ public class CommandExportMapImg{
 	}
 
 	private String lastRelPath = null;
-	private int genImgForMapsInInv(FabricClientCommandSource source, List<ItemStack> inventory, final String name, final int width, final boolean combine){
+	private final int genImgForMapsInInv(final FabricClientCommandSource source, final List<ItemStack> inventory, final String name, final int width,
+			final boolean combine){
 		final List<MapState> unnestedMaps = inventory.stream().map(s -> FilledMapItem.getMapState(s, source.getWorld())).filter(Objects::nonNull).toList();
 		List<MapState> allMaps = InvUtils.getAllNestedItems(inventory.stream())
 				.map(s -> FilledMapItem.getMapState(s, source.getWorld()))
@@ -297,7 +298,7 @@ public class CommandExportMapImg{
 	}
 
 //	private boolean ongoingExport;
-	private int genImgForMapsInItemFrames(FabricClientCommandSource source, final List<ItemFrameEntity> ifes, final Pair<Integer, Integer> shape,
+	private final int genImgForMapsInItemFrames(final FabricClientCommandSource source, final List<ItemFrameEntity> ifes, final Pair<Integer, Integer> shape,
 			final String namePrefix){
 		Direction facing = ifes.getFirst().getFacing();
 		int minX = facing.getAxis() == Axis.X ? ifes.getFirst().getBlockX() : ifes.stream().mapToInt(ItemFrameEntity::getBlockX).min().getAsInt();
@@ -360,7 +361,7 @@ public class CommandExportMapImg{
 	}
 
 	//private void getConnectedFramesRecur(final Map<XYZD, ?> ifeLookup, final XYZD xyzd, final HashSet<XYZD> connected){
-	private void getConnectedFramesRecur(final Map<Vec3i, ?> ifeLookup, final Axis axis, final Vec3i pos, final HashSet<Vec3i> connected){
+	private final void getConnectedFramesRecur(final Map<Vec3i, ?> ifeLookup, final Axis axis, final Vec3i pos, final HashSet<Vec3i> connected){
 		connected.add(pos);
 		for(Direction dir : Direction.values()){
 			if(dir.getAxis() == axis) continue;
@@ -370,15 +371,15 @@ public class CommandExportMapImg{
 		}
 	}
 	//private List<ItemFrameEntity> getConnectedFrames(Map<XYZD, ItemFrameEntity> ifeLookup, ItemFrameEntity ife){
-	private List<ItemFrameEntity> getConnectedFrames(Map<Vec3i, ItemFrameEntity> ifeLookup, ItemFrameEntity ife){
+	private final List<ItemFrameEntity> getConnectedFrames(final Map<Vec3i, ItemFrameEntity> ifeLookup, final ItemFrameEntity ife){
 		final HashSet<Vec3i> connected = new HashSet<>();
 		getConnectedFramesRecur(ifeLookup, ife.getFacing().getAxis(), ife.getBlockPos(), connected);
 
 		return connected.stream().map(ifeLookup::get).toList();
 	}
 
-	private List<ItemFrameEntity> getItemFramesWithMaps(ClientPlayerEntity player){
-		Box everythingBox = Box.of(player.getPos(), RENDER_DIST, RENDER_DIST, RENDER_DIST);
+	private final List<ItemFrameEntity> getItemFramesWithMaps(final ClientPlayerEntity player){
+		final Box everythingBox = Box.of(player.getPos(), RENDER_DIST, RENDER_DIST, RENDER_DIST);
 
 		return player.getWorld().getEntitiesByType(TypeFilter.instanceOf(ItemFrameEntity.class), everythingBox,
 				e -> e.getHeldItemStack().getItem() == Items.FILLED_MAP);
@@ -387,16 +388,15 @@ public class CommandExportMapImg{
 	private final Pattern pNxM = Pattern.compile("(?:as_)?([1-9][0-9]*)[x*]([1-9][0-9]*)");
 	private final Pair<Integer, Integer> getShapeArgOrNull(final CommandContext<FabricClientCommandSource> ctx){
 		try{
-			final String shape = ctx.getArgument("as_NxM", String.class);
-			Matcher m = pNxM.matcher(shape);
-			if(!m.find()) return null;
-			return new Pair<>(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)));
+			final Matcher m = pNxM.matcher(ctx.getArgument("as_NxM", String.class));
+			if(m.find()) return new Pair<>(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)));
 		}
-		catch(IllegalArgumentException ex){return null;}
+		catch(IllegalArgumentException ex){}
+		return null;
 	}
-	private final String toString(Pair<Integer, Integer> shape){return "shape_"+shape.a+"x"+shape.b+"_";}
+	private final String toString(final Pair<Integer, Integer> shape){return "shape_"+shape.a+"x"+shape.b+"_";}
 
-	private int runCommandInInventory(final CommandContext<FabricClientCommandSource> ctx){
+	private final int runCommandInInventory(final CommandContext<FabricClientCommandSource> ctx){
 		// TODO: use getShapeArgOrNull()
 		final int numSaved = genImgForMapsInInv(ctx.getSource(),
 				ctx.getSource().getPlayer().getInventory().main,
@@ -417,7 +417,7 @@ public class CommandExportMapImg{
 		return numSaved == 0 ? 1 : 0;
 	}
 
-	private int runCommandNoArg(final CommandContext<FabricClientCommandSource> ctx){
+	private final int runCommandNoArg(final CommandContext<FabricClientCommandSource> ctx){
 		ItemFrameEntity targetIFrame = null;
 		double bestUh = 0;
 		final ClientPlayerEntity player = ctx.getSource().getPlayer();
@@ -455,8 +455,8 @@ public class CommandExportMapImg{
 		return numSaved > 0 ? 0 : 1;
 	}
 
-	private record MapWall(Direction dir, int axis){}
-	private int runCommandForAllWalls(CommandContext<FabricClientCommandSource> ctx){
+	private final record MapWall(Direction dir, int axis){}
+	private final int runCommandForAllWalls(final CommandContext<FabricClientCommandSource> ctx){
 		final Pair<Integer, Integer> shape = getShapeArgOrNull(ctx);
 		final Map<MapWall, List<ItemFrameEntity>> mapWalls = getItemFramesWithMaps(ctx.getSource().getPlayer()).stream().collect(Collectors.groupingBy(
 				ife -> new MapWall(ife.getFacing(), ife.getBlockPos().getComponentAlongAxis(ife.getFacing().getAxis())) // Group by MapWall
@@ -491,7 +491,7 @@ public class CommandExportMapImg{
 		if(overwritten > 0) ctx.getSource().sendFeedback(Text.literal(overwritten+" images overwritten"));
 		return 1;
 	}
-	private int runCommandForAllNames(CommandContext<FabricClientCommandSource> ctx){
+	private final int runCommandForAllNames(final CommandContext<FabricClientCommandSource> ctx){
 		final HashSet<String> seen = new HashSet<>();
 		final Map<MapWall, List<ItemFrameEntity>> mapWalls = getItemFramesWithMaps(ctx.getSource().getPlayer()).stream()
 				.filter(ife -> ife.getHeldItemStack().getCustomName() != null) // Only consider named maps
@@ -551,7 +551,7 @@ public class CommandExportMapImg{
 		if(numMapsSaved > 5) ctx.getSource().sendFeedback(Text.literal(numMapsSaved+" images saved"));
 		return 1;
 	}
-	private int runCommandForMapName(CommandContext<FabricClientCommandSource> ctx){
+	private final int runCommandForMapName(final CommandContext<FabricClientCommandSource> ctx){
 		final String mapName = ctx.getArgument("map_name", String.class);
 		final String mapName0 = cmdMapNames.getOrDefault(mapName, mapName);
 		Main.LOGGER.info("Using lookup name: "+mapName0);
@@ -583,7 +583,7 @@ public class CommandExportMapImg{
 //		ctx.getSource().sendError(Text.literal("This version of the command is not yet implemented (try without a param)"));
 		return 1;
 	}
-	private int runCommandForPos1AndPos2(CommandContext<FabricClientCommandSource> ctx){
+	private final int runCommandForPos1AndPos2(final CommandContext<FabricClientCommandSource> ctx){
 		final Vec3i pos1 = ClientBlockPosArgumentType.getBlockPos(ctx, "pos1");
 		final Vec3i pos2 = ctx.getArgument("pos2", BlockPos.class); // Equivalent to above
 		if(pos1.getX() != pos2.getX() && pos1.getY() != pos2.getY() && pos1.getZ() != pos2.getZ()){
@@ -606,7 +606,7 @@ public class CommandExportMapImg{
 		return numSaved > 0 ? 0 : 1;
 	}
 
-	private final boolean isReflectedChar(char l, char r){
+	private final boolean isReflectedChar(final char l, final char r){
 		switch(l){
 			case '[': return r == ']';
 			case '(': return r == ')';
@@ -620,7 +620,7 @@ public class CommandExportMapImg{
 	private final boolean SHOW_ONLY_IF_HAS_AZ = true, REMOVE_MAX_CNT = true, REMOVE_BRACKET_SYMBOLS = true;
 	private final HashMap<String, String> cmdMapNames = new HashMap<>();
 	private long lastNameComputeTs;
-	private Set<String> getNearbyMapNames(ClientPlayerEntity player){
+	private final Set<String> getNearbyMapNames(final ClientPlayerEntity player){
 		if(!cmdMapNames.isEmpty() && lastNameComputeTs >= UpdateItemFrameHighlights.lastIFrameMapGroupUpdateTs) return cmdMapNames.keySet();
 		lastNameComputeTs = System.currentTimeMillis();
 		cmdMapNames.clear();
