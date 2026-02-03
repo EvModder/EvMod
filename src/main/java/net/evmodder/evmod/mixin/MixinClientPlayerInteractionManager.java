@@ -54,7 +54,7 @@ abstract class MixinClientPlayerInteractionManager{
 			MinecraftClient.getInstance().player.sendMessage(
 					Text.literal("Discarding unsafe click!"
 							+ " | limit:"+Configs.Generic.CLICK_LIMIT_COUNT.getIntegerValue()
-							+", duration:"+Configs.Generic.CLICK_LIMIT_DURATION.getIntegerValue()+"gt").withColor(/*&c=*/16733525), false);
+							+", duration:"+Configs.Generic.CLICK_LIMIT_WINDOW.getIntegerValue()+"gt").withColor(/*&c=*/16733525), false);
 		}
 	}
 }

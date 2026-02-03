@@ -4,11 +4,13 @@ import net.evmodder.EvLib.util.Command;
 import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
+import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.commands.CommandMapArtGroup;
 import net.evmodder.evmod.config.OptionMapStateCache;
+import net.evmodder.evmod.config.OptionUnlockedMapHandling;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.world.ClientWorld;
@@ -87,15 +89,17 @@ abstract class MixinClientPlayNetworkHandler{
 	@Inject(method="onMapUpdate", at=@At("TAIL"))
 	private final void updateSeenMaps(MapUpdateS2CPacket packet, CallbackInfo _ci){
 		final MapState state = MinecraftClient.getInstance().world.getMapState(packet.mapId());
-		assert state != null;
+		assert state != null && state.colors.length == 128*128;
 		final int id = packet.mapId().id();
-		AccessorMapGroupUtils.loadedMapIds().add(id);
+		if(AccessorMapGroupUtils.loadedMapIds().add(id))
+			if(MapColorUtils.isFullyTransparent(state.colors))
+				Main.LOGGER.warn("MixinClientPlayNetworkHandler: fully transparent map state! id="+id);
 		AccessorMapGroupUtils.nullMapIds().remove(id);
 		assert !MapStateCacher.hasCacheMarker(state);
 		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.addMapStateById(id, state);
 
 		if(!Configs.Database.SAVE_MAPART.getBooleanValue()) return;
-		if(!Configs.Generic.MAPART_GROUP_INCLUDE_UNLOCKED.getBooleanValue() && !state.locked) return;
+		if(!state.locked && Configs.Generic.MAPART_GROUP_UNLOCKED_HANDLING.getOptionListValue() == OptionUnlockedMapHandling.SKIP) return;
 
 		final String addr = MiscUtils.getServerAddress();
 		final UUID oldColorsId = MapGroupUtils.getCachedIdForMapStateOrNull(state);

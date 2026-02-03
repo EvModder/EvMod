@@ -14,12 +14,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 abstract class MixinScreenHandler{
 	@Inject(method="internalOnSlotClick", at=@At("TAIL"))
 	private final void clickMoveNeighborTriggerDetector(int slotIndex, int button, SlotActionType actionType, PlayerEntity player, CallbackInfo ci){
-		if(!Configs.Hotkeys.MAP_CLICK_MOVE_NEIGHBORS.getBooleanValue()) return;
+//		if(!Configs.Hotkeys.MAP_CLICK_MOVE_NEIGHBORS.getKeybind().isValid()) return;
+		if(!Configs.Hotkeys.MAP_MOVE_NEIGHBORS.getKeybind().isKeybindHeld()) return;
 		if(button != 0 || actionType != SlotActionType.PICKUP) return;
 		if(!player.currentScreenHandler.getCursorStack().isEmpty()) return;
 		if(slotIndex < 0 || slotIndex >= player.currentScreenHandler.slots.size()) return;
 //		if(!Screen.hasShiftDown() && !Screen.hasControlDown() && !Screen.hasAltDown()) return;
-		if(!Configs.Hotkeys.MAP_CLICK_MOVE_NEIGHBORS_KEY.getKeybind().isKeybindHeld()) return;
+//		if(!Configs.Hotkeys.MAP_CLICK_MOVE_NEIGHBORS.getKeybind().isKeybindHeld()) return;
 
 		MapClickMoveNeighbors.moveNeighbors(player, slotIndex, player.currentScreenHandler.getSlot(slotIndex).getStack());
 	}

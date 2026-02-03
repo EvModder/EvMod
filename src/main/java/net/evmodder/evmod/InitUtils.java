@@ -44,7 +44,7 @@ final class InitUtils{
 	}
 
 	static final void refreshClickLimits(){
-		ClickUtils.refreshLimits(Configs.Generic.CLICK_LIMIT_COUNT.getIntegerValue(), Configs.Generic.CLICK_LIMIT_DURATION.getIntegerValue());
+		ClickUtils.refreshLimits(Configs.Generic.CLICK_LIMIT_COUNT.getIntegerValue(), Configs.Generic.CLICK_LIMIT_WINDOW.getIntegerValue());
 	}
 
 	private static Timer clickRenderTimer;
@@ -69,14 +69,15 @@ final class InitUtils{
 
 	static final void refreshRemoteServerSender(RemoteServerSender rms){
 		assert rms != null;
-		String fullAddress = Configs.Database.ADDRESS.getStringValue();
+		final String fullAddress = Configs.Database.ADDRESS.getStringValue();
 		final int sep = fullAddress.indexOf(':');
 		final String addr;
 		final int port;
-		if(sep == -1){addr = fullAddress; port = RemoteServerSender.DEFAULT_PORT;}
+		if(sep == -1){addr = fullAddress.isBlank() ? null : fullAddress; port = RemoteServerSender.DEFAULT_PORT;}
 		else{addr = fullAddress.substring(0, sep).trim(); port = Integer.parseInt(fullAddress.substring(sep+1).trim());}
 		final int clientId = Configs.Database.CLIENT_ID.getIntegerValue();
 		rms.setConnectionDetails(addr, port, clientId, Configs.Database.CLIENT_KEY.getStringValue());
+		if(addr == null) return;
 
 		Main.LOGGER.info("RMS settings updated: "+addr+":"+port+", id="+clientId);
 		if(clientId != DUMMY_CLIENT_ID)
@@ -87,6 +88,7 @@ final class InitUtils{
 	static final int DUMMY_CLIENT_ID = 67;
 	private static boolean requestedKey = false;
 	static final boolean checkValidClientKeyAndRequestIfNot(RemoteServerSender rms, Configs configs){
+		if(Configs.Database.ADDRESS.getStringValue().isBlank()) return false;
 		if(Configs.Database.CLIENT_ID.getIntegerValue() != DUMMY_CLIENT_ID) return true;
 		if(requestedKey) return false;
 		requestedKey = true;

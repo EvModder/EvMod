@@ -28,7 +28,7 @@ public final class Configs implements IConfigHandler{
 		private static final String GENERIC_KEY = Main.MOD_ID+".config.generic";
 
 		public static final ConfigInteger CLICK_LIMIT_COUNT = new ConfigInteger("clickLimitCount", 69, 0, 100_000).apply(GENERIC_KEY);
-		public static final ConfigInteger CLICK_LIMIT_DURATION = new ConfigInteger("clickLimitWindow", 95, 1, 72_000).apply(GENERIC_KEY);
+		public static final ConfigInteger CLICK_LIMIT_WINDOW = new ConfigInteger("clickLimitWindow", 95, 1, 72_000).apply(GENERIC_KEY);
 		public static final ConfigBoolean CLICK_LIMIT_ADJUST_FOR_TPS = new ConfigBoolean("clickLimitAdjustForTPS", false);
 		public static final ConfigBoolean CLICK_LIMIT_USER_INPUT = new ConfigBoolean("clickLimitUserInputs", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean CLICK_FILTER_USER_INPUT = new ConfigBoolean("clickBlockUserInputsDuringOperation", true).apply(GENERIC_KEY);
@@ -45,6 +45,10 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean MAP_CACHE_BY_INV_POS = new ConfigBoolean("mapStateCacheByInvPos", false).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAP_CACHE_BY_EC_POS = new ConfigBoolean("mapStateCacheByEchestPos", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean MAP_CACHE_BY_CONTAINER_POS = new ConfigBoolean("mapStateCacheByContainerPos", false).apply(GENERIC_KEY);
+
+		public static final ConfigString MAPART_GROUP_DEFAULT = new ConfigString("mapArtDefaultGroup", "seen/2b2t.org").apply(GENERIC_KEY);
+		public static final ConfigOptionList MAPART_GROUP_UNLOCKED_HANDLING = new ConfigOptionList("mapArtGroupUnlockedMapHandling",
+				OptionUnlockedMapHandling.SKIP).apply(GENERIC_KEY);
 
 //		public static final ConfigBoolean NEW_MAP_NOTIFIER_ITEM_ENTITY = new ConfigBoolean("itemEntityNewMapNotifier", false).apply(GENERIC_KEY);
 		public static final ConfigBoolean NEW_MAP_NOTIFIER_IFRAME = new ConfigBoolean("iFrameNewMapNotifier", false).apply(GENERIC_KEY);
@@ -80,18 +84,14 @@ public final class Configs implements IConfigHandler{
 
 		public static final ConfigString WHISPER_PLAY_SOUND = new ConfigString("whisperPlaySound",
 				Main.mapArtFeaturesOnly ? "" : "{sound:block.note_block.bass, category:PLAYERS, volume:.7, pitch:2}").apply(GENERIC_KEY);
-		public static final ConfigBoolean WHISPER_PLAY_SOUND_UNFOCUSED_ONLY = new ConfigBoolean("whisperPlaySoundUnfocusedOnly", false).apply(GENERIC_KEY);
+		public static final ConfigString WHISPER_PLAY_SOUND_UNFOCUSED = new ConfigString("whisperPlaySoundUnfocused",
+				Main.mapArtFeaturesOnly ? "" : "{sound:block.note_block.bass, category:PLAYERS, volume:4, pitch:2}").apply(GENERIC_KEY);
 		public static final ConfigString WHISPER_PEARL_PULL = new ConfigString("whisperPearlPull",
 				Main.mapArtFeaturesOnly ? "" : "(tp|teleport|e?p|e?pearl|([iI]'?m ?)?r(ea)?dy)( pl(ea)?se?)?.?").apply(GENERIC_KEY);
 
-		public static final ConfigString MAPART_GROUP_DEFAULT = new ConfigString("mapArtDefaultGroup", "seen/2b2t.org").apply(GENERIC_KEY);
-		public static final ConfigBoolean MAPART_GROUP_INCLUDE_UNLOCKED = new ConfigBoolean("mapArtGroupIncludeUnlocked", true).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAPART_GROUP_ENFORCE_LOCKEDNESS_MATCH = new ConfigBoolean("mapArtGroupTreatUnlockedAsUnique", false).apply(GENERIC_KEY);
+//		public static final ConfigBoolean MAPART_GROUP_INCLUDE_UNLOCKED = new ConfigBoolean("mapArtGroupIncludeUnlocked", true).apply(GENERIC_KEY);
+//		public static final ConfigBoolean MAPART_GROUP_ENFORCE_LOCKEDNESS_MATCH = new ConfigBoolean("mapArtGroupTreatUnlockedAsUnique", false).apply(GENERIC_KEY);
 
-		public static final ConfigInteger KEYBIND_BUNDLE_REMOVE_MAX = new ConfigInteger("keybindMapArtBundleRemoveMax", 64, 1, 64).apply(GENERIC_KEY);
-		public static final ConfigBoolean KEYBIND_BUNDLE_PREFER_STOW = new ConfigBoolean("keybindMapArtBundlePreferStow", true).apply(GENERIC_KEY);
-		public static final ConfigBoolean KEYBIND_BUNDLE_STOW_NON_SINGLE_MAPS = new ConfigBoolean("keybindMapArtBundleStowNonSingleMaps", true).apply(GENERIC_KEY);
-		public static final ConfigBoolean KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS = new ConfigBoolean("keybindMapArtMoveIgnoreAirPockets", false).apply(GENERIC_KEY);
 		public static final ConfigBoolean SKIP_NULL_MAPS = new ConfigBoolean("ignoreNullMapsInHighlightsAndKeybinds", false).apply(GENERIC_KEY);
 		public static final ConfigBoolean SKIP_VOID_MAPS = new ConfigBoolean("ignoreTransparentMapsInHighlightsAndKeybinds", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean SKIP_MONO_COLOR_MAPS = new ConfigBoolean("ignoreMonoColorMapsInHightlights", false).apply(GENERIC_KEY);
@@ -120,7 +120,7 @@ public final class Configs implements IConfigHandler{
 		private static final List<IConfigBase> getConfigs(Settings settings){
 			if(configs != null) return configs;
 			configs = new ArrayList<>();
-			configs.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_DURATION, CLICK_LIMIT_ADJUST_FOR_TPS, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT));
+			configs.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_WINDOW, CLICK_LIMIT_ADJUST_FOR_TPS, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT));
 			if(settings.showNicheConfigs) configs.add(CLICK_DISPLAY_AVAILABLE_PERSISTENT);
 			configs.addAll(List.of(USE_BUNDLE_PACKET, BUNDLES_ARE_REVERSED));
 			final boolean CAN_CACHE_MAPS = (settings.serverJoinListener && settings.serverQuitListener) || settings.containerOpenCloseListener;
@@ -130,7 +130,11 @@ public final class Configs implements IConfigHandler{
 			if(settings.serverJoinListener && settings.serverQuitListener) configs.add(MAP_CACHE_BY_INV_POS);
 			if(settings.containerOpenCloseListener) configs.addAll(List.of(MAP_CACHE_BY_EC_POS, MAP_CACHE_BY_CONTAINER_POS));
 
-			if(settings.mapHighlights) configs.addAll(List.of(NEW_MAP_NOTIFIER_IFRAME, MAX_IFRAME_TRACKING_DIST));
+			if(settings.cmdMapArtGroup){
+				configs.addAll(List.of(MAPART_GROUP_DEFAULT, MAPART_GROUP_UNLOCKED_HANDLING));
+				if(settings.mapHighlights) configs.add(NEW_MAP_NOTIFIER_IFRAME);
+			}
+			if(settings.mapHighlights) configs.add(MAX_IFRAME_TRACKING_DIST);
 			if(settings.placementHelperIframeAutoPlace){
 				configs.addAll(List.of(IFRAME_AUTO_PLACER, IFRAME_AUTO_PLACER_MUST_CONNECT, IFRAME_AUTO_PLACER_MUST_MATCH_BLOCK));
 				if(settings.showNicheConfigs) configs.addAll(List.of(IFRAME_AUTO_PLACER_REACH, IFRAME_AUTO_PLACER_RAYCAST, IFRAME_AUTO_PLACER_ROTATE_PLAYER));
@@ -152,21 +156,21 @@ public final class Configs implements IConfigHandler{
 				}
 				else MAPART_AUTOREMOVE.setBooleanValue(false);
 			}
-			if(settings.gameMessageListener) configs.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PLAY_SOUND_UNFOCUSED_ONLY, WHISPER_PEARL_PULL));
-			if(settings.cmdMapArtGroup) configs.addAll(List.of(MAPART_GROUP_DEFAULT, MAPART_GROUP_INCLUDE_UNLOCKED, MAPART_GROUP_ENFORCE_LOCKEDNESS_MATCH));
-			if(/*settings.keybindMapArtMoveBundle &&*/settings.showNicheConfigs)
-				configs.addAll(List.of(KEYBIND_BUNDLE_REMOVE_MAX, KEYBIND_BUNDLE_PREFER_STOW, KEYBIND_BUNDLE_STOW_NON_SINGLE_MAPS));
-//			if(settings.keybindMapArtMove)
-				configs.add(KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS);
-			if(!Main.mapArtFeaturesOnly) configs.add(SCROLL_ORDER);
+			else{
+				MAPART_AUTOPLACE.setBooleanValue(false);
+				MAPART_AUTOREMOVE.setBooleanValue(false);
+			}
 //			if(settings.keybindMapArtMove || settings.keybindMapArtMoveBundle)
 				configs.addAll(List.of(SKIP_NULL_MAPS, SKIP_VOID_MAPS));
 			if(settings.mapHighlights) configs.add(SKIP_MONO_COLOR_MAPS);
+	
+			if(settings.gameMessageListener) configs.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PLAY_SOUND_UNFOCUSED, WHISPER_PEARL_PULL));
+			if(!Main.mapArtFeaturesOnly) configs.add(SCROLL_ORDER);
 			if(settings.serverJoinListener) configs.add(SEND_ON_SERVER_JOIN);
 			if(settings.serverQuitListener) configs.add(LOG_COORDS_ON_SERVER_QUIT);
 			if(settings.inventoryRestockAuto) configs.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
 			if(settings.broadcaster) configs.addAll(List.of(TEMP_BROADCAST_ACCOUNT, TEMP_BROADCAST_TIMESTAMP, TEMP_BROADCAST_MSGS));
-			if(settings.showNicheConfigs) configs.add(DISABLE_DRAG_CLICK_ON_MAPS_AND_BUNDLES); 
+			if(settings.showNicheConfigs) configs.add(DISABLE_DRAG_CLICK_ON_MAPS_AND_BUNDLES);
 			return configs;
 		}
 	}
@@ -191,8 +195,6 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean MAP_HIGHLIGHT_HOTBAR_HUD = new ConfigBoolean("mapHighlightInHotbarHUD", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_HIGHLIGHT_CONTAINER_NAME = new ConfigBoolean("mapHighlightInContainerName", true).apply(VISUALS_KEY);
 
-		public static final ConfigBoolean MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES = new ConfigBoolean("mapHighlightInInvIncludeBundles", false).apply(VISUALS_KEY);
-
 		public static final ConfigColor MAP_COLOR_UNLOADED = new ConfigColor("highlightColorUnloaded", "#FFC8AAD2").apply(VISUALS_KEY); // 13150930 Peach
 		public static final ConfigColor MAP_COLOR_UNLOCKED = new ConfigColor("highlightColorUnlocked", "#FFE03165").apply(VISUALS_KEY); // 14692709 Redish
 		public static final ConfigColor MAP_COLOR_UNNAMED = new ConfigColor("highlightColorUnnamed", "#FFEED7D7").apply(VISUALS_KEY); // 15652823 Pink
@@ -202,21 +204,24 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigColor MAP_COLOR_MULTI_IFRAME = new ConfigColor("highlightColorMultiIFrame", "#FFB450E6").apply(VISUALS_KEY); // 11817190 Purple
 		public static final ConfigColor MAP_COLOR_MULTI_CONTAINER = new ConfigColor("highlightColorMultiContainer", "#FFB450E6").apply(VISUALS_KEY); // 11817190 Purple
 
+		public static final ConfigBoolean MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES = new ConfigBoolean("mapHighlightInInvIncludeBundles", false).apply(VISUALS_KEY);
+
 //		public static final ConfigBoolean MAP_METADATA_TOOLTIP = new ConfigBoolean("mapMetadataTooltip", true);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_STAIRCASE = new ConfigBoolean("mapMetadataTooltipStaircase", true).apply(VISUALS_KEY);
+		public static final ConfigBoolean MAP_METADATA_TOOLTIP_STAIRCASE_PERCENT = new ConfigBoolean("mapMetadataTooltipPercentStaircase", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_MATERIAL = new ConfigBoolean("mapMetadataTooltipMaterial", true).apply(VISUALS_KEY);
+		public static final ConfigBoolean MAP_METADATA_TOOLTIP_CARPET_PERCENT = new ConfigBoolean("mapMetadataTooltipPercentCarpet", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_NUM_COLORS = new ConfigBoolean("mapMetadataTooltipNumColors", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_NUM_COLOR_IDS = new ConfigBoolean("mapMetadataTooltipNumColorIds", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_TRANSPARENCY = new ConfigBoolean("mapMetadataTooltipTransparency", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_NOOBLINE = new ConfigBoolean("mapMetadataTooltipNoobline", true).apply(VISUALS_KEY);
-		public static final ConfigBoolean MAP_METADATA_TOOLTIP_PERCENT_CARPET = new ConfigBoolean("mapMetadataTooltipPercentCarpet", true).apply(VISUALS_KEY);
-		public static final ConfigBoolean MAP_METADATA_TOOLTIP_PERCENT_STAIRCASE = new ConfigBoolean("mapMetadataTooltipPercentStaircase", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_UUID = new ConfigBoolean("mapMetadataTooltipHashCode", false).apply(VISUALS_KEY);
 
 		public static final ConfigInteger EXPORT_MAP_IMG_UPSCALE = new ConfigInteger("exportMapImageUpscale", 128, 128, 1280).apply(VISUALS_KEY);
 		public static final ConfigBoolean EXPORT_MAP_IMG_BORDER = new ConfigBoolean("exportMapImageBorder", false).apply(VISUALS_KEY);
 		public static final ConfigColor EXPORT_MAP_IMG_BORDER_COLOR1 = new ConfigColor("exportMapImageBorderColor1", "#FFFFC864").apply(VISUALS_KEY); // -14236 Yellow
 		public static final ConfigColor EXPORT_MAP_IMG_BORDER_COLOR2 = new ConfigColor("exportMapImageBorderColor2", "#00322D32").apply(VISUALS_KEY); // 3288370 Gray
+		public static final ConfigBoolean EXPORT_MAP_IMG_ATOMIC_NAMING = new ConfigBoolean("exportMapAtomicIdNaming", false).apply(VISUALS_KEY);
 
 		private static List<IConfigBase> configs;
 		private static final List<IConfigBase> getConfigs(Settings settings){
@@ -233,24 +238,26 @@ public final class Configs implements IConfigHandler{
 				configs.add(MAP_HIGHLIGHT_HOTBAR_HUD);
 				if(settings.mapHighlightsInGUIs) configs.add(MAP_HIGHLIGHT_CONTAINER_NAME);
 				configs.addAll(List.of(
-					MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES,
 					MAP_COLOR_IN_INV, MAP_COLOR_NOT_IN_GROUP, MAP_COLOR_UNLOCKED,
 					MAP_COLOR_UNLOADED, MAP_COLOR_UNNAMED, MAP_COLOR_IN_IFRAME,
-					MAP_COLOR_MULTI_IFRAME, MAP_COLOR_MULTI_CONTAINER
+					MAP_COLOR_MULTI_IFRAME, MAP_COLOR_MULTI_CONTAINER,
+					MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES
 				));
 			}
 			if(settings.tooltipMapMetadata) configs.addAll(List.of(
 //					MAP_METADATA_TOOLTIP,
-					MAP_METADATA_TOOLTIP_STAIRCASE, MAP_METADATA_TOOLTIP_MATERIAL,
+					MAP_METADATA_TOOLTIP_STAIRCASE, MAP_METADATA_TOOLTIP_STAIRCASE_PERCENT,
+					MAP_METADATA_TOOLTIP_MATERIAL, MAP_METADATA_TOOLTIP_CARPET_PERCENT,
 					MAP_METADATA_TOOLTIP_NUM_COLORS, MAP_METADATA_TOOLTIP_NUM_COLOR_IDS,
 					MAP_METADATA_TOOLTIP_TRANSPARENCY, MAP_METADATA_TOOLTIP_NOOBLINE,
-					MAP_METADATA_TOOLTIP_PERCENT_CARPET, MAP_METADATA_TOOLTIP_PERCENT_STAIRCASE, MAP_METADATA_TOOLTIP_UUID
+					MAP_METADATA_TOOLTIP_UUID
 			));
 			if(settings.cmdExportMapImg){
 				configs.addAll(List.of(
 						EXPORT_MAP_IMG_UPSCALE,
 						EXPORT_MAP_IMG_BORDER,
 						EXPORT_MAP_IMG_BORDER_COLOR1, EXPORT_MAP_IMG_BORDER_COLOR2));
+				if(settings.showNicheConfigs) configs.add(EXPORT_MAP_IMG_ATOMIC_NAMING);
 			}
 			return configs;
 		}
@@ -273,23 +280,25 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigHotkey MAP_COPY = new ConfigHotkey("mapCopy", "T", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_LOAD = new ConfigHotkey("mapLoad", "E", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_MOVE = new ConfigHotkey("mapMove", "T", GUI_ALLOW_EXTRA_KEYS).apply(HOTKEYS_KEY);
-		public static final ConfigHotkey MAP_MOVE_ALL_MODIFIER = new ConfigHotkey("mapMoveAllModifier", "SHIFT",
-				KeybindSettings.MODIFIER_GUI).apply(HOTKEYS_KEY);
+		public static final ConfigHotkey MAP_MOVE_ALL_MODIFIER = new ConfigHotkey("mapMoveAllModifier", "LEFT_SHIFT", KeybindSettings.MODIFIER_GUI).apply(HOTKEYS_KEY);
+		public static final ConfigBoolean MAP_MOVE_IGNORE_AIR_POCKETS = new ConfigBoolean("mapMoveIgnoreAirPockets", false).apply(HOTKEYS_KEY);
+
+		public static final ConfigHotkey MAP_MOVE_NEIGHBORS = new ConfigHotkey("mapMoveNeighbors", "LEFT_ALT", KeybindSettings.MODIFIER_GUI).apply(HOTKEYS_KEY);
+
 		public static final ConfigHotkey MAP_MOVE_BUNDLE = new ConfigHotkey("mapMoveBundle", "D", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey MAP_MOVE_BUNDLE_REVERSE = new ConfigHotkey("mapMoveBundleReverse", "", KeybindSettings.GUI).apply(HOTKEYS_KEY);
-
-		public static final ConfigBoolean MAP_CLICK_MOVE_NEIGHBORS = new ConfigBoolean("mapClickMoveNeighbors", true).apply(HOTKEYS_KEY);
-		public static final ConfigHotkey MAP_CLICK_MOVE_NEIGHBORS_KEY = new ConfigHotkey("mapClickMoveNeighborsKey", "LEFT_ALT",
-				KeybindSettings.MODIFIER_GUI).apply(HOTKEYS_KEY);
+		public static final ConfigBoolean MAP_MOVE_BUNDLE_PREFER_STOW = new ConfigBoolean("mapMoveBundlePreferStow", true).apply(HOTKEYS_KEY);
+		public static final ConfigBoolean MAP_MOVE_BUNDLE_STOW_NON_SINGLE_MAPS = new ConfigBoolean("mapMoveBundleStowNonSingleMaps", true).apply(HOTKEYS_KEY);
+		public static final ConfigInteger MAP_MOVE_BUNDLE_REMOVE_MAX = new ConfigInteger("mapMoveBundleRemoveMax", 64, 1, 64).apply(HOTKEYS_KEY);
 
 		public static final ConfigHotkey TOGGLE_CAPE = new ConfigHotkey("toggleCape", /*!Main.mapArtFeaturesOnly ? "," : */"");
 		public static final ConfigBoolean SYNC_CAPE_WITH_ELYTRA = new ConfigBoolean("syncCapeWithElytra", false).apply(HOTKEYS_KEY);
-		public static final ConfigHotkey TOGGLE_HAT = new ConfigHotkey("toggleHat", "");
-		public static final ConfigHotkey TOGGLE_JACKET = new ConfigHotkey("toggleJacket", Main.mapArtFeaturesOnly ? "" : "I");
-		public static final ConfigHotkey TOGGLE_SLEEVE_LEFT = new ConfigHotkey("toggleSleeveLeft", Main.mapArtFeaturesOnly ? "" : "I");
-		public static final ConfigHotkey TOGGLE_SLEEVE_RIGHT = new ConfigHotkey("toggleSleeveRight", Main.mapArtFeaturesOnly ? "" : "I");
-		public static final ConfigHotkey TOGGLE_PANTS_LEG_LEFT = new ConfigHotkey("togglePantsLegLeft", Main.mapArtFeaturesOnly ? "" : "I");
-		public static final ConfigHotkey TOGGLE_PANTS_LEG_RIGHT = new ConfigHotkey("togglePantsLegRight", Main.mapArtFeaturesOnly ? "" : "I");
+		public static final ConfigHotkey TOGGLE_HAT = new ConfigHotkey("toggleHat", "").apply(HOTKEYS_KEY);
+		public static final ConfigHotkey TOGGLE_JACKET = new ConfigHotkey("toggleJacket", Main.mapArtFeaturesOnly ? "" : "I").apply(HOTKEYS_KEY);
+		public static final ConfigHotkey TOGGLE_SLEEVE_LEFT = new ConfigHotkey("toggleSleeveLeft", Main.mapArtFeaturesOnly ? "" : "I").apply(HOTKEYS_KEY);
+		public static final ConfigHotkey TOGGLE_SLEEVE_RIGHT = new ConfigHotkey("toggleSleeveRight", Main.mapArtFeaturesOnly ? "" : "I").apply(HOTKEYS_KEY);
+		public static final ConfigHotkey TOGGLE_PANTS_LEG_LEFT = new ConfigHotkey("togglePantsLegLeft", Main.mapArtFeaturesOnly ? "" : "I").apply(HOTKEYS_KEY);
+		public static final ConfigHotkey TOGGLE_PANTS_LEG_RIGHT = new ConfigHotkey("togglePantsLegRight", Main.mapArtFeaturesOnly ? "" : "I").apply(HOTKEYS_KEY);
 
 		public static final ConfigBooleanHotkeyed AIE_TRAVEL_HELPER = new ConfigBooleanHotkeyed("automaticInfiniteElytraTravelHelper", false,
 				Main.mapArtFeaturesOnly ? "" : "SEMICOLON", KeybindSettings.NOCANCEL).apply(HOTKEYS_KEY);
@@ -375,8 +384,7 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigStringHotkeyed CHAT_MSG_1 = new ConfigStringHotkeyed("chatMessage1", "meow :3", "").apply(HOTKEYS_KEY);
 		public static final ConfigStringHotkeyed CHAT_MSG_2 = new ConfigStringHotkeyed("chatMessage2", "/home", "").apply(HOTKEYS_KEY);
 		public static final ConfigStringHotkeyed CHAT_MSG_3 = new ConfigStringHotkeyed("chatMessage3",
-				"/cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost", "").apply(HOTKEYS_KEY);
-		public static final ConfigHotkey TRIGGER_CHAT_MSG_3 = new ConfigHotkey("triggerChatMessage3",
+				"/cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost",
 				Main.mapArtFeaturesOnly ? "" : "Z").apply(HOTKEYS_KEY);
 
 		public static final ConfigStringHotkeyed REMOTE_MSG_1 = new ConfigStringHotkeyed("remoteMessage1",
@@ -391,13 +399,16 @@ public final class Configs implements IConfigHandler{
 		private static final List<IConfigBase> getConfigs(Settings settings){
 			if(configs != null) return configs;
 			configs = new ArrayList<>();
-			configs.addAll(List.of(
-					OPEN_CONFIG_GUI,
-					MAP_COPY, MAP_LOAD, MAP_MOVE, MAP_MOVE_ALL_MODIFIER,
-					MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE,
-					MAP_CLICK_MOVE_NEIGHBORS, MAP_CLICK_MOVE_NEIGHBORS_KEY
-			));
-			if(!Main.mapArtFeaturesOnly) configs.addAll(List.of(
+			configs.addAll(List.of(OPEN_CONFIG_GUI, MAP_COPY, MAP_LOAD, MAP_MOVE));
+			if(settings.showNicheConfigs) configs.addAll(List.of(MAP_MOVE_ALL_MODIFIER, MAP_MOVE_IGNORE_AIR_POCKETS));
+			configs.add(MAP_MOVE_NEIGHBORS);
+//			if(settings.keybindMapMoveBundle){
+				configs.addAll(List.of(MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE));
+				if(settings.showNicheConfigs)
+					configs.addAll(List.of(MAP_MOVE_BUNDLE_PREFER_STOW, MAP_MOVE_BUNDLE_STOW_NON_SINGLE_MAPS, MAP_MOVE_BUNDLE_REMOVE_MAX)); // Non-keybinds
+//			}
+			if(!Main.mapArtFeaturesOnly){
+				configs.addAll(List.of(
 					TOGGLE_CAPE, SYNC_CAPE_WITH_ELYTRA,
 					TOGGLE_HAT, TOGGLE_JACKET, TOGGLE_SLEEVE_LEFT, TOGGLE_SLEEVE_RIGHT, TOGGLE_PANTS_LEG_LEFT, TOGGLE_PANTS_LEG_RIGHT,
 					AIE_TRAVEL_HELPER,
@@ -405,19 +416,17 @@ public final class Configs implements IConfigHandler{
 					EJECT_JUNK_ITEMS,
 					CRAFT_RESTOCK,
 					HOTBAR_TYPE_INCR, HOTBAR_TYPE_DECR,
+
+					INV_RESTOCK, INV_RESTOCK_IF, INV_RESTOCK_LEAVE, INV_RESTOCK_BLACKLIST, INV_RESTOCK_WHITELIST,
 					INV_ORGANIZE_1, TRIGGER_INV_ORGANIZE_1,
 					INV_ORGANIZE_2, TRIGGER_INV_ORGANIZE_2,
 					INV_ORGANIZE_3, TRIGGER_INV_ORGANIZE_3,
-					INV_RESTOCK, INV_RESTOCK_IF, INV_RESTOCK_LEAVE, INV_RESTOCK_BLACKLIST, INV_RESTOCK_WHITELIST,
 
 					CHAT_MSG_1, CHAT_MSG_2, CHAT_MSG_3
-			));
-			if(settings.database) configs.addAll(List.of(
-					REMOTE_MSG_1, REMOTE_MSG_2, REMOTE_MSG_3
-			));
-			if(!Main.mapArtFeaturesOnly) configs.addAll(List.of(
-					SNAP_ANGLE_1, SNAP_ANGLE_2
-			));
+				));
+				if(settings.database) configs.addAll(List.of(REMOTE_MSG_1, REMOTE_MSG_2, REMOTE_MSG_3));
+				configs.addAll(List.of(SNAP_ANGLE_1, SNAP_ANGLE_2));
+			}
 			return configs;
 		}
 	}

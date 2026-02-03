@@ -256,7 +256,7 @@ public final class MapHandRestock{
 			copiedData.slots().remove(Integer.valueOf(prevSlot));
 			prevSlot = currSlot;
 			++trailLength;
-			if(copiedData.slots().isEmpty()) Main.LOGGER.info("MapRestock: Trail ended on pos: "+prevPosStr);
+//			if(copiedData.slots().isEmpty()) Main.LOGGER.info("MapRestock: Trail ended on pos: "+prevPosStr);
 		}
 		return new TrailLenAndScore(trailLength, scoreSum);
 	}

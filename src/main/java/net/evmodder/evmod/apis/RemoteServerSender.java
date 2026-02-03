@@ -29,12 +29,13 @@ public final class RemoteServerSender{
 	private int CLIENT_ID;
 	private String CLIENT_KEY;
 
-	private void resolveAddress(){
-		try{addrResolved = InetAddress.getByName(REMOTE_ADDR);}
+	private final void resolveAddress(){
+		if(REMOTE_ADDR == null) addrResolved = null;
+		else try{addrResolved = InetAddress.getByName(REMOTE_ADDR);}
 		catch(UnknownHostException e){LOGGER.warn("Server not found: "+REMOTE_ADDR);}
 	}
 
-	public void setConnectionDetails(String addr, int port, int clientId, String clientKey){
+	public final void setConnectionDetails(String addr, int port, int clientId, String clientKey){
 		REMOTE_ADDR = addr; resolveAddress();
 		PORT = port;
 		CLIENT_ID = clientId;
@@ -57,7 +58,7 @@ public final class RemoteServerSender{
 	}
 
 	// Returns a `4+message.length+16`-byte packet
-	private byte[] packageAndEncryptMessage(final Command command, final byte[/*16*n*/] message){
+	private final byte[] packageAndEncryptMessage(final Command command, final byte[/*16*n*/] message){
 		ByteBuffer bb1 = ByteBuffer.allocate(16+message.length);
 		bb1.putInt(CLIENT_ID);
 		bb1.putInt(command.ordinal());
@@ -79,7 +80,7 @@ public final class RemoteServerSender{
 		// Output: 2734ms
 		return latency+"ms";
 	}
-	private void sendPacketSequence(final boolean udp, final long timeout){
+	private final void sendPacketSequence(final boolean udp, final long timeout){
 		final LinkedList<byte[]> packetList = (udp ? udpPackets : tcpPackets);
 		final LinkedList<MessageReceiver> recvList = (udp ? udpReceivers : tcpReceivers);
 		final long startTs = System.currentTimeMillis();
@@ -102,7 +103,7 @@ public final class RemoteServerSender{
 			});
 		}
 	}
-	public void sendBotMessage(final Command command, final boolean udp, final long timeout, final byte[] message, final MessageReceiver recv){
+	public final void sendBotMessage(final Command command, final boolean udp, final long timeout, final byte[] message, final MessageReceiver recv){
 		final byte[] packet = packageAndEncryptMessage(command, message);
 		if(addrResolved == null) resolveAddress();
 		if(addrResolved == null) LOGGER.warn("RemoteSender address could not be resolved!: "+REMOTE_ADDR);
@@ -119,7 +120,7 @@ public final class RemoteServerSender{
 		}
 	}
 
-	public static void main(String... args) throws IOException{
+	public final static void main(String... args) throws IOException{
 		UUID pearlUUID = UUID.fromString("a8c5dd6e-5f95-4875-9494-7c1d519ba8c8");
 		UUID ownerUUID = UUID.fromString("34471e8d-d0c5-47b9-b8e1-b5b9472affa4");
 //		UUID loc = new UUID(Double.doubleToRawLongBits(x), Double.doubleToRawLongBits(z));

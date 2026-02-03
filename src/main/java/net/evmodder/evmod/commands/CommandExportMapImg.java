@@ -221,7 +221,7 @@ public final class CommandExportMapImg{
 		}
 	}
 
-//	private int atomic = 0;
+	private int atomic = 0;
 	private int overwritten;
 	private final void buildMapImgFile(final FabricClientCommandSource source, final Map<Vec3i, ItemFrameEntity> ifeLookup,
 			final ArrayList<Vec3i> mapWall, final int w, final int h, final String namePrefix){
@@ -267,23 +267,28 @@ public final class CommandExportMapImg{
 			img = upscaledImg;
 		}
 
-//		final String imgName =  namePrefix + ++atomic;
-		final ItemStack tlMapItemStack = ifeLookup.get(mapWall.stream().filter(ifeLookup::containsKey).findFirst().get()).getHeldItemStack();
-		final Text nameText = tlMapItemStack.getCustomName();
-		final String nameStr = nameText == null ? null : nameText.getString();
-		String imgName;
-		if(mapWall.size() == 1 || nameStr == null){
-			imgName = nameStr == null ? tlMapItemStack.get(DataComponentTypes.MAP_ID).asString() : nameStr;
+		final String imgName;
+		if(Configs.Visuals.EXPORT_MAP_IMG_ATOMIC_NAMING.getBooleanValue()){
+			imgName = namePrefix + ++atomic;
 		}
 		else{
-			List<ItemStack> sampleStacks = List.of(
-				tlMapItemStack,
-				ifeLookup.get(mapWall.reversed().stream().filter(ifeLookup::containsKey).findFirst().get()).getHeldItemStack()
-			);
-			RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(sampleStacks, source.getWorld());
-			imgName = getCleanedName(nameStr, data);
+			final ItemStack tlMapItemStack = ifeLookup.get(mapWall.stream().filter(ifeLookup::containsKey).findFirst().get()).getHeldItemStack();
+			final Text nameText = tlMapItemStack.getCustomName();
+			final String nameStr = nameText == null ? null : nameText.getString();
+			String tempName;
+			if(mapWall.size() == 1 || nameStr == null){
+				tempName = nameStr == null ? tlMapItemStack.get(DataComponentTypes.MAP_ID).asString() : nameStr;
+			}
+			else{
+				List<ItemStack> sampleStacks = List.of(
+					tlMapItemStack,
+					ifeLookup.get(mapWall.reversed().stream().filter(ifeLookup::containsKey).findFirst().get()).getHeldItemStack()
+				);
+				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(sampleStacks, source.getWorld());
+				tempName = getCleanedName(nameStr, data);
+			}
+			imgName = namePrefix + tempName.trim().replaceAll("[.\\\\/<>:\"|?*$]", "_");
 		}
-		imgName = namePrefix + imgName.trim().replaceAll("[.\\\\/]+", "_");
 
 		//16755200
 		if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdir();

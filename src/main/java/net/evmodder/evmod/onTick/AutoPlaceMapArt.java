@@ -64,7 +64,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 	private int ticksSinceInvAction, ticksWaitingForManualClick;
 	private boolean hasWarnedMissingIfe;
 	private final Predicate<ItemStack> handRestockFallback;
-	private boolean recalcLayoutFailed, handRestockFailed, warnedNoValidPos;
+	private boolean calledRecalcLayout, handRestockFailed, warnedNoValidPos;
 
 	public AutoPlaceMapArt(Predicate<ItemStack> moveNextMapToMainHand){
 		handRestockFallback = moveNextMapToMainHand;
@@ -171,7 +171,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			varAxis1Neg = varAxis2Neg = axisMatch = null;
 			currentData = null;
 			ofSize = rowWidth = null;
-			recalcLayoutFailed = handRestockFailed = warnedNoValidPos = false;
+			calledRecalcLayout = handRestockFailed = warnedNoValidPos = false;
 			allMapItems.clear();
 			stacksHashesForCurrentData.clear();
 //			applicableIfes = null;
@@ -205,9 +205,9 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 //	public final boolean ifePosFilter(ItemFrameEntity ife){return ife.getFacing() == dir && distFromPlane(ife.getBlockPos()) == 0;}
 	public final Predicate<ItemFrameEntity> ifePosFilter(){
 		return switch(dir){
-			case UP, DOWN     -> ife -> ife.getFacing() == dir && ife.getBlockPos().getY() == lastIfe.getBlockY();
-			case EAST, WEST   -> ife -> ife.getFacing() == dir && ife.getBlockPos().getX() == lastIfe.getBlockX();
-			case NORTH, SOUTH -> ife -> ife.getFacing() == dir && ife.getBlockPos().getZ() == lastIfe.getBlockZ();
+			case UP, DOWN     -> ife -> ife.getFacing() == dir && ife.getBlockY() == lastIfe.getBlockY();
+			case EAST, WEST   -> ife -> ife.getFacing() == dir && ife.getBlockX() == lastIfe.getBlockX();
+			case NORTH, SOUTH -> ife -> ife.getFacing() == dir && ife.getBlockZ() == lastIfe.getBlockZ();
 			default -> throw new RuntimeException("unreachable");
 		};
 	}
@@ -239,7 +239,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				&& Integer.parseInt(getPosStrFromItem(ife.getHeldItemStack())) == pos;
 	}
 
-	private final boolean iFramesIndicateEndOfRow(PlayerEntity player, AxisData currAxisData, int a, int b){
+	private final Boolean iFramesIndicateEndOfRow(PlayerEntity player, AxisData currAxisData, int a, int b){
 		assert axisMatch != null;
 //		final Boolean rowOffsetNeg = axisMatch ? varAxis1Neg : varAxis2Neg;
 		assert (axisMatch ? varAxis1Neg : varAxis2Neg) != null;//rowOffsetNeg != null;
@@ -255,8 +255,8 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 //				+", hasIfeToExtendCol(neg)="+anyIfeAtPos(ifes, getRelativeBp(currAxisData, !axisMatch, isNeg))
 //				+", hasIfeToExtendCol(pos)="+anyIfeAtPos(ifes, getRelativeBp(currAxisData, !axisMatch, !isNeg)));
 		ItemFrameEntity ifeExtendingRow = ifes.get(getRelativeBp(currAxisData, axisMatch, /*neg=*/rowOffset<0));
-		if(ifeExtendingRow != null && isPartOfCurrentAutoPlace(ifeExtendingRow.getHeldItemStack())) return false;
-		final boolean canExtendRow = ifeExtendingRow != null && ifeExtendingRow.getHeldItemStack().isEmpty();
+		if(ifeExtendingRow != null && isPartOfCurrentAutoPlace(ifeExtendingRow.getHeldItemStack())) return Boolean.FALSE;
+		final boolean emptyRowExtend = ifeExtendingRow != null && ifeExtendingRow.getHeldItemStack().isEmpty();
 
 		final int width = Math.abs(rowOffset)+1;
 		final int minPos = Math.min(a, b), maxPos = Math.max(a, b);
@@ -265,7 +265,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		if(isTopOrBottomRow != null && colOffsetNeg != null){
 			assert (colOffsetNeg ^ !isTopOrBottomRow) == (isTopOrBottomRow ? colOffsetNeg : !colOffsetNeg);
 			final ItemFrameEntity ifeOnNextRow = ifes.get(getRelativeBp(currAxisData, !axisMatch, colOffsetNeg ^ !isTopOrBottomRow));
-			if(canExtendRow){
+			if(emptyRowExtend){
 				// Check if the map one row up/down is already hung (with the name we'd expect to find)
 				// Otherwise, keep extending rowWidth
 				return checkPosMatch1D(ifeOnNextRow, isTopOrBottomRow ? maxPos+1 : minPos-1);
@@ -279,7 +279,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			final int pos = Integer.parseInt(getPosStrFromItem(ifeColNeg.getHeldItemStack()));
 			if(pos != minPos-1 && pos != maxPos+1){
 				Main.LOGGER.info("AutoPlaceMapArt: existing hung map conflicts with expected row alignment! (colNeg)");
-				disableAndReset(); return false;
+				disableAndReset(); return null;
 			}
 			final boolean colIsNeg = pos != minPos-1;
 			if(axisMatch) varAxis2Neg = colIsNeg; else varAxis1Neg = colIsNeg;
@@ -291,22 +291,23 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			final int pos = Integer.parseInt(getPosStrFromItem(ifeColPos.getHeldItemStack()));
 			if(pos != minPos-1 && pos != maxPos+1){
 				Main.LOGGER.info("AutoPlaceMapArt: existing hung map conflicts with expected row alignment! (colPos)");
-				disableAndReset(); return false;
+				disableAndReset(); return null;
 			}
 			final boolean colIsNeg = pos == minPos-1;
 			if(axisMatch) varAxis2Neg = colIsNeg; else varAxis1Neg = colIsNeg;
 			Main.LOGGER.info("AutoPlaceMapArt: determined col isNeg="+colIsNeg+" from adjacent hung maps (colPos)");
 			return true;
 		}
-		if(canExtendRow) return false;
+		if(emptyRowExtend) return null;
 		final boolean emptyColNeg = ifeColNeg != null && ifeColNeg.getHeldItemStack().isEmpty();
 		final boolean emptyColPos = ifeColPos != null && ifeColPos.getHeldItemStack().isEmpty();
+		if(!emptyColNeg && !emptyColPos) return null;
 		if(emptyColNeg != emptyColPos && isTopOrBottomRow != null){//implies colOffsetNeg == null
 			final boolean colIsNeg = emptyColNeg ^ !isTopOrBottomRow;
 			Main.LOGGER.info("AutoPlaceMapArt: determined col isNeg="+colIsNeg+" from available ifes");
 			if(axisMatch) varAxis2Neg = colIsNeg; else varAxis1Neg = colIsNeg;
 		}
-		return emptyColNeg || emptyColPos;
+		return true;
 	}
 
 	public final boolean recalcLayout(final PlayerEntity player, final ItemFrameEntity currIfe, final ItemStack currStack){
@@ -462,12 +463,20 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 						disableAndReset(); return false;
 					}
 					final int candidateRowWidth = Math.abs(rowOffset)+1;
-					if(ofSize % candidateRowWidth == 0 && iFramesIndicateEndOfRow(player, currAxisData, a, b)){
-						Main.LOGGER.info("AutoPlaceMapArt: smart width detection using factor ofSize and relative iFrames, rowWidth="+candidateRowWidth);
-						rowWidth = candidateRowWidth;
+					if(ofSize % candidateRowWidth == 0){
+//						Main.LOGGER.info("AutoPlaceMapArt: checking factor ofSize, candidateRowWidth="+candidateRowWidth);
+						final Boolean isEndOfRow = iFramesIndicateEndOfRow(player, currAxisData, a, b);
+						if(isEndOfRow == null){
+//							if(dir == null) return false; // Happens when iFramesIndicateEndOfRow() calls disableAndReset() 
+							return false; // Better safe than sorry: avoid overly-greedy autoplacing a row
+						}
+						if(isEndOfRow){
+							Main.LOGGER.info("AutoPlaceMapArt: smart width detection using factor ofSize and relative iFrames, rowWidth="+candidateRowWidth);
+							rowWidth = candidateRowWidth;
+						}
+						//else !isEndOfRow, so we continue to allow placing 1d
 					}
 					else{
-						if(dir == null) return false; // Happens when iFramesIndicateEndOfRow() calls disableAndReset() 
 						// A little hack to maximize future rowOffset; to help out the logic above
 						updateLastIfe = false;
 					}
@@ -767,7 +776,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 							Main.LOGGER.warn("AutoPlaceMapArt: iFrame already contains item at pos! ");//+ifeBp.toShortString());
 						continue;
 					}
-					ifeEyePos = ife.getEyePos(); //TODO: ife.getNearestCornerToPlayer
+					ifeEyePos = ife.getEyePos(); // Consider: should I use ife.getNearestCornerToPlayer?
 				}
 				final double distSq = ifeEyePos.squaredDistanceTo(player.getEyePos());
 				if(distSq > MAX_REACH_SQ) continue;
@@ -808,9 +817,10 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		return new MapPlacementData(nearestSlot, bundleSlot, nearestIfe, nearestBp);
 	}
 
+
+	private boolean test2=true; // TODO: Pause while player is moving... keep or nah?
 	private final boolean isMovingTooFast(Vec3d velocity){
-		double xzLengthSq = velocity.x*velocity.x + velocity.z*velocity.z;
-		return xzLengthSq > 0.0001 || Math.abs(velocity.y) > 0.08;
+		return !test2 && (velocity.x*velocity.x + velocity.z*velocity.z) > 0.0001 || Math.abs(velocity.y) > 0.08;
 	}
 
 	private final boolean test=true;// TODO: Test to confirm, but changing hotbar slots shouldn't count as an inv action
@@ -843,7 +853,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to avoid losing iFrame stack");
 					if(!test) return;
 				}
-				if(isMovingTooFast(player.getVelocity())) return; // TODO: Pause while player is moving... keep or nah?
+				if(isMovingTooFast(player.getVelocity())) return;
 				// Swap from upper inv to main hand
 				ClickUtils.executeClicks(_0->true, onDone, new InvAction(slot, selectedSlot, ActionType.HOTBAR_SWAP));
 				Main.LOGGER.info("AutoPlaceMapArt: Swapped nextMap to inv.selectedSlot: s="+slot+"->hb="+(selectedSlot));
@@ -861,14 +871,14 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					if(!test){ticksSinceInvAction = 0; return;}
 				}
 				else{
-					if(isMovingTooFast(player.getVelocity())) return; // TODO: Pause while player is moving... keep or nah?
+					if(isMovingTooFast(player.getVelocity())) return;
 					// Try to move item out of main hand
 					ClickUtils.executeClicks(_0->true, onDone, new InvAction(selectedSlot+36, 0, ActionType.SHIFT_CLICK));
 					Main.LOGGER.info("AutoPlaceMapArt: Shift-clicking item out of mainhand (to upper inv), hb="+selectedSlot);
 					return;
 				}
 			}
-			if(isMovingTooFast(player.getVelocity())) return; // TODO: Pause while player is moving... keep or nah?
+			if(isMovingTooFast(player.getVelocity())) return;
 			BundleContentsComponent contents = player.playerScreenHandler.slots.get(slot).getStack().get(DataComponentTypes.BUNDLE_CONTENTS);
 			assert contents != null && contents.size() > bundleSlot;
 			ArrayDeque<InvAction> clicks = new ArrayDeque<>();
@@ -949,10 +959,11 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 		final MapPlacementData data = getNearestMapPlacement(player, /*allowOutsideReach=*/false, /*allowMapInHand=*/true);
 		if(data == null){
-			if(lastIfeAuto != null && (axisMatch == null || varAxis1Neg == null || varAxis2Neg == null) && !recalcLayoutFailed){
+			if(lastIfeAuto != null && (axisMatch == null || varAxis1Neg == null || varAxis2Neg == null) && !calledRecalcLayout){
 				assert lastStackAuto != null; // in sync with lastIfeAuto
 				Main.LOGGER.info("AutoPlaceMapArt: Unable to determine placement, calling recalcLayout");
-				if(!recalcLayout(player, lastIfeAuto, lastStackAuto)) recalcLayoutFailed = true;
+				recalcLayout(player, lastIfeAuto, lastStackAuto);
+				calledRecalcLayout = true; // Calling this regardless, since sometimes
 			}
 			else if(player.getMainHandStack().getItem() != Items.FILLED_MAP && handRestockFallback != null && !handRestockFailed){
 				Main.LOGGER.info("AutoPlaceMapArt: Unable to determine placement, calling handRestockFallback");
@@ -960,7 +971,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			}
 			return;
 		}
-		recalcLayoutFailed = handRestockFailed = false;
+		calledRecalcLayout = handRestockFailed = false;
 
 		if(player.playerScreenHandler != null && !player.playerScreenHandler.getCursorStack().isEmpty()){
 			Main.LOGGER.warn("AutoPlaceMapArt: item stuck on cursor! attempting to place into empty slot");

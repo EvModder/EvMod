@@ -25,7 +25,7 @@ import net.minecraft.screen.slot.Slot;
 public final class KeybindMapMoveBundle{
 	//final int WITHDRAW_MAX = 27;
 	//enum BundleSelectionMode{FIRST, LAST, MOST_FULL_butNOT_FULL, MOST_EMPTY_butNOT_EMPTY};
-	enum BundleSelectionPriority {
+	private enum BundleSelectionPriority{
 		FULLEST, FULLEST_NOT_FULL,
 		EMPTIEST, EMPTIEST_NOT_EMPTY
 	}
@@ -87,7 +87,8 @@ public final class KeybindMapMoveBundle{
 			return;
 		}
 
-		final boolean doStow = slotsWithMapArt.length > 0 && (Configs.Generic.KEYBIND_BUNDLE_PREFER_STOW.getBooleanValue() || !anyBundleWithMaps);
+		final boolean anyBundleWithSpace = Arrays.stream(bundles).anyMatch(b -> b.getOccupancy().intValue() != 1);
+		final boolean doStow = slotsWithMapArt.length > 0 && anyBundleWithSpace && (Configs.Hotkeys.MAP_MOVE_BUNDLE_PREFER_STOW.getBooleanValue() || !anyBundleWithMaps);
 
 		long numMapsWithCount2 = -1;
 		final boolean pickup1of2 = doStow
@@ -154,7 +155,7 @@ public final class KeybindMapMoveBundle{
 		Main.LOGGER.info("MapBundleOp: contents="+stored+", pickedUp="+pickedUpBundle);
 
 		if(doStow){
-			final boolean STOW_NON_SINGLE_MAPS = Configs.Generic.KEYBIND_BUNDLE_STOW_NON_SINGLE_MAPS.getBooleanValue();
+			final boolean STOW_NON_SINGLE_MAPS = Configs.Hotkeys.MAP_MOVE_BUNDLE_STOW_NON_SINGLE_MAPS.getBooleanValue();
 			final int space = 64 - stored;
 //			Main.LOGGER.warn("MapBundleOp: space in bundle: "+space);
 			int suckedUp = 0;
@@ -173,7 +174,7 @@ public final class KeybindMapMoveBundle{
 			Main.LOGGER.info("MapBundleOp: storing "+suckedUp+" maps in bundle");
 		}
 		else{
-			final int MOVE_LIMIT = Configs.Generic.KEYBIND_BUNDLE_REMOVE_MAX.getIntegerValue();
+			final int MOVE_LIMIT = Configs.Hotkeys.MAP_MOVE_BUNDLE_REMOVE_MAX.getIntegerValue();
 			final int withdrawable = Math.min(MOVE_LIMIT, stored);
 			int withdrawn = 0;
 			if(reverse){

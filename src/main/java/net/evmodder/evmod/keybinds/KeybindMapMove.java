@@ -72,7 +72,7 @@ public final class KeybindMapMove{
 		TreeSet<Integer> countsInShulk = new TreeSet<>();
 		HashMap<ItemStack, Integer> shulkCapacity = new HashMap<>();
 		boolean smallerSlotsAtStart = true;
-		final boolean ALLOW_AIR_POCKETS = Configs.Generic.KEYBIND_MAPART_MOVE_IGNORE_AIR_POCKETS.getBooleanValue();
+		final boolean ALLOW_AIR_POCKETS = Configs.Hotkeys.MAP_MOVE_IGNORE_AIR_POCKETS.getBooleanValue();
 		for(int i=0; i<27; ++i){
 			ItemStack stack = slots[i];
 			if(stack.isEmpty()) ++emptySlotsShulk;

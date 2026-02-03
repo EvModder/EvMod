@@ -24,6 +24,7 @@ import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.BundleContentsComponent;
+import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.world.World;
@@ -38,6 +39,14 @@ public final class KeybindMapLoad{
 		if(stack.getItem() != Items.FILLED_MAP) return false;
 		MapState state = FilledMapItem.getMapState(stack, world);
 		return state != null && state.colors != null && state.colors.length == 128*128;
+	}
+
+	private final void requestTextureUpdate(MinecraftClient client, ItemStack stack){
+		MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
+		if(mapId == null) return;
+		MapState state = client.world.getMapState(mapId);
+		if(state == null) return;
+		client.getMapTextureManager().setNeedsUpdate(mapId, state);
 	}
 
 	private boolean isShulkerBox(ItemStack stack){
@@ -59,7 +68,7 @@ public final class KeybindMapLoad{
 	}
 
 	private final long WAIT_FOR_STATE_UPDATE = 101, STATE_LOAD_TIMEOUT = 5*1000; // 50 = 1 tick
-	private long stateUpdateWaitStart, stateLoadWaitStart;
+	private long stateUpdateWaitStart, stateLoadWaitStart, textureUpdateRequestClickIndex;
 	private final void loadMapArtFromBundles(){
 		final MinecraftClient client = MinecraftClient.getInstance();
 		final InventoryScreen is = (InventoryScreen)client.currentScreen;
@@ -143,10 +152,10 @@ public final class KeybindMapLoad{
 				}
 			}
 			if(c.slot() != emptySlot) return true;
-			if(stateUpdateWaitStart == 0){stateUpdateWaitStart = -1; return true;}
-			ItemStack item = client.player.currentScreenHandler.slots.get(emptySlot).getStack();
-//				if(!isLoadedMapArt(client.world, item)) return false;
-			if(!isLoadedMapArt(client.world, item)){
+			if(stateUpdateWaitStart == 0){stateUpdateWaitStart = -1; return true;} // Used as a hacky toggle, to only trigger every 2nd click (emptySlot->bundle)
+			final ItemStack stack = client.player.currentScreenHandler.slots.get(emptySlot).getStack();
+//			if(!isLoadedMapArt(client.world, item)) return false;
+			if(!isLoadedMapArt(client.world, stack)){
 				if(stateLoadWaitStart == 0) stateLoadWaitStart = System.currentTimeMillis();
 				if(System.currentTimeMillis() - stateLoadWaitStart < STATE_LOAD_TIMEOUT) return false;
 				stateUpdateWaitStart = stateLoadWaitStart = 0;
@@ -154,7 +163,11 @@ public final class KeybindMapLoad{
 				return true;
 			}
 			// Wait a bit even after map state is loaded, to ensure it REALLY gets loaded
-			else if(stateUpdateWaitStart <= 0){stateUpdateWaitStart = System.currentTimeMillis(); return false;}
+			else if(stateUpdateWaitStart <= 0){
+				requestTextureUpdate(client, stack);
+				stateUpdateWaitStart = System.currentTimeMillis();
+				return false;
+			}
 			else if(System.currentTimeMillis() - stateUpdateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
 			else{stateUpdateWaitStart = 0; return true;}
 		},
@@ -216,6 +229,11 @@ public final class KeybindMapLoad{
 				++clickIndex;
 				return true;
 			}
+			if(textureUpdateRequestClickIndex != clickIndex){
+				textureUpdateRequestClickIndex = clickIndex;
+				Arrays.stream(hbButtons).mapToObj(i -> client.player.getInventory().main.get(27+i)).forEach(s -> requestTextureUpdate(client, s));
+			}
+
 			if(ClickUtils.calcAvailableClicks() < CLICK_BATCH_SIZE) return false; // Wait for clicks
 
 //			if(isUnloadedMapArt(client.world, client.player.getInventory().main.get(27+hbButtons[clickIndex % hbButtons.length]))) return false;
@@ -228,7 +246,11 @@ public final class KeybindMapLoad{
 				++clickIndex;
 				return true;
 			}
-			else if(stateUpdateWaitStart == 0){stateUpdateWaitStart = System.currentTimeMillis(); return false;}
+			else if(stateUpdateWaitStart == 0){
+				Arrays.stream(hbButtons).mapToObj(i -> client.player.getInventory().main.get(27+i)).forEach(s -> requestTextureUpdate(client, s));
+				stateUpdateWaitStart = System.currentTimeMillis();
+				return false;
+			}
 			else if(System.currentTimeMillis() - stateUpdateWaitStart < WAIT_FOR_STATE_UPDATE) return false;
 			Main.LOGGER.info("MapLoad: map state loaded and updated, clickIndex="+clickIndex);
 			stateUpdateWaitStart = stateLoadWaitStart = 0;

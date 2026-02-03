@@ -3,9 +3,12 @@ package net.evmodder.evmod.apis;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.evmodder.evmod.Configs;
+import net.evmodder.evmod.config.OptionUnlockedMapHandling;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.map.MapState;
@@ -51,13 +54,11 @@ public final class MapGroupUtils{
 		}
 		return loadedMaps;
 	}*/
-	public static final HashSet<UUID> getLegitLoadedMaps(final ClientWorld world){ // Only caller: CommandMapArtGroup
-		final HashSet<UUID> loadedMaps = new HashSet<UUID>(loadedMapIds.size());
+	public static final Set<UUID> getLegitLoadedMaps(final ClientWorld world){ // Only caller: CommandMapArtGroup
 		Stream<MapState> states = loadedMapIds.stream().map(i -> world.getMapState(new MapIdComponent(i)))
 				.filter(Objects::nonNull).filter(s -> !MapStateCacher.hasCacheMarker(s));
-		if(!Configs.Generic.MAPART_GROUP_INCLUDE_UNLOCKED.getBooleanValue()) states = states.filter(s -> s.locked);
-		states.map(MapGroupUtils::getIdForMapState).forEach(loadedMaps::add);
-		return loadedMaps;
+		if(Configs.Generic.MAPART_GROUP_UNLOCKED_HANDLING.getOptionListValue() == OptionUnlockedMapHandling.SKIP) states = states.filter(s -> s.locked);
+		return states.map(MapGroupUtils::getIdForMapState).collect(Collectors.toSet());
 	}
 	public static final void setCurrentGroup(HashSet<UUID> newGroup){
 		currentMapGroup = newGroup;
@@ -65,16 +66,16 @@ public final class MapGroupUtils{
 	}
 	public static final int getCurrentGroupHash(){return mapsInGroupHash;} // Currently only called by UpdateItemFrameHighlights
 
-	public static final boolean isMapNotInCurrentGroup(final UUID colorsUUID){
+	/*public static final boolean isMapNotInCurrentGroup(final UUID colorsUUID){
 		return currentMapGroup != null && !currentMapGroup.contains(colorsUUID);
-	}
+	}*/
 	public static final boolean shouldHighlightNotInCurrentGroup(final MapState state){
 		if(currentMapGroup == null) return false;
-		if(!Configs.Generic.MAPART_GROUP_INCLUDE_UNLOCKED.getBooleanValue() && !state.locked) return false;
+		if(!state.locked && Configs.Generic.MAPART_GROUP_UNLOCKED_HANDLING.getOptionListValue() == OptionUnlockedMapHandling.SKIP) return false;
 
 		UUID uuid = getIdForMapState(state);
 		if(currentMapGroup.contains(uuid)) return false;
-		if(Configs.Generic.MAPART_GROUP_ENFORCE_LOCKEDNESS_MATCH.getBooleanValue()) return true;
+		if( Configs.Generic.MAPART_GROUP_UNLOCKED_HANDLING.getOptionListValue() == OptionUnlockedMapHandling.UNIQUE) return true;
 		// toggle 1st bit on/off
 		uuid = new UUID(uuid.getMostSignificantBits() ^ 1l, uuid.getLeastSignificantBits());
 		return !currentMapGroup.contains(uuid);

@@ -77,7 +77,7 @@ public abstract class MapRelationUtils{
 		return score; // Maximum score = 3*128 = 384
 	}
 
-	private static final String attribRegex = "(?:by|-(?:\\s*by)?)";
+	private static final String attribRegex = "(?:\\s*(?:by|-(?:\\s*by)?))";
 	private static final String posStrRegex = "(?:\\d+(?:[^0-9]+\\d+)?)|\\p{L}\\d+";
 	private static final String nameRegex = "(?:[\\s\\d]*[^\\s\\d]\\S*\\s*)";
 	private static final String nameSep = "(?:,|,?\\s*&|,?\\s*and)";
@@ -129,9 +129,9 @@ public abstract class MapRelationUtils{
 			int o = a-(Math.min(name2.length(), sourceName2.length())-b);
 			if(o>0){a-=o; b-=o;}//Handle special case: "a 11/x"+"a 111/x", a=len(a 11)=4,b=len(11/x)=4,o=2 => a=len(a ),b=len(/x)
 			//if(a == 0 && b == 0) continue; // No shared prefix/suffix
-			//Main.LOGGER.info("MapRestock: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
+//			Main.LOGGER.info("MapAdjUtil: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
 			if(prefixLen == a && suffixLen == b) continue;// No change to prefix/suffix
-			//Main.LOGGER.info("MapRestock: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
+			//Main.LOGGER.info("MapAdjUtil: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
 			final String posStr = simplifyPosStr(name2.substring(a, name2.length()-b));
 			final String sourcePosStr = simplifyPosStr(sourceName2.substring(a, sourceName2.length()-b));
 			//if(posStr.isBlank()) Main.LOGGER.info("Empty posStr for name in slot "+i+": "+name2+", prefix/suffix: "+a+"/"+b);

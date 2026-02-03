@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
@@ -260,10 +261,9 @@ public class CommandMapArtGroup{
 		final String newActiveGroup = String.join(",", groups);
 		if(cmd == Command.CREATE || cmd == Command.EXPAND || cmd == Command.ADD){
 			final int oldSize = mapsInGroup.size();
-			final HashSet<UUID> mapsToAdd;
+			final Set<UUID> mapsToAdd;
 			if(cmd == Command.ADD){
-				mapsToAdd = new HashSet<>();
-				try{mapsToAdd.add(UUID.fromString(groups2[0]));}
+				try{mapsToAdd = Set.of(UUID.fromString(groups2[0]));}
 				catch(IllegalArgumentException e){
 					source.sendError(Text.translatable(PREFIX+"add.invalidArg").withColor(ERROR_COLOR));
 //					source.sendError(Text.literal("Must provide a hashcode (UUID)").withColor(ERROR_COLOR));

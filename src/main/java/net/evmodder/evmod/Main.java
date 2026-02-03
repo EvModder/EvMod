@@ -50,6 +50,7 @@ import net.minecraft.client.MinecraftClient;
 public class Main{
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
+	// fix NULL map detection (bundle stow isn't sucking up unloaded maps rn)
 	// map-click-move: work multiple copies of same NxM map in inventory(s)
 	// map load from bundle skip loaded maps
 	// support non-QWERTY?

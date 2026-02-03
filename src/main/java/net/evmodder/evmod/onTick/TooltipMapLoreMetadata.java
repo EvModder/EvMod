@@ -60,9 +60,9 @@ public final class TooltipMapLoreMetadata implements Tooltip{
 				).formatted(Formatting.GREEN);
 
 		final boolean showStaircased = Configs.Visuals.MAP_METADATA_TOOLTIP_STAIRCASE.getBooleanValue();
+		final boolean showStaircasedPercent = Configs.Visuals.MAP_METADATA_TOOLTIP_STAIRCASE_PERCENT.getBooleanValue();
 		final boolean showMaterial = Configs.Visuals.MAP_METADATA_TOOLTIP_MATERIAL.getBooleanValue();
-		final boolean showPercentStaircased = Configs.Visuals.MAP_METADATA_TOOLTIP_PERCENT_STAIRCASE.getBooleanValue();
-		final boolean showPercentCarpet = Configs.Visuals.MAP_METADATA_TOOLTIP_PERCENT_CARPET.getBooleanValue();
+		final boolean showCarpetPercent = Configs.Visuals.MAP_METADATA_TOOLTIP_CARPET_PERCENT.getBooleanValue();
 		final boolean showNumColors = Configs.Visuals.MAP_METADATA_TOOLTIP_NUM_COLORS.getBooleanValue();
 		final boolean showNumColorIds = Configs.Visuals.MAP_METADATA_TOOLTIP_NUM_COLOR_IDS.getBooleanValue();
 		final boolean showTransparency = Configs.Visuals.MAP_METADATA_TOOLTIP_TRANSPARENCY.getBooleanValue();
@@ -72,14 +72,13 @@ public final class TooltipMapLoreMetadata implements Tooltip{
 		if(showColorsId) lines.add(Text.literal(MapGroupUtils.getIdForMapState(state, /*evict=*/true).toString()).formatted(Formatting.WHITE));
 		if(showStaircased){
 			lines.add(Text.translatable("advMode.type").formatted(Formatting.GRAY).append(": ").append(staircased));
+			if(showStaircasedPercent && data.height()>0) lines.add(lines.removeLast().copy().append(" ("+data.percentStaircase()+"%)"+(showMaterial?",":"")));
 		}
-		if(showStaircased && showPercentStaircased && data.height()>0) lines.add(
-				lines.removeLast().copy().append(" ("+data.percentStaircase()+"%)"+(showMaterial?",":"")));
 		if(showMaterial){
 			if(showStaircased) lines.add(lines.removeLast().copy().append(" "+paletteSymbol(data.palette())));
 			else lines.add(Text.translatable("advMode.type").formatted(Formatting.GRAY).append(": "+paletteSymbol(data.palette())));
 		}
-		if(showMaterial && showPercentCarpet && data.percentCarpet() < 100) lines.add(lines.removeLast().copy().append(" ("+data.percentCarpet()+"% carpet)"));
+		if(showMaterial && showCarpetPercent && data.percentCarpet() < 100) lines.add(lines.removeLast().copy().append(" ("+data.percentCarpet()+"% carpet)"));
 //		if(showStaircased){// If material 1st then staircased, on same line
 //			if(showMaterial) lines.add(lines.removeLast().copy().append(" ").append(staircased));
 //			else lines.add(Text.translatable("advMode.type").formatted(Formatting.GRAY).append(": ").append(staircased));

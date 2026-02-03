@@ -82,6 +82,7 @@ final class KeyCallbacks{
 			Configs.Hotkeys.INV_ORGANIZE_2.setValueChangeCallback(newValue -> kbInvOrgs[1].refreshLayout(newValue.getStrings()));
 			Configs.Hotkeys.INV_ORGANIZE_3.setValueChangeCallback(newValue -> kbInvOrgs[2].refreshLayout(newValue.getStrings()));
 			valueChangeCallback(Configs.Generic.WHISPER_PLAY_SOUND, whisperPlaySound::recomputeSound);
+			valueChangeCallback(Configs.Generic.WHISPER_PLAY_SOUND_UNFOCUSED, whisperPlaySound::recomputeSoundUnfocused);
 
 			// Keybind callbacks
 			keybindCallback(Configs.Hotkeys.TOGGLE_CAPE, null, ()->InitUtils.toggleSkinLayer(PlayerModelPart.CAPE));
@@ -126,7 +127,7 @@ final class KeyCallbacks{
 		KeybindMapMoveBundle kbMapMoveBundle = new KeybindMapMoveBundle();
 
 		valueChangeCallback(Configs.Generic.CLICK_LIMIT_COUNT, InitUtils::refreshClickLimits);
-		valueChangeCallback(Configs.Generic.CLICK_LIMIT_DURATION, InitUtils::refreshClickLimits);
+		valueChangeCallback(Configs.Generic.CLICK_LIMIT_WINDOW, InitUtils::refreshClickLimits);
 		valueChangeCallback(Configs.Generic.CLICK_DISPLAY_AVAILABLE_PERSISTENT, InitUtils::refreshClickRenderer);
 
 		keybindCallback(Configs.Hotkeys.OPEN_CONFIG_GUI, Objects::isNull, ()->GuiBase.openGui(new ConfigGui(configs)));
