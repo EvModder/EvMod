@@ -443,7 +443,7 @@ public final class MapHandRestock{
 	}
 
 	private boolean waitingForRestock;
-	private final void tryToStockNextMap(ItemStack prevMap, Hand hand){
+	private final boolean tryToStockNextMap(ItemStack prevMap, Hand hand){
 		assert prevMap != null && prevMap.getItem() == Items.FILLED_MAP;
 
 		final MinecraftClient client = MinecraftClient.getInstance();
@@ -472,13 +472,13 @@ public final class MapHandRestock{
 			Main.LOGGER.info("MapRestock: finding next map by ANY (count->locked->named->related)");
 			restockFromSlot = getNextSlotFirstMap(/*slotsWithBundleSub*/slots, prevMap, prevSlot, player.getWorld());
 		}
-		if(restockFromSlot == -1){Main.LOGGER.info("MapRestock: unable to find next map"); return;}
+		if(restockFromSlot == -1){Main.LOGGER.info("MapRestock: unable to find next map"); return false;}
 
 		//PlayerScreenHandler.HOTBAR_START=36
 		final boolean isHotbarSlot = restockFromSlot >= 36 && restockFromSlot < 45;
 		if(prevMap.getCount() > 2 && !isHotbarSlot){
 			Main.LOGGER.warn("MapRestock: Won't swap with inventory since prevMap count > 2");
-			return;
+			return false;
 		}
 
 		// Wait for hand to be free
@@ -517,6 +517,7 @@ public final class MapHandRestock{
 				waitingForRestock = false;
 			});
 		}}.start();
+		return true;
 	}
 
 	public MapHandRestock(final boolean allowAutoPlacer, final boolean allowAutoRemover){
@@ -527,7 +528,7 @@ public final class MapHandRestock{
 			AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
 				if(allowAutoPlacer && autoPlacer.hasKnownLayout()){
 					BlockPos placement;
-					if(entity instanceof ItemFrameEntity ife && ife.getHeldItemStack().getItem() == Items.FILLED_MAP && autoPlacer.ifePosFilter(ife)
+					if(entity instanceof ItemFrameEntity ife && ife.getHeldItemStack().getItem() == Items.FILLED_MAP && autoPlacer.ifePosFilter().test(ife)
 							&& (placement=autoPlacer.getPlacement(ife.getHeldItemStack())) != null && !placement.equals(ife.getBlockPos()))
 					{
 						Main.LOGGER.info("MapRestock: Player manually removed an incorrectly placed map (during AutoPlaceMapArt)");
