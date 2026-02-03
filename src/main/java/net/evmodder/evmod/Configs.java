@@ -486,7 +486,7 @@ public final class Configs implements IConfigHandler{
 		allConfigs.addAll(getGenericConfigs());
 		allConfigs.addAll(getVisualsConfigs());
 		allConfigs.addAll(getHotkeysConfigs());
-		allConfigs.addAll(getDatabaseConfigs());
+		if(settings.database) allConfigs.addAll(getDatabaseConfigs());
 		return allConfigs;
 	}
 

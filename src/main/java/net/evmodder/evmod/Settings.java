@@ -1,5 +1,6 @@
 package net.evmodder.evmod;
 
+import java.io.File;
 import java.util.HashMap;
 import net.evmodder.EvLib.util.FileIO;
 
@@ -7,14 +8,22 @@ final class Settings{
 	private final String internalSettingsFile = Main.mapArtFeaturesOnly ? "settings_for_mapart_ver.txt" : "settings.txt";
 
 	final boolean showNicheConfigs;
-	final boolean storeDataInConfigFolder;
+	final boolean storeDataInInstanceFolder;
 	final boolean database, epearlOwners;
 	final boolean inventoryRestockAuto, placementHelperIframeAutoPlace, placementHelperMapArt, placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove, broadcaster;
 	final boolean serverJoinListener, serverQuitListener, gameMessageListener, gameMessageFilter, containerOpenCloseListener;
 	final boolean cmdAssignPearl, cmdExportMapImg, cmdMapArtGroup, cmdMapHashCode, cmdSeen, cmdSendAs, cmdTimeOnline;
 	final boolean mapHighlights, mapHighlightsInGUIs, tooltipMapHighlights, tooltipMapMetadata, tooltipRepairCost;
 
+
 	private final HashMap<String, Boolean> loadSettings(){
+		File oldSettings = new File(FileIO.DIR+"enabled_features.txt"); 
+		if(oldSettings.exists()){ // TODO: remove this legacy-patch in a future version
+			oldSettings.renameTo(new File(FileIO.DIR+"settings.txt"));
+			FileIO.deleteFile("evmod.json");
+			Main.LOGGER.info("EvModConfig: Migrating configs from v1.x -> v2.0 (some settings may get reset)");
+		}
+
 		HashMap<String, Boolean> config = new HashMap<>();
 		final String configContents = FileIO.loadFile("settings.txt", getClass().getResourceAsStream("/assets/"+Main.MOD_ID+"/"+internalSettingsFile));
 		for(String line : configContents.split("\\r?\\n")){
@@ -38,7 +47,7 @@ final class Settings{
 
 		Main.mapArtFeaturesOnly = !extractConfigValue(settings, "enable_non_mapart_features");
 		showNicheConfigs = extractConfigValue(settings, "show_niche_config_settings");
-		storeDataInConfigFolder = !extractConfigValue(settings, "store_data_in_instance_folder");
+		storeDataInInstanceFolder = extractConfigValue(settings, "store_data_in_instance_folder");
 
 		database = extractConfigValue(settings, "database");
 		epearlOwners = extractConfigValue(settings, "epearl_owners");

@@ -95,7 +95,7 @@ public class Main{
 		Main.LOGGER.info("Loading "+MOD_NAME+" "+MOD_VERSION);
 		instance = this;
 		final Settings settings = new Settings();
-		if(!settings.storeDataInConfigFolder) FileIO.DIR = FabricLoader.getInstance().getGameDir()+"/"+MOD_ID+"/";
+		if(settings.storeDataInInstanceFolder) FileIO.DIR = FabricLoader.getInstance().getGameDir()+"/"+MOD_ID+"/";
 		final Configs configs = new Configs(settings);
 		configs.load();
 
