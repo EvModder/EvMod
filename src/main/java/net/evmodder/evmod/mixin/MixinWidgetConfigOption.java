@@ -45,7 +45,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.Objects;
 
 @Mixin(value=WidgetConfigOption.class, remap=false)
-public abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigsBase.ConfigOptionWrapper>{
+abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigsBase.ConfigOptionWrapper>{
 	@Shadow @Final private final IKeybindConfigGui host;
 	@Shadow @Final private final GuiConfigsBase.ConfigOptionWrapper wrapper;
 	@Shadow @Final @Mutable private KeybindSettings initialKeybindSettings;
@@ -174,8 +174,9 @@ public abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<Gui
 	}
 
 	@Unique private final boolean isOurConfigGui(){
-		return parent instanceof WidgetListConfigOptions wlco && wlco.getParent() instanceof ConfigGui;
-//		return parent instanceof WidgetListConfigOptions && ((AccessorWidgetListConfigOptions)parent).getParent() instanceof ConfigGui;
+//		return parent instanceof WidgetListConfigOptions wlco && wlco.getParent() instanceof ConfigGui;
+		// Goofy but necessary: Using the above alternative breaks the custom config widgets
+		return parent instanceof WidgetListConfigOptions && ((AccessorWidgetListConfigOptions)parent).getParent() instanceof ConfigGui;
 	}
 
 	@Inject(method="addConfigOption", at=@At(value="FIELD",
@@ -214,7 +215,7 @@ public abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<Gui
 //	}
 
 	@Inject(method="<init>", at=@At("TAIL"))
-	private final void initInitialState(CallbackInfo ci){
+	private final void initInitialState(final CallbackInfo ci){
 		if(!isOurConfigGui() || wrapper.getType() != GuiConfigsBase.ConfigOptionWrapper.Type.CONFIG) return;
 
 		IConfigBase config = wrapper.getConfig();
@@ -239,26 +240,26 @@ public abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<Gui
 	@Inject(method="wasConfigModified", at=@At(value="INVOKE",
 			target="Lfi/dy/masa/malilib/gui/GuiConfigsBase$ConfigOptionWrapper;getConfig()Lfi/dy/masa/malilib/config/IConfigBase;",
 			ordinal=0), cancellable=true)
-	private final void specialJudgeCustomConfigValueHotkeyed(CallbackInfoReturnable<Boolean> cir){
-		IConfigBase config = wrapper.getConfig();
+	private final void specialJudgeCustomConfigValueHotkeyed(final CallbackInfoReturnable<Boolean> cir){
+		final IConfigBase config = wrapper.getConfig();
 //		if(!OurConfigs.hasConfig(config)) return;
 
 		if(config instanceof ConfigStringHotkeyed csh){
-			IKeybind keybind = csh.getKeybind();
+			final IKeybind keybind = csh.getKeybind();
 			cir.setReturnValue(
 					!Objects.equals(initialString$OURS, csh.getStringValue())
 					|| !Objects.equals(initialStringValue, keybind.getStringValue())
 					|| !Objects.equals(initialKeybindSettings, keybind.getSettings()));
 		}
 		if(config instanceof ConfigYawPitchHotkeyed cyph){
-			IKeybind keybind = cyph.getKeybind();
+			final IKeybind keybind = cyph.getKeybind();
 			cir.setReturnValue(
 					initialYaw$OURS != cyph.getYaw() || initialPitch$OURS != cyph.getPitch()
 					|| !Objects.equals(initialStringValue, keybind.getStringValue())
 					|| !Objects.equals(initialKeybindSettings, keybind.getSettings()));
 		}
 //		if(config instanceof IOptionListHotkeyed iolh){
-//			IKeybind keybind = iolh.getKeybind();
+//			final IKeybind keybind = iolh.getKeybind();
 //			cir.setReturnValue(
 //					!Objects.equals(initialOptionListEntry$OURS, iolh.getOptionListValue())
 //					|| !Objects.equals(initialStringValue, keybind.getStringValue())

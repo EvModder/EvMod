@@ -22,7 +22,7 @@
 		"MixinScreenHandler",
 
 		// MaLiLib mixins:
-//		"AccessorWidgetListConfigOptions",
+		"AccessorWidgetListConfigOptions",
 		"MixinWidgetConfigOption"
 //		"MixinWidgetListConfigOptions"
 	],
