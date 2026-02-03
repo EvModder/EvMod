@@ -96,7 +96,7 @@ public final class ClickUtils{
 			return MAX_CLICKS - sumClicksInDuration;
 		}
 	}
-	public static boolean addClick(/*SlotActionType type*/){ // TODO: friend MixinClientPlayerInteractionManager?
+	public static boolean addClick(/*SlotActionType type*/){ // friend MixinClientPlayerInteractionManager?
 //		assert type != null; // unused
 
 		synchronized(tickDurationArr){

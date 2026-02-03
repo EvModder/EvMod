@@ -27,7 +27,7 @@ public class MiscUtils{
 	}
 
 	private static final String ADDRESS_2B2T = "2b2t.org"; // TODO: make EvMod more server-independent 
-	public static final int HASHCODE_2B2T = "2b2t.org".hashCode(); // -437714968;
+	public static final int HASHCODE_2B2T = ADDRESS_2B2T.hashCode(); // -437714968;
 //	private static final boolean USE_CANONICAL_IP = false;
 	public static final String getServerAddress(ServerInfo serverInfo, boolean USE_CANONICAL_IP){
 		if(serverInfo == null) return null;

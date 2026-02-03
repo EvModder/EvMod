@@ -120,7 +120,7 @@ public class UpdateContainerHighlights{
 		if(renderAsterisks && !asterisks.isEmpty()){
 //			Main.LOGGER.info("ContainerHighlighter: colored title! asterisks.size()="+asterisks.size());
 			customTitle = hs.getTitle().copy();
-			asterisks.stream().distinct() // TODO: the "distinct" only exists in case of configurations where 2+ settings share 1 color
+			asterisks.stream().distinct() // The "distinct" only exists in case of configurations where 2+ settings share 1 color
 				.forEach(color -> customTitle.append(Text.literal("*").withColor(color).formatted(Formatting.BOLD)));
 		}
 	}

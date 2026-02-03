@@ -379,7 +379,9 @@ public class CommandMapArtGroup{
 //			if(defaultGroupFile.exists()){
 				Main.LOGGER.info("[MapArtGroup] Loading default group: "+defaultGroupName);
 				runCommand(new TextListener(){
-					@Override public void sendFeedback(Text message){Main.LOGGER.info(message.getString());}
+					// It seems this doesn't properly resolve Text->msg (it gives the raw json instead of the resolved string)
+					// So I've commented it out for non-errors
+					@Override public void sendFeedback(Text message){/*Main.LOGGER.info(message.getString());*/}
 					@Override public void sendError(Text message){Main.LOGGER.warn(message.getString());}
 				}, Command.SET, defaultGroupName.split("[,+]"), null);
 //			}

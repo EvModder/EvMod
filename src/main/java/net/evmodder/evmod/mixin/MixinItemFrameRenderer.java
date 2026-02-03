@@ -17,12 +17,14 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.ItemFrameEntityRenderer;
 import net.minecraft.client.render.entity.state.ItemFrameEntityRenderState;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ItemFrameEntity;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.map.MapState;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.Vec3d;
 
 @Mixin(ItemFrameEntityRenderer.class)
 abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
@@ -40,6 +42,19 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 			default:
 				return false;
 		}
+	}
+
+	private static final boolean isLookingInGeneralDirection(Entity entity){ // Accessor: MixinItemFrameRenderer
+//		Entity player = MinecraftClient.getInstance().player;
+//		Vec3d vec3d2 = new Vec3d(entity.getX() - player.getX(), entity.getEyeY() - player.getEyeY(), entity.getZ() - player.getZ());
+		// maybe use entity.getCenterPos() instead?
+		Vec3d vec3d2 = entity.getEyePos().subtract(MinecraftClient.getInstance().player.getEyePos());
+		double d = vec3d2.length(); // Calls Math.sqrt()
+		vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d); // normalize
+		double e = AccessorUpdateItemFrameHighlights.clientRotationNormalized().dotProduct(vec3d2);
+//		final double asdf = player.squaredDistanceTo(entity) > 5*5 ? 0.3d : 0.1d;
+		final double asdf = vec3d2.lengthSquared() > 5*5 ? 0.3d : 0.1d;
+		return e > 1.0d - asdf / d;
 	}
 
 	@Inject(method="render", at=@At("HEAD"))
@@ -60,7 +75,7 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		final Highlight hl = UpdateItemFrameHighlights.iFrameGetHighlight(itemFrameEntity.getId());
 		if(hl == null) return;
 
-		final Boolean hasLabel = UpdateItemFrameHighlights.hasLabelCache.get(itemFrameEntity);
+		final Boolean hasLabel = AccessorUpdateItemFrameHighlights.hasLabelCache().get(itemFrameEntity);
 		if(hasLabel != null){cir.setReturnValue(hasLabel); return;}
 
 		if(hl == Highlight.MULTI_HUNG && Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue() && MapColorUtils.isMonoColor(state.colors)){
@@ -69,7 +84,7 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		else if(hl == Highlight.INV_OR_NESTED_INV){ // Show this label even if not looking in general direction
 			cir.setReturnValue(true);
 		}
-		else if(!UpdateItemFrameHighlights.isLookingInGeneralDirection(itemFrameEntity)){
+		else if(!isLookingInGeneralDirection(itemFrameEntity)){
 //			Main.LOGGER.info("not looking at: "+stack.getName().getString());
 			// no-op
 		}
@@ -85,7 +100,7 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		else if(squaredDistanceToCamera <= 400d/*20*20*/ && client.player.canSee(itemFrameEntity)){ // Show other labels only if LOS and dist <= 20
 			cir.setReturnValue(true);
 		}
-		UpdateItemFrameHighlights.hasLabelCache.put(itemFrameEntity, cir.getReturnValue());
+		AccessorUpdateItemFrameHighlights.hasLabelCache().put(itemFrameEntity, cir.getReturnValue());
 	}
 
 	private final boolean isMultiHung(MapState state){return UpdateItemFrameHighlights.isHungMultiplePlaces(MapGroupUtils.getIdForMapState(state));}
@@ -100,7 +115,7 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		final Highlight hl = UpdateItemFrameHighlights.iFrameGetHighlight(itemFrameEntity.getId());
 		if(hl == null) return;
 
-		final Text cachedName = UpdateItemFrameHighlights.displayNameCache.get(itemFrameEntity);
+		final Text cachedName = AccessorUpdateItemFrameHighlights.displayNameCache().get(itemFrameEntity);
 		if(cachedName != null){cir.setReturnValue(cachedName); return;}
 
 		if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue() && stack.getCustomName() != null)
@@ -130,10 +145,10 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 			else name.withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue());
 		}
 		else{
-			UpdateItemFrameHighlights.displayNameCache.put(itemFrameEntity, stack.getName());
+			AccessorUpdateItemFrameHighlights.displayNameCache().put(itemFrameEntity, stack.getName());
 			return;
 		}
-		UpdateItemFrameHighlights.displayNameCache.put(itemFrameEntity, name);
+		AccessorUpdateItemFrameHighlights.displayNameCache().put(itemFrameEntity, name);
 		cir.setReturnValue(name);
 	}
 }

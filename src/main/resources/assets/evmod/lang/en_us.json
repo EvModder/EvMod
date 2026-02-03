@@ -358,7 +358,7 @@
 	"evmod.config.database.name.clientId": "clientId",
 	"evmod.config.database.comment.clientId": "Unique user id for database to recognize us by",
 	"evmod.config.database.name.clientKey": "clientKey",
-	"evmod.config.database.comment.clientKey": "Ask @EvModder for a unique key to guarantee ongoing database access. Best not to share your key, since if a malicious user uses it (DDoS, submitting invalid data, etc.) your account will get banned from database access",
+	"evmod.config.database.comment.clientKey": "Keep it secret! This key is used to encrypt your database requests; sharing it with other players could let them pretend to be you (when talking to the DB)",
 	"evmod.config.database.name.address": "address",
 	"evmod.config.database.comment.address": "Default value is a globally-shared DB. Feel free to setup your own DB, or leave blank.",
 	"evmod.config.database.name.saveSeenMapArt": "saveMapArtHashCodes*",

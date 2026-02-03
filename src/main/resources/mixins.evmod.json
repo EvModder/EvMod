@@ -3,9 +3,9 @@
 	"package": "net.evmodder.evmod.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		// Main.instance mixin:
-		"AccessorMain",
-		"AccessorMapGroupUtils",
+		"AccessorMain", // Used by MixinClientPlayNetworkHandler, MixinEntityRenderer, MixinClientPlayerInteractionManager
+		"AccessorMapGroupUtils", // Used by MixinClientPlayNetworkHandler
+		"AccessorUpdateItemFrameHighlights", // Used by MixinItemFrameRenderer
 
 		// Minecraft mixins:
 		"AccessorAnvilScreen",

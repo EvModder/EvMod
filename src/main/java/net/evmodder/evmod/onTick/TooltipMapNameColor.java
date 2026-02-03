@@ -112,7 +112,7 @@ public final class TooltipMapNameColor implements Tooltip{
 		}
 		final boolean nameColor = asterisks.get(0) != MAP_COLOR_MULTI_CONTAINER; // This one is only permitted as an asterisk (idk why, ask older me)
 
-		asterisks = asterisks.stream().distinct().toList(); // TODO: this line only exists in case of configurations where 2+ meanings share 1 color
+		asterisks = asterisks.stream().distinct().toList(); // This line only exists in case of configurations where 2+ meanings share 1 color
 		MutableText text = lines.removeFirst().copy();
 		if(nameColor) text.withColor(asterisks.get(0));
 		for(int i=nameColor?1:0; i<asterisks.size(); ++i) text.append(Text.literal("*").withColor(asterisks.get(i)));
