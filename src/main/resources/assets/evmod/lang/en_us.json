@@ -54,6 +54,13 @@
 	"evmod.gui.label.unlockedMapHandling.unique": "Treat as unique",
 	"evmod.gui.label.unlockedMapHandling.equivalent": "Treat as equivalent",
 
+	"evmod.gui.label.bundleSelectionPriority.first": "First",
+	"evmod.gui.label.bundleSelectionPriority.last": "Last",
+	"evmod.gui.label.bundleSelectionPriority.fullest": "Fullest",
+	"evmod.gui.label.bundleSelectionPriority.fullestNotFull": "Fullest-not-full",
+	"evmod.gui.label.bundleSelectionPriority.emptiest": "Emptiest",
+	"evmod.gui.label.bundleSelectionPriority.emptiestNotEmpty": "Emptiest-not-empty",
+
 	"evmod.gui.label.invisIFrames.off": "Off",
 	"evmod.gui.label.invisIFrames.all": "Any item",
 	"evmod.gui.label.invisIFrames.mapArt": "MapArt only",
@@ -291,8 +298,12 @@
 	"evmod.config.hotkeys.comment.mapMoveBundlePreferStow": "When both are possible, should the keybind prefer putting maps into a bundle or taking maps out of a bundle?",
 	"evmod.config.hotkeys.name.mapMoveBundleStowNonSingleMaps": "mapMoveBundleStowNonSingleMaps",
 	"evmod.config.hotkeys.comment.mapMoveBundleStowNonSingleMaps": "Should the keybind also put maps with item.count > 1 into bundles?",
-	"evmod.config.hotkeys.name.mapMoveBundleRemoveMax": "mapMoveBundleRemoveMax",
-	"evmod.config.hotkeys.comment.mapMoveBundleRemoveMax": "Maximum maps to extract per keybind click. Sometimes nice to limit this to 27 if you are moving maps from bundles -> shulkers",
+	"evmod.config.hotkeys.name.mapMoveBundleTakeMax": "mapMoveBundleRemoveMax",
+	"evmod.config.hotkeys.comment.mapMoveBundleTakeMax": "Maximum maps to extract per keybind click. Sometimes nice to limit this to 27 if you are moving maps from bundles -> shulkers",
+	"evmod.config.hotkeys.name.mapMoveBundleSelectPrioForStow": "mapMoveBundleSelectPrioForStow",
+	"evmod.config.hotkeys.comment.mapMoveBundleSelectPrioForStow": "When there is no bundle on the cursor, and multiple bundles with empty space in the inventory, what selection strategy do we use for bundle-store?",
+	"evmod.config.hotkeys.name.mapMoveBundleSelectPrioForTake": "mapMoveBundleSelectPrioForTake",
+	"evmod.config.hotkeys.comment.mapMoveBundleSelectPrioForStow": "When there is no bundle on the cursor, and multiple bundles with mapart in the inventory, what selection strategy do we use for bundle-extract?",
 
 	"evmod.config.hotkeys.name.toggleCape": "toggleCape",
 //	"evmod.config.hotkeys.comment.toggleCape": "",

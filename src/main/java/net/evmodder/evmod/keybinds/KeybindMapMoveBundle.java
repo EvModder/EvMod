@@ -10,6 +10,8 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
+import net.evmodder.evmod.config.OptionBundleSelectPrio;
+import net.evmodder.evmod.config.OptionBundleSelectPrio.BundleSelectPrio;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -23,17 +25,6 @@ import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.slot.Slot;
 
 public final class KeybindMapMoveBundle{
-	//final int WITHDRAW_MAX = 27;
-	//enum BundleSelectionMode{FIRST, LAST, MOST_FULL_butNOT_FULL, MOST_EMPTY_butNOT_EMPTY};
-	private enum BundleSelectionPriority{
-		FULLEST, FULLEST_NOT_FULL,
-		EMPTIEST, EMPTIEST_NOT_EMPTY
-	}
-	// Can be: EMPTIEST_NOT_EMPTY or FULLEST
-	private final BundleSelectionPriority BUNDLE_EXTRACT = BundleSelectionPriority.EMPTIEST_NOT_EMPTY; // TODO: config settings for these
-	// Can be: FULLEST_NOT_FULL or EMPTIEST
-	private final BundleSelectionPriority BUNDLE_STOW = BundleSelectionPriority.FULLEST_NOT_FULL;
-
 	private final int getNumStored(Fraction fraction){
 		assert 64 % fraction.getDenominator() == 0;
 		return (64/fraction.getDenominator())*fraction.getNumerator();
@@ -111,9 +102,12 @@ public final class KeybindMapMoveBundle{
 		}
 		else if(!cursorStack.isEmpty()){Main.LOGGER.warn("MapBundleOp: Non-bundle item on cursor"); return;}
 		else{
-			final BundleSelectionPriority pickBy = doStow ? BUNDLE_STOW : BUNDLE_EXTRACT;
+			final BundleSelectPrio pickBy = ((OptionBundleSelectPrio)
+					(doStow ? Configs.Hotkeys.MAP_MOVE_BUNDLE_SELECT_PRIORITY_STOW : Configs.Hotkeys.MAP_MOVE_BUNDLE_SELECT_PRIORITY_TAKE)
+					.getOptionListValue()).getSelectPrio();
 			int bestBundleSlot = -1;
 			int bestStored = switch(pickBy){
+				case FIRST, LAST -> -1; // N/A, don't care
 				case FULLEST, FULLEST_NOT_FULL -> -1;
 				case EMPTIEST, EMPTIEST_NOT_EMPTY -> Integer.MAX_VALUE;
 			};
@@ -126,15 +120,16 @@ public final class KeybindMapMoveBundle{
 				if(doStow ? occ.intValue() == 1 : occ.getNumerator() == 0) continue; // Same logic as above
 				if(!contents.stream().allMatch(this::isMapItem)) continue; // Skip bundles with non-mapart contents
 				final int storedI = getNumStored(occ);
-				final boolean updatePick = switch(pickBy){
+				if(switch(pickBy){
+					case FIRST, LAST -> true;
 					case FULLEST -> storedI > bestStored;
 					case FULLEST_NOT_FULL -> storedI > bestStored && occ.intValue() != 1;
 					case EMPTIEST -> storedI < bestStored;
 					case EMPTIEST_NOT_EMPTY -> storedI < bestStored && occ.getNumerator() != 0;
-				};
-				if(updatePick){
+				}){
 					bestStored = storedI;
 					bestBundleSlot = i;
+					if(pickBy == BundleSelectPrio.FIRST) break;
 				}
 			}
 			if(bestBundleSlot == -1){
@@ -174,7 +169,7 @@ public final class KeybindMapMoveBundle{
 			Main.LOGGER.info("MapBundleOp: storing "+suckedUp+" maps in bundle");
 		}
 		else{
-			final int MOVE_LIMIT = Configs.Hotkeys.MAP_MOVE_BUNDLE_REMOVE_MAX.getIntegerValue();
+			final int MOVE_LIMIT = Configs.Hotkeys.MAP_MOVE_BUNDLE_TAKE_MAX.getIntegerValue();
 			final int withdrawable = Math.min(MOVE_LIMIT, stored);
 			int withdrawn = 0;
 			if(reverse){

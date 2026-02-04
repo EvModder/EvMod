@@ -289,7 +289,11 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigHotkey MAP_MOVE_BUNDLE_REVERSE = new ConfigHotkey("mapMoveBundleReverse", "", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigBoolean MAP_MOVE_BUNDLE_PREFER_STOW = new ConfigBoolean("mapMoveBundlePreferStow", true).apply(HOTKEYS_KEY);
 		public static final ConfigBoolean MAP_MOVE_BUNDLE_STOW_NON_SINGLE_MAPS = new ConfigBoolean("mapMoveBundleStowNonSingleMaps", true).apply(HOTKEYS_KEY);
-		public static final ConfigInteger MAP_MOVE_BUNDLE_REMOVE_MAX = new ConfigInteger("mapMoveBundleRemoveMax", 64, 1, 64).apply(HOTKEYS_KEY);
+		public static final ConfigInteger MAP_MOVE_BUNDLE_TAKE_MAX = new ConfigInteger("mapMoveBundleTakeMax", 64, 1, 64).apply(HOTKEYS_KEY);
+		public static final ConfigOptionList MAP_MOVE_BUNDLE_SELECT_PRIORITY_STOW = new ConfigOptionList(
+				"mapMoveBundleSelectPrioForStow", OptionBundleSelectPrioStow.FULLEST_NOT_FULL).apply(HOTKEYS_KEY);
+		public static final ConfigOptionList MAP_MOVE_BUNDLE_SELECT_PRIORITY_TAKE = new ConfigOptionList(
+				"mapMoveBundleSelectPrioForTake", OptionBundleSelectPrioTake.EMPTIEST_NOT_EMPTY).apply(HOTKEYS_KEY);
 
 		public static final ConfigHotkey TOGGLE_CAPE = new ConfigHotkey("toggleCape", /*!Main.mapArtFeaturesOnly ? "," : */"");
 		public static final ConfigBoolean SYNC_CAPE_WITH_ELYTRA = new ConfigBoolean("syncCapeWithElytra", false).apply(HOTKEYS_KEY);
@@ -404,8 +408,9 @@ public final class Configs implements IConfigHandler{
 			configs.add(MAP_MOVE_NEIGHBORS);
 //			if(settings.keybindMapMoveBundle){
 				configs.addAll(List.of(MAP_MOVE_BUNDLE, MAP_MOVE_BUNDLE_REVERSE));
-				if(settings.showNicheConfigs)
-					configs.addAll(List.of(MAP_MOVE_BUNDLE_PREFER_STOW, MAP_MOVE_BUNDLE_STOW_NON_SINGLE_MAPS, MAP_MOVE_BUNDLE_REMOVE_MAX)); // Non-keybinds
+				if(settings.showNicheConfigs) // Non-keybinds
+					configs.addAll(List.of(MAP_MOVE_BUNDLE_PREFER_STOW, MAP_MOVE_BUNDLE_STOW_NON_SINGLE_MAPS, MAP_MOVE_BUNDLE_TAKE_MAX,
+							MAP_MOVE_BUNDLE_SELECT_PRIORITY_STOW, MAP_MOVE_BUNDLE_SELECT_PRIORITY_TAKE)); 
 //			}
 			if(!Main.mapArtFeaturesOnly){
 				configs.addAll(List.of(
