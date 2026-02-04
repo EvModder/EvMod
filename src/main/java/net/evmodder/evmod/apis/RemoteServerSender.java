@@ -87,13 +87,12 @@ public final class RemoteServerSender{
 		synchronized(packetList){
 			final byte[] packet = packetList.peek();
 			final MessageReceiver recv = recvList.peek();
-			//Main.LOGGER.info("calling sendPacket with waitForReply="+(recv!=null));
-			LOGGER.warn("RMS: sendingPacket with len="+packet.length);
+//			LOGGER.warn("RMS: sendingPacket with len="+packet.length+", waitForReply="+(recv!=null));
 			PacketHelper.sendPacket(addrResolved, PORT, udp, timeout, /*waitForReply=*/recv != null, packet, reply->{
 				final long latency = System.currentTimeMillis()-startTs;
 				if(latency >= timeout && reply == null) LOGGER.info("RemoteServerSender "+(udp?"UDP":"TCP")+" request timed out");
-				else LOGGER.info("RMS: got "+(udp?"UDP":"TCP")+" reply (in "+formatTimeMillis(latency)
-								+") from RS: "+(reply == null ? "null" : new String(reply)+" ["+reply.length+"]"));
+				else LOGGER.info("RMS: got "+(udp?"UDP":"TCP")+" reply (in "+formatTimeMillis(latency)+"): "
+						+(reply == null ? "null" : new String(reply)+" [len="+reply.length+"]"));
 				if(recv != null) recv.receiveMessage(reply);
 				synchronized(packetList){
 					packetList.remove();
@@ -108,7 +107,7 @@ public final class RemoteServerSender{
 		if(addrResolved == null) resolveAddress();
 		if(addrResolved == null) LOGGER.warn("RemoteSender address could not be resolved!: "+REMOTE_ADDR);
 		else{
-			LOGGER.warn("RMS: queuingPacket for cmd: "+command);
+			LOGGER.warn("RMS: queuingPacket for cmd: "+command+", len="+packet.length);
 			final LinkedList<byte[]> packetList = (udp ? udpPackets : tcpPackets);
 			final LinkedList<MessageReceiver> recvList = (udp ? udpReceivers : tcpReceivers);
 			synchronized(packetList){

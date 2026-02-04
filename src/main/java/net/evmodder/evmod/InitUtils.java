@@ -69,6 +69,7 @@ final class InitUtils{
 
 	static final int DUMMY_CLIENT_ID = 67; // Accessor: Configs.java (for setting default value)
 	private static final String DUMMY_CLIENT_KEY = "yesyesyes";
+	private static boolean sendPingRequest = true;
 	static final void refreshRemoteServerSender(RemoteServerSender rms){
 		assert rms != null;
 		final String fullAddress = Configs.Database.ADDRESS.getStringValue();
@@ -82,10 +83,15 @@ final class InitUtils{
 		rms.setConnectionDetails(addr, port, clientId, clientKey);
 		if(addr == null) return;
 
-		Main.LOGGER.info("RMS settings updated: "+addr+":"+port+", id="+clientId);
-		if(clientId != DUMMY_CLIENT_ID)
+		Main.LOGGER.info("RMS settings updated: "+addr+":"+port+", id="+clientId+", key="+clientKey.charAt(0)+"..."+clientKey.charAt(clientKey.length()-1));
+		if(clientId != DUMMY_CLIENT_ID && sendPingRequest){
+			sendPingRequest = false;
 			rms.sendBotMessage(Command.PING, /*udp=*/false, /*timeout=*/5000, /*msg=*/new byte[0],
-				msg->Main.LOGGER.info("RMS responded to ping: "+(msg == null ? null : new String(msg))));
+				msg->{
+					Main.LOGGER.info("RMS responded to ping: "+(msg == null ? null : new String(msg)));
+					sendPingRequest = true;
+				});
+		}
 	}
 
 	private static boolean requestedKey = false;
@@ -104,20 +110,20 @@ final class InitUtils{
 				Main.LOGGER.info("ClientAuth: Invalid response from RMS for REQUEST_CLIENT_KEY: "+(reply == null ? null : new String(reply)+",len="+reply.length));
 				return;
 			}
-			ByteBuffer bb = ByteBuffer.wrap(reply);
+			final ByteBuffer bb = ByteBuffer.wrap(reply);
 			final int clientId = bb.getInt();
 			assert clientId != DUMMY_CLIENT_ID;
 			final byte[] strBytes = new byte[bb.remaining()]; bb.get(strBytes);
 			final String clientKey = new String(strBytes);
 
-			MinecraftClient.getInstance().executeSync(()->{
+//			MinecraftClient.getInstance().executeSync(()->{
 				Main.LOGGER.info("ClientAuth: Server granted credentials! id="+clientId+", key="+clientKey);
 				Configs.Database.CLIENT_ID.setIntegerValue(clientId);
 				Configs.Database.CLIENT_KEY.setValueFromString(clientKey);
-//				configs.save();
+				configs.save();
 //				refreshRemoteServerSender(rms); // Gets triggered automatically by KeyCallbacks onValueChanged()
 //				Main.LOGGER.info("ClientAuth: credentials sanity check clientId: "+Configs.Database.CLIENT_ID.getIntegerValue());
-			});
+//			});
 		});
 		return false;
 	}
