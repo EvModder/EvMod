@@ -2,6 +2,7 @@ package net.evmodder.evmod.commands;
 
 import static net.evmodder.evmod.apis.MojangProfileLookupConstants.NAME_404;
 import static net.evmodder.evmod.apis.MojangProfileLookupConstants.NAME_U_404;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import java.util.List;
 import net.evmodder.evmod.apis.EpearlLookupFabric;
@@ -9,7 +10,6 @@ import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.MojangProfileLookup;
 import net.evmodder.evmod.apis.MojangProfileLookupConstants;
 import net.evmodder.evmod.mixin.AccessorProjectileEntity;
-import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.projectile.thrown.EnderPearlEntity;
@@ -108,7 +108,7 @@ public class CommandAssignPearl{
 		ClientCommandRegistrationCallback.EVENT.register(
 			(dispatcher, _0) -> dispatcher.register(
 				ClientCommandManager.literal("assignpearl").then(
-					ClientCommandManager.argument("name", EntityArgumentType.players())
+					ClientCommandManager.argument("name", /*EntityArgumentType.players()*/StringArgumentType.word())
 					.executes(this::assignPearl)
 				)
 			)
