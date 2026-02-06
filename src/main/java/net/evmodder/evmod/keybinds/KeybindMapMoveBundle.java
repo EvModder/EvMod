@@ -78,7 +78,8 @@ public final class KeybindMapMoveBundle{
 			return;
 		}
 
-		final boolean anyBundleWithSpace = Arrays.stream(bundles).anyMatch(b -> b.getOccupancy().intValue() != 1);
+		final boolean cursorBundleHasSpace = cursorIsUsableBundle && cursorBundleContents.getOccupancy().intValue() != 1;
+		final boolean anyBundleWithSpace = cursorBundleHasSpace || Arrays.stream(bundles).anyMatch(b -> b.getOccupancy().intValue() != 1);
 		final boolean doStow = slotsWithMapArt.length > 0 && anyBundleWithSpace && (Configs.Hotkeys.MAP_MOVE_BUNDLE_PREFER_STOW.getBooleanValue() || !anyBundleWithMaps);
 
 		long numMapsWithCount2 = -1;

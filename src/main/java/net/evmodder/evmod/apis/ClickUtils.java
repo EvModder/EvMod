@@ -30,7 +30,9 @@ public final class ClickUtils{
 		SlotActionType action;
 		ActionType(SlotActionType a){action = a;}
 	}
-	public record InvAction(int slot, int button, ActionType action){}
+	public record InvAction(int slot, int button, ActionType action){
+		@Override public InvAction clone(){return new InvAction(slot, button, action);}
+	}
 
 	private static int MAX_CLICKS; public static int getMaxClicks(){return MAX_CLICKS;}
 	private static int[] tickDurationArr;
