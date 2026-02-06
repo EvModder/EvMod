@@ -77,6 +77,10 @@
 	"evmod.gui.label.inventoryRestockLeave.oneItem": "Don't take last item",
 	"evmod.gui.label.inventoryRestockLeave.oneStack": "Don't take last stack",
 
+	// TODO: way to configure all these?
+	//"evmod.tooltip.mapMetadata.materialType": "${advMode.type, color:gray}: %s",
+	//"evmod.tooltip.mapMetadata.colorSuppression:": "Render manipulation:",
+
 	// GENERIC:
 	"evmod.config.generic.name.clickLimitCount": "clickLimitCount*",
 	"evmod.config.generic.comment.clickLimitCount": "2b2t will kick you for sending >80 clicks in <80 ticks (Last checked: 2025-10-15)",
@@ -243,32 +247,40 @@
 	"evmod.config.visuals.comment.mapHighlightInInvIncludeBundles": "Should bundles nested inside the player's inv be considered for the 'IsInInv' highlight color?",
 
 	"evmod.config.visuals.name.mapMetadataTooltipStaircase": "mapTooltip: Staircase",
-//	"evmod.config.visuals.comment.mapMetadataTooltipStaircase": ""
+//	"evmod.config.visuals.comment.mapMetadataTooltipStaircase": "",
 	"evmod.config.visuals.name.mapMetadataTooltipPercentStaircase": "mapTooltip: Staircase%",
-//	"evmod.config.visuals.comment.mapMetadataTooltipPercentStaircase": ""
+//	"evmod.config.visuals.comment.mapMetadataTooltipPercentStaircase": "",
 	"evmod.config.visuals.name.mapMetadataTooltipMaterial": "mapTooltip: Material",
-//	"evmod.config.visuals.comment.mapMetadataTooltipMaterial": ""
+//	"evmod.config.visuals.comment.mapMetadataTooltipMaterial": "",
 	"evmod.config.visuals.name.mapMetadataTooltipPercentCarpet": "mapTooltip: Carpet%",
-//	"evmod.config.visuals.comment.mapMetadataTooltipPercentCarpet": ""
+//	"evmod.config.visuals.comment.mapMetadataTooltipPercentCarpet": "",
 	"evmod.config.visuals.name.mapMetadataTooltipNumColors": "mapTooltip: NumColors",
-//	"evmod.config.visuals.comment.mapMetadataTooltipNumColors": ""
+//	"evmod.config.visuals.comment.mapMetadataTooltipNumColors": "",
 	"evmod.config.visuals.name.mapMetadataTooltipNumColorIds": "mapTooltip: NumColorIds",
-//	"evmod.config.visuals.comment.mapMetadataTooltipNumColorIds": ""
-	"evmod.config.visuals.name.mapMetadataTooltipTransparency": "mapTooltip: Transparency",
-//	"evmod.config.visuals.comment.mapMetadataTooltipTransparency": ""
+//	"evmod.config.visuals.comment.mapMetadataTooltipNumColorIds": "",
+	"evmod.config.visuals.name.mapMetadataTooltipWaterColors": "mapTooltip: WaterColors",
+//	"evmod.config.visuals.comment.mapMetadataTooltipWaterColors": "",
+	"evmod.config.visuals.name.mapMetadataTooltipWaterColorsPercent": "mapTooltip: WaterColors%",
+//	"evmod.config.visuals.comment.mapMetadataTooltipWaterColorsPercent": "",
+	"evmod.config.visuals.name.mapMetadataTooltipTransparent": "mapTooltip: Transparent",
+//	"evmod.config.visuals.comment.mapMetadataTooltipTransparent": "",
+	"evmod.config.visuals.name.mapMetadataTooltipPercentTransparent": "mapTooltip: Transparent%",
+//	"evmod.config.visuals.comment.mapMetadataTooltipPercentTransparent": "",
+	"evmod.config.visuals.name.mapMetadataTooltipVoidShadow": "mapTooltip: VoidShadow%",
+//	"evmod.config.visuals.comment.mapMetadataTooltipVoidShadow": "",
 	"evmod.config.visuals.name.mapMetadataTooltipNoobline": "mapTooltip: Noobline",
-//	"evmod.config.visuals.comment.mapMetadataTooltipNoobline": ""
+//	"evmod.config.visuals.comment.mapMetadataTooltipNoobline": "",
 	"evmod.config.visuals.name.mapMetadataTooltipHashCode": "mapTooltip: HashCode",
-//	"evmod.config.visuals.comment.mapMetadataTooltipHashCode": ""
+//	"evmod.config.visuals.comment.mapMetadataTooltipHashCode": "",
 
 	"evmod.config.visuals.name.exportMapImageUpscale": "exportMapImageUpscale",
-//	"evmod.config.visuals.comment.exportMapImageUpscale": ""
+//	"evmod.config.visuals.comment.exportMapImageUpscale": "",
 	"evmod.config.visuals.name.exportMapImageBorder": "exportMapImageBorder",
-//	"evmod.config.visuals.comment.exportMapImageBorder": ""
+//	"evmod.config.visuals.comment.exportMapImageBorder": "",
 	"evmod.config.visuals.name.exportMapImageBorderColor1": "exportMapImageBorderColor1",
-//	"evmod.config.visuals.comment.exportMapImageBorderColor1": ""
+//	"evmod.config.visuals.comment.exportMapImageBorderColor1": "",
 	"evmod.config.visuals.name.exportMapImageBorderColor2": "exportMapImageBorderColor2",
-//	"evmod.config.visuals.comment.exportMapImageBorderColor2": ""
+//	"evmod.config.visuals.comment.exportMapImageBorderColor2": "",
 	"evmod.config.visuals.name.exportMapAtomicIdNaming": "exportMapAtomicIdNaming",
 	"evmod.config.visuals.comment.exportMapAtomicIdNaming": "Use an atomically increasing number rather than use the ingame item name for the generated .png file. Useful for Windows users, where certain characters are prohibitied in filenames",
 
@@ -303,7 +315,7 @@
 	"evmod.config.hotkeys.name.mapMoveBundleSelectPrioForStow": "mapMoveBundleSelectPrioForStow",
 	"evmod.config.hotkeys.comment.mapMoveBundleSelectPrioForStow": "When there is no bundle on the cursor, and multiple bundles with empty space in the inventory, what selection strategy do we use for bundle-store?",
 	"evmod.config.hotkeys.name.mapMoveBundleSelectPrioForTake": "mapMoveBundleSelectPrioForTake",
-	"evmod.config.hotkeys.comment.mapMoveBundleSelectPrioForStow": "When there is no bundle on the cursor, and multiple bundles with mapart in the inventory, what selection strategy do we use for bundle-extract?",
+	"evmod.config.hotkeys.comment.mapMoveBundleSelectPrioForTake": "When there is no bundle on the cursor, and multiple bundles with mapart in the inventory, what selection strategy do we use for bundle-extract?",
 
 	"evmod.config.hotkeys.name.toggleCape": "toggleCape",
 //	"evmod.config.hotkeys.comment.toggleCape": "",

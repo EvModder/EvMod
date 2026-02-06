@@ -207,15 +207,25 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES = new ConfigBoolean("mapHighlightInInvIncludeBundles", false).apply(VISUALS_KEY);
 
 //		public static final ConfigBoolean MAP_METADATA_TOOLTIP = new ConfigBoolean("mapMetadataTooltip", true);
+		// Line 0: "59d2da2c-e527-38cd-8557-62216bf65a57"
+		public static final ConfigBoolean MAP_METADATA_TOOLTIP_UUID = new ConfigBoolean("mapMetadataTooltipHashCode", false).apply(VISUALS_KEY);
+		// Line 1: "Type: = (65%), fullblock (42% carpet)"
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_STAIRCASE = new ConfigBoolean("mapMetadataTooltipStaircase", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_STAIRCASE_PERCENT = new ConfigBoolean("mapMetadataTooltipPercentStaircase", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_MATERIAL = new ConfigBoolean("mapMetadataTooltipMaterial", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_CARPET_PERCENT = new ConfigBoolean("mapMetadataTooltipPercentCarpet", true).apply(VISUALS_KEY);
+		// Line 2: "Colors: 128 (Blocks: 52)"
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_NUM_COLORS = new ConfigBoolean("mapMetadataTooltipNumColors", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_NUM_COLOR_IDS = new ConfigBoolean("mapMetadataTooltipNumColorIds", true).apply(VISUALS_KEY);
-		public static final ConfigBoolean MAP_METADATA_TOOLTIP_TRANSPARENCY = new ConfigBoolean("mapMetadataTooltipTransparency", true).apply(VISUALS_KEY);
+		// Extra lines:
+		public static final ConfigBoolean MAP_METADATA_TOOLTIP_WATER_COLORS = new ConfigBoolean("mapMetadataTooltipWaterColors", true).apply(VISUALS_KEY);
+		public static final ConfigBoolean MAP_METADATA_TOOLTIP_WATER_COLORS_PERCENT = new ConfigBoolean("mapMetadataTooltipWaterColorsPercent", true).apply(VISUALS_KEY);
+
+		public static final ConfigBoolean MAP_METADATA_TOOLTIP_TRANSPARENT = new ConfigBoolean("mapMetadataTooltipTransparent", true).apply(VISUALS_KEY);
+		public static final ConfigBoolean MAP_METADATA_TOOLTIP_TRANSPARENT_PERCENT = new ConfigBoolean("mapMetadataTooltipPercentTransparent", false).apply(VISUALS_KEY);
+		public static final ConfigBoolean MAP_METADATA_TOOLTIP_VOID_SHADOW_PERCENT = new ConfigBoolean("mapMetadataTooltipVoidShadow", true).apply(VISUALS_KEY);
+
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_NOOBLINE = new ConfigBoolean("mapMetadataTooltipNoobline", true).apply(VISUALS_KEY);
-		public static final ConfigBoolean MAP_METADATA_TOOLTIP_UUID = new ConfigBoolean("mapMetadataTooltipHashCode", false).apply(VISUALS_KEY);
 
 		public static final ConfigInteger EXPORT_MAP_IMG_UPSCALE = new ConfigInteger("exportMapImageUpscale", 128, 128, 1280).apply(VISUALS_KEY);
 		public static final ConfigBoolean EXPORT_MAP_IMG_BORDER = new ConfigBoolean("exportMapImageBorder", false).apply(VISUALS_KEY);
@@ -246,11 +256,13 @@ public final class Configs implements IConfigHandler{
 			}
 			if(settings.tooltipMapMetadata) configs.addAll(List.of(
 //					MAP_METADATA_TOOLTIP,
+					MAP_METADATA_TOOLTIP_UUID,
 					MAP_METADATA_TOOLTIP_STAIRCASE, MAP_METADATA_TOOLTIP_STAIRCASE_PERCENT,
 					MAP_METADATA_TOOLTIP_MATERIAL, MAP_METADATA_TOOLTIP_CARPET_PERCENT,
 					MAP_METADATA_TOOLTIP_NUM_COLORS, MAP_METADATA_TOOLTIP_NUM_COLOR_IDS,
-					MAP_METADATA_TOOLTIP_TRANSPARENCY, MAP_METADATA_TOOLTIP_NOOBLINE,
-					MAP_METADATA_TOOLTIP_UUID
+					MAP_METADATA_TOOLTIP_WATER_COLORS, MAP_METADATA_TOOLTIP_WATER_COLORS_PERCENT,
+					MAP_METADATA_TOOLTIP_TRANSPARENT, MAP_METADATA_TOOLTIP_TRANSPARENT_PERCENT, MAP_METADATA_TOOLTIP_VOID_SHADOW_PERCENT,
+					MAP_METADATA_TOOLTIP_NOOBLINE
 			));
 			if(settings.cmdExportMapImg){
 				configs.addAll(List.of(

@@ -103,6 +103,7 @@ public abstract class MapColorUtils{
 	}
 	private static final HashSet<Byte>
 			transparentColors = new HashSet<>(),
+			waterColors = new HashSet<>(),
 			carpetColors = new HashSet<>(),
 			pistonColors = new HashSet<>(), pistonNooblineColors = new HashSet<>(),
 			northLower = new HashSet<>(),
@@ -117,6 +118,9 @@ public abstract class MapColorUtils{
 				pistonColors.add(color.getRenderColorByte(Brightness.LOW));
 			}
 			if(color.id == /*12*/MapColor.WATER_BLUE.id){
+				waterColors.add(color.getRenderColorByte(Brightness.LOW));
+				waterColors.add(color.getRenderColorByte(Brightness.NORMAL));
+				waterColors.add(color.getRenderColorByte(Brightness.HIGH));
 //				pistonColors.add(color.getRenderColorByte(Brightness.LOW)); // Platform tech for this isn't developed yet
 //				pistonColors.add(color.getRenderColorByte(Brightness.NORMAL)); // Platform tech for this isn't developed yet
 				pistonColors.add(color.getRenderColorByte(Brightness.HIGH));
@@ -141,18 +145,22 @@ public abstract class MapColorUtils{
 //		Main.LOGGER.info("Num darker colors: "+northHigher.size());
 	}
 	public enum Palette{EMPTY, CARPET, PISTON_CLEAR, FULLBLOCK};
-	public final record MapColorData(Palette palette, int height, int uniqueColors, int uniqueColorIds, boolean noobline, boolean transparency,
-			int percentCarpet, int percentStaircase){}
+	public final record MapColorData(
+			Palette palette, int height,
+			int uniqueColors, int uniqueColorIds,
+			int waterLevels, int numWet,
+			int numCarpet, int numStaircase,
+			int numTransparent, int numSuppressed,
+			boolean noobline){}
 	public static final MapColorData getColorData(final byte[] colors){
 		assert colors != null && colors.length == 128*128;
-		int maxDiffH = 0;
+		int maxDiffH = 0, numSuppressed = 0;
 		Palette palette = Palette.EMPTY;
-		boolean transparency = false;
 		boolean staircaseBelowTopRow = false;
-//		int staircasedX=0, staircasedY=0;
 		HashSet<Byte> uniqueColors = new HashSet<>(), uniqueColorIds = new HashSet<>();
 		for(int x=0; x<128; ++x){
-			int h = 0;
+			int h = 0, minH = 0, maxH = 0;
+			boolean sameHeightAsTransparent = false;
 			for(int y=0; y<128; ++y){
 				final byte color = colors[x + y*128];
 				final boolean isTransparent = transparentColors.contains(color);
@@ -172,17 +180,21 @@ public abstract class MapColorUtils{
 						palette = Palette.FULLBLOCK;
 					case FULLBLOCK:
 				}
-				if(isTransparent){h=0; transparency=true; continue;}
-				else if(northLower.contains(color) && (y==0 || !transparentColors.contains(colors[x+(y-1)*128]))){h = h<0 ? 1 : ++h;}
-				else if(northHigher.contains(color)){h = h>0 ? -1 : --h;}
+				if(isTransparent){h=0; sameHeightAsTransparent=true; continue;}
+				else if(northLower.contains(color)){
+					if(y==0 || !transparentColors.contains(colors[x+(y-1)*128])) if(++h > maxH) maxH = h;
+					sameHeightAsTransparent = false;
+				}
+				else if(northHigher.contains(color)){
+					if(h == 0 && sameHeightAsTransparent) ++numSuppressed;
+					else if(--h < minH) minH = h;
+					sameHeightAsTransparent = false;
+				}
 				else continue;
-				maxDiffH = Math.max(maxDiffH, Math.abs(h));
-//				if(!staircaseBelowTopRow && y!=0){
-//					Main.LOGGER.info("found staircased pixel at "+x+","+y);
-//				}
+//				if(!staircaseBelowTopRow && y!=0) Main.LOGGER.info("found staircased pixel at "+x+","+y);
 				staircaseBelowTopRow |= (y!=0);
-//				if(staircasedX == 0){staircasedX = x; staircasedY = y;}
 			}
+			maxDiffH = Math.max(maxDiffH, maxH - minH);
 		}
 //		Main.LOGGER.info("maxH: "+maxDiffH);
 
@@ -195,23 +207,25 @@ public abstract class MapColorUtils{
 		else if(IntStream.range(0, 128).allMatch(i -> northLower.contains(colors[i])) &&
 				!IntStream.range(128, 256).allMatch(i -> northLower.contains(colors[i]))) noobline = true;
 
-		int numTransparent = (int)IntStream.range(0, colors.length).filter(i -> transparentColors.contains(colors[i])).count();
-		int numCarpet = (int)IntStream.range(0, colors.length).filter(i -> carpetColors.contains(colors[i])).count()-numTransparent;
-		int percentCarpet = (int)Math.ceil((numCarpet*100d)/(colors.length-numTransparent));
+		final int numWet = (int)IntStream.range(0, colors.length).filter(i -> waterColors.contains(colors[i])).count();
+		final int waterLevels = numWet == 0 ? 0 : (int)IntStream.range(0, colors.length).filter(i -> waterColors.contains(colors[i]))
+				.map(i -> colors[i]).distinct().count();
+		final int numTransparent = (int)IntStream.range(0, colors.length).filter(i -> transparentColors.contains(colors[i])).count();
+		final int numCarpet = (int)IntStream.range(0, colors.length).filter(i -> carpetColors.contains(colors[i])).count() - numTransparent;
 
 		final int[] staircasedPixels = IntStream.range(0, colors.length)
 				.filter(i -> (northLower.contains(colors[i]) || northHigher.contains(colors[i])) && !transparentColors.contains(colors[i])).toArray();
-		int numShaded = staircasedPixels.length;
-		int percentStaircase = (int)Math.ceil((numShaded*100d)/(colors.length-numTransparent));
-		if(percentStaircase <= 2 && percentStaircase > 0){
+		final int numShaded = staircasedPixels.length;
+		if(numShaded > 0 && numShaded < 10){
 //			Main.LOGGER.info("numShaded: "+numShaded+", numTransparent: "+numTransparent+", percentStaircase: "+percentStaircase);
-			int j = staircasedPixels[0];
-			int x = j%128, y = j/128;
+			final int j = staircasedPixels[0];
+			final int x = j%128, y = j/128;
 			MinecraftClient.getInstance().player.sendMessage(Text.literal("First staircased pixel: "+x+","+y+"  (id:"+(colors[j]&0xFF)/4+")"), true);
-			double numShadedAtTop = Arrays.stream(staircasedPixels).filter(i -> i<128).count();
+			final double numShadedAtTop = Arrays.stream(staircasedPixels).filter(i -> i<128).count();
 			if(numShadedAtTop/numShaded > .8) noobline = true; // If 80%+ of the shading is only the top row, consider it a noobline
 		}
 
-		return new MapColorData(palette, maxDiffH, uniqueColors.size(), uniqueColorIds.size(), noobline, transparency, percentCarpet, percentStaircase);
+		// Note: Disgusting hack, adding 999 to mark as % vs px. Decoded in TooltipMapLoreMetadata
+		return new MapColorData(palette, maxDiffH, uniqueColors.size(), uniqueColorIds.size(), waterLevels, numWet, numCarpet, numShaded, numTransparent, numSuppressed, noobline);
 	}
 }
