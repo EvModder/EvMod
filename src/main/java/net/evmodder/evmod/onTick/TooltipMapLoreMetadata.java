@@ -70,8 +70,8 @@ public final class TooltipMapLoreMetadata implements Tooltip{
 		final boolean showWaterColorsPercent = Configs.Visuals.MAP_METADATA_TOOLTIP_WATER_COLORS_PERCENT.getBooleanValue();
 		final boolean showTransparent = Configs.Visuals.MAP_METADATA_TOOLTIP_TRANSPARENT.getBooleanValue();
 		final boolean showTransparentPercent = Configs.Visuals.MAP_METADATA_TOOLTIP_TRANSPARENT_PERCENT.getBooleanValue();
-		final boolean showVoidShadowPercent  = Configs.Visuals.MAP_METADATA_TOOLTIP_VOID_SHADOW_PERCENT.getBooleanValue();
-		final boolean showVoidShadow = showVoidShadowPercent;
+		final boolean showVoidShadow = Configs.Visuals.MAP_METADATA_TOOLTIP_VOID_SHADOW.getBooleanValue();
+		final boolean showVoidShadowPercent = showVoidShadow;
 		final boolean showNoobline = Configs.Visuals.MAP_METADATA_TOOLTIP_NOOBLINE.getBooleanValue();
 
 		if(showColorsId) lines.add(Text.literal(MapGroupUtils.getIdForMapState(state, /*evict=*/true).toString()).formatted(Formatting.WHITE));

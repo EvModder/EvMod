@@ -213,7 +213,7 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_STAIRCASE = new ConfigBoolean("mapMetadataTooltipStaircase", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_STAIRCASE_PERCENT = new ConfigBoolean("mapMetadataTooltipPercentStaircase", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_MATERIAL = new ConfigBoolean("mapMetadataTooltipMaterial", true).apply(VISUALS_KEY);
-		public static final ConfigBoolean MAP_METADATA_TOOLTIP_CARPET_PERCENT = new ConfigBoolean("mapMetadataTooltipPercentCarpet", true).apply(VISUALS_KEY);
+		public static final ConfigBoolean MAP_METADATA_TOOLTIP_CARPET_PERCENT = new ConfigBoolean("mapMetadataTooltipPercentCarpet", false).apply(VISUALS_KEY);
 		// Line 2: "Colors: 128 (Blocks: 52)"
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_NUM_COLORS = new ConfigBoolean("mapMetadataTooltipNumColors", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_NUM_COLOR_IDS = new ConfigBoolean("mapMetadataTooltipNumColorIds", true).apply(VISUALS_KEY);
@@ -223,7 +223,7 @@ public final class Configs implements IConfigHandler{
 
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_TRANSPARENT = new ConfigBoolean("mapMetadataTooltipTransparent", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_TRANSPARENT_PERCENT = new ConfigBoolean("mapMetadataTooltipPercentTransparent", false).apply(VISUALS_KEY);
-		public static final ConfigBoolean MAP_METADATA_TOOLTIP_VOID_SHADOW_PERCENT = new ConfigBoolean("mapMetadataTooltipVoidShadow", true).apply(VISUALS_KEY);
+		public static final ConfigBoolean MAP_METADATA_TOOLTIP_VOID_SHADOW = new ConfigBoolean("mapMetadataTooltipVoidShadow", true).apply(VISUALS_KEY);
 
 		public static final ConfigBoolean MAP_METADATA_TOOLTIP_NOOBLINE = new ConfigBoolean("mapMetadataTooltipNoobline", true).apply(VISUALS_KEY);
 
@@ -261,7 +261,7 @@ public final class Configs implements IConfigHandler{
 					MAP_METADATA_TOOLTIP_MATERIAL, MAP_METADATA_TOOLTIP_CARPET_PERCENT,
 					MAP_METADATA_TOOLTIP_NUM_COLORS, MAP_METADATA_TOOLTIP_NUM_COLOR_IDS,
 					MAP_METADATA_TOOLTIP_WATER_COLORS, MAP_METADATA_TOOLTIP_WATER_COLORS_PERCENT,
-					MAP_METADATA_TOOLTIP_TRANSPARENT, MAP_METADATA_TOOLTIP_TRANSPARENT_PERCENT, MAP_METADATA_TOOLTIP_VOID_SHADOW_PERCENT,
+					MAP_METADATA_TOOLTIP_TRANSPARENT, MAP_METADATA_TOOLTIP_TRANSPARENT_PERCENT, MAP_METADATA_TOOLTIP_VOID_SHADOW,
 					MAP_METADATA_TOOLTIP_NOOBLINE
 			));
 			if(settings.cmdExportMapImg){
