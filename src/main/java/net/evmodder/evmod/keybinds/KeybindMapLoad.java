@@ -116,16 +116,19 @@ public final class KeybindMapLoad{
 			final ArrayList<InvAction> subClicks = new ArrayList<>();
 			if(depthToLoad <= emptySlots.length){
 //				Main.LOGGER.info("MapLoadBundle: More empty slots than maps to load, able to use simple method");
+				subClicks.add(new InvAction(i, 0, ActionType.CLICK)); // Pick up bundle
 				int j;
 				for(j=0; j<depthToLoad; ++j){
-					subClicks.add(takeFromBundle);
-					subClicks.add(new InvAction(emptySlots[emptySlots.length-1-j], 0, ActionType.CLICK)); // Place map in empty slot
+//					subClicks.add(takeFromBundle);
+//					subClicks.add(new InvAction(emptySlots[emptySlots.length-1-j], 0, ActionType.CLICK)); // Place map in empty slot
+					subClicks.add(new InvAction(emptySlots[emptySlots.length-1-j], 1, ActionType.CLICK)); // Place map in empty slot
 				}
 				for(--j; j>=0; --j){
 					subClicks.add(new InvAction(emptySlots[emptySlots.length-1-j], 0, ActionType.CLICK)); // Take map from empty slot
 					if(j+1 == depthToLoad) waitForMapLoadClicks.put(subClicks.getLast(), null); // Wait for map states to load
-					subClicks.add(stowIntoBundle); // Place map back into bundle
+//					subClicks.add(stowIntoBundle); // Place map back into bundle
 				}
+				subClicks.add(new InvAction(i, 0, ActionType.CLICK)); // Put back bundle
 			}
 			else if(emptyBundleSlot == -1){
 				int j=0;
