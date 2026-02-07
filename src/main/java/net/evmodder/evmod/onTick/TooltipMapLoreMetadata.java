@@ -87,9 +87,12 @@ public final class TooltipMapLoreMetadata implements Tooltip{
 			if(showStaircased) lines.add(lines.removeLast().copy().append(" "+paletteSymbol(data.palette())));
 			else lines.add(Text.translatable("advMode.type").formatted(Formatting.GRAY).append(": "+paletteSymbol(data.palette())));
 
-			if(showCarpetPercent && data.numCarpet() != 0 && data.numCarpet() < numNonTransparentPx){
-				final String pxOrPercent = data.numCarpet() < 10 ? data.numCarpet()+"px" : Math.ceilDiv(data.numCarpet()*100, numNonTransparentPx)+"%";
-				lines.add(lines.removeLast().copy().append(" ("+pxOrPercent+" carpet)"));
+			if(showCarpetPercent && data.numCarpet() != 0){
+				final int percentCarpet = Math.ceilDiv(data.numCarpet()*100, numNonTransparentPx);
+				if(percentCarpet < 100){
+					final String pxOrPercent = data.numCarpet() < 10 ? data.numCarpet()+"px" : percentCarpet+"%";
+					lines.add(lines.removeLast().copy().append(" ("+pxOrPercent+" carpet)"));
+				}
 			}
 		}
 //		if(showStaircased){// If material 1st then staircased, on same line

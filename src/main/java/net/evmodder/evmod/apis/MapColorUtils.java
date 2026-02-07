@@ -212,6 +212,8 @@ public abstract class MapColorUtils{
 				.map(i -> colors[i]).distinct().count();
 		final int numTransparent = (int)IntStream.range(0, colors.length).filter(i -> transparentColors.contains(colors[i])).count();
 		final int numCarpet = (int)IntStream.range(0, colors.length).filter(i -> carpetColors.contains(colors[i])).count() - numTransparent;
+		final int percentCarpet = Math.ceilDiv(numCarpet*100, colors.length-numTransparent);
+		if(percentCarpet == 100) palette = Palette.CARPET;
 
 		final int[] staircasedPixels = IntStream.range(0, colors.length)
 				.filter(i -> (northLower.contains(colors[i]) || northHigher.contains(colors[i])) && !transparentColors.contains(colors[i])).toArray();
