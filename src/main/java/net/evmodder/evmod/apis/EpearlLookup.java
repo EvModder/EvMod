@@ -81,6 +81,7 @@ public abstract class EpearlLookup{
 
 	private final synchronized HashMap<UUID, PearlDataClient> loadFromClientFile(String filename){
 		final byte[] data = FileIO.loadFileBytes(filename);
+		if(data == null) return new HashMap<>(0);
 //		// Old data format
 //		if(data.length % 40 == 0){
 //			final int numRows = data.length/40;
