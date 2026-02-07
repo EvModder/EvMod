@@ -212,10 +212,9 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		};
 	}
 
-	private final Map<Vec3i, ItemFrameEntity> getReachableItemFrames(final PlayerEntity player, final double SCAN_DIST){
+	private final List<ItemFrameEntity> getReachableItemFrames(final PlayerEntity player, final double SCAN_DIST){
 		final Box box = player.getBoundingBox().expand(SCAN_DIST, SCAN_DIST, SCAN_DIST);
-		final List<ItemFrameEntity> ifes = player.getWorld().getEntitiesByClass(ItemFrameEntity.class, box, ifePosFilter());
-		return ifes.stream().collect(Collectors.toMap(ItemFrameEntity::getBlockPos, Function.identity()));
+		return player.getWorld().getEntitiesByClass(ItemFrameEntity.class, box, ifePosFilter());
 	}
 
 	private final BlockPos getRelativeBp(AxisData data, boolean axis, boolean neg){
@@ -239,15 +238,87 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				&& Integer.parseInt(getPosStrFromItem(ife.getHeldItemStack())) == pos;
 	}
 
-	private final Boolean iFramesIndicateEndOfRow(PlayerEntity player, AxisData currAxisData, int a, int b){
+//	private final Boolean iFramesIndicateEndOfRow(PlayerEntity player, AxisData currAxisData, int a, int b){
+//		assert axisMatch != null;
+////		final Boolean rowOffsetNeg = axisMatch ? varAxis1Neg : varAxis2Neg;
+//		assert (axisMatch ? varAxis1Neg : varAxis2Neg) != null;//rowOffsetNeg != null;
+////		final Boolean colOffsetNeg = axisMatch ? varAxis2Neg : varAxis1Neg;
+////		Main.LOGGER.info("AutoPlaceMapArt: endOfRow, axisMatch="+axisMatch+", varAxis1Neg="+varAxis1Neg+", varAxis2Neg="+varAxis2Neg);
+//
+//		final double SCAN_DIST = Configs.Generic.MAPART_AUTOPLACE_REACH.getDoubleValue() + 3d;
+//		final Map<Vec3i, ItemFrameEntity> ifes = getReachableItemFrames(player, SCAN_DIST);
+//
+//		final int rowOffset = a-b;
+////		Main.LOGGER.info("AutoPlaceMapArt: "
+////				+"hasIfeToExtendRow="+anyIfeAtPos(ifes, getRelativeBp(currAxisData, axisMatch, isNeg))
+////				+", hasIfeToExtendCol(neg)="+anyIfeAtPos(ifes, getRelativeBp(currAxisData, !axisMatch, isNeg))
+////				+", hasIfeToExtendCol(pos)="+anyIfeAtPos(ifes, getRelativeBp(currAxisData, !axisMatch, !isNeg)));
+//		ItemFrameEntity ifeExtendingRow = ifes.get(getRelativeBp(currAxisData, axisMatch, /*neg=*/rowOffset<0));
+//		if(ifeExtendingRow != null && isPartOfCurrentAutoPlace(ifeExtendingRow.getHeldItemStack())) return Boolean.FALSE;
+//		final boolean emptyRowExtend = ifeExtendingRow != null && ifeExtendingRow.getHeldItemStack().isEmpty();
+//
+//		final int width = Math.abs(rowOffset)+1;
+//		final int minPos = Math.min(a, b), maxPos = Math.max(a, b);
+//		final Boolean isTopOrBottomRow = maxPos < width ? Boolean.TRUE : minPos >= ofSize-width ? Boolean.FALSE : null;
+//		final Boolean colOffsetNeg = axisMatch ? varAxis2Neg : varAxis1Neg;
+//		if(isTopOrBottomRow != null && colOffsetNeg != null){
+//			assert (colOffsetNeg ^ !isTopOrBottomRow) == (isTopOrBottomRow ? colOffsetNeg : !colOffsetNeg);
+//			final ItemFrameEntity ifeOnNextRow = ifes.get(getRelativeBp(currAxisData, !axisMatch, colOffsetNeg ^ !isTopOrBottomRow));
+//			if(emptyRowExtend){
+//				// Check if the map one row up/down is already hung (with the name we'd expect to find)
+//				// Otherwise, keep extending rowWidth
+//				return checkPosMatch1D(ifeOnNextRow, isTopOrBottomRow ? maxPos+1 : minPos-1);
+////				if(ifeOnNextRow == null || !isPartOfCurrentAutoPlace(ifeOnNextRow.getHeldItemStack())
+////					|| Integer.parseInt(getPosStrFromItem(ifeOnNextRow.getHeldItemStack())) != (isTopOrBottomRow ? maxPos+1 : minPos-1)) return false;
+//			}
+//			else return ifeOnNextRow != null && ifeOnNextRow.getHeldItemStack().isEmpty();
+//		}
+//		final ItemFrameEntity ifeColNeg = ifes.get(getRelativeBp(currAxisData, !axisMatch, true));
+//		if(ifeColNeg != null && isPartOfCurrentAutoPlace(ifeColNeg.getHeldItemStack())){
+//			final int pos = Integer.parseInt(getPosStrFromItem(ifeColNeg.getHeldItemStack()));
+//			if(pos != minPos-1 && pos != maxPos+1){
+//				Main.LOGGER.info("AutoPlaceMapArt: existing hung map conflicts with expected row alignment! (colNeg)");
+//				disableAndReset(); return null;
+//			}
+//			final boolean colIsNeg = pos != minPos-1;
+//			if(axisMatch) varAxis2Neg = colIsNeg; else varAxis1Neg = colIsNeg;
+//			Main.LOGGER.info("AutoPlaceMapArt: determined col isNeg="+colIsNeg+" from adjacent hung maps (colNeg)");
+//			return true;
+//		}
+//		final ItemFrameEntity ifeColPos = ifes.get(getRelativeBp(currAxisData, !axisMatch, false));
+//		if(ifeColPos != null && isPartOfCurrentAutoPlace(ifeColPos.getHeldItemStack())){
+//			final int pos = Integer.parseInt(getPosStrFromItem(ifeColPos.getHeldItemStack()));
+//			if(pos != minPos-1 && pos != maxPos+1){
+//				Main.LOGGER.info("AutoPlaceMapArt: existing hung map conflicts with expected row alignment! (colPos)");
+//				disableAndReset(); return null;
+//			}
+//			final boolean colIsNeg = pos == minPos-1;
+//			if(axisMatch) varAxis2Neg = colIsNeg; else varAxis1Neg = colIsNeg;
+//			Main.LOGGER.info("AutoPlaceMapArt: determined col isNeg="+colIsNeg+" from adjacent hung maps (colPos)");
+//			return true;
+//		}
+//		if(emptyRowExtend) return null;
+//		final boolean emptyColNeg = ifeColNeg != null && ifeColNeg.getHeldItemStack().isEmpty();
+//		final boolean emptyColPos = ifeColPos != null && ifeColPos.getHeldItemStack().isEmpty();
+//		if(!emptyColNeg && !emptyColPos) return null;
+//		if(emptyColNeg != emptyColPos && isTopOrBottomRow != null){//implies colOffsetNeg == null
+//			final boolean colIsNeg = emptyColNeg ^ !isTopOrBottomRow;
+//			Main.LOGGER.info("AutoPlaceMapArt: determined col isNeg="+colIsNeg+" from available ifes");
+//			if(axisMatch) varAxis2Neg = colIsNeg; else varAxis1Neg = colIsNeg;
+//		}
+//		return true;
+//	}
+	// Returns true if able to determine row width
+	private final boolean calcWidthUsingAdjIFrames(PlayerEntity player, AxisData currAxisData, int a, int b){
 		assert axisMatch != null;
 //		final Boolean rowOffsetNeg = axisMatch ? varAxis1Neg : varAxis2Neg;
 		assert (axisMatch ? varAxis1Neg : varAxis2Neg) != null;//rowOffsetNeg != null;
 //		final Boolean colOffsetNeg = axisMatch ? varAxis2Neg : varAxis1Neg;
-//		Main.LOGGER.info("AutoPlaceMapArt: endOfRow, axisMatch="+axisMatch+", varAxis1Neg="+varAxis1Neg+", varAxis2Neg="+varAxis2Neg);
+		Main.LOGGER.info("AutoPlaceMapArt: recurRecalcUsingAdjIFrames, axisMatch="+axisMatch+", varAxis1Neg="+varAxis1Neg+", varAxis2Neg="+varAxis2Neg);
 
 		final double SCAN_DIST = Configs.Generic.MAPART_AUTOPLACE_REACH.getDoubleValue() + 3d;
-		final Map<Vec3i, ItemFrameEntity> ifes = getReachableItemFrames(player, SCAN_DIST);
+		final Map<Vec3i, ItemFrameEntity> ifes = getReachableItemFrames(player, SCAN_DIST)
+				.stream().collect(Collectors.toMap(ItemFrameEntity::getBlockPos, Function.identity()));
 
 		final int rowOffset = a-b;
 //		Main.LOGGER.info("AutoPlaceMapArt: "
@@ -255,12 +326,12 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 //				+", hasIfeToExtendCol(neg)="+anyIfeAtPos(ifes, getRelativeBp(currAxisData, !axisMatch, isNeg))
 //				+", hasIfeToExtendCol(pos)="+anyIfeAtPos(ifes, getRelativeBp(currAxisData, !axisMatch, !isNeg)));
 		ItemFrameEntity ifeExtendingRow = ifes.get(getRelativeBp(currAxisData, axisMatch, /*neg=*/rowOffset<0));
-		if(ifeExtendingRow != null && isPartOfCurrentAutoPlace(ifeExtendingRow.getHeldItemStack())) return Boolean.FALSE;
+		if(ifeExtendingRow != null && isPartOfCurrentAutoPlace(ifeExtendingRow.getHeldItemStack())) return false;
 		final boolean emptyRowExtend = ifeExtendingRow != null && ifeExtendingRow.getHeldItemStack().isEmpty();
 
-		final int width = Math.abs(rowOffset)+1;
+		final int candidateWidth = Math.abs(rowOffset)+1;
 		final int minPos = Math.min(a, b), maxPos = Math.max(a, b);
-		final Boolean isTopOrBottomRow = maxPos < width ? Boolean.TRUE : minPos >= ofSize-width ? Boolean.FALSE : null;
+		final Boolean isTopOrBottomRow = maxPos < candidateWidth ? Boolean.TRUE : minPos >= ofSize-candidateWidth ? Boolean.FALSE : null;
 		final Boolean colOffsetNeg = axisMatch ? varAxis2Neg : varAxis1Neg;
 		if(isTopOrBottomRow != null && colOffsetNeg != null){
 			assert (colOffsetNeg ^ !isTopOrBottomRow) == (isTopOrBottomRow ? colOffsetNeg : !colOffsetNeg);
@@ -268,49 +339,41 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			if(emptyRowExtend){
 				// Check if the map one row up/down is already hung (with the name we'd expect to find)
 				// Otherwise, keep extending rowWidth
-				return checkPosMatch1D(ifeOnNextRow, isTopOrBottomRow ? maxPos+1 : minPos-1);
+				if(checkPosMatch1D(ifeOnNextRow, isTopOrBottomRow ? maxPos+1 : minPos-1)) rowWidth = candidateWidth;
 //				if(ifeOnNextRow == null || !isPartOfCurrentAutoPlace(ifeOnNextRow.getHeldItemStack())
 //					|| Integer.parseInt(getPosStrFromItem(ifeOnNextRow.getHeldItemStack())) != (isTopOrBottomRow ? maxPos+1 : minPos-1)) return false;
 			}
-			else return ifeOnNextRow != null && ifeOnNextRow.getHeldItemStack().isEmpty();
+			else if(ifeOnNextRow != null && ifeOnNextRow.getHeldItemStack().isEmpty()) rowWidth = candidateWidth;
+			return false;
 		}
 		final ItemFrameEntity ifeColNeg = ifes.get(getRelativeBp(currAxisData, !axisMatch, true));
 		if(ifeColNeg != null && isPartOfCurrentAutoPlace(ifeColNeg.getHeldItemStack())){
-			final int pos = Integer.parseInt(getPosStrFromItem(ifeColNeg.getHeldItemStack()));
-			if(pos != minPos-1 && pos != maxPos+1){
-				Main.LOGGER.info("AutoPlaceMapArt: existing hung map conflicts with expected row alignment! (colNeg)");
-				disableAndReset(); return null;
-			}
-			final boolean colIsNeg = pos != minPos-1;
-			if(axisMatch) varAxis2Neg = colIsNeg; else varAxis1Neg = colIsNeg;
-			Main.LOGGER.info("AutoPlaceMapArt: determined col isNeg="+colIsNeg+" from adjacent hung maps (colNeg)");
-			return true;
+			final boolean result = recalcLayout(player, ifeColNeg, ifeColNeg.getHeldItemStack());
+			if(result) assert rowWidth != null;
+			return result;
 		}
 		final ItemFrameEntity ifeColPos = ifes.get(getRelativeBp(currAxisData, !axisMatch, false));
 		if(ifeColPos != null && isPartOfCurrentAutoPlace(ifeColPos.getHeldItemStack())){
-			final int pos = Integer.parseInt(getPosStrFromItem(ifeColPos.getHeldItemStack()));
-			if(pos != minPos-1 && pos != maxPos+1){
-				Main.LOGGER.info("AutoPlaceMapArt: existing hung map conflicts with expected row alignment! (colPos)");
-				disableAndReset(); return null;
-			}
-			final boolean colIsNeg = pos == minPos-1;
-			if(axisMatch) varAxis2Neg = colIsNeg; else varAxis1Neg = colIsNeg;
-			Main.LOGGER.info("AutoPlaceMapArt: determined col isNeg="+colIsNeg+" from adjacent hung maps (colPos)");
-			return true;
+			final boolean result = recalcLayout(player, ifeColPos, ifeColPos.getHeldItemStack());
+			if(result) assert rowWidth != null;
+			return result;
 		}
-		if(emptyRowExtend) return null;
+		if(emptyRowExtend) return false;
 		final boolean emptyColNeg = ifeColNeg != null && ifeColNeg.getHeldItemStack().isEmpty();
 		final boolean emptyColPos = ifeColPos != null && ifeColPos.getHeldItemStack().isEmpty();
-		if(!emptyColNeg && !emptyColPos) return null;
+		if(!emptyColNeg && !emptyColPos) return false;
 		if(emptyColNeg != emptyColPos && isTopOrBottomRow != null){//implies colOffsetNeg == null
 			final boolean colIsNeg = emptyColNeg ^ !isTopOrBottomRow;
 			Main.LOGGER.info("AutoPlaceMapArt: determined col isNeg="+colIsNeg+" from available ifes");
 			if(axisMatch) varAxis2Neg = colIsNeg; else varAxis1Neg = colIsNeg;
 		}
+		rowWidth = candidateWidth;
 		return true;
 	}
 
 	public final boolean recalcLayout(final PlayerEntity player, final ItemFrameEntity currIfe, final ItemStack currStack){
+//		Main.LOGGER.info("AutoPlaceMapArt: called recalcLayout(), currStack="+currStack.getName().getString()
+//				+", lastStack="+(lastStack == null ? null : lastStack.getName().getString()));
 		synchronized(stacksHashesForCurrentData){
 		final Text currNameText = currStack.getCustomName();
 		if(currNameText == null) return false;
@@ -340,7 +403,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		}
 
 		final int ifeOffset1 = currAxisData.varAxis1 - lastAxisData.varAxis1, ifeOffset2 = currAxisData.varAxis2 - lastAxisData.varAxis2;
-//		Main.LOGGER.info("AutoPlaceMapArt: ifeOffset1="+ifeOffset1+",ifeOffset2="+ifeOffset2);
+		Main.LOGGER.info("AutoPlaceMapArt: ifeOffset1="+ifeOffset1+",ifeOffset2="+ifeOffset2);
 		if(ifeOffset1 == 0 && ifeOffset2 == 0){
 			Main.LOGGER.error("AutoPlaceMapArt: Placed maps appear to have the same pos! (shouldn't be possible!)");
 			disableAndReset(); return false;
@@ -368,6 +431,10 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				Main.LOGGER.info("AutoPlaceMapArt: not enough remaining maps in inv to justify enabling AutoPlace");
 				disableAndReset(); return false;
 			}
+			getReachableItemFrames(player, Configs.Generic.MAPART_AUTOPLACE_REACH.getDoubleValue()+2)
+					.stream().map(ItemFrameEntity::getHeldItemStack).filter(s -> s.getItem() == Items.FILLED_MAP).forEach(allMapItems::add);
+			currentData = MapRelationUtils.getRelatedMapsByName0(allMapItems, player.getWorld()); // More accurate prefix/suffix/etc data
+
 //			Main.LOGGER.info("AutoPlaceMapArt: related maps in inv: "+(currentData.slots().size()-2));
 			final String nameWoArtist = MapRelationUtils.removeByArtist(currName);
 			final String suffixStr = nameWoArtist.substring(nameWoArtist.length()-data.suffixLen());
@@ -464,17 +531,19 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					}
 					final int candidateRowWidth = Math.abs(rowOffset)+1;
 					if(ofSize % candidateRowWidth == 0){
-//						Main.LOGGER.info("AutoPlaceMapArt: checking factor ofSize, candidateRowWidth="+candidateRowWidth);
-						final Boolean isEndOfRow = iFramesIndicateEndOfRow(player, currAxisData, a, b);
-						if(isEndOfRow == null){
-//							if(dir == null) return false; // Happens when iFramesIndicateEndOfRow() calls disableAndReset() 
-							return false; // Better safe than sorry: avoid overly-greedy autoplacing a row
-						}
-						if(isEndOfRow){
-							Main.LOGGER.info("AutoPlaceMapArt: smart width detection using factor ofSize and relative iFrames, rowWidth="+candidateRowWidth);
-							rowWidth = candidateRowWidth;
-						}
-						//else !isEndOfRow, so we continue to allow placing 1d
+						final boolean determinedWidth = calcWidthUsingAdjIFrames(player, currAxisData, a, b);
+						if(determinedWidth) assert rowWidth != null;
+////					Main.LOGGER.info("AutoPlaceMapArt: checking factor ofSize, candidateRowWidth="+candidateRowWidth);
+//						final Boolean isEndOfRow = iFramesIndicateEndOfRow(player, currAxisData, a, b);
+//						if(isEndOfRow == null){
+////							if(dir == null) return false; // Happens when iFramesIndicateEndOfRow() calls disableAndReset() 
+//							return false; // Better safe than sorry: avoid overly-greedy autoplacing a row
+//						}
+//						if(isEndOfRow){
+//							Main.LOGGER.info("AutoPlaceMapArt: smart width detection using factor ofSize and relative iFrames, rowWidth="+candidateRowWidth);
+//							rowWidth = candidateRowWidth;
+//						}
+//						//else !isEndOfRow, we continue to allow placing 1d
 					}
 					else{
 						// A little hack to maximize future rowOffset; to help out the logic above
@@ -489,10 +558,13 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					final Boolean rowNeg = axisMatch ? varAxis1Neg : varAxis2Neg;
 					final Boolean colNeg = axisMatch ? varAxis2Neg : varAxis1Neg;
 					if(rowNeg != null){
-						final int test1 = Math.abs(posOffset - rowOffset*(rowNeg ? -1 : +1));
-						assert test1 % Math.abs(colOffset) == 0;
-						Main.LOGGER.info("AutoPlaceMapArt: rowNeg is known, solving sys-of-eqs, test1="+test1);
-						rowWidth = test1/Math.abs(colOffset);
+						final int test1 = posOffset - rowOffset*(rowNeg ? -1 : +1);
+						assert test1 % colOffset == 0;
+						Main.LOGGER.info("AutoPlaceMapArt: rowNeg="+rowNeg+", solving sys-of-eqs, test1="+test1+", posOffset="+posOffset);
+						rowWidth = Math.abs(test1/colOffset);
+//						colNeg = test1/colOffset < 0;
+						if(axisMatch) varAxis2Neg = test1/colOffset < 0;
+						else varAxis1Neg = test1/colOffset < 0;
 					}
 					else if(colNeg != null){
 						//Solve for: a + rowOffset*rowNeg + colOffset*colNeg*rowWidth = b;
@@ -581,9 +653,9 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			if(ifeOffset1 != 0){
 				final int posOffset = (axisMatch ? posOffset1 : posOffset2);
 				final boolean isNeg = ifeOffset1 != posOffset;
-				assert ifeOffset1 == posOffset*(isNeg ? -1 : +1);
-				if(ifeOffset1 != posOffset*(isNeg ? -1 : +1)){
+				if(isNeg && ifeOffset1 != posOffset*-1){
 					Main.LOGGER.info("AutoPlaceMapArt: error ??1 "+axisMatch+","+posOffset+","+isNeg);
+					assert false;
 					disableAndReset(); return false;
 				}
 				if(varAxis1Neg == null) varAxis1Neg = isNeg;
@@ -595,9 +667,9 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			if(ifeOffset2 != 0){
 				final int posOffset = (axisMatch ? posOffset2 : posOffset1);
 				final boolean isNeg = ifeOffset2 != posOffset;
-				assert ifeOffset2 == posOffset*(isNeg ? -1 : +1);
-				if(ifeOffset2 != posOffset*(isNeg ? -1 : +1)){
+				if(isNeg && ifeOffset2 != posOffset*-1){
 					Main.LOGGER.info("AutoPlaceMapArt: error ??2 "+axisMatch+","+posOffset+","+isNeg);
+					assert false;
 					disableAndReset(); return false;
 				}
 				if(varAxis2Neg == null) varAxis2Neg = isNeg;
@@ -722,7 +794,8 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		final double MAX_REACH_SQ = MAX_REACH*MAX_REACH;
 		final double BP_SCAN_DIST = MAX_REACH+2, BP_SCAN_DIST_SQ = BP_SCAN_DIST*BP_SCAN_DIST;
 
-		final Map<Vec3i, ItemFrameEntity> ifes = getReachableItemFrames(player, BP_SCAN_DIST);
+		final Map<Vec3i, ItemFrameEntity> ifes = getReachableItemFrames(player, BP_SCAN_DIST)
+				.stream().collect(Collectors.toMap(ItemFrameEntity::getBlockPos, Function.identity()));
 		final boolean CAN_PLACE_IFRAMES = Configs.Generic.MAPART_AUTOPLACE_IFRAMES.getBooleanValue();
 		if(!CAN_PLACE_IFRAMES && ifes.isEmpty()){
 //			Main.LOGGER.warn("AutoPlaceMapArt: no nearby iframes");
@@ -772,8 +845,8 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				}
 				else{
 					if(!ife.getHeldItemStack().isEmpty()){
-						if(ofSize == null || rowWidth != null) // Don't show this warning for uncertain ife positions
-							Main.LOGGER.warn("AutoPlaceMapArt: iFrame already contains item at pos! ");//+ifeBp.toShortString());
+//						if(ofSize == null || rowWidth != null) // Don't show this warning for uncertain ife positions
+//							Main.LOGGER.warn("AutoPlaceMapArt: iFrame already contains item at pos! ");//+ifeBp.toShortString());
 						continue;
 					}
 					ifeEyePos = ife.getEyePos(); // Consider: should I use ife.getNearestCornerToPlayer?
