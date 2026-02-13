@@ -433,14 +433,15 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					final int candidateRowWidth = Math.abs(rowOffset)+1;
 					if(ofSize % candidateRowWidth == 0){
 						final boolean determinedWidth = calcWidthUsingAdjIFrames(player, currAxisData, a, b);
-						if(determinedWidth) assert rowWidth != null;
+						if(determinedWidth) assert rowWidth != null && rowWidth != 0;
 					}
 					// A little hack to maximize future rowOffset; might not be necessary anymore, but used to help the logic above
 					if(rowWidth == null) updateLastIfe = false;
 				}
 				else if(rowOffset == 0){
-					Main.LOGGER.info("AutoPlaceMapArt: rowOffset==0, so (a-b)/colOffset will give rowWidth");
+					Main.LOGGER.info("AutoPlaceMapArt: rowOffset==0, so (a-b)/colOffset will give rowWidth: ("+a+"-"+b+")/"+colOffset);
 					rowWidth = Math.abs(posOffset)/Math.abs(colOffset);
+					assert rowWidth != 0;
 				}
 				else if(varAxis1Neg != null || varAxis2Neg != null){
 					final Boolean rowNeg = axisMatch ? varAxis1Neg : varAxis2Neg;
@@ -450,6 +451,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 						assert test1 % colOffset == 0;
 						Main.LOGGER.info("AutoPlaceMapArt: rowNeg="+rowNeg+", solving sys-of-eqs, test1="+test1+", posOffset="+posOffset);
 						rowWidth = Math.abs(test1/colOffset);
+						assert rowWidth != 0;
 //						colNeg = test1/colOffset < 0;
 						if(axisMatch) varAxis2Neg = test1/colOffset < 0;
 						else varAxis1Neg = test1/colOffset < 0;
@@ -471,17 +473,19 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 						else if(posWorks){
 							Main.LOGGER.info("AutoPlaceMapArt: (1d pos) using test1");
 							rowWidth = test1/off;
+							assert rowWidth != 0;
 //							rowNeg = false;
 						}
 						else if(negWorks){
 							Main.LOGGER.info("AutoPlaceMapArt: (1d pos) using test2");
 							rowWidth = test2/off;
+							assert rowWidth != 0;
 //							colNeg = true;
 						}
 					}
 				}
 //				assert rowWidth != null;
-				if(rowWidth != null && ofSize % rowWidth != 0){
+				if(rowWidth != null && (rowWidth == 0 || ofSize % rowWidth != 0)){
 					Main.LOGGER.warn("AutoPlaceMapArt: (1d pos) invalid width "+rowWidth+"! needs to be a divisor of SIZE");
 					disableAndReset(); return false;
 				}
