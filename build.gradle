@@ -3,8 +3,6 @@ plugins {
 	id "maven-publish"
 }
 
-//loom { accessWidenerPath = file("src/main/resources/accesswidener") }
-
 group = project.maven_group
 version = project.mod_version
 base { archivesName = project.mod_name + "-" + project.minecraft_version}
@@ -32,13 +30,10 @@ processResources {
 
 repositories {
 	// https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// You should only use this when depending on other mods.
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
+	// You should only use this when depending on other mods.
 
 	maven { url = "https://jitpack.io" } // MaLiLib
-//	maven { url = "https://masa.dy.fi/maven" } // MaLiLib's old maven repo
-//	maven { url "https://www.cursemaven.com" }
-//	maven { url = 'https://maven.cabaletta.com/' } // Baritone
 }
 
 dependencies {
@@ -46,21 +41,9 @@ dependencies {
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-
-	// Fabric API. Technically optional.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-
-//	include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:${project.mixinextras_version}")))
-
-//	modImplementation "fi.dy.masa.malilib:${project.minecraft_version}-${project.malilib_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}" // Technically optional
 	modImplementation "com.github.sakura-ryoko:malilib:${project.minecraft_version}-${project.malilib_version}"
-
-	// Baritone API.
 	modImplementation(files("libs/baritone-api-fabric-${project.baritone_version}.jar"))
-//	modImplementation(files("https://github.com/cabaletta/baritone/releases/download/v${project.baritone_version}/baritone-api-fabric-${project.baritone_version}.jar"))
-//	modImplementation "com.github.cabaletta:baritone-api-fabric:${project.baritone_version}"
-//	modImplementation "cabaletta:baritone-api-fabric:${project.baritone_version}"
-//	modImplementation "baritone-api-fabric:baritone-api-fabric:${project.baritone_version}"
 }
 
 // https://github.com/EvModder/EvLib
