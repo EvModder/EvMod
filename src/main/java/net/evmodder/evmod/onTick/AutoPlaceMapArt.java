@@ -63,10 +63,13 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 	private int attemptIdx, lastAttemptIdx;
 	private int ticksSinceInvAction, ticksWaitingForManualClick;
 	private boolean hasWarnedMissingIfe;
-	private final Predicate<ItemStack> handRestockFallback;
+	private final Function<ItemStack, ItemStack> handRestockFallback; // lastPlacedStack -> restockedStack (or null)
+	private ItemStack lastHandRestockFallbackStack;
 	private boolean calledRecalcLayout, handRestockFailed, warnedNoValidPos;
 
-	public AutoPlaceMapArt(Predicate<ItemStack> moveNextMapToMainHand){
+	private boolean extraInfoLogs = false;
+
+	public AutoPlaceMapArt(Function<ItemStack, ItemStack> moveNextMapToMainHand){
 		handRestockFallback = moveNextMapToMainHand;
 
 		TickListener.register(new TickListener(){
@@ -283,8 +286,11 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			Main.LOGGER.info("AutoPlaceMapArt: determined col isNeg="+colIsNeg+" from available ifes");
 			if(axisMatch) varAxis2Neg = colIsNeg; else varAxis1Neg = colIsNeg;
 		}
-		rowWidth = candidateWidth;
-		return true;
+		if(b == 0 || b == ofSize-1){
+			rowWidth = candidateWidth;
+			return true;
+		}
+		return false;
 	}
 
 	public final boolean recalcLayout(final PlayerEntity player, final ItemFrameEntity currIfe, final ItemStack currStack){
@@ -388,7 +394,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				Main.LOGGER.warn("AutoPlaceMapArt: Invalid 1d X/SIZE pos! a="+a+",b="+b);
 				disableAndReset(); return false;
 			}
-//			Main.LOGGER.info("AutoPlaceMapArt: for X/SIZE, curr(a)="+a+", last(b)="+b+", ifeOffset1="+ifeOffset1+", ifeOffset2="+ifeOffset2);
+			Main.LOGGER.info("AutoPlaceMapArt: for X/SIZE, curr(a)="+a+", last(b)="+b+", ifeOffset1="+ifeOffset1+", ifeOffset2="+ifeOffset2);
 			final int posOffset = a-b;
 			if(ifeOffset1 == 0 || ifeOffset2 == 0){
 				final int ifeOffset = ifeOffset1 + ifeOffset2; // one of them is 0
@@ -433,7 +439,10 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					final int candidateRowWidth = Math.abs(rowOffset)+1;
 					if(ofSize % candidateRowWidth == 0){
 						final boolean determinedWidth = calcWidthUsingAdjIFrames(player, currAxisData, a, b);
-						if(determinedWidth) assert rowWidth != null && rowWidth != 0;
+						if(determinedWidth){
+							assert rowWidth != null && rowWidth != 0;
+							Main.LOGGER.info("AutoPlaceMapArt: determined rowWidth="+rowWidth+" from calcWidthUsingAdjIFrames()");
+						}
 					}
 					// A little hack to maximize future rowOffset; might not be necessary anymore, but used to help the logic above
 					if(rowWidth == null) updateLastIfe = false;
@@ -578,7 +587,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			}
 		}
 
-		if(!stacksHashesForCurrentData.isEmpty()) return true; // Already ongoing and all values are defined
+		if(!stacksHashesForCurrentData.isEmpty()) return true; // Already ongoing, and hashlist has ahready been defined
 
 		assert !allMapItems.isEmpty();
 		assert stacksHashesForCurrentData.isEmpty();
@@ -586,7 +595,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		currentData.slots().stream().map(i -> ItemStack.hashCode(allMapItems.get(i))).forEach(stacksHashesForCurrentData::add);
 		assert !stacksHashesForCurrentData.isEmpty();
 
-		Main.LOGGER.info("AutoPlaceMapArt: activated! varAxis1Neg="+varAxis1Neg+",varAxis2Neg="+varAxis2Neg);
+		Main.LOGGER.info("AutoPlaceMapArt: activated! axisMatch="+axisMatch+",varAxis1Neg="+varAxis1Neg+",varAxis2Neg="+varAxis2Neg);
 		return true;
 		}
 		finally{
@@ -678,7 +687,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		};
 	}
 
-	record MapPlacementData(int slot, int bundleSlot, ItemFrameEntity ife, BlockPos bp){}
+	private record MapPlacementData(int slot, int bundleSlot, ItemFrameEntity ife, BlockPos bp){}
 	public final MapPlacementData getNearestMapPlacement(PlayerEntity player, final boolean ALLOW_OUTSIDE_MAX_REACH, final boolean ALLOW_MAP_IN_HAND){
 		final List<ItemStack> slots = player.playerScreenHandler.slots.stream().map(Slot::getStack).toList();
 
@@ -797,7 +806,8 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 		final int TICKS_BETWEEN_INV_ACTIONS = Configs.Generic.MAPART_AUTOPLACE_INV_DELAY.getIntegerValue();
 		if(ticksSinceInvAction < TICKS_BETWEEN_INV_ACTIONS){
-			Main.LOGGER.info("AutoPlaceMapArt: waiting for inv action cooldown ("+ticksSinceInvAction+"ticks)");
+			if(extraInfoLogs || ticksSinceInvAction == TICKS_BETWEEN_INV_ACTIONS-1)
+				Main.LOGGER.info("AutoPlaceMapArt: waiting for inv action cooldown ("+ticksSinceInvAction+"ticks)");
 			return;
 		}
 		final Runnable onDone = TICKS_BETWEEN_INV_ACTIONS == 0 ? ()->placeNearestMap(player) : ()->ticksSinceInvAction=0;
@@ -889,7 +899,8 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		// Sadly this doesn't work after the last manual map, since UseEntityCallback.EVENT isn't triggered by AutoMapArtPlace for some reason.
 		// And yeah, I tried setting it manually, but since the code can't guarantee a map gets placed, it can get it stuck.
 		if(!player.isInCreativeMode() && UpdateInventoryHighlights.hasCurrentlyBeingPlacedMapArt() && ++ticksWaitingForManualClick <= MANUAL_CLICK_WAIT_TIMEOUT){
-			Main.LOGGER.info("AutoPlaceMapArt: waiting for last manually-placed mapart to vanish from mainhand ("+ticksWaitingForManualClick+"ticks)");
+			if(extraInfoLogs || ticksWaitingForManualClick == MANUAL_CLICK_WAIT_TIMEOUT)
+				Main.LOGGER.info("AutoPlaceMapArt: waiting for last manually-placed mapart to vanish from mainhand ("+ticksWaitingForManualClick+"ticks)");
 			return;
 		}
 		ticksWaitingForManualClick = 0;
@@ -902,7 +913,8 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			Entity e = player.getWorld().getEntityById(recentPlaceAttempts[lastAttemptIdx]);
 			if(e != null && e instanceof ItemFrameEntity ife && ItemStack.areEqual(player.getMainHandStack(), ife.getHeldItemStack())){
 				final int waited = lastAttemptIdx < attemptIdx ? attemptIdx-lastAttemptIdx : recentPlaceAttempts.length+attemptIdx-lastAttemptIdx;
-				Main.LOGGER.info("AutoPlaceMapArt: waiting for current map to vanish from mainhand ("+waited+"ticks)");
+				if(extraInfoLogs || waited == recentPlaceAttempts.length-1)
+					Main.LOGGER.info("AutoPlaceMapArt: waiting for current map to vanish from mainhand ("+waited+"ticks)");
 				return;
 			}
 		}
@@ -915,7 +927,8 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				if(e != null && e instanceof ItemFrameEntity ife && ife.getHeldItemStack().isEmpty()){
 //					final int rem = attemptIdx < i ? i-attemptIdx : recentPlaceAttempts.length+i-attemptIdx;
 					final int waited = i < attemptIdx ? attemptIdx-i : recentPlaceAttempts.length+attemptIdx-i;
-					Main.LOGGER.info("AutoPlaceMapArt: waiting for current map to appear in iFrame ("+waited+"ticks)");
+					if(extraInfoLogs || waited == recentPlaceAttempts.length-1)
+						Main.LOGGER.info("AutoPlaceMapArt: waiting for current map to appear in iFrame ("+waited+"ticks)");
 					return;
 				}
 				if(++i == recentPlaceAttempts.length) i = 0;
@@ -932,7 +945,9 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			}
 			else if(player.getMainHandStack().getItem() != Items.FILLED_MAP && handRestockFallback != null && !handRestockFailed){
 				Main.LOGGER.info("AutoPlaceMapArt: Unable to determine placement, calling handRestockFallback");
-				if(!handRestockFallback.test(lastStackAuto != null ? lastStackAuto : lastStack)) handRestockFailed = true;
+				final ItemStack handRestock = handRestockFallback.apply(lastStackAuto != null ? lastStackAuto : lastStack);
+				if(handRestock == null || handRestock == lastHandRestockFallbackStack) handRestockFailed = true;
+				else lastHandRestockFallbackStack = handRestock;
 			}
 			return;
 		}

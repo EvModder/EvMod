@@ -443,7 +443,7 @@ public final class MapHandRestock{
 	}
 
 	private boolean waitingForRestock;
-	private final boolean tryToStockNextMap(ItemStack prevMap, Hand hand){
+	private final ItemStack tryToStockNextMap(ItemStack prevMap, Hand hand){
 		assert prevMap != null && prevMap.getItem() == Items.FILLED_MAP;
 
 		final MinecraftClient client = MinecraftClient.getInstance();
@@ -472,13 +472,13 @@ public final class MapHandRestock{
 			Main.LOGGER.info("MapRestock: finding next map by ANY (count->locked->named->related)");
 			restockFromSlot = getNextSlotFirstMap(/*slotsWithBundleSub*/slots, prevMap, prevSlot, player.getWorld());
 		}
-		if(restockFromSlot == -1){Main.LOGGER.info("MapRestock: unable to find next map"); return false;}
+		if(restockFromSlot == -1){Main.LOGGER.info("MapRestock: unable to find next map"); return null;}
 
 		//PlayerScreenHandler.HOTBAR_START=36
 		final boolean isHotbarSlot = restockFromSlot >= 36 && restockFromSlot < 45;
 		if(prevMap.getCount() > 2 && !isHotbarSlot){
 			Main.LOGGER.warn("MapRestock: Won't swap with inventory since prevMap count > 2");
-			return false;
+			return null;
 		}
 
 		// Wait for hand to be free
@@ -517,7 +517,7 @@ public final class MapHandRestock{
 				waitingForRestock = false;
 			});
 		}}.start();
-		return true;
+		return slots.get(restockFromSlot);
 	}
 
 	public MapHandRestock(final boolean allowAutoPlacer, final boolean allowAutoRemover){
@@ -588,9 +588,9 @@ public final class MapHandRestock{
 			UpdateInventoryHighlights.setCurrentlyBeingPlacedMapArt(stack, shSlot);
 
 			if(allowAutoPlacer && autoPlacer.recalcLayout(player, ife, stack)
-					&& autoPlacer.getNearestMapPlacement(player, /*allowOutsideReach=*/true, /*allowMapInHand=*/false) != null
+//					&& autoPlacer.getNearestMapPlacement(player, /*allowOutsideReach=*/true, /*allowMapInHand=*/false) != null
 			){
-				Main.LOGGER.info("MapRestock: AutoPlaceMapArt is active");
+				Main.LOGGER.info("MapRestock: AutoPlaceMapArt is active, no need to call tryToStockNextMap()");
 			}
 			else if(Configs.Generic.PLACEMENT_HELPER_MAPART.getBooleanValue()){
 //				Main.LOGGER.info("MapRestock: doing best-guess hand restock");
