@@ -35,9 +35,10 @@ repositories {
 	// You should only use this when depending on other mods.
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
 
-	maven { url = "https://jitpack.io" } // New home of MaLiLib
-//	maven { url = "https://masa.dy.fi/maven" }
+	maven { url = "https://jitpack.io" } // MaLiLib
+//	maven { url = "https://masa.dy.fi/maven" } // MaLiLib's old maven repo
 //	maven { url "https://www.cursemaven.com" }
+//	maven { url = 'https://maven.cabaletta.com/' } // Baritone
 }
 
 dependencies {
@@ -53,6 +54,13 @@ dependencies {
 
 //	modImplementation "fi.dy.masa.malilib:${project.minecraft_version}-${project.malilib_version}"
 	modImplementation "com.github.sakura-ryoko:malilib:${project.minecraft_version}-${project.malilib_version}"
+
+	// Baritone API.
+	modImplementation(files("libs/baritone-api-fabric-${project.baritone_version}.jar"))
+//	modImplementation(files("https://github.com/cabaletta/baritone/releases/download/v${project.baritone_version}/baritone-api-fabric-${project.baritone_version}.jar"))
+//	modImplementation "com.github.cabaletta:baritone-api-fabric:${project.baritone_version}"
+//	modImplementation "cabaletta:baritone-api-fabric:${project.baritone_version}"
+//	modImplementation "baritone-api-fabric:baritone-api-fabric:${project.baritone_version}"
 }
 
 // https://github.com/EvModder/EvLib
