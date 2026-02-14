@@ -94,6 +94,9 @@ public final class TooltipMapLoreMetadata implements Tooltip{
 					final String pxOrPercent = data.numCarpet() < 10 ? data.numCarpet()+"px" : percentCarpet+"%";
 					lines.add(lines.removeLast().copy().append(" ("+pxOrPercent+" carpet)"));
 				}
+				else if(data.numCarpet() < numNonTransparentPx){
+					lines.add(lines.removeLast().copy().append(" (99%)"));
+				}
 			}
 		}
 //		if(showStaircased){// If material 1st then staircased, on same line
