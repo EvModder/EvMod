@@ -53,7 +53,7 @@ public final class TooltipMapNameColor implements Tooltip{
 		if(cachedLines != null){lines.clear(); lines.addAll(cachedLines); return;}
 
 		if(item.getItem() != Items.FILLED_MAP){
-			final List<ItemStack> mapItems = InvUtils.getAllNestedItems(item).filter(i -> i.get(DataComponentTypes.MAP_ID) != null).toList();
+			final List<ItemStack> mapItems = InvUtils.getAllNestedItems(item).filter(s -> s.get(DataComponentTypes.MAP_ID) != null).toList();
 			if(mapItems.isEmpty()) return;
 			final List<MapState> states = mapItems.stream().map(i -> context.getMapState(i.get(DataComponentTypes.MAP_ID))).filter(Objects::nonNull).toList();
 //			final List<UUID> nonFillerIds = states.stream().filter(Predicate.not(MapRelationUtils::isFillerMap)).map(MapGroupUtils::getIdForMapState).toList();

@@ -7,6 +7,7 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.Tooltip;
 import net.evmodder.evmod.apis.MapColorUtils.MapColorData;
+import net.evmodder.evmod.apis.MapColorUtils.Palette;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
@@ -60,11 +61,11 @@ public final class TooltipMapLoreMetadata implements Tooltip{
 				).formatted(Formatting.GREEN);
 
 		final boolean showColorsId = Configs.Visuals.MAP_METADATA_TOOLTIP_UUID.getBooleanValue();
-		final boolean showStaircased = Configs.Visuals.MAP_METADATA_TOOLTIP_STAIRCASE.getBooleanValue();
+		final boolean showStaircased = Configs.Visuals.MAP_METADATA_TOOLTIP_STAIRCASE.getBooleanValue() && data.palette() != Palette.EMPTY;
 		final boolean showStaircasedPercent = Configs.Visuals.MAP_METADATA_TOOLTIP_STAIRCASE_PERCENT.getBooleanValue();
-		final boolean showMaterial = Configs.Visuals.MAP_METADATA_TOOLTIP_MATERIAL.getBooleanValue();
+		final boolean showMaterial = Configs.Visuals.MAP_METADATA_TOOLTIP_MATERIAL.getBooleanValue() && data.palette() != Palette.EMPTY;
 		final boolean showCarpetPercent = Configs.Visuals.MAP_METADATA_TOOLTIP_CARPET_PERCENT.getBooleanValue();
-		final boolean showNumColors = Configs.Visuals.MAP_METADATA_TOOLTIP_NUM_COLORS.getBooleanValue();
+		final boolean showNumColors = Configs.Visuals.MAP_METADATA_TOOLTIP_NUM_COLORS.getBooleanValue() && data.palette() != Palette.EMPTY;
 		final boolean showNumColorIds = Configs.Visuals.MAP_METADATA_TOOLTIP_NUM_COLOR_IDS.getBooleanValue();
 		final boolean showWaterColors = Configs.Visuals.MAP_METADATA_TOOLTIP_WATER_COLORS.getBooleanValue();
 		final boolean showWaterColorsPercent = Configs.Visuals.MAP_METADATA_TOOLTIP_WATER_COLORS_PERCENT.getBooleanValue();

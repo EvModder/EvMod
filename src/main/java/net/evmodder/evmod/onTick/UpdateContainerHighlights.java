@@ -17,10 +17,8 @@ import net.minecraft.client.gui.screen.ingame.CartographyTableScreen;
 import net.minecraft.client.gui.screen.ingame.CraftingScreen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
 import net.minecraft.item.map.MapState;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.MutableText;
@@ -48,7 +46,8 @@ public class UpdateContainerHighlights{
 	private static final List<ItemStack> getAllMapItemsInContainer(List<Slot> slots){
 		final List<Slot> containerSlots = slots.subList(0, slots.size()-36);
 		return InvUtils.getAllNestedItems(containerSlots.stream().map(Slot::getStack))
-				.filter(s -> s.getItem() == Items.FILLED_MAP)
+//				.filter(s -> s.getItem() == Items.FILLED_MAP)
+				.filter(s -> s.get(DataComponentTypes.MAP_ID) != null)
 				.toList();
 	}
 	private static final boolean mixedOnDisplayAndNotOnDisplay(List<UUID> nonFillerIds){
@@ -75,16 +74,16 @@ public class UpdateContainerHighlights{
 		}
 		final boolean renderAsterisks = Configs.Visuals.MAP_HIGHLIGHT_CONTAINER_NAME.getBooleanValue();
 
-		final List<ItemStack> items = getAllMapItemsInContainer(hs.getScreenHandler().slots);
+		final List<ItemStack> mapItems = getAllMapItemsInContainer(hs.getScreenHandler().slots);
 
-		mapsInContainerHash = hs.getScreenHandler().syncId + items.hashCode();
+		mapsInContainerHash = hs.getScreenHandler().syncId + mapItems.hashCode();
 		final int currHash = UpdateInventoryHighlights.getMapInInvHash() + mapsInContainerHash;
 		if(lastHash == currHash) return;
 		lastHash = currHash;
 //		Main.LOGGER.info("ContainerHighlighter: Recomputing cache");
 
-		if(items.isEmpty()) return;
-		final List<MapState> states = items.stream().map(i -> FilledMapItem.getMapState(i, client.world)).filter(Objects::nonNull).toList();
+		if(mapItems.isEmpty()) return;
+		final List<MapState> states = mapItems.stream().map(i -> FilledMapItem.getMapState(i, client.world)).filter(Objects::nonNull).toList();
 		final List<UUID> nonTransparentIds = (!Configs.Generic.SKIP_VOID_MAPS.getBooleanValue() ? states.stream() :
 			states.stream().filter(s -> !MapColorUtils.isFullyTransparent(s.colors))).map(MapGroupUtils::getIdForMapState).toList();
 
@@ -94,11 +93,8 @@ public class UpdateContainerHighlights{
 			if(!inContainerAndInInv.isEmpty()) asterisks.add(Configs.Visuals.MAP_COLOR_IN_INV.getIntegerValue());
 			if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue());
 			if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue());
-			if(items.size() > states.size() + (!Configs.Generic.SKIP_NULL_MAPS.getBooleanValue() ? 0 : items.stream().filter(stack -> {
-//					assert mapId != null;
-					MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
-					return mapId != null && MapGroupUtils.nullMapIds.contains(mapId.id());
-				}).count()
+			if(mapItems.size() > states.size() + (!Configs.Generic.SKIP_NULL_MAPS.getBooleanValue() ? 0
+					: mapItems.stream().filter(stack -> MapGroupUtils.nullMapIds.contains(stack.get(DataComponentTypes.MAP_ID).id())).count()
 			)){
 				asterisks.add(Configs.Visuals.MAP_COLOR_UNLOADED.getIntegerValue());
 			}
@@ -114,7 +110,7 @@ public class UpdateContainerHighlights{
 		uniqueIdsStream.filter(Predicate.not(uniqueMapIds::add)).forEach(duplicatesInContainer::add);
 		if(renderAsterisks){
 			if(!duplicatesInContainer.isEmpty()) asterisks.add(Configs.Visuals.MAP_COLOR_MULTI_CONTAINER.getIntegerValue());
-			if(items.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue());
+			if(mapItems.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue());
 		}
 
 		if(renderAsterisks && !asterisks.isEmpty()){

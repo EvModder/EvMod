@@ -181,7 +181,7 @@
 	"evmod.config.generic.comment.whisperPearlPull": "/w msg to trigger a pearl",
 
 	"evmod.config.generic.name.ignoreNullMapsInHighlightsAndKeybinds": "ignoreNullMapsInHighlightsAndKeybinds",
-	"evmod.config.generic.comment.ignoreNullMapsInHighlightsAndKeybinds": "Treat maps with missing MapState (either not-yet-loaded, or deleted by Hausemaster) as filler items (skipped)",
+	"evmod.config.generic.comment.ignoreNullMapsInHighlightsAndKeybinds": "Treat maps with confirmed missing MapState (not just unloaded, but actually deleted (thx Hause)) as filler items.",
 	"evmod.config.generic.name.ignoreTransparentMapsInHighlightsAndKeybinds": "ignoreTransparentMapsInHighlightsAndKeybinds",
 	"evmod.config.generic.comment.ignoreTransparentMapsInHighlightsAndKeybinds": "Treat fully transparent maps as filler items (this is actually very useful IMO)",
 	"evmod.config.generic.name.ignoreMonoColorMapsInHightlights": "ignoreMonoColorMapsInHightlights",

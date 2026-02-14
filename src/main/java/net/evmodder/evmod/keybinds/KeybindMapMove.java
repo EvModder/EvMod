@@ -9,6 +9,7 @@ import java.util.stream.IntStream;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapColorUtils;
+import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.MapRelationUtils;
 import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
@@ -16,6 +17,8 @@ import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -25,16 +28,16 @@ import net.minecraft.world.World;
 
 public final class KeybindMapMove{
 	static final boolean isFillerMap(ItemStack[] slots, ItemStack stack, World world){
-		final MapState state = FilledMapItem.getMapState(stack, world);
-		if(state == null) return Configs.Generic.SKIP_NULL_MAPS.getBooleanValue();
+		final MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
+		final MapState state = world.getMapState(mapId);
+		if(state == null) return Configs.Generic.SKIP_NULL_MAPS.getBooleanValue() && MapGroupUtils.isConfirmedNull(mapId.id());
 		if(!Configs.Generic.SKIP_VOID_MAPS.getBooleanValue()) return false;
 		if(!MapColorUtils.isFullyTransparent(state.colors)) return false;
 		if(stack.getCustomName() == null) return true;
 		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(Arrays.asList(slots), stack.getName().getString(), stack.getCount(), state.locked, world);
 		return data.slots().stream()
 				.map(i -> FilledMapItem.getMapState(slots[i], world))
-				.anyMatch(s -> s != null && !MapColorUtils.isFullyTransparent(s.colors));
-//		return data.slots().stream().map(i -> slots[i].getName().getString()).distinct().count() <= 1;
+				.allMatch(s -> s != null && MapColorUtils.isFullyTransparent(s.colors));
 	}
 
 	public final void moveMapArtToFromShulker(){
@@ -57,10 +60,13 @@ public final class KeybindMapMove{
 			if(stack == null || stack.isEmpty()) ++emptySlotsInv;
 			else if(stack.getItem() == Items.FILLED_MAP){
 				if(isFillerMap(slots, stack, client.world)){++fillerInInv; continue;}
-				if(FilledMapItem.getMapState(stack, client.world) == null){
+				final MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
+				if(client.world.getMapState(mapId) == null){
+					MapGroupUtils.nullMapIds.add(mapId.id());
 					Main.LOGGER.warn("MapMove: Unloaded map in player inventory!");
 //					return;
 				}
+				else MapGroupUtils.nullMapIds.remove(mapId.id());
 				++numInInv;
 				final int count = stack.getCount();
 				countsInInv.add(count);
