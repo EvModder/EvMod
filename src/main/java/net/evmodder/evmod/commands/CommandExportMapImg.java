@@ -146,7 +146,7 @@ public final class CommandExportMapImg{
 			final int w = combine && allMaps.size() > unnestedMaps.size() ? (int)Math.ceil(Math.sqrt(allMaps.size())) : Math.min(width, unnestedMaps.size());
 			final BufferedImage img = drawImgForMapStates(source, combine ? allMaps : unnestedMaps, w);
 
-			if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdir();
+			if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdirs();
 			try{ImageIO.write(img, "png", new File(lastRelPath=(FileIO.DIR+MAP_EXPORT_DIR+name+".png")));}
 			catch(IOException e){e.printStackTrace();}
 
@@ -291,7 +291,7 @@ public final class CommandExportMapImg{
 		}
 
 		//16755200
-		if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdir();
+		if(!new File(FileIO.DIR+MAP_EXPORT_DIR).exists()) new File(FileIO.DIR+MAP_EXPORT_DIR).mkdirs();
 		final String relFilePath = FileIO.DIR+MAP_EXPORT_DIR+imgName+".png";
 		final File imgFile = new File(relFilePath);
 		if(imgFile.exists()) ++overwritten;

@@ -100,7 +100,7 @@
 	"evmod.config.generic.comment.bundlesAreReversed": "When pulling items out of a bundle, use reverse index (goofy 2b2t thing, thx Hause)",
 
 	"evmod.config.generic.name.mapStateCache": "mapCache",
-	"evmod.config.generic.comment.mapStateCache": "Preserves cached map previews in player's inventory or echest between sessions (since MapStates get unloaded when you log off 2b2t)",
+	"evmod.config.generic.comment.mapStateCache": "Preserves cached map previews in player's inventory or echest between sessions\n(since MapStates get unloaded when you log off 2b2t)",
 	"evmod.config.generic.name.mapStateCacheUnlocked": "mapCacheUnlocked",
 	"evmod.config.generic.name.mapStateCacheById": "mapCache: by MapId",
 	"evmod.config.generic.comment.mapStateCacheById": "Does not work on 2b2t!",
@@ -116,7 +116,7 @@
 	"evmod.config.generic.name.mapArtDefaultGroup": "mapArtDefaultGroup",
 	"evmod.config.generic.comment.mapArtDefaultGroup": "Default selected group (for highlights). Overridden when using /MapArtGroup",
 	"evmod.config.generic.name.mapArtGroupUnlockedMapHandling": "mapArtGroupUnlockedMapHandling",
-	"evmod.config.generic.comment.mapArtGroupUnlockedMapHandling": "Should unlocked maparts be added to MapArtGroups? And if so, should identical-image unlocked and locked mapart be treated as unique (different hashcode)?",
+	"evmod.config.generic.comment.mapArtGroupUnlockedMapHandling": "Should unlocked maparts be added to MapArtGroups?\nAnd if so, should identical-image unlocked and locked mapart be treated as unique (different hashcode)?",
 	// unused:
 	"evmod.config.generic.name.mapArtGroupIncludeUnlocked": "mapArtGroupIncludeUnlocked",
 	"evmod.config.generic.comment.mapArtGroupIncludeUnlocked": "Include unlocked maps in MapGroups (not recommended)",
@@ -124,7 +124,7 @@
 	"evmod.config.generic.comment.mapArtGroupTreatUnlockedAsUnique": "If true, identical-image locked/vs/unlocked maps will be treated as if they are distinct maparts",
 
 	"evmod.config.generic.name.iFrameNewMapNotifier": "iFrameNewMapNotifier",
-	"evmod.config.generic.comment.iFrameNewMapNotifier": "Popup in chat/actionbar when map not in the current group are detected nearby; super useful for maphunting around spawn, but can get very annoying",
+	"evmod.config.generic.comment.iFrameNewMapNotifier": "Popup in chat/actionbar when map not in the current group are detected nearby;\nsuper useful for map hunting around spawn, but can get annoying",
 
 	"evmod.config.generic.name.iFrameTrackingDist": "iFrameTrackingDist",
 	"evmod.config.generic.comment.iFrameTrackingDist": "Set to 0 to disable recalculating nearby iFrames (slightly better performance)",
@@ -143,7 +143,7 @@
 //	"evmod.config.generic.comment.iFrameAutoPlacerRotatePlayer": "",
 
 	"evmod.config.generic.name.iFrameDisallowOffhand": "iFrameDisallowOffhand",
-	"evmod.config.generic.comment.iFrameDisallowOffhand": "Disable placing items into iFrames from the offhand (I don't need to display my offhand totem)",
+	"evmod.config.generic.comment.iFrameDisallowOffhand": "Disable placing items into iFrames from the offhand\n(I don't need to display my offhand totem)",
 
 	"evmod.config.generic.name.mapArtPlacer": "mapArtPlacer",
 	"evmod.config.generic.comment.mapArtPlacer": "MapArt Placement Helper",
@@ -158,7 +158,7 @@
 	"evmod.config.generic.name.mapArtAutoPlaceInvDelay": "mapArtAutoPlaceInvDelay",
 	"evmod.config.generic.comment.mapArtAutoPlaceInvDelay": "How many ticks to wait between inventory actions",
 	"evmod.config.generic.name.mapArtAutoPlaceAntiRotate": "mapArtAutoPlaceAntiRotate",
-	"evmod.config.generic.comment.mapArtAutoPlaceAntiRotate": "Disable rotating maparts in frames when AutoPlace is active (helps prevent accidental rotating with misclicks)",
+	"evmod.config.generic.comment.mapArtAutoPlaceAntiRotate": "Disable rotating maparts in frames when AutoPlace is active\n(helps prevent accidental rotating with misclicks)",
 	"evmod.config.generic.name.mapArtAutoPlaceIFrames": "mapArtAutoPlaceIFrames",
 	"evmod.config.generic.comment.mapArtAutoPlaceIFrames": "Also place missing iFrames when auto-placing mapart",
 	"evmod.config.generic.name.mapArtAutoPlaceSendSwingHandPacket": "mapArtAutoPlaceSendSwingHandPacket",
@@ -181,7 +181,7 @@
 	"evmod.config.generic.comment.whisperPearlPull": "/w msg to trigger a pearl",
 
 	"evmod.config.generic.name.ignoreNullMapsInHighlightsAndKeybinds": "ignoreNullMapsInHighlightsAndKeybinds",
-	"evmod.config.generic.comment.ignoreNullMapsInHighlightsAndKeybinds": "Treat maps with confirmed missing MapState (not just unloaded, but actually deleted (thx Hause)) as filler items.",
+	"evmod.config.generic.comment.ignoreNullMapsInHighlightsAndKeybinds": "Treat maps with confirmed missing* MapState as filler items.\n(NOT merely unloaded MapState, but actually deleted (thx Hause))",
 	"evmod.config.generic.name.ignoreTransparentMapsInHighlightsAndKeybinds": "ignoreTransparentMapsInHighlightsAndKeybinds",
 	"evmod.config.generic.comment.ignoreTransparentMapsInHighlightsAndKeybinds": "Treat fully transparent maps as filler items (this is actually very useful IMO)",
 	"evmod.config.generic.name.ignoreMonoColorMapsInHightlights": "ignoreMonoColorMapsInHightlights",
@@ -192,7 +192,7 @@
 	"evmod.config.generic.name.sendChatsOnServerJoin": "sendChatsOnServerJoin*",
 	"evmod.config.generic.comment.sendChatsOnServerJoin": "Automatically send chats/commands upon joining a server",
 	"evmod.config.generic.name.logCoordsOnServerQuit": "logCoordsOnServerQuit",
-	"evmod.config.generic.comment.logCoordsOnServerQuit": "Prints coords to /logs/latest.log when disconnecting; useful sometimes to rescue an account from a sticky situation",
+	"evmod.config.generic.comment.logCoordsOnServerQuit": "Prints coords to /logs/latest.log when disconnecting;\nuseful sometimes to rescue an account from a sticky situation",
 	"evmod.config.generic.name.inventoryRestockAuto": "inventoryRestockAuto",
 	"evmod.config.generic.comment.inventoryRestockAuto": "When opening shulkers/chests, automatically restocks consumables in your inventory",
 	"evmod.config.generic.name.inventoryRestockAutoForOrganization": "inventoryRestockAutoForOrganization",
@@ -204,7 +204,7 @@
 	"evmod.config.generic.name.broadcastMsgs": "broadcastMsgs*",
 //	"evmod.config.generic.comment.broadcastMsgs": "",
 	"evmod.config.generic.name.fix2b2tGhostItems": "fix2b2tGhostItems*",
-	"evmod.config.generic.comment.fix2b2tGhostItems": "Disables drag-clicking for certain items (bundles, maps, and banners); credit to EnderKill98 for telling me how to fix this",
+	"evmod.config.generic.comment.fix2b2tGhostItems": "Disables drag-clicking for certain items (bundles, maps, and banners);\ncredit to EnderKill98 for telling me how to fix this",
 
 	// VISUALS:
 //	"evmod.config.visuals.name.displayTotemCount": "displayTotemCount",
@@ -282,7 +282,7 @@
 	"evmod.config.visuals.name.exportMapImageBorderColor2": "exportMapImageBorderColor2",
 //	"evmod.config.visuals.comment.exportMapImageBorderColor2": "",
 	"evmod.config.visuals.name.exportMapAtomicIdNaming": "exportMapAtomicIdNaming",
-	"evmod.config.visuals.comment.exportMapAtomicIdNaming": "Use an atomically increasing number rather than use the ingame item name for the generated .png file. Useful for Windows users, where certain characters are prohibitied in filenames",
+	"evmod.config.visuals.comment.exportMapAtomicIdNaming": "Use an atomically increasing number rather than use the ingame item name for the generated .png file.\nUseful for Windows users, where certain characters are prohibitied in filenames",
 
 	// HOTKEYS:
 	"evmod.config.hotkeys.name.openConfigGui": "openConfigGui",
@@ -300,7 +300,7 @@
 	"evmod.config.hotkeys.comment.mapMoveIgnoreAirPockets": "Disregard empty space in containers",
 
 	"evmod.config.hotkeys.name.mapMoveNeighbors": "mapMoveNeighbors",
-	"evmod.config.hotkeys.comment.mapMoveNeighbors": "If holding this key while placing a map item into a slot, will try and move adjacent map items if part of the same mapart",
+	"evmod.config.hotkeys.comment.mapMoveNeighbors": "If holding this key while placing a map item into a slot,\nwill try and move adjacent map items if part of the same mapart",
 
 	"evmod.config.hotkeys.name.mapMoveBundle": "mapMoveBundle",
 	"evmod.config.hotkeys.comment.mapMoveBundle": "Take/Stow maps in bundle",
@@ -311,11 +311,11 @@
 	"evmod.config.hotkeys.name.mapMoveBundleStowNonSingleMaps": "mapMoveBundleStowNonSingleMaps",
 	"evmod.config.hotkeys.comment.mapMoveBundleStowNonSingleMaps": "Should the keybind also put maps with item.count > 1 into bundles?",
 	"evmod.config.hotkeys.name.mapMoveBundleTakeMax": "mapMoveBundleRemoveMax",
-	"evmod.config.hotkeys.comment.mapMoveBundleTakeMax": "Maximum maps to extract per keybind click. Sometimes nice to limit this to 27 if you are moving maps from bundles -> shulkers",
+	"evmod.config.hotkeys.comment.mapMoveBundleTakeMax": "Maximum maps to extract per keybind click.\nSometimes nice to limit this to 27 if you are moving maps from bundles -> shulkers",
 	"evmod.config.hotkeys.name.mapMoveBundleSelectPrioForStow": "mapMoveBundleSelectPrioForStow",
-	"evmod.config.hotkeys.comment.mapMoveBundleSelectPrioForStow": "When there is no bundle on the cursor, and multiple bundles with empty space in the inventory, what selection strategy do we use for bundle-store?",
+	"evmod.config.hotkeys.comment.mapMoveBundleSelectPrioForStow": "When there is no bundle on the cursor, and multiple bundles with empty space in the inventory,\nwhat selection strategy do we use for bundle-store?",
 	"evmod.config.hotkeys.name.mapMoveBundleSelectPrioForTake": "mapMoveBundleSelectPrioForTake",
-	"evmod.config.hotkeys.comment.mapMoveBundleSelectPrioForTake": "When there is no bundle on the cursor, and multiple bundles with mapart in the inventory, what selection strategy do we use for bundle-extract?",
+	"evmod.config.hotkeys.comment.mapMoveBundleSelectPrioForTake": "When there is no bundle on the cursor, and multiple bundles with mapart in the inventory,\nwhat selection strategy do we use for bundle-extract?",
 
 	"evmod.config.hotkeys.name.toggleCape": "toggleCape",
 //	"evmod.config.hotkeys.comment.toggleCape": "",
@@ -379,27 +379,27 @@
 
 	// DATABASE:
 	"evmod.config.database.name.clientId": "clientId",
-	"evmod.config.database.comment.clientId": "Unique user id for database to recognize us by",
+	"evmod.config.database.comment.clientId": "Unique user id for database to recognize you by",
 	"evmod.config.database.name.clientKey": "clientKey",
-	"evmod.config.database.comment.clientKey": "Keep it secret! This key is used to encrypt your database requests; sharing it with other players could let them pretend to be you (when talking to the DB)",
+	"evmod.config.database.comment.clientKey": "Keep it secret! This key is used to encrypt your database requests;\nsharing it with other players could let them pretend to be you (when talking to the DB)",
 	"evmod.config.database.name.address": "address",
-	"evmod.config.database.comment.address": "Default value is a globally-shared DB. Feel free to setup your own DB, or leave blank.",
+	"evmod.config.database.comment.address": "Feel free to setup your own DB, or set to blank to disable.\nI've got an instance available for public use: db.evmodder.net",
 	"evmod.config.database.name.saveSeenMapArt": "saveMapArtHashCodes*",
 	"evmod.config.database.comment.saveSeenMapArt": "Save MapArt HashCodes to a file",
 	"evmod.config.database.name.shareSeenMapArt": "shareMapArtHashCodes*",
-	"evmod.config.database.comment.shareSeenMapArt": "Participate in MapArt HashCode database (requires saveMapArtHashCodes=true)",
+	"evmod.config.database.comment.shareSeenMapArt": "Participate in MapArt HashCode database\n(requires saveMapArtHashCodes=true)",
 	"evmod.config.database.name.saveEpearlOwnersByUUID": "saveEpearlOwnersByUUID*",
 	"evmod.config.database.comment.saveEpearlOwnersByUUID": "Save [Epearl.Id->Owner] to a file",
 	"evmod.config.database.name.saveEpearlOwnersByXZ": "saveEpearlOwnersByXZ*",
 	"evmod.config.database.comment.saveEpearlOwnersByXZ": "Save [Epearl.X,Z->Owner] to a file",
 	"evmod.config.database.name.shareEpearlOwners": "shareEpearlOwners*",
-	"evmod.config.database.comment.shareEpearlOwners": "Participate in EpearlOwner database (requires saveEpearlOwnersByUUID=true)",
+	"evmod.config.database.comment.shareEpearlOwners": "Participate in EpearlOwner database\n(requires saveEpearlOwnersByUUID=true)",
 	"evmod.config.database.name.saveIgnoreList": "saveIgnoreList*",
 	"evmod.config.database.comment.saveIgnoreList": "Save ignorelists to ./configs/evmod/ignores/",
 	"evmod.config.database.name.shareIgnoreList": "shareIgnoreList*",
-	"evmod.config.database.comment.shareIgnoreList": "Share your /ignorehard list with the database (requires saveIgnoreList=true)",
+	"evmod.config.database.comment.shareIgnoreList": "Share your /ignorehard list with the database\n(requires saveIgnoreList=true)",
 	"evmod.config.database.name.borrowIgnoreLists": "borrowIgnoreLists*",
-	"evmod.config.database.comment.borrowIgnoreLists": "Apply /ignorehard lists from other accounts (doesn't affect your own list. Requires saveIgnoreList=true. If database is unlinked, will only work for accounts on the same instance, i.e. alts.)",
+	"evmod.config.database.comment.borrowIgnoreLists": "Apply /ignorehard lists from other accounts.\nDoesn't affect your own list. Requires saveIgnoreList=true.\nIf database is unlinked, will only work for accounts on the same instance, i.e. alts.",
 	"evmod.config.database.name.shareJoinQuit": "shareJoinQuitMsgs*",
 	"evmod.config.database.comment.shareJoinQuit": "Used to power /seen, /timeonline, etc."
 }

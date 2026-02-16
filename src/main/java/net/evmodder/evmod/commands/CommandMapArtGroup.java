@@ -69,7 +69,7 @@ public class CommandMapArtGroup{
 
 		final String notFoundGroups = IntStream.range(0, groups.length).filter(i -> data[i] == null).mapToObj(i -> groups[i]).collect(Collectors.joining(","));
 		if(!notFoundGroups.isEmpty()){
-			source.sendError(Text.literal("MapArtGroup file(s) not found: "+DIR+notFoundGroups).withColor(ERROR_COLOR));
+			Main.LOGGER.info("MapArtGroup file(s) not found: "+DIR+notFoundGroups);
 			String plural = notFoundGroups.indexOf(',') !=- 1 ? "s" : "";
 			source.sendError(Text.translatable(PREFIX+"notFound", plural, notFoundGroups).withColor(ERROR_COLOR));
 //			source.sendError(Text.literal("MapArtGroup"+plural+" not found: "+notFoundGroups).withColor(ERROR_COLOR));
@@ -293,7 +293,7 @@ public class CommandMapArtGroup{
 				final ByteBuffer bb = ByteBuffer.allocate(mapsInGroup.size()*16);
 				for(UUID uuid : mapsInGroup) bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
 				File dir = new File(FileIO.DIR+DIR);
-				if(!dir.exists()) dir.mkdir();
+				if(!dir.exists()) dir.mkdirs();
 				FileIO.saveFileBytes(DIR+groups[0], bb.array());
 				source.sendFeedback(switch(cmd){
 					case Command.CREATE -> Text.translatable(

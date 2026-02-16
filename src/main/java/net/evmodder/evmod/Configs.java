@@ -165,9 +165,11 @@ public final class Configs implements IConfigHandler{
 			if(settings.mapHighlights) configs.add(SKIP_MONO_COLOR_MAPS);
 	
 			if(settings.gameMessageListener) configs.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PLAY_SOUND_UNFOCUSED, WHISPER_PEARL_PULL));
-			if(!Main.mapArtFeaturesOnly) configs.add(SCROLL_ORDER);
-			if(settings.serverJoinListener) configs.add(SEND_ON_SERVER_JOIN);
-			if(settings.serverQuitListener) configs.add(LOG_COORDS_ON_SERVER_QUIT);
+			if(!Main.mapArtFeaturesOnly){
+				configs.add(SCROLL_ORDER);
+				if(settings.serverJoinListener) configs.add(SEND_ON_SERVER_JOIN);
+				if(settings.serverQuitListener) configs.add(LOG_COORDS_ON_SERVER_QUIT);
+			}
 			if(settings.inventoryRestockAuto) configs.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
 			if(settings.broadcaster) configs.addAll(List.of(TEMP_BROADCAST_ACCOUNT, TEMP_BROADCAST_TIMESTAMP, TEMP_BROADCAST_MSGS));
 			if(settings.showNicheConfigs) configs.add(DISABLE_DRAG_CLICK_ON_MAPS_AND_BUNDLES);
@@ -457,7 +459,7 @@ public final class Configs implements IConfigHandler{
 //		public static final ConfigOptionList PLACEMENT_WARN = new ConfigOptionList("placementWarn", MessageOutputType.ACTIONBAR).apply(DATABASE_KEY);
 		public static final ConfigInteger CLIENT_ID = new ConfigInteger("clientId", InitUtils.DUMMY_CLIENT_ID, 0, 1000000).apply(DATABASE_KEY);
 		public static final ConfigString CLIENT_KEY = new ConfigString("clientKey", "").apply(DATABASE_KEY);
-		public static final ConfigString ADDRESS = new ConfigString("address", Main.mapArtFeaturesOnly ? "" : "evmodder.net:14441").apply(DATABASE_KEY);
+		public static final ConfigString ADDRESS = new ConfigString("address", Main.mapArtFeaturesOnly ? "" : "db.evmodder.net").apply(DATABASE_KEY);
 		public static final ConfigBoolean SAVE_MAPART = new ConfigBoolean("saveSeenMapArt", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
 		public static final ConfigBoolean SHARE_MAPART = new ConfigBoolean("shareSeenMapArt", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
 		public static final ConfigBoolean EPEARL_OWNERS_BY_UUID = new ConfigBoolean("saveEpearlOwnersByUUID", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
