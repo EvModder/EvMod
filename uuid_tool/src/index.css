@@ -11,15 +11,13 @@
   --accent: 220 70% 50%;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: 220 20% 8%;
-    --foreground: 220 15% 95%;
-    --muted: 220 15% 16%;
-    --muted-foreground: 220 10% 55%;
-    --border: 220 15% 20%;
-    --accent: 220 70% 55%;
-  }
+.dark {
+  --background: 220 20% 8%;
+  --foreground: 220 15% 95%;
+  --muted: 220 15% 16%;
+  --muted-foreground: 220 10% 55%;
+  --border: 220 15% 20%;
+  --accent: 220 70% 55%;
 }
 
 body {

@@ -1,4 +1,4 @@
-import Index from "./pages/Index";
+import Index from "./Index";
 
 const App = () => <Index />;
 
