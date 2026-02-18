@@ -71,9 +71,9 @@ public final class KeybindAIETravelHelper{
 				}
 				String disconnectMsg = (goingDownInEnd?"FALLING!":"no longer flying")+", y="+y+", dur="+dur;
 				Main.LOGGER.warn("AIE Helper: Disconnecting player: "+disconnectMsg);
+				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
 				client.disconnect(new MessageScreen(Text.literal("[AIE Helper] "+disconnectMsg)));
 				client.world.disconnect();
-				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
 				return;
 			}
 
@@ -106,9 +106,9 @@ public final class KeybindAIETravelHelper{
 					}
 				}
 				Main.LOGGER.warn("AIE Helper: Disconnecting player: y="+y+", dur="+dur);
+				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
 				client.disconnect(new MessageScreen(Text.literal("[AIE Helper] y="+y+", dur="+dur)));
 				client.world.disconnect();
-				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
 				return;
 			}
 			lastPitch = client.player.getPitch();
