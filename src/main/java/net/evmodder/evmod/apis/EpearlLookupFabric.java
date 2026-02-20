@@ -30,10 +30,10 @@ public final class EpearlLookupFabric extends EpearlLookup{
 	private List<EnderPearlEntity> loadedEpearls;
 	private int epearlCount;
 
-	@Override protected boolean enableRemoteDbUUID(){return Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue();}
-	@Override protected boolean enableRemoteDbXZ(){return Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue();}
 	@Override protected boolean enableKeyUUID(){return Configs.Database.EPEARL_OWNERS_BY_UUID.getBooleanValue();}
 	@Override protected boolean enableKeyXZ(){return Configs.Database.EPEARL_OWNERS_BY_XZ.getBooleanValue();}
+	@Override protected boolean enableRemoteDbUUID(){return enableKeyUUID() && Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue();}
+	@Override protected boolean enableRemoteDbXZ(){return enableKeyXZ() && Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue();}
 	public boolean isDisabled(){return !enableKeyUUID() && !enableKeyXZ();} // Only accessor: MixinEntityRenderer
 
 	private final double DIST_XZ = 64, DIST_Y = 128; // Max dist for which to track/remove pearls
