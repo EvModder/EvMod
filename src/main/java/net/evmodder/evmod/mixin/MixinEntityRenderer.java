@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.evmodder.evmod.apis.EpearlLookup.XYZ;
+import net.evmodder.evmod.apis.EpearlLookupFabric;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.EntityRenderer;
@@ -27,12 +28,12 @@ abstract class MixinEntityRenderer{
 	// TODO: mixin onTick instead of hasLabel, or setName somehow
 	@Inject(method="hasLabel", at=@At("HEAD"), cancellable=true)
 	private final void fetchPearlOwnerNameInHasLabel_shouldDoThisInOnTickTBH(Entity e, double _distSqToCamera, CallbackInfoReturnable<Boolean> cir){
-		if(AccessorMain.getInstance().epearlLookup == null) return; // Feature is disabled
 		if(client.options.hudHidden) return; // HUD is hidden
 		if(e instanceof EnderPearlEntity == false) return;
-		//if(!isLookngAt(entity)) return; // Computationally expensive, so we do it later
+		final EpearlLookupFabric eplf = AccessorMain.getInstance().epearlLookup;
+		if(eplf == null || eplf.isDisabled()) return; // Feature is disabled
 
-		String name = AccessorMain.getInstance().epearlLookup.getOwnerName((EnderPearlEntity)e);
+		String name = eplf.getOwnerName((EnderPearlEntity)e);
 		if(name == null) return;
 		//----------
 		XYZ xyz = new XYZ(e.getBlockX(), e.getBlockY()/4, e.getBlockZ());
@@ -61,8 +62,7 @@ abstract class MixinEntityRenderer{
 				//else Main.LOGGER.info("Found pearl set at XZ: "+xyz.x()+","+xyz.z());
 			}
 		}
-		HashSet<Integer> pearlsForName = pearls.get(name);
-		if(pearlsForName == null){pearlsForName = new HashSet<>(1); pearls.put(name, pearlsForName);}
+		final HashSet<Integer> pearlsForName = pearls.computeIfAbsent(name, _k->new HashSet<>(1));
 		pearlsForName.add(e.getId());
 		final boolean alreadyRenderedThisTick = renderedOnTick == client.world.getTime();
 		if(alreadyRenderedThisTick && e.getId() != lastRenderedId) return;

@@ -71,9 +71,13 @@ public class CommandAssignPearl{
 	private final boolean isOverwritableName(String name){return name == null || name.equals(NAME_404) || name.equals(NAME_U_404);}
 
 	private final int assignPearl(CommandContext<FabricClientCommandSource> ctx){
+		if(epearlLookup.isDisabled()){
+			ctx.getSource().sendError(Text.literal("EpearlLookup is disbled (either key-by UUID or XZ must be on)"));
+			return 1;
+		}
 		final Entity player = ctx.getSource().getPlayer();
 		final Box box = player.getBoundingBox().expand(8, 6, 8);
-		List<EnderPearlEntity> epearls = player.getWorld().getEntitiesByType(EntityType.ENDER_PEARL, box, e->{
+		final List<EnderPearlEntity> epearls = player.getWorld().getEntitiesByType(EntityType.ENDER_PEARL, box, e->{
 			return MiscUtils.isLookingAt(e, player) && isOverwritableName(epearlLookup.getOwnerName(e));
 		});
 		if(epearls.isEmpty()){

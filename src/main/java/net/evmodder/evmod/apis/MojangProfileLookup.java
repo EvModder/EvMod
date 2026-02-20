@@ -30,7 +30,7 @@ public class MojangProfileLookup{
 				return NAME_404;
 			}
 			else{
-				uuidLookup.putIfAbsent(pr.profile().getName().toLowerCase(), key);
+				uuidLookup.put(pr.profile().getName().toLowerCase(), key);
 				return pr.profile().getName();
 			}
 		}
@@ -63,13 +63,13 @@ public class MojangProfileLookup{
 			final int nameStart = data.indexOf("\"name\":\"")+8;
 			final int nameEnd = data.indexOf("\"", nameStart+2); // +2 instead of +1 because we assume name field is non-empty (has at least 1 char)
 			if(nameStart == -1 || nameEnd == -1){Main.LOGGER.error("Unexpected API response (no 'name' field): "+data); return uuid;}
-			nameLookup.putIfAbsent(uuid, data.substring(nameStart, nameEnd));
+			nameLookup.put(uuid, data.substring(nameStart, nameEnd));
 			return uuid;
 		}
 	};
 	static{
-		nameLookup.putIfAbsent(UUID_404, NAME_U_404);
-		nameLookup.putIfAbsent(UUID_LOADING, NAME_U_LOADING);
+		nameLookup.put(UUID_404, NAME_U_404);
+		nameLookup.put(UUID_LOADING, NAME_U_LOADING);
 	}
 
 	public static final void prefetchName(UUID uuid){nameLookup.get(uuid, null);}

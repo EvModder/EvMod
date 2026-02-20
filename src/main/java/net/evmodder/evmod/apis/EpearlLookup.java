@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.UUID;
-import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import net.evmodder.EvLib.util.Command;
@@ -173,7 +173,7 @@ public abstract class EpearlLookup{
 				return PDC_404;
 			}
 
-			//Request UUID of epearl for <Server>,<ePearlPosEncrypted>
+			// Request UUID of epearl for <Server>,<ePearlPosEncrypted>
 			requestStartTimes.put(key, System.currentTimeMillis());
 			remoteSender.sendBotMessage(DB_FETCH_COMMAND, /*udp=*/true, FETCH_TIMEOUT, PacketHelper.toByteArray(key),
 				msg->{
@@ -206,7 +206,9 @@ public abstract class EpearlLookup{
 							appendToClientFile(DB_FILENAME, key, pdc);
 						}
 					}
-					putIfAbsent(key, pdc);
+					final PearlDataClient oldPdc = getCached(key);
+					if(oldPdc != null) LOGGER.warn("[EpearlLookup] Owner UUID was already added to prior to receiving DB response! owner="+oldPdc.owner);
+					else putIfAbsent(key, pdc);
 					requestStartTimes.remove(key);
 				}
 			);
@@ -242,26 +244,18 @@ public abstract class EpearlLookup{
 			);
 		});
 	}
-	protected final void runRemovalCheckUUID(Function<Entry<UUID, PearlDataClient>, Boolean> shouldRemove){
+	protected final void runRemovalCheckUUID(Predicate<Entry<UUID, PearlDataClient>> shouldRemove){
 		assert enableKeyUUID();
 //		if(!Configs.Database.EPEARL_OWNERS_BY_UUID.getBooleanValue()) return;
 		HashSet<UUID> keysToRemove = new HashSet<>();
-		cacheByUUID.getCache().entrySet().forEach(entry -> {
-			if(shouldRemove.apply(entry)) keysToRemove.add(entry.getKey());
-		});
-		if(!keysToRemove.isEmpty()){
-			removeEpearls(cacheByUUID, DB_FILENAME_UUID, keysToRemove); // Remove from inMemDB, FileDB, and RemoteDB
-		}
+		cacheByUUID.getCache().entrySet().forEach(entry->{if(shouldRemove.test(entry)) keysToRemove.add(entry.getKey());});
+		if(!keysToRemove.isEmpty()) removeEpearls(cacheByUUID, DB_FILENAME_UUID, keysToRemove); // Remove from inMemDB, FileDB, and RemoteDB
 	}
-	protected final void runRemovalCheckXZ(Function<Entry<UUID, PearlDataClient>, Boolean> shouldRemove){
+	protected final void runRemovalCheckXZ(Predicate<Entry<UUID, PearlDataClient>> shouldRemove){
 		assert enableKeyXZ();
 		HashSet<UUID> keysToRemove = new HashSet<>();
-		cacheByUUID.getCache().entrySet().forEach(entry -> {
-			if(shouldRemove.apply(entry)) keysToRemove.add(entry.getKey());
-		});
-		if(!keysToRemove.isEmpty()){
-			removeEpearls(cacheByXZ, DB_FILENAME_XZ, keysToRemove); // Remove from inMemDB, FileDB, and RemoteDB
-		}
+		cacheByUUID.getCache().entrySet().forEach(entry->{if(shouldRemove.test(entry)) keysToRemove.add(entry.getKey());});
+		if(!keysToRemove.isEmpty()) removeEpearls(cacheByXZ, DB_FILENAME_XZ, keysToRemove); // Remove from inMemDB, FileDB, and RemoteDB
 	}
 
 	public final void loadEpearlCacheUUID(){
@@ -290,13 +284,15 @@ public abstract class EpearlLookup{
 
 	protected final void putPearlOwner(final UUID key, final PearlDataClient pdc, final boolean keyIsUUID){
 		assert key != null && pdc != null;
+		assert key != UUID_404 && key != UUID_LOADING;
 		assert pdc.owner != null && pdc.owner != UUID_404 && pdc.owner != UUID_LOADING;
 		final RSLoadingCache cache = keyIsUUID ? cacheByUUID : cacheByXZ;
 		assert cache != null;
-		if(!cache.putIfAbsent(key, pdc) && cache.getSync(key) != PDC_404){ // Owner already stored
+		final PearlDataClient oldPdc = cache.getCached(key);
+		if(oldPdc != null && oldPdc.owner != UUID_404){ // Owner already stored
 //			LOGGER.info("Currently stored owner: "+key+" <- "+MojangProfileLookup.nameOrUUID(cache.getSync(key).owner));
 //			LOGGER.info("Requested update owner: "+key+" <- "+MojangProfileLookup.nameOrUUID(pdc.owner));
-			assert cache.getSync(key).owner.equals(pdc.owner);
+			assert oldPdc.owner.equals(pdc.owner);
 			return;
 		}
 		final String DB_FILENAME = (keyIsUUID ? DB_FILENAME_UUID : DB_FILENAME_XZ);
@@ -320,6 +316,7 @@ public abstract class EpearlLookup{
 	}
 
 	protected final PearlDataClient getPearlOwner(final UUID key, final int pearlId, final int x, final int y, final int z, final boolean keyIsUUID){
+		assert key != null && key != UUID_404 && key != UUID_LOADING;
 		final RSLoadingCache cache = (keyIsUUID ? cacheByUUID : cacheByXZ);
 		if(!keyIsUUID){
 			final UUID oldKey = updateKeyXZ.get(pearlId);
