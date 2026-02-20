@@ -12,7 +12,7 @@ final class Settings{
 	final boolean database, epearlOwners;
 	final boolean inventoryRestockAuto, placementHelperIframeAutoPlace, placementHelperMapArt, placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove, broadcaster;
 	final boolean serverJoinListener, serverQuitListener, gameMessageListener, gameMessageFilter, containerOpenCloseListener;
-	final boolean cmdAssignPearl, cmdExportMapImg, cmdMapArtGroup, cmdMapHashCode, cmdSeen, cmdSendAs, cmdTimeOnline;
+	final boolean cmdAssignPearl, cmdDeletedMapsNearby, cmdExportMapImg, cmdMapArtGroup, cmdMapHashCode, cmdSeen, cmdSendAs, cmdTimeOnline;
 	final boolean mapHighlights, mapHighlightsInGUIs, tooltipMapHighlights, tooltipMapMetadata, tooltipRepairCost;
 
 
@@ -69,6 +69,7 @@ final class Settings{
 		inventoryRestockAuto = containerOpenCloseListener && extractConfigValue(settings, "inventory_restock.auto");
 
 		cmdAssignPearl = epearlOwners && extractConfigValue(settings, "command.assignpearl");
+		cmdDeletedMapsNearby = extractConfigValue(settings, "command.deletedmapsnearby");
 		cmdExportMapImg = extractConfigValue(settings, "command.exportmapimg");
 		cmdMapArtGroup = extractConfigValue(settings, "command.mapartgroup");
 		cmdMapHashCode = extractConfigValue(settings, "command.maphashcode");

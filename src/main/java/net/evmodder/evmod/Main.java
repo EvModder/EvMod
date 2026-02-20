@@ -135,6 +135,7 @@ public class Main{
 		if(settings.broadcaster) ChatBroadcaster.refreshBroadcast();
 
 		if(settings.cmdAssignPearl) new CommandAssignPearl(epearlLookup);
+		if(settings.cmdDeletedMapsNearby) new CommandDeletedMapsNearby();
 		if(settings.cmdExportMapImg) new CommandExportMapImg();
 		if(settings.cmdMapArtGroup) new CommandMapArtGroup();
 		if(settings.cmdMapHashCode) new CommandMapHashCode();

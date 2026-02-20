@@ -35,6 +35,7 @@ inventory_restock.auto: false
 broadcaster: false
 epearl_owners: false
 
+command.deletedmapsnearby: false
 command.exportmapimg: true
 command.mapartgroup: true
 command.maphashcode: true

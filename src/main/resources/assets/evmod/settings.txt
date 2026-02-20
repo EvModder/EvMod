@@ -33,6 +33,7 @@ broadcaster: false
 epearl_owners: true  # depends: uuid/xz, softdepends: database
 
 command.assignpearl: true
+command.deletedmapsnearby: false
 command.exportmapimg: true
 command.mapartgroup: true
 command.maphashcode: true
