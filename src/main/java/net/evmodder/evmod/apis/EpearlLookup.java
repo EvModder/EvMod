@@ -156,7 +156,7 @@ public abstract class EpearlLookup{
 		final Command DB_FETCH_COMMAND;
 		final Supplier<Boolean> USE_REMOTE_DB;
 		RSLoadingCache(final String dbFilename, final Command fetchCommand, final Supplier<Boolean> dbEnabledCheck){
-			super(loadFromClientFile(dbFilename), PDC_404, PDC_LOADING);
+			super(loadFromClientFile(dbFilename), PDC_LOADING);
 			DB_FILENAME = dbFilename;
 			DB_FETCH_COMMAND = fetchCommand;
 			USE_REMOTE_DB = dbEnabledCheck;

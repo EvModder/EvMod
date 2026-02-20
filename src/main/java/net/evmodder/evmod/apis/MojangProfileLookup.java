@@ -13,7 +13,7 @@ import static net.evmodder.evmod.apis.MojangProfileLookupConstants.*;
 public class MojangProfileLookup{
 	private static final MinecraftClient client = MinecraftClient.getInstance();
 
-	public static final LoadingCache<UUID, String> nameLookup = new LoadingCache<>(NAME_404, NAME_LOADING){
+	public static final LoadingCache<UUID, String> nameLookup = new LoadingCache<>(NAME_LOADING){
 		@Override protected String loadSyncOrNull(UUID key){
 			ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
 			if(networkHandler != null){
@@ -35,7 +35,7 @@ public class MojangProfileLookup{
 			}
 		}
 	};
-	public static final LoadingCache<String, UUID> uuidLookup = new LoadingCache<>(UUID_404, UUID_LOADING){
+	public static final LoadingCache<String, UUID> uuidLookup = new LoadingCache<>(UUID_LOADING){
 		@Override protected UUID loadSyncOrNull(String key){
 			//Main.LOGGER.info("fetch name called for uuid: "+key);
 			ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
@@ -69,7 +69,7 @@ public class MojangProfileLookup{
 	};
 	static{
 		nameLookup.put(UUID_404, NAME_U_404);
-		nameLookup.put(UUID_LOADING, NAME_U_LOADING);
+		uuidLookup.put(NAME_U_404, UUID_404);
 	}
 
 	public static final void prefetchName(UUID uuid){nameLookup.get(uuid, null);}
