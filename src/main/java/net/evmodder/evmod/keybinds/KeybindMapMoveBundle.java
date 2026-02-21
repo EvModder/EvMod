@@ -151,7 +151,7 @@ public final class KeybindMapMoveBundle{
 		Main.LOGGER.info("MapBundleOp: contents="+stored+", pickedUp="+pickedUpBundle);
 
 		if(doStow){
-			final boolean STOW_NON_SINGLE_MAPS = Configs.Hotkeys.MAP_MOVE_BUNDLE_STOW_NON_SINGLE_MAPS.getBooleanValue();
+			final boolean STOW_ONLY_SINGLE_MAPS = !Configs.Hotkeys.MAP_MOVE_BUNDLE_STOW_NON_SINGLE_MAPS.getBooleanValue();
 			final int space = 64 - stored;
 //			Main.LOGGER.warn("MapBundleOp: space in bundle: "+space);
 			int suckedUp = 0;
@@ -159,7 +159,7 @@ public final class KeybindMapMoveBundle{
 			if(reverse) ArrayUtils.reverse(slotsWithMapArt);
 			for(int i : slotsWithMapArt){
 				if(slots[i].getItem() != Items.FILLED_MAP) continue;
-				if(pickup1of2 ? slots[i].getCount() != 2 : (STOW_NON_SINGLE_MAPS ? slots[i].getCount() != 1 : false)) continue;
+				if(pickup1of2 ? slots[i].getCount() != 2 : (STOW_ONLY_SINGLE_MAPS ? slots[i].getCount() != 1 : false)) continue;
 				if(pickedUpBundle) clicks.add(new InvAction(i, 0, ActionType.CLICK)); // Suck up item with bundle on cursor
 				else{
 					clicks.add(new InvAction(i, pickup1of2 ? 1 : 0, ActionType.CLICK)); // Pickup all/half
