@@ -95,8 +95,10 @@ final class Settings{
 			try{
 				List<Path> paths = Files.walk(Paths.get(mapGroupDir))
 						.filter(Files::isRegularFile)
-						.filter(p -> p.getFileName().toString().indexOf('.') == -1
-							|| (p.getNameCount() > 1 && p.getName(p.getNameCount()-2).toString().equals("seen")))
+						.filter(p -> 
+							(p.getFileName().toString().indexOf('.') == -1 ||
+								(p.getNameCount() > 1 && p.getName(p.getNameCount()-2).toString().equals("seen"))
+							) && !p.getFileName().toString().endsWith(".group"))
 						.toList();
 				if(!paths.isEmpty()){
 					paths.stream().forEach(p -> p.toFile().renameTo(p.resolveSibling(p.getFileName().toString()+".group").toFile()));
