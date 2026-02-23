@@ -1,8 +1,14 @@
 package net.evmodder.evmod;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import net.evmodder.EvLib.util.FileIO;
+import net.fabricmc.loader.api.FabricLoader;
 
 final class Settings{
 	private final String internalSettingsFile = Main.mapArtFeaturesOnly ? "settings_for_mapart_ver.txt" : "settings.txt";
@@ -17,12 +23,15 @@ final class Settings{
 
 
 	private final HashMap<String, Boolean> loadSettings(){
-		File oldSettings = new File(FileIO.DIR+"enabled_features.txt"); 
-		if(oldSettings.exists()){ // TODO: remove this legacy-patch in a future version
-			oldSettings.renameTo(new File(FileIO.DIR+"settings.txt"));
-			FileIO.deleteFile("evmod.json");
-			Main.LOGGER.info("EvModConfig: Migrating configs from v1.x -> v2.0 (some settings may get reset)");
-		}
+		{//==================================================
+			// TODO: remove these legacy-patches in a future version
+			File oldSettings = new File(FileIO.DIR+"enabled_features.txt"); 
+			if(oldSettings.exists()){
+				oldSettings.renameTo(new File(FileIO.DIR+"settings.txt"));
+				FileIO.deleteFile("evmod.json");
+				Main.LOGGER.info("EvModConfig: Migrating configs from v1.x -> v2.0 (some settings may get reset)");
+			}
+		}//==================================================
 
 		HashMap<String, Boolean> config = new HashMap<>();
 		final String configContents = FileIO.loadFile("settings.txt", getClass().getResourceAsStream("/assets/"+Main.MOD_ID+"/"+internalSettingsFile));
@@ -78,5 +87,23 @@ final class Settings{
 		cmdTimeOnline = database && extractConfigValue(settings, "command.timeonline");
 
 		if(!settings.isEmpty()) Main.LOGGER.error("Unrecognized config setting(s)!: "+settings);
+
+		{//==================================================
+			// TODO: remove these legacy-patches in a future version
+			final String mapGroupDir = (storeDataInInstanceFolder ? FabricLoader.getInstance().getGameDir()+"/"+Main.MOD_ID
+					: FabricLoader.getInstance().getConfigDir())+"/mapart_groups/";
+			try{
+				List<Path> paths = Files.walk(Paths.get(mapGroupDir))
+						.filter(Files::isRegularFile)
+						.filter(p -> p.getFileName().toString().indexOf('.') == -1
+							|| (p.getNameCount() > 1 && p.getName(p.getNameCount()-2).toString().equals("seen")))
+						.toList();
+				if(!paths.isEmpty()){
+					paths.stream().forEach(p -> p.toFile().renameTo(p.resolveSibling(p.getFileName().toString()+".group").toFile()));
+					Main.LOGGER.info("[MIGRATION]: added '.group' file_ext to "+paths.size()+" group files");
+				}
+			}
+			catch(IOException e){e.printStackTrace();}
+		}//==================================================
 	}
 }

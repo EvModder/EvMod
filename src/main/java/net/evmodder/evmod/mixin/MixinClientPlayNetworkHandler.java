@@ -1,7 +1,6 @@
 package net.evmodder.evmod.mixin;
 
 import net.evmodder.EvLib.util.Command;
-import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapColorUtils;
@@ -17,7 +16,6 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.map.MapState;
 import net.minecraft.network.packet.s2c.play.MapUpdateS2CPacket;
-import java.io.File;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,11 +42,11 @@ abstract class MixinClientPlayNetworkHandler{
 
 
 	// Rest of this file: Seen map db
-	private final String DIR = CommandMapArtGroup.DIR + "seen/";
+	private final String DIR = "seen/";
 	private final HashMap<String, HashSet<UUID>> mapsSaved = new HashMap<>(0);
 
 	private final HashSet<UUID> loadMapsForServer(String address){
-		final byte[] data = FileIO.loadFileBytes(DIR+address);
+		final byte[] data = CommandMapArtGroup.loadGroupFile(DIR+address);
 		if(data == null) return new HashSet<>(0);
 		assert data.length % 16 == 0;
 		final ByteBuffer bb = ByteBuffer.wrap(data);
@@ -58,18 +56,12 @@ abstract class MixinClientPlayNetworkHandler{
 		return colorIds;
 	}
 
-	private final void saveMapsForServer(String address, HashSet<UUID> colorIds){
+	private final boolean saveMapsForServer(String address, HashSet<UUID> colorIds){
 		Main.LOGGER.info("MapDB: saveMapsForServer()");
 		final ByteBuffer bb = ByteBuffer.allocate(colorIds.size()*16);
 		for(UUID uuid : colorIds) bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
 //		colorIds.forEach(uuid -> bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits()));
-		File dir = new File(FileIO.DIR+DIR);
-		if(!dir.exists()){
-			File parent = new File(FileIO.DIR+CommandMapArtGroup.DIR);
-			if(!parent.exists()) parent.mkdir();
-			dir.mkdir();
-		}
-		FileIO.saveFileBytes(DIR+address, bb.array());
+		return CommandMapArtGroup.saveGroupFile(DIR+address, bb.array());
 	}
 
 	private boolean pendingFileSave = false;

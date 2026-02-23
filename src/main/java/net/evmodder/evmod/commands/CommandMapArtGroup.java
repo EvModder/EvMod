@@ -33,12 +33,14 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
 public class CommandMapArtGroup{
-	public static final String DIR = "mapart_groups/";
+	private static final String DIR = "mapart_groups/";
+	private static final String FILE_EXT = ".group";
+	private static final String PREFIX = Main.MOD_ID+".command.mapartgroup.";
+	private final int ERROR_COLOR = 16733525/*&c*/, CREATE_COLOR = 5635925/*&a*/, DONE_COLOR = 16755200/*&6*/; // &2=43520
 	private final String CONFIRM;
 	private HashSet<UUID> activeGroup;
 	private String activeGroupName;
-	private final int ERROR_COLOR = 16733525/*&c*/, CREATE_COLOR = 5635925/*&a*/, DONE_COLOR = 16755200/*&6*/; // &2=43520
-	private static final String PREFIX = Main.MOD_ID+".command.mapartgroup.";
+
 	private enum Command{
 		SET, CREATE, EXPAND, ADD, COMPARE, RESET;
 
@@ -63,9 +65,20 @@ public class CommandMapArtGroup{
 		};
 	}
 
-	public final HashSet<UUID> getGroupIdsOrSendError(final TextListener source, final String... groups){
+	public static final byte[] loadGroupFile(final String name){ // Accessor: MixinClientPlayNetworkHandler
+		return FileIO.loadFileBytes(new File(FileIO.DIR+DIR+name+FILE_EXT).exists() ? DIR+name+FILE_EXT : DIR+name);
+	}
+	public static final boolean saveGroupFile(final String name, final byte[] data){ // Accessor: MixinClientPlayNetworkHandler
+		final int i = name.lastIndexOf('/');
+		final String resolvedDirs = i == -1 ? "" : name.substring(0, i+1);
+		final File dir = new File(FileIO.DIR+DIR+resolvedDirs);
+		if(!dir.exists()) dir.mkdirs();
+		return FileIO.saveFileBytes(DIR+name+FILE_EXT, data);
+	}
+
+	private final HashSet<UUID> getGroupIdsOrSendError(final TextListener source, final String... groups){
 		final byte[][] data = new byte[groups.length][];
-		for(int i=0; i<groups.length; ++i) data[i] = FileIO.loadFileBytes(DIR+groups[i]);
+		for(int i=0; i<groups.length; ++i) data[i] = loadGroupFile(groups[i]);
 
 		final String notFoundGroups = IntStream.range(0, groups.length).filter(i -> data[i] == null).mapToObj(i -> groups[i]).collect(Collectors.joining(","));
 		if(!notFoundGroups.isEmpty()){
@@ -118,24 +131,20 @@ public class CommandMapArtGroup{
 		if(!in1Not2.isEmpty()){
 			final ByteBuffer bb1 = ByteBuffer.allocate(in1Not2.size()*16);
 			for(UUID uuid : in1Not2) bb1.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
-			final String in1Not2Name = "in_"+groupName1+"_NOT_IN_"+groupName2;//TODO: comment out this line unless arg for write-to-file
-			FileIO.saveFileBytes(DIR+in1Not2Name, bb1.array());
+			saveGroupFile("in_"+groupName1+"_NOT_IN_"+groupName2, bb1.array());//TODO: comment out this line unless arg for write-to-file
 			if(in2Not1.isEmpty()){
 				colorIds1.removeIf(in1Not2::contains);
 				MapGroupUtils.setCurrentGroup(activeGroup = colorIds1);
 				activeGroupName = "in_"+groupName1+"_AND_IN_"+groupName2;
-				source.sendError(Text.translatable(PREFIX+"compare.create",
-						activeGroupName, colorIds1.size()).withColor(CREATE_COLOR));
-//				source.sendFeedback(Text.literal("Created group '"+activeGroupName
-//						+"' and set as active (ids: "+colorIds1.size()+")").withColor(CREATE_COLOR));
+				source.sendError(Text.translatable(PREFIX+"compare.create", activeGroupName, colorIds1.size()).withColor(CREATE_COLOR));
+//				source.sendFeedback(Text.literal("Created group '"+activeGroupName+"' and set as active (ids: "+colorIds1.size()+")").withColor(CREATE_COLOR));
 				return 1;
 			}
 		}
 		if(!in2Not1.isEmpty()){
 			final ByteBuffer bb2 = ByteBuffer.allocate(in2Not1.size()*16);
 			for(UUID uuid : in2Not1) bb2.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
-			final String in2Not1Name = "in_"+groupName2+"_NOT_IN_"+groupName1;//TODO: comment out this line unless arg for write-to-file
-			FileIO.saveFileBytes(DIR+in2Not1Name, bb2.array());
+			saveGroupFile("in_"+groupName2+"_NOT_IN_"+groupName1, bb2.array());//TODO: comment out this line unless arg for write-to-file
 //			if(in1Not2.isEmpty()){
 			int colorIds2OriginalSize = colorIds2.size();
 				colorIds2.removeIf(in2Not1::contains);
@@ -145,19 +154,16 @@ public class CommandMapArtGroup{
 				MapGroupUtils.setCurrentGroup(activeGroup = colorIds2);
 				if(in1Not2.isEmpty()){
 					activeGroupName = "in_"+groupName2+"_AND_IN_"+groupName1;
-					source.sendError(Text.translatable(PREFIX+"compare.create",
-							activeGroupName, colorIds2.size()).withColor(CREATE_COLOR));
-//					source.sendFeedback(Text.literal("Created group '"+activeGroupName
-//							+"' and set as active (ids: "+colorIds2.size()+")").withColor(CREATE_COLOR));
+					source.sendError(Text.translatable(PREFIX+"compare.create", activeGroupName, colorIds2.size()).withColor(CREATE_COLOR));
+//					source.sendFeedback(Text.literal("Created group '"+activeGroupName+"' and set as active (ids: "+colorIds2.size()+")").withColor(CREATE_COLOR));
 				}
 				else{
 					activeGroupName = "intersection_"+groupName1+"_and_"+groupName2; // Set intersection
 					source.sendError(Text.translatable(PREFIX+"compare.intersection",
-							colorIds1.size(), in1Not2.size(), colorIds2OriginalSize, in2Not1.size(), colorIds2.size())
-							.withColor(CREATE_COLOR));
-//					source.sendFeedback(Text.literal("Using set-intersection as active group "
-//							+"(ids: ("+colorIds1.size()+"-"+in1Not2.size()+")+("+(colorIds2.size()+in2Not1.size())+"-"+in2Not1.size()+")="
-//							+colorIds2.size()+")").withColor(CREATE_COLOR));
+							colorIds1.size(), in1Not2.size(), colorIds2OriginalSize, in2Not1.size(), colorIds2.size()).withColor(CREATE_COLOR));
+//					source.sendFeedback(Text.literal("Using set-intersection as active group (ids: ("
+//							+colorIds1.size()+"-"+in1Not2.size()+")+("+(colorIds2.size()+in2Not1.size())+"-"+in2Not1.size()+")="+colorIds2.size()+")")
+//							.withColor(CREATE_COLOR));
 				}
 				return 1;
 //			}
@@ -230,9 +236,6 @@ public class CommandMapArtGroup{
 		assert groups.length > 0;
 		if(cmd == Command.COMPARE) return runCompareCommand(source, groups, groups2);
 
-//		final byte[][] data = new byte[groups.length][];
-//		for(int i=0; i<groups.length; ++i) data[i] = FileIO.loadFileBytes(FILE_PATH+groups[i]);
-
 		final HashSet<UUID> mapsInGroup = cmd == Command.CREATE ? new HashSet<>() : getGroupIdsOrSendError(source, groups);
 		if(mapsInGroup == null) return 1;
 		if(groups.length != 1 && (cmd == Command.CREATE || cmd == Command.EXPAND || cmd == Command.ADD)){
@@ -240,7 +243,7 @@ public class CommandMapArtGroup{
 //			source.sendError(Text.literal("Command requires a single MapArtGroup name (no commas)").withColor(ERROR_COLOR));
 			return 1;
 		}
-		if(cmd == Command.CREATE && new File(FileIO.DIR+DIR+groups[0]).exists() && (groups2 == null || !CONFIRM.equalsIgnoreCase(groups2[0]))){
+		if(cmd == Command.CREATE && loadGroupFile(groups[0]) != null && (groups2 == null || !CONFIRM.equalsIgnoreCase(groups2[0]))){
 			source.sendError(Text.translatable(PREFIX+"create.alreadyExists", groups[0]).withColor(ERROR_COLOR));
 //			source.sendError(Text.literal("MapArtGroup '"+groups[0]+"' already exists!").withColor(ERROR_COLOR));
 //			source.sendFeedback(Text.literal("To overwrite it, add 'confirm' to the end of the command"));
@@ -292,9 +295,7 @@ public class CommandMapArtGroup{
 				assert mapsInGroup.size() > oldSize;
 				final ByteBuffer bb = ByteBuffer.allocate(mapsInGroup.size()*16);
 				for(UUID uuid : mapsInGroup) bb.putLong(uuid.getMostSignificantBits()).putLong(uuid.getLeastSignificantBits());
-				File dir = new File(FileIO.DIR+DIR);
-				if(!dir.exists()) dir.mkdirs();
-				FileIO.saveFileBytes(DIR+groups[0], bb.array());
+				saveGroupFile(groups[0], bb.array());
 				source.sendFeedback(switch(cmd){
 					case Command.CREATE -> Text.translatable(
 							PREFIX+"create.newGroup",
@@ -336,38 +337,47 @@ public class CommandMapArtGroup{
 	}
 
 	private CompletableFuture<Suggestions> getGroupNameSuggestions(CommandContext<?> ctx, SuggestionsBuilder builder) {
-		String wipGroupArg = "";
-		try{wipGroupArg = ctx.getArgument("group2", String.class);} catch(IllegalArgumentException e){}
-		if(wipGroupArg.isEmpty()){
-			try{wipGroupArg = ctx.getArgument("group", String.class);} catch(IllegalArgumentException e){}
+		String groupArg = "";
+		try{groupArg = ctx.getArgument("group2", String.class);} catch(IllegalArgumentException e){}
+		if(groupArg.isEmpty()){
+			try{groupArg = ctx.getArgument("group", String.class);} catch(IllegalArgumentException e){}
 		}
 		if(ctx.getArgument("command", String.class).equalsIgnoreCase(Command.CREATE.translation) || !new File(FileIO.DIR+DIR).exists()){
-			builder.suggest(wipGroupArg.isEmpty() ? "test" : wipGroupArg);
+			builder.suggest(groupArg.isEmpty() ? "test" : groupArg);
 			return builder.buildFuture();
 		}
-		final int i = wipGroupArg.lastIndexOf(',');
-		final String lastArgLastPart = i == -1 ? wipGroupArg : wipGroupArg.substring(i+1);
-		final String lastArgFirstPart = i == -1 ? "" : wipGroupArg.substring(0, i+1);
-		final String lastArgWithCommasAround = ","+wipGroupArg+",";
-		try{
-			final Path dir = Paths.get(FileIO.DIR+DIR);
-			final boolean subDir = lastArgLastPart.indexOf('/') > 0;
-			final Stream<Path> paths = (subDir ? Files.walk(dir) : Files.list(dir))
-					.filter(p -> {File f = p.toFile(); return/* f.isFile() && */!f.isHidden();});
-			final Stream<String> names;
-			if(!subDir) names = paths.map(path -> path.getFileName().toString() + (path.toFile().isDirectory() ? "/" : ""));
-			else names = paths.map(path -> {
-				String name = path.getFileName().toString() + (path.toFile().isDirectory() ? "/" : "");
-				while((path=path.getParent()) != null && !path.equals(dir)){
-					name = path.getFileName().toString() + "/" + name;
-				}
-				return name;
-			});
-			names.filter(name -> name.startsWith(lastArgLastPart))
-				.filter(name -> !lastArgWithCommasAround.contains(","+name+","))
-				.forEach(name -> builder.suggest(lastArgFirstPart+name));
+		final String resolvedGroups, wipGroup;
+		{
+			final int i = groupArg.lastIndexOf(',')+1;
+			if(i == 0){resolvedGroups = null; wipGroup = groupArg;}
+			else{resolvedGroups = groupArg.substring(0, i); wipGroup = groupArg.substring(i);}
 		}
+		final String resolvedDirs, wipName;
+		final Path dir;
+		{
+			final int i = wipGroup.lastIndexOf('/')+1;
+			if(i == 0){resolvedDirs = null; wipName = wipGroup; dir = Paths.get(FileIO.DIR+DIR);}
+			else{resolvedDirs = wipGroup.substring(0, i); wipName = wipGroup.substring(i); dir = Paths.get(FileIO.DIR+DIR+resolvedDirs);}
+		}
+		if(!dir.toFile().isDirectory()) return null;
+
+		Stream<String> names;
+		try{names = Files.list(dir).map(p -> p.getFileName().toString() + (Files.isDirectory(p) ? "/" : ""));}
 		catch(IOException e){e.printStackTrace(); return null;}
+		names = names
+				.filter(n -> n.endsWith(FILE_EXT) || n.endsWith("/") || n.indexOf('.') == -1)
+				.filter(n -> n.startsWith(wipName))
+				.map(n -> n.endsWith(FILE_EXT) ? n.substring(0, n.length()-FILE_EXT.length()) : n);
+		if(resolvedDirs != null){
+			Main.LOGGER.info("debug: resolvedDirs="+resolvedDirs);
+			names = names.map(n -> resolvedDirs+n);
+		}
+		if(resolvedGroups != null){
+			final String resolvedGroupsWithCommasAround = ","+resolvedGroups;
+			Main.LOGGER.info("debug: resolvedGroups="+resolvedGroupsWithCommasAround);
+			names = names.filter(n -> !resolvedGroupsWithCommasAround.contains(","+n+",")).map(n -> resolvedGroups+n);
+		}
+		names.forEach(builder::suggest);
 		return builder.buildFuture();
 	}
 
@@ -375,20 +385,15 @@ public class CommandMapArtGroup{
 		CONFIRM = Text.translatableWithFallback(PREFIX+"create.confirm", "confirm").getString();
 		final String defaultGroupName = Configs.Generic.MAPART_GROUP_DEFAULT.getStringValue();
 		if(!defaultGroupName.isBlank()){
-//			final File defaultGroupFile = new File(FileIO.DIR+DIR+defaultGroupName);
-//			if(defaultGroupFile.exists()){
-				Main.LOGGER.info("[MapArtGroup] Loading default group: "+defaultGroupName);
-				runCommand(new TextListener(){
-					// It seems this doesn't properly resolve Text->msg (it gives the raw json instead of the resolved string)
-					// So I've commented it out for non-errors
-					@Override public void sendFeedback(Text message){/*Main.LOGGER.info(message.getString());*/}
-					@Override public void sendError(Text message){Main.LOGGER.warn(message.getString());}
-				}, Command.SET, defaultGroupName.split("[,+]"), null);
-//			}
+			Main.LOGGER.info("[MapArtGroup] Loading default group: "+defaultGroupName);
+			runCommand(new TextListener(){
+				// It seems this doesn't properly resolve Text->msg (it gives the raw json instead of the resolved string)
+				// So I've commented it out for non-errors
+				@Override public void sendFeedback(Text message){/*Main.LOGGER.info(message.getString());*/}
+				@Override public void sendError(Text message){Main.LOGGER.warn(message.getString());}
+			}, Command.SET, defaultGroupName.split("[,+]"), null);
 		}
 		ClientCommandRegistrationCallback.EVENT.register(
-//				new ClientCommandRegistrationCallback(){
-//				@Override public void register(CommandDispatcher<FabricClientCommandSource> dispatcher, CommandRegistryAccess registryAccess){
 				(dispatcher, _0) -> {
 			dispatcher.register(
 				ClientCommandManager.literal(getClass().getSimpleName().substring(7).toLowerCase())
@@ -444,8 +449,8 @@ public class CommandMapArtGroup{
 							.suggests((ctx, builder) -> {
 								final String cmdStr = ctx.getArgument("command", String.class);
 								if(cmdStr.equalsIgnoreCase(Command.COMPARE.translation)) return getGroupNameSuggestions(ctx, builder);
-								else if(cmdStr.equalsIgnoreCase(Command.CREATE.translation)
-										&& new File(FileIO.DIR+DIR+ctx.getArgument("group", String.class)).exists()) builder.suggest(CONFIRM);
+								else if(cmdStr.equalsIgnoreCase(Command.CREATE.translation) && loadGroupFile(ctx.getArgument("group", String.class)) != null)
+									builder.suggest(CONFIRM);
 								return builder.buildFuture();
 							})
 							.executes(ctx->{
