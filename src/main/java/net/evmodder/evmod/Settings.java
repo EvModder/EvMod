@@ -16,7 +16,8 @@ final class Settings{
 	final boolean showNicheConfigs;
 	final boolean storeDataInInstanceFolder;
 	final boolean database, epearlOwners;
-	final boolean inventoryRestockAuto, placementHelperIframeAutoPlace, placementHelperMapArt, placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove, broadcaster;
+	final boolean placementHelperIframeAutoPlace, placementHelperMapArt, placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove;
+	final boolean mapLoaderBot, inventoryRestockAuto, broadcaster;
 	final boolean serverJoinListener, serverQuitListener, gameMessageListener, gameMessageFilter, containerOpenCloseListener;
 	final boolean cmdAssignPearl, cmdDeletedMapsNearby, cmdExportMapImg, cmdMapArtGroup, cmdMapHashCode, cmdSeen, cmdSendAs, cmdTimeOnline;
 	final boolean mapHighlights, mapHighlightsInGUIs, tooltipMapHighlights, tooltipMapMetadata, tooltipRepairCost;
@@ -65,6 +66,7 @@ final class Settings{
 		placementHelperMapArt = extractConfigValue(settings, "placement_helper.mapart");
 		placementHelperMapArtAutoPlace = placementHelperMapArt && extractConfigValue(settings, "placement_helper.mapart.autoplace");
 		placementHelperMapArtAutoRemove = placementHelperMapArt && extractConfigValue(settings, "placement_helper.mapart.autoremove");
+		mapLoaderBot = extractConfigValue(settings, "map_bot.loader");
 		serverJoinListener = extractConfigValue(settings, "listener.server_join");
 		serverQuitListener = extractConfigValue(settings, "listener.server_quit");
 		gameMessageListener = extractConfigValue(settings, "listener.game_message.read");
@@ -96,9 +98,10 @@ final class Settings{
 				List<Path> paths = Files.walk(Paths.get(mapGroupDir))
 						.filter(Files::isRegularFile)
 						.filter(p -> 
-							(p.getFileName().toString().indexOf('.') == -1 ||
-								(p.getNameCount() > 1 && p.getName(p.getNameCount()-2).toString().equals("seen"))
-							) && !p.getFileName().toString().endsWith(".group"))
+							(p.getFileName().toString().indexOf('.') == -1 || (
+								p.getNameCount() > 1 && p.getName(p.getNameCount()-2).toString().equals("seen")
+								&& !p.getFileName().toString().startsWith(".")
+							)) && !p.getFileName().toString().endsWith(".group"))
 						.toList();
 				if(!paths.isEmpty()){
 					paths.stream().forEach(p -> p.toFile().renameTo(p.resolveSibling(p.getFileName().toString()+".group").toFile()));

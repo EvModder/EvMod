@@ -19,6 +19,7 @@ map_highlights.in_gui: true
 tooltip.map_highlights: true
 tooltip.map_metadata: true
 tooltip.repair_cost: true
+map_bot.loader: false
 
 # Used by map state cacher (if you don't use that, I recommend setting them to false)
 listener.server_join: true

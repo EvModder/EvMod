@@ -31,6 +31,7 @@ import net.evmodder.evmod.keybinds.KeybindInventoryOrganize;
 import net.evmodder.evmod.keybinds.KeybindInventoryRestock;
 import net.evmodder.evmod.listeners.*;
 import net.evmodder.evmod.onTick.AutoPlaceItemFrames;
+import net.evmodder.evmod.onTick.MapLoaderBot;
 import net.evmodder.evmod.onTick.TooltipMapLoreMetadata;
 import net.evmodder.evmod.onTick.TooltipMapNameColor;
 import net.evmodder.evmod.onTick.TooltipRepairCost;
@@ -117,7 +118,9 @@ public class Main{
 		final WhisperPlaySound whisperPlaySound = mapArtFeaturesOnly ? null : new WhisperPlaySound();
 		if(settings.gameMessageListener) new GameMessageListener(remoteSender, epearlLookup, whisperPlaySound);
 		final GameMessageFilter gameMessageFilter = settings.gameMessageFilter ? new GameMessageFilter(remoteSender) : null;
-
+		if(settings.mapLoaderBot) TickListener.register(new TickListener(){
+			@Override public void onTickStart(MinecraftClient client){MapLoaderBot.onTickStart(client);}
+		});
 		final KeybindInventoryOrganize[] kbInvOrgs = mapArtFeaturesOnly ? null : new KeybindInventoryOrganize[]{
 				new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_1.getStrings()),
 				new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_2.getStrings()),

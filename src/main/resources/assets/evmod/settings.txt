@@ -19,13 +19,17 @@ map_highlights.in_gui: true
 tooltip.map_highlights: true
 tooltip.map_metadata: true
 tooltip.repair_cost: true
+map_bot.loader: true
 
+#
 listener.server_join: true  # depends: mapstate_cache.inv, send_on_srvr_join
 listener.server_quit: true  # depends: mapstate_cache.inv, log_logout_coords
 listener.container_open: true  # depends: inventory_restock.auto, mapstate_cache.echest
 
+#
 database: true
 
+#
 listener.game_message.read: true  # depends: share_ignores, whisper_sound, whisper_pearl_pull
 listener.game_message.filter: true  # depends: borrow_ignores
 inventory_restock.auto: false

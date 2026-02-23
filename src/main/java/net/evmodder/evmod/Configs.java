@@ -82,6 +82,8 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigInteger MAPART_AUTOREMOVE_AFTER = new ConfigInteger("mapArtAutoRemoveThreshold", 2, 1, 20, /*useSlider=*/true).apply(GENERIC_KEY);
 		public static final ConfigDouble MAPART_AUTOREMOVE_REACH = new ConfigDouble("mapArtAutoRemoveReach", 3.9d).apply(GENERIC_KEY);
 
+		public static final ConfigBooleanHotkeyed MAPART_SUPPRESS_BOT = new ConfigBooleanHotkeyed("mapArtSuppressBot", false, "").apply(GENERIC_KEY);
+
 		public static final ConfigString WHISPER_PLAY_SOUND = new ConfigString("whisperPlaySound",
 				Main.mapArtFeaturesOnly ? "" : "{sound:block.note_block.bass, category:PLAYERS, volume:.7, pitch:2}").apply(GENERIC_KEY);
 		public static final ConfigString WHISPER_PLAY_SOUND_UNFOCUSED = new ConfigString("whisperPlaySoundUnfocused",
@@ -160,6 +162,7 @@ public final class Configs implements IConfigHandler{
 				MAPART_AUTOPLACE.setBooleanValue(false);
 				MAPART_AUTOREMOVE.setBooleanValue(false);
 			}
+			if(settings.mapLoaderBot) configs.add(MAPART_SUPPRESS_BOT);
 //			if(settings.keybindMapArtMove || settings.keybindMapArtMoveBundle)
 				configs.addAll(List.of(SKIP_NULL_MAPS, SKIP_VOID_MAPS));
 			if(settings.mapHighlights) configs.add(SKIP_MONO_COLOR_MAPS);
