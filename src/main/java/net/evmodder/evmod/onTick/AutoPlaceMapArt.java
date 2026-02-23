@@ -183,6 +183,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 	private final String getPosStrFromName(final String name){
 		final String nameWoArtist = MapRelationUtils.removeByArtist(name);
+		if(currentData.prefixLen() == -1) return name;
 		return MapRelationUtils.simplifyPosStr(nameWoArtist.substring(currentData.prefixLen(), nameWoArtist.length()-currentData.suffixLen()));
 	}
 	private final String getPosStrFromItem(final ItemStack stack){return getPosStrFromName(stack.getName().getString());}
