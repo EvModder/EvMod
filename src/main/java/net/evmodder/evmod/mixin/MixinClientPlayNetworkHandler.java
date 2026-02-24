@@ -42,6 +42,7 @@ abstract class MixinClientPlayNetworkHandler{
 
 
 	// Rest of this file: Seen map db
+	private final boolean IS_WINDOWS = System.getProperty("os.name").toLowerCase().contains("win");
 	private final String DIR = "seen/";
 	private final HashMap<String, HashSet<UUID>> mapsSaved = new HashMap<>(0);
 
@@ -93,19 +94,20 @@ abstract class MixinClientPlayNetworkHandler{
 		if(!Configs.Database.SAVE_MAPART.getBooleanValue()) return;
 		if(!state.locked && Configs.Generic.MAPART_GROUP_UNLOCKED_HANDLING.getOptionListValue() == OptionUnlockedMapHandling.SKIP) return;
 
-		final String addr = MiscUtils.getServerAddress();
+		final String address = MiscUtils.getServerAddress();
+		final String filename = IS_WINDOWS ? address.replace(':', '#') : address;
 		final UUID oldColorsId = MapGroupUtils.getCachedIdForMapStateOrNull(state);
 		final UUID colorsId = MapGroupUtils.getIdForMapState(state, /*evict=*/true);
 		final HashSet<UUID> seenForServer;
 		synchronized(mapsSaved){
-			seenForServer = mapsSaved.computeIfAbsent(addr, this::loadMapsForServer);
+			seenForServer = mapsSaved.computeIfAbsent(filename, this::loadMapsForServer);
 			if(!seenForServer.add(colorsId)) return; // Already seen
 			if(oldColorsId != null && !oldColorsId.equals(colorsId)){
 				Main.LOGGER.info("MapDB: MapUpdateS2CPacket packet changed state.colors for id"+id+", colordsId "+oldColorsId+" -> "+colorsId);
 				seenForServer.remove(oldColorsId);
 			}
 		}
-		scheduleSaveMapsForServer(addr, seenForServer);
+		scheduleSaveMapsForServer(filename, seenForServer);
 
 		if(!Configs.Database.SHARE_MAPART.getBooleanValue() || !state.locked) return;
 		AccessorMain.getInstance().remoteSender.sendBotMessage(Command.DB_MAPART_STORE, /*udp=*/false, /*timeout=*/15_000l, state.colors, reply->{
