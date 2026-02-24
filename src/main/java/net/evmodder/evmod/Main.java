@@ -49,6 +49,8 @@ import net.minecraft.client.MinecraftClient;
 // gradle migrateMappings --mappings "1.21.4+build.8"
 
 public class Main{
+	// Ev PNG->NBT preset:
+	//https://evmodder.net/PNG-to-NBT/?preset=RXYncyBQcmVzZXR8MSwxLDAsMCwxLDksMCw3LDAsMjYsMywxLDAsMTAsMTMsNCwzLDMsMywzLDMsMyw0LDgsMSwxMSwzLDExLDE4LDAsMSwwLDAsMSwxNSwwLDIsMCwwLDAsMCwwLDEsMCwwLDAsMCwxLDAsMSwwLDAsMCwwLDAsMCwwLDAsMSwwLDF8cmVzaW5fYmxvY2t8bm9uZXxzdXBwcmVzc19wYWlyc19ld3x8MQ
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
 	// fix NULL map detection (bundle stow isn't sucking up unloaded maps rn)

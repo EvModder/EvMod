@@ -7,7 +7,6 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.HashMap;
@@ -74,14 +73,16 @@ public class MapIdsFromImg{
 		MAP_COLORS_REVERSE.put(0xff000000, (byte)0);
 	}*/
 
-	private static MapColor[] MAP_COLORS;
+//	private static MapColor[] MAP_COLORS;
 	private static final HashMap<Integer, Byte> MAP_COLORS_REVERSE = new HashMap<>();
 	static{
 		try{
-			Field f = MapColor.class.getDeclaredField("COLORS");
-			f.setAccessible(true);
-			MAP_COLORS = (MapColor[])f.get(null);
-			for(MapColor mc : MAP_COLORS){
+//			Field f = MapColor.class.getDeclaredField("COLORS");
+//			f.setAccessible(true);
+//			MAP_COLORS = (MapColor[])f.get(null);
+//			for(MapColor mc : MAP_COLORS){
+			for(int i=0; i<64; ++i){
+				MapColor mc = MapColor.get(i);
 				if(mc == null) continue;
 				for(MapColor.Brightness brightness : MapColor.Brightness.values()){
 					MAP_COLORS_REVERSE.put(mc.getRenderColor(brightness), mc.getRenderColorByte(brightness));
@@ -94,7 +95,7 @@ public class MapIdsFromImg{
 //				MAP_COLORS_REVERSE.put(MAP_COLORS[0].getRenderColor(brightness), MAP_COLORS[0].getRenderColorByte(Brightness.LOW));
 //			}
 		}
-		catch(NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e){
+		catch(Exception e){
 			e.printStackTrace();
 		}
 	}
@@ -109,22 +110,23 @@ public class MapIdsFromImg{
 		assert colors.length == 128*128;
 		for(int x=0; x<128; ++x) for(int y=0; y<128; ++y) img.setRGB(xo+x, yo+y, MAP_COLORS[((int)colors[x + y*128]) & 0xFF]);
 	}*/
-	private static byte[] colorsFromImg(final BufferedImage img, final int xo, final int yo){
+	public static final byte[] colorsFromImg(final BufferedImage img, final int xo, final int yo){
 		byte[] bs = new byte[128*128];
-		for(int x=0; x<128; ++x) for(int y=0; y<128; ++y){
-			int argb = img.getRGB(xo+x, yo+y);
+		for(int h=0; h<128; ++h) for(int w=0; w<128; ++w){
+			int argb = img.getRGB(xo+w, yo+h);
 			Byte b = MAP_COLORS_REVERSE.get(argb);
 			if(b == null){
-				System.err.println("Unsupported color detected (not a valid map color) at "+(xo+x)+","+(yo+y)+": "+argb);
+				System.err.println("Unsupported color detected (not a valid map color) at "+(xo+w)+","+(yo+h)+": "+argb);
 //				System.err.println("Unsigned representation: "+Integer.toUnsignedString(argb));
 //				int alpha = (argb >> 24) & 0xFF; // Shift right by 24 bits to get alpha, then mask with 0xFF
 //				int red = (argb >> 16) & 0xFF;   // Shift right by 16 bits to get red, then mask with 0xFF
 //				int green = (argb >> 8) & 0xFF;  // Shift right by 8 bits to get green, then mask with 0xFF
 //				int blue = argb & 0xFF;         // Mask with 0xFF to get blue
 //				System.err.println("A: "+alpha+", R: "+red+", G: "+green+", B: "+blue);
-				System.exit(1);
+				return null;
+//				System.exit(1);
 			}
-			bs[x + y*128] = b;
+			bs[w + h*128] = b;
 //			img.setRGB(xo+x, yo+y, MAP_COLORS[((int)colors[x + y*128]) & 0xFF]);
 		}
 		return bs;
@@ -161,7 +163,7 @@ public class MapIdsFromImg{
 		return ids;
 	}
 
-	public static BufferedImage getValidCompositeMapImg(String imgName){
+	public static final BufferedImage getValidCompositeMapImg(String imgName){
 		BufferedImage img;
 		try{img = ImageIO.read(new File(imgName));}
 		catch(IOException e){e.printStackTrace(); return null;}

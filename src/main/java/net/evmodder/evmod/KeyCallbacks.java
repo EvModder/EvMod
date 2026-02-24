@@ -66,7 +66,7 @@ final class KeyCallbacks{
 			valueChangeCallback(Configs.Database.ADDRESS, ()->InitUtils.refreshRemoteServerSender(remoteSender));
 			valueChangeCallback(Configs.Database.CLIENT_ID, ()->InitUtils.refreshRemoteServerSender(remoteSender));
 			valueChangeCallback(Configs.Database.CLIENT_KEY, ()->InitUtils.refreshRemoteServerSender(remoteSender));
-			valueChangeCallback(Configs.Database.BORROW_IGNORES, gameMessageFilter::recomputeIgnoreLists);
+			if(gameMessageFilter != null) valueChangeCallback(Configs.Database.BORROW_IGNORES, gameMessageFilter::recomputeIgnoreLists);
 			Configs.Database.EPEARL_OWNERS_BY_UUID.setValueChangeCallback(newValue -> {if(newValue.getBooleanValue()) epearlLookup.loadEpearlCacheUUID();});
 			Configs.Database.EPEARL_OWNERS_BY_XZ.setValueChangeCallback(newValue -> {if(newValue.getBooleanValue()) epearlLookup.loadEpearlCacheXZ();});
 
@@ -75,14 +75,20 @@ final class KeyCallbacks{
 			valueChangeCallback(Configs.Generic.TEMP_BROADCAST_MSGS, ChatBroadcaster::refreshBroadcast);
 			valueChangeCallback(Configs.Generic.SCROLL_ORDER, kbHbScroll::refreshColorLists);
 
-			valueChangeCallback(Configs.Hotkeys.INV_RESTOCK_BLACKLIST, kbInvRestock::refreshLists);
-			valueChangeCallback(Configs.Hotkeys.INV_RESTOCK_WHITELIST, kbInvRestock::refreshLists);
-			valueChangeCallback(Configs.Generic.INV_RESTOCK_AUTO_FOR_INV_ORGS, ()->kbInvRestock.refreshLayouts(kbInvOrgs));
-			Configs.Hotkeys.INV_ORGANIZE_1.setValueChangeCallback(newValue -> kbInvOrgs[0].refreshLayout(newValue.getStrings()));
-			Configs.Hotkeys.INV_ORGANIZE_2.setValueChangeCallback(newValue -> kbInvOrgs[1].refreshLayout(newValue.getStrings()));
-			Configs.Hotkeys.INV_ORGANIZE_3.setValueChangeCallback(newValue -> kbInvOrgs[2].refreshLayout(newValue.getStrings()));
-			valueChangeCallback(Configs.Generic.WHISPER_PLAY_SOUND, whisperPlaySound::recomputeSound);
-			valueChangeCallback(Configs.Generic.WHISPER_PLAY_SOUND_UNFOCUSED, whisperPlaySound::recomputeSoundUnfocused);
+			if(kbInvRestock != null){
+				valueChangeCallback(Configs.Hotkeys.INV_RESTOCK_BLACKLIST, kbInvRestock::refreshLists);
+				valueChangeCallback(Configs.Hotkeys.INV_RESTOCK_WHITELIST, kbInvRestock::refreshLists);
+				valueChangeCallback(Configs.Generic.INV_RESTOCK_AUTO_FOR_INV_ORGS, ()->kbInvRestock.refreshLayouts(kbInvOrgs));
+			}
+			if(kbInvOrgs != null){
+				Configs.Hotkeys.INV_ORGANIZE_1.setValueChangeCallback(newValue -> kbInvOrgs[0].refreshLayout(newValue.getStrings()));
+				Configs.Hotkeys.INV_ORGANIZE_2.setValueChangeCallback(newValue -> kbInvOrgs[1].refreshLayout(newValue.getStrings()));
+				Configs.Hotkeys.INV_ORGANIZE_3.setValueChangeCallback(newValue -> kbInvOrgs[2].refreshLayout(newValue.getStrings()));
+			}
+			if(whisperPlaySound != null){
+				valueChangeCallback(Configs.Generic.WHISPER_PLAY_SOUND, whisperPlaySound::recomputeSound);
+				valueChangeCallback(Configs.Generic.WHISPER_PLAY_SOUND_UNFOCUSED, whisperPlaySound::recomputeSoundUnfocused);
+			}
 
 			// Keybind callbacks
 			keybindCallback(Configs.Hotkeys.TOGGLE_CAPE, null, ()->InitUtils.toggleSkinLayer(PlayerModelPart.CAPE));
@@ -97,15 +103,19 @@ final class KeyCallbacks{
 //			keybindCallback(Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER, null, kbEbounce::toggle);
 			Configs.Hotkeys.AIE_TRAVEL_HELPER.setValueChangeCallback(newValue->kbAIE.updateEnabled(newValue.getBooleanValue()));
 			Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setValueChangeCallback(newValue->kbEbounce.updateEnabled(newValue.getBooleanValue()));
-			keybindCallback(Configs.Hotkeys.CRAFT_RESTOCK, null/*HandledScreen.class::isInstance*/, kbCraftRestock::restockInputSlots);
+			if(kbCraftRestock != null) keybindCallback(Configs.Hotkeys.CRAFT_RESTOCK, null/*HandledScreen.class::isInstance*/, kbCraftRestock::restockInputSlots);
 			keybindCallback(Configs.Hotkeys.EJECT_JUNK_ITEMS, s->s==null || s instanceof HandledScreen, kbej::ejectJunkItems);
 			keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_INCR, null, ()->kbHbScroll.scrollHotbarSlot(true));
 			keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_DECR, null, ()->kbHbScroll.scrollHotbarSlot(false));
 
-			keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_1, null, ()->kbInvOrgs[0].organizeInventory(false, null));
-			keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_2, null, ()->kbInvOrgs[1].organizeInventory(false, null));
-			keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_3, null, ()->kbInvOrgs[2].organizeInventory(false, null));
-			keybindCallback(Configs.Hotkeys.INV_RESTOCK, s->s instanceof HandledScreen && s instanceof InventoryScreen == false, kbInvRestock::doRestock);
+			if(kbInvOrgs != null){
+				keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_1, null, ()->kbInvOrgs[0].organizeInventory(false, null));
+				keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_2, null, ()->kbInvOrgs[1].organizeInventory(false, null));
+				keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_3, null, ()->kbInvOrgs[2].organizeInventory(false, null));
+			}
+			if(kbInvRestock != null){
+				keybindCallback(Configs.Hotkeys.INV_RESTOCK, s->s instanceof HandledScreen && s instanceof InventoryScreen == false, kbInvRestock::doRestock);
+			}
 
 			keybindCallback(Configs.Hotkeys.CHAT_MSG_1, null, ()->InitUtils.sendChatMsg(Configs.Hotkeys.CHAT_MSG_1.getStringValue()));
 			keybindCallback(Configs.Hotkeys.CHAT_MSG_2, null, ()->InitUtils.sendChatMsg(Configs.Hotkeys.CHAT_MSG_2.getStringValue()));
