@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "@/components/Layout";
 import Home from "@/pages/Home";
 import DatToPng from "@/pages/DatToPng";
@@ -6,7 +6,7 @@ import CacheToPng from "@/pages/CacheToPng";
 import MapHasher from "@/pages/MapHasher";
 
 const App = () => (
-  <HashRouter>
+  <BrowserRouter>
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Home />} />
@@ -15,7 +15,7 @@ const App = () => (
         <Route path="MapHasher" element={<MapHasher />} />
       </Route>
     </Routes>
-  </HashRouter>
+  </BrowserRouter>
 );
 
 export default App;
