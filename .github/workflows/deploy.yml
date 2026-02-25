@@ -5,12 +5,12 @@ on:
     branches:
       - main
     paths:
-      - 'uuid_tool/**' # Trigger only if files inside the uuid_tool/ folder change
+      - 'website/**' # Trigger only if files inside the website/ folder change
   pull_request:
     branches:
       - main
     paths:
-      - 'uuid_tool/**'
+      - 'website/**'
 
 permissions:
   contents: read
@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: uuid_tool
+        working-directory: website
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,14 +31,14 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: ~/.npm
-          key: ${{ runner.os }}-npm-${{ hashFiles('uuid_tool/package.json') }}
+          key: ${{ runner.os }}-npm-${{ hashFiles('website/package.json') }}
           restore-keys: |
             ${{ runner.os }}-npm-
       - run: npm install
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: uuid_tool/dist
+          path: website/dist
 
   deploy:
     needs: build

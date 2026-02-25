@@ -9,6 +9,7 @@
   --muted-foreground: 220 10% 45%;
   --border: 220 15% 88%;
   --accent: 220 70% 50%;
+  --accent-foreground: 0 0% 100%;
 }
 
 .dark {
@@ -18,6 +19,7 @@
   --muted-foreground: 220 10% 55%;
   --border: 220 15% 20%;
   --accent: 220 70% 55%;
+  --accent-foreground: 0 0% 100%;
 }
 
 body {

@@ -11,6 +11,7 @@ export default {
         "muted-foreground": "hsl(var(--muted-foreground))",
         border: "hsl(var(--border))",
         accent: "hsl(var(--accent))",
+        "accent-foreground": "hsl(var(--accent-foreground))",
       },
     },
   },
