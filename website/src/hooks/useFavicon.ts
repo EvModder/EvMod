@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import evmodIcon from "@/assets/EvMod.png";
 import datToPngIcon from "@/assets/DAT_to_PNG.png";
 import cacheToPngIcon from "@/assets/CACHE_to_PNG.png";
-import mapHasherIcon from "@/assets/MapHasher.svg";
+import mapHasherIcon from "@/assets/MAP-HASH.svg";
 
 const ROUTE_FAVICONS: Record<string, string> = {
   "/DAT-to-PNG": datToPngIcon,
