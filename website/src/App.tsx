@@ -6,7 +6,7 @@ import CacheToPng from "@/pages/CacheToPng";
 import MapHasher from "@/pages/MapHasher";
 
 const App = () => (
-  <BrowserRouter>
+  <BrowserRouter basename="/EvMod">
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Home />} />
