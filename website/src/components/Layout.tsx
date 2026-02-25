@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useTheme } from "@/hooks/useTheme";
 import { useFavicon } from "@/hooks/useFavicon";
-import evmodIcon from "@/assets/EvMod_icon.png";
+import evmodIcon from "@/assets/EvMod.png";
 
 const NAV_ITEMS = [
   { to: "/DAT-to-PNG", label: "Map.dat → PNG" },

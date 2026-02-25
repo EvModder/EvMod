@@ -1,9 +1,9 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import evmodIcon from "@/assets/EvMod_icon.png";
-import datToPngIcon from "@/assets/v1_DAT_to_PNG.png";
-import cacheToPngIcon from "@/assets/v1_CACHE_to_PNG.png";
-import mapHasherIcon from "@/assets/v1_MapHasher.svg";
+import evmodIcon from "@/assets/EvMod.png";
+import datToPngIcon from "@/assets/DAT_to_PNG.png";
+import cacheToPngIcon from "@/assets/CACHE_to_PNG.png";
+import mapHasherIcon from "@/assets/MapHasher.svg";
 
 const ROUTE_FAVICONS: Record<string, string> = {
   "/DAT-to-PNG": datToPngIcon,
