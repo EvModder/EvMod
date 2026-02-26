@@ -359,7 +359,7 @@ public class CommandMapArtGroup{
 			if(i == 0){resolvedDirs = null; wipName = wipGroup; dir = Paths.get(FileIO.DIR+DIR);}
 			else{resolvedDirs = wipGroup.substring(0, i); wipName = wipGroup.substring(i); dir = Paths.get(FileIO.DIR+DIR+resolvedDirs);}
 		}
-		if(!dir.toFile().isDirectory()) return null;
+		if(!dir.toFile().isDirectory()) return builder.buildFuture();
 
 		Stream<String> names;
 		try{names = Files.list(dir).map(p -> p.getFileName().toString() + (Files.isDirectory(p) ? "/" : ""));}

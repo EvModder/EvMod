@@ -16,6 +16,7 @@ import net.minecraft.item.Items;
 import net.minecraft.item.map.MapDecoration;
 import net.minecraft.item.map.MapDecorationTypes;
 import net.minecraft.item.map.MapState;
+import net.minecraft.text.Text;
 
 public final class MapLoaderBot{
 	private static byte[] desiredColors;
@@ -107,21 +108,28 @@ public final class MapLoaderBot{
 //		Main.LOGGER.info("debug: client is on a dom pixel");
 
 
-		if(!pairsMatch(state.colors, desiredColors, pixelX, pixelZ, isInMap)) return;
+		if(!pairsMatch(state.colors, desiredColors, pixelX, pixelZ, isInMap)){
+			final boolean isEven = (pixelZ&1)==0;
+			if(isEven ? (pixelZ == 0 || pixelZ == 126) : (pixelZ == 1 || pixelZ == 127)){
+				client.player.sendMessage(Text.literal("Waiting for next column"), true);
+			}
+			else client.player.sendMessage(Text.literal("Waiting for correct color"), true);
+			return;
+		}
 		mapSlot = client.player.getInventory().selectedSlot;
 
 		int z;
 		for(z=pixelZ-2; z>=0 && pairsMatch(state.colors, desiredColors, pixelX, z, isInMap); z-=2);
 		if(z < 0) for(z=pixelZ+2; z<128 && pairsMatch(state.colors, desiredColors, pixelX, z, isInMap); z+=2);
 		if(z < 128){
-//			Main.LOGGER.info("debug: walking to next row in col");
+			client.player.sendMessage(Text.literal("Walking to next incomplete row"), true);
 			walkTo(client.player, playerX, playerZ + (z-pixelZ));
 		}
 		else{
 			final boolean isEven = (pixelZ&1)==0;
 			if(isEven) z = pixelZ < 64 ? 1 : 127;
 			else z = pixelZ < 64 ? 0 : 126;
-			Main.LOGGER.info("debug: col finished, walking to next col");
+			client.player.sendMessage(Text.literal("Walking to start of next column"), true);
 			walkTo(client.player, playerX-1, playerZ + (z-pixelZ));
 		}
 	}

@@ -50,7 +50,7 @@ import net.minecraft.client.MinecraftClient;
 
 public class Main{
 	// Ev PNG->NBT preset:
-	//https://evmodder.net/PNG-to-NBT/?preset=RXYncyBQcmVzZXR8MSwxLDAsMCwxLDksMCw3LDAsMjYsMywxLDAsMTAsMTMsNCwzLDMsMywzLDMsMyw0LDgsMSwxMSwzLDExLDE4LDAsMSwwLDAsMSwxNSwwLDIsMCwwLDAsMCwwLDEsMCwwLDAsMCwxLDAsMSwwLDAsMCwwLDAsMCwwLDAsMSwwLDF8cmVzaW5fYmxvY2t8bm9uZXxzdXBwcmVzc19wYWlyc19ld3x8MQ
+	//https://evmodder.net/PNG-to-NBT/?preset=RXYncyBQcmVzZXR8MSwxLDAsMCwxLDksMCw3LDAsMjYsMywxLDAsNiwxMyw0LDMsMywzLDMsMywzLDQsOCwxLDExLDMsMTEsMTgsMCwxLDAsMCwxLDAsMCwyLDAsMCwwLDAsMCwxLDAsMCwwLDAsMSwwLDEsMCwwLDAsMCwwLDAsMCwwLDEsMCwxfHJlc2luX2Jsb2NrfG5vbmV8c3VwcHJlc3NfcGFpcnNfZXd8fDE
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
 	// fix NULL map detection (bundle stow isn't sucking up unloaded maps rn)
