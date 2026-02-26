@@ -103,7 +103,7 @@ abstract class MixinClientPlayNetworkHandler{
 			seenForServer = mapsSaved.computeIfAbsent(filename, this::loadMapsForServer);
 			if(!seenForServer.add(colorsId)) return; // Already seen
 			if(oldColorsId != null && !oldColorsId.equals(colorsId)){
-				Main.LOGGER.info("MapDB: MapUpdateS2CPacket packet changed state.colors for id"+id+", colordsId "+oldColorsId+" -> "+colorsId);
+//				Main.LOGGER.info("MapDB: MapUpdateS2CPacket packet changed state.colors for id"+id+", colordsId "+oldColorsId+" -> "+colorsId);
 				seenForServer.remove(oldColorsId);
 			}
 		}

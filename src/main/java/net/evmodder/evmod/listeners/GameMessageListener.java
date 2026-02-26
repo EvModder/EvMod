@@ -2,6 +2,8 @@ package net.evmodder.evmod.listeners;
 
 import java.util.HashSet;
 import java.util.UUID;
+import com.google.gson.Gson;
+import com.mojang.serialization.JsonOps;
 import net.evmodder.EvLib.util.Command;
 import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.EvLib.util.PacketHelper;
@@ -14,6 +16,7 @@ import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.text.Text;
+import net.minecraft.text.TextCodecs;
 
 public class GameMessageListener{
 	private void saveMyIgnores(UUID myUUID, UUID ignoredUUID, boolean ignored){
@@ -64,9 +67,11 @@ public class GameMessageListener{
 
 		ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {
 			if(overlay) return;
+			final String json = new Gson().toJson(TextCodecs.CODEC.encodeStart(JsonOps.INSTANCE, msg).getOrThrow());
+			if(json.contains("EvModder")) Main.LOGGER.info("GameMsgListener: EvModder mentioned (json):\n"+json);
 			final String literal = msg.getString();
 			if(literal == null) return;
-//			Main.LOGGER.info("GameMsgListener: received msg: "+literal);
+			if(literal.contains("EvModder")) Main.LOGGER.info("GameMsgListener: EvModder mentioned (literal):\n"+literal);
 
 			if(literal.matches("^\\w+ whispers: .*")){// TODO: per-server format support
 //				Main.LOGGER.info("GameMsgListener: whisper detected");
