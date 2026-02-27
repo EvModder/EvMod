@@ -35,46 +35,41 @@ public final class RemoteServerSender{
 		catch(UnknownHostException e){LOGGER.warn("Server not found: "+REMOTE_ADDR);}
 	}
 
-	public final void setConnectionDetails(String addr, int port, int clientId, String clientKey){
+	public final void setConnectionDetails(final String addr, final int port, final int clientId, final String clientKey){
 		REMOTE_ADDR = addr; resolveAddress();
 		PORT = port;
 		CLIENT_ID = clientId;
 		CLIENT_KEY = clientKey;
 	}
 
-	public RemoteServerSender(Logger logger, Supplier<Integer> serverAddrGetter){
+	public RemoteServerSender(final Logger logger, final Supplier<Integer> serverAddrGetter){
 		LOGGER = logger;
-//		REMOTE_ADDR = addr; resolveAddress();
-//		PORT = port;
 		CURR_SERVER_HASHCODE = serverAddrGetter;
 
 		tcpPackets = new LinkedList<>();
 		udpPackets = new LinkedList<>();
 		tcpReceivers = new LinkedList<>();
 		udpReceivers = new LinkedList<>();
-
-//		CLIENT_ID = clientId;
-//		CLIENT_KEY = clientKey;
 	}
 
 	// Returns a `4+message.length+16`-byte packet
 	private final byte[] packageAndEncryptMessage(final Command command, final byte[/*16*n*/] message){
-		ByteBuffer bb1 = ByteBuffer.allocate(16+message.length);
+		final ByteBuffer bb1 = ByteBuffer.allocate(16+message.length);
 		bb1.putInt(CLIENT_ID);
 		bb1.putInt(command.ordinal());
 		final int addressCode = CURR_SERVER_HASHCODE.get();
 		bb1.putInt(addressCode);
 		bb1.putInt((int)System.currentTimeMillis());//Truncate, since we assume ping < Integer.MAX anyway
 		bb1.put(message);
-		byte[] encryptedMessage = PacketHelper.encrypt(bb1.array(), CLIENT_KEY);
+		final byte[] encryptedMessage = PacketHelper.encrypt(bb1.array(), CLIENT_KEY);
 
-		ByteBuffer bb2 = ByteBuffer.allocate(4+encryptedMessage.length);
+		final ByteBuffer bb2 = ByteBuffer.allocate(4+encryptedMessage.length);
 		bb2.putInt(CLIENT_ID);
 		bb2.put(encryptedMessage);
 		return bb2.array();
 	}
 
-	private final String formatTimeMillis(long latency){
+	private final String formatTimeMillis(final long latency){
 		// Output: 2s734ms
 //		return TextUtils.formatTime(latency, false, "", 2, new long[]{1000, 1}, new char[]{'s', ' '}).stripTrailing()+"ms";
 		// Output: 2734ms
@@ -105,18 +100,16 @@ public final class RemoteServerSender{
 	public final void sendBotMessage(final Command command, final boolean udp, final long timeout, final byte[] message, final MessageReceiver recv){
 		final byte[] packet = packageAndEncryptMessage(command, message);
 		if(addrResolved == null) resolveAddress();
-		if(addrResolved == null) LOGGER.warn("RemoteSender address could not be resolved!: "+REMOTE_ADDR);
-		else{
-			LOGGER.warn("RMS: queuingPacket for cmd: "+command+", len="+packet.length);
-			final LinkedList<byte[]> packetList = (udp ? udpPackets : tcpPackets);
-			final LinkedList<MessageReceiver> recvList = (udp ? udpReceivers : tcpReceivers);
-			synchronized(packetList){
-				packetList.add(packet);
-				recvList.add(recv);
-				if(packetList.size() == 1) sendPacketSequence(udp, timeout);
-			}
-			resolveAddress();
+		if(addrResolved == null){LOGGER.warn("RemoteSender address could not be resolved!: "+REMOTE_ADDR); return;}
+		LOGGER.warn("RMS: queuingPacket for cmd: "+command+", len="+packet.length);
+		final LinkedList<byte[]> packetList = (udp ? udpPackets : tcpPackets);
+		final LinkedList<MessageReceiver> recvList = (udp ? udpReceivers : tcpReceivers);
+		synchronized(packetList){
+			packetList.add(packet);
+			recvList.add(recv);
+			if(packetList.size() == 1) sendPacketSequence(udp, timeout);
 		}
+		resolveAddress();
 	}
 
 	public final static void main(String... args) throws IOException{

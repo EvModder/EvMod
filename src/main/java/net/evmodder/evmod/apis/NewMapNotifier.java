@@ -16,15 +16,15 @@ public final class NewMapNotifier{
 	private static long lastNewMapColorsId;
 	private static boolean notifyInChat = true;
 
-	public static final void call(ItemFrameEntity ife, UUID colorsId){ // Called by UpdateItemFrameHighlights
+	public static final void call(final ItemFrameEntity ife, final UUID colorsId){ // Called by UpdateItemFrameContents
 		if(ife.getId() != lastNewMapIfeId && colorsId.getMostSignificantBits() == lastNewMapColorsId) return;
 		if(System.currentTimeMillis() - lastNewMapNotify < mapNotifyCooldown) return;
 
-		boolean isFar = ife.getBlockPos().getSquaredDistance(0, 0, 0) > 20_000d*20_000d;
-		int x = ife.getBlockX(), z = ife.getBlockZ();
-		String pos = (isFar ? ".."+Math.abs(x%1000) : x)+" "+ife.getBlockY()+" "+(isFar ? ".."+Math.abs(z%1000) : z);
+		final boolean isFar = ife.getBlockPos().getSquaredDistance(0, 0, 0) > 20_000d*20_000d;
+		final int x = ife.getBlockX(), z = ife.getBlockZ();
+		final String pos = (isFar ? ".."+Math.abs(x%1000) : x)+" "+ife.getBlockY()+" "+(isFar ? ".."+Math.abs(z%1000) : z);
 
-		int color = Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue();
+		final int color = Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue();
 		MinecraftClient.getInstance().player.sendMessage(Text.literal("New mapart: "+pos).withColor(color), true);
 
 		if(colorsId.getMostSignificantBits() != lastNewMapColorsId){

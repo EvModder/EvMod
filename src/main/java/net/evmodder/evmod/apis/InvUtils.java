@@ -8,9 +8,9 @@ import net.minecraft.item.ItemStack;
 
 public final class InvUtils{
 	public static final Stream<ItemStack> getAllNestedItems(ItemStack item){
-		BundleContentsComponent contents = item.get(DataComponentTypes.BUNDLE_CONTENTS);
+		final BundleContentsComponent contents = item.get(DataComponentTypes.BUNDLE_CONTENTS);
 		if(contents != null) return getAllNestedItems(contents.stream()/*.sequential()*/);
-		ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
+		final ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
 		if(container != null) return getAllNestedItems(container.streamNonEmpty()/*.sequential()*/);
 		return Stream.of(item);
 	}
@@ -18,7 +18,7 @@ public final class InvUtils{
 		return items.flatMap(InvUtils::getAllNestedItems);
 	}
 	public static final Stream<ItemStack> getAllNestedItemsExcludingBundles(ItemStack item){
-		ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
+		final ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
 		if(container != null) return getAllNestedItemsExcludingBundles(container.streamNonEmpty());
 		return Stream.of(item);
 	}

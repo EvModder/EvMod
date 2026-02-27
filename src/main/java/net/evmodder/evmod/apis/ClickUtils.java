@@ -34,7 +34,7 @@ public final class ClickUtils{
 		@Override public InvAction clone(){return new InvAction(slot, button, action);}
 	}
 
-	private static int MAX_CLICKS; public static int getMaxClicks(){return MAX_CLICKS;}
+	private static int MAX_CLICKS; public static final int getMaxClicks(){return MAX_CLICKS;}
 	private static int[] tickDurationArr;
 	private static int tickDurIndex, sumClicksInDuration;
 	private static long lastTick;
@@ -43,9 +43,9 @@ public final class ClickUtils{
 	public static long TICK_DURATION = 51l; // In millis
 
 	private static boolean thisClickIsBotted;
-	public static boolean isThisClickBotted(/*MixinClientPlayerInteractionManager.Friend friend*/){return thisClickIsBotted;}
+	public static final boolean isThisClickBotted(/*MixinClientPlayerInteractionManager.Friend friend*/){return thisClickIsBotted;}
 
-	public static void refreshLimits(final int MAX_CLICKS, int FOR_TICKS){
+	public static final void refreshLimits(final int MAX_CLICKS, int FOR_TICKS){
 		if(clickOpOngoing){
 			Main.LOGGER.error("ClickUtils.refreshLimits() called DURING AN ACTIVE CLICK-OPERATION!! May cause crash or incorrect result");
 		}
@@ -74,7 +74,7 @@ public final class ClickUtils{
 //		return serverInfo == null ? 0 : serverInfo.ping; 
 //	}
 
-	private static void updateAvailableClicks(){
+	private static final void updateAvailableClicks(){
 		final long curTick = System.currentTimeMillis()/TICK_DURATION;
 		if(curTick != lastTick){
 //			final long pingTicks = (long)Math.ceil(getPing()/(double)TICK_DURATION);
@@ -91,14 +91,14 @@ public final class ClickUtils{
 			}
 		}
 	}
-	public static int calcAvailableClicks(){
+	public static final int calcAvailableClicks(){
 		if(tickDurationArr == null) return MAX_CLICKS;
 		synchronized(tickDurationArr){
 			updateAvailableClicks();
 			return MAX_CLICKS - sumClicksInDuration;
 		}
 	}
-	public static boolean addClick(/*SlotActionType type*/){ // friend MixinClientPlayerInteractionManager?
+	public static final boolean addClick(/*SlotActionType type*/){ // friend MixinClientPlayerInteractionManager?
 //		assert type != null; // unused
 
 		synchronized(tickDurationArr){
@@ -111,7 +111,7 @@ public final class ClickUtils{
 		}
 	}
 
-	private static void adjustTickRate(long msPerTick){
+	private static final void adjustTickRate(final long msPerTick){
 		// If TPS is degrading, don't clear old tick data (this isn't a perfect solution by any means)
 		if(msPerTick > TICK_DURATION) lastTick = System.currentTimeMillis()/TICK_DURATION;
 		else calcAvailableClicks();
@@ -119,14 +119,14 @@ public final class ClickUtils{
 		lastTick = System.currentTimeMillis()/TICK_DURATION;
 	}
 
-	private static int calcRemainingTicks(int clicksToExecute){
+	private static final int calcRemainingTicks(int clicksToExecute){
 		synchronized(tickDurationArr){
 			updateAvailableClicks();
 			final int availableNow = MAX_CLICKS - sumClicksInDuration;
 			if(availableNow >= clicksToExecute) return 0;
 			clicksToExecute -= availableNow;
 			tickDurationArr[tickDurIndex] += availableNow;
-	
+
 			int ticksIntoFuture;
 			for(ticksIntoFuture = 1; clicksToExecute > 0; ++ticksIntoFuture){
 				clicksToExecute -= tickDurationArr[(tickDurIndex + ticksIntoFuture) % tickDurationArr.length];
@@ -137,7 +137,7 @@ public final class ClickUtils{
 	}
 
 	private static final Pattern tpsPattern = Pattern.compile("(\\d{1,2}(?:\\.\\d+))\\s?tps", Pattern.CASE_INSENSITIVE);
-	private static long /*getTPS*/getMillisPerTick(MinecraftClient client){
+	private static final long /*getTPS*/getMillisPerTick(MinecraftClient client){
 		// Alternative: client.getNetworkHandler().onPlayerListHeader(PlayerListHeaderS2CPacket plhp)
 
 		final AccessorPlayerListHud playerListHudAccessor = (AccessorPlayerListHud)client.inGameHud.getPlayerListHud();
@@ -156,8 +156,8 @@ public final class ClickUtils{
 
 	private static boolean clickOpOngoing/*, waitedForClicks*/;
 	private static int estimatedMsLeft;
-	public static boolean hasOngoingClicks(){return clickOpOngoing;}
-	public static void executeClicks(Function<InvAction, Boolean> canProceed, Runnable onComplete, Queue<InvAction> clicks){
+	public static final boolean hasOngoingClicks(){return clickOpOngoing;}
+	public static final void executeClicks(final Function<InvAction, Boolean> canProceed, final Runnable onComplete, final Queue<InvAction> clicks){
 		if(clicks.isEmpty()){
 			Main.LOGGER.warn("executeClicks() called with an empty ClickEvent list");
 			onComplete.run();
@@ -183,14 +183,14 @@ public final class ClickUtils{
 		estimatedMsLeft = Integer.MAX_VALUE;
 
 		new Timer().schedule(new TimerTask(){
-			private void stopTask(){
+			private final void stopTask(){
 				synchronized(tickDurationArr){
 					cancel();
 					clickOpOngoing=false;
 					onComplete.run();
 				}
 			}
-			@Override public void run(){
+			@Override public final void run(){
 				if(client.player == null){
 					Main.LOGGER.error("executeClicks() failed due to null player! num clicks in arr: "+sumClicksInDuration);
 					stopTask(); return;
@@ -211,7 +211,7 @@ public final class ClickUtils{
 							Main.LOGGER.error("executeClicks() lost available click mid-op, seemingly due to click(s) occuring during check of canProceed()!");
 							break;
 						}
-						InvAction click = clicks.remove();
+						final InvAction click = clicks.remove();
 						try{
 //							Main.LOGGER.info("Executing click: "+click.slot+","+click.button+","+click.action+" | available="+calcAvailableClicks());
 							thisClickIsBotted = true;
@@ -253,11 +253,11 @@ public final class ClickUtils{
 			}
 		}, 0l, 23l);//51l = just over a tick, 23l=just under half a tick
 	}
-	public static void executeClicks(Function<InvAction, Boolean> canProceed, Runnable onComplete, InvAction... clicks){
+	public static final void executeClicks(final Function<InvAction, Boolean> canProceed, final Runnable onComplete, final InvAction... clicks){
 		executeClicks(canProceed, onComplete, new ArrayDeque<>(List.of(clicks)));
 	}
 
-	public static void executeClicksLEGACY(
+	public static final void executeClicksLEGACY(
 			MinecraftClient client,
 			Queue<InvAction> clicks, final int MILLIS_BETWEEN_CLICKS, final int MAX_CLICKS_PER_SECOND,
 			Function<InvAction, Boolean> canProceed, Runnable onComplete)
