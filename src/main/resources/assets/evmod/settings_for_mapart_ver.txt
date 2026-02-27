@@ -26,6 +26,7 @@ placement_helper.iframe.autoplace: true
 listener.server_join: true
 listener.server_quit: true
 listener.container_open: true
+listener.click_block: true
 
 # Used for tracking seen maps
 database: true

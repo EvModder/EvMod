@@ -31,8 +31,8 @@ final class InitUtils{
 //	}
 	static final String getModId(){
 		// Get the path of the current class
-		String classPath = Main.class.getName().replace('.', '/') + ".class";
-		String modId = FabricLoader.getInstance().getAllMods().stream()
+		final String classPath = Main.class.getName().replace('.', '/') + ".class";
+		final String modId = FabricLoader.getInstance().getAllMods().stream()
 				.filter(container -> container.findPath(classPath).isPresent())
 				.map(container -> container.getMetadata().getId())
 				.findFirst()
@@ -70,7 +70,7 @@ final class InitUtils{
 	static final int DUMMY_CLIENT_ID = 67; // Accessor: Configs.java (for setting default value)
 	private static final String DUMMY_CLIENT_KEY = "yesyesyes";
 	private static boolean sendPingRequest = true;
-	static final void refreshRemoteServerSender(RemoteServerSender rms){
+	static final void refreshRemoteServerSender(final RemoteServerSender rms){
 		assert rms != null;
 		final String fullAddress = Configs.Database.ADDRESS.getStringValue();
 		final int sep = fullAddress.indexOf(':');
@@ -95,7 +95,7 @@ final class InitUtils{
 	}
 
 	private static boolean requestedKey = false;
-	static final boolean checkValidClientKeyAndRequestIfNot(RemoteServerSender rms, Configs configs){
+	static final boolean checkValidClientKeyAndRequestIfNot(final RemoteServerSender rms, final Configs configs){
 		if(Configs.Database.ADDRESS.getStringValue().isBlank()) return false;
 		if(Configs.Database.CLIENT_ID.getIntegerValue() != DUMMY_CLIENT_ID) return true;
 		if(requestedKey) return false;
@@ -128,8 +128,8 @@ final class InitUtils{
 		return false;
 	}
 
-	static final void sendRemoteMsg(RemoteServerSender rms, String msg){ // Accessor: KeybindCallbacks
-		String[] arr = msg.split(",");
+	static final void sendRemoteMsg(final RemoteServerSender rms, final String msg){ // Accessor: KeybindCallbacks
+		final String[] arr = msg.split(",");
 		if(arr.length < 2){
 			Main.LOGGER.error("Invalid remote msg syntax, expected 'COMMAND,UUID...' got: "+msg);
 			return;
@@ -149,14 +149,14 @@ final class InitUtils{
 		rms.sendBotMessage(command, /*udp=*/true, /*timeout=*/5000, byteMsg, /*recv=*/null);
 	}
 
-	static final void sendChatMsg(String msg){ // Accessor: KeybindCallbacks
+	static final void sendChatMsg(final String msg){ // Accessor: KeybindCallbacks
 		if(msg.isBlank()) return;
 		MinecraftClient mc = MinecraftClient.getInstance();
 		if(msg.charAt(0) == '/') mc.player.networkHandler.sendChatCommand(msg.substring(1));
 		else mc.player.networkHandler.sendChatMessage(msg);
 	}
 
-	static final void toggleSkinLayer(PlayerModelPart part){ // Accessor: KeybindCallbacks
+	static final void toggleSkinLayer(final PlayerModelPart part){ // Accessor: KeybindCallbacks
 		final MinecraftClient client = MinecraftClient.getInstance();
 		if(Configs.Hotkeys.SYNC_CAPE_WITH_ELYTRA.getBooleanValue() && part == PlayerModelPart.CAPE
 				&& client.player != null && client.options.isPlayerModelPartEnabled(part)){

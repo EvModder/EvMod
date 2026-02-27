@@ -10,8 +10,8 @@ import net.evmodder.evmod.config.OptionMapStateCache;
 import net.evmodder.evmod.onTick.ContainerOpenCloseListener;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 
-public class ServerQuitListener{
-	public ServerQuitListener(RemoteServerSender rms){
+public final class ServerQuitListener{
+	public ServerQuitListener(final RemoteServerSender rms){
 		//ClientLoginNetworkHandler handler/_0
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client)->{
 			if(Configs.Generic.LOG_COORDS_ON_SERVER_QUIT.getBooleanValue() && client.player != null){

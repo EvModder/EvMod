@@ -42,7 +42,6 @@ import net.evmodder.evmod.onTick.UpdateInventoryContents;
 import net.evmodder.evmod.onTick.UpdateItemFrameContents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.ModMetadata;
-import net.minecraft.client.MinecraftClient;
 
 //MC source code will be in ~/.gradle/caches/fabric-loom or ./.gradle/loom-cache
 // gradle tasks --all
@@ -119,47 +118,51 @@ public class Main{
 
 		if(settings.serverJoinListener) new ServerJoinListener(remoteSender);
 		if(settings.serverQuitListener) new ServerQuitListener(remoteSender);
-		final WhisperPlaySound whisperPlaySound = mapArtFeaturesOnly ? null : new WhisperPlaySound();
-		if(settings.gameMessageListener) new GameMessageListener(remoteSender, epearlLookup, whisperPlaySound);
-		final GameMessageFilter gameMessageFilter = settings.gameMessageFilter ? new GameMessageFilter(remoteSender) : null;
-		if(settings.mapLoaderBot) TickListener.register(new TickListener(){
-			@Override public void onTickStart(MinecraftClient client){MapLoaderBot.onTickStart(client);}
-		});
-		final KeybindInventoryOrganize[] kbInvOrgs = mapArtFeaturesOnly ? null : new KeybindInventoryOrganize[]{
-				new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_1.getStrings()),
-				new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_2.getStrings()),
-				new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_3.getStrings())
-		};
-		final KeybindInventoryRestock kbInvRestock = kbInvOrgs == null ? null : new KeybindInventoryRestock(kbInvOrgs);
-		if(settings.containerOpenCloseListener){
-			TickListener.register(new ContainerOpenCloseListener(kbInvRestock));
-			BlockClickListener.register();
+		if(settings.blockClickListener) new BlockClickListener();
+		final WhisperPlaySound whisperPlaySound;
+		final GameMessageFilter gameMessageFilter;
+		final KeybindInventoryOrganize[] kbInvOrgs;
+		final KeybindInventoryRestock kbInvRestock;
+		if(mapArtFeaturesOnly){whisperPlaySound = null; gameMessageFilter = null; kbInvOrgs = null; kbInvRestock = null; kbCraftRestock = null;}
+		else{
+			whisperPlaySound = new WhisperPlaySound();
+			if(settings.gameMessageListener) new GameMessageListener(remoteSender, epearlLookup, whisperPlaySound);
+			gameMessageFilter = settings.gameMessageFilter ? new GameMessageFilter(remoteSender) : null;
+			kbInvOrgs = new KeybindInventoryOrganize[]{
+					new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_1.getStrings()),
+					new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_2.getStrings()),
+					new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_3.getStrings())
+			};
+			kbInvRestock = new KeybindInventoryRestock(kbInvOrgs);
+			kbCraftRestock = new KeybindCraftingRestock();
+
+			if(settings.broadcaster) ChatBroadcaster.refreshBroadcast();
+			if(settings.tooltipRepairCost) Tooltip.register(new TooltipRepairCost());
 		}
-		kbCraftRestock = new KeybindCraftingRestock();
 
 		if(settings.placementHelperIframeAutoPlace) new AutoPlaceItemFrames();
 		if(settings.placementHelperMapArt) new MapHangListener(settings.placementHelperMapArtAutoPlace, settings.placementHelperMapArtAutoRemove);
-		if(settings.broadcaster) ChatBroadcaster.refreshBroadcast();
 
-		if(settings.cmdAssignPearl) new CommandAssignPearl(epearlLookup);
+		if(/*!mapArtFeaturesOnly && */settings.cmdAssignPearl) new CommandAssignPearl(epearlLookup);
 		if(settings.cmdDeletedMapsNearby) new CommandDeletedMapsNearby();
 		if(settings.cmdExportMapImg) new CommandExportMapImg();
 		if(settings.cmdMapArtGroup) new CommandMapArtGroup();
 		if(settings.cmdMapHashCode) new CommandMapHashCode();
-		if(settings.cmdSeen) new CommandSeen();
-		if(settings.cmdSendAs) new CommandSendAs(remoteSender);
-		if(settings.cmdTimeOnline) new CommandTimeOnline(remoteSender);
+		if(/*!mapArtFeaturesOnly && */settings.cmdSeen) new CommandSeen();
+		if(/*!mapArtFeaturesOnly && */settings.cmdSendAs) new CommandSendAs(remoteSender);
+		if(/*!mapArtFeaturesOnly && */settings.cmdTimeOnline) new CommandTimeOnline(remoteSender);
 
 		if(settings.onTickInventory) TickListener.register(new UpdateInventoryContents());
 		if(settings.onTickIframes) TickListener.register(new UpdateItemFrameContents());
 		if(settings.onTickContainer) TickListener.register(new UpdateContainerContents());
+		if(settings.containerOpenCloseListener) TickListener.register(new ContainerOpenCloseListener(kbInvRestock));
+		if(settings.mapLoaderBot) TickListener.register(new MapLoaderBot());
 
 		if(settings.tooltipMapHighlights) Tooltip.register(new TooltipMapNameColor());
 		if(settings.tooltipMapMetadata) Tooltip.register(new TooltipMapLoreMetadata());
-		if(settings.tooltipRepairCost) Tooltip.register(new TooltipRepairCost());
 
 		ConfigManager.getInstance().registerConfigHandler(MOD_ID, configs);
 		Registry.CONFIG_SCREEN.registerConfigScreenFactory(new ModInfo(MOD_ID, MOD_NAME, ()->new ConfigGui(configs)));
-		new KeyCallbacks(configs, remoteSender, epearlLookup, kbCraftRestock, gameMessageFilter, whisperPlaySound, kbInvOrgs, kbInvRestock);
+		new KeyCallbacks(configs, remoteSender, epearlLookup, kbCraftRestock, whisperPlaySound, gameMessageFilter, kbInvOrgs, kbInvRestock);
 	}
 }

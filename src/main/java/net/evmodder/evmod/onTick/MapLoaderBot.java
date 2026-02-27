@@ -8,6 +8,7 @@ import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapIdsFromImg;
+import net.evmodder.evmod.apis.TickListener;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
@@ -18,7 +19,7 @@ import net.minecraft.item.map.MapDecorationTypes;
 import net.minecraft.item.map.MapState;
 import net.minecraft.text.Text;
 
-public final class MapLoaderBot{
+public final class MapLoaderBot implements TickListener{
 	private static byte[] desiredColors;
 	private static long lastLoadAttempt;
 	private static IBaritone baritone;
@@ -57,7 +58,7 @@ public final class MapLoaderBot{
 		baritone.getCustomGoalProcess().setGoalAndPath(new GoalXZ(x, z));
 	}
 
-	public static final void onTickStart(final MinecraftClient client){
+	@Override public final void onTickStart(final MinecraftClient client){
 		if(!Configs.Generic.MAPART_SUPPRESS_BOT.getBooleanValue()) return;
 		if(client.player == null || client.world == null) return;
 

@@ -20,7 +20,10 @@ import net.minecraft.text.Text;
 
 public final class ContainerOpenCloseListener implements TickListener{
 	private final KeybindInventoryRestock kbInvRestock;
-	public ContainerOpenCloseListener(final KeybindInventoryRestock kbInvRestock){this.kbInvRestock = kbInvRestock;}
+	public ContainerOpenCloseListener(final KeybindInventoryRestock kbInvRestock){
+		this.kbInvRestock = kbInvRestock;
+		new BlockClickListener();
+	}
 
 	private int syncId;
 	private boolean waitingForEcToLoad, currentlyViewingEchest, currentlyViewingContainer;

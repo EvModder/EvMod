@@ -25,7 +25,8 @@ placement_helper.iframe.autoplace: true  # registers: onTick()
 #
 listener.server_join: true  # allows: map_cache.inv, send_on_srvr_join
 listener.server_quit: true  # allows: map_cache.inv, log_logout_coords
-listener.container_open: true  # registers: onTick(), allows: inventory_restock.auto, map_cache.echest
+listener.container_open: true  # registers: onTick(), allows: inventory_restock.auto, map_cache.echest, map_cache.container
+listener.click_block: true  # registers: listener, allows: map_cache.container
 
 #
 database: true

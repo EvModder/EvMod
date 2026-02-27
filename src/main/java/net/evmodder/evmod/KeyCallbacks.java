@@ -25,11 +25,11 @@ import fi.dy.masa.malilib.hotkeys.IKeybindManager;
 import fi.dy.masa.malilib.hotkeys.IKeybindProvider;
 
 final class KeyCallbacks{
-	private final void valueChangeCallback(ConfigBase<?> hotkey, Runnable callback){
+	private final void valueChangeCallback(final ConfigBase<?> hotkey, final Runnable callback){
 		hotkey.setValueChangeCallback(_0 -> callback.run());
 	}
 
-	private final void keybindCallback(IHotkey hotkey, Function<Screen, Boolean> allowInScreen, Runnable callback){
+	private final void keybindCallback(final IHotkey hotkey, final Function<Screen, Boolean> allowInScreen, final Runnable callback){
 		if(allowInScreen == null) hotkey.getKeybind().setCallback((_0, _1) -> {callback.run(); return true;});
 		else hotkey.getKeybind().setCallback((_0, _1) -> {
 			if(allowInScreen.apply(MinecraftClient.getInstance().currentScreen)){callback.run(); return true;}
@@ -39,7 +39,7 @@ final class KeyCallbacks{
 
 	KeyCallbacks(Configs configs,
 			RemoteServerSender remoteSender, EpearlLookup epearlLookup, KeybindCraftingRestock kbCraftRestock,
-			GameMessageFilter gameMessageFilter, WhisperPlaySound whisperPlaySound, KeybindInventoryOrganize[] kbInvOrgs, KeybindInventoryRestock kbInvRestock
+			WhisperPlaySound whisperPlaySound, GameMessageFilter gameMessageFilter, KeybindInventoryOrganize[] kbInvOrgs, KeybindInventoryRestock kbInvRestock
 	){
 		InputEventHandler.getKeybindManager().registerKeybindProvider(new IKeybindProvider(){
 			@Override public void addKeysToMap(IKeybindManager manager){
@@ -57,10 +57,10 @@ final class KeyCallbacks{
 		});
 
 		if(!Main.mapArtFeaturesOnly){
-			KeybindAIETravelHelper kbAIE = new KeybindAIETravelHelper();
-			KeybindEjectJunk kbej = new KeybindEjectJunk();
-			KeybindEbounceTravelHelper kbEbounce = new KeybindEbounceTravelHelper(kbej);
-			KeybindHotbarTypeScroller kbHbScroll = new KeybindHotbarTypeScroller();
+			final KeybindAIETravelHelper kbAIE = new KeybindAIETravelHelper();
+			final KeybindEjectJunk kbej = new KeybindEjectJunk();
+			final KeybindEbounceTravelHelper kbEbounce = new KeybindEbounceTravelHelper(kbej);
+			final KeybindHotbarTypeScroller kbHbScroll = new KeybindHotbarTypeScroller();
 
 			// Value change callbacks
 			valueChangeCallback(Configs.Database.ADDRESS, ()->InitUtils.refreshRemoteServerSender(remoteSender));
@@ -131,10 +131,10 @@ final class KeyCallbacks{
 					()->MinecraftClient.getInstance().player.setAngles(Configs.Hotkeys.SNAP_ANGLE_2.getYaw(), Configs.Hotkeys.SNAP_ANGLE_2.getPitch()));
 		}
 
-		KeybindMapCopy kbMapCopy = new KeybindMapCopy();
-		KeybindMapLoad kbMapLoad = new KeybindMapLoad();
-		KeybindMapMove kbMapMove = new KeybindMapMove();
-		KeybindMapMoveBundle kbMapMoveBundle = new KeybindMapMoveBundle();
+		final KeybindMapCopy kbMapCopy = new KeybindMapCopy();
+		final KeybindMapLoad kbMapLoad = new KeybindMapLoad();
+		final KeybindMapMove kbMapMove = new KeybindMapMove();
+		final KeybindMapMoveBundle kbMapMoveBundle = new KeybindMapMoveBundle();
 
 		valueChangeCallback(Configs.Generic.CLICK_LIMIT_COUNT, InitUtils::refreshClickLimits);
 		valueChangeCallback(Configs.Generic.CLICK_LIMIT_WINDOW, InitUtils::refreshClickLimits);

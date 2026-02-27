@@ -16,7 +16,7 @@ final class Settings{
 	final boolean showNicheConfigs;
 	final boolean storeDataInInstanceFolder, database, epearlOwners;
 	final boolean placementHelperIframeAutoPlace, placementHelperMapArt, placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove;
-	final boolean serverJoinListener, serverQuitListener, gameMessageListener, gameMessageFilter;
+	final boolean serverJoinListener, serverQuitListener, gameMessageListener, gameMessageFilter, blockClickListener;
 	final boolean onTickInventory, onTickContainer, onTickIframes, containerOpenCloseListener, mapLoaderBot, broadcaster;
 	final boolean tooltipMapHighlights, tooltipMapMetadata, tooltipRepairCost;
 	final boolean cmdAssignPearl, cmdDeletedMapsNearby, cmdExportMapImg, cmdMapArtGroup, cmdMapHashCode, cmdSeen, cmdSendAs, cmdTimeOnline;
@@ -80,6 +80,7 @@ final class Settings{
 		mapLoaderBot = extractConfigValue(settings, "map_bot.loader");
 		serverJoinListener = extractConfigValue(settings, "listener.server_join");
 		serverQuitListener = extractConfigValue(settings, "listener.server_quit");
+		blockClickListener = extractConfigValue(settings, "listener.block_click");
 		gameMessageListener = extractConfigValue(settings, "listener.game_message.read");
 		gameMessageFilter = extractConfigValue(settings, "listener.game_message.filter");
 		tooltipMapHighlights = (onTickInventory || onTickIframes) && extractConfigValue(settings, "tooltip.map_highlights");

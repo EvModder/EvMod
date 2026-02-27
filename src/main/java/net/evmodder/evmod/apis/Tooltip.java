@@ -8,9 +8,6 @@ import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.Text;
 
 public interface Tooltip{
-	public abstract void get(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines);
-
-	public static void register(Tooltip tooltip){
-		ItemTooltipCallback.EVENT.register(tooltip::get);
-	}
+	public abstract void get(final ItemStack item, final TooltipContext context, final TooltipType type, final List<Text> lines);
+	public static void register(final Tooltip tooltip){ItemTooltipCallback.EVENT.register(tooltip::get);}
 }

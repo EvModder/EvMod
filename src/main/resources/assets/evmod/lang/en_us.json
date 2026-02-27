@@ -397,7 +397,7 @@
 	"evmod.config.database.name.saveIgnoreList": "saveIgnoreList*",
 	"evmod.config.database.comment.saveIgnoreList": "Save ignorelists to ./configs/evmod/ignores/",
 	"evmod.config.database.name.shareIgnoreList": "shareIgnoreList*",
-	"evmod.config.database.comment.shareIgnoreList": "Share your /ignorehard list with the database\n(requires saveIgnoreList=true)",
+	"evmod.config.database.comment.shareIgnoreList": "Share your /ignorehard list with the database",
 	"evmod.config.database.name.borrowIgnoreLists": "borrowIgnoreLists*",
 	"evmod.config.database.comment.borrowIgnoreLists": "Apply /ignorehard lists from other accounts.\nDoesn't affect your own list. Requires saveIgnoreList=true.\nIf database is unlinked, will only work for accounts on the same instance, i.e. alts.",
 	"evmod.config.database.name.shareJoinQuit": "shareJoinQuitMsgs*",

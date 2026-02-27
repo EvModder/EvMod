@@ -35,7 +35,7 @@ abstract class MixinClientPlayerInteractionManager{
 			return;
 		}
 		if(ClickUtils.addClick()){
-			if(Configs.Hotkeys.CRAFT_RESTOCK.getKeybind().isValid())
+			if(AccessorMain.getInstance().kbCraftRestock != null && Configs.Hotkeys.CRAFT_RESTOCK.getKeybind().isValid())
 				AccessorMain.getInstance().kbCraftRestock.checkIfCraftAction(player.currentScreenHandler, slot, button, action);
 		}
 		else{

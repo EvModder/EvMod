@@ -12,7 +12,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 public final class TooltipRepairCost implements Tooltip{
-	@Override public final void get(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
+	@Override public final void get(final ItemStack item, final TooltipContext _0, final TooltipType type, final List<Text> lines){
 		switch((OptionTooltipDisplay)Configs.Visuals.REPAIR_COST_TOOLTIP.getOptionListValue()){
 			case OFF: return;
 			case ADVANCED_TOOLTIPS: if(type == TooltipType.BASIC) return;
@@ -21,7 +21,6 @@ public final class TooltipRepairCost implements Tooltip{
 		final int rc = item.getComponents().get(DataComponentTypes.REPAIR_COST);
 		if(rc == 0 && !item.hasEnchantments() && !item.getComponents().contains(DataComponentTypes.STORED_ENCHANTMENTS)) return;
 		//lines.add(Text.literal("RepairCost: ").formatted(Formatting.GRAY).append(Text.literal(""+rc).formatted(Formatting.GOLD)));
-		Text last = lines.removeLast().copy().append(Text.literal(", rc:").formatted(Formatting.GRAY).append(Text.literal(""+rc).formatted(Formatting.GOLD)));
-		lines.add(last);
+		lines.add(lines.removeLast().copy().append(Text.literal(", rc:").formatted(Formatting.GRAY).append(Text.literal(""+rc).formatted(Formatting.GOLD))));
 	}
 }

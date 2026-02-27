@@ -325,8 +325,7 @@ public final class Configs implements IConfigHandler{
 				Main.mapArtFeaturesOnly ? "" : "A", KeybindSettings.PRESS_ALLOWEXTRA).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey EJECT_JUNK_ITEMS = new ConfigHotkey("ejectJunkItems",
 				Main.mapArtFeaturesOnly ? "" : "R", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
-		public static final ConfigHotkey CRAFT_RESTOCK = new ConfigHotkey("craftingRestock",
-				Main.mapArtFeaturesOnly ? "" : " ", KeybindSettings.GUI).apply(HOTKEYS_KEY);
+		public static final ConfigHotkey CRAFT_RESTOCK = new ConfigHotkey("craftingRestock", " ", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey HOTBAR_TYPE_INCR = new ConfigHotkey("hotbarSlotItemTypeIncrement", "").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey HOTBAR_TYPE_DECR = new ConfigHotkey("hotbarSlotItemTypeDecrement", "").apply(HOTKEYS_KEY);
 
