@@ -34,6 +34,7 @@ import net.evmodder.evmod.listeners.*;
 import net.evmodder.evmod.onTick.AutoPlaceItemFrames;
 import net.evmodder.evmod.onTick.ContainerOpenCloseListener;
 import net.evmodder.evmod.onTick.MapLoaderBot;
+import net.evmodder.evmod.onTick.SyncPlayerPos;
 import net.evmodder.evmod.onTick.TooltipMapLoreMetadata;
 import net.evmodder.evmod.onTick.TooltipMapNameColor;
 import net.evmodder.evmod.onTick.TooltipRepairCost;
@@ -157,6 +158,7 @@ public class Main{
 		if(settings.onTickContainer) TickListener.register(new UpdateContainerContents());
 		if(settings.containerOpenCloseListener) TickListener.register(new ContainerOpenCloseListener(kbInvRestock));
 		if(settings.mapLoaderBot) TickListener.register(new MapLoaderBot());
+		if(settings.playerMoveListener) TickListener.register(new SyncPlayerPos());
 
 		if(settings.tooltipMapHighlights) Tooltip.register(new TooltipMapNameColor());
 		if(settings.tooltipMapMetadata) Tooltip.register(new TooltipMapLoreMetadata());
