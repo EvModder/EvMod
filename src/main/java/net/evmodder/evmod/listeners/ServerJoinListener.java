@@ -22,23 +22,22 @@ public class ServerJoinListener{
 
 	public static long lastJoinTs; // TODO: remove horrible public static eww
 
-	private void loadMapStateCaches(MinecraftClient client){
+	private final void loadMapStateCaches(MinecraftClient client){
 		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.loadMapStatesById();
 		if(Configs.Generic.MAP_CACHE_BY_INV_POS.getBooleanValue())
 			MapStateCacher.loadMapStatesByPos(client.player.getInventory().main, MapStateCacher.BY_PLAYER_INV);
 	}
 
-	public ServerJoinListener(RemoteServerSender rms){
+	public ServerJoinListener(final RemoteServerSender rms){
 		ClientPlayConnectionEvents.JOIN.register(
 				//ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server
 				(handler, _1, _2) ->
 		{
 			lastJoinTs = System.currentTimeMillis();
 
-			final int currServerHashCode = MiscUtils.getServerAddressHashCode(handler.getServerInfo());
-			assert currServerHashCode == MiscUtils.getCurrentServerAddressHashCode();
+//			assert MiscUtils.getServerAddressHashCode(handler.getServerInfo()) == MiscUtils.getServerAddressHashCode();
 
-			MinecraftClient client = MinecraftClient.getInstance();
+			final MinecraftClient client = MinecraftClient.getInstance();
 
 			if(Configs.Generic.MAP_CACHE.getDefaultOptionListValue() != OptionMapStateCache.OFF){
 				if(invLoadTimer != null){invLoadTimer.cancel(); invLoadTimer = null;}

@@ -18,7 +18,7 @@ public class CommandTimeOnline{
 	private void tellTimeOnline(final FabricClientCommandSource source, final long lastJoinTs){
 		final long timeOnline = System.currentTimeMillis() - lastJoinTs;
 		source.sendFeedback(Text.literal("Time online: "+TextUtils_New.formatTime(timeOnline)));
-		if(MiscUtils.getCurrentServerAddressHashCode() == MiscUtils.HASHCODE_2B2T){
+		if(MiscUtils.getServerAddressHashCode() == MiscUtils.HASHCODE_2B2T){
 			final long timeLeft = 8l*60l*60l*1000l - timeOnline;
 			source.sendFeedback(Text.literal("Time left on 2b2t (assuming 8h limit): "+TextUtils_New.formatTime(timeLeft)));
 		}

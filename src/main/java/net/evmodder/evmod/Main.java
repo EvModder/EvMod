@@ -109,7 +109,7 @@ public class Main{
 
 		if(!settings.database) remoteSender = null;
 		else{
-			remoteSender = new RemoteServerSender(LOGGER, MiscUtils::getCurrentServerAddressHashCode);
+			remoteSender = new RemoteServerSender(LOGGER, MiscUtils::getServerAddressHashCode);
 			InitUtils.refreshRemoteServerSender(remoteSender); // Potentially using DUMMY_CLIENT_ID
 			InitUtils.checkValidClientKeyAndRequestIfNot(remoteSender, configs); // Request a real clientId if needed
 		}

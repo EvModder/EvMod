@@ -57,8 +57,7 @@ public final class RemoteServerSender{
 		final ByteBuffer bb1 = ByteBuffer.allocate(16+message.length);
 		bb1.putInt(CLIENT_ID);
 		bb1.putInt(command.ordinal());
-		final int addressCode = CURR_SERVER_HASHCODE.get();
-		bb1.putInt(addressCode);
+		bb1.putInt(CURR_SERVER_HASHCODE.get());
 		bb1.putInt((int)System.currentTimeMillis());//Truncate, since we assume ping < Integer.MAX anyway
 		bb1.put(message);
 		final byte[] encryptedMessage = PacketHelper.encrypt(bb1.array(), CLIENT_KEY);

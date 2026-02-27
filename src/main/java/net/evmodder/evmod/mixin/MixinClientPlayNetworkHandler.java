@@ -80,7 +80,7 @@ abstract class MixinClientPlayNetworkHandler{
 	}
 
 	@Inject(method="onMapUpdate", at=@At("TAIL"))
-	private final void updateSeenMaps(MapUpdateS2CPacket packet, CallbackInfo _ci){
+	private final void updateSeenMaps(final MapUpdateS2CPacket packet, final CallbackInfo _ci){
 		final MapState state = MinecraftClient.getInstance().world.getMapState(packet.mapId());
 		assert state != null && state.colors.length == 128*128;
 		final int id = packet.mapId().id();
