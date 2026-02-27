@@ -18,7 +18,7 @@ public final class PlayerPosIPC{
 	private static final int MAX_SLOTS = 64;
 	// UUID + serverHashCode + worldHashCode + x + y + z
 	public static final int DATA_SIZE = 16 + 8 + 8 + 8 + 4 + 4; //=48
-	// PID + TS + lock + data
+	// PID + TS + version + data
 	private static final int SLOT_SIZE = 8 + 8 + 8 + DATA_SIZE;
 	// Treat PID as "dead" if no update for > 15s
 	private static final long TIMEOUT_NS = 15_000l * 1000000l;
@@ -61,7 +61,7 @@ public final class PlayerPosIPC{
 			throw new ExceptionInInitializerError(e);
 		}
 		Runtime.getRuntime().addShutdownHook(new Thread(()->{
-			// Mark owner PID as -1 so others can take it immediately (rather than waiting for heartbeat)
+			// Mark as dead so others can take this slot immediately (rather than waiting for heartbeat)
 			final int base = mySlot*SLOT_SIZE;
 			if(buffer != null && myPID == (long)LONG_HANDLE.getVolatile(buffer, base)) freeSlot(myPID, base);
 		}));
@@ -73,8 +73,7 @@ public final class PlayerPosIPC{
 			for(int i=0; i<MAX_SLOTS; ++i){
 				final int base = i*SLOT_SIZE;
 				final long owner = (long)LONG_HANDLE.getVolatile(buffer, base);
-				final long lastHeartbeat = (long)LONG_HANDLE.getVolatile(buffer, base + TIME_OFFSET);
-				if(owner > 0l && now - lastHeartbeat < TIMEOUT_NS) continue;
+				if(owner > 0l && now - (long)LONG_HANDLE.getVolatile(buffer, base + TIME_OFFSET) < TIMEOUT_NS) continue;
 				LONG_HANDLE.setVolatile(buffer, base + TIME_OFFSET, now); // Update ts (reduces contention fighting for this slot)
 				if(LONG_HANDLE.compareAndSet(buffer, base, owner, myPID)) return i; // Nice, we snagged this slot!
 //				i=-1; // Another PID grabbed the slot before us; start again from i=0.
@@ -98,17 +97,21 @@ public final class PlayerPosIPC{
 	}
 
 	public final void readData(final Consumer<byte[]> consumer){
-		final long now = System.nanoTime();
+		final long now = System.nanoTime(), prevOwner;
 		for(int i=0; i<MAX_SLOTS; ++i){
 			final int base = i*SLOT_SIZE;
-			final long owner = (long)LONG_HANDLE.getVolatile(buffer, base);
+			final long owner = (long)LONG_HANDLE.getOpaque(buffer, base);
 			if(owner < 0l || owner == myPID) continue;
-			if(owner == 0l) return;
-			final long lastHeartbeat = (long)LONG_HANDLE.getVolatile(buffer, base + TIME_OFFSET);
-			if(now - lastHeartbeat > TIMEOUT_NS){freeSlot(owner, base); continue;}
+			if(owner == 0l){
+				// Attempt cleanup of trailing -1/-2 for the last slot before 0
+				if(i > 0 && (prevOwner=(long)LONG_HANDLE.getVolatile(buffer, base-SLOT_SIZE)) < 0l) freeSlot(prevOwner, base-SLOT_SIZE);
+				return;
+			}
+			if(now - (long)LONG_HANDLE.getVolatile(buffer, base + TIME_OFFSET) > TIMEOUT_NS){freeSlot(owner, base); continue;}
 //			while(((long)LONG_HANDLE.getAcquire(buffer, base + VERSION_OFFSET)&1) == 0) Thread.onSpinWait();
 			final long version = (long)LONG_HANDLE.getAcquire(buffer, base + VERSION_OFFSET);
 			if((version&1l) == 0l || version == lastReadVersions[i]) continue; // Skip busy or stale
+			VarHandle.fullFence();
 			buffer.get(base + DATA_OFFSET, data); // Read data
 			if(version == (long)LONG_HANDLE.getVolatile(buffer, base + VERSION_OFFSET)){ // Verify data wasn't altered mid-read
 				consumer.accept(data);
