@@ -17,7 +17,7 @@ import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
 import net.evmodder.evmod.onTick.AutoPlaceMapArt;
 import net.evmodder.evmod.onTick.AutoRemoveMapArt;
-import net.evmodder.evmod.onTick.UpdateInventoryHighlights;
+import net.evmodder.evmod.onTick.UpdateInventoryContents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.client.MinecraftClient;
@@ -40,7 +40,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.world.World;
 
-public final class MapHandRestock{
+public final class MapHangListener{
 	private final boolean JUST_PICK_A_MAP = true;
 	private final PosData2D POS_DATA_404 = new PosData2D(false, null, null);
 
@@ -486,7 +486,7 @@ public final class MapHandRestock{
 		waitingForRestock = true;
 		new Thread(){@Override public void run(){
 //			Main.LOGGER.info("MapRestock: waiting for currently placed map to load");
-			while(player != null && !player.isInCreativeMode() && UpdateInventoryHighlights.hasCurrentlyBeingPlacedMapArt()) Thread.yield();
+			while(player != null && !player.isInCreativeMode() && UpdateInventoryContents.hasCurrentlyBeingPlacedMapArt()) Thread.yield();
 			if(player == null){waitingForRestock = false; return;}
 
 //			Main.LOGGER.info("MapRestock: ok, sync client execution");
@@ -520,7 +520,7 @@ public final class MapHandRestock{
 		return slots.get(restockFromSlot);
 	}
 
-	public MapHandRestock(final boolean allowAutoPlacer, final boolean allowAutoRemover){
+	public MapHangListener(final boolean allowAutoPlacer, final boolean allowAutoRemover){
 		final AutoPlaceMapArt autoPlacer = allowAutoPlacer ? new AutoPlaceMapArt(
 				stack->tryToStockNextMap(stack, Hand.MAIN_HAND)) : null;
 		final AutoRemoveMapArt autoRemover = allowAutoRemover ? new AutoRemoveMapArt() : null;
@@ -585,7 +585,7 @@ public final class MapHandRestock{
 
 			final int shSlot = hand == Hand.MAIN_HAND ? player.getInventory().selectedSlot : 40;
 //			assert ItemStack.areEqual(player.getStackInHand(hand), player.getInventory().getStack(player.getInventory().selectedSlot));
-			UpdateInventoryHighlights.setCurrentlyBeingPlacedMapArt(stack, shSlot);
+			UpdateInventoryContents.setCurrentlyBeingPlacedMapArt(stack, shSlot);
 
 			if(allowAutoPlacer && autoPlacer.recalcLayout(player, ife, stack)
 //					&& autoPlacer.getNearestMapPlacement(player, /*allowOutsideReach=*/true, /*allowMapInHand=*/false) != null

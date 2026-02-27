@@ -14,13 +14,12 @@ final class Settings{
 	private final String internalSettingsFile = Main.mapArtFeaturesOnly ? "settings_for_mapart_ver.txt" : "settings.txt";
 
 	final boolean showNicheConfigs;
-	final boolean storeDataInInstanceFolder;
-	final boolean database, epearlOwners;
+	final boolean storeDataInInstanceFolder, database, epearlOwners;
 	final boolean placementHelperIframeAutoPlace, placementHelperMapArt, placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove;
-	final boolean mapLoaderBot, inventoryRestockAuto, broadcaster;
-	final boolean serverJoinListener, serverQuitListener, gameMessageListener, gameMessageFilter, containerOpenCloseListener;
+	final boolean serverJoinListener, serverQuitListener, gameMessageListener, gameMessageFilter;
+	final boolean onTickInventory, onTickContainer, onTickIframes, containerOpenCloseListener, mapLoaderBot, broadcaster;
+	final boolean tooltipMapHighlights, tooltipMapMetadata, tooltipRepairCost;
 	final boolean cmdAssignPearl, cmdDeletedMapsNearby, cmdExportMapImg, cmdMapArtGroup, cmdMapHashCode, cmdSeen, cmdSendAs, cmdTimeOnline;
-	final boolean mapHighlights, mapHighlightsInGUIs, tooltipMapHighlights, tooltipMapMetadata, tooltipRepairCost;
 
 
 	private final HashMap<String, Boolean> loadSettings(){
@@ -34,9 +33,17 @@ final class Settings{
 			}
 		}//==================================================
 
-		HashMap<String, Boolean> config = new HashMap<>();
-		final String configContents = FileIO.loadFile("settings.txt", getClass().getResourceAsStream("/assets/"+Main.MOD_ID+"/"+internalSettingsFile));
-		for(String line : configContents.split("\\r?\\n")){
+		final HashMap<String, Boolean> config = new HashMap<>();
+		String configContents = FileIO.loadFile("settings.txt", getClass().getResourceAsStream("/assets/"+Main.MOD_ID+"/"+internalSettingsFile));
+		{//==================================================
+			// TODO: remove these legacy-patches in a future version
+			if(configContents.contains("map_highlights:")){
+				Main.LOGGER.info("EvModConfig: Deleting unusable old settings.txt file (due to name changes; resetting to defaults)");
+				FileIO.deleteFile("settings.txt");
+				configContents = FileIO.loadFile("settings.txt", getClass().getResourceAsStream("/assets/"+Main.MOD_ID+"/"+internalSettingsFile));
+			}
+		}
+		for(final String line : configContents.split("\\r?\\n")){
 			final int sep = line.indexOf(':');
 			if(sep == -1) continue;
 			final String key = line.substring(0, sep).trim();
@@ -47,9 +54,9 @@ final class Settings{
 		return config;
 	}
 
-	private final boolean extractConfigValue(HashMap<String, Boolean> config, String key){
+	private final boolean extractConfigValue(final HashMap<String, Boolean> config, final String key){
 		final Boolean value = config.remove(key);
-		return value != null ? value : false;
+		return value != null && value;
 	}
 
 	Settings(){
@@ -63,7 +70,11 @@ final class Settings{
 		epearlOwners = extractConfigValue(settings, "epearl_owners");
 		broadcaster = extractConfigValue(settings, "broadcaster");
 		placementHelperIframeAutoPlace = extractConfigValue(settings, "placement_helper.iframe.autoplace");
-		placementHelperMapArt = extractConfigValue(settings, "placement_helper.mapart");
+		onTickInventory = extractConfigValue(settings, "on_tick.inventory");
+		onTickIframes = extractConfigValue(settings, "on_tick.iframes");
+		onTickContainer = extractConfigValue(settings, "on_tick.container");
+		containerOpenCloseListener = extractConfigValue(settings, "listener.container_open");
+		placementHelperMapArt = onTickInventory && extractConfigValue(settings, "placement_helper.mapart");
 		placementHelperMapArtAutoPlace = placementHelperMapArt && extractConfigValue(settings, "placement_helper.mapart.autoplace");
 		placementHelperMapArtAutoRemove = placementHelperMapArt && extractConfigValue(settings, "placement_helper.mapart.autoremove");
 		mapLoaderBot = extractConfigValue(settings, "map_bot.loader");
@@ -71,13 +82,9 @@ final class Settings{
 		serverQuitListener = extractConfigValue(settings, "listener.server_quit");
 		gameMessageListener = extractConfigValue(settings, "listener.game_message.read");
 		gameMessageFilter = extractConfigValue(settings, "listener.game_message.filter");
-		containerOpenCloseListener = extractConfigValue(settings, "listener.container_open");
-		mapHighlights = extractConfigValue(settings, "map_highlights");
-		mapHighlightsInGUIs = extractConfigValue(settings, "map_highlights.in_gui");
-		tooltipMapHighlights = mapHighlights && extractConfigValue(settings, "tooltip.map_highlights");
+		tooltipMapHighlights = (onTickInventory || onTickIframes) && extractConfigValue(settings, "tooltip.map_highlights");
 		tooltipMapMetadata = extractConfigValue(settings, "tooltip.map_metadata");
 		tooltipRepairCost = extractConfigValue(settings, "tooltip.repair_cost");
-		inventoryRestockAuto = containerOpenCloseListener && extractConfigValue(settings, "inventory_restock.auto");
 
 		cmdAssignPearl = epearlOwners && extractConfigValue(settings, "command.assignpearl");
 		cmdDeletedMapsNearby = extractConfigValue(settings, "command.deletedmapsnearby");

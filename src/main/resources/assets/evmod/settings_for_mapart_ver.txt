@@ -1,4 +1,4 @@
-# EvMod expanded feature settings
+# EvMod startup settings
 
 # What separates these from configs.json?
 # The settings controlled by this file either cannot be easily changed while the game is running, or doing so incurs a performance hit. Hence, they are here.
@@ -9,19 +9,20 @@ enable_non_mapart_features: false
 show_niche_config_settings: false
 store_data_in_instance_folder: true
 
+# Used for highlights, placement_helper, and new_map_notifier
+on_tick.inventory: true
+on_tick.iframes: true
+on_tick.container: true
+tooltip.map_highlights: true
+tooltip.map_metadata: true
+tooltip.repair_cost: true
+
 placement_helper.mapart: true
 placement_helper.mapart.autoplace: true
 placement_helper.mapart.autoremove: true
 placement_helper.iframe.autoplace: true
 
-map_highlights: true
-map_highlights.in_gui: true
-tooltip.map_highlights: true
-tooltip.map_metadata: true
-tooltip.repair_cost: true
-map_bot.loader: false
-
-# Used by map state cacher (if you don't use that, I recommend setting them to false)
+# Used by map state cacher
 listener.server_join: true
 listener.server_quit: true
 listener.container_open: true
@@ -29,13 +30,15 @@ listener.container_open: true
 # Used for tracking seen maps
 database: true
 
-# You likly don't want any of these, unless enable_non_mapart_features=true
+# Unneeded/unused, unless you set enable_non_mapart_features = true
 listener.game_message.read: false
 listener.game_message.filter: false
-inventory_restock.auto: false
+listener.player_move: false
+map_bot.loader: false
 broadcaster: false
 epearl_owners: false
 
+#
 command.deletedmapsnearby: false
 command.exportmapimg: true
 command.mapartgroup: true

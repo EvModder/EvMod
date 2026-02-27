@@ -28,24 +28,23 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
-public class AutoPlaceItemFrames{
+public final class AutoPlaceItemFrames{
 	private Block placeAgainstBlock;
 	private Item iFrameItem;
 	private Direction dir;
 	private int axis;
 
-	private double distFromPlane(BlockPos bp){
-		switch(dir){
-			case UP: case DOWN: return Math.abs(bp.getY() - axis);
-			case EAST: case WEST: return Math.abs(bp.getX() - axis);
-			case NORTH: case SOUTH: return Math.abs(bp.getZ() - axis);
-
-			default: assert(false) : "Unreachable"; return -1;
-		}
+	private final double distFromPlane(BlockPos bp){
+		return switch(dir){
+			case UP, DOWN -> Math.abs(bp.getY() - axis);
+			case EAST, WEST -> Math.abs(bp.getX() - axis);
+			case NORTH, SOUTH -> Math.abs(bp.getZ() - axis);
+			default -> {assert(false) : "Unreachable"; yield -1;}
+		};
 	}
 
-	private Vec3d getPlaceAgainstSurface(BlockPos wallBp){
-		Vec3d center = wallBp.toCenterPos();
+	private final Vec3d getPlaceAgainstSurface(BlockPos wallBp){
+		final Vec3d center = wallBp.toCenterPos();
 		switch(dir){
 			case UP: return center.add(0, .5, 0);
 			case DOWN: return center.add(0, -.5, 0);
@@ -58,15 +57,15 @@ public class AutoPlaceItemFrames{
 		}
 	}
 
-	private boolean isValidIframePlacement(BlockPos bp, World world, List<ItemFrameEntity> existingIfes){
+	private final boolean isValidIframePlacement(BlockPos bp, World world, List<ItemFrameEntity> existingIfes){
 		if(distFromPlane(bp) != 0) return false;
 //		Main.LOGGER.info("iFramePlacer: wall block is on the plane");
-		BlockState bs = world.getBlockState(bp);
+		final BlockState bs = world.getBlockState(bp);
 		if(Configs.Generic.IFRAME_AUTO_PLACER_MUST_MATCH_BLOCK.getBooleanValue() && bs.getBlock() != placeAgainstBlock) return false;
 //		Main.LOGGER.info("iFramePlacer: wall block matches placeAgainstBlock");
 
-		BlockPos ifeBp = bp.offset(dir);
-		BlockState ifeBs = world.getBlockState(ifeBp);
+		final BlockPos ifeBp = bp.offset(dir);
+		final BlockState ifeBs = world.getBlockState(ifeBp);
 		if(ifeBs.isFullCube(world, ifeBp)) return false;
 		if(ifeBs.isSolidBlock(world, ifeBp)) return false; // iFrame cannot be placed inside a solid block
 //		Main.LOGGER.info("iFramePlacer: ife spot is non-solid");
@@ -79,7 +78,7 @@ public class AutoPlaceItemFrames{
 		return true;
 	}
 
-	private boolean isMovingTooFast(Vec3d velocity){
+	private final boolean isMovingTooFast(Vec3d velocity){
 		double xzLengthSq = velocity.x*velocity.x + velocity.z*velocity.z;
 		return xzLengthSq > 0.0001 || Math.abs(velocity.y) > 0.08;
 	}

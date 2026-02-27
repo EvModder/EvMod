@@ -1,4 +1,4 @@
-# EvMod expanded feature settings
+# EvMod startup settings
 
 # What separates these from configs.json?
 # The settings controlled by this file either cannot be easily changed while the game is running, or doing so incurs a performance hit. Hence, they are here.
@@ -9,32 +9,34 @@ enable_non_mapart_features: true
 show_niche_config_settings: false
 store_data_in_instance_folder: true
 
-placement_helper.mapart: true #(registers: onTick() + listener.entityInteractEvent)
-placement_helper.mapart.autoplace: true #(registers: onTick() + listener.entityAttackEvent)
-placement_helper.mapart.autoremove: true #(registers: onTick() + listener.entityAttackEvent)
-placement_helper.iframe.autoplace: true #(registers: onTick())
+#
+on_tick.inventory: true  # registers: onTick(), allows: map_highlights.inventory, placement_helper.mapart
+on_tick.iframes: true  # registers: onTick(), allows: map_highlights.iframes, new_map_notifier, soft: CmdExportMapImg (IframeUpdates)
+on_tick.container: true  # registers: onTick(), allows: map_highlights.container
+tooltip.map_highlights: true  # registers: tooltip
+tooltip.map_metadata: true  # registers: tooltip
+tooltip.repair_cost: true  # registers: tooltip
 
-map_highlights: true
-map_highlights.in_gui: true
-tooltip.map_highlights: true
-tooltip.map_metadata: true
-tooltip.repair_cost: true
-map_bot.loader: true
+placement_helper.mapart: true  # registers: onTick(), listener.entityInteractEvent, allows: mapart.autoplace, mapart.autoremove
+placement_helper.mapart.autoplace: true  # registers: onTick(), listener.entityAttackEvent
+placement_helper.mapart.autoremove: true  # registers: onTick(), listener.entityAttackEvent
+placement_helper.iframe.autoplace: true  # registers: onTick()
 
 #
-listener.server_join: true  # depends: mapstate_cache.inv, send_on_srvr_join
-listener.server_quit: true  # depends: mapstate_cache.inv, log_logout_coords
-listener.container_open: true  # depends: inventory_restock.auto, mapstate_cache.echest
+listener.server_join: true  # allows: map_cache.inv, send_on_srvr_join
+listener.server_quit: true  # allows: map_cache.inv, log_logout_coords
+listener.container_open: true  # registers: onTick(), allows: inventory_restock.auto, map_cache.echest
 
 #
 database: true
 
 #
-listener.game_message.read: true  # depends: share_ignores, whisper_sound, whisper_pearl_pull
-listener.game_message.filter: true  # depends: borrow_ignores
-inventory_restock.auto: false
-broadcaster: false
-epearl_owners: true  # depends: uuid/xz, softdepends: database
+listener.game_message.read: true  # registers: listener, allows: share_ignores, whisper_sound, whisper_pearl_pull
+listener.game_message.filter: true  # registers: listener, allows: borrow_ignores
+listener.player_move: true  # registers: onTick(), allows: player_pos_sync
+map_bot.loader: true  # registers: onTick()
+broadcaster: false  # registers: onTimer()
+epearl_owners: true  # registers: onTick(), listener.chunkLoad, listener.chunkUnload, allows: uuid/xz
 
 command.assignpearl: true
 command.deletedmapsnearby: false

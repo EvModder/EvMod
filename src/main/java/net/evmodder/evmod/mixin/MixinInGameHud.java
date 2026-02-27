@@ -2,7 +2,7 @@ package net.evmodder.evmod.mixin;
 
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapGroupUtils;
-import net.evmodder.evmod.onTick.UpdateItemFrameHighlights;
+import net.evmodder.evmod.onTick.UpdateItemFrameContents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.InGameHud;
 import net.minecraft.component.DataComponentTypes;
@@ -36,7 +36,7 @@ abstract class MixinInGameHud{
 					if(!state.locked) text = text.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue()));
 				}
 				else if(state != null && !state.locked) text = text.withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue());
-				else if(state != null && UpdateItemFrameHighlights.isInItemFrame(MapGroupUtils.getIdForMapState(state)))
+				else if(state != null && UpdateItemFrameContents.isInItemFrame(MapGroupUtils.getIdForMapState(state)))
 					text = text.withColor(Configs.Visuals.MAP_COLOR_IN_IFRAME.getIntegerValue());
 				else if(currentStack.getCustomName() == null) text = text.withColor(Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue());
 			}

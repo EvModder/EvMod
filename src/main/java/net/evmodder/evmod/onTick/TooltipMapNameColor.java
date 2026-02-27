@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.function.Predicate;
 import net.minecraft.item.Item.TooltipContext;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.InvUtils;
@@ -23,13 +22,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 
 public final class TooltipMapNameColor implements Tooltip{
-	private static final boolean mixedOnDisplayAndNotOnDisplay(List<UUID> nonFillerIds){
-		return nonFillerIds.stream().anyMatch(UpdateItemFrameHighlights::isInItemFrame)
-				&& nonFillerIds.stream().anyMatch(Predicate.not(UpdateItemFrameHighlights::isInItemFrame));
-		//Equivalent to:
-//		return nonFillerIds.stream().map(ItemFrameHighlightUpdater::isInItemFrame).distinct().count() > 1;
-	}
-
 	private static final HashMap<ItemStack, List<Text>> tooltipCache = new HashMap<>();
 	private static int lastHash;
 
@@ -43,7 +35,7 @@ public final class TooltipMapNameColor implements Tooltip{
 		final int MAP_COLOR_IN_IFRAME = Configs.Visuals.MAP_COLOR_IN_IFRAME.getIntegerValue();
 		final int MAP_COLOR_UNNAMED = Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue();
 
-		final int currHash = UpdateInventoryHighlights.getMapInInvHash() + UpdateContainerHighlights.mapsInContainerHash;
+		final int currHash = UpdateInventoryContents.getMapsInInvHash() + UpdateContainerContents.getMapsInContainerHash();
 		if(lastHash != currHash){
 			lastHash = currHash;
 			tooltipCache.clear();
@@ -64,16 +56,16 @@ public final class TooltipMapNameColor implements Tooltip{
 					states.stream()).map(MapGroupUtils::getIdForMapState).toList();
 
 			List<Integer> asterisks = new ArrayList<>(4);
-			if(colorIds.stream().anyMatch(UpdateInventoryHighlights::isInInventory)) asterisks.add(MAP_COLOR_IN_INV);
+			if(colorIds.stream().anyMatch(UpdateInventoryContents::isInInventory)) asterisks.add(MAP_COLOR_IN_INV);
 			if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(MAP_COLOR_NOT_IN_GROUP);
 			if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(MAP_COLOR_UNLOCKED);
-			if(unskippedIds.stream().anyMatch(UpdateContainerHighlights::hasDuplicateInContainer)) asterisks.add(MAP_COLOR_MULTI_CONTAINER);
+			if(unskippedIds.stream().anyMatch(UpdateContainerContents::hasDuplicateInContainer)) asterisks.add(MAP_COLOR_MULTI_CONTAINER);
 			if(mapItems.size() > states.size() + (!Configs.Generic.SKIP_NULL_MAPS.getBooleanValue() ? 0
 					: mapItems.stream().filter(stack -> MapGroupUtils.nullMapIds.contains(stack.get(DataComponentTypes.MAP_ID).id())).count()
 			)){
 				asterisks.add(MAP_COLOR_UNLOADED);
 			}
-			else if(mixedOnDisplayAndNotOnDisplay(unskippedIds)) asterisks.add(MAP_COLOR_IN_IFRAME);
+			else if(UpdateItemFrameContents.mixedOnDisplayAndNotOnDisplay(unskippedIds)) asterisks.add(MAP_COLOR_IN_IFRAME);
 			if(mapItems.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(MAP_COLOR_UNNAMED);
 
 			if(!asterisks.isEmpty()){
@@ -100,11 +92,11 @@ public final class TooltipMapNameColor implements Tooltip{
 						MapColorUtils.FULLY_TRANSPARENT_COLORS_ID.equals(colorsId)/*MapColorUtils.isFullyTransparent(state.colors)*/ :
 				false;
 		List<Integer> asterisks = new ArrayList<>();
-		if(UpdateContainerHighlights.isInInvAndContainer(colorsId)) asterisks.add(MAP_COLOR_IN_INV);
+		if(UpdateContainerContents.isInInvAndContainer(colorsId)) asterisks.add(MAP_COLOR_IN_INV);
 		if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)) asterisks.add(MAP_COLOR_NOT_IN_GROUP);
 		if(!state.locked) asterisks.add(MAP_COLOR_UNLOCKED);
-		if(UpdateItemFrameHighlights.isInItemFrame(colorsId)) asterisks.add(MAP_COLOR_IN_IFRAME);
-		if(UpdateContainerHighlights.hasDuplicateInContainer(colorsId) && !isSkipped) asterisks.add(MAP_COLOR_MULTI_CONTAINER);
+		if(UpdateItemFrameContents.isInItemFrame(colorsId)) asterisks.add(MAP_COLOR_IN_IFRAME);
+		if(UpdateContainerContents.hasDuplicateInContainer(colorsId) && !isSkipped) asterisks.add(MAP_COLOR_MULTI_CONTAINER);
 		if(asterisks.isEmpty()){
 			if(item.getCustomName() == null) lines.addFirst(lines.removeFirst().copy().withColor(MAP_COLOR_UNNAMED));
 			tooltipCache.put(item, lines);

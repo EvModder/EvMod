@@ -4,10 +4,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Predicate;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.NewMapNotifier;
+import net.evmodder.evmod.apis.TickListener;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
@@ -18,23 +20,22 @@ import net.minecraft.item.map.MapState;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 
-public class UpdateItemFrameHighlights{
-	private record XYZD(int x, int y, int z, int d){}
+public final class UpdateItemFrameContents implements TickListener{
+	private record XYZD(int x, int y, int z, int d, int w){}
 	private static final HashMap<XYZD, UUID> hangLocsReverse = new HashMap<>(); // XYZD -> colorsId
 	private static final HashMap<UUID, HashSet<XYZD>> iFrameMapGroup = new HashMap<>(); // colorsId -> {HangLocs}
-	private static int numLoadedIfes;
+	private static int lastGroupInvHash, numLoadedIfes;
 
-	private static Vec3d clientRotationNormalized; // Accessor: MixinItemFrameRenderer, cached for performance
-	private static final HashMap<ItemFrameEntity, Boolean> hasLabelCache = new HashMap<>(); // Accessor: MixinItemFrameRenderer
-	private static final HashMap<ItemFrameEntity, Text> displayNameCache = new HashMap<>(); // Accessor: MixinItemFrameRenderer
+	public enum Highlight{INV_OR_NESTED_INV, NOT_IN_CURR_GROUP, MULTI_HUNG, UNLOCKED_OR_UNNAMED}; // Accessor: MixinItemFrameRenderer
+	private static final HashMap<Integer, Highlight> highlightedIFrames = new HashMap<>(); // Accessor: MixinItemFrameRenderer
+	private static final HashMap<Integer, Boolean> hasLabelCache = new HashMap<>(); // Accessor: MixinItemFrameRenderer
+	private static final HashMap<Integer, Text> displayNameCache = new HashMap<>(); // Accessor: MixinItemFrameRenderer
 
+	private static Vec3d clientRotationNormalized; // Accessor: MixinItemFrameRenderer (cached/calculated here for performance)
 	public static long lastIFrameMapGroupUpdateTs; // Only accessor: CommandExportMapImg::getNearbyMapNames
 
-	public enum Highlight{INV_OR_NESTED_INV, NOT_IN_CURR_GROUP, MULTI_HUNG, UNLOCKED_OR_UNNAMED};
-	private static final HashMap<Integer, Highlight> highlightedIFrames = new HashMap<>();
-
-	public static final boolean isHungMultiplePlaces(UUID colorsId){
-		final var l = iFrameMapGroup.get(colorsId);
+	public static final boolean isHungMultiplePlaces(final UUID colorsId){
+		final HashSet<XYZD> l = iFrameMapGroup.get(colorsId);
 //		if(l != null && Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ > 0){
 //			l.removeIf(xyzd -> MinecraftClient.getInstance().player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ);
 //			if(l.size() == 0) iFrameMapGroup.remove(colorsId);
@@ -43,21 +44,24 @@ public class UpdateItemFrameHighlights{
 	}
 
 	public static final boolean isInItemFrame(final UUID colorsId){
-		final var l = iFrameMapGroup.get(colorsId);
+		final HashSet<XYZD> l = iFrameMapGroup.get(colorsId);
 //		if(l != null && Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ > 0){
 //			l.removeIf(xyzd -> MinecraftClient.getInstance().player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ);
 //			if(l.size() == 0) iFrameMapGroup.remove(colorsId);
 //		}
 		return l != null && l.size() > 0;
 	}
-
-	public static final Highlight iFrameGetHighlight(int entityId){
-		return highlightedIFrames.get(entityId);
+	public static final boolean mixedOnDisplayAndNotOnDisplay(final List<UUID> colorIds){
+		return !iFrameMapGroup.isEmpty()
+				&& colorIds.stream().anyMatch(UpdateItemFrameContents::isInItemFrame)
+				&& colorIds.stream().anyMatch(Predicate.not(UpdateItemFrameContents::isInItemFrame));
+		// Equivalent, but worse performance:
+//		return nonFillerIds.stream().map(ItemFrameHighlightUpdater::isInItemFrame).distinct().count() > 1;
 	}
 
 	private static final boolean scanIFrameContents(final List<ItemFrameEntity> ifes, final double trackingDistSq, final Vec3d centerPos){
 		boolean anyMapGroupUpdate = false;
-		for(ItemFrameEntity ife : ifes){
+		for(final ItemFrameEntity ife : ifes){
 			final ItemStack stack = ife.getHeldItemStack();
 			assert stack != null;
 			final MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
@@ -69,7 +73,7 @@ public class UpdateItemFrameHighlights{
 				else MapGroupUtils.nullMapIds.remove(mapId.id());
 			}
 			final UUID colorsId = state == null ? null : MapGroupUtils.getIdForMapState(state);
-			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal());
+			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal(), ife.getWorld().hashCode());
 			final UUID oldColorsIdForXYZD = colorsId != null ? hangLocsReverse.put(xyzd, colorsId) : hangLocsReverse.remove(xyzd);
 			if(colorsId != null){
 				if(trackingDistSq == 0 || centerPos.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) <= trackingDistSq){
@@ -89,9 +93,9 @@ public class UpdateItemFrameHighlights{
 	}
 	private static final boolean updateIframeHighlights(final List<ItemFrameEntity> ifes){
 		boolean anyHighlightUpdate = false;
-		for(ItemFrameEntity ife : ifes){
-			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal());
-			UUID colorsId = hangLocsReverse.get(xyzd);
+		for(final ItemFrameEntity ife : ifes){
+			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal(), ife.getWorld().hashCode());
+			final UUID colorsId = hangLocsReverse.get(xyzd);
 			if(colorsId == null) continue;
 
 			final ItemStack stack = ife.getHeldItemStack();
@@ -99,7 +103,8 @@ public class UpdateItemFrameHighlights{
 			if(state == null) continue; // Can happen in creative worlds!
 
 			final Highlight highlight;
-			if(UpdateInventoryHighlights.isInInventory(colorsId) || UpdateInventoryHighlights.isNestedInInventory(colorsId)) highlight = Highlight.INV_OR_NESTED_INV;
+			if(UpdateInventoryContents.isInInventory(colorsId) || UpdateInventoryContents.isNestedInInventory(colorsId))
+				highlight = Highlight.INV_OR_NESTED_INV;
 			else if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)){
 				highlight = Highlight.NOT_IN_CURR_GROUP;
 				if(Configs.Generic.NEW_MAP_NOTIFIER_IFRAME.getBooleanValue()) NewMapNotifier.call(ife, colorsId);
@@ -114,10 +119,10 @@ public class UpdateItemFrameHighlights{
 		}
 		return anyHighlightUpdate;
 	}
-	private static int lastGroupInvHash;
-	public static final void onTickStart(MinecraftClient client){
+
+	@Override public final void onTickStart(final MinecraftClient client){
 		if(client.world == null) return;
-		Vec3d newClientRot = client.player.getRotationVec(1.0F).normalize();
+		final Vec3d newClientRot = client.player.getRotationVec(1.0F).normalize();
 		if(!newClientRot.equals(clientRotationNormalized) || MiscUtils.hasMoved(client.player)){
 			clientRotationNormalized = newClientRot;
 			hasLabelCache.clear(); // Depends on client looking direction
@@ -130,7 +135,7 @@ public class UpdateItemFrameHighlights{
 //		client.world.getEntitiesByClass(ItemFrameEntity.class, client.player.getBoundingBox().expand(200, 200, 200), _0->true)
 //					.forEach(ife -> updateItemFrameEntity(client, ife));
 
-		List<ItemFrameEntity> ifes = client.world.getEntitiesByClass(ItemFrameEntity.class, client.player.getBoundingBox().expand(200, 200, 200), _0->true);
+		final List<ItemFrameEntity> ifes = client.world.getEntitiesByClass(ItemFrameEntity.class, client.player.getBoundingBox().expand(200, 200, 200), _0->true);
 
 		final double TRACKING_DIST_SQ = Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ;
 		final Vec3d playerPos = /*TRACKING_DIST_SQ == 0 ? null : */client.player.getPos();
@@ -138,8 +143,8 @@ public class UpdateItemFrameHighlights{
 		if(TRACKING_DIST_SQ > 0 && (ifes.size() != numLoadedIfes || TRACKING_DIST_SQ < 32)){
 			// Untrack maps which have gone out of range for iFrameMapGroup (for isInIFrame, isMultiHung)
 //			iFrameMapGroup.entrySet().removeIf(e -> {
-			for(var it = iFrameMapGroup.entrySet().iterator(); it.hasNext();) {
-				var e = it.next();
+			for(final var it = iFrameMapGroup.entrySet().iterator(); it.hasNext();) {
+				final var e = it.next();
 				anyMapGroupUpdate |= e.getValue().removeIf(xyzd -> client.player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > TRACKING_DIST_SQ);
 				if(e.getValue().isEmpty()) it.remove();
 			}
@@ -148,7 +153,7 @@ public class UpdateItemFrameHighlights{
 		// Updates iFrameMapGroup, highlightedIFrames, hangLocsReverse, & anyTrackedIFrameUpdate
 		anyMapGroupUpdate |= scanIFrameContents(ifes,TRACKING_DIST_SQ, playerPos);
 
-		final int currGroupInvHash = MapGroupUtils.getCurrentGroupHash() + UpdateInventoryHighlights.getMapInInvHash();
+		final int currGroupInvHash = MapGroupUtils.getCurrentGroupHash() + UpdateInventoryContents.getMapsInInvHash();
 		try{
 			if(anyMapGroupUpdate) lastIFrameMapGroupUpdateTs = System.currentTimeMillis();
 			else if(currGroupInvHash == lastGroupInvHash) return;

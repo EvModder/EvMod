@@ -44,7 +44,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 
-public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
+public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 	private final int MANUAL_CLICK_WAIT_TIMEOUT = 60;
 	private final Pattern pOfSize = Pattern.compile("^\\s*(?:of|/)\\s*(\\d+).*$");
 
@@ -899,7 +899,7 @@ public class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 		// Sadly this doesn't work after the last manual map, since UseEntityCallback.EVENT isn't triggered by AutoMapArtPlace for some reason.
 		// And yeah, I tried setting it manually, but since the code can't guarantee a map gets placed, it can get it stuck.
-		if(!player.isInCreativeMode() && UpdateInventoryHighlights.hasCurrentlyBeingPlacedMapArt() && ++ticksWaitingForManualClick <= MANUAL_CLICK_WAIT_TIMEOUT){
+		if(!player.isInCreativeMode() && UpdateInventoryContents.hasCurrentlyBeingPlacedMapArt() && ++ticksWaitingForManualClick <= MANUAL_CLICK_WAIT_TIMEOUT){
 			if(extraInfoLogs || ticksWaitingForManualClick == MANUAL_CLICK_WAIT_TIMEOUT)
 				Main.LOGGER.info("AutoPlaceMapArt: waiting for last manually-placed mapart to vanish from mainhand ("+ticksWaitingForManualClick+"ticks)");
 			return;

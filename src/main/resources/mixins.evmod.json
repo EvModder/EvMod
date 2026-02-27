@@ -5,7 +5,7 @@
 	"mixins": [
 		"AccessorMain", // Used by MixinClientPlayNetworkHandler, MixinEntityRenderer, MixinClientPlayerInteractionManager
 		"AccessorMapGroupUtils", // Used by MixinClientPlayNetworkHandler
-		"AccessorUpdateItemFrameHighlights", // Used by MixinItemFrameRenderer
+		"AccessorUpdateItemFrameContents", // Used by MixinItemFrameRenderer
 
 		// Minecraft mixins:
 		"AccessorAnvilScreen",

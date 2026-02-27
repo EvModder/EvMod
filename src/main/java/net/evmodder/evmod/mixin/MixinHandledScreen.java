@@ -2,7 +2,7 @@ package net.evmodder.evmod.mixin;
 
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapColorUtils;
-import net.evmodder.evmod.onTick.UpdateContainerHighlights;
+import net.evmodder.evmod.onTick.UpdateContainerContents;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -34,8 +34,8 @@ abstract class MixinHandledScreen<T extends ScreenHandler> extends Screen{
 
 	@Inject(method="drawForeground", at=@At("TAIL"))
 	private final void replaceScreenTitleForCurrentContainer(DrawContext context, int _mouseX, int _mouseY, CallbackInfo _ci){
-		if(UpdateContainerHighlights.customTitle == null) return;
-		context.drawText(textRenderer, UpdateContainerHighlights.customTitle, titleX, titleY, 4210752, false);
+		if(UpdateContainerContents.customTitle == null) return;
+		context.drawText(textRenderer, UpdateContainerContents.customTitle, titleX, titleY, 4210752, false);
 	}
 
 	// Credit to Enderkill for the idea:

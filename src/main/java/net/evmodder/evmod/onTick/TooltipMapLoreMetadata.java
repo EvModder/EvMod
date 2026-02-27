@@ -20,28 +20,22 @@ import net.minecraft.util.Formatting;
 
 public final class TooltipMapLoreMetadata implements Tooltip{
 	private final String paletteSymbol(MapColorUtils.Palette palette){
-		return //StringUtils.capitalize(
-				palette.name().toLowerCase().replace('_', '-');
-				//);
-//		switch(palette){
-//			case CARPET:
-//				return "carpet";
-//			case EMPTY:
-//				return "void";
-//			case FULLBLOCK:
-//				return "full";
-//			case PISTON_CLEAR:
-//				return "piston";
-//			default:
-//				break;
-//		}
+		return palette.name().toLowerCase().replace('_', '-');
+//		return StringUtils.capitalize(palette.name().toLowerCase().replace('_', '-'));
+//		return switch(palette){
+//			case CARPET -> "carpet";
+//			case EMPTY -> "void";
+//			case FULLBLOCK -> "full";
+//			case PISTON_CLEAR -> "piston";
+//			default -> null;
+//		};
 	}
 
 	private static final HashMap<ItemStack, List<Text>> tooltipCache = new HashMap<>();
 	private static int lastHash;
 
 	@Override public final void get(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
-		int currHash = UpdateInventoryHighlights.getMapInInvHash() + UpdateContainerHighlights.mapsInContainerHash;
+		final int currHash = UpdateInventoryContents.getMapsInInvHash() + UpdateContainerContents.getMapsInContainerHash();
 		if(lastHash != currHash){lastHash = currHash; tooltipCache.clear();}
 		List<Text> cachedLines = tooltipCache.get(item);
 		if(cachedLines != null){lines.clear(); lines.addAll(cachedLines); return;}

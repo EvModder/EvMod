@@ -12,14 +12,15 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.EpearlActivator;
 import net.evmodder.evmod.apis.EpearlLookupFabric;
 import net.evmodder.evmod.apis.RemoteServerSender;
+import net.evmodder.evmod.apis.WhisperPlaySound;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.text.Text;
 import net.minecraft.text.TextCodecs;
 
-public class GameMessageListener{
-	private void saveMyIgnores(UUID myUUID, UUID ignoredUUID, boolean ignored){
+public final class GameMessageListener{
+	private final void saveMyIgnores(UUID myUUID, UUID ignoredUUID, boolean ignored){
 		if(Configs.Database.SAVE_IGNORES.getBooleanValue()){
 			Main.LOGGER.info("Writing "+(ignored?"":"un")+"ignore update to local file cache");
 			final String filename = "ignores/"+myUUID+".cache";
@@ -32,7 +33,7 @@ public class GameMessageListener{
 		}
 	}
 
-	private void updateIgnoreState(final RemoteServerSender rms, final String name, final boolean ignored){
+	private final void updateIgnoreState(final RemoteServerSender rms, final String name, final boolean ignored){
 		Main.LOGGER.info("Ignore update: "+name+"="+ignored);
 		MinecraftClient client = MinecraftClient.getInstance();
 		PlayerListEntry ple = client.getNetworkHandler().getPlayerListEntry(name);

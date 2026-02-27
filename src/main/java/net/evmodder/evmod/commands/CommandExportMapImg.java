@@ -33,7 +33,7 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.InvUtils;
 import net.evmodder.evmod.apis.MapRelationUtils;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
-import net.evmodder.evmod.onTick.UpdateItemFrameHighlights;
+import net.evmodder.evmod.onTick.UpdateItemFrameContents;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -629,7 +629,7 @@ public final class CommandExportMapImg{
 	private final HashMap<String, String> cmdMapNames = new HashMap<>();
 	private long lastNameComputeTs;
 	private final Set<String> getNearbyMapNames(final ClientPlayerEntity player){
-		if(!cmdMapNames.isEmpty() && lastNameComputeTs >= UpdateItemFrameHighlights.lastIFrameMapGroupUpdateTs) return cmdMapNames.keySet();
+		if(!cmdMapNames.isEmpty() && lastNameComputeTs >= UpdateItemFrameContents.lastIFrameMapGroupUpdateTs) return cmdMapNames.keySet();
 		lastNameComputeTs = System.currentTimeMillis();
 		cmdMapNames.clear();
 

@@ -7,6 +7,7 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.InvUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
+import net.evmodder.evmod.apis.TickListener;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.MapIdComponent;
@@ -18,28 +19,23 @@ import net.minecraft.item.map.MapState;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.world.World;
 
-public class UpdateInventoryHighlights{
+public final class UpdateInventoryContents implements TickListener{
 	private static HashSet<UUID> inventoryMapGroup = new HashSet<>(), nestedInventoryMapGroup = new HashSet<>();
 	private static ItemStack currentlyBeingPlacedIntoItemFrame;
 	private static int slotUsedForCurrentlyBeingPlacedItem;
-//	private static int itemsInInvHash;
 	private static int mapsInInvHash;
+//	private static int itemsInInvHash;
 
-	public static final int getMapInInvHash(){return mapsInInvHash;}
+	public static final int getMapsInInvHash(){return mapsInInvHash;}
+	public static final boolean isInInventory(final UUID colorsUUID){return inventoryMapGroup.contains(colorsUUID);}
+	public static final boolean isNestedInInventory(final UUID colorsUUID){return nestedInventoryMapGroup.contains(colorsUUID);}
 
-	public static final boolean isInInventory(/*final int id, */final UUID colorsUUID){
-		return inventoryMapGroup.contains(colorsUUID);
-	}
-	public static final boolean isNestedInInventory(final UUID colorsUUID){
-		return nestedInventoryMapGroup.contains(colorsUUID);
-	}
-
-	public static final void setCurrentlyBeingPlacedMapArt(ItemStack stack, int slot){ // Accessor: MapHandRestock
+	public static final boolean hasCurrentlyBeingPlacedMapArt(){return currentlyBeingPlacedIntoItemFrame != null;}
+	public static final void setCurrentlyBeingPlacedMapArt(final ItemStack stack, final int slot){ // Accessor: MapHangListener
 		assert ItemStack.areEqual(MinecraftClient.getInstance().player.getInventory().getStack(slot), stack);
 		currentlyBeingPlacedIntoItemFrame = stack.copy();
 		slotUsedForCurrentlyBeingPlacedItem = slot;
 	}
-	public static final boolean hasCurrentlyBeingPlacedMapArt(){return currentlyBeingPlacedIntoItemFrame != null;}
 
 	private static final boolean addMapStateIds(final ItemStack stack, final World world){
 		if(stack.isEmpty()) return false;
@@ -67,13 +63,14 @@ public class UpdateInventoryHighlights{
 				.map(s -> FilledMapItem.getMapState(s, world)).filter(Objects::nonNull)
 				.map(MapGroupUtils::getIdForMapState).toList());
 	}
-	public static final void onTickStart(PlayerEntity player){
+	@Override public final void onTickStart(final MinecraftClient client){
+		final PlayerEntity player = client.player;
 		if(player == null || player.getWorld() == null || !player.isAlive()) return;
 
 		{
 			// Constantly force-refresh mapstate-colorsId cache for held unlocked maps
 			// Might deserve its own onTick listener tbh
-			MapState state = FilledMapItem.getMapState(player.getMainHandStack(), player.getWorld());
+			final MapState state = FilledMapItem.getMapState(player.getMainHandStack(), player.getWorld());
 			if(state != null && !state.locked) MapGroupUtils.getIdForMapState(state, /*evict*/true);
 		}
 		{

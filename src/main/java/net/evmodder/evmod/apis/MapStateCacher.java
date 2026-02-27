@@ -14,7 +14,7 @@ import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.config.OptionMapStateCache;
-import net.evmodder.evmod.listeners.ContainerClickListener;
+import net.evmodder.evmod.listeners.BlockClickListener;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.component.DataComponentTypes;
@@ -111,7 +111,7 @@ public class MapStateCacher{
 			case BY_PLAYER_EC:
 				return bySlot == null ? null : (subCache=bySlot.get(server)) == null ? null : subCache.get(getIdForPlayer(false));
 			case BY_CONTAINER:
-				return bySlot == null ? null : (subCache=bySlot.get(server)) == null ? null : subCache.get(ContainerClickListener.lastClickedBlockHash);
+				return bySlot == null ? null : (subCache=bySlot.get(server)) == null ? null : subCache.get(BlockClickListener.lastClickedBlockHash);
 			default:
 				throw new RuntimeException("MapStateCacher: Unknown cache type in getInMemCacheSpecific()! "+cache);
 		}
@@ -192,7 +192,7 @@ public class MapStateCacher{
 		switch(cache){
 			case BY_PLAYER_INV: key = getIdForPlayer(true); break;
 			case BY_PLAYER_EC: key = getIdForPlayer(false); break;
-			case BY_CONTAINER: key = ContainerClickListener.lastClickedBlockHash; break;
+			case BY_CONTAINER: key = BlockClickListener.lastClickedBlockHash; break;
 			default: throw new RuntimeException("MapStateCacher: Unknown cache type in saveMapStatesByPos()! "+cache);
 		}
 		if(!deleteCache) bySlotPerServer.put(key, serialStates);
@@ -231,7 +231,7 @@ public class MapStateCacher{
 					switch(cache){
 						case BY_PLAYER_INV: key = getIdForPlayer(true); break;
 						case BY_PLAYER_EC: key = getIdForPlayer(false); break;
-						case BY_CONTAINER: key = ContainerClickListener.lastClickedBlockHash; break;
+						case BY_CONTAINER: key = BlockClickListener.lastClickedBlockHash; break;
 						default: throw new RuntimeException("MapStateCacher: Unreachable in commonCacheLoad()!");
 					}
 					return bySlot.get(server).get(key);

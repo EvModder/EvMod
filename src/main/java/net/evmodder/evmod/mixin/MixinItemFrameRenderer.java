@@ -10,8 +10,8 @@ import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.config.OptionInvisIframes;
-import net.evmodder.evmod.onTick.UpdateItemFrameHighlights;
-import net.evmodder.evmod.onTick.UpdateItemFrameHighlights.Highlight;
+import net.evmodder.evmod.onTick.UpdateItemFrameContents;
+import net.evmodder.evmod.onTick.UpdateItemFrameContents.Highlight;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.ItemFrameEntityRenderer;
@@ -30,10 +30,10 @@ import net.minecraft.util.math.Vec3d;
 abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 	private final MinecraftClient client = MinecraftClient.getInstance();
 
-	private final boolean isSemiTransparent(MapState state){
+	private final boolean isSemiTransparent(final MapState state){
 		return state != null && state.colors != null && MapColorUtils.isSemiTransparent(state.colors);
 	}
-	private final boolean shouldBeInvis(ItemFrameEntityRenderState ifers){
+	private final boolean shouldBeInvis(final ItemFrameEntityRenderState ifers){
 		switch((OptionInvisIframes)Configs.Visuals.INVIS_IFRAMES.getOptionListValue()){
 			case ANY_ITEM: return !ifers.itemRenderState.isEmpty();
 			case MAPART: return ifers.mapId != null;
@@ -44,14 +44,14 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		}
 	}
 
-	private static final boolean isLookingInGeneralDirection(Entity entity){ // Accessor: MixinItemFrameRenderer
+	private static final boolean isLookingInGeneralDirection(final Entity entity){ // Accessor: MixinItemFrameRenderer
 //		Entity player = MinecraftClient.getInstance().player;
 //		Vec3d vec3d2 = new Vec3d(entity.getX() - player.getX(), entity.getEyeY() - player.getEyeY(), entity.getZ() - player.getZ());
 		// maybe use entity.getCenterPos() instead?
 		Vec3d vec3d2 = entity.getEyePos().subtract(MinecraftClient.getInstance().player.getEyePos());
 		double d = vec3d2.length(); // Calls Math.sqrt()
 		vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d); // normalize
-		double e = AccessorUpdateItemFrameHighlights.clientRotationNormalized().dotProduct(vec3d2);
+		double e = AccessorUpdateItemFrameContents.clientRotationNormalized().dotProduct(vec3d2);
 //		final double asdf = player.squaredDistanceTo(entity) > 5*5 ? 0.3d : 0.1d;
 		final double asdf = vec3d2.lengthSquared() > 5*5 ? 0.3d : 0.1d;
 		return e > 1.0d - asdf / d;
@@ -72,10 +72,10 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(stack.isEmpty()) return;
 		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
 		if(state == null) return;
-		final Highlight hl = UpdateItemFrameHighlights.iFrameGetHighlight(itemFrameEntity.getId());
+		final Highlight hl = AccessorUpdateItemFrameContents.highlightedIFrames().get(itemFrameEntity.getId());
 		if(hl == null) return;
 
-		final Boolean hasLabel = AccessorUpdateItemFrameHighlights.hasLabelCache().get(itemFrameEntity);
+		final Boolean hasLabel = AccessorUpdateItemFrameContents.hasLabelCache().get(itemFrameEntity.getId());
 		if(hasLabel != null){cir.setReturnValue(hasLabel); return;}
 
 		if(hl == Highlight.MULTI_HUNG && Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue() && MapColorUtils.isMonoColor(state.colors)){
@@ -100,10 +100,10 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		else if(squaredDistanceToCamera <= 400d/*20*20*/ && client.player.canSee(itemFrameEntity)){ // Show other labels only if LOS and dist <= 20
 			cir.setReturnValue(true);
 		}
-		AccessorUpdateItemFrameHighlights.hasLabelCache().put(itemFrameEntity, cir.getReturnValue());
+		AccessorUpdateItemFrameContents.hasLabelCache().put(itemFrameEntity.getId(), cir.getReturnValue());
 	}
 
-	private final boolean isMultiHung(MapState state){return UpdateItemFrameHighlights.isHungMultiplePlaces(MapGroupUtils.getIdForMapState(state));}
+	private final boolean isMultiHung(MapState state){return UpdateItemFrameContents.isHungMultiplePlaces(MapGroupUtils.getIdForMapState(state));}
 
 	@Inject(method="getDisplayName", at=@At("INVOKE"), cancellable = true)
 	public void getDisplayName_Mixin(T itemFrameEntity, CallbackInfoReturnable<Text> cir){
@@ -112,10 +112,10 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		if(stack == null || stack.isEmpty());
 		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getWorld());
 		if(state == null) return;
-		final Highlight hl = UpdateItemFrameHighlights.iFrameGetHighlight(itemFrameEntity.getId());
+		final Highlight hl = AccessorUpdateItemFrameContents.highlightedIFrames().get(itemFrameEntity.getId());
 		if(hl == null) return;
 
-		final Text cachedName = AccessorUpdateItemFrameHighlights.displayNameCache().get(itemFrameEntity);
+		final Text cachedName = AccessorUpdateItemFrameContents.displayNameCache().get(itemFrameEntity.getId());
 		if(cachedName != null){cir.setReturnValue(cachedName); return;}
 
 		if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue() && stack.getCustomName() != null)
@@ -145,10 +145,10 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 			else name.withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue());
 		}
 		else{
-			AccessorUpdateItemFrameHighlights.displayNameCache().put(itemFrameEntity, stack.getName());
+			AccessorUpdateItemFrameContents.displayNameCache().put(itemFrameEntity.getId(), stack.getName());
 			return;
 		}
-		AccessorUpdateItemFrameHighlights.displayNameCache().put(itemFrameEntity, name);
+		AccessorUpdateItemFrameContents.displayNameCache().put(itemFrameEntity.getId(), name);
 		cir.setReturnValue(name);
 	}
 }

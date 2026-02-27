@@ -34,23 +34,23 @@ public final class EpearlLookupFabric extends EpearlLookup{
 	@Override protected boolean enableKeyXZ(){return Configs.Database.EPEARL_OWNERS_BY_XZ.getBooleanValue();}
 	@Override protected boolean enableRemoteDbUUID(){return enableKeyUUID() && Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue();}
 	@Override protected boolean enableRemoteDbXZ(){return enableKeyXZ() && Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue();}
-	public boolean isDisabled(){return !enableKeyUUID() && !enableKeyXZ();} // Only accessor: MixinEntityRenderer
+	public final boolean isDisabled(){return !enableKeyUUID() && !enableKeyXZ();} // Only accessor: MixinEntityRenderer
 
 	private final double DIST_XZ = 64, DIST_Y = 128; // Max dist for which to track/remove pearls
 	private final double DIST_XZ_SQ = DIST_XZ*DIST_XZ, DIST_Y_SQ = DIST_Y*DIST_Y;
-	private boolean isWithinDist(PlayerEntity player, PearlDataClient pdc){
+	private final boolean isWithinDist(final PlayerEntity player, final PearlDataClient pdc){
 		final double dx = pdc.x()-player.getBlockX(), dy = pdc.y()-player.getBlockY(), dz = pdc.z()-player.getBlockZ();
 		return dx*dx + dz*dz < DIST_XZ_SQ && dy*dy < DIST_Y_SQ;
 	}
 
-	private final UUID toKeyXZ(Entity epearl){
+	private final UUID toKeyXZ(final Entity epearl){
 		return new UUID(Double.doubleToRawLongBits(epearl.getX()), Double.doubleToRawLongBits(epearl.getZ()));
 	}
-	private final ChunkPos toChunkPos(PearlDataClient pdc){
+	private final ChunkPos toChunkPos(final PearlDataClient pdc){
 		return new ChunkPos(pdc.x()<<4, pdc.z()<<4);
 	}
 
-	public EpearlLookupFabric(RemoteServerSender rms){
+	public EpearlLookupFabric(final RemoteServerSender rms){
 		super(rms, Main.LOGGER);
 		ClientChunkEvents.CHUNK_LOAD.register((phase, listener)->{
 			if(isDisabled()) return;
@@ -72,7 +72,7 @@ public final class EpearlLookupFabric extends EpearlLookup{
 		});
 
 		TickListener.register(new TickListener(){
-			@Override public void onTickStart(MinecraftClient client){
+			@Override public void onTickStart(final MinecraftClient client){
 				if(isDisabled()) return;
 				synchronized(recentlyLoadedChunks){
 					if(client == null || client.player == null || world != client.world || client.world == null){

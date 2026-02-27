@@ -4,10 +4,10 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 
 public interface TickListener{
-	public default void onTickStart(MinecraftClient client){}
-	public default void onTickEnd(MinecraftClient client){}
+	public default void onTickStart(final MinecraftClient client){}
+	public default void onTickEnd(final MinecraftClient client){}
 
-	public static void register(TickListener tickListener){
+	public static void register(final TickListener tickListener){
 		try{
 			if(!tickListener.getClass().getMethod("onTickStart", MinecraftClient.class).getDeclaringClass().equals(TickListener.class))
 				ClientTickEvents.START_CLIENT_TICK.register(tickListener::onTickStart);

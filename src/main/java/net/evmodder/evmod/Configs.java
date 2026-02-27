@@ -134,9 +134,9 @@ public final class Configs implements IConfigHandler{
 
 			if(settings.cmdMapArtGroup){
 				configs.addAll(List.of(MAPART_GROUP_DEFAULT, MAPART_GROUP_UNLOCKED_HANDLING));
-				if(settings.mapHighlights) configs.add(NEW_MAP_NOTIFIER_IFRAME);
+				if(settings.onTickIframes) configs.add(NEW_MAP_NOTIFIER_IFRAME);
 			}
-			if(settings.mapHighlights) configs.add(MAX_IFRAME_TRACKING_DIST);
+			if(settings.onTickIframes) configs.add(MAX_IFRAME_TRACKING_DIST);
 			if(settings.placementHelperIframeAutoPlace){
 				configs.addAll(List.of(IFRAME_AUTO_PLACER, IFRAME_AUTO_PLACER_MUST_CONNECT, IFRAME_AUTO_PLACER_MUST_MATCH_BLOCK));
 				if(settings.showNicheConfigs) configs.addAll(List.of(IFRAME_AUTO_PLACER_REACH, IFRAME_AUTO_PLACER_RAYCAST, IFRAME_AUTO_PLACER_ROTATE_PLAYER));
@@ -163,17 +163,15 @@ public final class Configs implements IConfigHandler{
 				MAPART_AUTOREMOVE.setBooleanValue(false);
 			}
 			if(settings.mapLoaderBot) configs.add(MAPART_SUPPRESS_BOT);
-//			if(settings.keybindMapArtMove || settings.keybindMapArtMoveBundle)
-				configs.addAll(List.of(SKIP_NULL_MAPS, SKIP_VOID_MAPS));
-			if(settings.mapHighlights) configs.add(SKIP_MONO_COLOR_MAPS);
-	
+			configs.addAll(List.of(SKIP_NULL_MAPS, SKIP_VOID_MAPS, SKIP_MONO_COLOR_MAPS));
+
 			if(settings.gameMessageListener) configs.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PLAY_SOUND_UNFOCUSED, WHISPER_PEARL_PULL));
 			if(!Main.mapArtFeaturesOnly){
 				configs.add(SCROLL_ORDER);
 				if(settings.serverJoinListener) configs.add(SEND_ON_SERVER_JOIN);
 				if(settings.serverQuitListener) configs.add(LOG_COORDS_ON_SERVER_QUIT);
 			}
-			if(settings.inventoryRestockAuto) configs.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
+			if(settings.containerOpenCloseListener) configs.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
 			if(settings.broadcaster) configs.addAll(List.of(TEMP_BROADCAST_ACCOUNT, TEMP_BROADCAST_TIMESTAMP, TEMP_BROADCAST_MSGS));
 			if(settings.showNicheConfigs) configs.add(DISABLE_DRAG_CLICK_ON_MAPS_AND_BUNDLES);
 			return configs;
@@ -247,11 +245,11 @@ public final class Configs implements IConfigHandler{
 				if(settings.tooltipRepairCost) configs.add(REPAIR_COST_TOOLTIP);
 			}
 			configs.add(INVIS_IFRAMES);
-			if(settings.mapHighlights){
-				configs.add(MAP_HIGHLIGHT_IFRAME);
+			if(settings.tooltipMapHighlights || settings.onTickIframes/* || settings.hotbarHudMixin*/){
+				if(settings.onTickIframes) configs.add(MAP_HIGHLIGHT_IFRAME);
+				if(settings.onTickContainer) configs.add(MAP_HIGHLIGHT_CONTAINER_NAME);
 				if(settings.tooltipMapHighlights) configs.add(MAP_HIGHLIGHT_TOOLTIP);
 				configs.add(MAP_HIGHLIGHT_HOTBAR_HUD);
-				if(settings.mapHighlightsInGUIs) configs.add(MAP_HIGHLIGHT_CONTAINER_NAME);
 				configs.addAll(List.of(
 					MAP_COLOR_IN_INV, MAP_COLOR_NOT_IN_GROUP, MAP_COLOR_UNLOCKED,
 					MAP_COLOR_UNLOADED, MAP_COLOR_UNNAMED, MAP_COLOR_IN_IFRAME,

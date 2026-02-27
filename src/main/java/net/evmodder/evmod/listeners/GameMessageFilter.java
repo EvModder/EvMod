@@ -20,25 +20,20 @@ import net.evmodder.evmod.apis.RemoteServerSender;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.text.Text;
 
-public class GameMessageFilter{
+public final class GameMessageFilter{
 	// TODO: limit reply size from server (to 1024 ids?), and allow bundling borrowLists into 1 request (limit to 8 ids?)
-	private HashMap<UUID, Integer> borrowedIgnoreList = new HashMap<>(0);
+	private final HashMap<UUID, Integer> borrowedIgnoreList = new HashMap<>(0);
 	private final RemoteServerSender remoteSender;
 	private int currentServer;
 
-	private void incrIgnore(UUID u){
-		Integer i = borrowedIgnoreList.get(u);
-		if(i == null) borrowedIgnoreList.put(u, 1);
-		else ++i;
+	private final void incrIgnore(final UUID u){
+		borrowedIgnoreList.merge(u, 1, Integer::sum);
 	}
-	private void decrIgnore(UUID u){
-		Integer i = borrowedIgnoreList.get(u);
-		if(i == null) Main.LOGGER.warn("MsgFilter: Unignoring already-unignored player! "+MojangProfileLookup.nameOrUUID(u));
-		assert i > 0;
-		if(--i == 0) borrowedIgnoreList.remove(u);
+	private final void decrIgnore(final UUID u){
+		borrowedIgnoreList.computeIfPresent(u, (_0, v) -> v == 1 ? null : v-1);
 	}
 
-	public void fetchIgnoreList(UUID uuid){
+	public final void fetchIgnoreList(final UUID uuid){
 		MojangProfileLookup.prefetchName(uuid);
 
 		long lastFetchTs = 0;
@@ -50,7 +45,7 @@ public class GameMessageFilter{
 		catch(IOException e){e.printStackTrace(); lastFetchTs = 0;}
 
 		@SuppressWarnings("unchecked")
-		HashSet<UUID> ignoreList = lastFetchTs <= 0 ? new HashSet<UUID>() : (HashSet<UUID>)FileIO.readObject("ignores/"+uuid+".cache");
+		final HashSet<UUID> ignoreList = lastFetchTs <= 0 ? new HashSet<UUID>() : (HashSet<UUID>)FileIO.readObject("ignores/"+uuid+".cache");
 
 		if(remoteSender == null){
 			ignoreList.forEach(this::incrIgnore);
@@ -73,7 +68,7 @@ public class GameMessageFilter{
 			final ByteBuffer bb = ByteBuffer.wrap(reply);
 			if(ignoreList.isEmpty()) for(int i=0; i<reply.length/16; ++i) ignoreList.add(new UUID(bb.getLong(), bb.getLong()));
 			else for(int i=0; i<reply.length/16; ++i){
-				UUID u = new UUID(bb.getLong(), bb.getLong());
+				final UUID u = new UUID(bb.getLong(), bb.getLong());
 				if(!ignoreList.remove(u)){
 					ignoreList.add(u); // Basically, toggle if set contains ignored uuid
 					incrIgnore(u);
@@ -87,7 +82,7 @@ public class GameMessageFilter{
 		});
 	}
 
-	public void recomputeIgnoreLists(){
+	public final void recomputeIgnoreLists(){
 		Main.LOGGER.info("MsgFilter: Recomputing borrowed ignorelists");
 
 		for(UUID uuid : Configs.Database.BORROW_IGNORES.getUUIDs()){
@@ -96,14 +91,14 @@ public class GameMessageFilter{
 		}
 	}
 
-	private UUID determineSender(Text text){
+	private final UUID determineSender(final Text text){
 		final String str = text.getString();
 		if(!str.matches("<\\w+> .*")) return null;
 		final String name = str.substring(1, str.indexOf('>'));
 		return MojangProfileLookup.uuidLookup.get(name, null);
 	}
 
-	public GameMessageFilter(RemoteServerSender rms){
+	public GameMessageFilter(final RemoteServerSender rms){
 		remoteSender = rms;
 //		ClientReceiveMessageEvents.ALLOW_CHAT.register((msg, signedMessage, sender, params, ts) -> {
 //			final int onServer = MiscUtils.getCurrentServerAddressHashCode();

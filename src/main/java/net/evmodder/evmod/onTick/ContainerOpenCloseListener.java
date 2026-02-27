@@ -1,4 +1,4 @@
-package net.evmodder.evmod.listeners;
+package net.evmodder.evmod.onTick;
 
 import java.util.HashSet;
 import java.util.List;
@@ -9,6 +9,7 @@ import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.apis.TickListener;
 import net.evmodder.evmod.config.OptionMapStateCache;
 import net.evmodder.evmod.keybinds.KeybindInventoryRestock;
+import net.evmodder.evmod.listeners.BlockClickListener;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.Items;
@@ -19,19 +20,18 @@ import net.minecraft.text.Text;
 
 public final class ContainerOpenCloseListener implements TickListener{
 	private final KeybindInventoryRestock kbInvRestock;
-	public ContainerOpenCloseListener(KeybindInventoryRestock kbInvRestock){this.kbInvRestock = kbInvRestock;}
+	public ContainerOpenCloseListener(final KeybindInventoryRestock kbInvRestock){this.kbInvRestock = kbInvRestock;}
 
 	private int syncId;
 	private boolean waitingForEcToLoad, currentlyViewingEchest, currentlyViewingContainer;
-//	private List<ItemStack> contents; // null until echest is opened
-	List<Slot> slots;
+	private List<Slot> slots;
 
 	public static boolean echestCacheLoaded; // TODO: remove horrible public static vars
 	public static HashSet<UUID> containerCachesLoaded = new HashSet<>();
 
-	@Override public final void onTickEnd(MinecraftClient client){
+	@Override public final void onTickEnd(final MinecraftClient client){
 		if(client.player == null) return;
-		ScreenHandler sh = client.player.currentScreenHandler;
+		final ScreenHandler sh = client.player.currentScreenHandler;
 		final int newSyncId = sh == null ? 0 : sh.syncId;
 		if(newSyncId == syncId){
 			if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
@@ -61,7 +61,7 @@ public final class ContainerOpenCloseListener implements TickListener{
 					waitingForEcToLoad = true;
 				}
 				else{
-					if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue() && containerCachesLoaded.add(ContainerClickListener.lastClickedBlockHash)){
+					if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue() && containerCachesLoaded.add(BlockClickListener.lastClickedBlockHash)){
 						MapStateCacher.loadMapStatesByPos(sh.getStacks(), MapStateCacher.BY_CONTAINER);
 					}
 					if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) sh.getStacks().stream()

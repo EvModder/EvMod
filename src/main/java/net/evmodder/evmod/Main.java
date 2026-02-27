@@ -25,19 +25,21 @@ import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.evmodder.evmod.apis.TickListener;
 import net.evmodder.evmod.apis.Tooltip;
+import net.evmodder.evmod.apis.WhisperPlaySound;
 import net.evmodder.evmod.commands.*;
 import net.evmodder.evmod.keybinds.KeybindCraftingRestock;
 import net.evmodder.evmod.keybinds.KeybindInventoryOrganize;
 import net.evmodder.evmod.keybinds.KeybindInventoryRestock;
 import net.evmodder.evmod.listeners.*;
 import net.evmodder.evmod.onTick.AutoPlaceItemFrames;
+import net.evmodder.evmod.onTick.ContainerOpenCloseListener;
 import net.evmodder.evmod.onTick.MapLoaderBot;
 import net.evmodder.evmod.onTick.TooltipMapLoreMetadata;
 import net.evmodder.evmod.onTick.TooltipMapNameColor;
 import net.evmodder.evmod.onTick.TooltipRepairCost;
-import net.evmodder.evmod.onTick.UpdateContainerHighlights;
-import net.evmodder.evmod.onTick.UpdateInventoryHighlights;
-import net.evmodder.evmod.onTick.UpdateItemFrameHighlights;
+import net.evmodder.evmod.onTick.UpdateContainerContents;
+import net.evmodder.evmod.onTick.UpdateInventoryContents;
+import net.evmodder.evmod.onTick.UpdateItemFrameContents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.client.MinecraftClient;
@@ -131,12 +133,12 @@ public class Main{
 		final KeybindInventoryRestock kbInvRestock = kbInvOrgs == null ? null : new KeybindInventoryRestock(kbInvOrgs);
 		if(settings.containerOpenCloseListener){
 			TickListener.register(new ContainerOpenCloseListener(kbInvRestock));
-			ContainerClickListener.register();
+			BlockClickListener.register();
 		}
 		kbCraftRestock = new KeybindCraftingRestock();
 
 		if(settings.placementHelperIframeAutoPlace) new AutoPlaceItemFrames();
-		if(settings.placementHelperMapArt) new MapHandRestock(settings.placementHelperMapArtAutoPlace, settings.placementHelperMapArtAutoRemove);
+		if(settings.placementHelperMapArt) new MapHangListener(settings.placementHelperMapArtAutoPlace, settings.placementHelperMapArtAutoRemove);
 		if(settings.broadcaster) ChatBroadcaster.refreshBroadcast();
 
 		if(settings.cmdAssignPearl) new CommandAssignPearl(epearlLookup);
@@ -148,15 +150,10 @@ public class Main{
 		if(settings.cmdSendAs) new CommandSendAs(remoteSender);
 		if(settings.cmdTimeOnline) new CommandTimeOnline(remoteSender);
 
-		if(settings.mapHighlights){
-			TickListener.register(new TickListener(){
-				@Override public void onTickStart(MinecraftClient client){
-					UpdateInventoryHighlights.onTickStart(client.player);
-					UpdateItemFrameHighlights.onTickStart(client);
-					if(settings.mapHighlightsInGUIs) UpdateContainerHighlights.onTickStart(client);
-				}
-			});
-		}
+		if(settings.onTickInventory) TickListener.register(new UpdateInventoryContents());
+		if(settings.onTickIframes) TickListener.register(new UpdateItemFrameContents());
+		if(settings.onTickContainer) TickListener.register(new UpdateContainerContents());
+
 		if(settings.tooltipMapHighlights) Tooltip.register(new TooltipMapNameColor());
 		if(settings.tooltipMapMetadata) Tooltip.register(new TooltipMapLoreMetadata());
 		if(settings.tooltipRepairCost) Tooltip.register(new TooltipRepairCost());

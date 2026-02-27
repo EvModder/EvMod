@@ -19,7 +19,7 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
-public class AutoRemoveMapArt/* extends MapLayoutFinder*/{
+public final class AutoRemoveMapArt/* extends MapLayoutFinder*/{
 	private Direction dir; // non-null implies autoremover is active
 	private World world;
 	private int constAxis;
