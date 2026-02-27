@@ -9,6 +9,7 @@ import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.function.Consumer;
+import net.evmodder.evmod.Main;
 
 public final class PlayerPosIPC{
 	private static final class Holder{private static final PlayerPosIPC INSTANCE = new PlayerPosIPC();}
@@ -16,10 +17,12 @@ public final class PlayerPosIPC{
 
 	// Hopefully nobody is running more than this many Minecraft accounts on 1 device...
 	private static final int MAX_SLOTS = 64;
-	// UUID + serverHashCode + worldHashCode + x + y + z
-	public static final int DATA_SIZE = 16 + 8 + 8 + 8 + 4 + 4; //=48
 	// PID + TS + version + data
-	private static final int SLOT_SIZE = 8 + 8 + 8 + DATA_SIZE;
+	public static final int METADATA_SIZE = 8 + 8 + 8; //=24
+	// UUID + serverHashCode + worldHashCode + x + y + z + yaw + pitch + headYaw + velX + velY + velZ + pose (+ health?)
+	public static final int DATA_SIZE = 16 + 4 + 4 + 8 + 8 + 8 + 4 + 4 + 4 + 8 + 8 + 8 + 4; //=92
+	public static final int CPU_CACHE_LINE_SIZE = 128;
+	private static final int SLOT_SIZE = Math.ceilDiv(METADATA_SIZE + DATA_SIZE, CPU_CACHE_LINE_SIZE) * CPU_CACHE_LINE_SIZE;
 	// Treat PID as "dead" if no update for > 15s
 	private static final long TIMEOUT_NS = 15_000l * 1000000l;
 
@@ -75,7 +78,10 @@ public final class PlayerPosIPC{
 				final long owner = (long)LONG_HANDLE.getVolatile(buffer, base);
 				if(owner > 0l && now - (long)LONG_HANDLE.getVolatile(buffer, base + TIME_OFFSET) < TIMEOUT_NS) continue;
 				LONG_HANDLE.setVolatile(buffer, base + TIME_OFFSET, now); // Update ts (reduces contention fighting for this slot)
-				if(LONG_HANDLE.compareAndSet(buffer, base, owner, myPID)) return i; // Nice, we snagged this slot!
+				if(LONG_HANDLE.compareAndSet(buffer, base, owner, myPID)){
+					Main.LOGGER.info("[EvMod] Claimed IPC slot "+i);
+					return i; // Nice, we snagged this slot!
+				}
 //				i=-1; // Another PID grabbed the slot before us; start again from i=0.
 			}
 		}

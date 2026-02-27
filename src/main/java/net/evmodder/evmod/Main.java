@@ -96,6 +96,7 @@ public class Main{
 	public final RemoteServerSender remoteSender; // MixinClientPlayNetworkHandler
 	public final EpearlLookupFabric epearlLookup; // MixinEntityRenderer
 	public final KeybindCraftingRestock kbCraftRestock; // MixinClientPlayerInteractionManager
+	public final SyncPlayerPos syncPlayerPos; // ClientPlayNetworkHandler
 
 	Main(){
 		Main.LOGGER.info("Loading "+MOD_NAME+" "+MOD_VERSION);
@@ -124,7 +125,9 @@ public class Main{
 		final GameMessageFilter gameMessageFilter;
 		final KeybindInventoryOrganize[] kbInvOrgs;
 		final KeybindInventoryRestock kbInvRestock;
-		if(mapArtFeaturesOnly){whisperPlaySound = null; gameMessageFilter = null; kbInvOrgs = null; kbInvRestock = null; kbCraftRestock = null;}
+		if(mapArtFeaturesOnly){
+			whisperPlaySound = null; gameMessageFilter = null; kbInvOrgs = null; kbInvRestock = null; kbCraftRestock = null; syncPlayerPos = null;
+		}
 		else{
 			whisperPlaySound = new WhisperPlaySound();
 			if(settings.gameMessageListener) new GameMessageListener(remoteSender, epearlLookup, whisperPlaySound);
@@ -139,6 +142,8 @@ public class Main{
 
 			if(settings.broadcaster) ChatBroadcaster.refreshBroadcast();
 			if(settings.tooltipRepairCost) Tooltip.register(new TooltipRepairCost());
+			if(settings.playerMoveListener) TickListener.register(syncPlayerPos = new SyncPlayerPos());
+			else syncPlayerPos = null;
 		}
 
 		if(settings.placementHelperIframeAutoPlace) new AutoPlaceItemFrames();
@@ -158,7 +163,6 @@ public class Main{
 		if(settings.onTickContainer) TickListener.register(new UpdateContainerContents());
 		if(settings.containerOpenCloseListener) TickListener.register(new ContainerOpenCloseListener(kbInvRestock));
 		if(settings.mapLoaderBot) TickListener.register(new MapLoaderBot());
-		if(settings.playerMoveListener) TickListener.register(new SyncPlayerPos());
 
 		if(settings.tooltipMapHighlights) Tooltip.register(new TooltipMapNameColor());
 		if(settings.tooltipMapMetadata) Tooltip.register(new TooltipMapLoreMetadata());

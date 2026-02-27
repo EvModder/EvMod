@@ -34,7 +34,7 @@ database: true
 #
 listener.game_message.read: true  # registers: listener, allows: share_ignores, whisper_sound, whisper_pearl_pull
 listener.game_message.filter: true  # registers: listener, allows: borrow_ignores
-listener.player_move: true  # registers: onTick(), listener.worldRender, allows: player_pos_sync
+listener.player_move: true  # registers: onTick(), listener.worldTick, listener.disconnect, allows: player_pos_sync
 map_bot.loader: true  # registers: onTick()
 broadcaster: false  # registers: onTimer()
 epearl_owners: true  # registers: onTick(), listener.chunkLoad, listener.chunkUnload, allows: uuid/xz

@@ -37,7 +37,7 @@ final class Settings{
 		String configContents = FileIO.loadFile("settings.txt", getClass().getResourceAsStream("/assets/"+Main.MOD_ID+"/"+internalSettingsFile));
 		{//==================================================
 			// TODO: remove these legacy-patches in a future version
-			if(configContents.contains("map_highlights:")){
+			if(configContents.contains("map_highlights.in_gui:")){
 				Main.LOGGER.info("EvModConfig: Deleting unusable old settings.txt file (due to name changes; resetting to defaults)");
 				FileIO.deleteFile("settings.txt");
 				configContents = FileIO.loadFile("settings.txt", getClass().getResourceAsStream("/assets/"+Main.MOD_ID+"/"+internalSettingsFile));
@@ -81,7 +81,7 @@ final class Settings{
 		playerMoveListener = extractConfigValue(settings, "listener.player_move");
 		serverJoinListener = extractConfigValue(settings, "listener.server_join");
 		serverQuitListener = extractConfigValue(settings, "listener.server_quit");
-		blockClickListener = extractConfigValue(settings, "listener.block_click");
+		blockClickListener = extractConfigValue(settings, "listener.click_block");
 		gameMessageListener = extractConfigValue(settings, "listener.game_message.read");
 		gameMessageFilter = extractConfigValue(settings, "listener.game_message.filter");
 		tooltipMapHighlights = (onTickInventory || onTickIframes) && extractConfigValue(settings, "tooltip.map_highlights");

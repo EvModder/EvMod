@@ -14,7 +14,9 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.component.type.MapIdComponent;
+import net.minecraft.entity.EntityType;
 import net.minecraft.item.map.MapState;
+import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.network.packet.s2c.play.MapUpdateS2CPacket;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -30,6 +32,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientPlayNetworkHandler.class)
 abstract class MixinClientPlayNetworkHandler{
+	@Inject(method="onEntitySpawn", at=@At("HEAD"))
+	private final void onSpawn(final EntitySpawnS2CPacket packet, final CallbackInfo _ci){
+		// If the incoming entity is a player and matches your target's UUID
+		if(packet.getEntityType() == EntityType.PLAYER && AccessorMain.getInstance().syncPlayerPos.removeFakePlayer(packet.getUuid())){
+			Main.LOGGER.info("[EvMod] Removed dummy player (real player spawned): "+packet.getUuid());
+		}
+	}
 
 	// Saw this in https://github.com/red-stoned/client_maps/, and realized it's probably good to incorporate
 	@Redirect(method="onMapUpdate", at=@At(value="INVOKE",
