@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 const TOOLS = [
   {
     to: "/DAT-to-PNG",
-    title: "Map.dat → PNG",
+    title: "map_#.dat → PNG",
     desc: "Convert Minecraft map_#.dat files to PNG images. Supports bulk upload with gallery preview and ZIP download.",
   },
   {
