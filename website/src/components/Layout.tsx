@@ -4,7 +4,7 @@ import { useFavicon } from "@/hooks/useFavicon";
 import evmodIcon from "@/assets/EvMod.png";
 
 const NAV_ITEMS = [
-  { to: "/DAT-to-PNG", label: "Map.dat → PNG" },
+  { to: "/DAT-to-PNG", label: "map_#.dat → PNG" },
   { to: "/CACHE-to-PNG", label: "inv.cache → PNG" },
   { to: "/MapHasher", label: "Map → Hash" },
 ];
