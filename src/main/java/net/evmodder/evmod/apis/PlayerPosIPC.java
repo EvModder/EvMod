@@ -10,7 +10,6 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.function.Consumer;
-import net.evmodder.evmod.Main;
 
 public final class PlayerPosIPC{
 	private static final class Holder{private static final PlayerPosIPC INSTANCE = new PlayerPosIPC();}
@@ -104,7 +103,7 @@ public final class PlayerPosIPC{
 				if(owner > 0l && now - (long)LONG_HANDLE.getAcquire(buffer, base + TIME_OFFSET) < TIMEOUT_NS) continue;
 				LONG_HANDLE.setOpaque(buffer, base + TIME_OFFSET, now); // Update heartbeat (reduces contention fighting for this slot)
 				if(LONG_HANDLE.compareAndSet(buffer, base, owner, myPID)){
-					Main.LOGGER.info("[EvMod] Claimed IPC slot "+i);
+//					Main.LOGGER.info("[EvMod] Claimed IPC slot "+i);
 					return i; // Nice, we snagged this slot!
 				}
 //				i=-1; // Another PID grabbed the slot before us; start again from i=0.
