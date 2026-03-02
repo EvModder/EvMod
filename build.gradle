@@ -62,7 +62,7 @@ compileJava.options.encoding = "UTF-8"
 tasks.withType(JavaCompile).configureEach { it.options.release = 21 }
 
 jar {
-	from("LICENSE") { rename { "${it}_${project.base.archivesName}"} }
+	from("LICENSE") { rename { "${it}_${base.archivesName}"} }
 }
 
 
