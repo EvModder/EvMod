@@ -239,7 +239,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 //		final Boolean rowOffsetNeg = axisMatch ? varAxis1Neg : varAxis2Neg;
 		assert (axisMatch ? varAxis1Neg : varAxis2Neg) != null;//rowOffsetNeg != null;
 //		final Boolean colOffsetNeg = axisMatch ? varAxis2Neg : varAxis1Neg;
-//		Main.LOGGER.info("AutoPlaceMapArt: recurRecalcUsingAdjIFrames, axisMatch="+axisMatch+", varAxis1Neg="+varAxis1Neg+", varAxis2Neg="+varAxis2Neg);
+		Main.LOGGER.info("AutoPlaceMapArt: recurRecalcUsingAdjIFrames, axisMatch="+axisMatch+", varAxis1Neg="+varAxis1Neg+", varAxis2Neg="+varAxis2Neg);
 
 		final double SCAN_DIST = Configs.Generic.MAPART_AUTOPLACE_REACH.getDoubleValue() + 3d;
 		final Map<Vec3i, ItemFrameEntity> ifes = getReachableItemFrames(player, SCAN_DIST)
@@ -268,13 +268,17 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		}
 		final ItemFrameEntity ifeColNeg = ifes.get(getRelativeBp(currAxisData, !axisMatch, true));
 		if(ifeColNeg != null && isPartOfCurrentAutoPlace(ifeColNeg.getHeldItemStack())){
-			final boolean result = recalcLayout(player, ifeColNeg, ifeColNeg.getHeldItemStack());
+			Main.LOGGER.info("AutoPlaceMapArt: sub-call to recalcLayout() with col-1");
+			//TODO: current, this can trigger disableAndReset, killing the process
+			final boolean result = recalcLayout(player, ifeColNeg, ifeColNeg.getHeldItemStack()/*, sandbox=true*/);
 			if(result) assert rowWidth != null;
 			return result;
 		}
 		final ItemFrameEntity ifeColPos = ifes.get(getRelativeBp(currAxisData, !axisMatch, false));
 		if(ifeColPos != null && isPartOfCurrentAutoPlace(ifeColPos.getHeldItemStack())){
-			final boolean result = recalcLayout(player, ifeColPos, ifeColPos.getHeldItemStack());
+			Main.LOGGER.info("AutoPlaceMapArt: sub-call to recalcLayout() with col+1");
+			//TODO: current, this can trigger disableAndReset, killing the process
+			final boolean result = recalcLayout(player, ifeColPos, ifeColPos.getHeldItemStack()/*, sandbox=true*/);
 			if(result) assert rowWidth != null;
 			return result;
 		}
@@ -395,7 +399,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				Main.LOGGER.warn("AutoPlaceMapArt: Invalid 1d X/SIZE pos! a="+a+",b="+b);
 				disableAndReset(); return false;
 			}
-			Main.LOGGER.info("AutoPlaceMapArt: for X/SIZE, curr(a)="+a+", last(b)="+b+", ifeOffset1="+ifeOffset1+", ifeOffset2="+ifeOffset2);
+			Main.LOGGER.info("AutoPlaceMapArt: for X/SIZE, size="+ofSize+", curr(a)="+a+", last(b)="+b+", ifeOffset1="+ifeOffset1+", ifeOffset2="+ifeOffset2);
 			final int posOffset = a-b;
 			if(ifeOffset1 == 0 || ifeOffset2 == 0){
 				final int ifeOffset = ifeOffset1 + ifeOffset2; // one of them is 0
@@ -439,11 +443,13 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					}
 					final int candidateRowWidth = Math.abs(rowOffset)+1;
 					if(ofSize % candidateRowWidth == 0){
+						//TODO: prevent calcWidthUsingAdjIFrames() from being able to trigger disableAndReset in sub-calls
 						final boolean determinedWidth = calcWidthUsingAdjIFrames(player, currAxisData, a, b);
 						if(determinedWidth){
 							assert rowWidth != null && rowWidth != 0;
 							Main.LOGGER.info("AutoPlaceMapArt: determined rowWidth="+rowWidth+" from calcWidthUsingAdjIFrames()");
 						}
+						if(dir == null) return false; // If the sub-call triggered disableAndReset()
 					}
 					// A little hack to maximize future rowOffset; might not be necessary anymore, but used to help the logic above
 					if(rowWidth == null) updateLastIfe = false;
@@ -459,8 +465,8 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					if(rowNeg != null){
 						final int test1 = posOffset - rowOffset*(rowNeg ? -1 : +1);
 						assert test1 % colOffset == 0;
-						Main.LOGGER.info("AutoPlaceMapArt: rowNeg="+rowNeg+", solving sys-of-eqs, test1="+test1+", posOffset="+posOffset);
 						rowWidth = Math.abs(test1/colOffset);
+						Main.LOGGER.info("AutoPlaceMapArt: rowNeg="+rowNeg+", solved sys-of-eqs, test1="+test1+", posOffset="+posOffset+", rowWidth="+rowWidth);
 						assert rowWidth != 0;
 //						colNeg = test1/colOffset < 0;
 						if(axisMatch) varAxis2Neg = test1/colOffset < 0;
@@ -503,7 +509,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		}
 		final Pos2DPair pos2dPair = getRelativePosPair(currPosStr, lastPosStr);
 		if(pos2dPair == null){
-			Main.LOGGER.info("AutoPlaceMapArt: unable to parse pos2dPair from pos strs ("+currPosStr+","+lastPosStr+")");
+			Main.LOGGER.warn("AutoPlaceMapArt: unable to parse pos2dPair from pos strs ("+currPosStr+","+lastPosStr+")");
 			disableAndReset(); return false;
 		}
 
