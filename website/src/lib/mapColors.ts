@@ -2,7 +2,7 @@
  * Minecraft map-color palette and nearest-color matching helpers.
  * Exports: `MAP_RGBA_PALETTE`, `parseMapDataFromImageData`.
  */
-import { BASE_COLORS, SHADE_MULTIPLIERS } from "@/lib/mapNbtColorData";
+import { BASE_COLORS, SHADE_MULTIPLIERS } from "@/lib/mapColorDataSynced";
 import type { MapData } from "@/lib/map";
 
 // Pre-built RGBA palette (248 colors × 4 channels)

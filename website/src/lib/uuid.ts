@@ -1,7 +1,7 @@
 /**
  * UUID + map-hash utilities.
- * Exports dashed UUID parsing/formatting, byte conversions, locked-bit helpers,
- * and PNG map tile -> UUID hashing.
+ * Exports: `UUID_RE`, `parseDashedUuid`, `dashedUuidFromLongs`, `nameUUIDFromBytes`,
+ * `setLockedBit`, `clearLockedBit`, `parseUUIDs`, `uuidsToBytes`, `parseImageUUIDs`.
  */
 import { md5 } from "@/lib/md5";
 import { parseMapDataFromImageData } from "@/lib/mapColors";

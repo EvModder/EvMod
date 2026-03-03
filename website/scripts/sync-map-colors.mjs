@@ -5,10 +5,11 @@ import process from "node:process";
 const args = process.argv.slice(2);
 const explicitSource = args.find((arg) => !arg.startsWith("--"));
 const cwd = process.cwd();
-const targetPath = path.resolve(cwd, "src/lib/mapNbtColorData.ts");
+const targetPath = path.resolve(cwd, "src/lib/mapColorDataSynced.ts");
 const banner =
   "// AUTO-SYNCED from PNG-to-NBT/website/src/data/mapColors.ts\n" +
-  "// Run `npm run sync:map-colors` to refresh.\n\n";
+  "// Run `npm run sync:map-colors` to refresh.\n" +
+  "// Exports: `SHADE_MULTIPLIERS`, `BASE_COLORS`, `WATER_BASE_INDEX`, `getColorLookup`, `getShadedRgb`.\n\n";
 
 const normalize = (text) => text.replace(/\r\n/g, "\n").trimEnd() + "\n";
 
@@ -44,9 +45,9 @@ const desired = banner + normalize(sourceText);
 const current = await fs.readFile(targetPath, "utf8").catch(() => "");
 
 if (normalize(current) === normalize(desired)) {
-  console.log("mapNbtColorData.ts is already synced.");
+  console.log("mapColorDataSynced.ts is already synced.");
   process.exit(0);
 }
 
 await fs.writeFile(targetPath, desired);
-console.log(`Synced mapNbtColorData.ts from ${sourcePath}`);
+console.log(`Synced mapColorDataSynced.ts from ${sourcePath}`);

@@ -1,5 +1,6 @@
 // AUTO-SYNCED from PNG-to-NBT/website/src/data/mapColors.ts
 // Run `npm run sync:map-colors` to refresh.
+// Exports: `SHADE_MULTIPLIERS`, `BASE_COLORS`, `WATER_BASE_INDEX`, `getColorLookup`, `getShadedRgb`.
 
 // Minecraft map color data
 // Base RGB values are the "light" shade (multiplier 255/255 = full brightness)

@@ -3,7 +3,7 @@
  * Exports: `parseMapDataFromNbt`.
  */
 import { parseNbtRoot } from "@/lib/mapDat";
-import { WATER_BASE_INDEX, BASE_COLORS } from "@/lib/mapNbtColorData";
+import { WATER_BASE_INDEX, BASE_COLORS } from "@/lib/mapColorDataSynced";
 import type { MapData } from "@/lib/map";
 
 interface StructurePaletteEntry {

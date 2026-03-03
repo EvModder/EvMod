@@ -1,6 +1,6 @@
 /**
  * Tool/page metadata for routing, nav labels, titles, and favicons.
- * Exports: `HOME_PAGE`, `TOOL_PAGES`, `getPageMeta`.
+ * Exports: `HOME_PAGE`, `TOOL_PAGES`, `withTrailingSlash`, `getPageMeta`.
  */
 import datToPngIcon from "@/assets/DAT-to-PNG.png";
 import nbtFormatIcon from "@/assets/NBT-to-PNG.png";
@@ -11,10 +11,13 @@ export type ToolPageId = "pngToDat" | "datToPng" | "nbtToPng" | "cacheToPng" | "
 
 type IconType = "image/png" | "image/svg+xml";
 
-export interface PageMeta {
-  path: string;
+export interface PageHeadMeta {
   tabTitle: string;
   favicon: { href: string; type: IconType };
+}
+
+export interface PageMeta extends PageHeadMeta {
+  path: string;
 }
 
 export interface ToolPageMeta extends PageMeta {
@@ -77,9 +80,9 @@ export const TOOL_PAGES: ToolPageMeta[] = [
 export const withTrailingSlash = (path: string) =>
   path === "/" ? "/" : `${path.replace(/\/+$/, "")}/`;
 
-const PAGE_MAP = new Map<string, PageMeta>([
+const PAGE_MAP = new Map<string, PageHeadMeta>([
   [HOME_PAGE.path, HOME_PAGE],
-  ...TOOL_PAGES.map(({ path, tabTitle, favicon }) => [path, { path, tabTitle, favicon }] as [string, PageMeta]),
+  ...TOOL_PAGES.map(({ path, tabTitle, favicon }) => [path, { tabTitle, favicon }] as [string, PageHeadMeta]),
 ]);
 
-export const getPageMeta = (pathname: string): PageMeta => PAGE_MAP.get(pathname) ?? HOME_PAGE;
+export const getPageMeta = (pathname: string): PageHeadMeta => PAGE_MAP.get(pathname) ?? HOME_PAGE;
