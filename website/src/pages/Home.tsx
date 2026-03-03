@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { TOOL_PAGES } from "@/lib/toolPages";
+import { TOOL_PAGES, withTrailingSlash } from "@/lib/toolPages";
 
 const LINKS = [
   {
@@ -32,7 +32,7 @@ export default function Home() {
         {TOOL_PAGES.map(({ path, navLabel, cardDesc }) => (
           <Link
             key={path}
-            to={path}
+            to={withTrailingSlash(path)}
             className="group block rounded-lg border border-border p-5 hover:border-accent hover:bg-accent/5 transition-colors"
           >
             <h2 className="text-lg font-semibold mb-2 group-hover:text-accent transition-colors">

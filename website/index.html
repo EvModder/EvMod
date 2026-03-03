@@ -17,6 +17,13 @@
         var base = configuredBase.endsWith("/") ? configuredBase : configuredBase + "/";
         var baseNoSlash = base === "/" ? "/" : base.slice(0, -1);
         var hasAppBase = base === "/" || l.pathname === baseNoSlash || l.pathname.startsWith(base);
+        var collapseTrailingSlashes = function(pathname) {
+          var q = pathname.indexOf("?");
+          var pathOnly = q < 0 ? pathname : pathname.slice(0, q);
+          var query = q < 0 ? "" : pathname.slice(q);
+          if (pathOnly !== "/") pathOnly = pathOnly.replace(/\/{2,}$/, "/");
+          return pathOnly + query;
+        };
         var needsTrailingSlash = function(pathname) {
           var q = pathname.indexOf("?");
           var pathOnly = q < 0 ? pathname : pathname.slice(0, q);
@@ -36,13 +43,20 @@
           l.replace(base + l.search + l.hash);
           return;
         }
+        if (hasAppBase) {
+          var collapsed = collapseTrailingSlashes(l.pathname);
+          if (collapsed !== l.pathname) {
+            l.replace(collapsed + l.search + l.hash);
+            return;
+          }
+        }
 
         if (l.search[1] === '/') {
           var decoded = l.search.slice(1).split('&').map(function(s) {
             return s.replace(/~and~/g, '&')
           }).join('?');
           var basePath = l.pathname.endsWith("/") ? l.pathname.slice(0, -1) : l.pathname;
-          var restored = basePath + decoded;
+          var restored = collapseTrailingSlashes(basePath + decoded);
           if (hasAppBase && needsTrailingSlash(restored)) restored = withSlash(restored);
           window.history.replaceState(null, null,
             restored + l.hash

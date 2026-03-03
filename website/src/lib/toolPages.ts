@@ -74,6 +74,9 @@ export const TOOL_PAGES: ToolPageMeta[] = [
   },
 ];
 
+export const withTrailingSlash = (path: string) =>
+  path === "/" ? "/" : `${path.replace(/\/+$/, "")}/`;
+
 const PAGE_MAP = new Map<string, PageMeta>([
   [HOME_PAGE.path, HOME_PAGE],
   ...TOOL_PAGES.map(({ path, tabTitle, favicon }) => [path, { path, tabTitle, favicon }] as [string, PageMeta]),

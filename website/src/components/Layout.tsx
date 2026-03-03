@@ -1,7 +1,7 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useTheme } from "@/hooks/useTheme";
 import { useFavicon } from "@/hooks/useFavicon";
-import { TOOL_PAGES } from "@/lib/toolPages";
+import { TOOL_PAGES, withTrailingSlash } from "@/lib/toolPages";
 import { MoonIcon, SunIcon } from "@/components/ThemeIcons";
 
 export default function Layout() {
@@ -13,9 +13,9 @@ export default function Layout() {
       <nav className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-10">
         <div className="mx-auto max-w-6xl flex items-center justify-between px-4 h-12">
           <div className="flex items-center gap-4 overflow-x-auto">
-            <NavLink to="/" className="shrink-0 hover:opacity-80 transition-opacity" title="EvMod Tools">
+            <a href={import.meta.env.BASE_URL} className="shrink-0 hover:opacity-80 transition-opacity" title="EvMod Tools">
               <img src={siteIcon} alt="EvMod Tools" className="w-7 h-7" />
-            </NavLink>
+            </a>
             <div className="flex items-center">
               {TOOL_PAGES.map(({ id, path, navLabel }, idx) => (
                 <div key={path} className="flex items-center">
@@ -26,7 +26,7 @@ export default function Layout() {
                     />
                   )}
                   <NavLink
-                    to={path}
+                    to={withTrailingSlash(path)}
                     className={({ isActive }) =>
                       `px-3 py-1.5 rounded text-sm transition-colors whitespace-nowrap ${id === "mapHasher" ? "font-semibold" : ""} ${
                         isActive

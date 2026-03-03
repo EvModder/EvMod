@@ -6,7 +6,7 @@ export function useFavicon() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    const normalized = pathname !== "/" && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+    const normalized = pathname === "/" ? "/" : pathname.replace(/\/+$/, "");
     const { favicon, tabTitle } = getPageMeta(normalized);
     document.title = tabTitle;
     let link = document.querySelector<HTMLLinkElement>("link[rel='icon']");
