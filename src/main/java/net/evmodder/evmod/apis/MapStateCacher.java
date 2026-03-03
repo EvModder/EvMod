@@ -85,7 +85,7 @@ public class MapStateCacher{
 		if(e == null) return null;
 		UUID uuid = e.getUuid();
 		// set 1st bit, 0= is inv, 1= is ec
-		return new UUID((uuid.getMostSignificantBits() & ~1l) | (invOrEc ? 0l : 1l), uuid.getLeastSignificantBits());
+		return new UUID(MiscUtils.setLSB(uuid.getMostSignificantBits(), !invOrEc), uuid.getLeastSignificantBits());
 	}
 
 	private static final HashMap<?, ?> getInMemCachePerServer(String server, String cache){

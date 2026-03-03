@@ -35,6 +35,10 @@ public class MiscUtils{
 		else return 3;
 	}
 
+	public static final long toggleLSB(final long input){return input ^ 1l;}
+	public static final long setLSB(final long input, final boolean set){return (input & ~1l) | (set ? 1l : 0l);}
+//	public static final long setMSB(final long input, final boolean set){return (input & ~(1l << 63)) | (set ? 1l << 63 : 0l);}
+
 	private static final String ADDRESS_2B2T = "2b2t.org"; // TODO: make EvMod more server-independent 
 	public static final int HASHCODE_2B2T = ADDRESS_2B2T.hashCode(); // -437714968;
 	private static final String getServerAddress(final ServerInfo serverInfo, final boolean USE_CANONICAL_IP){

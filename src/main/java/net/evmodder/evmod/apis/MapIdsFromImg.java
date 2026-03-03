@@ -135,7 +135,7 @@ public class MapIdsFromImg{
 	private static UUID getLockedIdForColors(byte[] colors){
 		UUID uuid = UUID.nameUUIDFromBytes(colors);
 		// set 1st bit = state.locked
-		return new UUID(uuid.getMostSignificantBits() | 1l, uuid.getLeastSignificantBits());
+		return new UUID(MiscUtils.setLSB(uuid.getMostSignificantBits(), true), uuid.getLeastSignificantBits());
 	}
 
 	public static HashSet<UUID> getIdsFromBinaryFile(String filename){

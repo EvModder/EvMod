@@ -38,7 +38,7 @@ public final class MapGroupUtils{
 
 		uuid = UUID.nameUUIDFromBytes(state.colors);
 		// set 1st bit = state.locked
-		uuid = new UUID((uuid.getMostSignificantBits() & ~1l) | (state.locked ? 1l : 0l), uuid.getLeastSignificantBits());
+		uuid = new UUID(MiscUtils.setLSB(uuid.getMostSignificantBits(), state.locked), uuid.getLeastSignificantBits());
 		(state.locked ? stateToIdCache : unlockedStateToIdCache).put(state.colors, uuid);
 		return uuid;
 	}
@@ -76,8 +76,7 @@ public final class MapGroupUtils{
 		UUID uuid = getIdForMapState(state);
 		if(currentMapGroup.contains(uuid)) return false;
 		if( Configs.Generic.MAPART_GROUP_UNLOCKED_HANDLING.getOptionListValue() == OptionUnlockedMapHandling.UNIQUE) return true;
-		// toggle 1st bit on/off
-		uuid = new UUID(uuid.getMostSignificantBits() ^ 1l, uuid.getLeastSignificantBits());
+		uuid = new UUID(MiscUtils.toggleLSB(uuid.getMostSignificantBits()), uuid.getLeastSignificantBits());
 		return !currentMapGroup.contains(uuid);
 	}
 	public static final boolean isConfirmedNull(int id){return nullMapIds.contains(id);}
