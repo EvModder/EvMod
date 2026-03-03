@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
 type Theme = "light" | "dark" | "system";
+type ResolvedTheme = "light" | "dark";
 
 const getSystemTheme = () =>
   matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
@@ -9,8 +10,17 @@ export function useTheme() {
   const [theme, setTheme] = useState<Theme>(
     () => (localStorage.getItem("theme") as Theme) ?? "system"
   );
+  const [systemTheme, setSystemTheme] = useState<ResolvedTheme>(() => getSystemTheme());
 
-  const resolved = theme === "system" ? getSystemTheme() : theme;
+  const resolved = theme === "system" ? systemTheme : theme;
+
+  useEffect(() => {
+    const mq = matchMedia("(prefers-color-scheme: dark)");
+    const onChange = (e: MediaQueryListEvent) => setSystemTheme(e.matches ? "dark" : "light");
+    setSystemTheme(mq.matches ? "dark" : "light");
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -18,16 +28,9 @@ export function useTheme() {
 
     if (theme === "system") localStorage.removeItem("theme");
     else localStorage.setItem("theme", theme);
-
-    if (theme !== "system") return;
-    const mq = matchMedia("(prefers-color-scheme: dark)");
-    const onChange = () => setTheme((t) => (t === "system" ? "system" : t));
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
   }, [theme, resolved]);
 
-  const toggle = () =>
-    setTheme(resolved === "dark" ? "light" : "dark");
+  const toggle = () => setTheme(resolved === "dark" ? "light" : "dark");
 
-  return { theme, resolved, toggle } as const;
+  return { resolved, toggle } as const;
 }

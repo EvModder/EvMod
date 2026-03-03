@@ -43,3 +43,6 @@ replay_*.log
 src/main/resources/assets/evmod/*.png
 tmp_workstuff/
 hashcode_*
+website/node_modules/
+website/dist/
+website/dist-check/

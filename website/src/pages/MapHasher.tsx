@@ -1,110 +1,111 @@
 import { useState, useCallback } from "react";
 import DropZone from "@/components/DropZone";
+import FileErrorList from "@/components/FileErrorList";
 import { UUID_RE, parseUUIDs, uuidsToBytes, parseImageUUIDs, nameUUIDFromBytes, setLockedBit, clearLockedBit } from "@/lib/uuid";
-import { parseDatFile } from "@/lib/nbt";
+import { parseMapDataFromDat } from "@/lib/mapDat";
 import { extractMapsFromCache } from "@/lib/javaDeserialize";
+import { downloadBlob, loadImageFromFile, nextFrame } from "@/lib/browser";
+import type { MapData } from "@/lib/map";
+
+interface ProcessResult {
+  uuids: string[];
+  error?: string;
+}
+
+type FileHandler = (file: File) => Promise<ProcessResult>;
 
 function getFileExtension(name: string): string {
   const dot = name.lastIndexOf(".");
   return dot >= 0 ? name.slice(dot + 1).toLowerCase() : "";
 }
 
-async function processFile(file: File): Promise<{ uuids: string[]; error?: string }> {
-  const ext = getFileExtension(file.name);
+const mapDataToUuid = ({ colors }: MapData, locked: boolean) => {
+  const uuid = nameUUIDFromBytes(colors);
+  return locked ? setLockedBit(uuid) : clearLockedBit(uuid);
+};
 
-  if (ext === "png") {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        try {
-          resolve({ uuids: parseImageUUIDs(img) });
-        } catch (err) {
-          resolve({ uuids: [], error: err instanceof Error ? err.message : "Image error" });
-        }
-      };
-      img.onerror = () => resolve({ uuids: [], error: "Failed to load image" });
-      img.src = URL.createObjectURL(file);
-    });
-  }
-
-  const buffer = await file.arrayBuffer();
-
-  if (ext === "dat") {
+const fileHandlers: Record<string, FileHandler> = {
+  png: async file => {
     try {
-      const data = parseDatFile(buffer);
-      let uuid = nameUUIDFromBytes(data.colors);
-      uuid = data.locked ? setLockedBit(uuid) : clearLockedBit(uuid);
-      return { uuids: [uuid] };
+      return { uuids: parseImageUUIDs(await loadImageFromFile(file)) };
+    } catch (err) {
+      return { uuids: [], error: err instanceof Error ? err.message : "Image error" };
+    }
+  },
+  dat: async file => {
+    try {
+      const mapData = parseMapDataFromDat(await file.arrayBuffer());
+      return { uuids: [mapDataToUuid(mapData, mapData.locked)] };
     } catch (err) {
       return { uuids: [], error: err instanceof Error ? err.message : "DAT parse error" };
     }
-  }
-
-  if (ext === "cache") {
+  },
+  cache: async file => {
     try {
-      const maps = extractMapsFromCache(buffer);
+      const maps = extractMapsFromCache(await file.arrayBuffer());
       if (!maps.length) return { uuids: [], error: "No map data found in cache file" };
-      const uuids = maps.map((m) => {
-        let uuid = nameUUIDFromBytes(m.colors);
-        uuid = m.locked ? setLockedBit(uuid) : clearLockedBit(uuid);
-        return uuid;
-      });
-      return { uuids };
+      return { uuids: maps.map(m => mapDataToUuid(m, m.locked)) };
     } catch (err) {
       return { uuids: [], error: err instanceof Error ? err.message : "Cache parse error" };
     }
-  }
-
-  if (ext === "group") {
+  },
+  group: async file => {
+    const buffer = await file.arrayBuffer();
     if (buffer.byteLength === 0) return { uuids: [], error: "File is empty" };
     if (buffer.byteLength % 16 !== 0) {
       return { uuids: [], error: `File length (${buffer.byteLength} bytes) is not divisible by 16 (UUID length)` };
     }
     return { uuids: parseUUIDs(buffer) };
-  }
+  },
+};
 
-  return { uuids: [], error: `Unsupported file type: .${ext || "(none)"}` };
+async function processFile(file: File): Promise<ProcessResult> {
+  const ext = getFileExtension(file.name);
+  const handler = fileHandlers[ext];
+  return handler ? handler(file) : { uuids: [], error: `Unsupported file type: .${ext || "(none)"}` };
 }
 
 export default function MapHasher() {
   const [uuids, setUuids] = useState<string[]>([]);
   const [copied, setCopied] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [statusText, setStatusText] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState("");
 
   const handleFiles = useCallback(async (files: File[]) => {
-    setError(null);
+    setErrors([]);
     setIsEditing(false);
+    setLoading(true);
+    setStatusText(null);
     const allUuids: string[] = [];
+    const allErrors: string[] = [];
 
-    for (const file of files) {
+    for (const [i, file] of files.entries()) {
+      setStatusText(`[${i + 1}/${files.length}] ${file.name}`);
+      await nextFrame();
       const result = await processFile(file);
-      if (result.error) {
-        setError(`${file.name}: ${result.error}`);
-        setUuids([]);
-        return;
-      }
+      if (result.error) allErrors.push(`${file.name}: ${result.error}`);
       allUuids.push(...result.uuids);
     }
+    setLoading(false);
+    setStatusText(null);
 
-    if (!allUuids.length) setError("No UUIDs found in the uploaded files.");
+    if (allErrors.length) setErrors(allErrors);
+    else if (!allUuids.length) setErrors(["No UUIDs found in the uploaded files."]);
     setUuids(allUuids);
   }, []);
 
   const handleEdit = () => { setEditText(uuids.join("\n")); setIsEditing(true); };
 
   const handleSave = () => {
-    const lines = editText.split("\n").map((l) => l.trim()).filter(Boolean);
+    const lines = editText.split("\n").map(l => l.trim()).filter(Boolean);
     const bytes = uuidsToBytes(lines);
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([bytes.buffer as ArrayBuffer]));
-    a.download = "uuids.bin";
-    a.click();
-    URL.revokeObjectURL(a.href);
+    downloadBlob(new Blob([bytes.buffer as ArrayBuffer]), "uuids.bin");
     setUuids(lines);
     setIsEditing(false);
-    setError(null);
+    setErrors([]);
   };
 
   const copyAll = async () => {
@@ -114,19 +115,19 @@ export default function MapHasher() {
   };
 
   const editLines = isEditing
-    ? editText.split("\n").map((l) => l.trim().toLowerCase()).filter(Boolean)
+    ? editText.split("\n").map(l => l.trim().toLowerCase()).filter(Boolean)
     : [];
-  const invalidCount = editLines.filter((l) => !UUID_RE.test(l)).length;
+  const invalidCount = editLines.filter(l => !UUID_RE.test(l)).length;
   const uniqueCount = isEditing
     ? new Set(editLines).size
-    : new Set(uuids.map((u) => u.toLowerCase())).size;
+    : new Set(uuids.map(u => u.toLowerCase())).size;
 
   const saveDisabled = (() => {
     if (!isEditing) return true;
     if (invalidCount > 0) return true;
     const editSet = new Set(editLines);
-    const origSet = new Set(uuids.map((u) => u.toLowerCase()));
-    return editSet.size === origSet.size && [...editSet].every((u) => origSet.has(u));
+    const origSet = new Set(uuids.map(u => u.toLowerCase()));
+    return editSet.size === origSet.size && [...editSet].every(u => origSet.has(u));
   })();
 
   return (
@@ -141,10 +142,10 @@ export default function MapHasher() {
         accept=".png,.dat,.cache,.group"
         multiple
         onFiles={handleFiles}
-        buttonLabel="Select Files"
       />
+      {loading && <p className="mt-4 text-sm text-muted-foreground">{statusText ?? "Reading file…"}</p>}
 
-      {error && <p className="mt-4 text-red-500 text-sm">{error}</p>}
+      <FileErrorList errors={errors} />
 
       {uuids.length > 0 && (
         <div className="mt-6 border border-border rounded-lg p-4">
@@ -181,7 +182,7 @@ export default function MapHasher() {
             {isEditing ? (
               <textarea
                 value={editText}
-                onChange={(e) => setEditText(e.target.value)}
+                onChange={e => setEditText(e.target.value)}
                 className="w-full h-64 font-mono text-sm bg-transparent border-none outline-none resize-none"
               />
             ) : (

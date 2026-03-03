@@ -1,5 +1,7 @@
-// Pure JavaScript MD5 implementation
-// Matches Java's MessageDigest.getInstance("MD5") exactly
+/**
+ * Pure JavaScript MD5 implementation.
+ * Exports: `md5` (matches Java `MessageDigest.getInstance("MD5")` output).
+ */
 
 function md5cycle(x: number[], k: number[]) {
   let a = x[0], b = x[1], c = x[2], d = x[3];
@@ -122,7 +124,7 @@ export function md5(data: Uint8Array): Uint8Array {
 
   const tail = new Uint8Array(64);
   const remaining = n - (i - 64);
-  for (let j = 0; j < remaining; j++) {
+  for (let j = 0; j < remaining; ++j) {
     tail[j] = data[i - 64 + j];
   }
   tail[remaining] = 0x80;
@@ -148,7 +150,7 @@ export function md5(data: Uint8Array): Uint8Array {
 
   // Convert state to bytes (little-endian)
   const result = new Uint8Array(16);
-  for (let j = 0; j < 4; j++) {
+  for (let j = 0; j < 4; ++j) {
     result[j * 4] = state[j] & 0xff;
     result[j * 4 + 1] = (state[j] >>> 8) & 0xff;
     result[j * 4 + 2] = (state[j] >>> 16) & 0xff;

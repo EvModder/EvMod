@@ -1,22 +1,5 @@
 import { Link } from "react-router-dom";
-
-const TOOLS = [
-  {
-    to: "/DAT-to-PNG",
-    title: "map_#.dat → PNG",
-    desc: "Convert Minecraft map_#.dat files to PNG images. Supports bulk upload with gallery preview and ZIP download.",
-  },
-  {
-    to: "/CACHE-to-PNG",
-    title: "inv.cache → PNG",
-    desc: "Convert EvMod's .cache files to PNG images. Parses Java-serialized HashMaps to extract map color data.",
-  },
-  {
-    to: "/MapHasher",
-    title: "Map → Hash",
-    desc: "Find map hash codes for .png images, .dat file, .cache files (from ./evmod/mapart_caches/), or .group files (from ./evmod/mapart_groups/)",
-  },
-];
+import { TOOL_PAGES } from "@/lib/toolPages";
 
 const LINKS = [
   {
@@ -40,22 +23,22 @@ export default function Home() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">EvMod Tools</h1>
+        <h1 className="text-3xl font-bold mb-2 text-[#4C8131]">EvMod Tools</h1>
         <p className="text-muted-foreground">
-          Utilities for working with Minecraft map data — converting, previewing, and hashing.
+          Minecraft map data utilities (convert, preview, hash).
         </p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {TOOLS.map(({ to, title, desc }) => (
+        {TOOL_PAGES.map(({ path, navLabel, cardDesc }) => (
           <Link
-            key={to}
-            to={to}
+            key={path}
+            to={path}
             className="group block rounded-lg border border-border p-5 hover:border-accent hover:bg-accent/5 transition-colors"
           >
             <h2 className="text-lg font-semibold mb-2 group-hover:text-accent transition-colors">
-              {title}
+              {navLabel}
             </h2>
-            <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+            <p className="text-sm text-muted-foreground leading-relaxed">{cardDesc}</p>
           </Link>
         ))}
         {LINKS.map(({ href, title, desc }) => (

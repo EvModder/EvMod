@@ -2,77 +2,144 @@
  * Minimal Java ObjectInputStream deserializer.
  * Handles HashMap, ArrayList, CollSer (immutable lists), primitives, strings, byte arrays.
  * Designed to parse EvMod MapStateCacher .cache files.
+ * Exports: `extractMapsFromCache`, `extractMapsFromCacheDetailed`.
  */
+import { dashedUuidFromLongs, parseDashedUuid, type DashedUuid } from "@/lib/uuid";
+import type { LockedMapData, MapData } from "@/lib/map";
 
-export interface MapData {
-  colors: Uint8Array;
-  locked: boolean;
-  scale?: number;
-  label?: string;
+export type MapStateData = LockedMapData;
+
+export type CacheExtractResult =
+  | { kind: "id"; maps: [id: number, map: MapStateData][] }
+  | { kind: "name"; maps: [name: string, map: MapStateData][] }
+  | { kind: "slot"; containers: [uuid: DashedUuid, maps: [slot: number, map: MapStateData][]][] };
+
+type Entry = [any, any];
+type RootKind = "id" | "name" | "slot";
+type LooseMapState = MapData & { locked?: boolean };
+
+const listItems = (v: any): any[] | undefined => Array.isArray(v?._elements) ? v._elements : Array.isArray(v) ? v : undefined;
+
+const toBig = (v: any): bigint | undefined =>
+  typeof v === "bigint" ? v : typeof v === "number" && Number.isFinite(v) ? BigInt(v) : undefined;
+
+const uuidToString = (key: any): DashedUuid | undefined => {
+  if (typeof key === "string") return parseDashedUuid(key) ?? undefined;
+  if (!key || typeof key !== "object") return;
+  const msb = toBig(key.mostSigBits);
+  const lsb = toBig(key.leastSigBits);
+  if (msb === undefined || lsb === undefined) return;
+  return dashedUuidFromLongs(msb, lsb);
+};
+
+const parseRootEntries = (buffer: ArrayBuffer): Entry[] => {
+  const parsed = new JavaDeserializer(buffer).parse();
+  if (!(parsed && typeof parsed === "object" && Array.isArray((parsed as any)._entries))) throw new Error("Unsupported cache root object");
+  return parsed._entries;
+};
+
+const getEntryKind = ([k, v]: Entry): RootKind | null => {
+  // Container caches store lists (often sparse with null slots); keyed caches store direct map states.
+  if (listItems(v)) return "slot";
+  if (typeof k === "number") return "id";
+  if (typeof k === "string") return "name";
+  return null;
+};
+
+const resolveRootKind = (entries: Entry[]): RootKind | null => {
+  if (!entries.length) return null;
+  const firstKind = getEntryKind(entries[0]);
+  if (!firstKind) throw new Error("Unsupported cache root entry format");
+  for (let i = 1; i < entries.length; ++i) {
+    if (getEntryKind(entries[i]) !== firstKind) throw new Error("Mixed cache root entry types");
+  }
+  return firstKind;
+};
+
+const toMapState = (v: LooseMapState): MapStateData => ({ colors: v.colors, locked: !!v.locked });
+function assertMapState(v: unknown, where: string): asserts v is LooseMapState {
+  if (!(v && typeof v === "object" && (v as any).colors instanceof Uint8Array && (v as any).colors.length === 16384)) throw new Error(`Invalid map state at ${where}`);
+}
+const getListItemsStrict = (v: unknown, where: string): any[] => {
+  const items = listItems(v);
+  if (!items) throw new Error(`Invalid container list at ${where}`);
+  return items;
+};
+
+export function extractMapsFromCache(buffer: ArrayBuffer): MapStateData[] {
+  const entries = parseRootEntries(buffer);
+  const kind = resolveRootKind(entries);
+  if (!kind) return [];
+  if (kind !== "slot") return entries.map(([, v], i) => {
+    assertMapState(v, `entry ${i}`);
+    return toMapState(v);
+  });
+  const states: MapStateData[] = [];
+  for (const [i, [, v]] of entries.entries()) {
+    const items = getListItemsStrict(v, `entry ${i}`);
+    for (const [slot, item] of items.entries()) {
+      if (item == null) continue;
+      assertMapState(item, `entry ${i}, slot ${slot}`);
+      states.push(toMapState(item));
+    }
+  }
+  return states;
 }
 
-export function extractMapsFromCache(buffer: ArrayBuffer): MapData[] {
-  const objs = new JavaDeserializer(buffer).parse();
-  const maps: MapData[] = [];
-  const visited = new Set<any>();
+export function extractMapsFromCacheDetailed(buffer: ArrayBuffer): CacheExtractResult {
+  const entries = parseRootEntries(buffer);
+  const kind = resolveRootKind(entries);
+  if (!kind) return { kind: "id", maps: [] };
 
-  function deepFind(obj: any, label?: string) {
-    if (!obj || typeof obj !== "object" || visited.has(obj)) return;
-    if (obj instanceof Uint8Array || obj instanceof ArrayBuffer) return;
-    visited.add(obj);
-
-    // Check if this object has a 16384-byte colors array
-    if (obj.colors instanceof Uint8Array && obj.colors.length === 16384) {
-      maps.push({
-        colors: obj.colors,
-        locked: !!obj.locked,
-        scale: typeof obj.scale === "number" ? obj.scale : undefined,
-        label,
-      });
-      return;
-    }
-
-    // Recurse into HashMap entries
-    if (obj._entries) {
-      for (const [k, v] of obj._entries) {
-        deepFind(v, String(k));
-      }
-    }
-
-    // Recurse into list elements (ArrayList, CollSer)
-    if (obj._elements) {
-      obj._elements.forEach((el: any, i: number) => {
-        deepFind(el, label ? `${label}_${i}` : `${i}`);
-      });
-    }
-
-    // Recurse into plain arrays
-    if (Array.isArray(obj)) {
-      obj.forEach((el: any, i: number) => {
-        deepFind(el, label ? `${label}_${i}` : `${i}`);
-      });
-    }
-
-    // Recurse into any object properties (catch-all)
-    for (const key of Object.keys(obj)) {
-      if (key === "_class" || key === "colors") continue;
-      const val = obj[key];
-      if (val && typeof val === "object" && !(val instanceof Uint8Array)) {
-        deepFind(val, key);
-      }
-    }
+  if (kind === "id") {
+    const maps: [number, MapStateData][] = entries
+      .map(([k, v], i) => {
+        if (typeof k !== "number") throw new Error(`Invalid id key at entry ${i}`);
+        assertMapState(v, `entry ${i}`);
+        return [k, toMapState(v)] as [number, MapStateData];
+      })
+    return {
+      kind,
+      maps: maps.sort((a, b) => a[0] - b[0]),
+    };
+  }
+  if (kind === "name") {
+    const maps: [string, MapStateData][] = entries
+      .map(([k, v], i) => {
+        if (typeof k !== "string") throw new Error(`Invalid name key at entry ${i}`);
+        assertMapState(v, `entry ${i}`);
+        return [k, toMapState(v)] as [string, MapStateData];
+      })
+    return {
+      kind,
+      maps: maps.sort((a, b) => a[0].localeCompare(b[0]))
+    };
   }
 
-  for (const obj of objs) {
-    deepFind(obj);
+  const containers: [DashedUuid, [number, MapStateData][]][] = [];
+  for (const [i, [k, v]] of entries.entries()) {
+    const uuid = uuidToString(k);
+    if (!uuid) throw new Error(`Invalid container UUID key at entry ${i}`);
+    const items = getListItemsStrict(v, `entry ${i}`);
+    const maps: [number, MapStateData][] = [];
+    // Keep original slot numbers so output names match inventory/container positions.
+    for (const [slot, item] of items.entries()) {
+      if (item == null) continue;
+      assertMapState(item, `entry ${i}, slot ${slot}`);
+      maps.push([slot, toMapState(item)]);
+    }
+    if (maps.length) containers.push([uuid, maps]);
   }
-  return maps;
+  return {
+    kind: "slot",
+    containers: containers.sort((a, b) => a[0].localeCompare(b[0])),
+  };
 }
 
 // --- Internal types ---
 interface JavaObj { _class: string; [k: string]: any }
-interface ClassDesc { name: string; uid: bigint; flags: number; fields: Field[]; superClass: ClassDesc | null }
-interface Field { type: string; name: string; className?: string }
+interface ClassDesc { name: string; flags: number; fields: Field[]; superClass: ClassDesc | null }
+interface Field { type: string; name: string }
 
 class JavaDeserializer {
   private view: DataView;
@@ -87,19 +154,10 @@ class JavaDeserializer {
     this.bytes = new Uint8Array(buf);
   }
 
-  parse(): any[] {
+  parse(): any {
     if (this.u16() !== 0xACED) throw new Error("Not a Java serialized stream");
     if (this.u16() !== 5) throw new Error("Unsupported stream version");
-
-    const first = this.readContent();
-    const res: any[] = [first];
-
-    while (this.pos < this.buf.byteLength) {
-      const prevPos = this.pos;
-      try { res.push(this.readContent()); } catch { break; }
-      if (this.pos === prevPos) break; // safety: no progress
-    }
-    return res;
+    return this.readContent();
   }
 
   // --- Primitives ---
@@ -110,12 +168,38 @@ class JavaDeserializer {
   private u8() { this.checkBounds(1); return this.view.getUint8(this.pos++); }
   private i8() { this.checkBounds(1); return this.view.getInt8(this.pos++); }
   private u16() { this.checkBounds(2); const v = this.view.getUint16(this.pos); this.pos += 2; return v; }
-  private i16() { this.checkBounds(2); const v = this.view.getInt16(this.pos); this.pos += 2; return v; }
   private i32() { this.checkBounds(4); const v = this.view.getInt32(this.pos); this.pos += 4; return v; }
   private f32() { this.checkBounds(4); const v = this.view.getFloat32(this.pos); this.pos += 4; return v; }
-  private f64() { this.checkBounds(8); const v = this.view.getFloat64(this.pos); this.pos += 8; return v; }
   private i64() { this.checkBounds(8); const v = this.view.getBigInt64(this.pos); this.pos += 8; return v; }
-  private utf() { const n = this.u16(); this.checkBounds(n); const s = new TextDecoder().decode(this.bytes.slice(this.pos, this.pos + n)); this.pos += n; return s; }
+  private decodeModifiedUtf(len: number) {
+    this.checkBounds(len);
+    const end = this.pos + len;
+    let out = "";
+    while (this.pos < end) {
+      const b1 = this.bytes[this.pos++];
+      if ((b1 & 0x80) === 0) {
+        out += String.fromCharCode(b1);
+        continue;
+      }
+      if ((b1 & 0xE0) === 0xC0) {
+        if (this.pos >= end) throw new Error("Truncated modified UTF-8 sequence");
+        const b2 = this.bytes[this.pos++];
+        out += String.fromCharCode(((b1 & 0x1F) << 6) | (b2 & 0x3F));
+        continue;
+      }
+      if ((b1 & 0xF0) === 0xE0) {
+        if (this.pos + 1 >= end) throw new Error("Truncated modified UTF-8 sequence");
+        const b2 = this.bytes[this.pos++];
+        const b3 = this.bytes[this.pos++];
+        out += String.fromCharCode(((b1 & 0x0F) << 12) | ((b2 & 0x3F) << 6) | (b3 & 0x3F));
+        continue;
+      }
+      throw new Error("Unsupported modified UTF-8 byte 0x" + b1.toString(16));
+    }
+    return out;
+  }
+
+  private utf() { return this.decodeModifiedUtf(this.u16()); }
   private handle<T>(o: T): T { this.handles.push(o); return o; }
 
   // --- Content ---
@@ -124,12 +208,9 @@ class JavaDeserializer {
     switch (tc) {
       case 0x73: return this.readObject();
       case 0x74: return this.handle(this.utf());
-      case 0x7C: { const n = Number(this.i64()); const s = new TextDecoder().decode(this.bytes.slice(this.pos, this.pos + n)); this.pos += n; return this.handle(s); }
       case 0x75: return this.readArray();
       case 0x70: return null;
       case 0x71: return this.handles[this.i32() - 0x7E0000];
-      case 0x76: { const d = this.readClassDesc(); return this.handle({ _class: "Class", name: d?.name }); }
-      case 0x7E: return this.readEnum();
       default: throw new Error("Unknown typecode 0x" + tc.toString(16) + " at position " + (this.pos - 1));
     }
   }
@@ -139,7 +220,6 @@ class JavaDeserializer {
     const tc = this.u8();
     switch (tc) {
       case 0x72: return this.readNewClassDesc();
-      case 0x7D: return this.readProxyClassDesc();
       case 0x70: return null;
       case 0x71: return this.handles[this.i32() - 0x7E0000] as ClassDesc;
       default: throw new Error("Expected classDesc, got 0x" + tc.toString(16));
@@ -148,31 +228,21 @@ class JavaDeserializer {
 
   private readNewClassDesc(): ClassDesc {
     const name = this.utf();
-    const uid = this.i64();
+    this.i64(); // serialVersionUID
     // Per Java spec: handle is assigned BEFORE classDescInfo (flags, fields, annotations, superclass)
-    const desc: ClassDesc = { name, uid, flags: 0, fields: [], superClass: null };
+    const desc: ClassDesc = { name, flags: 0, fields: [], superClass: null };
     this.handle(desc);
     const flags = this.u8();
     const fc = this.u16();
     desc.flags = flags;
     const fields: Field[] = [];
-    for (let i = 0; i < fc; i++) {
+    for (let i = 0; i < fc; ++i) {
       const type = String.fromCharCode(this.u8());
       const fn = this.utf();
-      const className = (type === "L" || type === "[") ? this.readContent() as string : undefined;
-      fields.push({ type, name: fn, className });
+      if (type === "L" || type === "[") this.readContent(); // field class name string/object
+      fields.push({ type, name: fn });
     }
     desc.fields = fields;
-    this.skipAnnotations();
-    desc.superClass = this.readClassDesc();
-    return desc;
-  }
-
-  private readProxyClassDesc(): ClassDesc {
-    const desc: ClassDesc = { name: "Proxy", uid: 0n, flags: 0, fields: [], superClass: null };
-    this.handle(desc);
-    const n = this.i32();
-    for (let i = 0; i < n; i++) this.utf();
     this.skipAnnotations();
     desc.superClass = this.readClassDesc();
     return desc;
@@ -197,13 +267,13 @@ class JavaDeserializer {
     const hi = this.handles.push(obj) - 1;
     this.readClassData(desc, obj);
 
-    // Unwrap primitives
-    if (desc.name === "java.lang.Integer" || desc.name === "java.lang.Short" || desc.name === "java.lang.Byte") {
+    // Boxed Integer keys appear in by-id cache maps.
+    if (desc.name === "java.lang.Integer") {
       this.handles[hi] = obj.value; return obj.value;
     }
-    if (desc.name === "java.lang.Long") { this.handles[hi] = obj.value; return obj.value; }
-    if (desc.name === "java.lang.Boolean") { this.handles[hi] = obj.value; return obj.value; }
-    if (desc.name === "java.lang.Float" || desc.name === "java.lang.Double") { this.handles[hi] = obj.value; return obj.value; }
+    if (desc.name.startsWith("java.lang.") && Object.prototype.hasOwnProperty.call(obj, "value")) {
+      throw new Error(`Unsupported boxed primitive in cache shape: ${desc.name}`);
+    }
     return obj;
   }
 
@@ -222,15 +292,12 @@ class JavaDeserializer {
   private readFieldValue(f: Field): any {
     switch (f.type) {
       case "B": return this.i8();
-      case "C": return String.fromCharCode(this.u16());
-      case "D": return this.f64();
       case "F": return this.f32();
       case "I": return this.i32();
       case "J": return this.i64();
-      case "S": return this.i16();
       case "Z": return this.u8() !== 0;
       case "L": case "[": return this.readContent();
-      default: throw new Error("Unknown field type: " + f.type);
+      default: throw new Error("Unsupported field type in cache shape: " + f.type);
     }
   }
 
@@ -243,64 +310,27 @@ class JavaDeserializer {
       /* capacity */ bv.getInt32(0);
       const size = bv.getInt32(4);
       const entries: [any, any][] = [];
-      for (let i = 0; i < size; i++) entries.push([this.readContent(), this.readContent()]);
+      for (let i = 0; i < size; ++i) entries.push([this.readContent(), this.readContent()]);
       obj._entries = entries;
       if (this.u8() !== 0x78) throw new Error("Expected endBlockData after HashMap entries");
-    } else if (n === "java.util.Hashtable") {
-      // Hashtable.writeObject: block data = capacity (int) + loadFactor (float) + count (int) = 12 bytes
-      const bd = this.readBlockData();
-      const bv = new DataView(bd.buffer, bd.byteOffset, bd.byteLength);
-      /* capacity */ bv.getInt32(0);
-      /* loadFactor */ bv.getFloat32(4);
-      const size = bv.getInt32(8);
-      const entries: [any, any][] = [];
-      for (let i = 0; i < size; i++) entries.push([this.readContent(), this.readContent()]);
-      obj._entries = entries;
-      if (this.u8() !== 0x78) throw new Error("Expected endBlockData after Hashtable entries");
-    } else if (n === "java.util.HashSet" || n === "java.util.LinkedHashSet") {
-      // HashSet.writeObject: block data = capacity (int) + loadFactor (float) + size (int) = 12 bytes
-      const bd = this.readBlockData();
-      const bv = new DataView(bd.buffer, bd.byteOffset, bd.byteLength);
-      /* capacity */ bv.getInt32(0);
-      /* loadFactor */ bv.getFloat32(4);
-      const size = bv.getInt32(8);
-      const elements: any[] = [];
-      for (let i = 0; i < size; i++) elements.push(this.readContent());
-      obj._elements = elements;
-      if (this.u8() !== 0x78) throw new Error("Expected endBlockData after HashSet entries");
-    } else if (n === "java.util.ArrayList") {
-      const bd = this.readBlockData();
-      // block data contains capacity (int)
-      const size = obj.size as number;
-      const elements: any[] = [];
-      for (let i = 0; i < size; i++) elements.push(this.readContent());
-      obj._elements = elements;
-      if (this.u8() !== 0x78) throw new Error("Expected endBlockData after ArrayList entries");
     } else if (n.includes("CollSer") || n.includes("ImmutableCollections")) {
       const bd = this.readBlockData();
       const bv = new DataView(bd.buffer, bd.byteOffset, bd.byteLength);
       const arrayLen = bv.getInt32(0);
       const elements: any[] = [];
-      for (let i = 0; i < arrayLen; i++) elements.push(this.readContent());
+      for (let i = 0; i < arrayLen; ++i) elements.push(this.readContent());
       obj._elements = elements;
       if (this.u8() !== 0x78) throw new Error("Expected endBlockData after CollSer entries");
     } else {
-      // Unknown class with writeObject — skip custom data
-      this.skipAnnotations();
+      throw new Error(`Unsupported writeObject class: ${n}`);
     }
   }
 
   /** Read TC_BLOCKDATA (0x77) or TC_BLOCKDATALONG (0x7A) */
   private readBlockData(): Uint8Array {
     const tc = this.u8();
-    let len: number;
-    if (tc === 0x77) {
-      len = this.u8();
-    } else if (tc === 0x7A) {
-      len = this.i32();
-    } else {
-      throw new Error("Expected blockdata (0x77 or 0x7A), got 0x" + tc.toString(16) + " at position " + (this.pos - 1));
-    }
+    if (tc !== 0x77) throw new Error("Unsupported blockdata type 0x" + tc.toString(16) + " at position " + (this.pos - 1));
+    const len = this.u8();
     const data = this.bytes.slice(this.pos, this.pos + len);
     this.pos += len;
     return data;
@@ -315,11 +345,11 @@ class JavaDeserializer {
         const arrLen = bv.getInt32(1);
         obj._tag = tag;
         const elements: any[] = [];
-        for (let i = 0; i < arrLen; i++) elements.push(this.readContent());
+        for (let i = 0; i < arrLen; ++i) elements.push(this.readContent());
         obj._elements = elements;
         if (this.u8() !== 0x78) throw new Error("Expected endBlockData after CollSer external data");
       } else {
-        this.skipAnnotations();
+        throw new Error(`Unsupported externalizable class: ${desc.name}`);
       }
     }
   }
@@ -330,33 +360,9 @@ class JavaDeserializer {
     const length = this.i32();
     const et = desc.name.charAt(1);
 
-    if (et === "B") {
-      const arr = this.bytes.slice(this.pos, this.pos + length);
-      this.pos += length;
-      return this.handle(arr);
-    }
-
-    const arr: any[] = [];
-    this.handle(arr);
-    for (let i = 0; i < length; i++) {
-      switch (et) {
-        case "I": arr.push(this.i32()); break;
-        case "J": arr.push(this.i64()); break;
-        case "S": arr.push(this.i16()); break;
-        case "F": arr.push(this.f32()); break;
-        case "D": arr.push(this.f64()); break;
-        case "Z": arr.push(this.u8() !== 0); break;
-        case "C": arr.push(String.fromCharCode(this.u16())); break;
-        default: arr.push(this.readContent()); break;
-      }
-    }
-    return arr;
-  }
-
-  // --- Enum ---
-  private readEnum(): any {
-    const desc = this.readClassDesc()!;
-    const name = this.readContent() as string;
-    return this.handle({ _class: desc.name, name });
+    if (et !== "B") throw new Error("Unsupported array type in cache shape: " + desc.name);
+    const arr = this.bytes.slice(this.pos, this.pos + length);
+    this.pos += length;
+    return this.handle(arr);
   }
 }

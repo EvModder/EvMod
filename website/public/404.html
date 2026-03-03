@@ -6,7 +6,10 @@
     <script>
       // Single Page App redirect for GitHub Pages
       // Encodes the path into a query param so index.html can restore it
-      var pathSegmentsToKeep = 1; // deployed under /EvMod/
+      var pathSegmentsToKeep =
+        /\.github\.io$/i.test(window.location.hostname) || /^\/EvMod(?:\/|$)/.test(window.location.pathname)
+          ? 1
+          : 0;
       var l = window.location;
       l.replace(
         l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +

@@ -1,76 +1,67 @@
-// Minecraft map base colors (62 entries, RGB)
-const BASE_COLORS: [number, number, number][] = [
-  [0, 0, 0], [127, 178, 56], [247, 233, 163], [199, 199, 199],
-  [255, 0, 0], [160, 160, 255], [167, 167, 167], [0, 124, 0],
-  [255, 255, 255], [164, 168, 184], [151, 109, 77], [112, 112, 112],
-  [64, 64, 255], [143, 119, 72], [255, 252, 245], [216, 127, 51],
-  [178, 76, 216], [102, 153, 216], [229, 229, 51], [127, 204, 25],
-  [242, 127, 165], [76, 76, 76], [153, 153, 153], [76, 127, 153],
-  [127, 63, 178], [51, 76, 178], [102, 76, 51], [102, 127, 51],
-  [153, 51, 51], [25, 25, 25], [250, 238, 77], [92, 219, 213],
-  [74, 128, 255], [0, 217, 58], [129, 86, 49], [112, 2, 0],
-  [209, 177, 161], [159, 82, 36], [149, 87, 108], [112, 108, 138],
-  [186, 133, 36], [103, 117, 53], [160, 77, 78], [57, 41, 35],
-  [135, 107, 98], [87, 92, 92], [122, 73, 88], [76, 62, 92],
-  [76, 50, 35], [76, 82, 42], [142, 60, 46], [37, 22, 16],
-  [189, 48, 49], [148, 63, 97], [92, 25, 29], [22, 126, 134],
-  [58, 142, 140], [86, 44, 62], [20, 180, 133], [100, 100, 100],
-  [216, 175, 147], [127, 167, 150],
-];
-
-// Shade multipliers: LOW=180, NORMAL=220, HIGH=255, LOWEST=135
-const SHADE_MULTIPLIERS = [180, 220, 255, 135];
+/**
+ * Minecraft map-color palette and nearest-color matching helpers.
+ * Exports: `MAP_RGBA_PALETTE`, `parseMapDataFromImageData`.
+ */
+import { BASE_COLORS, SHADE_MULTIPLIERS } from "@/lib/mapNbtColorData";
+import type { MapData } from "@/lib/map";
 
 // Pre-built RGBA palette (248 colors × 4 channels)
-const PALETTE = new Uint8Array(248 * 4);
-for (let base = 0; base < 62; base++) {
-  for (let shade = 0; shade < 4; shade++) {
+const PALETTE = new Uint8Array(BASE_COLORS.length * 16);
+for (let base = 0; base < BASE_COLORS.length; ++base) {
+  const { r, g, b } = BASE_COLORS[base];
+  for (let shade = 0; shade < 4; ++shade) {
     const idx = (base * 4 + shade) * 4;
     if (base === 0) {
       PALETTE[idx] = PALETTE[idx + 1] = PALETTE[idx + 2] = PALETTE[idx + 3] = 0;
     } else {
       const m = SHADE_MULTIPLIERS[shade];
-      PALETTE[idx] = Math.floor(BASE_COLORS[base][0] * m / 255);
-      PALETTE[idx + 1] = Math.floor(BASE_COLORS[base][1] * m / 255);
-      PALETTE[idx + 2] = Math.floor(BASE_COLORS[base][2] * m / 255);
+      PALETTE[idx] = Math.floor(r * m / 255);
+      PALETTE[idx + 1] = Math.floor(g * m / 255);
+      PALETTE[idx + 2] = Math.floor(b * m / 255);
       PALETTE[idx + 3] = 255;
     }
   }
 }
 
-/** Convert 128×128 color byte array to a PNG Blob */
-export function colorsToPngBlob(colors: Uint8Array): Promise<Blob> {
-  const canvas = document.createElement("canvas");
-  canvas.width = 128;
-  canvas.height = 128;
-  const ctx = canvas.getContext("2d")!;
-  const imageData = ctx.createImageData(128, 128);
-  for (let i = 0; i < 16384; i++) {
-    const palIdx = (colors[i] & 0xFF) * 4;
-    const pixIdx = i * 4;
-    imageData.data[pixIdx] = PALETTE[palIdx];
-    imageData.data[pixIdx + 1] = PALETTE[palIdx + 1];
-    imageData.data[pixIdx + 2] = PALETTE[palIdx + 2];
-    imageData.data[pixIdx + 3] = PALETTE[palIdx + 3];
-  }
-  ctx.putImageData(imageData, 0, 0);
-  return new Promise((resolve) => canvas.toBlob((b) => resolve(b!), "image/png"));
+interface PaletteEntry {
+  byte: number;
+  r: number;
+  g: number;
+  b: number;
 }
 
+const OPAQUE_PALETTE: PaletteEntry[] = [];
+for (let base = 1; base < BASE_COLORS.length; ++base) {
+  const { r, g, b } = BASE_COLORS[base];
+  for (let shade = 0; shade < 4; ++shade) {
+    const m = SHADE_MULTIPLIERS[shade];
+    OPAQUE_PALETTE.push({
+      byte: base * 4 + shade,
+      r: Math.floor(r * m / 255),
+      g: Math.floor(g * m / 255),
+      b: Math.floor(b * m / 255),
+    });
+  }
+}
+
+let argbMap: Map<number, number> | null = null;
+export const MAP_RGBA_PALETTE = PALETTE;
+
 /** Build ARGB→byte reverse map for image parsing (opaque black for base 0) */
-export function buildArgbToByteMap(): Map<number, number> {
+function buildArgbToByteMap(): Map<number, number> {
   const map = new Map<number, number>();
-  for (let base = 0; base < 62; base++) {
-    for (let shade = 0; shade < 4; shade++) {
+  for (let base = 0; base < BASE_COLORS.length; ++base) {
+    const { r: br, g: bg, b: bb } = BASE_COLORS[base];
+    for (let shade = 0; shade < 4; ++shade) {
       const idx = base * 4 + shade;
       let r: number, g: number, b: number;
       if (base === 0) {
         r = g = b = 0;
       } else {
         const m = SHADE_MULTIPLIERS[shade];
-        r = Math.floor(BASE_COLORS[base][0] * m / 255);
-        g = Math.floor(BASE_COLORS[base][1] * m / 255);
-        b = Math.floor(BASE_COLORS[base][2] * m / 255);
+        r = Math.floor(br * m / 255);
+        g = Math.floor(bg * m / 255);
+        b = Math.floor(bb * m / 255);
       }
       const argb = ((0xFF << 24) | (r << 16) | (g << 8) | b) | 0;
       map.set(argb, idx);
@@ -78,4 +69,55 @@ export function buildArgbToByteMap(): Map<number, number> {
   }
   map.set(0, 0);
   return map;
+}
+
+interface ParseMapDataFromImageDataOptions {
+  sourceWidth?: number;
+  startX?: number;
+  startY?: number;
+}
+
+export function parseMapDataFromImageData(
+  pixels: Uint8ClampedArray,
+  { sourceWidth = 128, startX = 0, startY = 0 }: ParseMapDataFromImageDataOptions = {}
+): { mapData: MapData; approximatedPixels: number; approximatedColorKeys: Set<number> } {
+  const mapData: MapData = { colors: new Uint8Array(16384) };
+  const { colors } = mapData;
+  const map = argbMap ?? (argbMap = buildArgbToByteMap());
+  let approximatedPixels = 0;
+  const approximatedColorKeys = new Set<number>();
+  for (let y = 0; y < 128; ++y) {
+    for (let x = 0; x < 128; ++x) {
+      const i = y * 128 + x;
+      const off = ((startY + y) * sourceWidth + (startX + x)) * 4;
+      const a = pixels[off + 3];
+      if (a < 128) {
+        colors[i] = 0;
+        continue;
+      }
+      const r = pixels[off], g = pixels[off + 1], b = pixels[off + 2];
+      const argb = ((0xFF << 24) | (r << 16) | (g << 8) | b) | 0;
+      const exact = map.get(argb);
+      if (exact !== undefined && exact >= 4) {
+        colors[i] = exact;
+        continue;
+      }
+
+      let best = OPAQUE_PALETTE[0];
+      let bestDist = Infinity;
+      for (const candidate of OPAQUE_PALETTE) {
+        const dr = r - candidate.r, dg = g - candidate.g, db = b - candidate.b;
+        const dist = dr * dr + dg * dg + db * db;
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = candidate;
+          if (dist === 0) break;
+        }
+      }
+      colors[i] = best.byte;
+      ++approximatedPixels;
+      approximatedColorKeys.add((r << 16) | (g << 8) | b);
+    }
+  }
+  return { mapData, approximatedPixels, approximatedColorKeys };
 }

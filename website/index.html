@@ -3,23 +3,55 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Map Hasher</title>
-    <meta name="description" content="Minecraft map tools — convert .dat and .cache files to PNG, extract map hashes" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>EvMod Tools</title>
+    <meta name="description" content="Minecraft map tools — convert .dat/.cache/.nbt/.litematic/.schem files and extract map hashes" />
+    <link rel="icon" href="%BASE_URL%favicon.png" type="image/png" />
 
-    <meta property="og:title" content="Map Hash Extractor" />
-    <meta property="og:description" content="Extract map hashes from binary files and PNG images" />
+    <meta property="og:title" content="EvMod Tools" />
+    <meta property="og:description" content="Convert map-related files and extract map hashes" />
     <meta property="og:type" content="website" />
     <!-- GitHub Pages SPA redirect restore -->
     <script type="text/javascript">
       (function(l) {
+        var configuredBase = "%BASE_URL%";
+        var base = configuredBase.endsWith("/") ? configuredBase : configuredBase + "/";
+        var baseNoSlash = base === "/" ? "/" : base.slice(0, -1);
+        var hasAppBase = base === "/" || l.pathname === baseNoSlash || l.pathname.startsWith(base);
+        var needsTrailingSlash = function(pathname) {
+          var q = pathname.indexOf("?");
+          var pathOnly = q < 0 ? pathname : pathname.slice(0, q);
+          if (pathOnly.endsWith("/")) return false;
+          var last = pathOnly.split("/").pop() || "";
+          return last.indexOf(".") < 0;
+        };
+        var withSlash = function(pathname) {
+          var q = pathname.indexOf("?");
+          if (q < 0) return pathname.endsWith("/") ? pathname : pathname + "/";
+          var pathOnly = pathname.slice(0, q);
+          var query = pathname.slice(q);
+          return (pathOnly.endsWith("/") ? pathOnly : pathOnly + "/") + query;
+        };
+
+        if (configuredBase !== "/" && l.pathname === baseNoSlash) {
+          l.replace(base + l.search + l.hash);
+          return;
+        }
+
         if (l.search[1] === '/') {
           var decoded = l.search.slice(1).split('&').map(function(s) {
             return s.replace(/~and~/g, '&')
           }).join('?');
+          var basePath = l.pathname.endsWith("/") ? l.pathname.slice(0, -1) : l.pathname;
+          var restored = basePath + decoded;
+          if (hasAppBase && needsTrailingSlash(restored)) restored = withSlash(restored);
           window.history.replaceState(null, null,
-            l.pathname.slice(0, -1) + decoded + l.hash
+            restored + l.hash
           );
+          return;
+        }
+
+        if (hasAppBase && needsTrailingSlash(l.pathname)) {
+          l.replace(withSlash(l.pathname) + l.search + l.hash);
         }
       }(window.location))
     </script>

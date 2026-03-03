@@ -25,6 +25,10 @@ jobs:
         working-directory: website
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: EvModder/PNG-to-NBT
+          path: png-to-nbt
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -35,6 +39,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-npm-
       - run: npm install
+      - run: npm run sync:map-colors -- ../png-to-nbt/website/src/data/mapColors.ts
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:

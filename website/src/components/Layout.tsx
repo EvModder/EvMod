@@ -1,16 +1,12 @@
 import { NavLink, Outlet } from "react-router-dom";
 import { useTheme } from "@/hooks/useTheme";
 import { useFavicon } from "@/hooks/useFavicon";
-import evmodIcon from "@/assets/EvMod.png";
-
-const NAV_ITEMS = [
-  { to: "/DAT-to-PNG", label: "map_#.dat → PNG" },
-  { to: "/CACHE-to-PNG", label: "inv.cache → PNG" },
-  { to: "/MapHasher", label: "Map → Hash" },
-];
+import { TOOL_PAGES } from "@/lib/toolPages";
+import { MoonIcon, SunIcon } from "@/components/ThemeIcons";
 
 export default function Layout() {
   const { resolved, toggle } = useTheme();
+  const siteIcon = `${import.meta.env.BASE_URL}favicon.png`;
   useFavicon();
   return (
     <div className="min-h-screen">
@@ -18,23 +14,30 @@ export default function Layout() {
         <div className="mx-auto max-w-6xl flex items-center justify-between px-4 h-12">
           <div className="flex items-center gap-4 overflow-x-auto">
             <NavLink to="/" className="shrink-0 hover:opacity-80 transition-opacity" title="EvMod Tools">
-              <img src={evmodIcon} alt="EvMod Tools" className="w-7 h-7" />
+              <img src={siteIcon} alt="EvMod Tools" className="w-7 h-7" />
             </NavLink>
-            <div className="flex gap-1">
-              {NAV_ITEMS.map(({ to, label }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  className={({ isActive }) =>
-                    `px-3 py-1.5 rounded text-sm transition-colors whitespace-nowrap ${
-                      isActive
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                    }`
-                  }
-                >
-                  {label}
-                </NavLink>
+            <div className="flex items-center">
+              {TOOL_PAGES.map(({ id, path, navLabel }, idx) => (
+                <div key={path} className="flex items-center">
+                  {idx > 0 && (
+                    <span
+                      aria-hidden="true"
+                      className="mx-[1.5px] inline-block h-4 w-px rounded-full bg-muted-foreground/35"
+                    />
+                  )}
+                  <NavLink
+                    to={path}
+                    className={({ isActive }) =>
+                      `px-3 py-1.5 rounded text-sm transition-colors whitespace-nowrap ${id === "mapHasher" ? "font-semibold" : ""} ${
+                        isActive
+                          ? "bg-accent text-accent-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                      }`
+                    }
+                  >
+                    {navLabel}
+                  </NavLink>
+                </div>
               ))}
             </div>
           </div>
@@ -43,7 +46,7 @@ export default function Layout() {
             className="rounded p-2 hover:bg-muted transition-colors shrink-0"
             aria-label="Toggle theme"
           >
-            {resolved === "dark" ? "☀️" : "🌙"}
+            {resolved === "dark" ? <SunIcon className="h-4 w-4" /> : <MoonIcon className="h-4 w-4" />}
           </button>
         </div>
       </nav>
