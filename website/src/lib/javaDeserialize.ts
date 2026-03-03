@@ -271,7 +271,7 @@ class JavaDeserializer {
     if (desc.name === "java.lang.Integer") {
       this.handles[hi] = obj.value; return obj.value;
     }
-    if (desc.name.startsWith("java.lang.") && Object.prototype.hasOwnProperty.call(obj, "value")) {
+    if (desc.name.startsWith("java.lang.") && Object.hasOwn(obj, "value")) {
       throw new Error(`Unsupported boxed primitive in cache shape: ${desc.name}`);
     }
     return obj;

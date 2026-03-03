@@ -63,7 +63,7 @@ export const uuidsToBytes = (uuidList: string[]): Uint8Array => {
   for (const [i, uuid] of uuidList.entries()) {
     const dashed = parseDashedUuid(uuid);
     if (!dashed) throw new Error(`Invalid UUID: ${uuid}`);
-    const hex = dashed.replace(/-/g, ""); // The only place where I've decided to strip UUID dashes, for iteration ease
+    const hex = dashed.replaceAll("-", "");
     for (let j = 0; j < 16; ++j)
       bytes[i * 16 + j] = Number.parseInt(hex.slice(j * 2, j * 2 + 2), 16);
   }
