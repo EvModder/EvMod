@@ -12,14 +12,17 @@ import net.minecraft.world.World;
 public final class BlockClickListener{
 //	public static BlockPos lastClickedBlock;
 	public static UUID lastClickedBlockHash; // TODO: Ewwww public static :(
+	private final ByteBuffer posData;
 
-	private static final UUID getIdForBlockPos(final World world, final BlockPos pos){
+	private final UUID getIdForBlockPos(final World world, final BlockPos pos){
 		final byte dim = MiscUtils.getDimensionId(world);
-		final byte[] bytes = ByteBuffer.allocate(13).put(dim).putInt(pos.getX()).putInt(pos.getY()).putInt(pos.getZ()).array();
-		return UUID.nameUUIDFromBytes(bytes);
+		posData.rewind();
+		posData.put(dim).putInt(pos.getX()).putInt(pos.getY()).putInt(pos.getZ()).array();
+		return UUID.nameUUIDFromBytes(posData.array());
 	}
 
 	public BlockClickListener(){ // TODO: currently called by ContainerOpenCloseListener
+		posData = ByteBuffer.allocate(13);
 		// TODO: add later phase, after ActionResult is determined to be PASS
 		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
 			if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue()){
