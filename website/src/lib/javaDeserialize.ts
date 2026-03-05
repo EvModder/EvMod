@@ -7,9 +7,9 @@
 import { dashedUuidFromLongs, parseDashedUuid, type DashedUuid } from "@/lib/uuid";
 import type { LockedMapData, MapData } from "@/lib/map";
 
-export type MapStateData = LockedMapData;
+type MapStateData = LockedMapData;
 
-export type CacheExtractResult =
+type CacheExtractResult =
   | { kind: "id"; maps: [id: number, map: MapStateData][] }
   | { kind: "name"; maps: [name: string, map: MapStateData][] }
   | { kind: "slot"; containers: [uuid: DashedUuid, maps: [slot: number, map: MapStateData][]][] };

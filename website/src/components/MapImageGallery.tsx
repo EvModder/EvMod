@@ -20,7 +20,7 @@ export default function MapImageGallery({ images, zipName, summaryLabel }: MapIm
           </button>
         )}
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-9">
         {images.map(img => (
           <button key={img.url} onClick={() => downloadUrl(img.url, img.name)} className="group overflow-hidden rounded-lg border border-border transition-colors hover:border-accent" title={`Download ${img.name}`}>
             <img src={img.url} alt={img.name} className="aspect-square w-full object-contain bg-muted" style={{ imageRendering: "pixelated" }} />

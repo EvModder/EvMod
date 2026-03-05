@@ -88,7 +88,7 @@ function encodeMapDataToPng({ colors }: MapData): Blob {
   return new Blob([png], { type: "image/png" });
 }
 
-export interface ParsedMap extends MapData {
+interface ParsedMap extends MapData {
   label?: string;
 }
 

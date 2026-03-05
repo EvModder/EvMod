@@ -7,7 +7,9 @@ import DatToPng from "@/pages/DatToPng";
 import NbtToPng from "@/pages/NbtToPng";
 import CacheToPng from "@/pages/CacheToPng";
 import MapHasher from "@/pages/MapHasher";
-import { TOOL_PAGES, type ToolPageId } from "@/lib/toolPages";
+import { TOOL_PAGES } from "@/lib/toolPages";
+
+type ToolPageId = (typeof TOOL_PAGES)[number]["id"];
 
 const routeElements: Record<ToolPageId, ReactElement> = {
   pngToDat: <PngToDat />,

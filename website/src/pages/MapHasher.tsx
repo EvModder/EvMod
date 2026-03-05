@@ -102,7 +102,7 @@ export default function MapHasher() {
   const handleSave = () => {
     const lines = editText.split("\n").map(l => l.trim()).filter(Boolean);
     const bytes = uuidsToBytes(lines);
-    downloadBlob(new Blob([bytes.buffer as ArrayBuffer]), "uuids.bin");
+    downloadBlob(new Blob([bytes]), "uuids.bin");
     setUuids(lines);
     setIsEditing(false);
     setErrors([]);

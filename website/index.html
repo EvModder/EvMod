@@ -38,15 +38,18 @@
           var query = pathname.slice(q);
           return (pathOnly.endsWith("/") ? pathOnly : pathOnly + "/") + query;
         };
+        var stripIndexHtml = function(pathname) {
+          return pathname.replace(/\/index\.html\/?$/i, "/");
+        };
 
         if (configuredBase !== "/" && l.pathname === baseNoSlash) {
           l.replace(base + l.search + l.hash);
           return;
         }
         if (hasAppBase) {
-          var collapsed = collapseTrailingSlashes(l.pathname);
-          if (collapsed !== l.pathname) {
-            l.replace(collapsed + l.search + l.hash);
+          var canonicalPath = stripIndexHtml(collapseTrailingSlashes(l.pathname));
+          if (canonicalPath !== l.pathname) {
+            l.replace(canonicalPath + l.search + l.hash);
             return;
           }
         }
