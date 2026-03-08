@@ -11,7 +11,7 @@ export default function Layout() {
   return (
     <div className="min-h-screen">
       <nav className="border-b border-border bg-background/80 backdrop-blur sticky top-0 z-10">
-        <div className="mx-auto max-w-6xl flex items-center justify-between px-4 h-12">
+        <div className="flex h-12 w-full items-center justify-between px-4">
           <div className="flex items-center gap-4 overflow-x-auto">
             <a href={import.meta.env.BASE_URL} className="shrink-0 hover:opacity-80 transition-opacity" title="EvMod Tools">
               <img src={siteIcon} alt="EvMod Tools" className="w-7 h-7" />
@@ -50,7 +50,7 @@ export default function Layout() {
           </button>
         </div>
       </nav>
-      <main className="mx-auto max-w-6xl p-6">
+      <main className="w-full p-6">
         <Outlet />
       </main>
     </div>

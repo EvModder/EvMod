@@ -1,26 +1,26 @@
 /**
  * Tool/page metadata for routing, nav labels, titles, and favicons.
- * Exports: `HOME_PAGE`, `TOOL_PAGES`, `withTrailingSlash`, `getPageMeta`.
+ * Exports: `TOOL_PAGES`, `withTrailingSlash`, `getPageMeta`.
  */
 import datToPngIcon from "@/assets/DAT-to-PNG.png";
 import nbtFormatIcon from "@/assets/NBT-to-PNG.png";
 import cacheToPngIcon from "@/assets/CACHE-to-PNG.png";
 import mapHasherIcon from "@/assets/MAP-to-HASH.svg";
 
-export type ToolPageId = "pngToDat" | "datToPng" | "nbtToPng" | "cacheToPng" | "mapHasher";
+type ToolPageId = "pngToDat" | "datToPng" | "nbtToPng" | "cacheToPng" | "mapHasher";
 
 type IconType = "image/png" | "image/svg+xml";
 
-export interface PageHeadMeta {
+interface PageHeadMeta {
   tabTitle: string;
   favicon: { href: string; type: IconType };
 }
 
-export interface PageMeta extends PageHeadMeta {
+interface PageMeta extends PageHeadMeta {
   path: string;
 }
 
-export interface ToolPageMeta extends PageMeta {
+interface ToolPageMeta extends PageMeta {
   id: ToolPageId;
   navLabel: string;
   cardDesc: string;
@@ -28,7 +28,7 @@ export interface ToolPageMeta extends PageMeta {
 
 const siteIcon = `${import.meta.env.BASE_URL}favicon.png`;
 
-export const HOME_PAGE: PageMeta = {
+const HOME_PAGE: PageMeta = {
   path: "/",
   tabTitle: "EvMod Tools",
   favicon: { href: siteIcon, type: "image/png" },
@@ -82,7 +82,7 @@ export const withTrailingSlash = (path: string) =>
 
 const PAGE_MAP = new Map<string, PageHeadMeta>([
   [HOME_PAGE.path, HOME_PAGE],
-  ...TOOL_PAGES.map(({ path, tabTitle, favicon }) => [path, { tabTitle, favicon }] as [string, PageHeadMeta]),
+  ...TOOL_PAGES.map(({ path, tabTitle, favicon }) => [path, { tabTitle, favicon }] as [string, PageHeadMeta])
 ]);
 
 export const getPageMeta = (pathname: string): PageHeadMeta => PAGE_MAP.get(pathname) ?? HOME_PAGE;

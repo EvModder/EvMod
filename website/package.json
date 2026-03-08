@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "build:dev": "vite build --mode development",
+    "build": "vite build && node scripts/generate-route-indexes.mjs",
+    "build:dev": "vite build --mode development && node scripts/generate-route-indexes.mjs",
     "sync:map-colors": "node scripts/sync-map-colors.mjs",
     "preview": "vite preview"
   },

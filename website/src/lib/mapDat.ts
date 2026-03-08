@@ -4,7 +4,6 @@
  */
 import pako from "pako";
 import type { LockedMapData, MapData } from "@/lib/map";
-export type DatFileData = LockedMapData;
 
 const inflateIfNeeded = (buffer: ArrayBuffer): Uint8Array => {
   let data: Uint8Array;
@@ -64,7 +63,7 @@ export function encodeMapDataToDat(mapData: MapData, locked = true): Blob {
   return new Blob([pako.gzip(new Uint8Array(out))], { type: "application/octet-stream" });
 }
 
-export function parseMapDataFromDat(buffer: ArrayBuffer): DatFileData {
+export function parseMapDataFromDat(buffer: ArrayBuffer): LockedMapData {
   const data = inflateIfNeeded(buffer);
 
   const reader = new NbtReader(data);
