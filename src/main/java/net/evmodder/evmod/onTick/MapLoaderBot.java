@@ -112,7 +112,14 @@ public final class MapLoaderBot implements TickListener{
 		if(!pairsMatch(state.colors, desiredColors, pixelX, pixelZ, isInMap)){
 			final boolean isEven = (pixelZ&1)==0;
 			if(isEven ? (pixelZ == 0 || pixelZ == 126) : (pixelZ == 1 || pixelZ == 127)){
-				client.player.sendMessage(Text.literal("Waiting for next column"), true);
+				final int prevColX = pixelX+1, prevColZ = pixelZ + (pixelZ == 0 || pixelZ == 126 ? +1 : -1);
+				if(pairsMatch(state.colors, desiredColors, prevColX, prevColZ, /*TODO: detemine for prevXZ!*/false)){
+					client.player.sendMessage(Text.literal("Waiting for next column"), true);
+				}
+				else{
+					client.player.sendMessage(Text.literal("Previous column mismatch!"), true);
+//					walkTo(client.player, playerX+1, playerZ+prevColZ-pixelZ);
+				}
 			}
 			else client.player.sendMessage(Text.literal("Waiting for correct color"), true);
 			return;
@@ -131,7 +138,7 @@ public final class MapLoaderBot implements TickListener{
 			if(isEven) z = pixelZ < 64 ? 1 : 127;
 			else z = pixelZ < 64 ? 0 : 126;
 			client.player.sendMessage(Text.literal("Walking to start of next column"), true);
-			walkTo(client.player, playerX-1, playerZ + (z-pixelZ));
+			walkTo(client.player, playerX-1, playerZ+(z-pixelZ));
 		}
 	}
 }
