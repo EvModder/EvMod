@@ -35,7 +35,8 @@ abstract class MixinClientPlayNetworkHandler{
 	@Inject(method="onEntitySpawn", at=@At("HEAD"))
 	private final void onSpawn(final EntitySpawnS2CPacket packet, final CallbackInfo _ci){
 		// If the incoming entity is a player and matches your target's UUID
-		if(packet.getEntityType() == EntityType.PLAYER && AccessorMain.getInstance().syncPlayerPos.removeFakePlayer(packet.getUuid())){
+		if(packet.getEntityType() == EntityType.PLAYER && AccessorMain.getInstance().syncPlayerPos != null &&
+				AccessorMain.getInstance().syncPlayerPos.removeFakePlayer(packet.getUuid())){
 			Main.LOGGER.info("[EvMod] Removed dummy player (real player spawned): "+packet.getUuid());
 		}
 	}
