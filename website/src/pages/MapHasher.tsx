@@ -19,6 +19,11 @@ function getFileExtension(name: string): string {
   return dot >= 0 ? name.slice(dot + 1).toLowerCase() : "";
 }
 
+const dedupeUuids = (list: string[]) => {
+  const seen = new Set<string>();
+  return list.filter(uuid => !seen.has(uuid) && !!seen.add(uuid));
+};
+
 const mapDataToUuid = ({ colors }: MapData, locked: boolean) => {
   const uuid = nameUUIDFromBytes(colors);
   return locked ? setLockedBit(uuid) : clearLockedBit(uuid);
@@ -94,7 +99,7 @@ export default function MapHasher() {
 
     if (allErrors.length) setErrors(allErrors);
     else if (!allUuids.length) setErrors(["No UUIDs found in the uploaded files."]);
-    setUuids(allUuids);
+    setUuids(dedupeUuids(allUuids));
   }, []);
 
   const handleEdit = () => { setEditText(uuids.join("\n")); setIsEditing(true); };
@@ -109,7 +114,7 @@ export default function MapHasher() {
   };
 
   const copyAll = async () => {
-    await navigator.clipboard.writeText(uuids.join("\n"));
+    await navigator.clipboard.writeText(dedupeUuids(uuids).join("\n"));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
