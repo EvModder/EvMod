@@ -182,7 +182,7 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 
 	@Inject(method="addConfigOption", at=@At(value="FIELD",
 			target="Lfi/dy/masa/malilib/config/ConfigType;BOOLEAN:Lfi/dy/masa/malilib/config/ConfigType;"), cancellable=true)
-	private final void customConfigGui(int x, int y, float zLevel, int labelWidth, int configWidth, IConfigBase config, CallbackInfo ci){
+	private final void customConfigGui(int x, int y, int labelWidth, int configWidth, IConfigBase config, CallbackInfo ci){
 		if(!isOurConfigGui() || !(config instanceof IHotkey)) return;
 
 		boolean modified = true;

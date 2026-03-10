@@ -8,7 +8,6 @@ import java.util.UUID;
 import net.evmodder.EvLib.util.TextUtils_New;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
-import net.evmodder.evmod.mixin.AccessorProjectileEntity;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
@@ -145,7 +144,7 @@ public final class EpearlLookupFabric extends EpearlLookup{
 
 	public final String getOwnerName(final EnderPearlEntity epearl){
 		assert epearl != null;
-		UUID ownerUUID = ((AccessorProjectileEntity)epearl).getOwnerUUID();
+		UUID ownerUUID = MiscUtils.getPearlUUID(epearl);
 		if(isDisabled()) return getDynamicUsername(ownerUUID, epearl.getUuid());
 
 		if(ownerUUID == null){
@@ -155,7 +154,7 @@ public final class EpearlLookupFabric extends EpearlLookup{
 				ownerUUID = getOwnerFromDb(epearl, /*byUUID=*/false);
 			}
 			assert ownerUUID != null : "Expected at least one of [enableKeyUUID() or enableKeyXZ()] to be enabled, and return one of [404, LOADING, <result>]";
-			if(ownerUUID != UUID_404 && ownerUUID != UUID_LOADING) ((AccessorProjectileEntity)epearl).setOwnerUUID(ownerUUID);
+			if(ownerUUID != UUID_404 && ownerUUID != UUID_LOADING) MiscUtils.setPearlUUID(epearl, ownerUUID);
 		}
 		else{
 			assert ownerUUID != UUID_404 && ownerUUID != UUID_LOADING;
