@@ -300,7 +300,7 @@ public final class CommandExportMapImg{
 
 		final Text text = Text.literal("Saved mapwall to ").withColor(16755200).append(
 				Text.literal(relFilePath).withColor(43520).formatted(Formatting.UNDERLINE)
-				.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, imgFile.getAbsolutePath())))
+				.styled(style -> style.withClickEvent(new ClickEvent.OpenFile(imgFile.getAbsolutePath())))
 		);
 		source.sendFeedback(text);
 	}
@@ -387,9 +387,9 @@ public final class CommandExportMapImg{
 	}
 
 	private final List<ItemFrameEntity> getItemFramesWithMaps(final ClientPlayerEntity player){
-		final Box everythingBox = Box.of(player.getPos(), RENDER_DIST, RENDER_DIST, RENDER_DIST);
+		final Box everythingBox = Box.of(player.getEntityPos(), RENDER_DIST, RENDER_DIST, RENDER_DIST);
 
-		return player.getWorld().getEntitiesByType(TypeFilter.instanceOf(ItemFrameEntity.class), everythingBox,
+		return player.getEntityWorld().getEntitiesByType(TypeFilter.instanceOf(ItemFrameEntity.class), everythingBox,
 				e -> e.getHeldItemStack().getItem() == Items.FILLED_MAP);
 	}
 
@@ -407,19 +407,19 @@ public final class CommandExportMapImg{
 	private final int runCommandInInventory(final CommandContext<FabricClientCommandSource> ctx){
 		// TODO: use getShapeArgOrNull()
 		final int numSaved = genImgForMapsInInv(ctx.getSource(),
-				ctx.getSource().getPlayer().getInventory().main,
+				ctx.getSource().getPlayer().getInventory().getMainStacks(),
 				/*name=*/StringUtils.translate("container.inventory"), /*width=*/9, /*combine=*/false);
 		if(numSaved == 1){
 			final String absolutePath = new File(lastRelPath).getAbsolutePath();
 			ctx.getSource().sendFeedback(Text.literal("Saved map shulk img to ").withColor(16755200).append(
 					Text.literal(lastRelPath).withColor(43520).formatted(Formatting.UNDERLINE)
-					.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, absolutePath)))
+					.styled(style -> style.withClickEvent(new ClickEvent.OpenFile(absolutePath)))
 			));
 		}
 		if(numSaved > 1){
 			ctx.getSource().sendFeedback(Text.literal("Saved "+numSaved+" map shulk imgs to ").withColor(16755200).append(
 					Text.literal(FileIO.DIR+MAP_EXPORT_DIR).withColor(43520).formatted(Formatting.UNDERLINE)
-					.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, new File(FileIO.DIR+MAP_EXPORT_DIR).getAbsolutePath())))
+					.styled(style -> style.withClickEvent(new ClickEvent.OpenFile(new File(FileIO.DIR+MAP_EXPORT_DIR).getAbsolutePath())))
 			));
 		}
 		return numSaved == 0 ? 1 : 0;
@@ -600,7 +600,7 @@ public final class CommandExportMapImg{
 		}
 		final Box box = new Box(new Vec3d(pos1), new Vec3d(pos2));
 		final List<ItemFrameEntity> iFrames = getItemFramesWithMaps(ctx.getSource().getPlayer());
-		iFrames.removeIf(ife -> !box.contains(ife.getPos()));
+		iFrames.removeIf(ife -> !box.contains(ife.getEntityPos()));
 		if(iFrames.isEmpty()){
 			ctx.getSource().sendError(Text.literal("No iFrames found within the given selection"));
 			return -1;
@@ -645,9 +645,9 @@ public final class CommandExportMapImg{
 			List<ItemStack> mapItems = mapWall.stream().map(ife -> ife.getHeldItemStack()).collect(Collectors.toCollection(LinkedList::new));
 			while(!mapItems.isEmpty()){
 				final String name = mapItems.getFirst().getCustomName().getString();
-				final MapState state = FilledMapItem.getMapState(mapItems.getFirst(), player.getWorld());
+				final MapState state = FilledMapItem.getMapState(mapItems.getFirst(), player.getEntityWorld());
 				final Boolean locked = state == null ? null : state.locked;
-				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(mapItems, name, 1, locked, player.getWorld());
+				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(mapItems, name, 1, locked, player.getEntityWorld());
 				final String nameKey = getCleanedName(name, data);
 				if(!SHOW_ONLY_IF_HAS_AZ || nameKey.matches(".*[a-zA-Z].*")) cmdMapNames.put(nameKey, name);
 //				assert data.slots().size() > 0; // Can be size=0 for mismatched pos data

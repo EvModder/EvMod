@@ -20,14 +20,14 @@ public class CommandDeletedMapsNearby{
 	private final int displayHashCode(CommandContext<FabricClientCommandSource> ctx){
 		final ClientPlayerEntity player = ctx.getSource().getPlayer();
 
-		final Box everythingBox = Box.of(player.getPos(), RENDER_DIST, RENDER_DIST, RENDER_DIST);
-		final String mapNames = player.getWorld().getEntitiesByType(TypeFilter.instanceOf(ItemFrameEntity.class), everythingBox,
-				e -> e.getHeldItemStack().getItem() == Items.FILLED_MAP && FilledMapItem.getMapState(e.getHeldItemStack(), player.getWorld()) == null)
+		final Box everythingBox = Box.of(player.getEntityPos(), RENDER_DIST, RENDER_DIST, RENDER_DIST);
+		final String mapNames = player.getEntityWorld().getEntitiesByType(TypeFilter.instanceOf(ItemFrameEntity.class), everythingBox,
+				e -> e.getHeldItemStack().getItem() == Items.FILLED_MAP && FilledMapItem.getMapState(e.getHeldItemStack(), player.getEntityWorld()) == null)
 			.stream().map(e -> e.getHeldItemStack().getName().getString()).collect(Collectors.joining("\n"));
 
 		final String displayText = mapNames.length() < 1000 ? mapNames : "[Click to copy]";
 		ctx.getSource().sendFeedback(Text.literal(displayText)
-				.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, mapNames))));
+				.styled(style -> style.withClickEvent(new ClickEvent.CopyToClipboard(mapNames))));
 		return 1;
 	}
 

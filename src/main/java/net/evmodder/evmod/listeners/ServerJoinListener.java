@@ -25,7 +25,7 @@ public class ServerJoinListener{
 	private final void loadMapStateCaches(MinecraftClient client){
 		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.loadMapStatesById();
 		if(Configs.Generic.MAP_CACHE_BY_INV_POS.getBooleanValue())
-			MapStateCacher.loadMapStatesByPos(client.player.getInventory().main, MapStateCacher.BY_PLAYER_INV);
+			MapStateCacher.loadMapStatesByPos(client.player.getInventory().getMainStacks(), MapStateCacher.BY_PLAYER_INV);
 	}
 
 	public ServerJoinListener(final RemoteServerSender rms){
@@ -69,7 +69,7 @@ public class ServerJoinListener{
 
 				//Main.LOGGER.info("Server join detected, checking if stuff is loaded");
 				if(!client.isFinishedLoading() || client.player == null || client.world == null || client.getNetworkHandler() == null || !client.player.isAlive()
-					|| !client.player.isLoaded() || client.player.isSpectator() || client.player.isRegionUnloaded() || client.player.isInvisible()) return;
+					|| !client.player.isRegionUnloaded() || client.player.isSpectator() || client.player.isRegionUnloaded() || client.player.isInvisible()) return;
 				if(loadedAt == 0){
 					loadedAt = System.currentTimeMillis();
 					if(WAIT_FOR_MOVEMENT){loadedAtX = client.player.getX(); loadedAtZ = client.player.getZ();}

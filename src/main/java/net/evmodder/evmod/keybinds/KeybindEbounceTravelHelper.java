@@ -131,7 +131,7 @@ public final class KeybindEbounceTravelHelper{
 		int i=0;
 		for(; i<9; ++i){
 			Item item = client.player.getInventory().getStack(i).getItem();
-			if(client.player.getInventory().selectedSlot == i || item instanceof BlockItem == false) continue;
+			if(client.player.getInventory().getSelectedSlot() == i || item instanceof BlockItem == false) continue;
 			if(path == null || Registries.ITEM.getId(item).getPath().equals(path)) break;
 		}
 		if(i == 9){
@@ -156,9 +156,9 @@ public final class KeybindEbounceTravelHelper{
 //		Block block = ((BlockItem)client.player.getStackInHand(hand).getItem()).getBlock();
 //		if(!useBlock.isInstance(block)) return false;
 
-		Vec3d vec = client.player.getPos().add(client.player.getVelocity()).add(0, -0.75, 0);
+		Vec3d vec = client.player.getEntityPos().add(client.player.getVelocity()).add(0, -0.75, 0);
 
-		Vec3d pos = client.player.getPos();
+		Vec3d pos = client.player.getEntityPos();
 		if(aheadDist != 0 && !client.world.getBlockState(client.player.getBlockPos().down())
 				.getCollisionShape(client.world, client.player.getBlockPos()).isEmpty()) {
 			Vec3d dir = Vec3d.fromPolar(0, client.player.getYaw()).multiply(aheadDist, 0, aheadDist);
@@ -175,7 +175,7 @@ public final class KeybindEbounceTravelHelper{
 		BlockPos targetBlock = bp.toImmutable();
 
 		if(getPlaceSide(bp) == null){
-			pos = client.player.getPos();
+			pos = client.player.getEntityPos();
 			pos = pos.add(0, -0.98f, 0);
 			pos.add(client.player.getVelocity());
 
@@ -209,7 +209,7 @@ public final class KeybindEbounceTravelHelper{
 
 	private Vec3d getEyesPos(){
 		float eyeHeight = client.player.getEyeHeight(client.player.getPose());
-		return client.player.getPos().add(0, eyeHeight, 0);
+		return client.player.getEntityPos().add(0, eyeHeight, 0);
 	}
 	private Direction getBlockBreakingSide(BlockPos bp){
 		Vec3d eyes = getEyesPos();
@@ -258,7 +258,7 @@ public final class KeybindEbounceTravelHelper{
 
 	private boolean selectPickaxeInHotbar(BlockState bs){
 //		if(client.player.getMainHandStack().getItem() instanceof PickaxeItem) return false;
-		int bestI=client.player.getInventory().selectedSlot;
+		int bestI=client.player.getInventory().getSelectedSlot();
 		float bestSpeed=0;
 		for(int i=0; i<9; ++i){
 			float speed = client.player.getInventory().getStack(i).getMiningSpeedMultiplier(bs);
@@ -268,7 +268,7 @@ public final class KeybindEbounceTravelHelper{
 			client.player.sendMessage(Text.literal("(!) No matching tool in hotbar"), true);
 			return false;
 		}
-		if(bestI == client.player.getInventory().selectedSlot){
+		if(bestI == client.player.getInventory().getSelectedSlot()){
 			client.player.sendMessage(Text.literal("Best tool in hotbar already selected"), true);
 			return false;
 		}
@@ -296,10 +296,10 @@ public final class KeybindEbounceTravelHelper{
 			}
 		}
 		// Don't try to mine blocks if the player isn't stuck
-		if(client.player.prevX != client.player.getX() || client.player.prevZ != client.player.getZ()) return false;
+		if(client.player.lastX != client.player.getX() || client.player.lastZ != client.player.getZ()) return false;
 
 		ArrayList<BlockPos> mineSpots = new ArrayList<>();
-		Vec3d pos = client.player.getPos();
+		Vec3d pos = client.player.getEntityPos();
 		if(pos.getY() > targetY) pos = new Vec3d(pos.x, targetY, pos.z);
 		if(dx != 0){
 			mineSpots.add(bp.add(dx, 0, 0));

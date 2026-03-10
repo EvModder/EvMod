@@ -9,9 +9,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.config.OptionUnlockedMapHandling;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.component.type.MapIdComponent;
 import net.minecraft.item.map.MapState;
+import net.minecraft.world.World;
 
 public final class MapGroupUtils{
 	private static int mapsInGroupHash;
@@ -54,7 +54,7 @@ public final class MapGroupUtils{
 		}
 		return loadedMaps;
 	}*/
-	public static final Set<UUID> getLegitLoadedMaps(final ClientWorld world){ // Only caller: CommandMapArtGroup
+	public static final Set<UUID> getLegitLoadedMaps(final World world){ // Only caller: CommandMapArtGroup
 		Stream<MapState> states = loadedMapIds.stream().map(i -> world.getMapState(new MapIdComponent(i)))
 				.filter(Objects::nonNull).filter(s -> !MapStateCacher.hasCacheMarker(s));
 		if(Configs.Generic.MAPART_GROUP_UNLOCKED_HANDLING.getOptionListValue() == OptionUnlockedMapHandling.SKIP) states = states.filter(s -> s.locked);

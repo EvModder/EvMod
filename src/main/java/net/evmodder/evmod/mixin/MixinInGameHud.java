@@ -25,7 +25,7 @@ abstract class MixinInGameHud{
 
 		if(rcHUD == false && mapHighlightHUD == false) return originalText;
 		final MinecraftClient client = MinecraftClient.getInstance();
-		final ItemStack currentStack = client.player.getInventory().getMainHandStack();
+		final ItemStack currentStack = client.player.getMainHandStack();
 		MutableText text = originalText;
 		if(mapHighlightHUD){
 			final MapIdComponent id = currentStack.get(DataComponentTypes.MAP_ID);

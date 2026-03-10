@@ -11,7 +11,6 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.screen.slot.SlotActionType;
@@ -55,7 +54,7 @@ abstract class MixinClientPlayerInteractionManager{
 //			else if(syncId == 0 && slot == 0 && button == 0 && action == SlotActionType.QUICK_MOVE) return; // QUICK_CRAFT sends duplicate fake QUICK_MOVE?
 			else ci.cancel(); // Throw out clicks that exceed the limit!!
 			Main.LOGGER.error("Discarded click in clickSlot() due to exceeding limit!"
-					+ " slot:"+slot+",button:"+button+",action:"+action.name()+",isShiftClick:"+Screen.hasShiftDown());
+					+ " slot:"+slot+",button:"+button+",action:"+action.name());
 //			MinecraftClient.getInstance().player.sendMessage(Text.literal("syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
 //			MinecraftClient.getInstance().player.sendMessage(
 //					Text.literal("Discarding unsafe click!"
