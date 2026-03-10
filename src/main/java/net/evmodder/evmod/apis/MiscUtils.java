@@ -7,9 +7,12 @@ import java.text.Normalizer;
 import java.util.UUID;
 import net.evmodder.EvLib.util.PacketHelper;
 import net.evmodder.evmod.Main;
+import net.evmodder.evmod.mixin.AccessorProjectileEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.LazyEntityReference;
+import net.minecraft.entity.projectile.thrown.EnderPearlEntity;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
@@ -101,5 +104,13 @@ public class MiscUtils{
 		final UUID sessionUUID = client.getSession().getUuidOrNull(), playerUUID = client.player.getGameProfile().id();
 		final UUID usableSessionUUID = sessionUUID != null ? sessionUUID : MiscUtils.encodeAsUUID(sessionName);
 		return sessionName.equals(playerName) ? PacketHelper.toByteArray(usableSessionUUID) : PacketHelper.toByteArray(usableSessionUUID, playerUUID);
+	}
+
+	public static final UUID getPearlUUID(final EnderPearlEntity epearl){
+		var ref = ((AccessorProjectileEntity)epearl).getOwnerReference();
+		return ref == null ? null : ref.getUuid();
+	}
+	public static final void setPearlUUID(final EnderPearlEntity epearl, final UUID owner){
+		((AccessorProjectileEntity)epearl).setOwnerReference(LazyEntityReference.ofUUID(owner));
 	}
 }

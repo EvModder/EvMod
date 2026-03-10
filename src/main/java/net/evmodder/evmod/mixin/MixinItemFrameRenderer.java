@@ -14,8 +14,10 @@ import net.evmodder.evmod.onTick.UpdateItemFrameContents;
 import net.evmodder.evmod.onTick.UpdateItemFrameContents.Highlight;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.entity.ItemFrameEntityRenderer;
 import net.minecraft.client.render.entity.state.ItemFrameEntityRenderState;
+import net.minecraft.client.render.state.CameraRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ItemFrameEntity;
@@ -59,7 +61,7 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 
 	@Inject(method="render", at=@At("HEAD"))
 	private final void disableItemFrameFrameRenderingWhenHoldingMaps(
-			ItemFrameEntityRenderState ifers, MatrixStack _0, VertexConsumerProvider _1, int _2, CallbackInfo _3){
+			ItemFrameEntityRenderState ifers, MatrixStack _0, OrderedRenderCommandQueue _1, CameraRenderState _2, CallbackInfo _3){
 		ifers.invisible |= shouldBeInvis(ifers);
 	}
 

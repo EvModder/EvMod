@@ -55,12 +55,12 @@ java {
 	// If you remove this line, sources will not be generated.
 //	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
 }
 
 compileJava.options.encoding = "UTF-8"
-tasks.withType(JavaCompile).configureEach { it.options.release = 21 }
+tasks.withType(JavaCompile).configureEach { it.options.release = 25 }
 
 jar {
 	from("LICENSE") { rename { "${it}_${base.archivesName}"} }
