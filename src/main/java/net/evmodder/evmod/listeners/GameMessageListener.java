@@ -2,8 +2,6 @@ package net.evmodder.evmod.listeners;
 
 import java.util.HashSet;
 import java.util.UUID;
-import com.google.gson.Gson;
-import com.mojang.serialization.JsonOps;
 import net.evmodder.EvLib.util.Command;
 import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.EvLib.util.PacketHelper;
@@ -17,7 +15,13 @@ import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.text.Text;
-import net.minecraft.text.TextCodecs;
+
+//import net.minecraft.registry.RegistryOps;
+//import net.minecraft.registry.RegistryWrapper;
+//import net.minecraft.text.TextCodecs;
+//import com.google.gson.Gson;
+//import com.google.gson.JsonElement;
+//import com.mojang.serialization.JsonOps;
 
 public final class GameMessageListener{
 	private final void saveMyIgnores(final UUID myUUID, final UUID ignoredUUID, final boolean ignored){
@@ -69,11 +73,20 @@ public final class GameMessageListener{
 
 		ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {
 			if(overlay) return;
-			final String json = new Gson().toJson(TextCodecs.CODEC.encodeStart(JsonOps.INSTANCE, msg).getOrThrow());
-			if(json.contains("EvModder")) Main.LOGGER.info("GameMsgListener: EvModder mentioned (json):\n"+json);
+
+//			//========== TODO: remove this
+//			final String myName = MinecraftClient.getInstance().getSession().getUsername();
+//			try{
+//			final RegistryWrapper.WrapperLookup lookup = MinecraftClient.getInstance().world.getRegistryManager();
+//			final RegistryOps<JsonElement> ops = lookup.getOps(JsonOps.INSTANCE);
+//			final String json = new Gson().toJson(TextCodecs.CODEC.encodeStart(ops, msg).getOrThrow(err -> new IllegalStateException("Failed to encode: " + err)));
+//			if(json.contains(myName)) Main.LOGGER.info("GameMsgListener: Account mentioned!:\n"+json);
+//			}catch(Exception e){e.printStackTrace();}
+//			//==========
+
 			final String literal = msg.getString();
 			if(literal == null) return;
-			if(literal.contains("EvModder")) Main.LOGGER.info("GameMsgListener: EvModder mentioned (literal):\n"+literal);
+//			if(literal.contains(myName)) Main.LOGGER.info("GameMsgListener: Account mentioned (literal):\n"+literal);
 
 			if(literal.matches("^\\w+ whispers: .*")){// TODO: per-server format support
 //				Main.LOGGER.info("GameMsgListener: whisper detected");
