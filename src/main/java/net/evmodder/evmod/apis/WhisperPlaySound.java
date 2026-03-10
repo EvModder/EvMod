@@ -44,6 +44,6 @@ public class WhisperPlaySound{
 		final MinecraftClient client = MinecraftClient.getInstance();
 		final SoundData data = client.isWindowFocused() ? whisperSound : whisperSoundUnfocused;
 		if(data == null) return;
-		client.player.playSoundToPlayer(data.sound, data.category, data.volume, data.pitch);
+		client.player.playSound(data.sound, data.volume, data.pitch);
 	}
 }

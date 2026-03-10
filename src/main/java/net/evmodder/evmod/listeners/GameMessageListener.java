@@ -41,7 +41,7 @@ public final class GameMessageListener{
 		final MinecraftClient client = MinecraftClient.getInstance();
 		final PlayerListEntry ple = client.getNetworkHandler().getPlayerListEntry(name);
 		if(ple == null){Main.LOGGER.error("Unable to find PlayerListEntry for player name: "+name); return;}
-		final UUID ignoredUUID = ple.getProfile().getId();
+		final UUID ignoredUUID = ple.getProfile().id();
 
 		if(!Configs.Database.SHARE_IGNORES.getBooleanValue() || rms == null){
 			saveMyIgnores(client.player.getUuid(), ignoredUUID, ignored);

@@ -210,7 +210,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 	private final List<ItemFrameEntity> getReachableItemFrames(final PlayerEntity player, final double SCAN_DIST){
 		final Box box = player.getBoundingBox().expand(SCAN_DIST, SCAN_DIST, SCAN_DIST);
-		return player.getWorld().getEntitiesByClass(ItemFrameEntity.class, box, ifePosFilter());
+		return player.getEntityWorld().getEntitiesByClass(ItemFrameEntity.class, box, ifePosFilter());
 	}
 
 	private final BlockPos getRelativeBp(AxisData data, boolean axis, boolean neg){
@@ -317,7 +317,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not facing the same dir");
 			disableAndReset(); return false;
 		}
-		if((world=currIfe.getWorld()) != lastIfe.getWorld()){
+		if((world=currIfe.getEntityWorld()) != lastIfe.getEntityWorld()){
 			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not in the same world!");
 			disableAndReset(); return false;
 		}
@@ -348,17 +348,17 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		if(fetchData){
 			assert allMapItems.isEmpty();
 			allMapItems.add(currStack); allMapItems.add(lastStack);
-			InvUtils.getAllNestedItems(player.getInventory().main.stream()).filter(s -> s.getItem() == Items.FILLED_MAP).forEach(allMapItems::add);
+			InvUtils.getAllNestedItems(player.getInventory().getMainStacks().stream()).filter(s -> s.getItem() == Items.FILLED_MAP).forEach(allMapItems::add);
 //			Main.LOGGER.info("AutoPlaceMapArt: all maps in inv: "+(allMapItems.size()-2));
 
-			currentData = MapRelationUtils.getRelatedMapsByName0(allMapItems, player.getWorld());
+			currentData = MapRelationUtils.getRelatedMapsByName0(allMapItems, player.getEntityWorld());
 			if(currentData.slots().size() <= 3){
 				Main.LOGGER.info("AutoPlaceMapArt: not enough remaining maps in inv to justify enabling AutoPlace");
 				disableAndReset(); return false;
 			}
 			getReachableItemFrames(player, Configs.Generic.MAPART_AUTOPLACE_REACH.getDoubleValue()+2)
 					.stream().map(ItemFrameEntity::getHeldItemStack).filter(s -> s.getItem() == Items.FILLED_MAP).forEach(allMapItems::add);
-			currentData = MapRelationUtils.getRelatedMapsByName0(allMapItems, player.getWorld()); // More accurate prefix/suffix/etc data
+			currentData = MapRelationUtils.getRelatedMapsByName0(allMapItems, player.getEntityWorld()); // More accurate prefix/suffix/etc data
 
 //			Main.LOGGER.info("AutoPlaceMapArt: related maps in inv: "+(currentData.slots().size()-2));
 			final String nameWoArtist = MapRelationUtils.removeByArtist(currName);
@@ -651,20 +651,20 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 	// Functions NOT from MapLayoutFinder:
 
 	private final void placeMapInFrame(ClientPlayerEntity player, ItemFrameEntity ife){
-		assert player.getInventory().getMainHandStack().equals(player.getInventory().main.get(player.getInventory().selectedSlot));
+		assert player.getMainHandStack().equals(player.getInventory().getMainStacks().get(player.getInventory().getSelectedSlot()));
 
 		Main.LOGGER.info("AutoPlaceMapArt: right-clicking target iFrame"
 //				+ " ("+ife.getBlockPos().toShortString()+")"
-				+ " with map: "+player.getInventory().getMainHandStack().getName().getString());
+				+ " with map: "+player.getMainHandStack().getName().getString());
 
 //		UpdateInventoryHighlights.setCurrentlyBeingPlacedMapArt(null, stack);
 		recentPlaceAttempts[attemptIdx] = ife.getId();
 		lastAttemptIdx = attemptIdx;
 
-		lastStackAuto = player.getInventory().getMainHandStack(); // TODO: is .copy() necessary here?
+		lastStackAuto = player.getMainHandStack(); // TODO: is .copy() necessary here?
 		lastIfeAuto = ife;
 
-		player.networkHandler.sendPacket(PlayerInteractEntityC2SPacket.interactAt(ife, player.isSneaking(), Hand.MAIN_HAND, ife.getPos().add(0, 0.0625, 0)));
+		player.networkHandler.sendPacket(PlayerInteractEntityC2SPacket.interactAt(ife, player.isSneaking(), Hand.MAIN_HAND, ife.getEntityPos().add(0, 0.0625, 0)));
 		MinecraftClient.getInstance().interactionManager.interactEntity(player, ife, Hand.MAIN_HAND);
 		if(Configs.Generic.MAPART_AUTOPLACE_SWING_HAND.getBooleanValue()) player.networkHandler.sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
 //		nearestIfe.interactAt(player, ife.getEyePos(), Hand.MAIN_HAND);
@@ -719,7 +719,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		invloop: for(int i=slots.size()-1; i>=0; --i){
 			final boolean isInHotbar = i >= 36 && i < 45 && slots.get(i).getItem() == Items.FILLED_MAP;
 			if(nearestIsInHotbar && !isInHotbar) continue;
-			if(!ALLOW_MAP_IN_HAND && i-36 == player.getInventory().selectedSlot) continue;
+			if(!ALLOW_MAP_IN_HAND && i-36 == player.getInventory().getSelectedSlot()) continue;
 //			ItemStack mapItem = slots.get(i);
 			BundleContentsComponent contents = slots.get(i).get(DataComponentTypes.BUNDLE_CONTENTS);
 			if(bundleSlot == -1 && contents != null) continue; // Prefer to avoid bundles when we have an alterantive itemstack
@@ -771,7 +771,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					Main.LOGGER.warn("AutoPlaceMapArt: Cannot place into the same iFrame twice! "+ifeBp.toShortString());
 					continue;
 				}
-				final boolean justUseIt = isInHotbar && i-36 == player.getInventory().selectedSlot && distSq <= MAX_REACH_SQ;
+				final boolean justUseIt = isInHotbar && i-36 == player.getInventory().getSelectedSlot() && distSq <= MAX_REACH_SQ;
 				if(justUseIt || distSq < nearestDistSq || (isInHotbar && !nearestIsInHotbar)){
 					nearestIsInHotbar = isInHotbar;
 					nearestDistSq = distSq;
@@ -807,9 +807,9 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 	private final boolean test=true;// TODO: Test to confirm, but changing hotbar slots shouldn't count as an inv action
 
 	private final void getMapIntoMainHand(ClientPlayerEntity player, int slot, int bundleSlot){
-		assert slot != player.getInventory().selectedSlot+36 || bundleSlot != -1;
-		assert player.getMainHandStack() == player.getInventory().getMainHandStack();
-		assert player.getMainHandStack() == player.getInventory().getStack(player.getInventory().selectedSlot);
+		assert slot != player.getInventory().getSelectedSlot()+36 || bundleSlot != -1;
+		assert player.getMainHandStack() == player.getMainHandStack();
+		assert player.getMainHandStack() == player.getInventory().getStack(player.getInventory().getSelectedSlot());
 
 		final int TICKS_BETWEEN_INV_ACTIONS = Configs.Generic.MAPART_AUTOPLACE_INV_DELAY.getIntegerValue();
 		if(ticksSinceInvAction < TICKS_BETWEEN_INV_ACTIONS){
@@ -818,7 +818,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			return;
 		}
 		final Runnable onDone = TICKS_BETWEEN_INV_ACTIONS == 0 ? ()->placeNearestMap(player) : ()->ticksSinceInvAction=0;
-		final int selectedSlot = player.getInventory().selectedSlot;
+		final int selectedSlot = player.getInventory().getSelectedSlot();
 		if(bundleSlot == -1){
 			final int nextHbSlot;
 			if(slot >= 36 && slot < 45){
@@ -846,7 +846,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				Main.LOGGER.info("AutoPlaceMapArt: Main hand is not empty! Unable to extract from bundle");
 //				disableAndReset(); return;
 				int hbSlot = 0;
-				while(hbSlot < 9 && !player.getInventory().main.get(hbSlot).isEmpty()) ++hbSlot;
+				while(hbSlot < 9 && !player.getInventory().getMainStacks().get(hbSlot).isEmpty()) ++hbSlot;
 				if(hbSlot != 9){
 					player.getInventory().setSelectedSlot(hbSlot);
 					Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to empty slot: hb="+hbSlot);
@@ -869,7 +869,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				clicks.add(new InvAction(slot, bundleSlotUsed, ActionType.BUNDLE_SELECT)); // Select bundle slot
 			}
 			clicks.add(new InvAction(slot, 1, ActionType.CLICK)); // Take from bundle
-			clicks.add(new InvAction(player.getInventory().selectedSlot+36, 0, ActionType.CLICK)); // Place in hand (intentionally using inv.selectedSlot here)
+			clicks.add(new InvAction(player.getInventory().getSelectedSlot()+36, 0, ActionType.CLICK)); // Place in hand (intentionally using inv.selectedSlot here)
 			ClickUtils.executeClicks(_0->true, onDone, clicks);
 			Main.LOGGER.info("AutoPlaceMapArt: Extracted map from bundle into mainhand");
 		}
@@ -879,7 +879,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 	private final void placeNearestMap(ClientPlayerEntity player){
 		if(!hasKnownLayout()) return;
-		if(player == null || player.getWorld() == null){
+		if(player == null || player.getEntityWorld() == null){
 			Main.LOGGER.info("AutoPlaceMapArt: player disconnected mid-op");
 			disableAndReset(); return;
 		}
@@ -917,7 +917,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		recentPlaceAttempts[attemptIdx] = 0;
 
 		{
-			Entity e = player.getWorld().getEntityById(recentPlaceAttempts[lastAttemptIdx]);
+			Entity e = player.getEntityWorld().getEntityById(recentPlaceAttempts[lastAttemptIdx]);
 			if(e != null && e instanceof ItemFrameEntity ife && ItemStack.areEqual(player.getMainHandStack(), ife.getHeldItemStack())){
 				final int waited = lastAttemptIdx < attemptIdx ? attemptIdx-lastAttemptIdx : recentPlaceAttempts.length+attemptIdx-lastAttemptIdx;
 				if(extraInfoLogs || waited == recentPlaceAttempts.length-1)
@@ -930,7 +930,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 //			assert 0 <= attemptIdx < recentPlaceAttempts.length;
 			int i = (attemptIdx + 1) % recentPlaceAttempts.length;
 			while(i != attemptIdx){
-				Entity e = player.getWorld().getEntityById(recentPlaceAttempts[i]);
+				Entity e = player.getEntityWorld().getEntityById(recentPlaceAttempts[i]);
 				if(e != null && e instanceof ItemFrameEntity ife && ife.getHeldItemStack().isEmpty()){
 //					final int rem = attemptIdx < i ? i-attemptIdx : recentPlaceAttempts.length+i-attemptIdx;
 					final int waited = i < attemptIdx ? attemptIdx-i : recentPlaceAttempts.length+attemptIdx-i;
@@ -979,7 +979,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			else if(isIFrame(player.getOffHandStack().getItem())) hand = Hand.OFF_HAND;
 			else{
 				int hbSlot = 0;
-				while(hbSlot < 9 && !isIFrame(player.getInventory().main.get(hbSlot).getItem())) ++hbSlot;
+				while(hbSlot < 9 && !isIFrame(player.getInventory().getMainStacks().get(hbSlot).getItem())) ++hbSlot;
 				if(hbSlot == 9){
 					if(!hasWarnedMissingIfe) Main.LOGGER.warn("AutoPlaceMapArt: no iFrames found in offhand or hotbar");
 					hasWarnedMissingIfe = true;
@@ -998,7 +998,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		}
 		else hasWarnedMissingIfe = false;
 
-		if(data.slot != player.getInventory().selectedSlot+36 || data.bundleSlot != -1){
+		if(data.slot != player.getInventory().getSelectedSlot()+36 || data.bundleSlot != -1){
 //			Main.LOGGER.warn("AutoPlaceMapArt: calling getMapIntoMainHand(), data.slot="+data.slot+",hb="+client.player.getInventory().selectedSlot);
 			getMapIntoMainHand(player, data.slot, data.bundleSlot);
 			return;

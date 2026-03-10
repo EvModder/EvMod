@@ -124,7 +124,7 @@ public final class MapLoaderBot implements TickListener{
 			else client.player.sendMessage(Text.literal("Waiting for correct color"), true);
 			return;
 		}
-		mapSlot = client.player.getInventory().selectedSlot;
+		mapSlot = client.player.getInventory().getSelectedSlot();
 
 		int z;
 		for(z=pixelZ-2; z>=0 && pairsMatch(state.colors, desiredColors, pixelX, z, isInMap); z-=2);

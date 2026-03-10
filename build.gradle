@@ -33,6 +33,7 @@ repositories {
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
 	// You should only use this when depending on other mods.
 
+	maven { url = 'https://maven.fallenbreath.me/releases' } // MaLiLib dep, in 1.21.11
 	maven { url = "https://jitpack.io" } // MaLiLib
 }
 

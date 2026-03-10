@@ -28,7 +28,7 @@ public abstract class MapClickMoveNeighbors{
 		Main.LOGGER.info("MapMoveClick: moveNeighbors() called");
 
 		final ItemStack[] slots = player.currentScreenHandler.slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
-		final MapState state = FilledMapItem.getMapState(mapMoved, player.getWorld());
+		final MapState state = FilledMapItem.getMapState(mapMoved, player.getEntityWorld());
 		RelatedMapsData data;
 		final boolean moveHalf;
 		{
@@ -36,10 +36,10 @@ public abstract class MapClickMoveNeighbors{
 			final String name = mapMoved.getName().getString();
 			final int count = mapMoved.getCount();
 			final Boolean locked = state == null ? null : state.locked;
-			data = MapRelationUtils.getRelatedMapsByName(slotList, name, count, locked, player.getWorld());
+			data = MapRelationUtils.getRelatedMapsByName(slotList, name, count, locked, player.getEntityWorld());
 			if(data.prefixLen() == -1){
-				data = MapRelationUtils.getRelatedMapsByName(slotList, name, count*2, locked, player.getWorld());
-				if(data.prefixLen() == -1) data = MapRelationUtils.getRelatedMapsByName(slotList, name, count*2-1, locked, player.getWorld());
+				data = MapRelationUtils.getRelatedMapsByName(slotList, name, count*2, locked, player.getEntityWorld());
+				if(data.prefixLen() == -1) data = MapRelationUtils.getRelatedMapsByName(slotList, name, count*2-1, locked, player.getEntityWorld());
 				if(data.prefixLen() == -1){
 					Main.LOGGER.info("MapMoveClick: related-name maps not found");
 					return;
@@ -75,8 +75,8 @@ public abstract class MapClickMoveNeighbors{
 			if(state == null){++w; br += 1;}
 			else{
 				final byte[] colors = state.colors;
-				final byte[] tlColors = FilledMapItem.getMapState(slots[tl], player.getWorld()).colors;
-				final byte[] brColors = FilledMapItem.getMapState(slots[br], player.getWorld()).colors;
+				final byte[] tlColors = FilledMapItem.getMapState(slots[tl], player.getEntityWorld()).colors;
+				final byte[] brColors = FilledMapItem.getMapState(slots[br], player.getEntityWorld()).colors;
 				int scoreLeft = -2, scoreRight = -2, scoreTop = -2, scoreBottom = -2;
 				if(h == 1){
 					scoreLeft = (tl%9==0||destSlot%9+w>8) ? -2 : MapRelationUtils.adjacentEdgeScore(colors, tlColors, true);

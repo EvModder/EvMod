@@ -273,7 +273,7 @@ public class CommandMapArtGroup{
 					return 1;
 				}
 			}
-			else mapsToAdd = MapGroupUtils.getLegitLoadedMaps(MinecraftClient.getInstance().player.clientWorld);
+			else mapsToAdd = MapGroupUtils.getLegitLoadedMaps(MinecraftClient.getInstance().player.getEntityWorld());
 
 			if(mapsToAdd.isEmpty()){
 				source.sendError(Text.translatable(PREFIX+"create.noMapsFound").withColor(ERROR_COLOR));

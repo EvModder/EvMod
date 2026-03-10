@@ -15,7 +15,7 @@ import net.minecraft.world.World;
 
 public class MiscUtils{
 	public static final boolean hasMoved(final Entity entity){
-		return entity.prevX != entity.getX() || entity.prevY != entity.getY() || entity.prevZ != entity.getZ();
+		return entity.lastX != entity.getX() || entity.lastY != entity.getY() || entity.lastZ != entity.getZ();
 	}
 
 	public static final boolean isLookingAt(final Entity entity, final Entity player){
@@ -97,8 +97,8 @@ public class MiscUtils{
 	}
 
 	public static final byte[] getEncodedPlayerIds(final MinecraftClient client){
-		final String sessionName = client.getSession().getUsername(), playerName = client.player.getGameProfile().getName();
-		final UUID sessionUUID = client.getSession().getUuidOrNull(), playerUUID = client.player.getGameProfile().getId();
+		final String sessionName = client.getSession().getUsername(), playerName = client.player.getGameProfile().name();
+		final UUID sessionUUID = client.getSession().getUuidOrNull(), playerUUID = client.player.getGameProfile().id();
 		final UUID usableSessionUUID = sessionUUID != null ? sessionUUID : MiscUtils.encodeAsUUID(sessionName);
 		return sessionName.equals(playerName) ? PacketHelper.toByteArray(usableSessionUUID) : PacketHelper.toByteArray(usableSessionUUID, playerUUID);
 	}

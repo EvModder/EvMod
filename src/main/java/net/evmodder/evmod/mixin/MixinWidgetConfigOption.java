@@ -32,11 +32,12 @@ import fi.dy.masa.malilib.gui.interfaces.IGuiIcon;
 import fi.dy.masa.malilib.gui.interfaces.IKeybindConfigGui;
 import fi.dy.masa.malilib.gui.widgets.*;
 import fi.dy.masa.malilib.gui.widgets.WidgetConfigOption.ListenerSliderToggle;
+import fi.dy.masa.malilib.gui.wrappers.TextFieldType;
 import fi.dy.masa.malilib.hotkeys.*;
+import fi.dy.masa.malilib.render.GuiContext;
 import net.evmodder.evmod.ConfigGui;
 import net.evmodder.evmod.config.ConfigStringHotkeyed;
 import net.evmodder.evmod.config.ConfigYawPitchHotkeyed;
-import net.minecraft.client.gui.DrawContext;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -87,7 +88,7 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 			}
 		}, resetButton, null);
 
-		addTextField(textField, listenerChange);
+		addTextField(textField, listenerChange, TextFieldType.STRING);
 		addButton(keybindButton, host.getButtonPressListener());
 		addButton(resetButton, resetListener);
 
@@ -103,10 +104,10 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 		WidgetConfigOptionBase<ConfigOptionWrapper> fakeChildWidget = new WidgetConfigOptionBase<>(
 				textFieldI.getX(), textFieldI.getY(), textFieldI.getWidth(), textFieldI.getHeight(), parent, wrapper, 1){
 			{
-				addTextField(textFieldI, changeListener);
+				addTextField(textFieldI, changeListener, TextFieldType.FLOAT);
 			}
-			@Override public void render(int mouseX, int mouseY, boolean selected, DrawContext drawContext){
-				textFieldI.render(drawContext, mouseX, mouseY, 0f);
+			@Override public void render(GuiContext guiContext, int mouseX, int mouseY, boolean selected){
+				textFieldI.render(guiContext, mouseX, mouseY, 0f);
 			}
 
 			@Override public boolean wasConfigModified(){

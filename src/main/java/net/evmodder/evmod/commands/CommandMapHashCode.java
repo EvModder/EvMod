@@ -21,7 +21,7 @@ public class CommandMapHashCode{
 			ctx.getSource().sendError(Text.literal("Must be holding a FilledMap item"));
 			return 1;
 		}
-		MapState state = FilledMapItem.getMapState(stack, player.getWorld());
+		MapState state = FilledMapItem.getMapState(stack, player.getEntityWorld());
 		if(state == null || state.colors == null){
 			ctx.getSource().sendError(Text.literal("MapState of held item needs to be loaded"));
 			return 1;
@@ -29,7 +29,7 @@ public class CommandMapHashCode{
 
 		final String colorsId = MapGroupUtils.getIdForMapState(state, /*evict=*/true).toString();
 		ctx.getSource().sendFeedback(Text.literal(colorsId+" \u2398")
-				.styled(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, colorsId))));
+				.styled(style -> style.withClickEvent(new ClickEvent.CopyToClipboard(colorsId))));
 		return 1;
 	}
 

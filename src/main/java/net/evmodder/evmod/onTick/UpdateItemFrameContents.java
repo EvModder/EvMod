@@ -68,12 +68,12 @@ public final class UpdateItemFrameContents implements TickListener{
 			final MapState state;
 			if(mapId == null) state = null;
 			else{
-				state = ife.getWorld().getMapState(mapId);
+				state = ife.getEntityWorld().getMapState(mapId);
 				if(state == null) MapGroupUtils.nullMapIds.add(mapId.id());
 				else MapGroupUtils.nullMapIds.remove(mapId.id());
 			}
 			final UUID colorsId = state == null ? null : MapGroupUtils.getIdForMapState(state);
-			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal(), ife.getWorld().hashCode());
+			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal(), ife.getEntityWorld().hashCode());
 			final UUID oldColorsIdForXYZD = colorsId != null ? hangLocsReverse.put(xyzd, colorsId) : hangLocsReverse.remove(xyzd);
 			if(colorsId != null){
 				if(trackingDistSq == 0 || centerPos.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) <= trackingDistSq){
@@ -94,12 +94,12 @@ public final class UpdateItemFrameContents implements TickListener{
 	private static final boolean updateIframeHighlights(final List<ItemFrameEntity> ifes){
 		boolean anyHighlightUpdate = false;
 		for(final ItemFrameEntity ife : ifes){
-			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal(), ife.getWorld().hashCode());
+			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal(), ife.getEntityWorld().hashCode());
 			final UUID colorsId = hangLocsReverse.get(xyzd);
 			if(colorsId == null) continue;
 
 			final ItemStack stack = ife.getHeldItemStack();
-			final MapState state = FilledMapItem.getMapState(ife.getHeldItemStack(), ife.getWorld());
+			final MapState state = FilledMapItem.getMapState(ife.getHeldItemStack(), ife.getEntityWorld());
 			if(state == null) continue; // Can happen in creative worlds!
 
 			final Highlight highlight;
@@ -138,7 +138,7 @@ public final class UpdateItemFrameContents implements TickListener{
 		final List<ItemFrameEntity> ifes = client.world.getEntitiesByClass(ItemFrameEntity.class, client.player.getBoundingBox().expand(200, 200, 200), _0->true);
 
 		final double TRACKING_DIST_SQ = Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ;
-		final Vec3d playerPos = /*TRACKING_DIST_SQ == 0 ? null : */client.player.getPos();
+		final Vec3d playerPos = /*TRACKING_DIST_SQ == 0 ? null : */client.player.getEntityPos();
 		boolean anyMapGroupUpdate = false;
 		if(TRACKING_DIST_SQ > 0 && (ifes.size() != numLoadedIfes || TRACKING_DIST_SQ < 32)){
 			// Untrack maps which have gone out of range for iFrameMapGroup (for isInIFrame, isMultiHung)

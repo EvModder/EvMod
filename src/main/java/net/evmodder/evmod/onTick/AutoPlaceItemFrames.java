@@ -160,7 +160,7 @@ public final class AutoPlaceItemFrames{
 				hand = Hand.MAIN_HAND;
 				if(client.player.getMainHandStack().getItem() != iFrameItem){
 					int hbSlot = 0;
-					while(hbSlot < 9 && client.player.getInventory().main.get(hbSlot).getItem() != iFrameItem) ++hbSlot;
+					while(hbSlot < 9 && client.player.getInventory().getMainStacks().get(hbSlot).getItem() != iFrameItem) ++hbSlot;
 					if(hbSlot == 9){
 //						Main.LOGGER.info("iFramePlacer: Out of iFrames in hotbar/offhand");
 						return;

@@ -16,6 +16,8 @@ import net.evmodder.evmod.config.OptionInventoryRestockLeave;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -83,6 +85,16 @@ public final class KeybindInventoryOrganize{
 		return stackToMove.getCount();
 	}
 
+	private final ItemStack getArmorSlot(PlayerEntity player, int slot){
+		return switch(slot){
+			case 0 -> player.getEquippedStack(EquipmentSlot.HEAD);
+			case 1 -> player.getEquippedStack(EquipmentSlot.CHEST);
+			case 2 -> player.getEquippedStack(EquipmentSlot.LEGS);
+			case 3 -> player.getEquippedStack(EquipmentSlot.FEET);
+			default -> throw new RuntimeException("[InvOrganize]: not a valid armor slot: "+slot);
+		};
+	}
+
 	public boolean[] checkDoneSlots(ItemStack[] slots, boolean[] doneSlots, boolean isInvScreen){
 		//HashSet<Integer> plannedSlots = new HashSet<>();
 		final boolean[] plannedSlots = Arrays.copyOf(doneSlots, doneSlots.length);
@@ -94,7 +106,7 @@ public final class KeybindInventoryOrganize{
 			final String dstName;
 			if(isInvScreen || dstSlot >= slots.length-36) dstName = getName(slots[dstSlot]);
 			else if(dstSlot < slots.length-40){Main.LOGGER.warn("InvOrganize: Unable to restock Container->CraftingGrid");continue;}
-			else dstName = getName(MinecraftClient.getInstance().player.getInventory().getArmorStack(p.slot-5));
+			else dstName = getName(getArmorSlot(MinecraftClient.getInstance().player, p.slot-5));
 			if(p.name.equals(dstName)){
 				plannedSlots[dstSlot] = doneSlots[dstSlot] = true;
 //				Main.LOGGER.info("checkDoneSlots(): done slot: "+dstSlot+" (item: "+p.b().getPath()+")");
@@ -379,7 +391,7 @@ public final class KeybindInventoryOrganize{
 		if(!isInvScreen && CAN_RESTOCK_FROM_CONTAINER) for(SlotAndItemName p : layoutMap){
 			if(p.slot == -106 || p.slot == 45) continue;
 			if(p.slot > 8) continue;
-			if(!client.player.getInventory().getArmorStack(3 - (p.slot - 5)).isEmpty()) continue; // -5 to get armor index, 3-x to reverse order
+			if(!getArmorSlot(client.player, 3 - (p.slot - 5)).isEmpty()) continue; // -5 to get armor index, 3-x to reverse order
 			final int srcSlot = findSlotWithItem(simSlots, p.name, doneSlots);
 			if(srcSlot == -1 || srcSlot >= MAIN_INV_START) continue;
 			if(srcSlot < MAIN_INV_START && LEAVE_ONE){ // Avoid taking 100% of any item type from src container

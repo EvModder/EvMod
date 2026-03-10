@@ -7,7 +7,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.text.Text;
 import net.minecraft.world.World;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.MessageScreen;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.screen.slot.SlotActionType;
@@ -42,7 +42,7 @@ public final class KeybindAIETravelHelper{
 				return;
 			}
 
-			ItemStack chestStack = client.player.getInventory().getArmorStack(2);
+			ItemStack chestStack = client.player.getEquippedStack(EquipmentSlot.CHEST);
 //			//Identifier chestItemId = Registries.ITEM.getId(chestStack.getItem()); // Not really needed thanks to 
 //			if(chestStack.getItem() != Items.ELYTRA){
 //				client.player.sendMessage(Text.literal("Not wearing elytra"), true);
@@ -72,8 +72,8 @@ public final class KeybindAIETravelHelper{
 				String disconnectMsg = (goingDownInEnd?"FALLING!":"no longer flying")+", y="+y+", dur="+dur;
 				Main.LOGGER.warn("AIE Helper: Disconnecting player: "+disconnectMsg);
 				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
-				client.disconnect(new MessageScreen(Text.literal("[AIE Helper] "+disconnectMsg)));
-				client.world.disconnect();
+				client.disconnect(Text.literal("[AIE Helper] "+disconnectMsg));
+				client.world.disconnect(Text.literal("[AIE Helper] "+disconnectMsg));
 				return;
 			}
 
@@ -107,8 +107,8 @@ public final class KeybindAIETravelHelper{
 				}
 				Main.LOGGER.warn("AIE Helper: Disconnecting player: y="+y+", dur="+dur);
 				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
-				client.disconnect(new MessageScreen(Text.literal("[AIE Helper] y="+y+", dur="+dur)));
-				client.world.disconnect();
+				client.disconnect(Text.literal("[AIE Helper] y="+y+", dur="+dur));
+				client.world.disconnect(Text.literal("[AIE Helper] y="+y+", dur="+dur));
 				return;
 			}
 			lastPitch = client.player.getPitch();

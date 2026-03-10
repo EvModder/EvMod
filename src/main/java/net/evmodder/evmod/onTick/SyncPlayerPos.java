@@ -14,6 +14,7 @@ import net.minecraft.client.network.OtherClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.Vec3d;
 
 public final class SyncPlayerPos implements TickListener{
 	private final static boolean ONLY_SHOW_PLAYERS_IN_LOADED_CHUNKS = true;
@@ -77,7 +78,7 @@ public final class SyncPlayerPos implements TickListener{
 				final double x = bb.getDouble(), y = bb.getDouble(), z = bb.getDouble();
 				if(!world.getChunkManager().isChunkLoaded(((int)x) >> 4, ((int)z) >> 4)){
 					if(ONLY_SHOW_PLAYERS_IN_LOADED_CHUNKS){
-						if(removeFakePlayer(uuid)) Main.LOGGER.info("[EvMod] Removed dummy player (unloaded chunks): "+entry.getProfile().getName());
+						if(removeFakePlayer(uuid)) Main.LOGGER.info("[EvMod] Removed dummy player (unloaded chunks): "+entry.getProfile().name());
 						return;
 					}
 				}
@@ -103,7 +104,7 @@ public final class SyncPlayerPos implements TickListener{
 				dummy.setHeadYaw(bb.getFloat());
 				dummy.setVelocity(bb.getDouble(), bb.getDouble(), bb.getDouble());
 				dummy.setPose(EntityPose.INDEX_TO_VALUE.apply(bb.getInt()));
-				dummy.updateTrackedPositionAndAngles(x, y, z, yaw, pitch, 0);
+				dummy.updateTrackedPositionAndAngles(new Vec3d(x, y, z), yaw, pitch);
 				dummy.updatePositionAndAngles(x, y, z, yaw, pitch);
 //				dummy.setHealth(bb.getFloat());
 				dummy.tick();

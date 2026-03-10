@@ -65,12 +65,12 @@ public final class UpdateInventoryContents implements TickListener{
 	}
 	@Override public final void onTickStart(final MinecraftClient client){
 		final PlayerEntity player = client.player;
-		if(player == null || player.getWorld() == null || !player.isAlive()) return;
+		if(player == null || player.getEntityWorld() == null || !player.isAlive()) return;
 
 		{
 			// Constantly force-refresh mapstate-colorsId cache for held unlocked maps
 			// Might deserve its own onTick listener tbh
-			final MapState state = FilledMapItem.getMapState(player.getMainHandStack(), player.getWorld());
+			final MapState state = FilledMapItem.getMapState(player.getMainHandStack(), player.getEntityWorld());
 			if(state != null && !state.locked) MapGroupUtils.getIdForMapState(state, /*evict*/true);
 		}
 		{
@@ -90,8 +90,8 @@ public final class UpdateInventoryContents implements TickListener{
 		nestedInventoryMapGroup.clear();
 		final ScreenHandler sh = player.currentScreenHandler;
 //		boolean anyNewMap = false;
-		for(int i=0; i<41; ++i) /*anyNewMap |=*/ addMapStateIds(player.getInventory().getStack(i), player.getWorld());
-		if(sh != null) /*anyNewMap |=*/ addMapStateIds(sh.getCursorStack(), player.getWorld());
+		for(int i=0; i<41; ++i) /*anyNewMap |=*/ addMapStateIds(player.getInventory().getStack(i), player.getEntityWorld());
+		if(sh != null) /*anyNewMap |=*/ addMapStateIds(sh.getCursorStack(), player.getEntityWorld());
 
 		final int syncId = sh == null ? 0 : sh.syncId;
 		mapsInInvHash = syncId + inventoryMapGroup.hashCode() + nestedInventoryMapGroup.hashCode();// * (mapPlaceStillOngoing ? 7 : 1);

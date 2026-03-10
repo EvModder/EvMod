@@ -196,7 +196,7 @@ public final class KeybindMapLoad{
 				}
 			}
 			if(!waitForMapLoadClicks.containsKey(c)) return true;
-			if(Arrays.stream(emptySlots).anyMatch(i -> isUnloadedMapArt(client.world, client.player.getInventory().main.get(i-9)))){
+			if(Arrays.stream(emptySlots).anyMatch(i -> isUnloadedMapArt(client.world, client.player.getInventory().getMainStacks().get(i-9)))){
 //				Main.LOGGER.info("MapLoadBundle: still waiting for map states to load");
 				if(stateLoadWaitStart == 0) stateLoadWaitStart = System.currentTimeMillis();
 				if(System.currentTimeMillis() - stateLoadWaitStart < STATE_LOAD_TIMEOUT) return false;
@@ -205,7 +205,7 @@ public final class KeybindMapLoad{
 				return true;
 			}
 			else if(stateUpdateWaitStart == 0){
-				Arrays.stream(emptySlots).mapToObj(i -> client.player.getInventory().main.get(i-9)).forEach(s -> requestTextureUpdate(client, s));
+				Arrays.stream(emptySlots).mapToObj(i -> client.player.getInventory().getMainStacks().get(i-9)).forEach(s -> requestTextureUpdate(client, s));
 				stateUpdateWaitStart = System.currentTimeMillis();
 				return false;
 			}
@@ -234,7 +234,7 @@ public final class KeybindMapLoad{
 
 		if(hs instanceof InventoryScreen){loadMapArtFromBundles(); return;}
 		final DefaultedList<Slot> slots = hs.getScreenHandler().slots;
-		if(slots.stream().noneMatch(s -> isUnloadedMapArt(client.player.clientWorld, s.getStack()))){
+		if(slots.stream().noneMatch(s -> isUnloadedMapArt(client.player.getEntityWorld(), s.getStack()))){
 			Main.LOGGER.warn("MapLoad cancelled: none to load");
 			return;
 		}
@@ -248,7 +248,7 @@ public final class KeybindMapLoad{
 
 		int hbi = 0;
 		for(int i=0; i<slots.size(); ++i){
-			if(!isUnloadedMapArt(client.player.clientWorld, slots.get(i).getStack())) continue;
+			if(!isUnloadedMapArt(client.player.getEntityWorld(), slots.get(i).getStack())) continue;
 			if(!mapIdsToLoad.add(slots.get(i).getStack().get(DataComponentTypes.MAP_ID).id())) continue;
 			clicks.add(new InvAction(i, hbButtons[hbi], ActionType.HOTBAR_SWAP));
 			putBackSlots[hbi] = i;
@@ -274,13 +274,13 @@ public final class KeybindMapLoad{
 			}
 			if(textureUpdateRequestClickIndex != clickIndex){
 				textureUpdateRequestClickIndex = clickIndex;
-				Arrays.stream(hbButtons).mapToObj(i -> client.player.getInventory().main.get(27+i)).forEach(s -> requestTextureUpdate(client, s));
+				Arrays.stream(hbButtons).mapToObj(i -> client.player.getInventory().getMainStacks().get(27+i)).forEach(s -> requestTextureUpdate(client, s));
 			}
 
 			if(ClickUtils.calcAvailableClicks() < CLICK_BATCH_SIZE) return false; // Wait for clicks
 
 //			if(isUnloadedMapArt(client.world, client.player.getInventory().main.get(27+hbButtons[clickIndex % hbButtons.length]))) return false;
-			if(Arrays.stream(hbButtons).anyMatch(i -> isUnloadedMapArt(client.world, client.player.getInventory().main.get(27+i)))){
+			if(Arrays.stream(hbButtons).anyMatch(i -> isUnloadedMapArt(client.world, client.player.getInventory().getMainStacks().get(27+i)))){
 //				Main.LOGGER.info("MapLoad: still waiting for map state to load from hotbar slot: "+c.button());
 				if(stateLoadWaitStart == 0) stateLoadWaitStart = System.currentTimeMillis();
 				if(System.currentTimeMillis() - stateLoadWaitStart < STATE_LOAD_TIMEOUT) return false;
@@ -290,7 +290,7 @@ public final class KeybindMapLoad{
 				return true;
 			}
 			else if(stateUpdateWaitStart == 0){
-				Arrays.stream(hbButtons).mapToObj(i -> client.player.getInventory().main.get(27+i)).forEach(s -> requestTextureUpdate(client, s));
+				Arrays.stream(hbButtons).mapToObj(i -> client.player.getInventory().getMainStacks().get(27+i)).forEach(s -> requestTextureUpdate(client, s));
 				stateUpdateWaitStart = System.currentTimeMillis();
 				return false;
 			}

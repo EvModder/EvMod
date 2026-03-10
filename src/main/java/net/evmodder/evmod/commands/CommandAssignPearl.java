@@ -77,7 +77,7 @@ public class CommandAssignPearl{
 		}
 		final Entity player = ctx.getSource().getPlayer();
 		final Box box = player.getBoundingBox().expand(8, 6, 8);
-		final List<EnderPearlEntity> epearls = player.getWorld().getEntitiesByType(EntityType.ENDER_PEARL, box, e->{
+		final List<EnderPearlEntity> epearls = player.getEntityWorld().getEntitiesByType(EntityType.ENDER_PEARL, box, e->{
 			return MiscUtils.isLookingAt(e, player) && isOverwritableName(epearlLookup.getOwnerName(e));
 		});
 		if(epearls.isEmpty()){
