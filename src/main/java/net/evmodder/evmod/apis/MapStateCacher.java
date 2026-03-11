@@ -58,14 +58,20 @@ public class MapStateCacher{
 	private static final record MapStateSerializable(byte scale, boolean locked, String dimRegistry, String dimValue, byte[] colors) implements Serializable{
 		private static final long serialVersionUID = 2713495820097984925L;
 
-		public static MapStateSerializable fromMapState(MapState ms){
+		public static final MapStateSerializable fromMapState(MapState ms){
 			return ms == null/* || ms.colors == null*/ ? null :
-				new MapStateSerializable(ms.scale, ms.locked, ms.dimension.getRegistry().toString(), ms.dimension.getValue().toString(), ms.colors);
+				new MapStateSerializable(ms.scale, ms.locked,
+						ms.dimension == null ? null : ms.dimension.getRegistry().toString(),
+						ms.dimension == null ? null : ms.dimension.getValue().toString(), ms.colors);
 		}
-		public MapState toMapState(){
-			Identifier registryId = Identifier.of(dimRegistry), valueId = Identifier.of(dimValue);
-			RegistryKey<World> dimension = RegistryKey.of(RegistryKey.ofRegistry(registryId), valueId);
-			MapState ms = MapState.of(scale, locked, dimension);
+		public final MapState toMapState(){
+			final RegistryKey<World> dimension;
+			if(dimRegistry != null){
+				final Identifier registryId = Identifier.of(dimRegistry), valueId = Identifier.of(dimValue);
+				dimension = RegistryKey.of(RegistryKey.ofRegistry(registryId), valueId);
+			}
+			else dimension = null;
+			final MapState ms = MapState.of(scale, locked, dimension);
 			ms.colors = colors;
 			ms.replaceDecorations(List.of(CACHED_MARKER_DECORATION));
 			return ms;
