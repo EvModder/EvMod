@@ -2,22 +2,22 @@
  * Minecraft map-color palette and nearest-color matching helpers.
  * Exports: `MAP_RGBA_PALETTE`, `parseMapDataFromImageData`.
  */
-import { BASE_COLORS, SHADE_MULTIPLIERS } from "@/lib/mapColorDataSynced";
+import { BASE_COLORS, SHADE_MULTIPLIERS, getShadedRgb, packRgb } from "@/lib/mapColorDataSynced";
 import type { MapData } from "@/lib/map";
 
 // Pre-built RGBA palette (248 colors × 4 channels)
 const PALETTE = new Uint8Array(BASE_COLORS.length * 16);
+const SHADE_COUNT = SHADE_MULTIPLIERS.length;
 for (let base = 0; base < BASE_COLORS.length; ++base) {
-  const { r, g, b } = BASE_COLORS[base];
-  for (let shade = 0; shade < 4; ++shade) {
+  for (let shade = 0; shade < SHADE_COUNT; ++shade) {
     const idx = (base * 4 + shade) * 4;
     if (base === 0) {
       PALETTE[idx] = PALETTE[idx + 1] = PALETTE[idx + 2] = PALETTE[idx + 3] = 0;
     } else {
-      const m = SHADE_MULTIPLIERS[shade];
-      PALETTE[idx] = Math.floor(r * m / 255);
-      PALETTE[idx + 1] = Math.floor(g * m / 255);
-      PALETTE[idx + 2] = Math.floor(b * m / 255);
+      const [r, g, b] = getShadedRgb({ baseIndex: base, shade });
+      PALETTE[idx] = r;
+      PALETTE[idx + 1] = g;
+      PALETTE[idx + 2] = b;
       PALETTE[idx + 3] = 255;
     }
   }
@@ -32,14 +32,13 @@ interface PaletteEntry {
 
 const OPAQUE_PALETTE: PaletteEntry[] = [];
 for (let base = 1; base < BASE_COLORS.length; ++base) {
-  const { r, g, b } = BASE_COLORS[base];
-  for (let shade = 0; shade < 4; ++shade) {
-    const m = SHADE_MULTIPLIERS[shade];
+  for (let shade = 0; shade < SHADE_COUNT; ++shade) {
+    const [r, g, b] = getShadedRgb({ baseIndex: base, shade });
     OPAQUE_PALETTE.push({
       byte: base * 4 + shade,
-      r: Math.floor(r * m / 255),
-      g: Math.floor(g * m / 255),
-      b: Math.floor(b * m / 255),
+      r,
+      g,
+      b,
     });
   }
 }
@@ -51,19 +50,10 @@ export const MAP_RGBA_PALETTE = PALETTE;
 function buildArgbToByteMap(): Map<number, number> {
   const map = new Map<number, number>();
   for (let base = 0; base < BASE_COLORS.length; ++base) {
-    const { r: br, g: bg, b: bb } = BASE_COLORS[base];
-    for (let shade = 0; shade < 4; ++shade) {
+    for (let shade = 0; shade < SHADE_COUNT; ++shade) {
       const idx = base * 4 + shade;
-      let r: number, g: number, b: number;
-      if (base === 0) {
-        r = g = b = 0;
-      } else {
-        const m = SHADE_MULTIPLIERS[shade];
-        r = Math.floor(br * m / 255);
-        g = Math.floor(bg * m / 255);
-        b = Math.floor(bb * m / 255);
-      }
-      const argb = ((0xFF << 24) | (r << 16) | (g << 8) | b) | 0;
+      const rgb = base === 0 ? 0 : packRgb(...getShadedRgb({ baseIndex: base, shade }));
+      const argb = (0xFF000000 | rgb) | 0;
       map.set(argb, idx);
     }
   }
@@ -96,7 +86,7 @@ export function parseMapDataFromImageData(
         continue;
       }
       const r = pixels[off], g = pixels[off + 1], b = pixels[off + 2];
-      const argb = ((0xFF << 24) | (r << 16) | (g << 8) | b) | 0;
+      const argb = (0xFF000000 | packRgb(r, g, b)) | 0;
       const exact = map.get(argb);
       if (exact !== undefined && exact >= 4) {
         colors[i] = exact;
@@ -116,7 +106,7 @@ export function parseMapDataFromImageData(
       }
       colors[i] = best.byte;
       ++approximatedPixels;
-      approximatedColorKeys.add((r << 16) | (g << 8) | b);
+      approximatedColorKeys.add(packRgb(r, g, b));
     }
   }
   return { mapData, approximatedPixels, approximatedColorKeys };

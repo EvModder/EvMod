@@ -32,7 +32,7 @@ export default function NbtToPng() {
       </p>
 
       <DropZone
-        label="Drop .nbt files here"
+        label="Drop schematics here"
         subtitle="Supports structure NBTs with X=128 and Z=128 or 129 (for shading/noobline)"
         accept=".nbt,.litematic,.schem"
         multiple

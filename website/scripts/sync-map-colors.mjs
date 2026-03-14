@@ -9,7 +9,7 @@ const targetPath = path.resolve(cwd, "src/lib/mapColorDataSynced.ts");
 const banner =
   "// AUTO-SYNCED from PNG-to-NBT/website/src/data/mapColors.ts\n" +
   "// Run `npm run sync:map-colors` to refresh.\n" +
-  "// Exports: `SHADE_MULTIPLIERS`, `BASE_COLORS`, `WATER_BASE_INDEX`, `getColorLookup`, `getShadedRgb`.\n\n";
+  "// Exports: `Shade`, `SHADE_MULTIPLIERS`, `BASE_COLORS`, `WATER_BASE_INDEX`, `ColorShade`, `packRgb`, `unpackRgb`, `getShadedRgb`.\n\n";
 
 const normalize = (text) => text.replace(/\r\n/g, "\n").trimEnd() + "\n";
 
