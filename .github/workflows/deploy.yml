@@ -24,24 +24,18 @@ jobs:
       run:
         working-directory: website
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+      - uses: actions/checkout@v5
         with:
           repository: EvModder/PNG-to-NBT
           path: png-to-nbt
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: '20'
-      - uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-npm-${{ hashFiles('website/package.json') }}
-          restore-keys: |
-            ${{ runner.os }}-npm-
-      - run: npm install
-      - run: npm run sync:map-colors -- ../png-to-nbt/website/src/data/mapColors.ts
-      - run: npm run build
-      - uses: actions/upload-pages-artifact@v3
+          bun-version-file: website/.bun-version
+      - run: bun ci
+      - run: bun run sync:map-colors -- ../png-to-nbt/website/src/data/mapColors.ts
+      - run: bun run build
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: website/dist
 

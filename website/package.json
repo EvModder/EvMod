@@ -3,11 +3,12 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "packageManager": "bun@1.3.10",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && node scripts/generate-route-indexes.mjs",
-    "build:dev": "vite build --mode development && node scripts/generate-route-indexes.mjs",
-    "sync:map-colors": "node scripts/sync-map-colors.mjs",
+    "build": "vite build && bun scripts/generate-route-indexes.mjs",
+    "build:dev": "vite build --mode development && bun scripts/generate-route-indexes.mjs",
+    "sync:map-colors": "bun scripts/sync-map-colors.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

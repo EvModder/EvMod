@@ -38,10 +38,13 @@ replay_*.log
 *.hprof
 *.jfr
 
+########## Website
+website/node_modules/
+website/dist/
+website/.bun_version
+website/bun.lock
 
 ########## Other
 src/main/resources/assets/evmod/*.png
 tmp_workstuff/
 hashcode_*
-website/node_modules/
-website/dist/
