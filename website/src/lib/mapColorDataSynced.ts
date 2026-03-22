@@ -9,30 +9,7 @@
  * - TRANSPARENCY_BASE_INDEX
  * - WATER_BASE_INDEX
  * - BASE_COLORS
- *
- * Callers:
- * - src/Index.tsx
- * - src/data/colorSortOrder.ts
- * - src/data/i18n/*
- * - src/data/mapColorsExcluded.ts
- * - src/data/presets.ts
- * - src/utils/color.ts
- * - src/lib/colorGridAnalysis.ts
- * - src/lib/colorGridParsing.ts
- * - src/lib/fillerRules.ts
- * - src/lib/materialRules.ts
- * - src/lib/previewImageEdits.ts
- * - src/lib/shapeAnalysis.ts
- * - src/lib/shapeModel.ts
- * - tests/run.mts
  */
-// Callers:
-// - src/Index.tsx
-// - src/data/colorSortOrder.ts
-// - src/data/i18n/*
-// - src/lib/colorGridAnalysis.ts
-// - src/lib/colorGridParsing.ts
-// - tests/run.mts
 export { Shade } from "@/types/color";
 import type { ColorRgbBase } from "@/types/color";
 
@@ -64,42 +41,12 @@ import type { ColorRgbBase } from "@/types/color";
  * - State-specific entries are used where one block ID can map to multiple map colors
  * depending on state (for example, `*_log[axis=x]` vs `*_log`).
  */
-// Callers:
-// - src/lib/colorGridParsing.ts
-// - src/utils/color.ts
+
 export const SHADE_MULTIPLIERS = [180, 220, 255, 135] as const;
 
-// Callers:
-// - src/Index.tsx
-// - src/utils/color.ts
-// - src/lib/colorGridAnalysis.ts
-// - src/lib/fillerRules.ts
-// - src/lib/previewImageEdits.ts
-// - src/lib/shapeAnalysis.ts
-// - tests/run.mts
 export const TRANSPARENCY_BASE_INDEX = 0;
-
-// WATER is the only base color with special logic; current hardcoding has it stored at index 12
-// Callers:
-// - src/Index.tsx
-// - src/utils/color.ts
-// - src/lib/shapeAnalysis.ts
-// - tests/run.mts
 export const WATER_BASE_INDEX = 12;
 
-// 62 base colors (index 0 = transparent/NONE)
-// Callers:
-// - src/Index.tsx
-// - src/data/colorSortOrder.ts
-// - src/data/mapColorsExcluded.ts
-// - src/data/presets.ts
-// - src/lib/colorGridParsing.ts
-// - src/lib/fillerRules.ts
-// - src/lib/materialRules.ts
-// - src/lib/previewImageEdits.ts
-// - src/lib/shapeAnalysis.ts
-// - src/lib/shapeModel.ts
-// - tests/run.mts
 export const BASE_COLORS: ColorRgbBase[] = [
   { name: "NONE", r: 0, g: 0, b: 0, blocks: ["glass", "glass_pane", "iron_bars", "chain", "end_rod", "ladder", "rail", "powered_rail", "detector_rail", "activator_rail", "lever", "torch", "wall_torch", "soul_torch", "soul_wall_torch", "redstone_wire", "repeater", "comparator", "tripwire_hook", "tripwire", "flower_pot", "cake"] },
   { name: "GRASS", r: 127, g: 178, b: 56, blocks: ["grass_block", "slime_block"] },
