@@ -113,7 +113,8 @@ public final class MapLoaderBot implements TickListener{
 			final boolean isEven = (pixelZ&1)==0;
 			if(isEven ? (pixelZ == 0 || pixelZ == 126) : (pixelZ == 1 || pixelZ == 127)){
 				final int prevColX = pixelX+1, prevColZ = pixelZ + (pixelZ == 0 || pixelZ == 126 ? +1 : -1);
-				if(pairsMatch(state.colors, desiredColors, prevColX, prevColZ, /*TODO: detemine for prevXZ!*/false)){
+				final boolean atEnd = prevColX + 128*prevColZ == 128*128;
+				if(atEnd || pairsMatch(state.colors, desiredColors, prevColX, prevColZ, /*TODO: detemine for prevXZ!*/false)){
 					client.player.sendMessage(Text.literal("Waiting for next column"), true);
 				}
 				else{
