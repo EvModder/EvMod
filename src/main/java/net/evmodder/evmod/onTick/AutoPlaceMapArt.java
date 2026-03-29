@@ -11,6 +11,7 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.Configs.Generic;
@@ -159,6 +160,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 		final String posA1 = posA.substring(0, cutA), posA2 = posA.substring(cutA+cutSpaceA);
 		final String posB1 = posB.substring(0, cutB), posB2 = posB.substring(cutB+cutSpaceB);
+		if(Stream.of(posA1, posA2, posB1, posB2).anyMatch(p -> !p.matches("[A-Z]+|-?[0-9]+"))) return null; // TODO: this should be safe to remove, eventually
 
 //		Main.LOGGER.info("posA:"+posA+",posB:"+posB+",posA1:"+posA1+",posA2:"+posA2+",posB1:"+posB1+",posB2:"+posB2);
 		return new Pos2DPair(intFromPos(posA1), intFromPos(posA2), intFromPos(posB1), intFromPos(posB2));
