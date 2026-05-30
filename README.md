@@ -4,11 +4,11 @@ Fabric client-side utility mod for Minecraft 1.21.11.
 
 ## Download
 
-Download the latest ready-to-use mod jar here:
+Download the ready-to-use mod jar committed in this repository:
 
-[Download Ev's Mod-1.21.11-2.1.jar](../../releases/latest/download/Ev%27s%20Mod-1.21.11-2.1.jar)
+[Download Ev's Mod-1.21.11-2.1.jar](build/libs/Ev%27s%20Mod-1.21.11-2.1.jar)
 
-If the direct link does not work, open the releases page and download the jar from the latest release:
+You can also download builds from the releases page when releases are published:
 
 [GitHub Releases](../../releases)
 
