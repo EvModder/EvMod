@@ -8,9 +8,7 @@ Download the ready-to-use mod jar committed in this repository:
 
 [Download Ev's Mod-1.21.11-2.1.jar](build/libs/Ev%27s%20Mod-1.21.11-2.1.jar)
 
-You can also download builds from the releases page when releases are published:
 
-[GitHub Releases](../../releases)
 
 ## Install
 
