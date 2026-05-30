@@ -1,7 +1,7 @@
 {
 	"required": true,
 	"package": "net.evmodder.evmod.mixin",
-	"compatibilityLevel": "JAVA_25",
+	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"AccessorMain", // Used by MixinClientPlayNetworkHandler, MixinEntityRenderer, MixinClientPlayerInteractionManager
 		"AccessorMapGroupUtils", // Used by MixinClientPlayNetworkHandler

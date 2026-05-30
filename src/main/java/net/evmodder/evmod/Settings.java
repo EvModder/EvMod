@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Stream;
 import net.evmodder.EvLib.util.FileIO;
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -103,21 +104,24 @@ final class Settings{
 			// TODO: remove these legacy-patches in a future version
 			final String mapGroupDir = (storeDataInInstanceFolder ? FabricLoader.getInstance().getGameDir()+"/"+Main.MOD_ID
 					: FabricLoader.getInstance().getConfigDir())+"/mapart_groups/";
-			try{
-				List<Path> paths = Files.walk(Paths.get(mapGroupDir))
-						.filter(Files::isRegularFile)
-						.filter(p -> 
-							(p.getFileName().toString().indexOf('.') == -1 || (
-								p.getNameCount() > 1 && p.getName(p.getNameCount()-2).toString().equals("seen")
-								&& !p.getFileName().toString().startsWith(".")
-							)) && !p.getFileName().toString().endsWith(".group"))
-						.toList();
-				if(!paths.isEmpty()){
-					paths.stream().forEach(p -> p.toFile().renameTo(p.resolveSibling(p.getFileName().toString()+".group").toFile()));
-					Main.LOGGER.info("[MIGRATION]: added '.group' file_ext to "+paths.size()+" group files");
+			final Path mapGroupPath = Paths.get(mapGroupDir);
+			if(Files.isDirectory(mapGroupPath)){
+				try(Stream<Path> walk = Files.walk(mapGroupPath)){
+					List<Path> paths = walk
+							.filter(Files::isRegularFile)
+							.filter(p -> 
+								(p.getFileName().toString().indexOf('.') == -1 || (
+									p.getNameCount() > 1 && p.getName(p.getNameCount()-2).toString().equals("seen")
+									&& !p.getFileName().toString().startsWith(".")
+								)) && !p.getFileName().toString().endsWith(".group"))
+							.toList();
+					if(!paths.isEmpty()){
+						paths.stream().forEach(p -> p.toFile().renameTo(p.resolveSibling(p.getFileName().toString()+".group").toFile()));
+						Main.LOGGER.info("[MIGRATION]: added '.group' file_ext to "+paths.size()+" group files");
+					}
 				}
+				catch(IOException e){e.printStackTrace();}
 			}
-			catch(IOException e){e.printStackTrace();}
 		}//==================================================
 	}
 }
