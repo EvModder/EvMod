@@ -32,7 +32,10 @@ public final class UpdateInventoryContents implements TickListener{
 
 	public static final boolean hasCurrentlyBeingPlacedMapArt(){return currentlyBeingPlacedIntoItemFrame != null;}
 	public static final void setCurrentlyBeingPlacedMapArt(final ItemStack stack, final int slot){ // Accessor: MapHangListener
-		assert ItemStack.areEqual(MinecraftClient.getInstance().player.getInventory().getStack(slot), stack);
+		if(!ItemStack.areEqual(MinecraftClient.getInstance().player.getInventory().getStack(slot), stack)){
+			assert false;
+			return;
+		}
 		currentlyBeingPlacedIntoItemFrame = stack.copy();
 		slotUsedForCurrentlyBeingPlacedItem = slot;
 	}
