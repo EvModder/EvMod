@@ -484,39 +484,41 @@ public final class MapHangListener{
 		// Wait for hand to be free
 		final int restockFromSlotFinal = restockFromSlot;
 		waitingForRestock = true;
-		new Thread(){@Override public void run(){
+		new Thread(()->{
 //			Main.LOGGER.info("MapRestock: waiting for currently placed map to load");
 			while(player != null && !player.isInCreativeMode() && UpdateInventoryContents.hasCurrentlyBeingPlacedMapArt()) Thread.yield();
 			if(player == null){waitingForRestock = false; return;}
 
 //			Main.LOGGER.info("MapRestock: ok, sync client execution");
 			client.executeSync(()->{
-//				try{sleep(50l);}catch(InterruptedException e){e.printStackTrace();waitingForRestock=false;} // 50ms = 1tick
-//				Main.LOGGER.info("MapRestock: ok, doing restock click(s)");
+				try{
+//					try{sleep(50l);}catch(InterruptedException e){e.printStackTrace();waitingForRestock=false;} // 50ms = 1tick
+//					Main.LOGGER.info("MapRestock: ok, doing restock click(s)");
 
-				if(slots.get(restockFromSlotFinal).get(DataComponentTypes.BUNDLE_CONTENTS) != null){
-					ArrayDeque<InvAction> clicks = new ArrayDeque<>();
-//					clicks.add(new ClickEvent(restockFromSlotFinal, 0, SlotActionType.PICKUP)); // Pickup bundle
-//					clicks.add(new ClickEvent(36+player.getInventory().selectedSlot, 1, SlotActionType.PICKUP)); // Place in active hb slot
-//					clicks.add(new ClickEvent(restockFromSlotFinal, 0, SlotActionType.PICKUP)); // Putback bundle
-					clicks.add(new InvAction(restockFromSlotFinal, 1, ActionType.CLICK)); // Take last from bundle
-					clicks.add(new InvAction(36+player.getInventory().selectedSlot, 0, ActionType.CLICK)); // Place in active hb slot
-					ClickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("HandRestockFromBundle: DONE"), clicks);
-					Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlotFinal+" -> hb="+player.getInventory().selectedSlot);
+					if(slots.get(restockFromSlotFinal).get(DataComponentTypes.BUNDLE_CONTENTS) != null){
+						ArrayDeque<InvAction> clicks = new ArrayDeque<>();
+//						clicks.add(new ClickEvent(restockFromSlotFinal, 0, SlotActionType.PICKUP)); // Pickup bundle
+//						clicks.add(new ClickEvent(36+player.getInventory().selectedSlot, 1, SlotActionType.PICKUP)); // Place in active hb slot
+//						clicks.add(new ClickEvent(restockFromSlotFinal, 0, SlotActionType.PICKUP)); // Putback bundle
+						clicks.add(new InvAction(restockFromSlotFinal, 1, ActionType.CLICK)); // Take last from bundle
+						clicks.add(new InvAction(36+player.getInventory().selectedSlot, 0, ActionType.CLICK)); // Place in active hb slot
+						ClickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("HandRestockFromBundle: DONE"), clicks);
+						Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlotFinal+" -> hb="+player.getInventory().selectedSlot);
+					}
+					else if(isHotbarSlot){
+//						player.networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(restockFromSlotFinal - 36));
+//						player.getInventory().selectedSlot = restockFromSlotFinal - 36;
+						player.getInventory().setSelectedSlot(restockFromSlotFinal - 36);
+						Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().selectedSlot);
+					}
+					else{
+						client.interactionManager.clickSlot(0, restockFromSlotFinal, player.getInventory().selectedSlot, SlotActionType.SWAP, player);
+						Main.LOGGER.info("MapRestock: Swapped inv.selectedSlot to nextMap: s="+restockFromSlotFinal);
+					}
 				}
-				else if(isHotbarSlot){
-//					player.networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(restockFromSlotFinal - 36));
-//					player.getInventory().selectedSlot = restockFromSlotFinal - 36;
-					player.getInventory().setSelectedSlot(restockFromSlotFinal - 36);
-					Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().selectedSlot);
-				}
-				else{
-					client.interactionManager.clickSlot(0, restockFromSlotFinal, player.getInventory().selectedSlot, SlotActionType.SWAP, player);
-					Main.LOGGER.info("MapRestock: Swapped inv.selectedSlot to nextMap: s="+restockFromSlotFinal);
-				}
-				waitingForRestock = false;
+				finally{waitingForRestock = false;}
 			});
-		}}.start();
+		}).start();
 		return slots.get(restockFromSlot);
 	}
 
