@@ -1,5 +1,8 @@
 package net.evmodder.evmod.mixin;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -20,6 +23,8 @@ abstract class MixinClientPlayerInteractionManager{
 //	public static final class Friend{private Friend(){}}
 //	private static final Friend friend = new Friend();
 
+	private final AtomicInteger discardedClicks = new AtomicInteger();
+
 	@Inject(method="clickSlot", at=@At("HEAD"), cancellable=true)
 	private final void avoidSendingTooManyClicks(int syncId, int slot, int button, SlotActionType action, PlayerEntity player, CallbackInfo ci){
 //		MinecraftClient.getInstance().player.sendMessage(Text.literal("clickSlot: syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
@@ -34,7 +39,9 @@ abstract class MixinClientPlayerInteractionManager{
 //			MinecraftClient.getInstance().player.sendMessage(Text.literal("syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
 			return;
 		}
-		if(ClickUtils.addClick()){
+		final boolean success = ClickUtils.addClick();
+
+		if(success){
 			if(AccessorMain.getInstance().kbCraftRestock != null && Configs.Hotkeys.CRAFT_RESTOCK.getKeybind().isValid())
 				AccessorMain.getInstance().kbCraftRestock.checkIfCraftAction(player.currentScreenHandler, slot, button, action);
 		}
@@ -45,16 +52,25 @@ abstract class MixinClientPlayerInteractionManager{
 				MinecraftClient.getInstance().player.sendMessage(Text.literal(err), false);
 			}
 			else if(!Configs.Generic.CLICK_LIMIT_USER_INPUT.getBooleanValue()) return;
+//			else if(syncId == 0 && slot == 0 && button == 0 && action == SlotActionType.QUICK_MOVE) return; // QUICK_CRAFT sends duplicate fake QUICK_MOVE?
 			else ci.cancel(); // Throw out clicks that exceed the limit!!
-
-			if(syncId == 0 && slot == 0 && button == 0 && action == SlotActionType.QUICK_MOVE) return; // QUICK_CRAFT sometimes sends duplicate fake QUICK_MOVE?
 			Main.LOGGER.error("Discarded click in clickSlot() due to exceeding limit!"
 					+ " slot:"+slot+",button:"+button+",action:"+action.name()+",isShiftClick:"+Screen.hasShiftDown());
 //			MinecraftClient.getInstance().player.sendMessage(Text.literal("syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
-			MinecraftClient.getInstance().player.sendMessage(
-					Text.literal("Discarding unsafe click!"
-							+ " | limit:"+Configs.Generic.CLICK_LIMIT_COUNT.getIntegerValue()
-							+", duration:"+Configs.Generic.CLICK_LIMIT_WINDOW.getIntegerValue()+"gt").withColor(/*&c=*/16733525), false);
+//			MinecraftClient.getInstance().player.sendMessage(
+//					Text.literal("Discarding unsafe click!"
+//							+ " | limit:"+Configs.Generic.CLICK_LIMIT_COUNT.getIntegerValue()
+//							+", duration:"+Configs.Generic.CLICK_LIMIT_WINDOW.getIntegerValue()+"gt").withColor(/*&c=*/16733525), false);
+			if(discardedClicks.getAndIncrement() == 0){
+				CompletableFuture.delayedExecutor(ClickUtils.TICK_DURATION_NANOS, TimeUnit.NANOSECONDS).execute(() -> {
+					final int clicks = discardedClicks.getAndSet(0);
+					MinecraftClient.getInstance().player.sendMessage(
+							Text.literal("Unsafe clicks! | limit:"+Configs.Generic.CLICK_LIMIT_COUNT.getIntegerValue()
+									+" | window:"+Configs.Generic.CLICK_LIMIT_WINDOW.getIntegerValue()+"gt"
+									+" | discarded: "+clicks
+									).withColor(/*&c=*/16733525), false);
+				});
+			}
 		}
 	}
 }

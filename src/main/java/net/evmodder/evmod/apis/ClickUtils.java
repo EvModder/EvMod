@@ -40,7 +40,8 @@ public final class ClickUtils{
 	private static long lastTick;
 	private static final int OUTTA_CLICKS_COLOR = 15777300, SYNC_ID_CHANGED_COLOR = 16733525;
 //	private static final double C_PER_T;
-	public static long TICK_DURATION = 51l; // In millis
+	public static long TICK_DURATION_NANOS = 50_100_000l;
+	private static boolean IS_NEW_TICK; // TODO: friend MixinClientPlayerInteractionManager?
 
 	private static boolean thisClickIsBotted;
 	public static final boolean isThisClickBotted(/*MixinClientPlayerInteractionManager.Friend friend*/){return thisClickIsBotted;}
@@ -66,7 +67,7 @@ public final class ClickUtils{
 		ClickUtils.MAX_CLICKS = MAX_CLICKS;
 //		C_PER_T = (double)MAX_CLICKS/(double)FOR_TICKS;
 		tickDurationArr = new int[FOR_TICKS];
-//		lastTick = System.currentTimeMillis()/TICK_DURATION; // Get recomputed by calcAvailableClicks() anyway
+//		lastTick = System.nanoTime()/TICK_DURATION_NANOS; // Get recomputed by calcAvailableClicks() anyway
 	}
 
 //	private long getPing(){
@@ -75,8 +76,9 @@ public final class ClickUtils{
 //	}
 
 	private static final void updateAvailableClicks(){
-		final long curTick = System.currentTimeMillis()/TICK_DURATION;
-		if(curTick != lastTick){
+		final long curTick = System.nanoTime()/TICK_DURATION_NANOS;
+		IS_NEW_TICK = curTick != lastTick;
+		if(IS_NEW_TICK){
 //			final long pingTicks = (long)Math.ceil(getPing()/(double)TICK_DURATION);
 			if(curTick - lastTick >= tickDurationArr.length){
 				lastTick = curTick;
@@ -110,13 +112,14 @@ public final class ClickUtils{
 			return true;
 		}
 	}
+	public static final boolean isNewTick(){return IS_NEW_TICK;} // friend MixinClientPlayerInteractionManager?
 
 	private static final void adjustTickRate(final long msPerTick){
 		// If TPS is degrading, don't clear old tick data (this isn't a perfect solution by any means)
-		if(msPerTick > TICK_DURATION) lastTick = System.currentTimeMillis()/TICK_DURATION;
+		if(msPerTick > TICK_DURATION_NANOS/1_000_000l) lastTick = System.nanoTime()/TICK_DURATION_NANOS;
 		else calcAvailableClicks();
-		TICK_DURATION = msPerTick;
-		lastTick = System.currentTimeMillis()/TICK_DURATION;
+		TICK_DURATION_NANOS = msPerTick*1_000_000l;
+		lastTick = System.nanoTime()/TICK_DURATION_NANOS;
 	}
 
 	private static final int calcRemainingTicks(int clicksToExecute){
@@ -142,12 +145,12 @@ public final class ClickUtils{
 
 		final AccessorPlayerListHud playerListHudAccessor = (AccessorPlayerListHud)client.inGameHud.getPlayerListHud();
 		final Text footerText = playerListHudAccessor.getFooter();
-		if(footerText == null) return TICK_DURATION;
+		if(footerText == null) return TICK_DURATION_NANOS/1_000_000l;
 		final MutableText text = Text.empty(); footerText.withoutStyle().forEach(text::append);
 		final String footerStr = TextUtils_New.stripColorAndFormats(text.getString());
 		//§819.90 tps — 692 players online — 92 ping
 		final Matcher matcher = tpsPattern.matcher(footerStr);
-		if(!matcher.find()) return TICK_DURATION;
+		if(!matcher.find()) return TICK_DURATION_NANOS/1_000_000l;
 		final double tps = Double.parseDouble(matcher.group(1));
 //		Main.LOGGER.info("ClickUtils: got TPS from playerListTab: "+tps);
 		final long msPerTick = (long)Math.ceil(1000d/tps);
@@ -176,7 +179,7 @@ public final class ClickUtils{
 		}
 		if(Configs.Generic.CLICK_LIMIT_ADJUST_FOR_TPS.getBooleanValue() && tickDurationArr != null){
 			final long msPerTick = getMillisPerTick(client);
-			if(msPerTick != TICK_DURATION) adjustTickRate(msPerTick);
+			if(msPerTick != TICK_DURATION_NANOS/1_000_000l) adjustTickRate(msPerTick);
 		}
 
 		final int syncId = client.player.currentScreenHandler.syncId;
@@ -233,7 +236,7 @@ public final class ClickUtils{
 					}
 					if(tickDurationArr != null){
 						// +1000 so it always says at least "1s left" and not "0s left"
-						final int msLeft = 1000 + calcRemainingTicks(clicks.size())*(int)TICK_DURATION;
+						final int msLeft = 1000 + calcRemainingTicks(clicks.size())*(int)(TICK_DURATION_NANOS/1_000_000l);
 						estimatedMsLeft = Math.min(estimatedMsLeft, msLeft);
 //						StringUtils.translate("");
 						client.player.sendMessage(
