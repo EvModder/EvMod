@@ -410,6 +410,10 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigStringHotkeyed REMOTE_MSG_2 = new ConfigStringHotkeyed("remoteMessage2", "", "").apply(HOTKEYS_KEY);
 		public static final ConfigStringHotkeyed REMOTE_MSG_3 = new ConfigStringHotkeyed("remoteMessage3", "", "").apply(HOTKEYS_KEY);
 
+		public static final ConfigString PP_IP_1 = new ConfigString("pearlPlusIp1", "").apply(HOTKEYS_KEY);
+		public static final ConfigString PP_TOKEN_1 = new ConfigString("pearlPlusToken1", "").apply(HOTKEYS_KEY);
+		public static final ConfigHotkey PP_HOTKEY_1 = new ConfigHotkey("pearlPlusHotkey1", "").apply(HOTKEYS_KEY);
+
 		public static final ConfigYawPitchHotkeyed SNAP_ANGLE_1 = new ConfigYawPitchHotkeyed("snapAngle1", 148, -73, "").apply(HOTKEYS_KEY);
 		public static final ConfigYawPitchHotkeyed SNAP_ANGLE_2 = new ConfigYawPitchHotkeyed("snapAngle2", -159, -51, "").apply(HOTKEYS_KEY);
 
@@ -444,6 +448,7 @@ public final class Configs implements IConfigHandler{
 					CHAT_MSG_1, CHAT_MSG_2, CHAT_MSG_3
 				));
 				if(settings.database) configs.addAll(List.of(REMOTE_MSG_1, REMOTE_MSG_2, REMOTE_MSG_3));
+				configs.addAll(List.of(PP_IP_1, PP_TOKEN_1, PP_HOTKEY_1));
 				configs.addAll(List.of(SNAP_ANGLE_1, SNAP_ANGLE_2));
 			}
 			return configs;

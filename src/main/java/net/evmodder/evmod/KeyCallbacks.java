@@ -1,6 +1,7 @@
 package net.evmodder.evmod;
 
 import net.evmodder.evmod.apis.ChatBroadcaster;
+import net.evmodder.evmod.apis.EpearlExternalAdapter;
 import net.evmodder.evmod.apis.EpearlLookup;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.evmodder.evmod.apis.WhisperPlaySound;
@@ -125,6 +126,8 @@ final class KeyCallbacks{
 				keybindCallback(Configs.Hotkeys.REMOTE_MSG_2, null, ()->InitUtils.sendRemoteMsg(remoteSender, Configs.Hotkeys.REMOTE_MSG_2.getStringValue()));
 				keybindCallback(Configs.Hotkeys.REMOTE_MSG_3, null, ()->InitUtils.sendRemoteMsg(remoteSender, Configs.Hotkeys.REMOTE_MSG_3.getStringValue()));
 			}
+			keybindCallback(Configs.Hotkeys.PP_HOTKEY_1, null,
+					()->EpearlExternalAdapter.trigger(Configs.Hotkeys.PP_IP_1.getStringValue(), Configs.Hotkeys.PP_TOKEN_1.getStringValue()));
 			keybindCallback(Configs.Hotkeys.SNAP_ANGLE_1, null,
 					()->MinecraftClient.getInstance().player.setAngles(Configs.Hotkeys.SNAP_ANGLE_1.getYaw(), Configs.Hotkeys.SNAP_ANGLE_1.getPitch()));
 			keybindCallback(Configs.Hotkeys.SNAP_ANGLE_2, null,
