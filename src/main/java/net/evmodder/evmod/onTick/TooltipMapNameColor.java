@@ -5,27 +5,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import net.minecraft.item.Item.TooltipContext;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.InvUtils;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.Tooltip;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.map.MapState;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.item.Item.TooltipContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 public final class TooltipMapNameColor implements Tooltip{
-	private static final HashMap<ItemStack, List<Text>> tooltipCache = new HashMap<>();
+	private static final HashMap<ItemStack, List<Component>> tooltipCache = new HashMap<>();
 	private static int lastHash;
 
-	@Override public final void get(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
+	@Override public final void get(ItemStack item, TooltipContext context, TooltipFlag type, List<Component> lines){
 		if(!Configs.Visuals.MAP_HIGHLIGHT_TOOLTIP.getBooleanValue()) return;
 		final int MAP_COLOR_IN_INV = Configs.Visuals.MAP_COLOR_IN_INV.getIntegerValue();
 		final int MAP_COLOR_NOT_IN_GROUP = Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue();
@@ -41,13 +41,13 @@ public final class TooltipMapNameColor implements Tooltip{
 			tooltipCache.clear();
 //			Main.LOGGER.info("TooltipMapNameColor: Clearing cache");
 		}
-		List<Text> cachedLines = tooltipCache.get(item);
+		List<Component> cachedLines = tooltipCache.get(item);
 		if(cachedLines != null){lines.clear(); lines.addAll(cachedLines); return;}
 
 		if(item.getItem() != Items.FILLED_MAP){
-			final List<ItemStack> mapItems = InvUtils.getAllNestedItems(item).filter(s -> s.get(DataComponentTypes.MAP_ID) != null).toList();
+			final List<ItemStack> mapItems = InvUtils.getAllNestedItems(item).filter(s -> s.get(DataComponents.MAP_ID) != null).toList();
 			if(mapItems.isEmpty()) return;
-			final List<MapState> states = mapItems.stream().map(i -> context.getMapState(i.get(DataComponentTypes.MAP_ID))).filter(Objects::nonNull).toList();
+			final List<MapItemSavedData> states = mapItems.stream().map(i -> context.mapData(i.get(DataComponents.MAP_ID))).filter(Objects::nonNull).toList();
 //			final List<UUID> nonFillerIds = states.stream().filter(Predicate.not(MapRelationUtils::isFillerMap)).map(MapGroupUtils::getIdForMapState).toList();
 			final List<UUID> colorIds = states.stream().map(MapGroupUtils::getIdForMapState).toList();
 			final List<UUID> unskippedIds = (
@@ -61,7 +61,7 @@ public final class TooltipMapNameColor implements Tooltip{
 			if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(MAP_COLOR_UNLOCKED);
 			if(unskippedIds.stream().anyMatch(UpdateContainerContents::hasDuplicateInContainer)) asterisks.add(MAP_COLOR_MULTI_CONTAINER);
 			if(mapItems.size() > states.size() + (!Configs.Generic.SKIP_NULL_MAPS.getBooleanValue() ? 0
-					: mapItems.stream().filter(stack -> MapGroupUtils.nullMapIds.contains(stack.get(DataComponentTypes.MAP_ID).id())).count()
+					: mapItems.stream().filter(stack -> MapGroupUtils.nullMapIds.contains(stack.get(DataComponents.MAP_ID).id())).count()
 			)){
 				asterisks.add(MAP_COLOR_UNLOADED);
 			}
@@ -70,15 +70,15 @@ public final class TooltipMapNameColor implements Tooltip{
 
 			if(!asterisks.isEmpty()){
 				asterisks = asterisks.stream().distinct().toList();
-				MutableText text = lines.removeFirst().copy();
-				asterisks.forEach(color -> text.append(Text.literal("*").withColor(color).formatted(Formatting.BOLD)));
+				MutableComponent text = lines.removeFirst().copy();
+				asterisks.forEach(color -> text.append(Component.literal("*").withColor(color).withStyle(ChatFormatting.BOLD)));
 				lines.addFirst(text);
 			}
 			tooltipCache.put(item, lines);
 			return;
 		}
-		MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
-		MapState state = id == null ? null : context.getMapState(id);
+		MapId id = item.get(DataComponents.MAP_ID);
+		MapItemSavedData state = id == null ? null : context.mapData(id);
 		if(state == null){
 			if(Configs.Generic.SKIP_NULL_MAPS.getBooleanValue() && id != null && MapGroupUtils.isConfirmedNull(id.id())) return;
 			if(item.getCustomName() == null) lines.addFirst(lines.removeFirst().copy().withColor(MAP_COLOR_UNNAMED));
@@ -105,9 +105,9 @@ public final class TooltipMapNameColor implements Tooltip{
 		final boolean nameColor = asterisks.get(0) != MAP_COLOR_MULTI_CONTAINER; // This one is only permitted as an asterisk (idk why, ask older me)
 
 		asterisks = asterisks.stream().distinct().toList(); // This line only exists in case of configurations where 2+ meanings share 1 color
-		MutableText text = lines.removeFirst().copy();
+		MutableComponent text = lines.removeFirst().copy();
 		if(nameColor) text.withColor(asterisks.get(0));
-		for(int i=nameColor?1:0; i<asterisks.size(); ++i) text.append(Text.literal("*").withColor(asterisks.get(i)));
+		for(int i=nameColor?1:0; i<asterisks.size(); ++i) text.append(Component.literal("*").withColor(asterisks.get(i)));
 		lines.addFirst(text);
 		tooltipCache.put(item, lines);
 	}

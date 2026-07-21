@@ -15,7 +15,7 @@ public final class ServerQuitListener{
 		//ClientLoginNetworkHandler handler/_0
 		ClientPlayConnectionEvents.DISCONNECT.register((handler, client)->{
 			if(Configs.Generic.LOG_COORDS_ON_SERVER_QUIT.getBooleanValue() && client.player != null){
-				Main.LOGGER.info(client.player.getName().getString()+" logged out at: "+client.player.getBlockPos().toShortString());
+				Main.LOGGER.info(client.player.getName().getString()+" logged out at: "+client.player.blockPosition().toShortString());
 			}
 
 			if(Configs.Database.SHARE_JOIN_QUIT.getBooleanValue() && rms != null){
@@ -27,7 +27,7 @@ public final class ServerQuitListener{
 					if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.saveMapStatesByIdToFile();
 					if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) MapStateCacher.saveMapStatesByNameToFile();
 				}
-				MapStateCacher.saveMapStatesByPos(client.player.getInventory().getMainStacks().stream(), MapStateCacher.BY_PLAYER_INV);
+				MapStateCacher.saveMapStatesByPos(client.player.getInventory().getNonEquipmentItems().stream(), MapStateCacher.BY_PLAYER_INV);
 				ContainerOpenCloseListener.echestCacheLoaded = false; // TODO: ewww
 				ContainerOpenCloseListener.containerCachesLoaded.clear(); // TODO: ewww
 			}

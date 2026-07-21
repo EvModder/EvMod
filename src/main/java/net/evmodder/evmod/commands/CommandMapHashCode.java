@@ -2,40 +2,40 @@ package net.evmodder.evmod.commands;
 
 import com.mojang.brigadier.context.CommandContext;
 import net.evmodder.evmod.apis.MapGroupUtils;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.item.FilledMapItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.map.MapState;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.text.ClickEvent;
-import net.minecraft.text.Text;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 public class CommandMapHashCode{
 	private final int displayHashCode(CommandContext<FabricClientCommandSource> ctx){
-		final ClientPlayerEntity player = ctx.getSource().getPlayer();
-		final ItemStack stack = player.getMainHandStack();
+		final LocalPlayer player = ctx.getSource().getPlayer();
+		final ItemStack stack = player.getMainHandItem();
 		if(stack.getItem() != Items.FILLED_MAP){
-			ctx.getSource().sendError(Text.literal("Must be holding a FilledMap item"));
+			ctx.getSource().sendError(Component.literal("Must be holding a FilledMap item"));
 			return 1;
 		}
-		MapState state = FilledMapItem.getMapState(stack, player.getEntityWorld());
+		MapItemSavedData state = MapItem.getSavedData(stack, player.level());
 		if(state == null || state.colors == null){
-			ctx.getSource().sendError(Text.literal("MapState of held item needs to be loaded"));
+			ctx.getSource().sendError(Component.literal("MapState of held item needs to be loaded"));
 			return 1;
 		}
 
 		final String colorsId = MapGroupUtils.getIdForMapState(state, /*evict=*/true).toString();
-		ctx.getSource().sendFeedback(Text.literal(colorsId+" \u2398")
-				.styled(style -> style.withClickEvent(new ClickEvent.CopyToClipboard(colorsId))));
+		ctx.getSource().sendFeedback(Component.literal(colorsId+" \u2398")
+				.withStyle(style -> style.withClickEvent(new ClickEvent.CopyToClipboard(colorsId))));
 		return 1;
 	}
 
 	public CommandMapHashCode(){
 		ClientCommandRegistrationCallback.EVENT.register(
-			(dispatcher, _0) -> dispatcher.register(ClientCommandManager.literal("maphashcode").executes(this::displayHashCode))
+			(dispatcher, _0) -> dispatcher.register(ClientCommands.literal("maphashcode").executes(this::displayHashCode))
 		);
 	}
 }

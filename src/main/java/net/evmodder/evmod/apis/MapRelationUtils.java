@@ -5,14 +5,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import net.evmodder.evmod.Main;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.item.FilledMapItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.map.MapState;
-import net.minecraft.text.Text;
-import net.minecraft.world.World;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 public abstract class MapRelationUtils{
 	public record RelatedMapsData(int prefixLen, int suffixLen, List<Integer> slots){}
@@ -91,16 +91,16 @@ public abstract class MapRelationUtils{
 	public static final boolean isMapArtWithCount(final ItemStack stack, final int count){
 		return stack.getCount() == count && stack.getItem() == Items.FILLED_MAP;
 	}
-	private static final boolean differentLockedState(final Boolean locked, final ItemStack item, final World world){
+	private static final boolean differentLockedState(final Boolean locked, final ItemStack item, final Level world){
 		if(locked == null) return false;
-		final MapIdComponent mapId = item.get(DataComponentTypes.MAP_ID);
+		final MapId mapId = item.get(DataComponents.MAP_ID);
 		if(mapId == null) return false;
-		final MapState state = world.getMapState(mapId);
+		final MapItemSavedData state = world.getMapData(mapId);
 		return state != null && state.locked != locked;
 	}
 	// Output inclues input map
 	public static final RelatedMapsData getRelatedMapsByName(final List<ItemStack> slots, final String sourceName,
-			final int count, final Boolean locked, final World world){
+			final int count, final Boolean locked, final Level world){
 //		Main.LOGGER.info("MapAdjUtil: getRelatedMapsByName() called, sourceName="+sourceName);
 		List<Integer> relatedMapSlots = new ArrayList<>();
 		if(sourceName == null) return new RelatedMapsData(-1, -1, relatedMapSlots);
@@ -113,7 +113,7 @@ public abstract class MapRelationUtils{
 		Iterator<ItemStack> it = slots.iterator();
 		for(int i=0; i<slots.size(); ++i){
 			final ItemStack item = it.next();
-			final Text nameText = item.getCustomName();
+			final Component nameText = item.getCustomName();
 			if(nameText == null || !isMapArtWithCount(item, count)) continue;
 			if(differentLockedState(locked, item, world)) continue;
 
@@ -193,7 +193,7 @@ public abstract class MapRelationUtils{
 		it = slots.iterator();
 		for(int i=0; i<slots.size(); ++i){
 			final ItemStack item = it.next();
-			final Text nameText = item.getCustomName();
+			final Component nameText = item.getCustomName();
 			if(!isMapArtWithCount(item, count) || nameText == null) continue;
 			if(differentLockedState(locked, item, world)) continue;
 
@@ -219,12 +219,12 @@ public abstract class MapRelationUtils{
 		return new RelatedMapsData(prefixLen, suffixLen, relatedMapSlots);
 	}
 
-	public static final RelatedMapsData getRelatedMapsByName0(final List<ItemStack> slots, final World world){
+	public static final RelatedMapsData getRelatedMapsByName0(final List<ItemStack> slots, final Level world){
 		assert slots != null && !slots.isEmpty();
-		final Text nameText = slots.getFirst().getCustomName();
+		final Component nameText = slots.getFirst().getCustomName();
 		final String name = nameText == null ? null : nameText.getString();
 		if(name == null) return new RelatedMapsData(-1, -1, new ArrayList<>());
-		final MapState state = FilledMapItem.getMapState(slots.getFirst(), world);
+		final MapItemSavedData state = MapItem.getSavedData(slots.getFirst(), world);
 		final Boolean locked = state == null ? null : state.locked;
 		return getRelatedMapsByName(slots, name, slots.getFirst().getCount(), locked, world);
 	}

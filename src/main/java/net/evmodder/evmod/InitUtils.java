@@ -10,13 +10,13 @@ import net.evmodder.EvLib.util.PacketHelper;
 import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.session.Session;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.player.PlayerModelPart;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.User;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.PlayerModelPart;
+import net.minecraft.world.item.ItemStack;
 
 final class InitUtils{
 //	public static final String MOD_ID;
@@ -31,16 +31,12 @@ final class InitUtils{
 //		MOD_NAME = fabricModJsonObj.get("name").getAsString();
 //	}
 	static final String getModId(){
-		// Get the path of the current class
-		final String classPath = Main.class.getName().replace('.', '/') + ".class";
-		final String modId = FabricLoader.getInstance().getAllMods().stream()
-				.filter(container -> container.findPath(classPath).isPresent())
-				.map(container -> container.getMetadata().getId())
-				.findFirst()
-				.orElseThrow(() -> new IllegalStateException("Could not find current mod ID!"));
-
-		assert classPath.contains("/"+modId+"/") : "Class path does not contain mod id! "+classPath;
-		assert classPath.equals("net/evmodder/"+modId+"/Main.class");
+		final String packageName = Main.class.getPackageName();
+		final String modId = packageName.substring(packageName.lastIndexOf('.')+1);
+		if(FabricLoader.getInstance().getModContainer(modId).isEmpty()){
+			throw new IllegalStateException("Could not find current mod ID: "+modId);
+		}
+		assert packageName.equals("net.evmodder."+modId);
 		return modId;
 	}
 
@@ -55,7 +51,7 @@ final class InitUtils{
 		if(!Configs.Generic.CLICK_DISPLAY_AVAILABLE_PERSISTENT.getBooleanValue()) return;
 		clickRenderTimer = new Timer(/*isDaemon=*/true);
 		clickRenderTimer.scheduleAtFixedRate(new TimerTask(){@Override public void run(){
-			MinecraftClient client = MinecraftClient.getInstance();
+			Minecraft client = Minecraft.getInstance();
 			if(client.player == null) return;
 			if(ClickUtils.hasOngoingClicks()) return; // Don't stomp actionbar statuses from click-ops
 			final int clicks = ClickUtils.calcAvailableClicks();
@@ -64,7 +60,7 @@ final class InitUtils{
 				lastClickRenderWasMax = true;
 			}
 			else lastClickRenderWasMax = false;
-			client.player.sendMessage(Text.literal("Clicks available: "+clicks+"/"+ClickUtils.getMaxClicks()).withColor(15777300), true);
+			client.player.sendOverlayMessage(Component.literal("Clicks available: "+clicks+"/"+ClickUtils.getMaxClicks()).withColor(15777300));
 		}}, 1l, 50l); // Runs every tick
 	}
 
@@ -103,8 +99,8 @@ final class InitUtils{
 		requestedKey = true;
 		Main.LOGGER.info("Missing valid CLIENT_ID for Database, requesting one from RMS");
 
-		final Session session = MinecraftClient.getInstance().getSession();
-		final UUID uuid = session.getUuidOrNull() != null ? session.getUuidOrNull() : UUID.nameUUIDFromBytes(session.getUsername().getBytes());
+		final User session = Minecraft.getInstance().getUser();
+		final UUID uuid = session.getProfileId() != null ? session.getProfileId() : UUID.nameUUIDFromBytes(session.getName().getBytes());
 		final byte[] msg = PacketHelper.toByteArray(uuid);
 		rms.sendBotMessage(Command.REQUEST_CLIENT_KEY, /*udp=*/false, /*timeout=*/5000, msg, reply->{
 			if(reply == null || reply.length != 20){
@@ -152,20 +148,20 @@ final class InitUtils{
 
 	static final void sendChatMsg(final String msg){ // Accessor: KeybindCallbacks
 		if(msg.isBlank()) return;
-		MinecraftClient mc = MinecraftClient.getInstance();
-		if(msg.charAt(0) == '/') mc.player.networkHandler.sendChatCommand(msg.substring(1));
-		else mc.player.networkHandler.sendChatMessage(msg);
+		Minecraft mc = Minecraft.getInstance();
+		if(msg.charAt(0) == '/') mc.player.connection.sendCommand(msg.substring(1));
+		else mc.player.connection.sendChat(msg);
 	}
 
 	static final void toggleSkinLayer(final PlayerModelPart part){ // Accessor: KeybindCallbacks
-		final MinecraftClient client = MinecraftClient.getInstance();
+		final Minecraft client = Minecraft.getInstance();
 		if(Configs.Hotkeys.SYNC_CAPE_WITH_ELYTRA.getBooleanValue() && part == PlayerModelPart.CAPE
-				&& client.player != null && client.options.isPlayerModelPartEnabled(part)){
-			ItemStack chestItem = client.player.getEquippedStack(EquipmentSlot.CHEST);
+				&& client.player != null && client.options.isModelPartEnabled(part)){
+			ItemStack chestItem = client.player.getItemBySlot(EquipmentSlot.CHEST);
 			// Don't disable cape if we just switched to an elytra
-			if(Registries.ITEM.getId(chestItem.getItem()).getPath().equals("elytra")) return;
+			if(BuiltInRegistries.ITEM.getKey(chestItem.getItem()).getPath().equals("elytra")) return;
 		}
-		client.options.setPlayerModelPart(part, !client.options.isPlayerModelPartEnabled(part));
-		client.options.sendClientSettings();
+		client.options.setModelPart(part, !client.options.isModelPartEnabled(part));
+		client.options.broadcastOptions();
 	}
 }

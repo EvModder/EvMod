@@ -14,7 +14,7 @@ import fi.dy.masa.malilib.config.options.*;
 import fi.dy.masa.malilib.hotkeys.KeyAction;
 import fi.dy.masa.malilib.hotkeys.KeybindSettings;
 import fi.dy.masa.malilib.hotkeys.KeybindSettings.Context;
-import fi.dy.masa.malilib.util.JsonUtils;
+import fi.dy.masa.malilib.util.data.json.JsonUtils;
 import net.evmodder.evmod.config.*;
 import net.evmodder.evmod.config.ConfigPlayerList.NameAndUUID;
 
@@ -530,7 +530,7 @@ public final class Configs implements IConfigHandler{
 //		final JsonElement element = JsonUtils.parseJsonFileAsPath(configFile);
 		final File file = new File(Main.CONFIG_DIR+CONFIG_NAME);
 		if(!file.exists() || !file.canRead()) return;
-		final JsonElement element = JsonUtils.parseJsonFile(file);
+		final JsonElement element = JsonUtils.parseJsonFile(file.toPath());
 		if(element == null || !element.isJsonObject()){
 			Main.LOGGER.error("Configs.load(): Failed to load config file '{}'.", file.getAbsolutePath());
 			return;
@@ -558,7 +558,7 @@ public final class Configs implements IConfigHandler{
 		ConfigUtils.writeConfigBase(root, "Visuals", getVisualsConfigs());
 		ConfigUtils.writeConfigBase(root, "Hotkeys", getHotkeysConfigs());
 		if(settings.database) ConfigUtils.writeConfigBase(root, "Database", getDatabaseConfigs());
-		JsonUtils.writeJsonToFile(root, new File(Main.CONFIG_DIR+CONFIG_NAME));
+		JsonUtils.writeJsonToFile(root, new File(Main.CONFIG_DIR+CONFIG_NAME).toPath());
 //		Main.LOGGER.debug("Configs.save(): Successfully saved config file '{}'.", file.getAbsolutePath());
 	}
 }

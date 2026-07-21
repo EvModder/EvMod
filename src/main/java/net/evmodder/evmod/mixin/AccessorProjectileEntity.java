@@ -1,13 +1,13 @@
 package net.evmodder.evmod.mixin;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LazyEntityReference;
-import net.minecraft.entity.projectile.ProjectileEntity;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityReference;
+import net.minecraft.world.entity.projectile.Projectile;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(ProjectileEntity.class)
+@Mixin(Projectile.class)
 public interface AccessorProjectileEntity{
-	@Accessor("owner") void setOwnerReference(LazyEntityReference<Entity> owner);
-	@Accessor("owner") LazyEntityReference<Entity> getOwnerReference();
+	@Accessor("owner") void setOwnerReference(EntityReference<Entity> owner);
+	@Accessor("owner") EntityReference<Entity> getOwnerReference();
 }

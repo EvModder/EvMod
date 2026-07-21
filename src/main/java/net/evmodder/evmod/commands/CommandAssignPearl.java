@@ -9,16 +9,14 @@ import net.evmodder.evmod.apis.EpearlLookupFabric;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.MojangProfileLookup;
 import net.evmodder.evmod.apis.MojangProfileLookupConstants;
-import net.evmodder.evmod.mixin.AccessorProjectileEntity;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LazyEntityReference;
-import net.minecraft.entity.projectile.thrown.EnderPearlEntity;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Box;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
+import net.minecraft.world.phys.AABB;
 
 public class CommandAssignPearl{
 	private final EpearlLookupFabric epearlLookup;
@@ -73,37 +71,37 @@ public class CommandAssignPearl{
 
 	private final int assignPearl(CommandContext<FabricClientCommandSource> ctx){
 		if(epearlLookup.isDisabled()){
-			ctx.getSource().sendError(Text.literal("EpearlLookup is disbled (either key-by UUID or XZ must be on)"));
+			ctx.getSource().sendError(Component.literal("EpearlLookup is disbled (either key-by UUID or XZ must be on)"));
 			return 1;
 		}
 		final Entity player = ctx.getSource().getPlayer();
-		final Box box = player.getBoundingBox().expand(8, 6, 8);
-		final List<EnderPearlEntity> epearls = player.getEntityWorld().getEntitiesByType(EntityType.ENDER_PEARL, box, e->{
+		final AABB box = player.getBoundingBox().inflate(8, 6, 8);
+		final List<ThrownEnderpearl> epearls = player.level().getEntities(EntityTypes.ENDER_PEARL, box, e->{
 			return MiscUtils.isLookingAt(e, player) && isOverwritableName(epearlLookup.getOwnerName(e));
 		});
 		if(epearls.isEmpty()){
-			ctx.getSource().sendError(Text.literal("Unable to detect target unassigned epearl"));
+			ctx.getSource().sendError(Component.literal("Unable to detect target unassigned epearl"));
 			return 1;
 		}
 		if(epearls.size() > 1){
-			ctx.getSource().sendError(Text.literal("Warning: Command does not currently work with multiple (stacked) epearls"));
+			ctx.getSource().sendError(Component.literal("Warning: Command does not currently work with multiple (stacked) epearls"));
 		}
-		final EnderPearlEntity epearl = epearls.getFirst();
+		final ThrownEnderpearl epearl = epearls.getFirst();
 
 		final String name = ctx.getArgument("name", String.class);
 //		ctx.getSource().sendFeedback(Text.literal("Fetching UUID for name: "+name+"..."));
 		MojangProfileLookup.uuidLookup.get(name, (uuid)->{
 			if(uuid == MojangProfileLookupConstants.UUID_404){
-				ctx.getSource().sendError(Text.literal("Invalid player name"));
+				ctx.getSource().sendError(Component.literal("Invalid player name"));
 				return;
 			}
 			if(epearl == null || epearl.isRemoved()){
-				ctx.getSource().sendError(Text.literal("Epearl disappeared while fetching player UUID!"));
+				ctx.getSource().sendError(Component.literal("Epearl disappeared while fetching player UUID!"));
 				return;
 			}
-			((AccessorProjectileEntity)epearl).setOwnerReference(LazyEntityReference.ofUUID(uuid));
+			MiscUtils.setPearlUUID(epearl, uuid);
 			epearlLookup.getOwnerName(epearl); // Calling this updates EpearlOwners using the uuid we just provided
-			ctx.getSource().sendFeedback(Text.literal("Assigned owner for epearl: "+epearl.getUuidAsString()+" <- "+name));
+			ctx.getSource().sendFeedback(Component.literal("Assigned owner for epearl: "+epearl.getStringUUID()+" <- "+name));
 		});
 		return 1;
 	}
@@ -112,8 +110,8 @@ public class CommandAssignPearl{
 		epearlLookup = epl;
 		ClientCommandRegistrationCallback.EVENT.register(
 			(dispatcher, _0) -> dispatcher.register(
-				ClientCommandManager.literal("assignpearl").then(
-					ClientCommandManager.argument("name", /*EntityArgumentType.players()*/StringArgumentType.word())
+				ClientCommands.literal("assignpearl").then(
+					ClientCommands.argument("name", /*EntityArgumentType.players()*/StringArgumentType.word())
 					.executes(this::assignPearl)
 				)
 			)

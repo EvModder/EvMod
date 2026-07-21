@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.stream.Stream;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.item.ItemStack;
 
 public final class KeybindHotbarTypeScroller{
 	//private final static String COLOR_SCROLL_CATEGORY = "key.categories."+Main.MOD_ID+".color_scroll";
@@ -32,9 +32,9 @@ public final class KeybindHotbarTypeScroller{
 		final String colorA = hasEmpty ? colors[1] : colors[0];
 		final String[] colorsB = Arrays.copyOfRange(colors, hasEmpty? 2 : 1, colors.length);
 
-		Stream<Identifier> s = Registries.ITEM.getIds().stream().filter(id -> id.getPath().contains(colorA));
-		if(hasEmpty) s = s.filter(id -> Registries.ITEM.containsId(Identifier.of(id.getNamespace(), id.getPath().replace(colorA+"_", ""))));//TODO: icky
-		s = s.filter(id -> Arrays.stream(colorsB).allMatch(b -> Registries.ITEM.containsId(Identifier.of(id.getNamespace(), id.getPath().replace(colorA, b)))));
+		Stream<Identifier> s = BuiltInRegistries.ITEM.keySet().stream().filter(id -> id.getPath().contains(colorA));
+		if(hasEmpty) s = s.filter(id -> BuiltInRegistries.ITEM.containsKey(Identifier.fromNamespaceAndPath(id.getNamespace(), id.getPath().replace(colorA+"_", ""))));//TODO: icky
+		s = s.filter(id -> Arrays.stream(colorsB).allMatch(b -> BuiltInRegistries.ITEM.containsKey(Identifier.fromNamespaceAndPath(id.getNamespace(), id.getPath().replace(colorA, b)))));
 		List<Identifier> ids = s.toList();
 		if(ids.isEmpty()){
 			Main.LOGGER.warn("Could not find items for the given scroll list: ["+String.join(",", colors)+"]");
@@ -48,12 +48,12 @@ public final class KeybindHotbarTypeScroller{
 	}
 
 	public void scrollHotbarSlot(boolean upOrDown){
-		final MinecraftClient client = MinecraftClient.getInstance();
-		PlayerInventory inventory = client.player.getInventory();
-		if(!PlayerInventory.isValidHotbarIndex(inventory.getSelectedSlot())) return;
-		ItemStack is = client.player.getMainHandStack();
-		Identifier id = Registries.ITEM.getId(is.getItem());
-		if(!ItemStack.areItemsAndComponentsEqual(is, new ItemStack(Registries.ITEM.get(id)))) return;  // don't scroll if has custom NBT
+		final Minecraft client = Minecraft.getInstance();
+		Inventory inventory = client.player.getInventory();
+		if(!Inventory.isHotbarSlot(inventory.getSelectedSlot())) return;
+		ItemStack is = client.player.getMainHandItem();
+		Identifier id = BuiltInRegistries.ITEM.getKey(is.getItem());
+		if(!ItemStack.isSameItemSameComponents(is, new ItemStack(BuiltInRegistries.ITEM.getValue(id)))) return;  // don't scroll if has custom NBT
 		String path = id.getPath();
 		String[] colors = scrollableItems.get(id.toString());//e.g., "rail" -> [,powered,detector,activator]"
 		int i = 0;
@@ -67,38 +67,38 @@ public final class KeybindHotbarTypeScroller{
 
 		final int original_i = i;
 		i = upOrDown ? (i == colors.length-1 ? 0 : i+1) : (i == 0 ? colors.length-1 : i-1);
-		id = Identifier.of(id.getNamespace(), id.getPath().replace(colors[original_i], colors[i]));
-		if(client.player.isInCreativeMode()){
-			inventory.setStack(inventory.getSelectedSlot(), new ItemStack(Registries.ITEM.get(id), is.getCount()));//TODO: doesn't seem to work on servers (visually yes, but not when u place the block)
+		id = Identifier.fromNamespaceAndPath(id.getNamespace(), id.getPath().replace(colors[original_i], colors[i]));
+		if(client.player.hasInfiniteMaterials()){
+			inventory.setItem(inventory.getSelectedSlot(), new ItemStack(BuiltInRegistries.ITEM.getValue(id), is.getCount()));//TODO: doesn't seem to work on servers (visually yes, but not when u place the block)
 			//client.interactionManager.clickCreativeStack(new ItemStack(Registries.ITEM.get(id)), inventory.selectedSlot);//TODO: this doesn't work either :sob:
 			//inventory.markDirty();
 		}
 		else{// survival mode
 			do{
 				int j = 0;
-				for(; j<inventory.getMainStacks().size(); ++j){
-					ItemStack jis = inventory.getMainStacks().get(j);
+				for(; j<inventory.getNonEquipmentItems().size(); ++j){
+					ItemStack jis = inventory.getNonEquipmentItems().get(j);
 					if(jis.isEmpty()) continue;
-					Identifier jid = Registries.ITEM.getId(jis.getItem());
+					Identifier jid = BuiltInRegistries.ITEM.getKey(jis.getItem());
 					if(!jid.equals(id)) continue;
-					if(!ItemStack.areItemsAndComponentsEqual(jis, new ItemStack(Registries.ITEM.get(jid)))) continue;
+					if(!ItemStack.isSameItemSameComponents(jis, new ItemStack(BuiltInRegistries.ITEM.getValue(jid)))) continue;
 					//found an item to use
 					break;
 				}
-				if(j != inventory.getMainStacks().size()){
+				if(j != inventory.getNonEquipmentItems().size()){
 					//use the item (change selected hotbar slot or swap with main inv)
-					if(PlayerInventory.isValidHotbarIndex(j)) inventory.setSelectedSlot(j);
+					if(Inventory.isHotbarSlot(j)) inventory.setSelectedSlot(j);
 					else{
-						inventory.getMainStacks().set(inventory.getSelectedSlot(), inventory.getMainStacks().get(j));
-						inventory.getMainStacks().set(j, is);
-						client.interactionManager.clickSlot(/*client.player.playerScreenHandler.syncId*/0, j, inventory.getSelectedSlot(), SlotActionType.SWAP, client.player);
+						inventory.getNonEquipmentItems().set(inventory.getSelectedSlot(), inventory.getNonEquipmentItems().get(j));
+						inventory.getNonEquipmentItems().set(j, is);
+						client.gameMode.handleContainerInput(/*client.player.playerScreenHandler.syncId*/0, j, inventory.getSelectedSlot(), ContainerInput.SWAP, client.player);
 					}
 					//Main.LOGGER.error("did swap");
 					break;
 				}
 				//else Main.LOGGER.error("no "+id.getPath()+", continuing for next item");
 				final int new_i = upOrDown ? (i == colors.length-1 ? 0 : i+1) : (i == 0 ? colors.length-1 : i-1);
-				id = Identifier.of(id.getNamespace(), id.getPath().replace(colors[i], colors[new_i]));
+				id = Identifier.fromNamespaceAndPath(id.getNamespace(), id.getPath().replace(colors[i], colors[new_i]));
 				i = new_i;
 			}while(i != original_i);
 			//Main.LOGGER.error("full wrap-around: "+i);

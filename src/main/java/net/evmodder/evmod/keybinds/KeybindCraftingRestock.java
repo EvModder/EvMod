@@ -4,23 +4,23 @@ import java.util.List;
 import java.util.stream.IntStream;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.mixin.AccessorAnvilScreen;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.AnvilScreen;
-import net.minecraft.client.gui.screen.ingame.ForgingScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.AnvilScreenHandler;
-import net.minecraft.screen.CraftingScreenHandler;
-import net.minecraft.screen.PlayerScreenHandler;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.AnvilScreen;
+import net.minecraft.client.gui.screens.inventory.ItemCombinerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.AnvilMenu;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.CraftingMenu;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 public final class KeybindCraftingRestock{
 	record SlotAndItem(int slot, ItemStack stack){
-		SlotAndItem(ScreenHandler sh, int slot){this(slot, sh.getSlot(slot).getStack().copy());}
+		SlotAndItem(AbstractContainerMenu sh, int slot){this(slot, sh.getSlot(slot).getItem().copy());}
 	}
 	private List<SlotAndItem> inputItems;
 	private String anvilName;
@@ -28,7 +28,7 @@ public final class KeybindCraftingRestock{
 	private final long THREAD_TIMEOUT = 2000;
 	private Class<?> lastScreen;
 
-	private boolean willCraftItem(SlotActionType action){
+	private boolean willCraftItem(ContainerInput action){
 		switch(action){
 			case PICKUP:
 			case QUICK_MOVE:
@@ -38,27 +38,27 @@ public final class KeybindCraftingRestock{
 				return false;
 		}
 	}
-	public void checkIfCraftAction(ScreenHandler sh, int slot, int button, SlotActionType action){
+	public void checkIfCraftAction(AbstractContainerMenu sh, int slot, int button, ContainerInput action){
 		if(sh == null || !willCraftItem(action)) return;
-		if(sh instanceof AnvilScreenHandler && slot == AnvilScreenHandler.OUTPUT_ID){
-			lastScreen = AnvilScreenHandler.class;
-			inputItems = List.of(new SlotAndItem(sh, AnvilScreenHandler.INPUT_1_ID), new SlotAndItem(sh, AnvilScreenHandler.INPUT_2_ID));
+		if(sh instanceof AnvilMenu && slot == AnvilMenu.RESULT_SLOT){
+			lastScreen = AnvilMenu.class;
+			inputItems = List.of(new SlotAndItem(sh, AnvilMenu.INPUT_SLOT), new SlotAndItem(sh, AnvilMenu.ADDITIONAL_SLOT));
 //			anvilText = as.newItemName;
-			Text anvilText = sh.getSlot(AnvilScreenHandler.OUTPUT_ID).getStack().getCustomName();
-			anvilName = anvilText == null ? null : anvilText.getLiteralString();
+			Component anvilText = sh.getSlot(AnvilMenu.RESULT_SLOT).getItem().getCustomName();
+			anvilName = anvilText == null ? null : anvilText.tryCollapseToString();
 			THREAD_START = 0; // Cancel current anvil name thread - anvil craft event occured
 //			try{anvilNameThread.join();}catch(InterruptedException e){e.printStackTrace();}
 
 			Main.LOGGER.info("CraftRestock: Storing 2 anvil slots"+(anvilName==null?"": " and a custom name"));
 		}
-		if(sh instanceof PlayerScreenHandler && slot == PlayerScreenHandler.CRAFTING_RESULT_ID){
-			lastScreen = PlayerScreenHandler.class;
-			inputItems = IntStream.range(PlayerScreenHandler.CRAFTING_INPUT_START, PlayerScreenHandler.CRAFTING_INPUT_END)
+		if(sh instanceof InventoryMenu && slot == InventoryMenu.RESULT_SLOT){
+			lastScreen = InventoryMenu.class;
+			inputItems = IntStream.range(InventoryMenu.CRAFT_SLOT_START, InventoryMenu.CRAFT_SLOT_END)
 					.mapToObj(i -> new SlotAndItem(sh, i)).toList();
 //			Main.LOGGER.info("CraftRestock: Storing 2x2 player inv slots");
 		}
-		if(sh instanceof CraftingScreenHandler && slot == CraftingScreenHandler.RESULT_ID){
-			lastScreen = CraftingScreenHandler.class;
+		if(sh instanceof CraftingMenu && slot == CraftingMenu.RESULT_SLOT){
+			lastScreen = CraftingMenu.class;
 			inputItems = IntStream.range(1/*CraftingScreenHandler.INPUT_START*/, 10/*CraftingScreenHandler.INPUT_END*/)
 					.mapToObj(i -> new SlotAndItem(sh, i)).toList();
 			Main.LOGGER.info("CraftRestock: Storing 3x3 crafting table slots");
@@ -70,25 +70,25 @@ public final class KeybindCraftingRestock{
 	}
 
 	private void updateAnvilName(AnvilScreen as){
-		TextFieldWidget nameField = ((AccessorAnvilScreen)as).getNameField();
-		nameField.setText(anvilName);
-		nameField.setCursorToStart(false);
-		nameField.setCursorToEnd(false);
+		EditBox nameField = ((AccessorAnvilScreen)as).getNameField();
+		nameField.setValue(anvilName);
+		nameField.moveCursorToStart(false);
+		nameField.moveCursorToEnd(false);
 	}
 
 	public void restockInputSlots(){
 //		Main.LOGGER.info("CraftRestock: restockInputSlots() called");
-		MinecraftClient client = MinecraftClient.getInstance();
-		if(lastScreen == null || !(client.currentScreen instanceof HandledScreen hs) || !lastScreen.isInstance(hs.getScreenHandler())) return;
+		Minecraft client = Minecraft.getInstance();
+		if(lastScreen == null || !(client.gui.screen() instanceof AbstractContainerScreen hs) || !lastScreen.isInstance(hs.getMenu())) return;
 		assert inputItems != null;
-		final List<Slot> slots = hs.getScreenHandler().slots;
+		final List<Slot> slots = hs.getMenu().slots;
 		final int[] restockFrom = new int[inputItems.size()];
 //		Main.LOGGER.info("CraftRestock: Looking for available items");
 		for(int i=0; i<inputItems.size(); ++i){
 			SlotAndItem needed = inputItems.get(i);
 			restockFrom[i] = -1;
-			if(slots.get(needed.slot).hasStack()){
-				if(ItemStack.areItemsAndComponentsEqual(slots.get(needed.slot).getStack(), needed.stack)) continue;
+			if(slots.get(needed.slot).hasItem()){
+				if(ItemStack.isSameItemSameComponents(slots.get(needed.slot).getItem(), needed.stack)) continue;
 				else{
 					Main.LOGGER.info("CraftRestock: Non-matching item in input");
 					return;
@@ -97,23 +97,23 @@ public final class KeybindCraftingRestock{
 			if(needed.stack.isEmpty()) continue;
 			// TODO: currently assumes player inv is always the last 36 slots
 			for(int j=slots.size()-36; j<slots.size(); ++j){
-				if(ItemStack.areItemsAndComponentsEqual(needed.stack, slots.get(j).getStack())){restockFrom[i] = j; break;}
+				if(ItemStack.isSameItemSameComponents(needed.stack, slots.get(j).getItem())){restockFrom[i] = j; break;}
 			}
 			if(restockFrom[i] == -1){
-				Main.LOGGER.info("CraftRestock: Unable to find restock item: "+needed.stack.getName().getString());
+				Main.LOGGER.info("CraftRestock: Unable to find restock item: "+needed.stack.getHoverName().getString());
 				return; // Unable to find matching item to restock a non-empty input slot
 			}
 		}
 
-		final int syncId = hs.getScreenHandler().syncId;
-		if(client.currentScreen instanceof AnvilScreen as && THREAD_START == 0 && restockFrom[0] != -1){
+		final int syncId = hs.getMenu().containerId;
+		if(client.gui.screen() instanceof AnvilScreen as && THREAD_START == 0 && restockFrom[0] != -1){
 			Main.LOGGER.info("CraftRestock: Restocking for anvil ("+restockFrom[0]+"->INPUT_1"+")");
-			client.interactionManager.clickSlot(syncId, restockFrom[0], 0, SlotActionType.QUICK_MOVE, client.player);
-			if(restockFrom[1] != -1) client.interactionManager.clickSlot(syncId, restockFrom[1], 0, SlotActionType.QUICK_MOVE, client.player);
+			client.gameMode.handleContainerInput(syncId, restockFrom[0], 0, ContainerInput.QUICK_MOVE, client.player);
+			if(restockFrom[1] != -1) client.gameMode.handleContainerInput(syncId, restockFrom[1], 0, ContainerInput.QUICK_MOVE, client.player);
 
-			ItemStack input0 = slots.get(restockFrom[0]).getStack();
-			final Text input0NameText = input0.getCustomName();
-			final String input0Name = input0NameText == null ? null : input0NameText.getLiteralString();
+			ItemStack input0 = slots.get(restockFrom[0]).getItem();
+			final Component input0NameText = input0.getCustomName();
+			final String input0Name = input0NameText == null ? null : input0NameText.tryCollapseToString();
 			if(anvilName != null && !anvilName.equals(input0Name)){
 				updateAnvilName(as);
 //				Main.LOGGER.info("assigned name!");
@@ -123,9 +123,9 @@ public final class KeybindCraftingRestock{
 //					int attempts = 0;
 					boolean lastWasGood = false;
 					while(true){
-						if(!(client.currentScreen instanceof AnvilScreen as)){
-							Main.LOGGER.info("not in anvilscreen! is forgingscreen:"+(client.currentScreen instanceof ForgingScreen));
-							if(client.currentScreen instanceof ForgingScreen){Thread.yield(); continue;}
+						if(!(client.gui.screen() instanceof AnvilScreen as)){
+							Main.LOGGER.info("not in anvilscreen! is forgingscreen:"+(client.gui.screen() instanceof ItemCombinerScreen));
+							if(client.gui.screen() instanceof ItemCombinerScreen){Thread.yield(); continue;}
 							break;
 						}
 						if(System.currentTimeMillis() - THREAD_START >= THREAD_TIMEOUT){
@@ -133,9 +133,9 @@ public final class KeybindCraftingRestock{
 							break;
 						}
 
-						ItemStack result = as.getScreenHandler().getSlot(AnvilScreenHandler.OUTPUT_ID).getStack();
-						final Text resultNameText = result.getCustomName();
-						String resultName = resultNameText == null ? null : resultNameText.getLiteralString();
+						ItemStack result = as.getMenu().getSlot(AnvilMenu.RESULT_SLOT).getItem();
+						final Component resultNameText = result.getCustomName();
+						String resultName = resultNameText == null ? null : resultNameText.tryCollapseToString();
 						if(!anvilName.equals(resultName) && (input0Name == null ? resultName == null : input0Name.equals(resultName))){
 //							Main.LOGGER.info("assigned name in thread! attempt="+attempts);
 							updateAnvilName(as);

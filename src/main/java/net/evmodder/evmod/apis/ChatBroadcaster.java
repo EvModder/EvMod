@@ -9,8 +9,8 @@ import java.util.TimerTask;
 import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 
 public final class ChatBroadcaster{
 	private static Timer timer;
@@ -20,7 +20,7 @@ public final class ChatBroadcaster{
 		if(timer != null) timer.cancel();
 		final long unix_evt_ts = Long.parseLong(Configs.Generic.TEMP_BROADCAST_TIMESTAMP.getStringValue());
 		final List<String> evt_msgs = Configs.Generic.TEMP_BROADCAST_MSGS.getStrings();
-		final String username = MinecraftClient.getInstance().getSession().getUsername();
+		final String username = Minecraft.getInstance().getUser().getName();
 		final long ts = System.currentTimeMillis();
 		if(unix_evt_ts*1000L <= ts || evt_msgs.isEmpty() || !username.equalsIgnoreCase(Configs.Generic.TEMP_BROADCAST_ACCOUNT.getStringValue())) return;
 
@@ -44,7 +44,7 @@ public final class ChatBroadcaster{
 				final long ts = System.currentTimeMillis();
 				if(ts > evt_ts) return; // Event has passed
 
-				final ClientPlayNetworkHandler handler = MinecraftClient.getInstance().getNetworkHandler();
+				final ClientPacketListener handler = Minecraft.getInstance().getConnection();
 				if(handler == null){
 					Main.LOGGER.warn("Player appears to be offline (or otherwise unable to send chats)");
 					return;
@@ -64,7 +64,7 @@ public final class ChatBroadcaster{
 
 				final String msg = evt_msgs.get(msgIndex).replace("{time}", timeStr).replace("{t}", timeStr);
 				Main.LOGGER.info("sending msg: "+msg);
-				handler.sendChatMessage(msg);
+				handler.sendChat(msg);
 			}
 		}, 1L, 15_000L); // Runs every 15s
 	}

@@ -14,7 +14,7 @@ import java.util.HashSet;
 import java.util.UUID;
 import javax.imageio.ImageIO;
 import net.evmodder.EvLib.util.FileIO;
-import net.minecraft.block.MapColor;
+import net.minecraft.world.level.material.MapColor;
 
 public class MapIdsFromImg{
 	/*static int getIntFromARGB(int a, int r, int g, int b){return (a<<24) | (r<<16) | (g<<8) | b;}
@@ -82,10 +82,10 @@ public class MapIdsFromImg{
 //			MAP_COLORS = (MapColor[])f.get(null);
 //			for(MapColor mc : MAP_COLORS){
 			for(int i=0; i<64; ++i){
-				MapColor mc = MapColor.get(i);
+				MapColor mc = MapColor.byId(i);
 				if(mc == null) continue;
 				for(MapColor.Brightness brightness : MapColor.Brightness.values()){
-					MAP_COLORS_REVERSE.put(mc.getRenderColor(brightness), mc.getRenderColorByte(brightness));
+					MAP_COLORS_REVERSE.put(mc.calculateARGBColor(brightness), mc.getPackedId(brightness));
 				}
 			}
 			MAP_COLORS_REVERSE.put(0xff000000, (byte)0);
@@ -193,7 +193,7 @@ public class MapIdsFromImg{
 			if(mapColors.isEmpty()) break;
 			byte[] colors = mapColors.poll();
 			final int xo = i*128, yo = j*128;
-			for(int x=0; x<128; ++x) for(int y=0; y<128; ++y) img.setRGB(xo+x, yo+y, MapColor.getRenderColor(colors[x + y*128]));
+			for(int x=0; x<128; ++x) for(int y=0; y<128; ++y) img.setRGB(xo+x, yo+y, MapColor.getColorFromPackedId(colors[x + y*128]));
 		}
 		ImageIO.write(img, "png", new File(imgName));
 	}

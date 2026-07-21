@@ -10,14 +10,14 @@ import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.commands.CommandMapArtGroup;
 import net.evmodder.evmod.config.OptionMapStateCache;
 import net.evmodder.evmod.config.OptionUnlockedMapHandling;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.entity.EntityType;
-import net.minecraft.item.map.MapState;
-import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
-import net.minecraft.network.packet.s2c.play.MapUpdateS2CPacket;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.network.protocol.game.ClientboundMapItemDataPacket;
+import net.minecraft.world.entity.EntityTypes;
+import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,22 +30,22 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(ClientPlayNetworkHandler.class)
+@Mixin(ClientPacketListener.class)
 abstract class MixinClientPlayNetworkHandler{
-	@Inject(method="onEntitySpawn", at=@At("HEAD"))
-	private final void onSpawn(final EntitySpawnS2CPacket packet, final CallbackInfo _ci){
+	@Inject(method="handleAddEntity", at=@At("HEAD"))
+	private final void onSpawn(final ClientboundAddEntityPacket packet, final CallbackInfo _ci){
 		// If the incoming entity is a player and matches your target's UUID
-		if(packet.getEntityType() == EntityType.PLAYER && AccessorMain.getInstance().syncPlayerPos != null &&
-				AccessorMain.getInstance().syncPlayerPos.removeFakePlayer(packet.getUuid())){
-			Main.LOGGER.info("[EvMod] Removed dummy player (real player spawned): "+packet.getUuid());
+		if(packet.getType() == EntityTypes.PLAYER && AccessorMain.getInstance().syncPlayerPos != null &&
+				AccessorMain.getInstance().syncPlayerPos.removeFakePlayer(packet.getUUID())){
+			Main.LOGGER.info("[EvMod] Removed dummy player (real player spawned): "+packet.getUUID());
 		}
 	}
 
 	// Saw this in https://github.com/red-stoned/client_maps/, and realized it's probably good to incorporate
-	@Redirect(method="onMapUpdate", at=@At(value="INVOKE",
-			target="Lnet/minecraft/client/world/ClientWorld;getMapState(Lnet/minecraft/component/type/MapIdComponent;)Lnet/minecraft/item/map/MapState;"))
-	private final MapState replaceIfClientMaps(ClientWorld instance, MapIdComponent id){
-		final MapState s = instance.getMapState(id);
+	@Redirect(method="handleMapItemData", at=@At(value="INVOKE",
+			target="Lnet/minecraft/client/multiplayer/ClientLevel;getMapData(Lnet/minecraft/world/level/saveddata/maps/MapId;)Lnet/minecraft/world/level/saveddata/maps/MapItemSavedData;"))
+	private final MapItemSavedData replaceIfClientMaps(ClientLevel instance, MapId id){
+		final MapItemSavedData s = instance.getMapData(id);
 		if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.MEMORY_AND_DISK) return s;
 		return s == null || MapStateCacher.hasCacheMarker(s) ? null : s;
 	}
@@ -89,9 +89,9 @@ abstract class MixinClientPlayNetworkHandler{
 		}}, 5_000l); // 5s
 	}
 
-	@Inject(method="onMapUpdate", at=@At("TAIL"))
-	private final void updateSeenMaps(final MapUpdateS2CPacket packet, final CallbackInfo _ci){
-		final MapState state = MinecraftClient.getInstance().world.getMapState(packet.mapId());
+	@Inject(method="handleMapItemData", at=@At("TAIL"))
+	private final void updateSeenMaps(final ClientboundMapItemDataPacket packet, final CallbackInfo _ci){
+		final MapItemSavedData state = Minecraft.getInstance().level.getMapData(packet.mapId());
 		assert state != null && state.colors.length == 128*128;
 		final int id = packet.mapId().id();
 		if(AccessorMapGroupUtils.loadedMapIds().add(id))

@@ -12,9 +12,9 @@ import net.evmodder.evmod.apis.EpearlLookupFabric;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.evmodder.evmod.apis.WhisperPlaySound;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.network.chat.Component;
 
 //import net.minecraft.registry.RegistryOps;
 //import net.minecraft.registry.RegistryWrapper;
@@ -38,32 +38,32 @@ public final class GameMessageListener{
 
 	private final void updateIgnoreState(final RemoteServerSender rms, final String name, final boolean ignored){
 		Main.LOGGER.info("Ignore update: "+name+"="+ignored);
-		final MinecraftClient client = MinecraftClient.getInstance();
-		final PlayerListEntry ple = client.getNetworkHandler().getPlayerListEntry(name);
+		final Minecraft client = Minecraft.getInstance();
+		final PlayerInfo ple = client.getConnection().getPlayerInfo(name);
 		if(ple == null){Main.LOGGER.error("Unable to find PlayerListEntry for player name: "+name); return;}
 		final UUID ignoredUUID = ple.getProfile().id();
 
 		if(!Configs.Database.SHARE_IGNORES.getBooleanValue() || rms == null){
-			saveMyIgnores(client.player.getUuid(), ignoredUUID, ignored);
+			saveMyIgnores(client.player.getUUID(), ignoredUUID, ignored);
 			return;
 		}
 		Main.LOGGER.info("Sending "+(ignored?"":"un")+"ignore packet to RMS");
 		rms.sendBotMessage(ignored ? Command.DB_PLAYER_STORE_IGNORE : Command.DB_PLAYER_STORE_UNIGNORE, /*udp=*/true, 2000,
-			PacketHelper.toByteArray(client.player.getUuid(), ignoredUUID),
+			PacketHelper.toByteArray(client.player.getUUID(), ignoredUUID),
 			msg->{
 				if(msg != null && msg.length == 1){
 					if(msg[0] != 0){
 						Main.LOGGER.info("[IgnoreSync] Updated ignore="+ignored+" in remote DB");
-						client.player.sendMessage(Text.literal("Updated ignore="+ignored+" in remote DB"), /*overlay=*/true);
+						client.player.sendOverlayMessage(Component.literal("Updated ignore="+ignored+" in remote DB"));
 					}
 					else{
 						Main.LOGGER.info("[IgnoreSync] Remote DB reported ignoreState out of sync!");
-						client.player.sendMessage(Text.literal("Remote DB reported ignoreState out of sync!"), /*overlay=*/true);
+						client.player.sendOverlayMessage(Component.literal("Remote DB reported ignoreState out of sync!"));
 					}
 				}
 				else Main.LOGGER.info("[IgnoreSync] Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_UUID: "+msg);
 				// Important that we update local cache AFTER db, for cache-priority reasons (Note: assumes decent clock synchronization, eesh)
-				saveMyIgnores(client.player.getUuid(), ignoredUUID, ignored);
+				saveMyIgnores(client.player.getUUID(), ignoredUUID, ignored);
 			}
 		);
 	}

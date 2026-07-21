@@ -5,19 +5,19 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.CartographyTableScreen;
-import net.minecraft.client.gui.screen.ingame.CraftingScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.BundleContentsComponent;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CartographyTableScreen;
+import net.minecraft.client.gui.screens.inventory.CraftingScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.BundleContents;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,15 +76,15 @@ public final class KeybindMapCopy{
 		}
 		for(int j=START; j<END; ++j){
 			if(slots[j].isEmpty()){swap(slots, i, j); return true;}
-			if(f==CARTO && ItemStack.areItemsAndComponentsEqual(slots[i], slots[j])){
+			if(f==CARTO && ItemStack.isSameItemSameComponents(slots[i], slots[j])){
 				int sumCount = slots[j].getCount() + slots[i].getCount();
-				if(sumCount <= slots[j].getMaxCount()){
+				if(sumCount <= slots[j].getMaxStackSize()){
 					slots[j].setCount(sumCount);
 					slots[i] = ItemStack.EMPTY;
 				}
 				else{
-					slots[j].setCount(slots[j].getMaxCount());
-					slots[i].setCount(sumCount - slots[j].getMaxCount());
+					slots[j].setCount(slots[j].getMaxStackSize());
+					slots[i].setCount(sumCount - slots[j].getMaxStackSize());
 				}
 				return true;
 			}
@@ -170,7 +170,7 @@ public final class KeybindMapCopy{
 		return (64/fraction.getDenominator())*fraction.getNumerator();
 	}
 	private final String getCustomNameOrNull(ItemStack stack){
-		final Text text = stack.getCustomName();
+		final Component text = stack.getCustomName();
 		return text == null ? null : text.getString();
 	}
 
@@ -180,17 +180,17 @@ public final class KeybindMapCopy{
 	private void copyMapArtInBundles(final ArrayDeque<InvAction> clicks, final ItemStack[] slots, final ConstFields f,
 			int numEmptyMapsInGrid, final int totalEmptyMaps){
 		final int[] slotsWithBundles = IntStream.range(f.INV_START, f.HOTBAR_END).filter(i -> {
-			BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
-			return contents != null && contents.stream().allMatch(s -> s.getItem() == Items.FILLED_MAP);
+			BundleContents contents = slots[i].get(DataComponents.BUNDLE_CONTENTS);
+			return contents != null && contents.itemCopyStream().allMatch(s -> s.getItem() == Items.FILLED_MAP);
 		}).toArray();
-		final BundleContentsComponent[] bundles = Arrays.stream(slotsWithBundles)
-				.mapToObj(i -> slots[i].get(DataComponentTypes.BUNDLE_CONTENTS)).toArray(BundleContentsComponent[]::new);
-		final int SRC_BUNDLES = (int)Arrays.stream(bundles).filter(Predicate.not(BundleContentsComponent::isEmpty)).count();
+		final BundleContents[] bundles = Arrays.stream(slotsWithBundles)
+				.mapToObj(i -> slots[i].get(DataComponents.BUNDLE_CONTENTS)).toArray(BundleContents[]::new);
+		final int SRC_BUNDLES = (int)Arrays.stream(bundles).filter(Predicate.not(BundleContents::isEmpty)).count();
 		final boolean USE_TEMP_BUNDLE = !Configs.Generic.USE_BUNDLE_PACKET.getBooleanValue();
 		final int USABLE_EMPTY_BUNDLES = bundles.length - SRC_BUNDLES - (USE_TEMP_BUNDLE ? 1 : 0);
 		if(USABLE_EMPTY_BUNDLES <= 0){Main.LOGGER.warn("MapCopyBundle: Could not find a usable empty bundle"); return;}
 		int LAST_EMPTY_SLOT = lastEmptySlot(slots, f.HOTBAR_END, f.INV_START);
-		if(LAST_EMPTY_SLOT == -1 && Arrays.stream(bundles).anyMatch(b -> b.stream().anyMatch(s -> s.getCount() > 1))){
+		if(LAST_EMPTY_SLOT == -1 && Arrays.stream(bundles).anyMatch(b -> b.itemCopyStream().anyMatch(s -> s.getCount() > 1))){
 			Main.LOGGER.warn("MapCopyBundle: Unable to copy bundles containing maps with stackSize>1 without an empty inv slot");
 			return;
 		}
@@ -244,9 +244,9 @@ public final class KeybindMapCopy{
 			bundlesToCopy.put(i, copyDests);
 		}
 		final int emptyMapsNeeded = bundlesToCopy.entrySet().stream().mapToInt(
-				e -> getNumStored(bundles[e.getKey()].getOccupancy())*e.getValue().size()).sum();
+				e -> getNumStored(bundles[e.getKey()].weight().getOrThrow())*e.getValue().size()).sum();
 		if(totalEmptyMaps < emptyMapsNeeded){
-			MinecraftClient.getInstance().player.sendMessage(Text.of("Insufficient empty maps"), true);
+			Minecraft.getInstance().player.sendOverlayMessage(Component.nullToEmpty("Insufficient empty maps"));
 			Main.LOGGER.warn("MapCopyBundle: Insufficient empty maps");
 			return;
 		}
@@ -274,7 +274,7 @@ public final class KeybindMapCopy{
 
 		final boolean BUNDLE_SELECT_REVERSE = !USE_TEMP_BUNDLE && Configs.Generic.BUNDLES_ARE_REVERSED.getBooleanValue();
 		for(var entry : bundlesToCopy.entrySet()){
-			BundleContentsComponent content = bundles[entry.getKey()];
+			BundleContents content = bundles[entry.getKey()];
 //			Main.LOGGER.info("MapCopyBundle: Copying map bundle in slot "+k+", "+slots[k].getName().getString()+" to slots: "+bundlesToCopy.get(k));
 			if(USE_TEMP_BUNDLE) for(int _0=0; _0<content.size(); ++_0){
 				clicks.add(new InvAction(slotsWithBundles[entry.getKey()], 1, ActionType.CLICK)); // Take last map from src bundle
@@ -285,7 +285,7 @@ public final class KeybindMapCopy{
 			//2+4+2 vs 2+3+2
 			//bundles[k].stream().mapToInt(stack -> stack.getCount()).forEach(count -> {
 			for(int i=0; i<content.size(); ++i){
-				final int count = content.get(i).getCount();
+				final int count = content.items().get(i).count();
 
 				if(USE_TEMP_BUNDLE) clicks.add(new InvAction(tempBundleSlot, 1, ActionType.CLICK)); // Take map from temp bundle
 				else{
@@ -343,18 +343,18 @@ public final class KeybindMapCopy{
 	}
 
 	private boolean isMapArtBundle(ItemStack stack){
-		BundleContentsComponent contents = stack.get(DataComponentTypes.BUNDLE_CONTENTS);
-		return contents != null && !contents.isEmpty() && contents.stream().allMatch(s -> s.getItem() == Items.FILLED_MAP);
+		BundleContents contents = stack.get(DataComponents.BUNDLE_CONTENTS);
+		return contents != null && !contents.isEmpty() && contents.itemCopyStream().allMatch(s -> s.getItem() == Items.FILLED_MAP);
 	}
 
 	@SuppressWarnings("unused")
 	public void copyMapArtInInventory(){
 		if(ClickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapCopy: Already ongoing"); return;}
 		//
-		MinecraftClient client = MinecraftClient.getInstance();
-		final boolean isCrafter = client.currentScreen instanceof CraftingScreen;
-		final boolean isCartographyTable = client.currentScreen instanceof CartographyTableScreen;
-		if(!(client.currentScreen instanceof InventoryScreen || isCrafter || isCartographyTable)){
+		Minecraft client = Minecraft.getInstance();
+		final boolean isCrafter = client.gui.screen() instanceof CraftingScreen;
+		final boolean isCartographyTable = client.gui.screen() instanceof CartographyTableScreen;
+		if(!(client.gui.screen() instanceof InventoryScreen || isCrafter || isCartographyTable)){
 			Main.LOGGER.warn("MapCopy: not in InventoryScreen/CraftingScreen/CartographyTableScreen");
 			return;
 		}
@@ -362,20 +362,20 @@ public final class KeybindMapCopy{
 		if(ts - lastCopy < copyCooldown){Main.LOGGER.warn("MapCopy: In cooldown"); return;}
 		lastCopy = ts;
 		//
-		final ScreenHandler xsh = ((HandledScreen<?>)client.currentScreen).getScreenHandler();
-		final ItemStack[] slots = xsh.slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
+		final AbstractContainerMenu xsh = ((AbstractContainerScreen<?>)client.gui.screen()).getMenu();
+		final ItemStack[] slots = xsh.slots.stream().map(Slot::getItem).toArray(ItemStack[]::new);
 		//for(int i=0; i<xsh.slots.size(); ++i) slots[i] = xsh.slots.get(i).getStack();
 
 		// Ensure cursor is clear
-		final int syncId = xsh.syncId;
+		final int syncId = xsh.containerId;
 		final ArrayDeque<InvAction> clicks = new ArrayDeque<>();
-		if(!xsh.getCursorStack().isEmpty()){
+		if(!xsh.getCarried().isEmpty()){
 			Main.LOGGER.warn("MapCopy: Cursor needs to be empty");
 			//return;
 			final OptionalInt emptySlot = IntStream.range(0, slots.length).filter(i -> slots[i].isEmpty()).findAny();
 			if(emptySlot.isEmpty()) return;
 			clicks.add(new InvAction(emptySlot.getAsInt(), 0, ActionType.CLICK)); // Place stack from cursor
-			slots[emptySlot.getAsInt()] = xsh.getCursorStack();
+			slots[emptySlot.getAsInt()] = xsh.getCarried();
 		}
 
 		final ConstFields f = isCrafter ? CRAFTER : isCartographyTable ? CARTO : INV;
@@ -458,7 +458,7 @@ public final class KeybindMapCopy{
 		final int emptyMapsPerCopy = secondMinMapCount - minMapCount;
 		if(availableEmptyMaps < numSlotsToCopy*emptyMapsPerCopy){
 			Main.LOGGER.warn("MapCopy: Insufficient empty maps (have:"+availableEmptyMaps+",need:"+numSlotsToCopy*emptyMapsPerCopy+")");
-			client.player.sendMessage(Text.of("Insufficient empty maps"), true);
+			client.player.sendOverlayMessage(Component.nullToEmpty("Insufficient empty maps"));
 			return;
 		}
 

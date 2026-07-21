@@ -162,7 +162,10 @@ public class Main{
 		if(settings.onTickIframes) TickListener.register(new UpdateItemFrameContents());
 		if(settings.onTickContainer) TickListener.register(new UpdateContainerContents());
 		if(settings.containerOpenCloseListener) TickListener.register(new ContainerOpenCloseListener(kbInvRestock));
-		if(settings.mapLoaderBot) TickListener.register(new MapLoaderBot());
+		if(settings.mapLoaderBot){
+			if(FabricLoader.getInstance().isModLoaded("baritone")) TickListener.register(new MapLoaderBot());
+			else LOGGER.warn("Map-loader bot is enabled, but a compatible Baritone mod is not installed; disabling the bot");
+		}
 
 		if(settings.tooltipMapHighlights) Tooltip.register(new TooltipMapNameColor());
 		if(settings.tooltipMapMetadata) Tooltip.register(new TooltipMapLoreMetadata());

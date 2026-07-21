@@ -8,16 +8,16 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.InvUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.TickListener;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.FilledMapItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.map.MapState;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 public final class UpdateInventoryContents implements TickListener{
 	private static HashSet<UUID> inventoryMapGroup = new HashSet<>(), nestedInventoryMapGroup = new HashSet<>();
@@ -32,7 +32,7 @@ public final class UpdateInventoryContents implements TickListener{
 
 	public static final boolean hasCurrentlyBeingPlacedMapArt(){return currentlyBeingPlacedIntoItemFrame != null;}
 	public static final void setCurrentlyBeingPlacedMapArt(final ItemStack stack, final int slot){ // Accessor: MapHangListener
-		if(!ItemStack.areEqual(MinecraftClient.getInstance().player.getInventory().getStack(slot), stack)){
+		if(!ItemStack.matches(Minecraft.getInstance().player.getInventory().getItem(slot), stack)){
 			assert false;
 			return;
 		}
@@ -40,15 +40,15 @@ public final class UpdateInventoryContents implements TickListener{
 		slotUsedForCurrentlyBeingPlacedItem = slot;
 	}
 
-	private static final boolean addMapStateIds(final ItemStack stack, final World world){
+	private static final boolean addMapStateIds(final ItemStack stack, final Level world){
 		if(stack.isEmpty()) return false;
 		if(stack.getItem() == Items.FILLED_MAP){
-			final MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
+			final MapId mapId = stack.get(DataComponents.MAP_ID);
 			if(mapId == null){
-				Main.LOGGER.warn("UpdateInv: mapId is null! stack="+stack.getName().getString());
+				Main.LOGGER.warn("UpdateInv: mapId is null! stack="+stack.getHoverName().getString());
 				return false;
 			}
-			final MapState state = world.getMapState(mapId);
+			final MapItemSavedData state = world.getMapData(mapId);
 			if(state != null){
 				MapGroupUtils.nullMapIds.remove(mapId.id());
 				return inventoryMapGroup.add(MapGroupUtils.getIdForMapState(state));
@@ -63,23 +63,23 @@ public final class UpdateInventoryContents implements TickListener{
 				(Configs.Visuals.MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES.getBooleanValue()
 						? InvUtils.getAllNestedItems(stack)
 						: InvUtils.getAllNestedItemsExcludingBundles(stack))
-				.map(s -> FilledMapItem.getMapState(s, world)).filter(Objects::nonNull)
+				.map(s -> MapItem.getSavedData(s, world)).filter(Objects::nonNull)
 				.map(MapGroupUtils::getIdForMapState).toList());
 	}
-	@Override public final void onTickStart(final MinecraftClient client){
-		final PlayerEntity player = client.player;
-		if(player == null || player.getEntityWorld() == null || !player.isAlive()) return;
+	@Override public final void onTickStart(final Minecraft client){
+		final Player player = client.player;
+		if(player == null || player.level() == null || !player.isAlive()) return;
 
 		{
 			// Constantly force-refresh mapstate-colorsId cache for held unlocked maps
 			// Might deserve its own onTick listener tbh
-			final MapState state = FilledMapItem.getMapState(player.getMainHandStack(), player.getEntityWorld());
+			final MapItemSavedData state = MapItem.getSavedData(player.getMainHandItem(), player.level());
 			if(state != null && !state.locked) MapGroupUtils.getIdForMapState(state, /*evict*/true);
 		}
 		{
 			// Check if the currentlyBeingPlacedIntoItemFrame slot has changed value (indicates it's done being placed)
 			if(currentlyBeingPlacedIntoItemFrame != null && 
-					!ItemStack.areEqual(player.getInventory().getStack(slotUsedForCurrentlyBeingPlacedItem), currentlyBeingPlacedIntoItemFrame)){
+					!ItemStack.matches(player.getInventory().getItem(slotUsedForCurrentlyBeingPlacedItem), currentlyBeingPlacedIntoItemFrame)){
 //				MapState state = FilledMapItem.getMapState(currentlyBeingPlacedIntoItemFrame, player.getWorld());
 //				UUID colorsId = MapGroupUtils.getIdForMapState(state);
 //				if(UpdateItemFrameHighlights.isInItemFrame(colorsId)){
@@ -91,12 +91,12 @@ public final class UpdateInventoryContents implements TickListener{
 
 		inventoryMapGroup.clear();
 		nestedInventoryMapGroup.clear();
-		final ScreenHandler sh = player.currentScreenHandler;
+		final AbstractContainerMenu sh = player.containerMenu;
 //		boolean anyNewMap = false;
-		for(int i=0; i<41; ++i) /*anyNewMap |=*/ addMapStateIds(player.getInventory().getStack(i), player.getEntityWorld());
-		if(sh != null) /*anyNewMap |=*/ addMapStateIds(sh.getCursorStack(), player.getEntityWorld());
+		for(int i=0; i<41; ++i) /*anyNewMap |=*/ addMapStateIds(player.getInventory().getItem(i), player.level());
+		if(sh != null) /*anyNewMap |=*/ addMapStateIds(sh.getCarried(), player.level());
 
-		final int syncId = sh == null ? 0 : sh.syncId;
+		final int syncId = sh == null ? 0 : sh.containerId;
 		mapsInInvHash = syncId + inventoryMapGroup.hashCode() + nestedInventoryMapGroup.hashCode();// * (mapPlaceStillOngoing ? 7 : 1);
 	}
 }

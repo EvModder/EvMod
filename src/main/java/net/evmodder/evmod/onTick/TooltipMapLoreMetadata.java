@@ -2,21 +2,21 @@ package net.evmodder.evmod.onTick;
 
 import java.util.HashMap;
 import java.util.List;
-import net.minecraft.item.Item.TooltipContext;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.Tooltip;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item.TooltipContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.evmodder.evmod.apis.MapColorUtils.MapColorData;
 import net.evmodder.evmod.apis.MapColorUtils.Palette;
 import net.evmodder.evmod.apis.MapGroupUtils;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.map.MapState;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 
 public final class TooltipMapLoreMetadata implements Tooltip{
 	private final String paletteSymbol(MapColorUtils.Palette palette){
@@ -31,28 +31,28 @@ public final class TooltipMapLoreMetadata implements Tooltip{
 //		};
 	}
 
-	private static final HashMap<ItemStack, List<Text>> tooltipCache = new HashMap<>();
+	private static final HashMap<ItemStack, List<Component>> tooltipCache = new HashMap<>();
 	private static int lastHash;
 
-	@Override public final void get(ItemStack item, TooltipContext context, TooltipType type, List<Text> lines){
+	@Override public final void get(ItemStack item, TooltipContext context, TooltipFlag type, List<Component> lines){
 		final int currHash = UpdateInventoryContents.getMapsInInvHash() + UpdateContainerContents.getMapsInContainerHash();
 		if(lastHash != currHash){lastHash = currHash; tooltipCache.clear();}
-		List<Text> cachedLines = tooltipCache.get(item);
+		List<Component> cachedLines = tooltipCache.get(item);
 		if(cachedLines != null){lines.clear(); lines.addAll(cachedLines); return;}
 
 //		final ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
 //		if(container != null){} // TODO: aggregate map data for nested shulker/bundle
 
 		if(item.getItem() != Items.FILLED_MAP) return;
-		final MapIdComponent id = item.get(DataComponentTypes.MAP_ID);
+		final MapId id = item.get(DataComponents.MAP_ID);
 		if(id == null){tooltipCache.put(item, lines); return;}
-		final MapState state = context.getMapState(id);
+		final MapItemSavedData state = context.mapData(id);
 		if(state == null){tooltipCache.put(item, lines); return;}
 
 		final MapColorData data = MapColorUtils.getColorData(state.colors);
-		final Text staircased = Text.literal(
+		final Component staircased = Component.literal(
 					data.height() == 0 ? "_" : data.height() == 1 ? "=" : data.height() == 2 ? "☰" : data.height()+"\uD83D\uDCF6"
-				).formatted(Formatting.GREEN);
+				).withStyle(ChatFormatting.GREEN);
 
 		final boolean showColorsId = Configs.Visuals.MAP_METADATA_TOOLTIP_UUID.getBooleanValue();
 		final boolean showStaircased = Configs.Visuals.MAP_METADATA_TOOLTIP_STAIRCASE.getBooleanValue() && data.palette() != Palette.EMPTY;
@@ -69,10 +69,10 @@ public final class TooltipMapLoreMetadata implements Tooltip{
 		final boolean showVoidShadowPercent = showVoidShadow;
 		final boolean showNoobline = Configs.Visuals.MAP_METADATA_TOOLTIP_NOOBLINE.getBooleanValue();
 
-		if(showColorsId) lines.add(Text.literal(MapGroupUtils.getIdForMapState(state, /*evict=*/true).toString()).formatted(Formatting.WHITE));
+		if(showColorsId) lines.add(Component.literal(MapGroupUtils.getIdForMapState(state, /*evict=*/true).toString()).withStyle(ChatFormatting.WHITE));
 		final int numNonTransparentPx = state.colors.length-data.numTransparent();
 		if(showStaircased){
-			lines.add(Text.translatable("advMode.type").formatted(Formatting.GRAY).append(": ").append(staircased));
+			lines.add(Component.translatable("advMode.type").withStyle(ChatFormatting.GRAY).append(": ").append(staircased));
 			if(showStaircasedPercent && data.height() != 0 && data.numStaircase() < numNonTransparentPx){
 				final String pxOrPercent = data.numStaircase() < 10 ? data.numStaircase()+"px" : Math.ceilDiv(data.numStaircase()*100, numNonTransparentPx)+"%";
 				lines.add(lines.removeLast().copy().append(" ("+pxOrPercent+")"+(showMaterial?",":"")));
@@ -80,7 +80,7 @@ public final class TooltipMapLoreMetadata implements Tooltip{
 		}
 		if(showMaterial){
 			if(showStaircased) lines.add(lines.removeLast().copy().append(" "+paletteSymbol(data.palette())));
-			else lines.add(Text.translatable("advMode.type").formatted(Formatting.GRAY).append(": "+paletteSymbol(data.palette())));
+			else lines.add(Component.translatable("advMode.type").withStyle(ChatFormatting.GRAY).append(": "+paletteSymbol(data.palette())));
 
 			if(showCarpetPercent && data.numCarpet() != 0){
 				final int percentCarpet = Math.ceilDiv(data.numCarpet()*100, numNonTransparentPx);
@@ -99,37 +99,37 @@ public final class TooltipMapLoreMetadata implements Tooltip{
 //		}
 //		if(showStaircased && showPercentStaircased && data.height()>0) lines.add(lines.removeLast().copy().append(" ("+data.percentStaircase()+"%)"));
 		if(showNumColors){
-			lines.add(Text.translatable("options.chat.color").formatted(Formatting.GRAY).append(": ")
-					.append(Text.literal(""+data.uniqueColors()).formatted(Formatting.GREEN)));
+			lines.add(Component.translatable("options.chat.color").withStyle(ChatFormatting.GRAY).append(": ")
+					.append(Component.literal(""+data.uniqueColors()).withStyle(ChatFormatting.GREEN)));
 			if(showNumColorIds && data.uniqueColors() > data.uniqueColorIds()){
-				lines.add(lines.removeLast().copy().append(" (").append(Text.translatable("soundCategory.block")).append(": "+data.uniqueColorIds()+")"));
+				lines.add(lines.removeLast().copy().append(" (").append(Component.translatable("soundCategory.block")).append(": "+data.uniqueColorIds()+")"));
 			}
 		}
 		if(showWaterColors && data.waterLevels() != 0){
 			assert data.waterLevels() >= 1 && data.waterLevels() <= 3;
 			// Idea: "_" vs "-" vs X for middle vs deep vs shallow?
 			final String waterColorsUsed = data.waterLevels() == 1 ? "-" : data.waterLevels() == 2 ? "=" : "☰";
-			lines.add(Text.translatable("block.minecraft.water").formatted(Formatting.BLUE).append(": "+waterColorsUsed));
+			lines.add(Component.translatable("block.minecraft.water").withStyle(ChatFormatting.BLUE).append(": "+waterColorsUsed));
 			if(showWaterColorsPercent && data.numWet() < numNonTransparentPx){
 				final String pxOrPercent = data.numWet() < 10 ? data.numWet()+"px" : Math.ceilDiv(data.numWet()*100, state.colors.length-data.numTransparent())+"%";
-				lines.add(lines.removeLast().copy().append(Text.literal(" "+pxOrPercent).formatted(Formatting.GRAY)));
+				lines.add(lines.removeLast().copy().append(Component.literal(" "+pxOrPercent).withStyle(ChatFormatting.GRAY)));
 			}
 		}
 		if(showTransparent && data.numTransparent() != 0){
-			lines.add(Text.literal("Transparent").formatted(Formatting.AQUA));
+			lines.add(Component.literal("Transparent").withStyle(ChatFormatting.AQUA));
 			if(showTransparentPercent && numNonTransparentPx != 0){
 				final String pxOrPercent = data.numTransparent() < 10 ? data.numTransparent()+"px" : Math.floorDiv(data.numTransparent()*100, state.colors.length)+"%";
-				lines.add(lines.removeLast().copy().append(Text.literal(": "+pxOrPercent).formatted(Formatting.GRAY)));
+				lines.add(lines.removeLast().copy().append(Component.literal(": "+pxOrPercent).withStyle(ChatFormatting.GRAY)));
 			}
 			if(showVoidShadow && data.numSuppressed() != 0){
-				lines.add(lines.removeLast().copy().append(Text.literal(" VS").formatted(Formatting.LIGHT_PURPLE)));
+				lines.add(lines.removeLast().copy().append(Component.literal(" VS").withStyle(ChatFormatting.LIGHT_PURPLE)));
 				if(showVoidShadowPercent && data.numSuppressed() < numNonTransparentPx){
 					final String pxOrPercent = data.numSuppressed() < 10 ? data.numSuppressed()+"px" : Math.ceilDiv(data.numSuppressed()*100, numNonTransparentPx)+"%";
-					lines.add(lines.removeLast().copy().append(Text.literal(": "+pxOrPercent).formatted(Formatting.GRAY)));
+					lines.add(lines.removeLast().copy().append(Component.literal(": "+pxOrPercent).withStyle(ChatFormatting.GRAY)));
 				}
 			}
 		}
-		if(showNoobline && data.noobline()) lines.add(Text.literal("Noobline").formatted(Formatting.RED));
+		if(showNoobline && data.noobline()) lines.add(Component.literal("Noobline").withStyle(ChatFormatting.RED));
 		tooltipCache.put(item, lines);
 	}
 }

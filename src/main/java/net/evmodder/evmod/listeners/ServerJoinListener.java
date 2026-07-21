@@ -10,8 +10,8 @@ import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.evmodder.evmod.config.OptionMapStateCache;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 
 public class ServerJoinListener{
 	private final long JOIN_DELAY = 2500l;
@@ -22,10 +22,10 @@ public class ServerJoinListener{
 
 	public static long lastJoinTs; // TODO: remove horrible public static eww
 
-	private final void loadMapStateCaches(MinecraftClient client){
+	private final void loadMapStateCaches(Minecraft client){
 		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.loadMapStatesById();
 		if(Configs.Generic.MAP_CACHE_BY_INV_POS.getBooleanValue())
-			MapStateCacher.loadMapStatesByPos(client.player.getInventory().getMainStacks(), MapStateCacher.BY_PLAYER_INV);
+			MapStateCacher.loadMapStatesByPos(client.player.getInventory().getNonEquipmentItems(), MapStateCacher.BY_PLAYER_INV);
 	}
 
 	public ServerJoinListener(final RemoteServerSender rms){
@@ -37,7 +37,7 @@ public class ServerJoinListener{
 
 //			assert MiscUtils.getServerAddressHashCode(handler.getServerInfo()) == MiscUtils.getServerAddressHashCode();
 
-			final MinecraftClient client = MinecraftClient.getInstance();
+			final Minecraft client = Minecraft.getInstance();
 
 			if(Configs.Generic.MAP_CACHE.getDefaultOptionListValue() != OptionMapStateCache.OFF){
 				if(invLoadTimer != null){invLoadTimer.cancel(); invLoadTimer = null;}
@@ -68,8 +68,8 @@ public class ServerJoinListener{
 				//if(now - joinedAt > GIVE_UP_AFTER_MS) cancel();
 
 				//Main.LOGGER.info("Server join detected, checking if stuff is loaded");
-				if(!client.isFinishedLoading() || client.player == null || client.world == null || client.getNetworkHandler() == null || !client.player.isAlive()
-					|| !client.player.isRegionUnloaded() || client.player.isSpectator() || client.player.isRegionUnloaded() || client.player.isInvisible()) return;
+				if(!client.isGameLoadFinished() || client.player == null || client.level == null || client.getConnection() == null || !client.player.isAlive()
+					|| !client.player.touchingUnloadedChunk() || client.player.isSpectator() || client.player.touchingUnloadedChunk() || client.player.isInvisible()) return;
 				if(loadedAt == 0){
 					loadedAt = System.currentTimeMillis();
 					if(WAIT_FOR_MOVEMENT){loadedAtX = client.player.getX(); loadedAtZ = client.player.getZ();}
@@ -90,12 +90,12 @@ public class ServerJoinListener{
 
 				Main.LOGGER.info("JOIN_DELAY reached, triggering commands... ("+Configs.Generic.SEND_ON_SERVER_JOIN.getStrings().size()+")");
 				//client.player.sendMessage(Text.literal("Sending "+messages.length+" msgs/cmds"), false);
-				ClientPlayNetworkHandler handler = client.getNetworkHandler();
+				ClientPacketListener handler = client.getConnection();
 				for(String msg : Configs.Generic.SEND_ON_SERVER_JOIN.getStrings()){
 					msg = msg.trim();
 					//client.player.sendMessage(Text.literal("Sending "+(msg.startsWith("/")?"cmd":"msg")+": "+msg), false);
-					if(msg.startsWith("/")) handler.sendChatCommand(msg.substring(1));
-					else handler.sendChatMessage(msg);
+					if(msg.startsWith("/")) handler.sendCommand(msg.substring(1));
+					else handler.sendChat(msg);
 				}
 				loadedAt = 0;
 				cancel();

@@ -18,7 +18,7 @@ import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.MojangProfileLookup;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public final class GameMessageFilter{
 	// TODO: limit reply size from server (to 1024 ids?), and allow bundling borrowLists into 1 request (limit to 8 ids?)
@@ -91,7 +91,7 @@ public final class GameMessageFilter{
 		}
 	}
 
-	private final UUID determineSender(final Text text){
+	private final UUID determineSender(final Component text){
 		final String str = text.getString();
 		if(!str.matches("<\\w+> .*")) return null;
 		final String name = str.substring(1, str.indexOf('>'));

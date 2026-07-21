@@ -10,15 +10,15 @@ import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.NewMapNotifier;
 import net.evmodder.evmod.apis.TickListener;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.entity.decoration.ItemFrameEntity;
-import net.minecraft.item.FilledMapItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.map.MapState;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
+import net.minecraft.world.phys.Vec3;
 
 public final class UpdateItemFrameContents implements TickListener{
 	private record XYZD(int x, int y, int z, int d, int w){}
@@ -29,9 +29,9 @@ public final class UpdateItemFrameContents implements TickListener{
 	public enum Highlight{INV_OR_NESTED_INV, NOT_IN_CURR_GROUP, MULTI_HUNG, UNLOCKED_OR_UNNAMED}; // Accessor: MixinItemFrameRenderer
 	private static final HashMap<Integer, Highlight> highlightedIFrames = new HashMap<>(); // Accessor: MixinItemFrameRenderer
 	private static final HashMap<Integer, Boolean> hasLabelCache = new HashMap<>(); // Accessor: MixinItemFrameRenderer
-	private static final HashMap<Integer, Text> displayNameCache = new HashMap<>(); // Accessor: MixinItemFrameRenderer
+	private static final HashMap<Integer, Component> displayNameCache = new HashMap<>(); // Accessor: MixinItemFrameRenderer
 
-	private static Vec3d clientRotationNormalized; // Accessor: MixinItemFrameRenderer (cached/calculated here for performance)
+	private static Vec3 clientRotationNormalized; // Accessor: MixinItemFrameRenderer (cached/calculated here for performance)
 	public static long lastIFrameMapGroupUpdateTs; // Only accessor: CommandExportMapImg::getNearbyMapNames
 
 	public static final boolean isHungMultiplePlaces(final UUID colorsId){
@@ -59,24 +59,24 @@ public final class UpdateItemFrameContents implements TickListener{
 //		return nonFillerIds.stream().map(ItemFrameHighlightUpdater::isInItemFrame).distinct().count() > 1;
 	}
 
-	private static final boolean scanIFrameContents(final List<ItemFrameEntity> ifes, final double trackingDistSq, final Vec3d centerPos){
+	private static final boolean scanIFrameContents(final List<ItemFrame> ifes, final double trackingDistSq, final Vec3 centerPos){
 		boolean anyMapGroupUpdate = false;
-		for(final ItemFrameEntity ife : ifes){
-			final ItemStack stack = ife.getHeldItemStack();
+		for(final ItemFrame ife : ifes){
+			final ItemStack stack = ife.getItem();
 			assert stack != null;
-			final MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
-			final MapState state;
+			final MapId mapId = stack.get(DataComponents.MAP_ID);
+			final MapItemSavedData state;
 			if(mapId == null) state = null;
 			else{
-				state = ife.getEntityWorld().getMapState(mapId);
+				state = ife.level().getMapData(mapId);
 				if(state == null) MapGroupUtils.nullMapIds.add(mapId.id());
 				else MapGroupUtils.nullMapIds.remove(mapId.id());
 			}
 			final UUID colorsId = state == null ? null : MapGroupUtils.getIdForMapState(state);
-			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal(), ife.getEntityWorld().hashCode());
+			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getNearestViewDirection().ordinal(), ife.level().hashCode());
 			final UUID oldColorsIdForXYZD = colorsId != null ? hangLocsReverse.put(xyzd, colorsId) : hangLocsReverse.remove(xyzd);
 			if(colorsId != null){
-				if(trackingDistSq == 0 || centerPos.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) <= trackingDistSq){
+				if(trackingDistSq == 0 || centerPos.distanceToSqr(xyzd.x, xyzd.y, xyzd.z) <= trackingDistSq){
 					anyMapGroupUpdate |= iFrameMapGroup.computeIfAbsent(colorsId, _0 -> new HashSet<XYZD>()).add(xyzd);
 				}
 //				if(oldColorsIdForXYZ == null) Main.LOGGER.info("IFHU: Added map at xyzd");
@@ -91,15 +91,15 @@ public final class UpdateItemFrameContents implements TickListener{
 		}
 		return anyMapGroupUpdate;
 	}
-	private static final boolean updateIframeHighlights(final List<ItemFrameEntity> ifes){
+	private static final boolean updateIframeHighlights(final List<ItemFrame> ifes){
 		boolean anyHighlightUpdate = false;
-		for(final ItemFrameEntity ife : ifes){
-			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getFacing().ordinal(), ife.getEntityWorld().hashCode());
+		for(final ItemFrame ife : ifes){
+			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getNearestViewDirection().ordinal(), ife.level().hashCode());
 			final UUID colorsId = hangLocsReverse.get(xyzd);
 			if(colorsId == null) continue;
 
-			final ItemStack stack = ife.getHeldItemStack();
-			final MapState state = FilledMapItem.getMapState(ife.getHeldItemStack(), ife.getEntityWorld());
+			final ItemStack stack = ife.getItem();
+			final MapItemSavedData state = MapItem.getSavedData(ife.getItem(), ife.level());
 			if(state == null) continue; // Can happen in creative worlds!
 
 			final Highlight highlight;
@@ -120,9 +120,9 @@ public final class UpdateItemFrameContents implements TickListener{
 		return anyHighlightUpdate;
 	}
 
-	@Override public final void onTickStart(final MinecraftClient client){
-		if(client.world == null) return;
-		final Vec3d newClientRot = client.player.getRotationVec(1.0F).normalize();
+	@Override public final void onTickStart(final Minecraft client){
+		if(client.level == null) return;
+		final Vec3 newClientRot = client.player.getViewVector(1.0F).normalize();
 		if(!newClientRot.equals(clientRotationNormalized) || MiscUtils.hasMoved(client.player)){
 			clientRotationNormalized = newClientRot;
 			hasLabelCache.clear(); // Depends on client looking direction
@@ -135,17 +135,17 @@ public final class UpdateItemFrameContents implements TickListener{
 //		client.world.getEntitiesByClass(ItemFrameEntity.class, client.player.getBoundingBox().expand(200, 200, 200), _0->true)
 //					.forEach(ife -> updateItemFrameEntity(client, ife));
 
-		final List<ItemFrameEntity> ifes = client.world.getEntitiesByClass(ItemFrameEntity.class, client.player.getBoundingBox().expand(200, 200, 200), _0->true);
+		final List<ItemFrame> ifes = client.level.getEntitiesOfClass(ItemFrame.class, client.player.getBoundingBox().inflate(200, 200, 200), _0->true);
 
 		final double TRACKING_DIST_SQ = Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ;
-		final Vec3d playerPos = /*TRACKING_DIST_SQ == 0 ? null : */client.player.getEntityPos();
+		final Vec3 playerPos = /*TRACKING_DIST_SQ == 0 ? null : */client.player.position();
 		boolean anyMapGroupUpdate = false;
 		if(TRACKING_DIST_SQ > 0 && (ifes.size() != numLoadedIfes || TRACKING_DIST_SQ < 32)){
 			// Untrack maps which have gone out of range for iFrameMapGroup (for isInIFrame, isMultiHung)
 //			iFrameMapGroup.entrySet().removeIf(e -> {
 			for(final var it = iFrameMapGroup.entrySet().iterator(); it.hasNext();) {
 				final var e = it.next();
-				anyMapGroupUpdate |= e.getValue().removeIf(xyzd -> client.player.squaredDistanceTo(xyzd.x, xyzd.y, xyzd.z) > TRACKING_DIST_SQ);
+				anyMapGroupUpdate |= e.getValue().removeIf(xyzd -> client.player.distanceToSqr(xyzd.x, xyzd.y, xyzd.z) > TRACKING_DIST_SQ);
 				if(e.getValue().isEmpty()) it.remove();
 			}
 //			});

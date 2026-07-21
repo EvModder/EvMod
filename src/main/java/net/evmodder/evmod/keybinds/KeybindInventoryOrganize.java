@@ -13,16 +13,16 @@ import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.config.OptionInventoryRestockIf;
 import net.evmodder.evmod.config.OptionInventoryRestockLeave;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 public final class KeybindInventoryOrganize{
 	// TODO: move to config?
@@ -39,7 +39,7 @@ public final class KeybindInventoryOrganize{
 	List<SlotAndItemName> layoutMap;
 
 	private String getName(ItemStack stack){
-		return stack == null || stack.isEmpty() ? null : Registries.ITEM.getId(stack.getItem()).getPath();
+		return stack == null || stack.isEmpty() ? null : BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
 	}
 	private int findSlotWithItem(ItemStack[] slots, String itemName, boolean[] skipSlots){
 //		for(int slot=1; slot<=45; ++slot){
@@ -72,9 +72,9 @@ public final class KeybindInventoryOrganize{
 			}
 			if(!stackToMove.isStackable()) continue;
 			final ItemStack stackToFill = simSlots[j];
-			if(stackToFill.getCount() == stackToFill.getMaxCount()) continue;
-			if(!ItemStack.areItemsAndComponentsEqual(stackToFill, stackToMove)) continue;
-			final int amtToMove = Math.min(stackToFill.getMaxCount()-stackToFill.getCount(), stackToMove.getCount());
+			if(stackToFill.getCount() == stackToFill.getMaxStackSize()) continue;
+			if(!ItemStack.isSameItemSameComponents(stackToFill, stackToMove)) continue;
+			final int amtToMove = Math.min(stackToFill.getMaxStackSize()-stackToFill.getCount(), stackToMove.getCount());
 			stackToFill.setCount(stackToFill.getCount() + amtToMove);
 			stackToMove.setCount(stackToMove.getCount() - amtToMove);
 			if(stackToMove.getCount() == 0){
@@ -85,12 +85,12 @@ public final class KeybindInventoryOrganize{
 		return stackToMove.getCount();
 	}
 
-	private final ItemStack getArmorSlot(PlayerEntity player, int slot){
+	private final ItemStack getArmorSlot(Player player, int slot){
 		return switch(slot){
-			case 0 -> player.getEquippedStack(EquipmentSlot.HEAD);
-			case 1 -> player.getEquippedStack(EquipmentSlot.CHEST);
-			case 2 -> player.getEquippedStack(EquipmentSlot.LEGS);
-			case 3 -> player.getEquippedStack(EquipmentSlot.FEET);
+			case 0 -> player.getItemBySlot(EquipmentSlot.HEAD);
+			case 1 -> player.getItemBySlot(EquipmentSlot.CHEST);
+			case 2 -> player.getItemBySlot(EquipmentSlot.LEGS);
+			case 3 -> player.getItemBySlot(EquipmentSlot.FEET);
 			default -> throw new RuntimeException("[InvOrganize]: not a valid armor slot: "+slot);
 		};
 	}
@@ -106,7 +106,7 @@ public final class KeybindInventoryOrganize{
 			final String dstName;
 			if(isInvScreen || dstSlot >= slots.length-36) dstName = getName(slots[dstSlot]);
 			else if(dstSlot < slots.length-40){Main.LOGGER.warn("InvOrganize: Unable to restock Container->CraftingGrid");continue;}
-			else dstName = getName(getArmorSlot(MinecraftClient.getInstance().player, p.slot-5));
+			else dstName = getName(getArmorSlot(Minecraft.getInstance().player, p.slot-5));
 			if(p.name.equals(dstName)){
 				plannedSlots[dstSlot] = doneSlots[dstSlot] = true;
 //				Main.LOGGER.info("checkDoneSlots(): done slot: "+dstSlot+" (item: "+p.b().getPath()+")");
@@ -130,22 +130,22 @@ public final class KeybindInventoryOrganize{
 		//Main.LOGGER.info("InvOrganize: keybind pressed");
 		if(ClickUtils.hasOngoingClicks()) return;
 
-		MinecraftClient client = MinecraftClient.getInstance();
-		if(!(client.currentScreen instanceof HandledScreen hs)){
+		Minecraft client = Minecraft.getInstance();
+		if(!(client.gui.screen() instanceof AbstractContainerScreen hs)){
 			Main.LOGGER.warn("InvOrganize: not in InventoryScreen");
 			return;
 		}
-		if(hs.getScreenHandler().slots.size() < 46){
+		if(hs.getMenu().slots.size() < 46){
 //			Main.LOGGER.warn("InvOrganize: Inventory too small to restock from (due to limitations in current code)");
 			return;
 		}
-		final boolean isInvScreen = client.currentScreen instanceof InventoryScreen;
+		final boolean isInvScreen = client.gui.screen() instanceof InventoryScreen;
 
-		ItemStack[] simSlots = new ItemStack[hs.getScreenHandler().slots.size()];
+		ItemStack[] simSlots = new ItemStack[hs.getMenu().slots.size()];
 		boolean[] emptySlots = new boolean[simSlots.length];
 		boolean[] doneSlots = new boolean[simSlots.length];
 		for(int i=0; i<simSlots.length; ++i){
-			simSlots[i] = hs.getScreenHandler().getSlot(i).getStack().copy();
+			simSlots[i] = hs.getMenu().getSlot(i).getItem().copy();
 			emptySlots[i] = simSlots[i].isEmpty();
 		}
 		final int HOTBAR_START = isInvScreen ? 36 : simSlots.length-9;
@@ -447,8 +447,8 @@ public final class KeybindInventoryOrganize{
 		.map(s -> {
 			final int sep = s.indexOf(':');
 			int slot = Integer.parseInt(s.substring(0, sep));
-			Identifier id = Identifier.of(s.substring(sep+1));
-			if(!Registries.ITEM.containsId(id)){
+			Identifier id = Identifier.parse(s.substring(sep+1));
+			if(!BuiltInRegistries.ITEM.containsKey(id)){
 				Main.LOGGER.error("InvOrganize: Unknown item: "+s.substring(sep+1));
 				return null;
 			}

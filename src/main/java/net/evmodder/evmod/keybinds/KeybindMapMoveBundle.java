@@ -12,17 +12,17 @@ import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.config.OptionBundleSelectPrio;
 import net.evmodder.evmod.config.OptionBundleSelectPrio.BundleSelectPrio;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.CraftingScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.BundleContentsComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.screen.GenericContainerScreenHandler;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CraftingScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.screens.inventory.ShulkerBoxScreen;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.BundleContents;
 
 public final class KeybindMapMoveBundle{
 	private final int getNumStored(Fraction fraction){
@@ -36,20 +36,20 @@ public final class KeybindMapMoveBundle{
 	public final void moveMapArtToFromBundle(final boolean reverse){
 		if(ClickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapBundleOp: Already ongoing"); return;}
 		//
-		MinecraftClient client = MinecraftClient.getInstance();
-		if(!(client.currentScreen instanceof HandledScreen hs)) return;
+		Minecraft client = Minecraft.getInstance();
+		if(!(client.gui.screen() instanceof AbstractContainerScreen hs)) return;
 		//
 		final long ts = System.currentTimeMillis();
 		if(ts - lastBundleOp < bundleOpCooldown){Main.LOGGER.warn("MapBundleOp: in cooldown"); return;}
 		lastBundleOp = ts;
 		//
-		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
+		final ItemStack[] slots = hs.getMenu().slots.stream().map(Slot::getItem).toArray(ItemStack[]::new);
 
 		final int SLOT_START = hs instanceof InventoryScreen ? 9 : hs instanceof CraftingScreen ? 10 : 0;
 		final int SLOT_END =
 					// Ignore player inventory slots
 				hs instanceof ShulkerBoxScreen ? 27 :
-				hs.getScreenHandler() instanceof GenericContainerScreenHandler gcsh ? gcsh.getRows()*9 :
+				hs.getMenu() instanceof ChestMenu gcsh ? gcsh.getRowCount()*9 :
 					// Use all available slots
 				hs instanceof InventoryScreen ? slots.length :
 				hs instanceof CraftingScreen ? slots.length :
@@ -58,28 +58,28 @@ public final class KeybindMapMoveBundle{
 		assert SLOT_END != 0;
 		final int[] slotsWithMapArt = IntStream.range(SLOT_START, SLOT_END)
 				.filter(i -> slots[i].getItem() == Items.FILLED_MAP
-					&& !KeybindMapMove.isFillerMap(slots, slots[i], client.world))
+					&& !KeybindMapMove.isFillerMap(slots, slots[i], client.level))
 				.toArray();
 		final int[] slotsWithBundles = IntStream.range(BUNDLE_SLOT_START, slots.length).filter(i -> {
-			BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
-			return contents != null && contents.stream().allMatch(this::isMapItem);
+			BundleContents contents = slots[i].get(DataComponents.BUNDLE_CONTENTS);
+			return contents != null && contents.itemCopyStream().allMatch(this::isMapItem);
 		}).toArray();
-		final BundleContentsComponent[] bundles = Arrays.stream(slotsWithBundles)
-				.mapToObj(i -> slots[i].get(DataComponentTypes.BUNDLE_CONTENTS)).toArray(BundleContentsComponent[]::new);
+		final BundleContents[] bundles = Arrays.stream(slotsWithBundles)
+				.mapToObj(i -> slots[i].get(DataComponents.BUNDLE_CONTENTS)).toArray(BundleContents[]::new);
 
-		final ItemStack cursorStack = hs.getScreenHandler().getCursorStack();
-		final BundleContentsComponent cursorBundleContents = cursorStack.get(DataComponentTypes.BUNDLE_CONTENTS);
-		final boolean cursorIsUsableBundle = cursorBundleContents != null && cursorBundleContents.stream().allMatch(this::isMapItem);
+		final ItemStack cursorStack = hs.getMenu().getCarried();
+		final BundleContents cursorBundleContents = cursorStack.get(DataComponents.BUNDLE_CONTENTS);
+		final boolean cursorIsUsableBundle = cursorBundleContents != null && cursorBundleContents.itemCopyStream().allMatch(this::isMapItem);
 		final boolean cursorBundleHasMaps = cursorIsUsableBundle && !cursorBundleContents.isEmpty();
-		final boolean anyBundleWithMaps = cursorBundleHasMaps || !Arrays.stream(bundles).allMatch(BundleContentsComponent::isEmpty);
+		final boolean anyBundleWithMaps = cursorBundleHasMaps || !Arrays.stream(bundles).allMatch(BundleContents::isEmpty);
 
 		if(slotsWithMapArt.length == 0 && !anyBundleWithMaps){
 //			Main.LOGGER.info("MapBundleOp: No maps found to extract/stow");
 			return;
 		}
 
-		final boolean cursorBundleHasSpace = cursorIsUsableBundle && cursorBundleContents.getOccupancy().intValue() != 1;
-		final boolean anyBundleWithSpace = cursorBundleHasSpace || Arrays.stream(bundles).anyMatch(b -> b.getOccupancy().intValue() != 1);
+		final boolean cursorBundleHasSpace = cursorIsUsableBundle && cursorBundleContents.weight().getOrThrow().intValue() != 1;
+		final boolean anyBundleWithSpace = cursorBundleHasSpace || Arrays.stream(bundles).anyMatch(b -> b.weight().getOrThrow().intValue() != 1);
 		final boolean doStow = slotsWithMapArt.length > 0 && anyBundleWithSpace && (Configs.Hotkeys.MAP_MOVE_BUNDLE_PREFER_STOW.getBooleanValue() || !anyBundleWithMaps);
 
 		long numMapsWithCount2 = -1;
@@ -99,7 +99,7 @@ public final class KeybindMapMoveBundle{
 			if(pickup1of2){Main.LOGGER.warn("MapBundleOp: Cannot use cursor-bundle when splitting stacked maps"); return;}
 			bundleSlot = -1;
 			pickedUpBundle = true;
-			stored = getNumStored(cursorStack.get(DataComponentTypes.BUNDLE_CONTENTS).getOccupancy());
+			stored = getNumStored(cursorStack.get(DataComponents.BUNDLE_CONTENTS).weight().getOrThrow());
 		}
 		else if(!cursorStack.isEmpty()){Main.LOGGER.warn("MapBundleOp: Non-bundle item on cursor"); return;}
 		else{
@@ -113,13 +113,13 @@ public final class KeybindMapMoveBundle{
 				case EMPTIEST, EMPTIEST_NOT_EMPTY -> Integer.MAX_VALUE;
 			};
 			for(int i=0; i<slots.length; ++i){ // Hmm, allow using bundles from outside the container screen
-				final BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
+				final BundleContents contents = slots[i].get(DataComponents.BUNDLE_CONTENTS);
 				if(contents == null) continue;
-				final Fraction occ = contents.getOccupancy();
+				final Fraction occ = contents.weight().getOrThrow();
 //				if(doStow && occ.intValue() == 1) continue; // Skip full bundles
 //				if(!doStow && occ.getNumerator() == 0) continue; // Skip empty bundles
 				if(doStow ? occ.intValue() == 1 : occ.getNumerator() == 0) continue; // Same logic as above
-				if(!contents.stream().allMatch(this::isMapItem)) continue; // Skip bundles with non-mapart contents
+				if(!contents.itemCopyStream().allMatch(this::isMapItem)) continue; // Skip bundles with non-mapart contents
 				final int storedI = getNumStored(occ);
 				if(switch(pickBy){
 					case FIRST, LAST -> true;

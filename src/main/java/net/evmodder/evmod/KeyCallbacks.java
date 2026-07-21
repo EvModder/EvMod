@@ -7,15 +7,15 @@ import net.evmodder.evmod.apis.RemoteServerSender;
 import net.evmodder.evmod.apis.WhisperPlaySound;
 import net.evmodder.evmod.keybinds.*;
 import net.evmodder.evmod.listeners.GameMessageFilter;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.CartographyTableScreen;
-import net.minecraft.client.gui.screen.ingame.CraftingScreen;
-import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
-import net.minecraft.entity.player.PlayerModelPart;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CartographyTableScreen;
+import net.minecraft.client.gui.screens.inventory.ContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CraftingScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.screens.inventory.ShulkerBoxScreen;
+import net.minecraft.world.entity.player.PlayerModelPart;
 import java.util.Objects;
 import java.util.function.Function;
 import fi.dy.masa.malilib.config.options.ConfigBase;
@@ -33,7 +33,7 @@ final class KeyCallbacks{
 	private final void keybindCallback(final IHotkey hotkey, final Function<Screen, Boolean> allowInScreen, final Runnable callback){
 		if(allowInScreen == null) hotkey.getKeybind().setCallback((_0, _1) -> {callback.run(); return true;});
 		else hotkey.getKeybind().setCallback((_0, _1) -> {
-			if(allowInScreen.apply(MinecraftClient.getInstance().currentScreen)){callback.run(); return true;}
+			if(allowInScreen.apply(Minecraft.getInstance().gui.screen())){callback.run(); return true;}
 			return false;
 		});
 	}
@@ -105,7 +105,7 @@ final class KeyCallbacks{
 			Configs.Hotkeys.AIE_TRAVEL_HELPER.setValueChangeCallback(newValue->kbAIE.updateEnabled(newValue.getBooleanValue()));
 			Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setValueChangeCallback(newValue->kbEbounce.updateEnabled(newValue.getBooleanValue()));
 			if(kbCraftRestock != null) keybindCallback(Configs.Hotkeys.CRAFT_RESTOCK, null/*HandledScreen.class::isInstance*/, kbCraftRestock::restockInputSlots);
-			keybindCallback(Configs.Hotkeys.EJECT_JUNK_ITEMS, s->s==null || s instanceof HandledScreen, kbej::ejectJunkItems);
+			keybindCallback(Configs.Hotkeys.EJECT_JUNK_ITEMS, s->s==null || s instanceof AbstractContainerScreen, kbej::ejectJunkItems);
 			keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_INCR, null, ()->kbHbScroll.scrollHotbarSlot(true));
 			keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_DECR, null, ()->kbHbScroll.scrollHotbarSlot(false));
 
@@ -115,7 +115,7 @@ final class KeyCallbacks{
 				keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_3, null, ()->kbInvOrgs[2].organizeInventory(false, null));
 			}
 			if(kbInvRestock != null){
-				keybindCallback(Configs.Hotkeys.INV_RESTOCK, s->s instanceof HandledScreen && s instanceof InventoryScreen == false, kbInvRestock::doRestock);
+				keybindCallback(Configs.Hotkeys.INV_RESTOCK, s->s instanceof AbstractContainerScreen && s instanceof InventoryScreen == false, kbInvRestock::doRestock);
 			}
 
 			keybindCallback(Configs.Hotkeys.CHAT_MSG_1, null, ()->InitUtils.sendChatMsg(Configs.Hotkeys.CHAT_MSG_1.getStringValue()));
@@ -129,9 +129,9 @@ final class KeyCallbacks{
 			keybindCallback(Configs.Hotkeys.PP_HOTKEY_1, null,
 					()->EpearlExternalAdapter.trigger(Configs.Hotkeys.PP_IP_1.getStringValue(), Configs.Hotkeys.PP_TOKEN_1.getStringValue()));
 			keybindCallback(Configs.Hotkeys.SNAP_ANGLE_1, null,
-					()->MinecraftClient.getInstance().player.setAngles(Configs.Hotkeys.SNAP_ANGLE_1.getYaw(), Configs.Hotkeys.SNAP_ANGLE_1.getPitch()));
+					()->Minecraft.getInstance().player.absSnapRotationTo(Configs.Hotkeys.SNAP_ANGLE_1.getYaw(), Configs.Hotkeys.SNAP_ANGLE_1.getPitch()));
 			keybindCallback(Configs.Hotkeys.SNAP_ANGLE_2, null,
-					()->MinecraftClient.getInstance().player.setAngles(Configs.Hotkeys.SNAP_ANGLE_2.getYaw(), Configs.Hotkeys.SNAP_ANGLE_2.getPitch()));
+					()->Minecraft.getInstance().player.absSnapRotationTo(Configs.Hotkeys.SNAP_ANGLE_2.getYaw(), Configs.Hotkeys.SNAP_ANGLE_2.getPitch()));
 		}
 
 		final KeybindMapCopy kbMapCopy = new KeybindMapCopy();
@@ -147,11 +147,11 @@ final class KeyCallbacks{
 
 		keybindCallback(Configs.Hotkeys.MAP_COPY, s->s instanceof InventoryScreen
 				|| s instanceof CraftingScreen || s instanceof CartographyTableScreen, kbMapCopy::copyMapArtInInventory);
-		keybindCallback(Configs.Hotkeys.MAP_LOAD, HandledScreen.class::isInstance, kbMapLoad::loadMapArtFromContainer);
+		keybindCallback(Configs.Hotkeys.MAP_LOAD, AbstractContainerScreen.class::isInstance, kbMapLoad::loadMapArtFromContainer);
 		keybindCallback(Configs.Hotkeys.MAP_MOVE,
-				s->s instanceof HandledScreen && s instanceof InventoryScreen == false, kbMapMove::moveMapArtToFromShulker);
+				s->s instanceof AbstractContainerScreen && s instanceof InventoryScreen == false, kbMapMove::moveMapArtToFromShulker);
 		Function<Screen, Boolean> allowInScreenBundleMove = //InventoryScreen.class::isInstance
-				s->s instanceof InventoryScreen || s instanceof GenericContainerScreen || s instanceof ShulkerBoxScreen || s instanceof CraftingScreen;
+				s->s instanceof InventoryScreen || s instanceof ContainerScreen || s instanceof ShulkerBoxScreen || s instanceof CraftingScreen;
 		keybindCallback(Configs.Hotkeys.MAP_MOVE_BUNDLE, allowInScreenBundleMove, ()->kbMapMoveBundle.moveMapArtToFromBundle(false));
 		keybindCallback(Configs.Hotkeys.MAP_MOVE_BUNDLE_REVERSE, allowInScreenBundleMove, ()->kbMapMoveBundle.moveMapArtToFromBundle(true));
 

@@ -3,37 +3,37 @@ package net.evmodder.evmod.mixin;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.onTick.UpdateItemFrameContents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.hud.InGameHud;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.map.MapState;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Hud;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-@Mixin(InGameHud.class)
+@Mixin(Hud.class)
 abstract class MixinInGameHud{
-	@ModifyVariable(method="renderHeldItemTooltip", at=@At("STORE"), ordinal=0)
-	private final MutableText showRepairCostNextToItemName(MutableText originalText){
+	@ModifyVariable(method="extractSelectedItemName", at=@At("STORE"), ordinal=0)
+	private final MutableComponent showRepairCostNextToItemName(MutableComponent originalText){
 		final boolean rcHUD = Configs.Visuals.REPAIR_COST_HOTBAR_HUD.getBooleanValue();
 		final boolean mapHighlightHUD = Configs.Visuals.MAP_HIGHLIGHT_HOTBAR_HUD.getBooleanValue();
 
 		if(rcHUD == false && mapHighlightHUD == false) return originalText;
-		final MinecraftClient client = MinecraftClient.getInstance();
-		final ItemStack currentStack = client.player.getMainHandStack();
-		MutableText text = originalText;
+		final Minecraft client = Minecraft.getInstance();
+		final ItemStack currentStack = client.player.getMainHandItem();
+		MutableComponent text = originalText;
 		if(mapHighlightHUD){
-			final MapIdComponent id = currentStack.get(DataComponentTypes.MAP_ID);
+			final MapId id = currentStack.get(DataComponents.MAP_ID);
 			if(id != null){
-				final MapState state = client.world.getMapState(id);
+				final MapItemSavedData state = client.level.getMapData(id);
 				if(state != null && MapGroupUtils.shouldHighlightNotInCurrentGroup(state)){
 					text = text.withColor(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue());
-					if(!state.locked) text = text.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue()));
+					if(!state.locked) text = text.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue()));
 				}
 				else if(state != null && !state.locked) text = text.withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue());
 				else if(state != null && UpdateItemFrameContents.isInItemFrame(MapGroupUtils.getIdForMapState(state)))
@@ -41,10 +41,10 @@ abstract class MixinInGameHud{
 				else if(currentStack.getCustomName() == null) text = text.withColor(Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue());
 			}
 		}
-		if(rcHUD && currentStack.contains(DataComponentTypes.REPAIR_COST)){
-			final int rc = currentStack.get(DataComponentTypes.REPAIR_COST);
-			if(rc != 0 || currentStack.hasEnchantments() || currentStack.contains(DataComponentTypes.STORED_ENCHANTMENTS)){
-				text = text.append(Text.literal(" \u02b3\u1d9c").formatted(Formatting.GRAY)).append(Text.literal(""+rc).formatted(Formatting.GOLD));
+		if(rcHUD && currentStack.has(DataComponents.REPAIR_COST)){
+			final int rc = currentStack.get(DataComponents.REPAIR_COST);
+			if(rc != 0 || currentStack.isEnchanted() || currentStack.has(DataComponents.STORED_ENCHANTMENTS)){
+				text = text.append(Component.literal(" \u02b3\u1d9c").withStyle(ChatFormatting.GRAY)).append(Component.literal(""+rc).withStyle(ChatFormatting.GOLD));
 			}
 		}
 		return text;

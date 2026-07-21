@@ -5,16 +5,16 @@ import java.util.UUID;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.level.Level;
 
 public final class BlockClickListener{
 //	public static BlockPos lastClickedBlock;
 	public static UUID lastClickedBlockHash; // TODO: Ewwww public static :(
 	private final ByteBuffer posData;
 
-	private final UUID getIdForBlockPos(final World world, final BlockPos pos){
+	private final UUID getIdForBlockPos(final Level world, final BlockPos pos){
 		final byte dim = MiscUtils.getDimensionId(world);
 		posData.rewind();
 		posData.put(dim).putInt(pos.getX()).putInt(pos.getY()).putInt(pos.getZ()).array();
@@ -29,7 +29,7 @@ public final class BlockClickListener{
 //				lastClickedBlock = hitResult.getBlockPos();
 				lastClickedBlockHash = getIdForBlockPos(world, hitResult.getBlockPos());
 			}
-			return ActionResult.PASS;
+			return InteractionResult.PASS;
 		});
 	}
 }

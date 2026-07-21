@@ -12,44 +12,44 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.item.FilledMapItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.map.MapState;
-import net.minecraft.registry.Registries;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.BundleContentsComponent;
-import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.screens.inventory.ShulkerBoxScreen;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.item.component.BundleContents;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 public final class KeybindMapLoad{
-	private boolean isUnloadedMapArt(World world, ItemStack stack){
+	private boolean isUnloadedMapArt(Level world, ItemStack stack){
 		if(stack.getItem() != Items.FILLED_MAP) return false;
-		MapState state = FilledMapItem.getMapState(stack, world);
+		MapItemSavedData state = MapItem.getSavedData(stack, world);
 		return state == null || state.colors == null || state.colors.length != 128*128;
 	}
-	private boolean isLoadedMapArt(World world, ItemStack stack){
+	private boolean isLoadedMapArt(Level world, ItemStack stack){
 		if(stack.getItem() != Items.FILLED_MAP) return false;
-		MapState state = FilledMapItem.getMapState(stack, world);
+		MapItemSavedData state = MapItem.getSavedData(stack, world);
 		return state != null && state.colors != null && state.colors.length == 128*128;
 	}
 
-	private final void requestTextureUpdate(MinecraftClient client, ItemStack stack){
-		MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
+	private final void requestTextureUpdate(Minecraft client, ItemStack stack){
+		MapId mapId = stack.get(DataComponents.MAP_ID);
 		if(mapId == null) return;
-		MapState state = client.world.getMapState(mapId);
+		MapItemSavedData state = client.level.getMapData(mapId);
 		if(state == null) return;
-		client.getMapTextureManager().setNeedsUpdate(mapId, state);
+		client.getMapTextureManager().update(mapId, state);
 	}
 
 	private boolean isShulkerBox(ItemStack stack){
-		return !stack.isEmpty() && Registries.ITEM.getId(stack.getItem()).getPath().endsWith("shulker_box");
+		return !stack.isEmpty() && BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath().endsWith("shulker_box");
 	}
 
 //	private int getNextUsableHotbarButton(MinecraftClient client, int hb){
@@ -58,23 +58,23 @@ public final class KeybindMapLoad{
 //	}
 
 	private boolean isUsable(ItemStack stack){
-		return !isShulkerBox(stack) && stack.get(DataComponentTypes.BUNDLE_CONTENTS) == null;
+		return !isShulkerBox(stack) && stack.get(DataComponents.BUNDLE_CONTENTS) == null;
 	}
 
-	private int[] getUsableHotbarButtons(MinecraftClient client){
-		if(client.currentScreen instanceof ShulkerBoxScreen == false) IntStream.range(0, 9).toArray();
-		return IntStream.range(0, 9).filter(hb -> isUsable(client.player.getInventory().getStack(hb))).toArray();
+	private int[] getUsableHotbarButtons(Minecraft client){
+		if(client.gui.screen() instanceof ShulkerBoxScreen == false) IntStream.range(0, 9).toArray();
+		return IntStream.range(0, 9).filter(hb -> isUsable(client.player.getInventory().getItem(hb))).toArray();
 	}
 
 	private final long WAIT_FOR_STATE_UPDATE = 101, STATE_LOAD_TIMEOUT = 5*1000; // 50 = 1 tick
 	private long stateUpdateWaitStart, stateLoadWaitStart, textureUpdateRequestClickIndex;
 	private final void loadMapArtFromBundles(){
-		final MinecraftClient client = MinecraftClient.getInstance();
-		final InventoryScreen is = (InventoryScreen)client.currentScreen;
-		final ItemStack[] slots = is.getScreenHandler().slots.stream().map(s -> s.getStack()).toArray(ItemStack[]::new);
+		final Minecraft client = Minecraft.getInstance();
+		final InventoryScreen is = (InventoryScreen)client.gui.screen();
+		final ItemStack[] slots = is.getMenu().slots.stream().map(s -> s.getItem()).toArray(ItemStack[]::new);
 		final int[] slotsWithMapArtBundles = IntStream.range(9, 45).filter(i -> {
-			BundleContentsComponent content = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
-			return content != null && !content.isEmpty() && content.stream().allMatch(s -> s.getItem() == Items.FILLED_MAP);
+			BundleContents content = slots[i].get(DataComponents.BUNDLE_CONTENTS);
+			return content != null && !content.isEmpty() && content.itemCopyStream().allMatch(s -> s.getItem() == Items.FILLED_MAP);
 		}).toArray();
 		if(slotsWithMapArtBundles.length == 0){
 			Main.LOGGER.warn("MapLoadBundle: No mapart bundles in inventory");
@@ -83,7 +83,7 @@ public final class KeybindMapLoad{
 		final int emptyBundleSlot;
 		if(Configs.Generic.USE_BUNDLE_PACKET.getBooleanValue()) emptyBundleSlot = -1;
 		else{
-			final OptionalInt emptyBundleSlotOpt = IntStream.range(9, 45).filter(i -> slots[i].get(DataComponentTypes.BUNDLE_CONTENTS).isEmpty()).findAny();
+			final OptionalInt emptyBundleSlotOpt = IntStream.range(9, 45).filter(i -> slots[i].get(DataComponents.BUNDLE_CONTENTS).isEmpty()).findAny();
 			if(emptyBundleSlotOpt.isEmpty()){Main.LOGGER.warn("MapLoadBundle: Empty bundle not found"); return;}
 			emptyBundleSlot = emptyBundleSlotOpt.getAsInt();
 		}
@@ -96,17 +96,17 @@ public final class KeybindMapLoad{
 		final IdentityHashMap<InvAction, Integer> ableToSkipClicks = new IdentityHashMap<>();
 		final IdentityHashMap<InvAction, Object> waitForMapLoadClicks = new IdentityHashMap<InvAction, Object>();
 		for(int i : slotsWithMapArtBundles){
-			BundleContentsComponent contents = slots[i].get(DataComponentTypes.BUNDLE_CONTENTS);
+			BundleContents contents = slots[i].get(DataComponents.BUNDLE_CONTENTS);
 			if(contents.isEmpty()) continue;
 //			if(contents.stream().anyMatch(s -> s.getItem() != Items.FILLED_MAP)) continue; // Skip bundles with non-mapart contents
-			final int numToLoad = (int)contents.stream().filter(s -> isUnloadedMapArt(client.world, s)).count();
+			final int numToLoad = (int)contents.itemCopyStream().filter(s -> isUnloadedMapArt(client.level, s)).count();
 			if(numToLoad == 0) continue; // Skip bundles with already-loaded mapart
 //			Main.LOGGER.info("MapLoadBundle: found bundle with "+contents.size()+" maps");
 
 			final int depthToLoad;
 			{
 				int j;
-				for(j=0; j<contents.size() && !isUnloadedMapArt(client.world, contents.get(BUNDLES_ARE_REVERSED ? j : contents.size()-1-j)); ++j);
+				for(j=0; j<contents.size() && !isUnloadedMapArt(client.level, contents.items().get(BUNDLES_ARE_REVERSED ? j : contents.size()-1-j).create()); ++j);
 				depthToLoad = contents.size()-j;
 //				if(j>0) Main.LOGGER.info("MapLoadBundle: Able to skip loading for bundle in slot"+i+": "+j);
 			}
@@ -183,20 +183,20 @@ public final class KeybindMapLoad{
 
 		Main.LOGGER.info("MapLoadBundle: STARTED");
 		ClickUtils.executeClicks(c->{
-			if(client.player == null || client.world == null) return true;
+			if(client.player == null || client.level == null) return true;
 			final Integer skipIfLoaded = ableToSkipClicks.get(c);
 //				Main.LOGGER.info("click for slot: "+c.slotId()+", clicksLeft: "+clicks.size());
 			if(skipIfLoaded != null){
 				//Main.LOGGER.info("MapLoadBundle: potentially skippable");
-				final BundleContentsComponent contents = client.player.currentScreenHandler.slots.get(c.slot()).getStack().get(DataComponentTypes.BUNDLE_CONTENTS);
-				if(contents != null && contents.stream().allMatch(s -> isLoadedMapArt(client.world, s))){
+				final BundleContents contents = client.player.containerMenu.slots.get(c.slot()).getItem().get(DataComponents.BUNDLE_CONTENTS);
+				if(contents != null && contents.itemCopyStream().allMatch(s -> isLoadedMapArt(client.level, s))){
 //						Main.LOGGER.info("MapLoadBundle: skippable! whoop whoop: "+(skipIfLoaded));
 					for(int i=0; i<skipIfLoaded; ++i) clicks.remove();
 					return false;
 				}
 			}
 			if(!waitForMapLoadClicks.containsKey(c)) return true;
-			if(Arrays.stream(emptySlots).anyMatch(i -> isUnloadedMapArt(client.world, client.player.getInventory().getMainStacks().get(i-9)))){
+			if(Arrays.stream(emptySlots).anyMatch(i -> isUnloadedMapArt(client.level, client.player.getInventory().getNonEquipmentItems().get(i-9)))){
 //				Main.LOGGER.info("MapLoadBundle: still waiting for map states to load");
 				if(stateLoadWaitStart == 0) stateLoadWaitStart = System.currentTimeMillis();
 				if(System.currentTimeMillis() - stateLoadWaitStart < STATE_LOAD_TIMEOUT) return false;
@@ -205,7 +205,7 @@ public final class KeybindMapLoad{
 				return true;
 			}
 			else if(stateUpdateWaitStart == 0){
-				Arrays.stream(emptySlots).mapToObj(i -> client.player.getInventory().getMainStacks().get(i-9)).forEach(s -> requestTextureUpdate(client, s));
+				Arrays.stream(emptySlots).mapToObj(i -> client.player.getInventory().getNonEquipmentItems().get(i-9)).forEach(s -> requestTextureUpdate(client, s));
 				stateUpdateWaitStart = System.currentTimeMillis();
 				return false;
 			}
@@ -225,16 +225,16 @@ public final class KeybindMapLoad{
 	public final void loadMapArtFromContainer(){
 		if(ClickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapLoad cancelled: Already ongoing"); return;}
 
-		MinecraftClient client = MinecraftClient.getInstance();
-		if(!(client.currentScreen instanceof HandledScreen hs)){Main.LOGGER.warn("MapLoad cancelled: not in HandledScreen"); return;}
+		Minecraft client = Minecraft.getInstance();
+		if(!(client.gui.screen() instanceof AbstractContainerScreen hs)){Main.LOGGER.warn("MapLoad cancelled: not in HandledScreen"); return;}
 
 		final long ts = System.currentTimeMillis();
 		if(ts - lastLoad < loadCooldown){Main.LOGGER.warn("MapLoad cancelled: Cooldown"); return;}
 		lastLoad = ts;
 
 		if(hs instanceof InventoryScreen){loadMapArtFromBundles(); return;}
-		final DefaultedList<Slot> slots = hs.getScreenHandler().slots;
-		if(slots.stream().noneMatch(s -> isUnloadedMapArt(client.player.getEntityWorld(), s.getStack()))){
+		final NonNullList<Slot> slots = hs.getMenu().slots;
+		if(slots.stream().noneMatch(s -> isUnloadedMapArt(client.player.level(), s.getItem()))){
 			Main.LOGGER.warn("MapLoad cancelled: none to load");
 			return;
 		}
@@ -248,8 +248,8 @@ public final class KeybindMapLoad{
 
 		int hbi = 0;
 		for(int i=0; i<slots.size(); ++i){
-			if(!isUnloadedMapArt(client.player.getEntityWorld(), slots.get(i).getStack())) continue;
-			if(!mapIdsToLoad.add(slots.get(i).getStack().get(DataComponentTypes.MAP_ID).id())) continue;
+			if(!isUnloadedMapArt(client.player.level(), slots.get(i).getItem())) continue;
+			if(!mapIdsToLoad.add(slots.get(i).getItem().get(DataComponents.MAP_ID).id())) continue;
 			clicks.add(new InvAction(i, hbButtons[hbi], ActionType.HOTBAR_SWAP));
 			putBackSlots[hbi] = i;
 			if(++hbi == hbButtons.length){
@@ -264,7 +264,7 @@ public final class KeybindMapLoad{
 		Main.LOGGER.info("MapLoad: STARTED, clicks: "+clicks.size()+" == ("+hbButtons.length+"x"+numFullBatches+" + "+hbi+")x2");
 		clickIndex = 0;
 		ClickUtils.executeClicks(c->{
-			if(client.player == null || client.world == null) return true;
+			if(client.player == null || client.level == null) return true;
 
 			// Not the start of a putback click sequence
 			final int inBatch = clickIndex/hbButtons.length;
@@ -274,13 +274,13 @@ public final class KeybindMapLoad{
 			}
 			if(textureUpdateRequestClickIndex != clickIndex){
 				textureUpdateRequestClickIndex = clickIndex;
-				Arrays.stream(hbButtons).mapToObj(i -> client.player.getInventory().getMainStacks().get(27+i)).forEach(s -> requestTextureUpdate(client, s));
+				Arrays.stream(hbButtons).mapToObj(i -> client.player.getInventory().getNonEquipmentItems().get(27+i)).forEach(s -> requestTextureUpdate(client, s));
 			}
 
 			if(ClickUtils.calcAvailableClicks() < CLICK_BATCH_SIZE) return false; // Wait for clicks
 
 //			if(isUnloadedMapArt(client.world, client.player.getInventory().main.get(27+hbButtons[clickIndex % hbButtons.length]))) return false;
-			if(Arrays.stream(hbButtons).anyMatch(i -> isUnloadedMapArt(client.world, client.player.getInventory().getMainStacks().get(27+i)))){
+			if(Arrays.stream(hbButtons).anyMatch(i -> isUnloadedMapArt(client.level, client.player.getInventory().getNonEquipmentItems().get(27+i)))){
 //				Main.LOGGER.info("MapLoad: still waiting for map state to load from hotbar slot: "+c.button());
 				if(stateLoadWaitStart == 0) stateLoadWaitStart = System.currentTimeMillis();
 				if(System.currentTimeMillis() - stateLoadWaitStart < STATE_LOAD_TIMEOUT) return false;
@@ -290,7 +290,7 @@ public final class KeybindMapLoad{
 				return true;
 			}
 			else if(stateUpdateWaitStart == 0){
-				Arrays.stream(hbButtons).mapToObj(i -> client.player.getInventory().getMainStacks().get(27+i)).forEach(s -> requestTextureUpdate(client, s));
+				Arrays.stream(hbButtons).mapToObj(i -> client.player.getInventory().getNonEquipmentItems().get(27+i)).forEach(s -> requestTextureUpdate(client, s));
 				stateUpdateWaitStart = System.currentTimeMillis();
 				return false;
 			}

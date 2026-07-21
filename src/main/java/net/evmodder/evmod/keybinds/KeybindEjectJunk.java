@@ -2,65 +2,65 @@ package net.evmodder.evmod.keybinds;
 
 import java.util.Set;
 import net.evmodder.evmod.Main;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.gui.screen.ingame.ShulkerBoxScreen;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.ItemEnchantmentsComponent;
-import net.minecraft.enchantment.Enchantment;
-import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.entry.RegistryEntry;
-import net.minecraft.screen.slot.SlotActionType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.ContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.gui.screens.inventory.ShulkerBoxScreen;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 
 public final class KeybindEjectJunk{
-	private boolean canGoOnArmor(RegistryEntry<Enchantment> re, EquipmentSlot slot){
-		if(re.matchesKey(Enchantments.PROTECTION)) return true;
-		if(re.matchesKey(Enchantments.PROJECTILE_PROTECTION)) return true;
-		if(re.matchesKey(Enchantments.BLAST_PROTECTION)) return true;
-		if(re.matchesKey(Enchantments.FIRE_PROTECTION)) return true;
-		if(re.matchesKey(Enchantments.THORNS)) return true;
-		if(re.matchesKey(Enchantments.UNBREAKING)) return true;
-		if(re.matchesKey(Enchantments.MENDING)) return true;
+	private boolean canGoOnArmor(Holder<Enchantment> re, EquipmentSlot slot){
+		if(re.is(Enchantments.PROTECTION)) return true;
+		if(re.is(Enchantments.PROJECTILE_PROTECTION)) return true;
+		if(re.is(Enchantments.BLAST_PROTECTION)) return true;
+		if(re.is(Enchantments.FIRE_PROTECTION)) return true;
+		if(re.is(Enchantments.THORNS)) return true;
+		if(re.is(Enchantments.UNBREAKING)) return true;
+		if(re.is(Enchantments.MENDING)) return true;
 
-		if(re.matchesKey(Enchantments.RESPIRATION) && (slot==null || slot == EquipmentSlot.HEAD)) return true;
-		if(re.matchesKey(Enchantments.AQUA_AFFINITY) && (slot==null || slot == EquipmentSlot.HEAD)) return true;
-		if(re.matchesKey(Enchantments.SWIFT_SNEAK) && (slot==null || slot == EquipmentSlot.LEGS)) return true;
-		if(re.matchesKey(Enchantments.SOUL_SPEED) && (slot==null || slot == EquipmentSlot.FEET)) return true;
-		if(re.matchesKey(Enchantments.FROST_WALKER) && (slot==null || slot == EquipmentSlot.FEET)) return true;
-		if(re.matchesKey(Enchantments.DEPTH_STRIDER) && (slot==null || slot == EquipmentSlot.FEET)) return true;
-		if(re.matchesKey(Enchantments.FEATHER_FALLING) && (slot==null || slot == EquipmentSlot.FEET)) return true;
+		if(re.is(Enchantments.RESPIRATION) && (slot==null || slot == EquipmentSlot.HEAD)) return true;
+		if(re.is(Enchantments.AQUA_AFFINITY) && (slot==null || slot == EquipmentSlot.HEAD)) return true;
+		if(re.is(Enchantments.SWIFT_SNEAK) && (slot==null || slot == EquipmentSlot.LEGS)) return true;
+		if(re.is(Enchantments.SOUL_SPEED) && (slot==null || slot == EquipmentSlot.FEET)) return true;
+		if(re.is(Enchantments.FROST_WALKER) && (slot==null || slot == EquipmentSlot.FEET)) return true;
+		if(re.is(Enchantments.DEPTH_STRIDER) && (slot==null || slot == EquipmentSlot.FEET)) return true;
+		if(re.is(Enchantments.FEATHER_FALLING) && (slot==null || slot == EquipmentSlot.FEET)) return true;
 		return false;
 	}
-	private boolean isUnrenewOutsideFishing(RegistryEntry<Enchantment> re, int lvl, Set<RegistryEntry<Enchantment>> allEnchs){
-		if(re.matchesKey(Enchantments.MENDING) && allEnchs.size() > 1) return true;
-		if(re.matchesKey(Enchantments.VANISHING_CURSE) && allEnchs.size() > 1) return true;
-		if(re.matchesKey(Enchantments.SWIFT_SNEAK)) return true;
-		if(re.matchesKey(Enchantments.BINDING_CURSE) && allEnchs.stream().anyMatch(r -> !r.matchesKey(Enchantments.BINDING_CURSE)
+	private boolean isUnrenewOutsideFishing(Holder<Enchantment> re, int lvl, Set<Holder<Enchantment>> allEnchs){
+		if(re.is(Enchantments.MENDING) && allEnchs.size() > 1) return true;
+		if(re.is(Enchantments.VANISHING_CURSE) && allEnchs.size() > 1) return true;
+		if(re.is(Enchantments.SWIFT_SNEAK)) return true;
+		if(re.is(Enchantments.BINDING_CURSE) && allEnchs.stream().anyMatch(r -> !r.is(Enchantments.BINDING_CURSE)
 				&& canGoOnArmor(r, null))) return true;
-		if(re.matchesKey(Enchantments.SHARPNESS) && lvl == re.value().getMaxLevel() && allEnchs.size() > 1) return true;
-		if(re.matchesKey(Enchantments.EFFICIENCY) && lvl == re.value().getMaxLevel() && allEnchs.size() > 1) return true;
+		if(re.is(Enchantments.SHARPNESS) && lvl == re.value().getMaxLevel() && allEnchs.size() > 1) return true;
+		if(re.is(Enchantments.EFFICIENCY) && lvl == re.value().getMaxLevel() && allEnchs.size() > 1) return true;
 
 		// Not technically unrenewable, but rare enough to want it:
-		if(re.matchesKey(Enchantments.FEATHER_FALLING) && lvl == re.value().getMaxLevel() &&
-				allEnchs.stream().anyMatch(r -> !r.matchesKey(Enchantments.FEATHER_FALLING) && canGoOnArmor(r, EquipmentSlot.FEET))) return true;
+		if(re.is(Enchantments.FEATHER_FALLING) && lvl == re.value().getMaxLevel() &&
+				allEnchs.stream().anyMatch(r -> !r.is(Enchantments.FEATHER_FALLING) && canGoOnArmor(r, EquipmentSlot.FEET))) return true;
 		return false;
 	}
 	private enum JunkCategory{END_CITY, FISHING, RAID_FARM, NETHER}
 	private JunkCategory junkType = null;
 	public boolean shouldEject(ItemStack stack){
 		if(stack == null || stack.isEmpty()) return false;
-		final int rc = stack.getComponents().get(DataComponentTypes.REPAIR_COST);
+		final int rc = stack.getComponents().get(DataComponents.REPAIR_COST);
 		if(rc != 0) return false;
 
-		final ItemEnchantmentsComponent iec = stack.getEnchantments();
-		final Set<RegistryEntry<Enchantment>> enchs = iec.getEnchantments();
+		final ItemEnchantments iec = stack.getEnchantments();
+		final Set<Holder<Enchantment>> enchs = iec.keySet();
 		boolean isJunk = false;
-		switch(Registries.ITEM.getId(stack.getItem()).getPath()){
+		switch(BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath()){
 			//========== GoldFarm/NetherHighway section ========================================
 			case "netherrack":
 			case "crimson_roots": case "warped_roots":
@@ -107,8 +107,8 @@ public final class KeybindEjectJunk{
 				if(isJunk) junkType = JunkCategory.FISHING;
 				return isJunk;
 			case "enchanted_book": {
-				final ItemEnchantmentsComponent siec = stack.getComponents().get(DataComponentTypes.STORED_ENCHANTMENTS);
-				final Set<RegistryEntry<Enchantment>> sEnchs = siec.getEnchantments();
+				final ItemEnchantments siec = stack.getComponents().get(DataComponents.STORED_ENCHANTMENTS);
+				final Set<Holder<Enchantment>> sEnchs = siec.keySet();
 				isJunk = sEnchs.size() == 1 || (sEnchs.size() < 4 && sEnchs.stream().noneMatch(r -> isUnrenewOutsideFishing(r, siec.getLevel(r), sEnchs)));
 				if(isJunk) junkType = JunkCategory.FISHING;
 				return isJunk;
@@ -141,27 +141,27 @@ public final class KeybindEjectJunk{
 	}
 
 	public void ejectJunkItems(){
-		MinecraftClient client = MinecraftClient.getInstance();
-		final int syncId = client.player.currentScreenHandler.syncId;
+		Minecraft client = Minecraft.getInstance();
+		final int syncId = client.player.containerMenu.containerId;
 
-		if(client.currentScreen instanceof HandledScreen hs){
+		if(client.gui.screen() instanceof AbstractContainerScreen hs){
 			final int invStart, invEnd;
 			if(hs instanceof ShulkerBoxScreen){Main.LOGGER.info("EjectJunk: ShulkerBox"); invStart = 0; invEnd = 27;}
 			else if(hs instanceof InventoryScreen){Main.LOGGER.info("EjectJunk: Inventory"); invStart = 9; invEnd = 45;}
-			else if(hs instanceof GenericContainerScreen gcs){
-				Main.LOGGER.info("EjectJunk: GenericContainer"); invStart = 0; invEnd = 9*gcs.getScreenHandler().getRows();}
+			else if(hs instanceof ContainerScreen gcs){
+				Main.LOGGER.info("EjectJunk: GenericContainer"); invStart = 0; invEnd = 9*gcs.getMenu().getRowCount();}
 			else{Main.LOGGER.info("EjectJunk: Unsupported screen type. syncId: "+syncId); return;}
 
-			for(int i=invStart; i<invEnd; ++i) shouldEject(hs.getScreenHandler().getSlot(i).getStack()); // Detect junk category
-			for(int i=invStart; i<invEnd; ++i) if(shouldEject(hs.getScreenHandler().getSlot(i).getStack())){
-				client.interactionManager.clickSlot(syncId, i, 0, SlotActionType.THROW, client.player);
+			for(int i=invStart; i<invEnd; ++i) shouldEject(hs.getMenu().getSlot(i).getItem()); // Detect junk category
+			for(int i=invStart; i<invEnd; ++i) if(shouldEject(hs.getMenu().getSlot(i).getItem())){
+				client.gameMode.handleContainerInput(syncId, i, 0, ContainerInput.THROW, client.player);
 			}
 		}
 		else{
 			Main.LOGGER.info("EjectJunk: Default (no Screen)");
-			for(int i=9; i<45; ++i) shouldEject(client.player.getInventory().getStack(i%36)); // Detect junk category
-			for(int i=9; i<45; ++i) if(shouldEject(client.player.getInventory().getStack(i%36))){
-				client.interactionManager.clickSlot(syncId, i, 1, SlotActionType.THROW, client.player);
+			for(int i=9; i<45; ++i) shouldEject(client.player.getInventory().getItem(i%36)); // Detect junk category
+			for(int i=9; i<45; ++i) if(shouldEject(client.player.getInventory().getItem(i%36))){
+				client.gameMode.handleContainerInput(syncId, i, 1, ContainerInput.THROW, client.player);
 			}
 		}
 		//junkType = null;

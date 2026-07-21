@@ -1,25 +1,25 @@
 package net.evmodder.evmod.apis;
 
 import java.util.stream.Stream;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.BundleContentsComponent;
-import net.minecraft.component.type.ContainerComponent;
-import net.minecraft.item.ItemStack;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.BundleContents;
+import net.minecraft.world.item.component.ItemContainerContents;
 
 public final class InvUtils{
 	public static final Stream<ItemStack> getAllNestedItems(ItemStack item){
-		final BundleContentsComponent contents = item.get(DataComponentTypes.BUNDLE_CONTENTS);
-		if(contents != null) return getAllNestedItems(contents.stream()/*.sequential()*/);
-		final ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
-		if(container != null) return getAllNestedItems(container.streamNonEmpty()/*.sequential()*/);
+		final BundleContents contents = item.get(DataComponents.BUNDLE_CONTENTS);
+		if(contents != null) return getAllNestedItems(contents.itemCopyStream()/*.sequential()*/);
+		final ItemContainerContents container = item.get(DataComponents.CONTAINER);
+		if(container != null) return getAllNestedItems(container.nonEmptyItemCopyStream()/*.sequential()*/);
 		return Stream.of(item);
 	}
 	public static final Stream<ItemStack> getAllNestedItems(Stream<ItemStack> items){
 		return items.flatMap(InvUtils::getAllNestedItems);
 	}
 	public static final Stream<ItemStack> getAllNestedItemsExcludingBundles(ItemStack item){
-		final ContainerComponent container = item.get(DataComponentTypes.CONTAINER);
-		if(container != null) return getAllNestedItemsExcludingBundles(container.streamNonEmpty());
+		final ItemContainerContents container = item.get(DataComponents.CONTAINER);
+		if(container != null) return getAllNestedItemsExcludingBundles(container.nonEmptyItemCopyStream());
 		return Stream.of(item);
 	}
 	public static final Stream<ItemStack> getAllNestedItemsExcludingBundles(Stream<ItemStack> items){

@@ -12,34 +12,30 @@ import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.config.OptionInvisIframes;
 import net.evmodder.evmod.onTick.UpdateItemFrameContents;
 import net.evmodder.evmod.onTick.UpdateItemFrameContents.Highlight;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.command.OrderedRenderCommandQueue;
-import net.minecraft.client.render.entity.ItemFrameEntityRenderer;
-import net.minecraft.client.render.entity.state.ItemFrameEntityRenderState;
-import net.minecraft.client.render.state.CameraRenderState;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.decoration.ItemFrameEntity;
-import net.minecraft.item.FilledMapItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.map.MapState;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.entity.ItemFrameRenderer;
+import net.minecraft.client.renderer.entity.state.ItemFrameRenderState;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
+import net.minecraft.world.phys.Vec3;
 
-@Mixin(ItemFrameEntityRenderer.class)
-abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
-	private final MinecraftClient client = MinecraftClient.getInstance();
+@Mixin(ItemFrameRenderer.class)
+abstract class MixinItemFrameRenderer<T extends ItemFrame>{
+	private final Minecraft client = Minecraft.getInstance();
 
-	private final boolean isSemiTransparent(final MapState state){
+	private final boolean isSemiTransparent(final MapItemSavedData state){
 		return state != null && state.colors != null && MapColorUtils.isSemiTransparent(state.colors);
 	}
-	private final boolean shouldBeInvis(final ItemFrameEntityRenderState ifers){
+	private final boolean shouldBeInvis(final ItemFrameRenderState ifers){
 		switch((OptionInvisIframes)Configs.Visuals.INVIS_IFRAMES.getOptionListValue()){
-			case ANY_ITEM: return !ifers.itemRenderState.isEmpty();
+			case ANY_ITEM: return !ifers.item.isEmpty();
 			case MAPART: return ifers.mapId != null;
-			case SEMI_TRANSPARENT_MAPART: return ifers.mapId != null && isSemiTransparent(client.world.getMapState(ifers.mapId));
+			case SEMI_TRANSPARENT_MAPART: return ifers.mapId != null && isSemiTransparent(client.level.getMapData(ifers.mapId));
 			case OFF:
 			default:
 				return false;
@@ -50,29 +46,32 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 //		Entity player = MinecraftClient.getInstance().player;
 //		Vec3d vec3d2 = new Vec3d(entity.getX() - player.getX(), entity.getEyeY() - player.getEyeY(), entity.getZ() - player.getZ());
 		// maybe use entity.getCenterPos() instead?
-		Vec3d vec3d2 = entity.getEyePos().subtract(MinecraftClient.getInstance().player.getEyePos());
+		Vec3 vec3d2 = entity.getEyePosition().subtract(Minecraft.getInstance().player.getEyePosition());
 		double d = vec3d2.length(); // Calls Math.sqrt()
-		vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d); // normalize
-		double e = AccessorUpdateItemFrameContents.clientRotationNormalized().dotProduct(vec3d2);
+		vec3d2 = new Vec3(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d); // normalize
+		double e = AccessorUpdateItemFrameContents.clientRotationNormalized().dot(vec3d2);
 //		final double asdf = player.squaredDistanceTo(entity) > 5*5 ? 0.3d : 0.1d;
-		final double asdf = vec3d2.lengthSquared() > 5*5 ? 0.3d : 0.1d;
+		final double asdf = vec3d2.lengthSqr() > 5*5 ? 0.3d : 0.1d;
 		return e > 1.0d - asdf / d;
 	}
 
-	@Inject(method="render", at=@At("HEAD"))
+	@Inject(method="extractRenderState", at=@At("TAIL"))
 	private final void disableItemFrameFrameRenderingWhenHoldingMaps(
-			ItemFrameEntityRenderState ifers, MatrixStack _0, OrderedRenderCommandQueue _1, CameraRenderState _2, CallbackInfo _3){
-		ifers.invisible |= shouldBeInvis(ifers);
+			T _0, ItemFrameRenderState ifers, float _1, CallbackInfo _2){
+		if(shouldBeInvis(ifers)){
+			ifers.isInvisible = true;
+			ifers.frameModel.clear();
+		}
 	}
 
-	@Inject(method="hasLabel", at=@At("HEAD"), cancellable=true)
+	@Inject(method="shouldShowName", at=@At("HEAD"), cancellable=true)
 	private final void modifyHasLableBasedOnMapState(T itemFrameEntity, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
 		if(!Configs.Visuals.MAP_HIGHLIGHT_IFRAME.getBooleanValue()) return; // Feature is disabled
-		if(!MinecraftClient.isHudEnabled()) return;
+		if(client.gui.hud.isHidden()) return;
 
-		final ItemStack stack = itemFrameEntity.getHeldItemStack();
+		final ItemStack stack = itemFrameEntity.getItem();
 		if(stack.isEmpty()) return;
-		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getEntityWorld());
+		final MapItemSavedData state = MapItem.getSavedData(stack, itemFrameEntity.level());
 		if(state == null) return;
 		final Highlight hl = AccessorUpdateItemFrameContents.highlightedIFrames().get(itemFrameEntity.getId());
 		if(hl == null) return;
@@ -91,7 +90,7 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 			// no-op
 		}
 		// If right up in front of iFrame, use the vanilla label check
-		else if((squaredDistanceToCamera=client.player.squaredDistanceTo(itemFrameEntity)) <= 16d/*4*4*/ && stack.getCustomName() != null){
+		else if((squaredDistanceToCamera=client.player.distanceToSqr(itemFrameEntity)) <= 16d/*4*4*/ && stack.getCustomName() != null){
 //			Main.LOGGER.info("right up in front: "+stack.getName().getString()+", squaredDistanceToCamera="+squaredDistanceToCamera);
 			// no-op
 			if(!state.locked) MapGroupUtils.getIdForMapState(state, /*evict*/true); // Evict cache for maps being directly looked at
@@ -99,55 +98,55 @@ abstract class MixinItemFrameRenderer<T extends ItemFrameEntity>{
 		else if(hl == Highlight.NOT_IN_CURR_GROUP){ // Show this label as long as dist >4
 			cir.setReturnValue(true);
 		}
-		else if(squaredDistanceToCamera <= 400d/*20*20*/ && client.player.canSee(itemFrameEntity)){ // Show other labels only if LOS and dist <= 20
+		else if(squaredDistanceToCamera <= 400d/*20*20*/ && client.player.hasLineOfSight(itemFrameEntity)){ // Show other labels only if LOS and dist <= 20
 			cir.setReturnValue(true);
 		}
 		AccessorUpdateItemFrameContents.hasLabelCache().put(itemFrameEntity.getId(), cir.getReturnValue());
 	}
 
-	private final boolean isMultiHung(MapState state){return UpdateItemFrameContents.isHungMultiplePlaces(MapGroupUtils.getIdForMapState(state));}
+	private final boolean isMultiHung(MapItemSavedData state){return UpdateItemFrameContents.isHungMultiplePlaces(MapGroupUtils.getIdForMapState(state));}
 
-	@Inject(method="getDisplayName", at=@At("INVOKE"), cancellable = true)
-	public void getDisplayName_Mixin(T itemFrameEntity, CallbackInfoReturnable<Text> cir){
+	@Inject(method="getNameTag", at=@At("INVOKE"), cancellable = true)
+	public void getDisplayName_Mixin(T itemFrameEntity, CallbackInfoReturnable<Component> cir){
 		if(!Configs.Visuals.MAP_HIGHLIGHT_IFRAME.getBooleanValue()) return; // Feature is disabled
-		final ItemStack stack = itemFrameEntity.getHeldItemStack();
+		final ItemStack stack = itemFrameEntity.getItem();
 		if(stack == null || stack.isEmpty());
-		final MapState state = FilledMapItem.getMapState(stack, itemFrameEntity.getEntityWorld());
+		final MapItemSavedData state = MapItem.getSavedData(stack, itemFrameEntity.level());
 		if(state == null) return;
 		final Highlight hl = AccessorUpdateItemFrameContents.highlightedIFrames().get(itemFrameEntity.getId());
 		if(hl == null) return;
 
-		final Text cachedName = AccessorUpdateItemFrameContents.displayNameCache().get(itemFrameEntity.getId());
+		final Component cachedName = AccessorUpdateItemFrameContents.displayNameCache().get(itemFrameEntity.getId());
 		if(cachedName != null){cir.setReturnValue(cachedName); return;}
 
 		if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue() && stack.getCustomName() != null)
 			MapStateCacher.addMapStateByName(stack, state);
 
-		final MutableText name = stack.getName().copy();
+		final MutableComponent name = stack.getHoverName().copy();
 		if(hl == Highlight.INV_OR_NESTED_INV){
 			final boolean notInCurrGroup = MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
 			name.withColor(Configs.Visuals.MAP_COLOR_IN_INV.getIntegerValue());
-			if(notInCurrGroup) name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue()));
-			if(!state.locked) name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue()));
-			if(isMultiHung(state)) name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
+			if(notInCurrGroup) name.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue()));
+			if(!state.locked) name.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue()));
+			if(isMultiHung(state)) name.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
 		}
 		else if(hl == Highlight.NOT_IN_CURR_GROUP){
 			name.withColor(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue());
-			if(!state.locked) name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue()));
-			if(isMultiHung(state)) name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
+			if(!state.locked) name.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue()));
+			if(isMultiHung(state)) name.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
 		}
 		else if(!state.locked){
 			name.withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue());
-			if(isMultiHung(state)) name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
+			if(isMultiHung(state)) name.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
 		}
 		else if(stack.getCustomName() == null) name.withColor(Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue());
 		else if(hl == Highlight.MULTI_HUNG){
 			if(Configs.Generic.SKIP_MONO_COLOR_MAPS.getBooleanValue() && MapColorUtils.isMonoColor(state.colors))
-				name.append(Text.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
+				name.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
 			else name.withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue());
 		}
 		else{
-			AccessorUpdateItemFrameContents.displayNameCache().put(itemFrameEntity.getId(), stack.getName());
+			AccessorUpdateItemFrameContents.displayNameCache().put(itemFrameEntity.getId(), stack.getHoverName());
 			return;
 		}
 		AccessorUpdateItemFrameContents.displayNameCache().put(itemFrameEntity.getId(), name);

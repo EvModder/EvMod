@@ -1,5 +1,5 @@
 plugins {
-	id "fabric-loom"
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 	id "maven-publish"
 }
 
@@ -39,12 +39,11 @@ repositories {
 
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}" // Technically optional
-	modImplementation "com.github.sakura-ryoko:malilib:${project.minecraft_version}-${project.malilib_version}"
-	modImplementation(files("libs/baritone-api-fabric-${project.baritone_version}.jar"))
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}" // Technically optional
+	implementation "com.github.sakura-ryoko:malilib:${project.minecraft_version}-${project.malilib_version}"
+	implementation files("libs/baritone-api-fabric-${project.baritone_version}.jar")
 }
 
 // https://github.com/EvModder/EvLib

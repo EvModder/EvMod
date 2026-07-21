@@ -1,17 +1,17 @@
 package net.evmodder.evmod.apis;
 
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 public interface TickListener{
-	public default void onTickStart(final MinecraftClient client){}
-	public default void onTickEnd(final MinecraftClient client){}
+	public default void onTickStart(final Minecraft client){}
+	public default void onTickEnd(final Minecraft client){}
 
 	public static void register(final TickListener tickListener){
 		try{
-			if(!tickListener.getClass().getMethod("onTickStart", MinecraftClient.class).getDeclaringClass().equals(TickListener.class))
+			if(!tickListener.getClass().getMethod("onTickStart", Minecraft.class).getDeclaringClass().equals(TickListener.class))
 				ClientTickEvents.START_CLIENT_TICK.register(tickListener::onTickStart);
-			if(!tickListener.getClass().getMethod("onTickEnd", MinecraftClient.class).getDeclaringClass().equals(TickListener.class))
+			if(!tickListener.getClass().getMethod("onTickEnd", Minecraft.class).getDeclaringClass().equals(TickListener.class))
 				ClientTickEvents.END_CLIENT_TICK.register(tickListener::onTickEnd);
 		}
 		catch(NoSuchMethodException | SecurityException e){

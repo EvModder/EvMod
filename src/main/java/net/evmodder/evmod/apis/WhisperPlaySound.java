@@ -2,13 +2,13 @@ package net.evmodder.evmod.apis;
 
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 
 public class WhisperPlaySound{
-	record SoundData(SoundEvent sound, SoundCategory category, float volume, float pitch){}
+	record SoundData(SoundEvent sound, SoundSource category, float volume, float pitch){}
 	private SoundData whisperSound, whisperSoundUnfocused;
 
 	private final SoundData parseSoundData(final String soundData){
@@ -22,10 +22,10 @@ public class WhisperPlaySound{
 		int idx;
 		final String soundName =
 				((idx=parts[0].indexOf(':')) == -1 ? parts[0] : parts[0].substring(idx+1)).trim();
-		final SoundEvent sound = SoundEvent.of(Identifier.of(soundName));
-		final String categoryName = parts.length < 2 ? SoundCategory.PLAYERS.name() :
+		final SoundEvent sound = SoundEvent.createVariableRangeEvent(Identifier.parse(soundName));
+		final String categoryName = parts.length < 2 ? SoundSource.PLAYERS.name() :
 				((idx=parts[1].indexOf(':')) == -1 ? parts[1] : parts[1].substring(idx+1)).trim();
-		final SoundCategory category = SoundCategory.valueOf(categoryName);
+		final SoundSource category = SoundSource.valueOf(categoryName);
 		final float volume = parts.length < 3 ? 1 : Float.parseFloat(
 				((idx=parts[2].indexOf(':')) == -1 ? parts[2] : parts[2].substring(idx+1)).trim());
 		final float pitch = parts.length < 4 ? 1 : Float.parseFloat(
@@ -41,8 +41,8 @@ public class WhisperPlaySound{
 	public WhisperPlaySound(){recomputeSound(); recomputeSoundUnfocused();}
 
 	public void playSound(){
-		final MinecraftClient client = MinecraftClient.getInstance();
-		final SoundData data = client.isWindowFocused() ? whisperSound : whisperSoundUnfocused;
+		final Minecraft client = Minecraft.getInstance();
+		final SoundData data = client.isWindowActive() ? whisperSound : whisperSoundUnfocused;
 		if(data == null) return;
 		client.player.playSound(data.sound, data.volume, data.pitch);
 	}

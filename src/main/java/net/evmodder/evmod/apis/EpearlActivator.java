@@ -4,23 +4,23 @@ import java.util.Arrays;
 import java.util.Objects;
 import com.google.common.collect.Streams;
 import net.evmodder.evmod.Main;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.NoteBlock;
-import net.minecraft.block.entity.SignBlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.entity.projectile.thrown.EnderPearlEntity;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.text.Text;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3i;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.RaycastContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
+import net.minecraft.network.chat.Component;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.block.NoteBlock;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class EpearlActivator{
 	private final EpearlLookupFabric epearlLookup;
@@ -31,9 +31,9 @@ public final class EpearlActivator{
 
 	public EpearlActivator(EpearlLookupFabric epl){epearlLookup = epl;}
 
-	private final boolean hasLineOfSight(MinecraftClient client, Vec3d from, Vec3d to){
-		return client.world.raycast(
-				new RaycastContext(from, to, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, client.player))
+	private final boolean hasLineOfSight(Minecraft client, Vec3 from, Vec3 to){
+		return client.level.clip(
+				new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, client.player))
 				.getType() == HitResult.Type.MISS;
 	}
 
@@ -43,32 +43,32 @@ public final class EpearlActivator{
 	 * squared distance to that hit vector, and whether or not there is line of
 	 * sight to that hit vector.
 	 */
-	private final BlockHitResult getHitResult(MinecraftClient client, BlockPos pos){
-		Vec3d eyes = client.player.getEyePos();
+	private final BlockHitResult getHitResult(Minecraft client, BlockPos pos){
+		Vec3 eyes = client.player.getEyePosition();
 		Direction[] sides = Direction.values();
 
-		BlockState state = client.world.getBlockState(pos);
-		VoxelShape shape = state.getOutlineShape(client.world, pos);
+		BlockState state = client.level.getBlockState(pos);
+		VoxelShape shape = state.getShape(client.level, pos);
 		if(shape.isEmpty()){Main.LOGGER.error("AutoPearlActivator: shape.isEmpty()!"); return null;}
 
-		Box box = shape.getBoundingBox();
-		Vec3d halfSize = new Vec3d(box.maxX - box.minX, box.maxY - box.minY, box.maxZ - box.minZ).multiply(0.5);
-		Vec3d center = Vec3d.of(pos).add(box.getCenter());
+		AABB box = shape.bounds();
+		Vec3 halfSize = new Vec3(box.maxX - box.minX, box.maxY - box.minY, box.maxZ - box.minZ).scale(0.5);
+		Vec3 center = Vec3.atLowerCornerOf(pos).add(box.getCenter());
 
-		Vec3d[] hitVecs = new Vec3d[sides.length];
+		Vec3[] hitVecs = new Vec3[sides.length];
 		for(int i=0; i<sides.length; ++i){
-			Vec3i dirVec = sides[i].getVector();
-			Vec3d relHitVec = new Vec3d(halfSize.x * dirVec.getX(), halfSize.y * dirVec.getY(), halfSize.z * dirVec.getZ());
+			Vec3i dirVec = sides[i].getUnitVec3i();
+			Vec3 relHitVec = new Vec3(halfSize.x * dirVec.getX(), halfSize.y * dirVec.getY(), halfSize.z * dirVec.getZ());
 			hitVecs[i] = center.add(relHitVec);
 		}
 
-		double distSqToCenter = eyes.squaredDistanceTo(center);
+		double distSqToCenter = eyes.distanceToSqr(center);
 
 		int bestSide = 0;
-		double bestDistSq = eyes.squaredDistanceTo(hitVecs[0]);
+		double bestDistSq = eyes.distanceToSqr(hitVecs[0]);
 		boolean bestHasLoS = bestDistSq < distSqToCenter && hasLineOfSight(client, eyes, hitVecs[0]);
 		for(int i=1; i<sides.length; ++i){
-			final double distSq = eyes.squaredDistanceTo(hitVecs[0]);
+			final double distSq = eyes.distanceToSqr(hitVecs[0]);
 			final boolean hasLoS = distSq < distSqToCenter && hasLineOfSight(client, eyes, hitVecs[0]);
 			if(!hasLoS && bestHasLoS) continue;
 			if(hasLoS && !bestHasLoS){bestSide = i; bestDistSq = distSq; bestHasLoS = true;} // Prefer LoS
@@ -78,25 +78,25 @@ public final class EpearlActivator{
 		return new BlockHitResult(hitVecs[bestSide], sides[bestSide], pos, /*insideBlock=*/false);
 	}
 
-	private final BlockPos findNearestPearlWithOwnerName(MinecraftClient client, String name){
-		final Vec3d playerPos = client.player.getEntityPos();
+	private final BlockPos findNearestPearlWithOwnerName(Minecraft client, String name){
+		final Vec3 playerPos = client.player.position();
 		double closestDistSq = Double.MAX_VALUE;
-		Vec3d closestPos = null;
-		for(EnderPearlEntity pearl : client.world.getEntitiesByClass(EnderPearlEntity.class,
-				client.player.getBoundingBox().expand(REACH, REACH, REACH),
+		Vec3 closestPos = null;
+		for(ThrownEnderpearl pearl : client.level.getEntitiesOfClass(ThrownEnderpearl.class,
+				client.player.getBoundingBox().inflate(REACH, REACH, REACH),
 				pearl->name.equalsIgnoreCase(epearlLookup.getOwnerName(pearl)))
 		){
-			final double distSq = pearl.getEntityPos().squaredDistanceTo(playerPos);
-			if(distSq < closestDistSq){closestDistSq = distSq; closestPos = pearl.getEntityPos();}
+			final double distSq = pearl.position().distanceToSqr(playerPos);
+			if(distSq < closestDistSq){closestDistSq = distSq; closestPos = pearl.position();}
 		}
-		return BlockPos.ofFloored(closestPos);
+		return BlockPos.containing(closestPos);
 	}
-	private final BlockPos findSignWithName(MinecraftClient client, String name){
-		final BlockPos playerPos = client.player.getBlockPos();
-		for(BlockPos pos : BlockPos.iterateOutwards(playerPos, REACH, REACH, REACH)){
-			if(client.world.getBlockEntity(pos) instanceof SignBlockEntity sbe &&
+	private final BlockPos findSignWithName(Minecraft client, String name){
+		final BlockPos playerPos = client.player.blockPosition();
+		for(BlockPos pos : BlockPos.withinManhattan(playerPos, REACH, REACH, REACH)){
+			if(client.level.getBlockEntity(pos) instanceof SignBlockEntity sbe &&
 					Streams.concat(Arrays.stream(sbe.getFrontText().getMessages(/*filtered=*/false)), Arrays.stream(sbe.getBackText().getMessages(false))
-					).map(Text::getLiteralString)
+					).map(Component::tryCollapseToString)
 					.filter(Objects::nonNull)
 					.map(s -> s.replaceAll("[^a-zA-Z0-9_]+", ""))
 					.anyMatch(s -> s.equalsIgnoreCase(name)))
@@ -107,35 +107,35 @@ public final class EpearlActivator{
 		return null;
 	}
 	private final boolean isClickableTrigger(final BlockState bs){
-		return bs.getBlock() instanceof NoteBlock || bs.isIn(BlockTags.BUTTONS) || bs.isIn(BlockTags.WOODEN_TRAPDOORS);
+		return bs.getBlock() instanceof NoteBlock || bs.is(BlockTags.BUTTONS) || bs.is(BlockTags.WOODEN_TRAPDOORS);
 	}
-	private final BlockPos findNearestTrigger(MinecraftClient client, BlockPos startPos){
+	private final BlockPos findNearestTrigger(Minecraft client, BlockPos startPos){
 		double closestDistSq = Double.MAX_VALUE;
 		BlockPos buttonPos = null;
-		final Vec3d centerPos = startPos.toCenterPos();
-		for(BlockPos pos : BlockPos.iterateOutwards(startPos, REACH, REACH, REACH)){
-			BlockState bs = client.world.getBlockState(pos);
+		final Vec3 centerPos = Vec3.atCenterOf(startPos);
+		for(BlockPos pos : BlockPos.withinManhattan(startPos, REACH, REACH, REACH)){
+			BlockState bs = client.level.getBlockState(pos);
 			if(isClickableTrigger(bs)){
-				Vec3d closestPoint = bs.getOutlineShape(client.world, pos).getClosestPointTo(centerPos).get();
-				final double distSq = closestPoint.squaredDistanceTo(centerPos);
-				if(distSq < closestDistSq){closestDistSq = distSq; buttonPos = pos.mutableCopy();}
+				Vec3 closestPoint = bs.getShape(client.level, pos).closestPointTo(centerPos).get();
+				final double distSq = closestPoint.distanceToSqr(centerPos);
+				if(distSq < closestDistSq){closestDistSq = distSq; buttonPos = pos.mutable();}
 			}
 		}
 		return buttonPos;
 	}
 
-	private final void sendFeedback(MinecraftClient client, final String who, final String msg){
+	private final void sendFeedback(Minecraft client, final String who, final String msg){
 		if(!msgFailureFeedback) return;
 		if(msgCooldown > 0){
 			final long currTs = System.currentTimeMillis();
 			if(currTs-lastMsgTs < msgCooldown) return;
 			lastMsgTs = currTs;
 		}
-		client.getNetworkHandler().sendChatCommand("w "+who+" "+msg);
+		client.getConnection().sendCommand("w "+who+" "+msg);
 	}
 
 	public final void triggerPearl(final String who){
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		BlockPos signPos = findSignWithName(client, who);
 		if(signPos == null && (signPos=findNearestPearlWithOwnerName(client, who)) == null){
 //			sendFeedback(client, who, "[AutoPearl] I do not recognize any pearl of yours nearby");
@@ -154,7 +154,7 @@ public final class EpearlActivator{
 
 //		assert hitResult != null;
 //		if(hitResult == null) return;
-		client.interactionManager.interactBlock(client.player, Hand.MAIN_HAND, getHitResult(client, buttonPos));
+		client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND, getHitResult(client, buttonPos));
 //		Main.LOGGER.info("AutoPearlActivator: button pressed!");
 	}
 }

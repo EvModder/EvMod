@@ -15,53 +15,53 @@ import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.item.FilledMapItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.map.MapState;
-import net.minecraft.text.Text;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 public final class KeybindMapMove{
-	static final boolean isFillerMap(ItemStack[] slots, ItemStack stack, World world){
-		final MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
-		final MapState state = world.getMapState(mapId);
+	static final boolean isFillerMap(ItemStack[] slots, ItemStack stack, Level world){
+		final MapId mapId = stack.get(DataComponents.MAP_ID);
+		final MapItemSavedData state = world.getMapData(mapId);
 		if(state == null) return Configs.Generic.SKIP_NULL_MAPS.getBooleanValue() && MapGroupUtils.isConfirmedNull(mapId.id());
 		if(!Configs.Generic.SKIP_VOID_MAPS.getBooleanValue()) return false;
 		if(!MapColorUtils.isFullyTransparent(state.colors)) return false;
 		if(stack.getCustomName() == null) return true;
-		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(Arrays.asList(slots), stack.getName().getString(), stack.getCount(), state.locked, world);
+		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(Arrays.asList(slots), stack.getHoverName().getString(), stack.getCount(), state.locked, world);
 		return data.slots().stream()
-				.map(i -> FilledMapItem.getMapState(slots[i], world))
+				.map(i -> MapItem.getSavedData(slots[i], world))
 				.allMatch(s -> s != null && MapColorUtils.isFullyTransparent(s.colors));
 	}
 
 	public final void moveMapArtToFromShulker(){
 		if(ClickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapMove cancelled: Already ongoing"); return;}
 		//
-		MinecraftClient client = MinecraftClient.getInstance();
-		if(!(client.currentScreen instanceof HandledScreen hs)){/*Main.LOGGER.warn("MapMove cancelled: Not in ShulkerBoxScreen"); */return;}
+		Minecraft client = Minecraft.getInstance();
+		if(!(client.gui.screen() instanceof AbstractContainerScreen hs)){/*Main.LOGGER.warn("MapMove cancelled: Not in ShulkerBoxScreen"); */return;}
 		//
-		if(hs.getScreenHandler().slots.size() != 63/*27+36*/){
-			Main.LOGGER.warn("MapMove cancelled: Unexpected slot count for MapMove: "+hs.getScreenHandler().slots.size());
+		if(hs.getMenu().slots.size() != 63/*27+36*/){
+			Main.LOGGER.warn("MapMove cancelled: Unexpected slot count for MapMove: "+hs.getMenu().slots.size());
 			return;
 		}
 		//
-		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(s -> s.getStack()).toArray(ItemStack[]::new);
+		final ItemStack[] slots = hs.getMenu().slots.stream().map(s -> s.getItem()).toArray(ItemStack[]::new);
 		int numInInv = 0, emptySlotsInv = 0, fillerInInv = 0;
 		TreeSet<Integer> countsInInv = new TreeSet<>();
 		HashMap<ItemStack, Integer> invCapacity = new HashMap<>();// id -> available space to merge into
 		for(int i=0; i<36; ++i){
-			ItemStack stack = client.player.getInventory().getStack(i);
+			ItemStack stack = client.player.getInventory().getItem(i);
 			if(stack == null || stack.isEmpty()) ++emptySlotsInv;
 			else if(stack.getItem() == Items.FILLED_MAP){
-				if(isFillerMap(slots, stack, client.world)){++fillerInInv; continue;}
-				final MapIdComponent mapId = stack.get(DataComponentTypes.MAP_ID);
-				if(client.world.getMapState(mapId) == null){
+				if(isFillerMap(slots, stack, client.level)){++fillerInInv; continue;}
+				final MapId mapId = stack.get(DataComponents.MAP_ID);
+				if(client.level.getMapData(mapId) == null){
 					MapGroupUtils.nullMapIds.add(mapId.id());
 					Main.LOGGER.warn("MapMove: Unloaded map in player inventory!");
 //					return;
@@ -70,7 +70,7 @@ public final class KeybindMapMove{
 				++numInInv;
 				final int count = stack.getCount();
 				countsInInv.add(count);
-				invCapacity.put(stack, invCapacity.getOrDefault(stack, 0)+(stack.getMaxCount()-count));
+				invCapacity.put(stack, invCapacity.getOrDefault(stack, 0)+(stack.getMaxStackSize()-count));
 			}
 		}
 		int cantMergeIntoInv = 0;
@@ -83,17 +83,17 @@ public final class KeybindMapMove{
 			ItemStack stack = slots[i];
 			if(stack.isEmpty()) ++emptySlotsShulk;
 			else if(stack.getItem() == Items.FILLED_MAP){
-				if(isFillerMap(slots, stack, client.world)){++fillerInShulk; continue;}
+				if(isFillerMap(slots, stack, client.level)){++fillerInShulk; continue;}
 				if(!ALLOW_AIR_POCKETS && emptySlotsShulk != 0 && numInInv != 0){
-					client.player.sendMessage(Text.literal("MapMove: Air gap between items in shulker currently disabled"), true);
-					client.player.sendMessage(Text.literal("MapMove: Air gap between items in shulker currently disabled"), false);
+					client.player.sendOverlayMessage(Component.literal("MapMove: Air gap between items in shulker currently disabled"));
+					client.player.sendSystemMessage(Component.literal("MapMove: Air gap between items in shulker currently disabled"));
 					return;
 				}
 				++numInShulk;
 				final int count = slots[i].getCount();
 				countsInShulk.add(count);
 				if(count < countsInShulk.last()) smallerSlotsAtStart = false;
-				shulkCapacity.put(stack, shulkCapacity.getOrDefault(stack, 0)+(stack.getMaxCount()-count));
+				shulkCapacity.put(stack, shulkCapacity.getOrDefault(stack, 0)+(stack.getMaxStackSize()-count));
 
 				int space = invCapacity.getOrDefault(stack, 0);
 				if(count > space) ++cantMergeIntoInv;
@@ -101,9 +101,9 @@ public final class KeybindMapMove{
 			}
 		}
 		final long cantMergeIntoShulk =
-				IntStream.range(0, 36).mapToObj(i -> client.player.getInventory().getStack(i))
+				IntStream.range(0, 36).mapToObj(i -> client.player.getInventory().getItem(i))
 				.filter(s -> s.getItem() == Items.FILLED_MAP)
-				.filter(s -> !isFillerMap(slots, s, client.world))
+				.filter(s -> !isFillerMap(slots, s, client.level))
 				.filter(s -> {
 					int space = shulkCapacity.getOrDefault(s, 0);
 					if(s.getCount() > space) return false;
@@ -133,7 +133,7 @@ public final class KeybindMapMove{
 		IdentityHashMap<InvAction, Integer> reserveClicks = new IdentityHashMap<>();
 		if(moveToShulk) for(int i=27, j=0; i<63; ++i){
 			if(slots[i].getItem() != Items.FILLED_MAP) continue;
-			if(isFillerMap(slots, slots[i], client.world)) continue;
+			if(isFillerMap(slots, slots[i], client.level)) continue;
 			final int count = slots[i].getCount();
 			if(selectiveMove && count != countsInInv.last()) continue;
 			if(numInShulk == 0){
@@ -172,7 +172,7 @@ public final class KeybindMapMove{
 		else for(int i=26, j=62; i>=0; --i){
 //			if(isMapArt(sh.getSlot(i).getStack())) clicks.add(new ClickEvent(sh.syncId, i, 0, ClickAction.SHIFT_CLICK));
 			if(slots[i].getItem() != Items.FILLED_MAP) continue;
-			if(isFillerMap(slots, slots[i], client.world)) continue;
+			if(isFillerMap(slots, slots[i], client.level)) continue;
 			final int count = slots[i].getCount();
 			if(selectiveMove && count != countsInShulk.last()) continue;
 			if(numInInv == 0){

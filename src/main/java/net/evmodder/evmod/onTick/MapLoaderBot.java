@@ -9,15 +9,15 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapIdsFromImg;
 import net.evmodder.evmod.apis.TickListener;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Items;
-import net.minecraft.item.map.MapDecoration;
-import net.minecraft.item.map.MapDecorationTypes;
-import net.minecraft.item.map.MapState;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.saveddata.maps.MapDecoration;
+import net.minecraft.world.level.saveddata.maps.MapDecorationTypes;
+import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 public final class MapLoaderBot implements TickListener{
 	private static byte[] desiredColors;
@@ -39,7 +39,7 @@ public final class MapLoaderBot implements TickListener{
 		}
 	}
 
-	private static final Boolean isInMap(final MapState state){
+	private static final Boolean isInMap(final MapItemSavedData state){
 //		Main.LOGGER.info("checking isInMap");
 		Boolean isInMap = null;
 		for(MapDecoration d : state.getDecorations()){
@@ -52,15 +52,15 @@ public final class MapLoaderBot implements TickListener{
 		return isInMap;
 	}
 
-	private static final void walkTo(PlayerEntity player, final int x, final int z){
+	private static final void walkTo(Player player, final int x, final int z){
 		player.getInventory().setSelectedSlot((mapSlot+1)%9);
 		isWalking = true;
 		baritone.getCustomGoalProcess().setGoalAndPath(new GoalXZ(x, z));
 	}
 
-	@Override public final void onTickStart(final MinecraftClient client){
+	@Override public final void onTickStart(final Minecraft client){
 		if(!Configs.Generic.MAPART_SUPPRESS_BOT.getBooleanValue()) return;
-		if(client.player == null || client.world == null) return;
+		if(client.player == null || client.level == null) return;
 
 		if(baritone == null) baritone = BaritoneAPI.getProvider().getPrimaryBaritone();
 		if(baritone.getCustomGoalProcess().isActive()) return;
@@ -71,7 +71,7 @@ public final class MapLoaderBot implements TickListener{
 		}
 //		Main.LOGGER.info("debug: baritone pathing is available");
 
-		if(client.player.getMainHandStack().getItem() != Items.FILLED_MAP) return;
+		if(client.player.getMainHandItem().getItem() != Items.FILLED_MAP) return;
 
 //		final int topY = client.world.getBottomY() + client.world.getHeight();
 //		final int addToReachTopY = topY-client.player.getBlockY();
@@ -79,8 +79,8 @@ public final class MapLoaderBot implements TickListener{
 //		while(true){
 //			MapColor c = client.world.getBlockState(bp).getMapColor(client.world, bp);
 //		}
-		final MapIdComponent mapId = client.player.getMainHandStack().get(DataComponentTypes.MAP_ID);
-		final MapState state = client.world.getMapState(mapId);
+		final MapId mapId = client.player.getMainHandItem().get(DataComponents.MAP_ID);
+		final MapItemSavedData state = client.level.getMapData(mapId);
 		final Boolean isInMap;
 		if(state == null || state.locked || (isInMap=isInMap(state)) == null) return;
 //		Main.LOGGER.info("debug: client is holding unlocked map with a player symbol, isInMap="+isInMap);
@@ -115,14 +115,14 @@ public final class MapLoaderBot implements TickListener{
 				final int prevColX = pixelX+1, prevColZ = pixelZ + (pixelZ == 0 || pixelZ == 126 ? +1 : -1);
 				final boolean atEnd = prevColX + 128*prevColZ == 128*128;
 				if(atEnd || pairsMatch(state.colors, desiredColors, prevColX, prevColZ, /*TODO: detemine for prevXZ!*/false)){
-					client.player.sendMessage(Text.literal("Waiting for next column"), true);
+					client.player.sendOverlayMessage(Component.literal("Waiting for next column"));
 				}
 				else{
-					client.player.sendMessage(Text.literal("Previous column mismatch!"), true);
+					client.player.sendOverlayMessage(Component.literal("Previous column mismatch!"));
 //					walkTo(client.player, playerX+1, playerZ+prevColZ-pixelZ);
 				}
 			}
-			else client.player.sendMessage(Text.literal("Waiting for correct color"), true);
+			else client.player.sendOverlayMessage(Component.literal("Waiting for correct color"));
 			return;
 		}
 		mapSlot = client.player.getInventory().getSelectedSlot();
@@ -131,14 +131,14 @@ public final class MapLoaderBot implements TickListener{
 		for(z=pixelZ-2; z>=0 && pairsMatch(state.colors, desiredColors, pixelX, z, isInMap); z-=2);
 		if(z < 0) for(z=pixelZ+2; z<128 && pairsMatch(state.colors, desiredColors, pixelX, z, isInMap); z+=2);
 		if(z < 128){
-			client.player.sendMessage(Text.literal("Walking to next incomplete row"), true);
+			client.player.sendOverlayMessage(Component.literal("Walking to next incomplete row"));
 			walkTo(client.player, playerX, playerZ + (z-pixelZ));
 		}
 		else{
 			final boolean isEven = (pixelZ&1)==0;
 			if(isEven) z = pixelZ < 64 ? 1 : 127;
 			else z = pixelZ < 64 ? 0 : 126;
-			client.player.sendMessage(Text.literal("Walking to start of next column"), true);
+			client.player.sendOverlayMessage(Component.literal("Walking to start of next column"));
 			walkTo(client.player, playerX-1, playerZ+(z-pixelZ));
 		}
 	}

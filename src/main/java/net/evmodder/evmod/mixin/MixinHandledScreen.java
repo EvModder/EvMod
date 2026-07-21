@@ -3,15 +3,15 @@ package net.evmodder.evmod.mixin;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.onTick.UpdateContainerContents;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.item.BannerItem;
-import net.minecraft.item.FilledMapItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.map.MapState;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.BannerItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -20,22 +20,22 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(HandledScreen.class)
-abstract class MixinHandledScreen<T extends ScreenHandler> extends Screen{
-	@Shadow @Final private final T handler;
-	@Shadow @Final private final int titleX;
-	@Shadow @Final private final int titleY;
+@Mixin(AbstractContainerScreen.class)
+abstract class MixinHandledScreen<T extends AbstractContainerMenu> extends Screen{
+	@Shadow @Final private final T menu;
+	@Shadow @Final private final int titleLabelX;
+	@Shadow @Final private final int titleLabelY;
 
 	// Java requires we provide a constructor because of the <T>, but it'll never be called
-	private MixinHandledScreen(Text title){
+	private MixinHandledScreen(Component title){
 		super(title);
 		throw new RuntimeException("EvMod: unreachable (cnstr of MixinHandledScreen)");
 	}
 
-	@Inject(method="drawForeground", at=@At("TAIL"))
-	private final void replaceScreenTitleForCurrentContainer(DrawContext context, int _mouseX, int _mouseY, CallbackInfo _ci){
+	@Inject(method="extractLabels", at=@At("TAIL"))
+	private final void replaceScreenTitleForCurrentContainer(GuiGraphicsExtractor context, int _mouseX, int _mouseY, CallbackInfo _ci){
 		if(UpdateContainerContents.customTitle == null) return;
-		context.drawText(textRenderer, UpdateContainerContents.customTitle, titleX, titleY, 4210752, false);
+		context.text(font, UpdateContainerContents.customTitle, titleLabelX, titleLabelY, 4210752, false);
 	}
 
 	// Credit to Enderkill for the idea:
@@ -46,11 +46,11 @@ abstract class MixinHandledScreen<T extends ScreenHandler> extends Screen{
 //		if(MiscUtils.getCurrentServerAddressHashCode() != MiscUtils.HASHCODE_2B2T) return;
 		if(!Configs.Generic.DISABLE_DRAG_CLICK_ON_MAPS_AND_BUNDLES.getBooleanValue()) return;
 
-		if(client.player == null || client.player.isCreative()) return; // Breaks creative middle-click drag (on other servers)
-		final ItemStack cursorStack = handler.getCursorStack();
+		if(minecraft.player == null || minecraft.player.isCreative()) return; // Breaks creative middle-click drag (on other servers)
+		final ItemStack cursorStack = menu.getCarried();
 		if(cursorStack == null || cursorStack.isEmpty()) return;
 		if(!cursorStack.isStackable() || cursorStack.getItem() instanceof BannerItem) cir.setReturnValue(true); // Prevent initiating a drag
-		final MapState state = FilledMapItem.getMapState(cursorStack, client.world);
+		final MapItemSavedData state = MapItem.getSavedData(cursorStack, minecraft.level);
 		if(state != null && !MapColorUtils.isMonoColor(state.colors)) cir.setReturnValue(true); // Prevent initiating a drag
 	}
 }

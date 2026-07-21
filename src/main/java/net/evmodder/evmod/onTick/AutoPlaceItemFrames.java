@@ -10,23 +10,23 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.EndTick;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.command.argument.EntityAnchorArgumentType.EntityAnchor;
-import net.minecraft.entity.decoration.ItemFrameEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.commands.arguments.EntityAnchorArgument.Anchor;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.network.protocol.game.ServerboundSwingPacket;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 
 public final class AutoPlaceItemFrames{
 	private Block placeAgainstBlock;
@@ -43,8 +43,8 @@ public final class AutoPlaceItemFrames{
 		};
 	}
 
-	private final Vec3d getPlaceAgainstSurface(BlockPos wallBp){
-		final Vec3d center = wallBp.toCenterPos();
+	private final Vec3 getPlaceAgainstSurface(BlockPos wallBp){
+		final Vec3 center = Vec3.atCenterOf(wallBp);
 		switch(dir){
 			case UP: return center.add(0, .5, 0);
 			case DOWN: return center.add(0, -.5, 0);
@@ -57,40 +57,40 @@ public final class AutoPlaceItemFrames{
 		}
 	}
 
-	private final boolean isValidIframePlacement(BlockPos bp, World world, List<ItemFrameEntity> existingIfes){
+	private final boolean isValidIframePlacement(BlockPos bp, Level world, List<ItemFrame> existingIfes){
 		if(distFromPlane(bp) != 0) return false;
 //		Main.LOGGER.info("iFramePlacer: wall block is on the plane");
 		final BlockState bs = world.getBlockState(bp);
 		if(Configs.Generic.IFRAME_AUTO_PLACER_MUST_MATCH_BLOCK.getBooleanValue() && bs.getBlock() != placeAgainstBlock) return false;
 //		Main.LOGGER.info("iFramePlacer: wall block matches placeAgainstBlock");
 
-		final BlockPos ifeBp = bp.offset(dir);
+		final BlockPos ifeBp = bp.relative(dir);
 		final BlockState ifeBs = world.getBlockState(ifeBp);
-		if(ifeBs.isFullCube(world, ifeBp)) return false;
-		if(ifeBs.isSolidBlock(world, ifeBp)) return false; // iFrame cannot be placed inside a solid block
+		if(ifeBs.isCollisionShapeFullBlock(world, ifeBp)) return false;
+		if(ifeBs.isRedstoneConductor(world, ifeBp)) return false; // iFrame cannot be placed inside a solid block
 //		Main.LOGGER.info("iFramePlacer: ife spot is non-solid");
 
-		if(existingIfes.stream().anyMatch(ife -> ife.getBlockPos().equals(ifeBp))) return false; // Already iFrame here
+		if(existingIfes.stream().anyMatch(ife -> ife.blockPosition().equals(ifeBp))) return false; // Already iFrame here
 //		Main.LOGGER.info("iFramePlacer: ife spot is available");
 		if(Configs.Generic.IFRAME_AUTO_PLACER_MUST_CONNECT.getBooleanValue()
-				&& existingIfes.stream().noneMatch(ife -> ife.getBlockPos().getManhattanDistance(ifeBp) == 1)) return false; // No iFrame neighbor
+				&& existingIfes.stream().noneMatch(ife -> ife.blockPosition().distManhattan(ifeBp) == 1)) return false; // No iFrame neighbor
 //		Main.LOGGER.info("iFramePlacer: ife spot has neighboring iframe");
 		return true;
 	}
 
-	private final boolean isMovingTooFast(Vec3d velocity){
+	private final boolean isMovingTooFast(Vec3 velocity){
 		double xzLengthSq = velocity.x*velocity.x + velocity.z*velocity.z;
 		return xzLengthSq > 0.0001 || Math.abs(velocity.y) > 0.08;
 	}
 
-	private final void placeIframe(MinecraftClient client, BlockPos bp, Hand hand){
+	private final void placeIframe(Minecraft client, BlockPos bp, InteractionHand hand){
 		// Do the clicky-clicky
 		if(Configs.Generic.IFRAME_AUTO_PLACER_RAYCAST.getBooleanValue()){
 			BlockHitResult hitResult = new BlockHitResult(getPlaceAgainstSurface(bp), dir, bp, /*insideBlock=*/false);
 			if(Configs.Generic.IFRAME_AUTO_PLACER_ROTATE_PLAYER.getBooleanValue()){
 //				Vec3d playerPos = client.player.getPos();
 //				float oldYaw = client.player.getYaw(), oldPitch = client.player.getPitch();
-				client.player.lookAt(EntityAnchor.EYES, hitResult.getPos());
+				client.player.lookAt(Anchor.EYES, hitResult.getLocation());
 //				float grimYaw = client.player.getYaw(), grimPitch = client.player.getPitch();
 //				client.player.setAngles(oldYaw, oldPitch);
 //				client.getNetworkHandler().sendPacket(new PlayerInputC2SPacket(client.player.input.playerInput));
@@ -99,18 +99,18 @@ public final class AutoPlaceItemFrames{
 //				client.player.prevYaw = grimYaw;
 //				client.player.prevPitch = grimPitch;
 			}
-			client.interactionManager.interactBlock(client.player, hand, hitResult);
+			client.gameMode.useItemOn(client.player, hand, hitResult);
 //			client.player.swingHand(Hand.MAIN_HAND, false);
 //			client.getNetworkHandler().sendPacket(new HandSwingC2SPacket(hand));
 		}
 		else{
-			BlockHitResult hitResult = new BlockHitResult(Vec3d.ofCenter(bp), dir, bp, /*insideBlock=*/true);
+			BlockHitResult hitResult = new BlockHitResult(Vec3.atCenterOf(bp), dir, bp, /*insideBlock=*/true);
 //			if(ROTATE_PLAYER) client.player.lookAt(EntityAnchor.EYES, hitResult.getPos());
-			client.interactionManager.interactBlock(client.player, hand, hitResult);
+			client.gameMode.useItemOn(client.player, hand, hitResult);
 			// Airplace, basically
-			client.player.swingHand(Hand.MAIN_HAND, false);
-			client.getNetworkHandler().sendPacket(new HandSwingC2SPacket(hand));
-			client.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ORIGIN, Direction.DOWN));
+			client.player.swing(InteractionHand.MAIN_HAND, false);
+			client.getConnection().send(new ServerboundSwingPacket(hand));
+			client.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ZERO, Direction.DOWN));
 		}
 	}
 
@@ -125,7 +125,7 @@ public final class AutoPlaceItemFrames{
 				return;
 			}
 
-			if(client.player == null || client.world == null){ // Player offline, cancel iFramePlacer
+			if(client.player == null || client.level == null){ // Player offline, cancel iFramePlacer
 				Main.LOGGER.info("iFramePlacer: Disabling due to player offline");
 				dir = null; iFrameItem = null; placeAgainstBlock = null;
 				return;
@@ -134,33 +134,33 @@ public final class AutoPlaceItemFrames{
 			if(++attemptIdx >= recentPlaceAttempts.length) attemptIdx = 0;
 			recentPlaceAttempts[attemptIdx] = null;
 
-			if(isMovingTooFast(client.player.getVelocity())) return; // Pause while player is moving
+			if(isMovingTooFast(client.player.getDeltaMovement())) return; // Pause while player is moving
 
 			final double MAX_REACH = Configs.Generic.IFRAME_AUTO_PLACER_REACH.getDoubleValue();
 			final int SCAN_DIST = (int)(MAX_REACH+2);
 
-			BlockPos clientBp = client.player.getBlockPos();
+			BlockPos clientBp = client.player.blockPosition();
 			if(distFromPlane(clientBp) > SCAN_DIST) return; // Player out of range of iFrame wall
 
-			Box box = client.player.getBoundingBox().expand(SCAN_DIST, SCAN_DIST, SCAN_DIST);
-			Predicate<ItemFrameEntity> filter = ife -> ife.getFacing() == dir && distFromPlane(ife.getBlockPos().offset(dir.getOpposite())) == 0;
-			List<ItemFrameEntity> ifes = client.world.getEntitiesByClass(ItemFrameEntity.class, box, filter);
+			AABB box = client.player.getBoundingBox().inflate(SCAN_DIST, SCAN_DIST, SCAN_DIST);
+			Predicate<ItemFrame> filter = ife -> ife.getNearestViewDirection() == dir && distFromPlane(ife.blockPosition().relative(dir.getOpposite())) == 0;
+			List<ItemFrame> ifes = client.level.getEntitiesOfClass(ItemFrame.class, box, filter);
 
-			Vec3d eyePos = client.player.getEyePos();
-			Optional<BlockPos> closestValidPlacement = BlockPos.streamOutwards(clientBp, SCAN_DIST, SCAN_DIST, SCAN_DIST)
-				.filter(bp -> isValidIframePlacement(bp, client.world, ifes))
-				.filter(bp -> getPlaceAgainstSurface(bp).squaredDistanceTo(eyePos) <= MAX_REACH*MAX_REACH)
+			Vec3 eyePos = client.player.getEyePosition();
+			Optional<BlockPos> closestValidPlacement = BlockPos.withinManhattanStream(clientBp, SCAN_DIST, SCAN_DIST, SCAN_DIST)
+				.filter(bp -> isValidIframePlacement(bp, client.level, ifes))
+				.filter(bp -> getPlaceAgainstSurface(bp).distanceToSqr(eyePos) <= MAX_REACH*MAX_REACH)
 				.filter(bp -> Arrays.stream(recentPlaceAttempts).noneMatch(attempt -> attempt != null && bp.equals(attempt)))
 				.findFirst();
 			if(closestValidPlacement.isEmpty()) return; // No valid spot in range to place an iFrame
 
-			final Hand hand;
-			if(client.player.getOffHandStack().getItem() == iFrameItem) hand = Hand.OFF_HAND;
+			final InteractionHand hand;
+			if(client.player.getOffhandItem().getItem() == iFrameItem) hand = InteractionHand.OFF_HAND;
 			else{
-				hand = Hand.MAIN_HAND;
-				if(client.player.getMainHandStack().getItem() != iFrameItem){
+				hand = InteractionHand.MAIN_HAND;
+				if(client.player.getMainHandItem().getItem() != iFrameItem){
 					int hbSlot = 0;
-					while(hbSlot < 9 && client.player.getInventory().getMainStacks().get(hbSlot).getItem() != iFrameItem) ++hbSlot;
+					while(hbSlot < 9 && client.player.getInventory().getNonEquipmentItems().get(hbSlot).getItem() != iFrameItem) ++hbSlot;
 					if(hbSlot == 9){
 //						Main.LOGGER.info("iFramePlacer: Out of iFrames in hotbar/offhand");
 						return;
@@ -177,30 +177,30 @@ public final class AutoPlaceItemFrames{
 		ClientTickEvents.END_CLIENT_TICK.register(etl);
 
 		UseBlockCallback.EVENT.register((player, world, hand, hitResult) -> {
-			Item heldItem = player.getStackInHand(hand).getItem();
-			if(heldItem != Items.ITEM_FRAME && heldItem != Items.GLOW_ITEM_FRAME) return ActionResult.PASS;
+			Item heldItem = player.getItemInHand(hand).getItem();
+			if(heldItem != Items.ITEM_FRAME && heldItem != Items.GLOW_ITEM_FRAME) return InteractionResult.PASS;
 
 			BlockPos bp = hitResult.getBlockPos();
 			BlockState bs = world.getBlockState(bp);
 			placeAgainstBlock = bs.getBlock();
 			iFrameItem = heldItem;
-			dir = hitResult.getSide();
+			dir = hitResult.getDirection();
 			switch(dir){
 				case UP: case DOWN: axis = bp.getY(); break;
 				case EAST: case WEST: axis = bp.getX(); break;
 				case NORTH: case SOUTH: axis = bp.getZ(); break;
 			}
 //			Main.LOGGER.info("iFramePlacer: dir="+dir.name()+", placeAgainstBlock="+placeAgainstBlock);
-			return ActionResult.PASS;
+			return InteractionResult.PASS;
 		});
 		//TODO: prefer entity attack event? (like mapart autoplacer)
 		ClientEntityEvents.ENTITY_UNLOAD.register((entity, world) -> {
-			if(dir != null && entity instanceof ItemFrameEntity ife
-					&& ife.getFacing() == dir && distFromPlane(ife.getBlockPos().offset(dir.getOpposite())) == 0
+			if(dir != null && entity instanceof ItemFrame ife
+					&& ife.getNearestViewDirection() == dir && distFromPlane(ife.blockPosition().relative(dir.getOpposite())) == 0
 					// Filter out "ghost" itemframes (failed auto-place attempts that appear client-side for a tick)
-					&& (ife.age > 0 || Arrays.stream(recentPlaceAttempts).noneMatch(attempt -> attempt != null && ife.getBlockPos().equals(attempt)))
+					&& (ife.tickCount > 0 || Arrays.stream(recentPlaceAttempts).noneMatch(attempt -> attempt != null && ife.blockPosition().equals(attempt)))
 					// Filter out itemframes that were not punched by the player (likely just unloaded due to render distance)
-					&& ife.squaredDistanceTo(MinecraftClient.getInstance().player) < 32*32
+					&& ife.distanceToSqr(Minecraft.getInstance().player) < 32*32
 			){
 				Main.LOGGER.info("iFramePlacer: Disabling due to removed ItemFrameEntity");
 				dir = null; iFrameItem = null; placeAgainstBlock = null;

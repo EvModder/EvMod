@@ -1,26 +1,26 @@
 package net.evmodder.evmod.onTick;
 
 import java.util.List;
-import net.minecraft.item.Item.TooltipContext;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.Tooltip;
 import net.evmodder.evmod.config.OptionTooltipDisplay;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item.TooltipContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 
 public final class TooltipRepairCost implements Tooltip{
-	@Override public final void get(final ItemStack item, final TooltipContext _0, final TooltipType type, final List<Text> lines){
+	@Override public final void get(final ItemStack item, final TooltipContext _0, final TooltipFlag type, final List<Component> lines){
 		switch((OptionTooltipDisplay)Configs.Visuals.REPAIR_COST_TOOLTIP.getOptionListValue()){
 			case OFF: return;
-			case ADVANCED_TOOLTIPS: if(type == TooltipType.BASIC) return;
+			case ADVANCED_TOOLTIPS: if(type == TooltipFlag.NORMAL) return;
 			case ON: /*no op*/
 		}
-		final int rc = item.getComponents().get(DataComponentTypes.REPAIR_COST);
-		if(rc == 0 && !item.hasEnchantments() && !item.getComponents().contains(DataComponentTypes.STORED_ENCHANTMENTS)) return;
+		final int rc = item.getComponents().get(DataComponents.REPAIR_COST);
+		if(rc == 0 && !item.isEnchanted() && !item.getComponents().has(DataComponents.STORED_ENCHANTMENTS)) return;
 		//lines.add(Text.literal("RepairCost: ").formatted(Formatting.GRAY).append(Text.literal(""+rc).formatted(Formatting.GOLD)));
-		lines.add(lines.removeLast().copy().append(Text.literal(", rc:").formatted(Formatting.GRAY).append(Text.literal(""+rc).formatted(Formatting.GOLD))));
+		lines.add(lines.removeLast().copy().append(Component.literal(", rc:").withStyle(ChatFormatting.GRAY).append(Component.literal(""+rc).withStyle(ChatFormatting.GOLD))));
 	}
 }

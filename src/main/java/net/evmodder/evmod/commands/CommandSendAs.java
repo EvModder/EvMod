@@ -3,29 +3,29 @@ package net.evmodder.evmod.commands;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.evmodder.evmod.apis.RemoteServerSender;
 //import net.minecraft.client.multiplayer.PlayerInfo;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public class CommandSendAs{
 	public CommandSendAs(RemoteServerSender rms){
 		ClientCommandRegistrationCallback.EVENT.register(
 			(dispatcher, _0) -> dispatcher.register(
-				ClientCommandManager.literal("sendas")
-					.then(ClientCommandManager.argument("name", StringArgumentType.word())
-					.then(ClientCommandManager.argument("message", StringArgumentType.greedyString()))
+				ClientCommands.literal("sendas")
+					.then(ClientCommands.argument("name", StringArgumentType.word())
+					.then(ClientCommands.argument("message", StringArgumentType.greedyString()))
 					.executes(ctx->{
 						//ctx.getArgument("name", EntitySelector.class).getPlayer(ctx.getSource());
 						String name = ctx.getArgument("name", String.class);
 						boolean targetIsOnline = false;
-						for(String onlinePlayerName : ctx.getSource().getPlayerNames()) if(onlinePlayerName.equals(name)) targetIsOnline = true;
+						for(String onlinePlayerName : ctx.getSource().getOnlinePlayerNames()) if(onlinePlayerName.equals(name)) targetIsOnline = true;
 						if(!targetIsOnline){
-							ctx.getSource().sendError(Text.literal(name+" does not appear to be online"));
+							ctx.getSource().sendError(Component.literal(name+" does not appear to be online"));
 							return 1;
 						}
 						String message = ctx.getArgument("message", String.class).trim();
 						if(message.length() > 200){
-							ctx.getSource().sendFeedback(Text.literal("Request message >200 chars, trimming it"));
+							ctx.getSource().sendFeedback(Component.literal("Request message >200 chars, trimming it"));
 							message = message.substring(0, 200);
 						}
 						while((name.length() + message.length()) % 16 != 0) name += ' ';

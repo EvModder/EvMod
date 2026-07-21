@@ -3,10 +3,10 @@ package net.evmodder.evmod.commands;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 //import net.minecraft.client.multiplayer.PlayerInfo;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 
 public class CommandSeen{
 	//TODO: update map entry every time a player leaves the server
@@ -14,22 +14,22 @@ public class CommandSeen{
 	//TODO: NO-OP if not connected to the server
 	//TODO: 
 	public CommandSeen(){
-		/*ClientCommandManager.getActiveDispatcher().register(
-			ClientCommandManager.literal("hello").executes(context -> {
+		/*ClientCommands.getActiveDispatcher().register(
+			ClientCommands.literal("hello").executes(context -> {
 				context.getSource().sendFeedback(Text.literal("Hello world!"));
 				return 0;
 			})
 		);*/
 		ClientCommandRegistrationCallback.EVENT.register(
 			(dispatcher, _0) -> dispatcher.register(
-				ClientCommandManager.literal("seen").then(
-					//ClientCommandManager.argument("name", EntityArgumentType.player())
-					ClientCommandManager.argument("name", StringArgumentType.word())
+				ClientCommands.literal("seen").then(
+					//ClientCommands.argument("name", EntityArgumentType.player())
+					ClientCommands.argument("name", StringArgumentType.word())
 					.executes(ctx->{
 						//ctx.getArgument("name", EntitySelector.class).getPlayer(ctx.getSource());
 						String name = ctx.getArgument("name", String.class);
-						for(String onlinePlayerName : ctx.getSource().getPlayerNames()) if(onlinePlayerName.equals(name)){
-							ctx.getSource().sendFeedback(Text.literal(onlinePlayerName+" is online").formatted(Formatting.GRAY));
+						for(String onlinePlayerName : ctx.getSource().getOnlinePlayerNames()) if(onlinePlayerName.equals(name)){
+							ctx.getSource().sendFeedback(Component.literal(onlinePlayerName+" is online").withStyle(ChatFormatting.GRAY));
 							return Command.SINGLE_SUCCESS;
 						}
 //						ctx.getSource().getClient()
@@ -40,7 +40,7 @@ public class CommandSeen{
 //							ctx.getSource().getPlayerNames().contains(name);
 //							ctx.getSource().sendFeedback(Text.literal("You entered: "+name));
 //						}
-						ctx.getSource().sendFeedback(Text.literal("You entered: "+name));
+						ctx.getSource().sendFeedback(Component.literal("You entered: "+name));
 						return 1;
 					})
 				)

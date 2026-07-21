@@ -9,9 +9,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.config.OptionUnlockedMapHandling;
-import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.item.map.MapState;
-import net.minecraft.world.World;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 public final class MapGroupUtils{
 	private static int mapsInGroupHash;
@@ -21,9 +21,9 @@ public final class MapGroupUtils{
 
 	private static final HashMap<byte[], UUID> stateToIdCache = new HashMap<>(), unlockedStateToIdCache = new HashMap<>();
 	// Only external caller: MixinClientPlayNetworkHandler
-	public static final UUID getCachedIdForMapStateOrNull(MapState state){return (state.locked ? stateToIdCache : unlockedStateToIdCache).get(state.colors);}
+	public static final UUID getCachedIdForMapStateOrNull(MapItemSavedData state){return (state.locked ? stateToIdCache : unlockedStateToIdCache).get(state.colors);}
 //	private static final Random rand = new Random();
-	public static final UUID getIdForMapState(MapState state, boolean evict){
+	public static final UUID getIdForMapState(MapItemSavedData state, boolean evict){
 		UUID uuid;
 		if(!evict){
 			uuid = getCachedIdForMapStateOrNull(state);
@@ -42,7 +42,7 @@ public final class MapGroupUtils{
 		(state.locked ? stateToIdCache : unlockedStateToIdCache).put(state.colors, uuid);
 		return uuid;
 	}
-	public static final UUID getIdForMapState(MapState state){return getIdForMapState(state, /*evict*/false);}
+	public static final UUID getIdForMapState(MapItemSavedData state){return getIdForMapState(state, /*evict*/false);}
 
 	/*private static final int MAX_MAPS_IN_INV_AND_ECHEST = 64*27*(36+27); // 108864
 	public static final HashSet<UUID> getLegitLoadedMaps(final ClientWorld world){ // Only caller: CommandMapArtGroup
@@ -54,8 +54,8 @@ public final class MapGroupUtils{
 		}
 		return loadedMaps;
 	}*/
-	public static final Set<UUID> getLegitLoadedMaps(final World world){ // Only caller: CommandMapArtGroup
-		Stream<MapState> states = loadedMapIds.stream().map(i -> world.getMapState(new MapIdComponent(i)))
+	public static final Set<UUID> getLegitLoadedMaps(final Level world){ // Only caller: CommandMapArtGroup
+		Stream<MapItemSavedData> states = loadedMapIds.stream().map(i -> world.getMapData(new MapId(i)))
 				.filter(Objects::nonNull).filter(s -> !MapStateCacher.hasCacheMarker(s));
 		if(Configs.Generic.MAPART_GROUP_UNLOCKED_HANDLING.getOptionListValue() == OptionUnlockedMapHandling.SKIP) states = states.filter(s -> s.locked);
 		return states.map(MapGroupUtils::getIdForMapState).collect(Collectors.toSet());
@@ -69,7 +69,7 @@ public final class MapGroupUtils{
 	/*public static final boolean isMapNotInCurrentGroup(final UUID colorsUUID){
 		return currentMapGroup != null && !currentMapGroup.contains(colorsUUID);
 	}*/
-	public static final boolean shouldHighlightNotInCurrentGroup(final MapState state){
+	public static final boolean shouldHighlightNotInCurrentGroup(final MapItemSavedData state){
 		if(currentMapGroup == null) return false;
 		if(!state.locked && Configs.Generic.MAPART_GROUP_UNLOCKED_HANDLING.getOptionListValue() == OptionUnlockedMapHandling.SKIP) return false;
 

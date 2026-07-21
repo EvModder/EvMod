@@ -13,22 +13,22 @@ import net.evmodder.EvLib.util.TextUtils_New;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.mixin.AccessorPlayerListHud;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.network.packet.c2s.play.BundleItemSelectedC2SPacket;
-import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.protocol.game.ServerboundSelectBundleItemPacket;
+import net.minecraft.world.inventory.ContainerInput;
 
 public final class ClickUtils{
 	public enum ActionType{
-		CLICK(SlotActionType.PICKUP),
-		SHIFT_CLICK(SlotActionType.QUICK_MOVE),
-		HOTBAR_SWAP(SlotActionType.SWAP),
-		THROW(SlotActionType.THROW),
+		CLICK(ContainerInput.PICKUP),
+		SHIFT_CLICK(ContainerInput.QUICK_MOVE),
+		HOTBAR_SWAP(ContainerInput.SWAP),
+		THROW(ContainerInput.THROW),
 		BUNDLE_SELECT(null);
 
-		SlotActionType action;
-		ActionType(SlotActionType a){action = a;}
+		ContainerInput action;
+		ActionType(ContainerInput a){action = a;}
 	}
 	public record InvAction(int slot, int button, ActionType action){
 		@Override public InvAction clone(){return new InvAction(slot, button, action);}
@@ -140,13 +140,13 @@ public final class ClickUtils{
 	}
 
 	private static final Pattern tpsPattern = Pattern.compile("(\\d{1,2}(?:\\.\\d+))\\s?tps", Pattern.CASE_INSENSITIVE);
-	private static final long /*getTPS*/getMillisPerTick(MinecraftClient client){
+	private static final long /*getTPS*/getMillisPerTick(Minecraft client){
 		// Alternative: client.getNetworkHandler().onPlayerListHeader(PlayerListHeaderS2CPacket plhp)
 
-		final AccessorPlayerListHud playerListHudAccessor = (AccessorPlayerListHud)client.inGameHud.getPlayerListHud();
-		final Text footerText = playerListHudAccessor.getFooter();
+		final AccessorPlayerListHud playerListHudAccessor = (AccessorPlayerListHud)client.gui.hud.getTabList();
+		final Component footerText = playerListHudAccessor.getFooter();
 		if(footerText == null) return TICK_DURATION_NANOS/1_000_000l;
-		final MutableText text = Text.empty(); footerText.withoutStyle().forEach(text::append);
+		final MutableComponent text = Component.empty(); footerText.toFlatList().forEach(text::append);
 		final String footerStr = TextUtils_New.stripColorAndFormats(text.getString());
 		//§819.90 tps — 692 players online — 92 ping
 		final Matcher matcher = tpsPattern.matcher(footerStr);
@@ -167,11 +167,11 @@ public final class ClickUtils{
 			return;
 		}
 
-		final MinecraftClient client = MinecraftClient.getInstance();
+		final Minecraft client = Minecraft.getInstance();
 		synchronized(tickDurationArr){
 			if(clickOpOngoing){
 				Main.LOGGER.warn("executeClicks() already has an ongoing operation");
-				client.player.sendMessage(Text.literal("Clicks cancelled: current operation needs to finish before starting a new one"), true);
+				client.player.sendOverlayMessage(Component.literal("Clicks cancelled: current operation needs to finish before starting a new one"));
 				onComplete.run();
 				return;
 			}
@@ -182,7 +182,7 @@ public final class ClickUtils{
 			if(msPerTick != TICK_DURATION_NANOS/1_000_000l) adjustTickRate(msPerTick);
 		}
 
-		final int syncId = client.player.currentScreenHandler.syncId;
+		final int syncId = client.player.containerMenu.containerId;
 		estimatedMsLeft = Integer.MAX_VALUE;
 
 		new Timer().schedule(new TimerTask(){
@@ -198,16 +198,16 @@ public final class ClickUtils{
 					Main.LOGGER.error("executeClicks() failed due to null player! num clicks in arr: "+sumClicksInDuration);
 					stopTask(); return;
 				}
-				if(client.player.currentScreenHandler.syncId != syncId){
-					Main.LOGGER.error("executeClicks() failed due to syncId changing mid-operation ("+syncId+" -> "+client.player.currentScreenHandler.syncId+")");
-					client.player.sendMessage(Text.literal("Clicks cancelled: container ID changed").withColor(SYNC_ID_CHANGED_COLOR), true);
+				if(client.player.containerMenu.containerId != syncId){
+					Main.LOGGER.error("executeClicks() failed due to syncId changing mid-operation ("+syncId+" -> "+client.player.containerMenu.containerId+")");
+					client.player.sendOverlayMessage(Component.literal("Clicks cancelled: container ID changed").withColor(SYNC_ID_CHANGED_COLOR));
 					stopTask(); return;
 				}
 				if(clicks.isEmpty()){
-					if(estimatedMsLeft != Integer.MAX_VALUE) client.player.sendMessage(Text.literal("Clicks finished early!"), true);
+					if(estimatedMsLeft != Integer.MAX_VALUE) client.player.sendOverlayMessage(Component.literal("Clicks finished early!"));
 					stopTask(); return;
 				}
-				client.executeSync(()->{
+				client.executeIfPossible(()->{
 					while(calcAvailableClicks() > 0 && !clicks.isEmpty() && canProceed.apply(clicks.peek())){
 //						if(!canProceed.apply(clicks.peek())) break;//{waitedForClicks = true; return;}
 						if(calcAvailableClicks() <= 0){
@@ -219,9 +219,9 @@ public final class ClickUtils{
 //							Main.LOGGER.info("Executing click: "+click.slot+","+click.button+","+click.action+" | available="+calcAvailableClicks());
 							thisClickIsBotted = true;
 							if(click.action == ActionType.BUNDLE_SELECT){
-								client.player.networkHandler.sendPacket(new BundleItemSelectedC2SPacket(click.slot, click.button));
+								client.player.connection.send(new ServerboundSelectBundleItemPacket(click.slot, click.button));
 							}
-							else client.interactionManager.clickSlot(syncId, click.slot, click.button, click.action.action, client.player);
+							else client.gameMode.handleContainerInput(syncId, click.slot, click.button, click.action.action, client.player);
 							thisClickIsBotted = false;
 						}
 						catch(NullPointerException e){
@@ -231,7 +231,7 @@ public final class ClickUtils{
 					}
 					if(clicks.isEmpty()){
 						stopTask();
-						if(estimatedMsLeft != Integer.MAX_VALUE) client.player.sendMessage(Text.translatable(Main.MOD_ID+".clickutils.clicksDone"), true);
+						if(estimatedMsLeft != Integer.MAX_VALUE) client.player.sendOverlayMessage(Component.translatable(Main.MOD_ID+".clickutils.clicksDone"));
 						return;
 					}
 					if(tickDurationArr != null){
@@ -239,11 +239,11 @@ public final class ClickUtils{
 						final int msLeft = 1000 + calcRemainingTicks(clicks.size())*(int)(TICK_DURATION_NANOS/1_000_000l);
 						estimatedMsLeft = Math.min(estimatedMsLeft, msLeft);
 //						StringUtils.translate("");
-						client.player.sendMessage(
-							Text.translatable(
+						client.player.sendOverlayMessage(
+							Component.translatable(
 									Main.MOD_ID+".clickutils.waitingForClicks",
 									clicks.size(), TextUtils_New.formatTime(estimatedMsLeft)
-							).withColor(OUTTA_CLICKS_COLOR), true);
+							).withColor(OUTTA_CLICKS_COLOR));
 //						client.player.sendMessage(
 //							Text.literal(
 ////							"Waiting for available clicks... ("
@@ -261,7 +261,7 @@ public final class ClickUtils{
 	}
 
 	public static final void executeClicksLEGACY(
-			MinecraftClient client,
+			Minecraft client,
 			Queue<InvAction> clicks, final int MILLIS_BETWEEN_CLICKS, final int MAX_CLICKS_PER_SECOND,
 			Function<InvAction, Boolean> canProceed, Runnable onComplete)
 	{
@@ -274,7 +274,7 @@ public final class ClickUtils{
 			Main.LOGGER.error("Invalid settings! clicks_per_second cannot be < 1 and millis_between clicks cannot be < 0");
 			return;
 		}
-		final int syncId = MinecraftClient.getInstance().player.currentScreenHandler.syncId;
+		final int syncId = Minecraft.getInstance().player.containerMenu.containerId;
 		if(MILLIS_BETWEEN_CLICKS == 0){
 			new Timer().schedule(new TimerTask(){
 				int clicksInLastSecond = 0;
@@ -286,9 +286,9 @@ public final class ClickUtils{
 						InvAction click = clicks.remove();
 						try{
 							if(click.action == ActionType.BUNDLE_SELECT){
-								client.player.networkHandler.sendPacket(new BundleItemSelectedC2SPacket(click.slot, click.button));
+								client.player.connection.send(new ServerboundSelectBundleItemPacket(click.slot, click.button));
 							}
-							else client.interactionManager.clickSlot(syncId, click.slot, click.button, click.action.action, client.player);
+							else client.gameMode.handleContainerInput(syncId, click.slot, click.button, click.action.action, client.player);
 						}
 						catch(NullPointerException e){
 							Main.LOGGER.error("executeClicks()-MODE:c/ms(array) failure due to null client. Clicks left: "+clicks.size());
@@ -311,9 +311,9 @@ public final class ClickUtils{
 				InvAction click = clicks.remove();
 				try{
 					if(click.action == ActionType.BUNDLE_SELECT){
-						client.player.networkHandler.sendPacket(new BundleItemSelectedC2SPacket(click.slot, click.button));
+						client.player.connection.send(new ServerboundSelectBundleItemPacket(click.slot, click.button));
 					}
-					else client.interactionManager.clickSlot(syncId, click.slot, click.button, click.action.action, client.player);
+					else client.gameMode.handleContainerInput(syncId, click.slot, click.button, click.action.action, client.player);
 				}
 				catch(NullPointerException e){
 					Main.LOGGER.error("executeClicks()-MODE:c/ms(simple) failure due to null client. Clicks left: "+clicks.size());
@@ -331,9 +331,9 @@ public final class ClickUtils{
 					//Main.LOGGER.info("click: "+click.syncId+","+click.slotId+","+click.button+","+click.actionType);
 					try{
 						if(click.action == ActionType.BUNDLE_SELECT){
-							client.player.networkHandler.sendPacket(new BundleItemSelectedC2SPacket(click.slot, click.button));
+							client.player.connection.send(new ServerboundSelectBundleItemPacket(click.slot, click.button));
 						}
-						else client.interactionManager.clickSlot(syncId, click.slot, click.button, click.action.action, client.player);
+						else client.gameMode.handleContainerInput(syncId, click.slot, click.button, click.action.action, client.player);
 					}
 					catch(NullPointerException e){
 						Main.LOGGER.error("executeClicks()-MODE:ms/c failure due to null client. Clicks left: "+clicks.size());

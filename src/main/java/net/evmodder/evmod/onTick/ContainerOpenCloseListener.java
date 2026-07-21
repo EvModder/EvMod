@@ -10,13 +10,13 @@ import net.evmodder.evmod.apis.TickListener;
 import net.evmodder.evmod.config.OptionMapStateCache;
 import net.evmodder.evmod.keybinds.KeybindInventoryRestock;
 import net.evmodder.evmod.listeners.BlockClickListener;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.item.FilledMapItem;
-import net.minecraft.item.Items;
-import net.minecraft.item.map.MapState;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 public final class ContainerOpenCloseListener implements TickListener{
 	private final KeybindInventoryRestock kbInvRestock;
@@ -32,17 +32,17 @@ public final class ContainerOpenCloseListener implements TickListener{
 	public static boolean echestCacheLoaded; // TODO: remove horrible public static vars
 	public static HashSet<UUID> containerCachesLoaded = new HashSet<>();
 
-	@Override public final void onTickEnd(final MinecraftClient client){
+	@Override public final void onTickEnd(final Minecraft client){
 		if(client.player == null) return;
-		final ScreenHandler sh = client.player.currentScreenHandler;
-		final int newSyncId = sh == null ? 0 : sh.syncId;
+		final AbstractContainerMenu sh = client.player.containerMenu;
+		final int newSyncId = sh == null ? 0 : sh.containerId;
 		if(newSyncId == syncId){
 			if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
 				if(currentlyViewingContainer){
 					slots = sh.slots;
-					if(waitingForEcToLoad && IntStream.range(0, 27).anyMatch(i -> !slots.get(i).getStack().isEmpty())){
+					if(waitingForEcToLoad && IntStream.range(0, 27).anyMatch(i -> !slots.get(i).getItem().isEmpty())){
 						waitingForEcToLoad = false;
-						if(!echestCacheLoaded) MapStateCacher.loadMapStatesByPos(sh.getStacks(), MapStateCacher.BY_PLAYER_EC);
+						if(!echestCacheLoaded) MapStateCacher.loadMapStatesByPos(sh.getItems(), MapStateCacher.BY_PLAYER_EC);
 						echestCacheLoaded = true;
 					}
 				}
@@ -59,19 +59,19 @@ public final class ContainerOpenCloseListener implements TickListener{
 				currentlyViewingContainer = true;
 				// Don't reload from echest-cache unless player leaves and rejoins server
 				if(Configs.Generic.MAP_CACHE_BY_EC_POS.getBooleanValue() && (
-					currentlyViewingEchest=client.currentScreen.getTitle().contains(Text.translatable("container.enderchest")))
+					currentlyViewingEchest=client.gui.screen().getTitle().contains(Component.translatable("container.enderchest")))
 				){
 					waitingForEcToLoad = true;
 				}
 				else{
 					if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue() && containerCachesLoaded.add(BlockClickListener.lastClickedBlockHash)){
-						MapStateCacher.loadMapStatesByPos(sh.getStacks(), MapStateCacher.BY_CONTAINER);
+						MapStateCacher.loadMapStatesByPos(sh.getItems(), MapStateCacher.BY_CONTAINER);
 					}
-					if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) sh.getStacks().stream()
+					if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) sh.getItems().stream()
 						.filter(s -> s.getItem() == Items.FILLED_MAP && s.getCustomName() != null)
 						.forEach(s -> {
-							MapState state = FilledMapItem.getMapState(s, client.world);
-							if(state == null) MapStateCacher.loadMapStateByName(s, client.world);
+							MapItemSavedData state = MapItem.getSavedData(s, client.level);
+							if(state == null) MapStateCacher.loadMapStateByName(s, client.level);
 //							else MapStateCacher.addMapStateByName(s, state);
 						});
 				}
@@ -84,16 +84,16 @@ public final class ContainerOpenCloseListener implements TickListener{
 					currentlyViewingContainer = false;
 					if(currentlyViewingEchest){
 						currentlyViewingEchest = false;
-						if(!waitingForEcToLoad) MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getStack), MapStateCacher.BY_PLAYER_EC);
+						if(!waitingForEcToLoad) MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getItem), MapStateCacher.BY_PLAYER_EC);
 					}
 					else{
 						if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue()){
-							MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getStack), MapStateCacher.BY_CONTAINER);
+							MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getItem), MapStateCacher.BY_CONTAINER);
 						}
-						if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) slots.stream().map(Slot::getStack)
+						if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) slots.stream().map(Slot::getItem)
 							.filter(s -> s.getItem() == Items.FILLED_MAP && s.getCustomName() != null)
 							.forEach(s -> {
-								MapState state = FilledMapItem.getMapState(s, client.world);
+								MapItemSavedData state = MapItem.getSavedData(s, client.level);
 								if(state != null) MapStateCacher.addMapStateByName(s, state);
 //								else MapStateCacher.loadMapStateByName(s, client.world);
 							});

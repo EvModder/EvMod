@@ -5,26 +5,27 @@ import com.mojang.authlib.yggdrasil.ProfileResult;
 import net.evmodder.EvLib.util.LoadingCache;
 import net.evmodder.EvLib.util.WebHook;
 import net.evmodder.evmod.Main;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.PlayerInfo;
+
 import static net.evmodder.evmod.apis.MojangProfileLookupConstants.*;
 
 public class MojangProfileLookup{
-	private static final MinecraftClient client = MinecraftClient.getInstance();
+	private static final Minecraft client = Minecraft.getInstance();
 
 	public static final LoadingCache<UUID, String> nameLookup = new LoadingCache<>(NAME_LOADING){
 		@Override protected String loadSyncOrNull(UUID key){
-			ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
+			ClientPacketListener networkHandler = client.getConnection();
 			if(networkHandler != null){
-				PlayerListEntry entry = networkHandler.getPlayerListEntry(key);
+				PlayerInfo entry = networkHandler.getPlayerInfo(key);
 				if(entry != null) return entry.getProfile().name();
 			}
 			return null;
 		}
 		@Override protected String load(UUID key){
 			//Main.LOGGER.info("oof, web request D:");
-			ProfileResult pr = client.getApiServices().sessionService().fetchProfile(key, /*requireSecure=*/false);
+			ProfileResult pr = client.services().sessionService().fetchProfile(key, /*requireSecure=*/false);
 			if(pr == null || pr.profile() == null || pr.profile().name() == null){
 				Main.LOGGER.error("Unable to find name for player UUID: "+key.toString());
 				return NAME_404;
@@ -38,9 +39,9 @@ public class MojangProfileLookup{
 	public static final LoadingCache<String, UUID> uuidLookup = new LoadingCache<>(UUID_LOADING){
 		@Override protected UUID loadSyncOrNull(String key){
 			//Main.LOGGER.info("fetch name called for uuid: "+key);
-			ClientPlayNetworkHandler networkHandler = client.getNetworkHandler();
+			ClientPacketListener networkHandler = client.getConnection();
 			if(networkHandler != null){
-				for(PlayerListEntry entry : networkHandler.getPlayerList()){
+				for(PlayerInfo entry : networkHandler.getListedOnlinePlayers()){
 					if(entry.getProfile().name().equalsIgnoreCase(key)) return entry.getProfile().id();
 				}
 			}

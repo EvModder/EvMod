@@ -8,38 +8,38 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.FilledMapItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.map.MapState;
-import net.minecraft.screen.PlayerScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 public abstract class MapClickMoveNeighbors{
 	private static boolean ongoingClickMove;
 
 	// Only called by MixinScreenHandler
-	public static final void moveNeighbors(final PlayerEntity player, final int destSlot, final ItemStack mapMoved){
+	public static final void moveNeighbors(final Player player, final int destSlot, final ItemStack mapMoved){
 		if(mapMoved.getItem() != Items.FILLED_MAP) return;
 
 		if(ongoingClickMove){Main.LOGGER.warn("MapMoveClick: Already ongoing"); return;}
 		Main.LOGGER.info("MapMoveClick: moveNeighbors() called");
 
-		final ItemStack[] slots = player.currentScreenHandler.slots.stream().map(Slot::getStack).toArray(ItemStack[]::new);
-		final MapState state = FilledMapItem.getMapState(mapMoved, player.getEntityWorld());
+		final ItemStack[] slots = player.containerMenu.slots.stream().map(Slot::getItem).toArray(ItemStack[]::new);
+		final MapItemSavedData state = MapItem.getSavedData(mapMoved, player.level());
 		RelatedMapsData data;
 		final boolean moveHalf;
 		{
 			final List<ItemStack> slotList = Arrays.asList(slots);
-			final String name = mapMoved.getName().getString();
+			final String name = mapMoved.getHoverName().getString();
 			final int count = mapMoved.getCount();
 			final Boolean locked = state == null ? null : state.locked;
-			data = MapRelationUtils.getRelatedMapsByName(slotList, name, count, locked, player.getEntityWorld());
+			data = MapRelationUtils.getRelatedMapsByName(slotList, name, count, locked, player.level());
 			if(data.prefixLen() == -1){
-				data = MapRelationUtils.getRelatedMapsByName(slotList, name, count*2, locked, player.getEntityWorld());
-				if(data.prefixLen() == -1) data = MapRelationUtils.getRelatedMapsByName(slotList, name, count*2-1, locked, player.getEntityWorld());
+				data = MapRelationUtils.getRelatedMapsByName(slotList, name, count*2, locked, player.level());
+				if(data.prefixLen() == -1) data = MapRelationUtils.getRelatedMapsByName(slotList, name, count*2-1, locked, player.level());
 				if(data.prefixLen() == -1){
 					Main.LOGGER.info("MapMoveClick: related-name maps not found");
 					return;
@@ -50,7 +50,7 @@ public abstract class MapClickMoveNeighbors{
 		}
 		data.slots().removeIf(i -> {
 			if(i == destSlot) return true;
-			if(ItemStack.areItemsAndComponentsEqual(slots[i], mapMoved)){
+			if(ItemStack.isSameItemSameComponents(slots[i], mapMoved)){
 				Main.LOGGER.warn("MapMoveClick: multiple copies of same map not yet supported (i:"+i+",dest"+destSlot);
 				return true;
 			}
@@ -75,8 +75,8 @@ public abstract class MapClickMoveNeighbors{
 			if(state == null){++w; br += 1;}
 			else{
 				final byte[] colors = state.colors;
-				final byte[] tlColors = FilledMapItem.getMapState(slots[tl], player.getEntityWorld()).colors;
-				final byte[] brColors = FilledMapItem.getMapState(slots[br], player.getEntityWorld()).colors;
+				final byte[] tlColors = MapItem.getSavedData(slots[tl], player.level()).colors;
+				final byte[] brColors = MapItem.getSavedData(slots[br], player.level()).colors;
 				int scoreLeft = -2, scoreRight = -2, scoreTop = -2, scoreBottom = -2;
 				if(h == 1){
 					scoreLeft = (tl%9==0||destSlot%9+w>8) ? -2 : MapRelationUtils.adjacentEdgeScore(colors, tlColors, true);
@@ -139,20 +139,20 @@ public abstract class MapClickMoveNeighbors{
 		//if(PREFER_HOTBAR_SWAPS){
 		int hotbarButton = 40;
 		if(!moveHalf){
-			final boolean isPlayerInv = player.currentScreenHandler instanceof PlayerScreenHandler;
+			final boolean isPlayerInv = player.containerMenu instanceof InventoryMenu;
 			final int hbStart = slots.length-(isPlayerInv ? 10 : 9); // extra slot at end to account for offhand
 			final boolean fromHotbar = br >= hbStart, toHotbar = brDest >= hbStart;
 			//Main.LOGGER.warn("MapMoveClick: fromHotbar:"+fromHotbar+", toHotbar:"+toHotbar+", brDest:"+brDest+", last  hotbar if to: "+(brDest-hbStart));
 			for(int i=0; i<9; ++i){
 				if(fromHotbar && (tl-hbStart)%9 <= i && i <= (br-hbStart)%9) continue;		// Avoid hotbar slots the map might be moving from
 				if(toHotbar && (tlDest-hbStart)%9 <= i && i <= (brDest-hbStart)%9) continue;// Avoid hotbar slots the map might be moving into
-				if(player.getInventory().getStack(i).isEmpty()){hotbarButton = i; break;}
+				if(player.getInventory().getItem(i).isEmpty()){hotbarButton = i; break;}
 			}
 			if(hotbarButton == 40) Main.LOGGER.warn("MapMoveClick: Using offhand for swaps");
 		}
 
 		int tempSlot = -1;
-		if(!moveHalf && !player.getInventory().getStack(hotbarButton).isEmpty()){
+		if(!moveHalf && !player.getInventory().getItem(hotbarButton).isEmpty()){
 			for(int i=0; i<slots.length; ++i) if(slots[i].isEmpty() && !slotsInvolved.contains(i)){tempSlot = i; break;}
 			if(tempSlot == -1) Main.LOGGER.warn("MapMoveClick: No available slot with which to free up offhand");
 		}
@@ -189,7 +189,7 @@ public abstract class MapClickMoveNeighbors{
 		ClickUtils.executeClicks(/*canProceed=*/_0->true, ()->{
 			ongoingClickMove = false;
 			Main.LOGGER.info("MapMoveClick: DONE (clicks:"+numClicks+")");
-			player.sendMessage(Text.literal("MapMoveClick: DONE (clicks:"+numClicks+")"), true);
+			player.sendOverlayMessage(Component.literal("MapMoveClick: DONE (clicks:"+numClicks+")"));
 		}, clicks);
 //		if(Main.inventoryUtils.addClick(null) >= Main.inventoryUtils.MAX_CLICKS){
 //			Main.LOGGER.warn("Not enough clicks available to execute MapMoveNeighbors :(");

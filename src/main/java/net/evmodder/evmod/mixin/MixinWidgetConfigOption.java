@@ -68,7 +68,7 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 		int configHeight = 20;
 		GuiTextFieldGeneric textField = createTextField(x, y + 1, textFieldWidth, configHeight - 3);
 		textField.setMaxLength(maxTextfieldTextLength);
-		textField.setText(config.getStringValue());
+		textField.setValue(config.getStringValue());
 
 		x += textFieldWidth + 3;
 		configWidth -= textFieldWidth + 23;
@@ -82,13 +82,13 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 		ConfigOptionChangeListenerTextField listenerChange = new ConfigOptionChangeListenerTextField(config, textField, resetButton);
 		ConfigOptionListenerResetConfig resetListener = new ConfigOptionListenerResetConfig(config, new ConfigResetterBase(){
 			@Override public void resetConfigOption(){
-				textField.setText(config.getStringValue());
+				textField.setValue(config.getStringValue());
 				keybindButton.updateDisplayString();
 				resetButton.setEnabled(config.isModified());
 			}
 		}, resetButton, null);
 
-		addTextField(textField, listenerChange, TextFieldType.STRING);
+		addTextField(textField, listenerChange, TextFieldType.STRING.setMaxLength(maxTextfieldTextLength));
 		addButton(keybindButton, host.getButtonPressListener());
 		addButton(resetButton, resetListener);
 
@@ -97,7 +97,7 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 	private final void goofyAddFloatWidget(GuiTextFieldGeneric textFieldI, ButtonGeneric resetButton, ConfigYawPitchHotkeyed config, boolean yaw){
 		ConfigOptionChangeListenerTextField changeListener = new ConfigOptionChangeListenerTextField(config, textFieldI, resetButton){
 			@Override public boolean onTextChange(GuiTextFieldGeneric textField){
-				if(textFieldI.getText().isBlank()) resetButton.setEnabled(true);
+				if(textFieldI.getValue().isBlank()) resetButton.setEnabled(true);
 				return super.onTextChange(textField);
 			}
 		};
@@ -107,7 +107,7 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 				addTextField(textFieldI, changeListener, TextFieldType.FLOAT);
 			}
 			@Override public void render(GuiContext guiContext, int mouseX, int mouseY, boolean selected){
-				textFieldI.render(guiContext, mouseX, mouseY, 0f);
+				textFieldI.extractRenderState(guiContext.getGuiGraphics(), mouseX, mouseY, 0f);
 			}
 
 			@Override public boolean wasConfigModified(){
@@ -116,8 +116,8 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 
 			@Override public void applyNewValueToConfig(){
 				try{
-					if(yaw) config.setYaw(Float.parseFloat(textFieldI.getText()));
-					else config.setPitch(Float.parseFloat(textFieldI.getText()));
+					if(yaw) config.setYaw(Float.parseFloat(textFieldI.getValue()));
+					else config.setPitch(Float.parseFloat(textFieldI.getValue()));
 				}
 				catch(NumberFormatException e){}
 			}
@@ -139,9 +139,9 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 		x += textFieldWidth + 2;
 		GuiTextFieldGeneric textField2 = createTextField(x, y + 1, textFieldWidth, configHeight - 3);
 		textField1.setMaxLength(maxTextfieldTextLength);
-		textField1.setText(""+config.getYaw());
+		textField1.setValue(""+config.getYaw());
 		textField2.setMaxLength(maxTextfieldTextLength);
-		textField2.setText(""+config.getPitch());
+		textField2.setValue(""+config.getPitch());
 
 		x += textFieldWidth + 4;
 		IGuiIcon icon = config.shouldUseSlider() ? MaLiLibIcons.BTN_TXTFIELD : MaLiLibIcons.BTN_SLIDER;
@@ -159,8 +159,8 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 
 		ConfigOptionListenerResetConfig resetListener = new ConfigOptionListenerResetConfig(config, new ConfigResetterBase(){
 			@Override public void resetConfigOption(){
-				textField1.setText(""+config.getYaw());
-				textField2.setText(""+config.getPitch());
+				textField1.setValue(""+config.getYaw());
+				textField2.setValue(""+config.getPitch());
 				keybindButton.updateDisplayString();
 				resetButton.setEnabled(config.isModified());
 			}

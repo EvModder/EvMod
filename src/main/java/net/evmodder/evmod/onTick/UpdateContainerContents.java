@@ -12,25 +12,25 @@ import net.evmodder.evmod.apis.InvUtils;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.TickListener;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.AnvilScreen;
-import net.minecraft.client.gui.screen.ingame.CartographyTableScreen;
-import net.minecraft.client.gui.screen.ingame.CraftingScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.item.FilledMapItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.map.MapState;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.AnvilScreen;
+import net.minecraft.client.gui.screens.inventory.CartographyTableScreen;
+import net.minecraft.client.gui.screens.inventory.CraftingScreen;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 public final class UpdateContainerContents implements TickListener{
 	private static final HashSet<UUID> duplicatesInContainer = new HashSet<>(), inContainerAndInInv = new HashSet<>();
 	private static int mapsInContainerHash;
-	public static MutableText customTitle; // Accessor: MixinHandledScreen
+	public static MutableComponent customTitle; // Accessor: MixinHandledScreen
 
 	public static final int getMapsInContainerHash(){return mapsInContainerHash;} // Accessors: TooltipMapNameColor, TooltipMapLoreMetadata
 	public static final boolean hasDuplicateInContainer(final UUID colorsId){return duplicatesInContainer.contains(colorsId);} // Accessor: TooltipMapNameColor
@@ -46,15 +46,15 @@ public final class UpdateContainerContents implements TickListener{
 	}
 	private final List<ItemStack> getAllMapItemsInContainer(final List<Slot> slots){
 		final List<Slot> containerSlots = slots.subList(0, slots.size()-36);
-		return InvUtils.getAllNestedItems(containerSlots.stream().map(Slot::getStack))
+		return InvUtils.getAllNestedItems(containerSlots.stream().map(Slot::getItem))
 //				.filter(s -> s.getItem() == Items.FILLED_MAP)
-				.filter(s -> s.get(DataComponentTypes.MAP_ID) != null)
+				.filter(s -> s.get(DataComponents.MAP_ID) != null)
 				.toList();
 	}
-	@Override public final void onTickStart(final MinecraftClient client){
-		if(client.player == null || client.world == null || !client.player.isAlive() ||
-			client.currentScreen == null || !(client.currentScreen instanceof HandledScreen hs) ||
-			hs.getScreenHandler().syncId == 0 || // InventoryScreen/CreativeScreen/RecipeBookScreen (NOT a container)
+	@Override public final void onTickStart(final Minecraft client){
+		if(client.player == null || client.level == null || !client.player.isAlive() ||
+			client.gui.screen() == null || !(client.gui.screen() instanceof AbstractContainerScreen hs) ||
+			hs.getMenu().containerId == 0 || // InventoryScreen/CreativeScreen/RecipeBookScreen (NOT a container)
 			hs instanceof AnvilScreen || // These get false-flagged for "duplicate map in container" with i/o slots
 			hs instanceof CraftingScreen ||
 			hs instanceof CartographyTableScreen)
@@ -66,12 +66,12 @@ public final class UpdateContainerContents implements TickListener{
 			return;
 		}
 		{
-			final ScreenHandler sh = client.player.currentScreenHandler;
-			handleContainerChangeEvent(sh == null ? 0 : sh.syncId);
+			final AbstractContainerMenu sh = client.player.containerMenu;
+			handleContainerChangeEvent(sh == null ? 0 : sh.containerId);
 		}
 
-		final List<ItemStack> mapItems = getAllMapItemsInContainer(hs.getScreenHandler().slots);
-		mapsInContainerHash = hs.getScreenHandler().syncId + mapItems.hashCode();
+		final List<ItemStack> mapItems = getAllMapItemsInContainer(hs.getMenu().slots);
+		mapsInContainerHash = hs.getMenu().containerId + mapItems.hashCode();
 
 		final boolean SHOW_ASTERISKS = Configs.Visuals.MAP_HIGHLIGHT_CONTAINER_NAME.getBooleanValue();
 		if(!SHOW_ASTERISKS && !Configs.Visuals.MAP_HIGHLIGHT_TOOLTIP.getBooleanValue()) return;
@@ -82,7 +82,7 @@ public final class UpdateContainerContents implements TickListener{
 //		Main.LOGGER.info("ContainerHighlighter: Recomputing cache");
 
 		if(mapItems.isEmpty()) return;
-		final List<MapState> states = mapItems.stream().map(i -> FilledMapItem.getMapState(i, client.world)).filter(Objects::nonNull).toList();
+		final List<MapItemSavedData> states = mapItems.stream().map(i -> MapItem.getSavedData(i, client.level)).filter(Objects::nonNull).toList();
 		final List<UUID> colorIds;
 		{
 			// More optimized compared to the commented-out version, but has the downside of skipping unlocked fully transparent maps (slightly incorrect)
@@ -108,7 +108,7 @@ public final class UpdateContainerContents implements TickListener{
 			if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue());
 			if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue());
 			if(mapItems.size() > states.size() + (!Configs.Generic.SKIP_NULL_MAPS.getBooleanValue() ? 0
-					: mapItems.stream().filter(stack -> MapGroupUtils.nullMapIds.contains(stack.get(DataComponentTypes.MAP_ID).id())).count()
+					: mapItems.stream().filter(stack -> MapGroupUtils.nullMapIds.contains(stack.get(DataComponents.MAP_ID).id())).count()
 			)){
 				asterisks.add(Configs.Visuals.MAP_COLOR_UNLOADED.getIntegerValue());
 			}
@@ -121,7 +121,7 @@ public final class UpdateContainerContents implements TickListener{
 //				Main.LOGGER.info("ContainerHighlighter: colored title! asterisks.size()="+asterisks.size());
 				customTitle = hs.getTitle().copy();
 				asterisks.stream().distinct() // The "distinct" only exists in case of configurations where 2+ settings share 1 color
-					.forEach(color -> customTitle.append(Text.literal("*").withColor(color).formatted(Formatting.BOLD)));
+					.forEach(color -> customTitle.append(Component.literal("*").withColor(color).withStyle(ChatFormatting.BOLD)));
 			}
 		}
 	}

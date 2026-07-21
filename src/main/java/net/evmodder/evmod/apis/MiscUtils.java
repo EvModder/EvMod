@@ -8,33 +8,33 @@ import java.util.UUID;
 import net.evmodder.EvLib.util.PacketHelper;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.mixin.AccessorProjectileEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ServerInfo;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LazyEntityReference;
-import net.minecraft.entity.projectile.thrown.EnderPearlEntity;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ServerData;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityReference;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 public class MiscUtils{
 	public static final boolean hasMoved(final Entity entity){
-		return entity.lastX != entity.getX() || entity.lastY != entity.getY() || entity.lastZ != entity.getZ();
+		return entity.xo != entity.getX() || entity.yo != entity.getY() || entity.zo != entity.getZ();
 	}
 
 	public static final boolean isLookingAt(final Entity entity, final Entity player){
-		final Vec3d vec3d = player.getRotationVec(1f).normalize();
-		Vec3d vec3d2 = new Vec3d(entity.getX() - player.getX(), entity.getEyeY() - player.getEyeY(), entity.getZ() - player.getZ());
+		final Vec3 vec3d = player.getViewVector(1f).normalize();
+		Vec3 vec3d2 = new Vec3(entity.getX() - player.getX(), entity.getEyeY() - player.getEyeY(), entity.getZ() - player.getZ());
 		final double d = vec3d2.length();
-		vec3d2 = new Vec3d(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d);//normalize
-		final double e = vec3d.dotProduct(vec3d2);
+		vec3d2 = new Vec3(vec3d2.x / d, vec3d2.y / d, vec3d2.z / d);//normalize
+		final double e = vec3d.dot(vec3d2);
 		return e > 1.0D - 0.03D / d ? /*client.player.canSee(entity)*/true : false;
 	}
 
-	public static final byte getDimensionId(final World world){
+	public static final byte getDimensionId(final Level world){
 		if(world == null) return -1;
-		else if(world.getRegistryKey() == World.OVERWORLD) return 0;
-		else if(world.getRegistryKey() == World.NETHER) return 1;
-		else if(world.getRegistryKey() == World.END) return 2;
+		else if(world.dimension() == Level.OVERWORLD) return 0;
+		else if(world.dimension() == Level.NETHER) return 1;
+		else if(world.dimension() == Level.END) return 2;
 		else return 3;
 	}
 
@@ -44,13 +44,13 @@ public class MiscUtils{
 
 	private static final String ADDRESS_2B2T = "2b2t.org"; // TODO: make EvMod more server-independent 
 	public static final int HASHCODE_2B2T = ADDRESS_2B2T.hashCode(); // -437714968;
-	private static final String getServerAddress(final ServerInfo serverInfo, final boolean USE_CANONICAL_IP){
+	private static final String getServerAddress(final ServerData serverInfo, final boolean USE_CANONICAL_IP){
 //		if(serverInfo == null) return null;
 		final String name = Normalizer.normalize(serverInfo.name, Normalizer.Form.NFKD).toLowerCase().replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", "");
 		// TODO: Sync with proxy via some API, and have it tell us what server the backend is connecting to?
 		if(name.contains("2b2tproxy")) return ADDRESS_2B2T;
 
-		final String address = serverInfo.address.toLowerCase();
+		final String address = serverInfo.ip.toLowerCase();
 		switch(address){
 			case ADDRESS_2B2T: // "2b2t.org"
 			case "connect.2b2t.org":
@@ -71,12 +71,12 @@ public class MiscUtils{
 		}
 	}
 	private static final String getServerAddress(final boolean USE_CANONICAL_IP){
-		final MinecraftClient client = MinecraftClient.getInstance();
+		final Minecraft client = Minecraft.getInstance();
 //		if(client == null) return "null0";
 		assert client != null;
-		final ServerInfo serverInfo = client.getCurrentServerEntry();
+		final ServerData serverInfo = client.getCurrentServer();
 		return serverInfo != null ? getServerAddress(serverInfo, USE_CANONICAL_IP)
-			: client.getServer() != null ? client.getServer().getSaveProperties().getLevelName() : null;
+			: client.getSingleplayerServer() != null ? client.getSingleplayerServer().getWorldData().getLevelName() : null;
 	}
 	public static final String getServerAddress(){return getServerAddress(/*useCanonical=*/false);}
 
@@ -99,18 +99,18 @@ public class MiscUtils{
 		return new UUID(bb.getLong(), bb.getLong());
 	}
 
-	public static final byte[] getEncodedPlayerIds(final MinecraftClient client){
-		final String sessionName = client.getSession().getUsername(), playerName = client.player.getGameProfile().name();
-		final UUID sessionUUID = client.getSession().getUuidOrNull(), playerUUID = client.player.getGameProfile().id();
+	public static final byte[] getEncodedPlayerIds(final Minecraft client){
+		final String sessionName = client.getUser().getName(), playerName = client.player.getGameProfile().name();
+		final UUID sessionUUID = client.getUser().getProfileId(), playerUUID = client.player.getGameProfile().id();
 		final UUID usableSessionUUID = sessionUUID != null ? sessionUUID : MiscUtils.encodeAsUUID(sessionName);
 		return sessionName.equals(playerName) ? PacketHelper.toByteArray(usableSessionUUID) : PacketHelper.toByteArray(usableSessionUUID, playerUUID);
 	}
 
-	public static final UUID getPearlUUID(final EnderPearlEntity epearl){
+	public static final UUID getPearlUUID(final ThrownEnderpearl epearl){
 		var ref = ((AccessorProjectileEntity)epearl).getOwnerReference();
-		return ref == null ? null : ref.getUuid();
+		return ref == null ? null : ref.getUUID();
 	}
-	public static final void setPearlUUID(final EnderPearlEntity epearl, final UUID owner){
-		((AccessorProjectileEntity)epearl).setOwnerReference(LazyEntityReference.ofUUID(owner));
+	public static final void setPearlUUID(final ThrownEnderpearl epearl, final UUID owner){
+		((AccessorProjectileEntity)epearl).setOwnerReference(EntityReference.of(owner));
 	}
 }

@@ -15,20 +15,20 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.config.OptionMapStateCache;
 import net.evmodder.evmod.listeners.BlockClickListener;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.MapIdComponent;
-import net.minecraft.entity.Entity;
-import net.minecraft.item.FilledMapItem;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.item.map.MapDecoration;
-import net.minecraft.item.map.MapDecorationTypes;
-import net.minecraft.item.map.MapState;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.saveddata.maps.MapDecoration;
+import net.minecraft.world.level.saveddata.maps.MapDecorationTypes;
+import net.minecraft.world.level.saveddata.maps.MapId;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 public class MapStateCacher{
 	// Server address -> cache
@@ -50,7 +50,7 @@ public class MapStateCacher{
 	private static final MapDecoration CACHED_MARKER_DECORATION
 		= new MapDecoration(MapDecorationTypes.BLUE_MARKER, /*x=*/(byte)-1, /*z=*/(byte)-1, /*rot=*/(byte)-1, java.util.Optional.empty());
 
-	public static final boolean hasCacheMarker(MapState state){
+	public static final boolean hasCacheMarker(MapItemSavedData state){
 		Iterator<MapDecoration> iter = state.getDecorations().iterator();
 		return iter.hasNext() && iter.next() == CACHED_MARKER_DECORATION && !iter.hasNext();
 	}
@@ -58,22 +58,22 @@ public class MapStateCacher{
 	private static final record MapStateSerializable(byte scale, boolean locked, String dimRegistry, String dimValue, byte[] colors) implements Serializable{
 		private static final long serialVersionUID = 2713495820097984925L;
 
-		public static final MapStateSerializable fromMapState(MapState ms){
+		public static final MapStateSerializable fromMapState(MapItemSavedData ms){
 			return ms == null/* || ms.colors == null*/ ? null :
 				new MapStateSerializable(ms.scale, ms.locked,
-						ms.dimension == null ? null : ms.dimension.getRegistry().toString(),
-						ms.dimension == null ? null : ms.dimension.getValue().toString(), ms.colors);
+						ms.dimension == null ? null : ms.dimension.registry().toString(),
+						ms.dimension == null ? null : ms.dimension.identifier().toString(), ms.colors);
 		}
-		public final MapState toMapState(){
-			final RegistryKey<World> dimension;
+		public final MapItemSavedData toMapState(){
+			final ResourceKey<Level> dimension;
 			if(dimRegistry != null){
-				final Identifier registryId = Identifier.of(dimRegistry), valueId = Identifier.of(dimValue);
-				dimension = RegistryKey.of(RegistryKey.ofRegistry(registryId), valueId);
+				final Identifier registryId = Identifier.parse(dimRegistry), valueId = Identifier.parse(dimValue);
+				dimension = ResourceKey.create(ResourceKey.createRegistryKey(registryId), valueId);
 			}
 			else dimension = null;
-			final MapState ms = MapState.of(scale, locked, dimension);
+			final MapItemSavedData ms = MapItemSavedData.createForClient(scale, locked, dimension);
 			ms.colors = colors;
-			ms.replaceDecorations(List.of(CACHED_MARKER_DECORATION));
+			ms.addClientSideDecorations(List.of(CACHED_MARKER_DECORATION));
 			return ms;
 		}
 
@@ -85,11 +85,11 @@ public class MapStateCacher{
 	}
 
 	private static final UUID getIdForPlayer(boolean invOrEc){
-		MinecraftClient client = MinecraftClient.getInstance();
+		Minecraft client = Minecraft.getInstance();
 		if(client.player == null) return null;
-		Entity e = MinecraftClient.getInstance().player;
+		Entity e = Minecraft.getInstance().player;
 		if(e == null) return null;
-		UUID uuid = e.getUuid();
+		UUID uuid = e.getUUID();
 		// set 1st bit, 0= is inv, 1= is ec
 		return new UUID(MiscUtils.setLSB(uuid.getMostSignificantBits(), !invOrEc), uuid.getLeastSignificantBits());
 	}
@@ -168,11 +168,11 @@ public class MapStateCacher{
 	//====================================================================================================
 	@SuppressWarnings("unchecked")
 	public static final boolean saveMapStatesByPos(Stream<ItemStack> items, String cache){
-		MinecraftClient client = MinecraftClient.getInstance();
-		Stream<MapState> states = InvUtils.getAllNestedItems(items/*.sequential()*/)
+		Minecraft client = Minecraft.getInstance();
+		Stream<MapItemSavedData> states = InvUtils.getAllNestedItems(items/*.sequential()*/)
 				.sequential()
 				.filter(s -> s.getItem() == Items.FILLED_MAP)
-				.map(s -> FilledMapItem.getMapState(s, client.world));
+				.map(s -> MapItem.getSavedData(s, client.level));
 		if(!Configs.Generic.MAP_CACHE_UNLOCKED.getBooleanValue()) states = states.map(s -> s == null || s.locked ? s : null);
 		final List<MapStateSerializable> serialStates = states.map(MapStateSerializable::fromMapState).toList();
 
@@ -211,8 +211,8 @@ public class MapStateCacher{
 	}
 
 	private static final Object commonCacheLoad(String cache){
-		MinecraftClient client = MinecraftClient.getInstance();
-		if(client == null || client.player == null || client.world == null) return null;
+		Minecraft client = Minecraft.getInstance();
+		if(client == null || client.player == null || client.level == null) return null;
 		final String server = MiscUtils.getServerAddress();
 		final Object specificCache = getInMemCacheSpecific(server, cache);
 		if(specificCache == null && getInMemCachePerServer(server, cache) == null){
@@ -250,8 +250,8 @@ public class MapStateCacher{
 
 	public static final boolean loadMapStatesByPos(List<ItemStack> items, String type){
 		List<ItemStack> mapItems = InvUtils.getAllNestedItems(items.stream()).filter(s -> s.getItem() == Items.FILLED_MAP).toList();
-		ClientWorld world = MinecraftClient.getInstance().world;
-		if(mapItems.stream().allMatch(s -> FilledMapItem.getMapState(s, world) != null)) return false; // All states already loaded
+		ClientLevel world = Minecraft.getInstance().level;
+		if(mapItems.stream().allMatch(s -> MapItem.getSavedData(s, world) != null)) return false; // All states already loaded
 
 		@SuppressWarnings("unchecked")
 		List<MapStateSerializable> loadedCache = (List<MapStateSerializable>) commonCacheLoad(type);
@@ -265,11 +265,11 @@ public class MapStateCacher{
 		for(int i=0; i<mapItems.size(); ++i){
 			if(loadedCache.get(i) == null) continue; // Loaded state wasn't cached
 			++statesCached;
-			MapIdComponent mapIdComponent = mapItems.get(i).get(DataComponentTypes.MAP_ID);
+			MapId mapIdComponent = mapItems.get(i).get(DataComponents.MAP_ID);
 			assert mapIdComponent != null : "Unable to load from cache when even the mapId is missing!";
-			if(world.getMapState(mapIdComponent) != null) continue; // Already loaded
+			if(world.getMapData(mapIdComponent) != null) continue; // Already loaded
 //			world.putMapState(mapIdComponent, cachedMapStates.get(i));
-			world.putClientsideMapState(mapIdComponent, loadedCache.get(i).toMapState());
+			world.overrideMapData(mapIdComponent, loadedCache.get(i).toMapState());
 //			getMapRenderer().update(mapIdComponent, cachedMapStates.get(i), null);
 			++statesLoaded;
 		}
@@ -278,7 +278,7 @@ public class MapStateCacher{
 	}
 	//====================================================================================================
 
-	public static final boolean addMapStateById(int id, MapState state){
+	public static final boolean addMapStateById(int id, MapItemSavedData state){
 		if(state == null || state.colors == null) return false;
 		if(!state.locked && !Configs.Generic.MAP_CACHE_UNLOCKED.getBooleanValue()) return false;
 		@SuppressWarnings("unchecked")
@@ -305,8 +305,8 @@ public class MapStateCacher{
 		HashMap<Integer, MapStateSerializable> cache = (HashMap<Integer, MapStateSerializable>) commonCacheLoad(BY_ID);
 //		if(cache == null) return false; // created by commonCacheLoad
 
-		ClientWorld world = MinecraftClient.getInstance().world;
-		for(var e : cache.entrySet()) world.putClientsideMapState(new MapIdComponent(e.getKey()), e.getValue().toMapState());
+		ClientLevel world = Minecraft.getInstance().level;
+		for(var e : cache.entrySet()) world.overrideMapData(new MapId(e.getKey()), e.getValue().toMapState());
 		Main.LOGGER.info("MapStateCacher: type="+BY_ID+",loaded="+cache.size());
 		return true;
 	}
@@ -321,10 +321,10 @@ public class MapStateCacher{
 	}
 	//====================================================================================================
 
-	public static final boolean addMapStateByName(ItemStack stack, MapState state){
+	public static final boolean addMapStateByName(ItemStack stack, MapItemSavedData state){
 		assert stack != null && stack.getItem() == Items.FILLED_MAP;
 		assert state != null && state.colors != null;
-		assert FilledMapItem.getMapState(stack, MinecraftClient.getInstance().world) == state;
+		assert MapItem.getSavedData(stack, Minecraft.getInstance().level) == state;
 		assert stack.getCustomName() != null;
 
 		if(!state.locked && !Configs.Generic.MAP_CACHE_UNLOCKED.getBooleanValue()) return false;
@@ -354,9 +354,9 @@ public class MapStateCacher{
 		}
 		return true;
 	}
-	public static final boolean loadMapStateByName(ItemStack stack, ClientWorld world){
+	public static final boolean loadMapStateByName(ItemStack stack, ClientLevel world){
 		assert stack != null && stack.getItem() == Items.FILLED_MAP;
-		assert world.getMapState(stack.get(DataComponentTypes.MAP_ID)) == null; // Already loaded
+		assert world.getMapData(stack.get(DataComponents.MAP_ID)) == null; // Already loaded
 		assert stack.getCustomName() != null;
 
 		final String name = stack.getCustomName().getString();
@@ -372,7 +372,7 @@ public class MapStateCacher{
 //		HashSet<String> unusable = unusableNames == null ? null : unusableNames.get(server);
 //		if(unusable != null && unusable.contains(name)) return false;
 
-		world.putClientsideMapState(stack.get(DataComponentTypes.MAP_ID), mss.toMapState());
+		world.overrideMapData(stack.get(DataComponents.MAP_ID), mss.toMapState());
 		return true;
 	}
 	public static final boolean saveMapStatesByNameToFile(){

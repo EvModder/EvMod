@@ -16,15 +16,15 @@ import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.config.OptionInventoryRestockIf;
 import net.evmodder.evmod.config.OptionInventoryRestockLeave;
 import net.evmodder.evmod.keybinds.KeybindInventoryOrganize.SlotAndItemName;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.AnvilScreen;
-import net.minecraft.client.gui.screen.ingame.CartographyTableScreen;
-import net.minecraft.client.gui.screen.ingame.CraftingScreen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.AnvilScreen;
+import net.minecraft.client.gui.screens.inventory.CartographyTableScreen;
+import net.minecraft.client.gui.screens.inventory.CraftingScreen;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 //TODO: Shift-click (only 2 clicks intead of 3) when possible
 
@@ -41,12 +41,12 @@ public final class KeybindInventoryRestock{
 	public final void doRestock(){
 		if(ClickUtils.hasOngoingClicks()){Main.LOGGER.warn("InvRestock cancelled: Already ongoing"); return;}
 		//
-		MinecraftClient client = MinecraftClient.getInstance();
-		if(client.player == null || client.world == null || !client.player.isAlive()) return;
-		if(client.currentScreen == null || !(client.currentScreen instanceof HandledScreen hs)) return;
+		Minecraft client = Minecraft.getInstance();
+		if(client.player == null || client.level == null || !client.player.isAlive()) return;
+		if(client.gui.screen() == null || !(client.gui.screen() instanceof AbstractContainerScreen hs)) return;
 		if(hs instanceof AnvilScreen || hs instanceof CraftingScreen || hs instanceof CartographyTableScreen) return;
 		//
-		final ItemStack[] slots = hs.getScreenHandler().slots.stream().map(s -> s.getStack().copy()).toArray(ItemStack[]::new);
+		final ItemStack[] slots = hs.getMenu().slots.stream().map(s -> s.getItem().copy()).toArray(ItemStack[]::new);
 
 		ArrayDeque<InvAction> clicks = new ArrayDeque<>();
 		// if leave.ONE_STACK: map of item->#slots
@@ -73,7 +73,7 @@ public final class KeybindInventoryRestock{
 		for(int i=slots.length-37; i>=0; --i){
 			if(slots[i].isEmpty()) continue;
 			if(limits == OptionInventoryRestockIf.RESUPPLY){
-				final String itemName = Registries.ITEM.getId(slots[i].getItem()).getPath();
+				final String itemName = BuiltInRegistries.ITEM.getKey(slots[i].getItem()).getPath();
 				if(!itemNamesInLayout.contains(itemName)){
 //					Main.LOGGER.info("InvRestock: not a valid source (LEAVE_UNLESS_ALL_RESUPPLY: container has unlisted item type '"+itemName+"')");
 					return;
@@ -95,14 +95,14 @@ public final class KeybindInventoryRestock{
 
 		for(int i=slots.length-36; i<slots.length; ++i){
 			if(slots[i].isEmpty() || !doneSlots[i]) continue;
-			final int maxCount = slots[i].getMaxCount();
+			final int maxCount = slots[i].getMaxStackSize();
 			if(slots[i].getCount() >= maxCount) continue;
 			if(IS_WHITELIST != itemList.contains(slots[i].getItem())) continue;
 			int totalInContainer = supply.getOrDefault(slots[i].getItem(), 0);
 			if(LEAVE_ONE && totalInContainer <= 1) continue;
 
 			for(int j=slots.length-37; j>=0; --j){
-				if(!ItemStack.areItemsAndComponentsEqual(slots[i], slots[j])) continue;
+				if(!ItemStack.isSameItemSameComponents(slots[i], slots[j])) continue;
 //				Main.LOGGER.info("Adding clicks to restock "+slots[i].getItem().getName().getString()+" from slot "+j+" -> "+i);
 
 				int combinedCount = slots[i].getCount() + slots[j].getCount();
@@ -157,9 +157,9 @@ public final class KeybindInventoryRestock{
 		return list.stream().map(
 //				s -> Registries.ITEM.get(Identifier.of(s))
 				s -> {
-					Identifier id = Identifier.of(s);
-					if(!Registries.ITEM.containsId(id)) Main.LOGGER.error("InvRestock: Unknown item: "+s);
-					return Registries.ITEM.get(id);
+					Identifier id = Identifier.parse(s);
+					if(!BuiltInRegistries.ITEM.containsKey(id)) Main.LOGGER.error("InvRestock: Unknown item: "+s);
+					return BuiltInRegistries.ITEM.getValue(id);
 				}
 		).toList();
 	}

@@ -6,7 +6,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 public final class EpearlExternalAdapter{
 	private EpearlExternalAdapter(){}
@@ -66,6 +66,6 @@ public final class EpearlExternalAdapter{
 	}
 
 	public static final CompletableFuture<Void> trigger(final String baseUrl, final String token){
-		return trigger(baseUrl, token, MinecraftClient.getInstance().player.getGameProfile().getName());
+		return trigger(baseUrl, token, Minecraft.getInstance().player.getGameProfile().name());
 	}
 }

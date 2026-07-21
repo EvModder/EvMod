@@ -4,54 +4,54 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import net.evmodder.evmod.Main;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.block.AbstractFireBlock;
-import net.minecraft.block.AbstractPressurePlateBlock;
-import net.minecraft.block.AnvilBlock;
-import net.minecraft.block.BedBlock;
-import net.minecraft.block.Block;
-import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
-import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
-import net.minecraft.registry.Registries;
-import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.text.Text;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.BlockWithEntity;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.ButtonBlock;
-import net.minecraft.block.CartographyTableBlock;
-import net.minecraft.block.CraftingTableBlock;
-import net.minecraft.block.DoorBlock;
-import net.minecraft.block.FenceGateBlock;
-import net.minecraft.block.GrindstoneBlock;
-import net.minecraft.block.LoomBlock;
-import net.minecraft.block.NoteBlock;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.block.StonecutterBlock;
-import net.minecraft.block.TrapdoorBlock;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.entity.EquipmentSlot;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3i;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.RaycastContext;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
+import net.minecraft.network.protocol.game.ServerboundSwingPacket;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.AnvilBlock;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.BaseFireBlock;
+import net.minecraft.world.level.block.BasePressurePlateBlock;
+import net.minecraft.world.level.block.BedBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ButtonBlock;
+import net.minecraft.world.level.block.CartographyTableBlock;
+import net.minecraft.world.level.block.CraftingTableBlock;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.FenceGateBlock;
+import net.minecraft.world.level.block.GrindstoneBlock;
+import net.minecraft.world.level.block.LoomBlock;
+import net.minecraft.world.level.block.NoteBlock;
+import net.minecraft.world.level.block.StonecutterBlock;
+import net.minecraft.world.level.block.TrapDoorBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class KeybindEbounceTravelHelper{
 	private boolean isEnabled;
 	private long enabledTs, targetY;
 	private final long ENABLE_DELAY = 1500l;
-	private MinecraftClient client;
+	private Minecraft client;
 	private KeybindEjectJunk ejectJunk;
 
 	private boolean hasRightClickFunction(Block block) {
@@ -62,31 +62,31 @@ public final class KeybindEbounceTravelHelper{
 				|| block instanceof GrindstoneBlock
 				|| block instanceof StonecutterBlock
 				|| block instanceof ButtonBlock
-				|| block instanceof AbstractPressurePlateBlock
-				|| block instanceof BlockWithEntity
+				|| block instanceof BasePressurePlateBlock
+				|| block instanceof BaseEntityBlock
 				|| block instanceof BedBlock
 				|| block instanceof FenceGateBlock
 				|| block instanceof DoorBlock
 				|| block instanceof NoteBlock
-				|| block instanceof TrapdoorBlock;
+				|| block instanceof TrapDoorBlock;
 	}
 
 	private Direction getPlaceSide(BlockPos blockPos) {
-		Vec3d lookVec = blockPos.toCenterPos().subtract(client.player.getEyePos());
+		Vec3 lookVec = Vec3.atCenterOf(blockPos).subtract(client.player.getEyePosition());
 		double bestRelevancy = -Double.MAX_VALUE;
 		Direction bestSide = null;
 
 		for(Direction side : Direction.values()){
-			BlockPos neighbor = blockPos.offset(side);
-			BlockState state = client.world.getBlockState(neighbor);
+			BlockPos neighbor = blockPos.relative(side);
+			BlockState state = client.level.getBlockState(neighbor);
 
 			// Check if neighbour isn't empty
-			if(state.isAir() || (!client.player.isSneaking() && hasRightClickFunction(state.getBlock()))) continue;
+			if(state.isAir() || (!client.player.isShiftKeyDown() && hasRightClickFunction(state.getBlock()))) continue;
 
 			// Check if neighbour is a fluid
 			if(!state.getFluidState().isEmpty()) continue;
 
-			double relevancy = side.getAxis().choose(lookVec.getX(), lookVec.getY(), lookVec.getZ()) * side.getDirection().offset();
+			double relevancy = side.getAxis().choose(lookVec.x(), lookVec.y(), lookVec.z()) * side.getAxisDirection().getStep();
 			if(relevancy > bestRelevancy){
 				bestRelevancy = relevancy;
 				bestSide = side;
@@ -96,19 +96,19 @@ public final class KeybindEbounceTravelHelper{
 		return bestSide;
 	}
 
-	private boolean placeBlock(BlockPos bp, Hand hand){
-		Vec3d hitPos = Vec3d.ofCenter(bp);
+	private boolean placeBlock(BlockPos bp, InteractionHand hand){
+		Vec3 hitPos = Vec3.atCenterOf(bp);
 
 		Direction side = getPlaceSide(bp);
 		if(side == null) return false;
-		BlockPos neighbour = bp.offset(side);
-		hitPos = hitPos.add(side.getOffsetX() * 0.5, side.getOffsetY() * 0.5, side.getOffsetZ() * 0.5);
+		BlockPos neighbour = bp.relative(side);
+		hitPos = hitPos.add(side.getStepX() * 0.5, side.getStepY() * 0.5, side.getStepZ() * 0.5);
 		BlockHitResult bhr = new BlockHitResult(hitPos, side.getOpposite(), neighbour, false);
 
-		ActionResult result = client.interactionManager.interactBlock(client.player, hand, bhr);
-		if(!result.isAccepted()) return false;
+		InteractionResult result = client.gameMode.useItemOn(client.player, hand, bhr);
+		if(!result.consumesAction()) return false;
 
-		client.getNetworkHandler().sendPacket(new HandSwingC2SPacket(hand));
+		client.getConnection().send(new ServerboundSwingPacket(hand));
 
 		return true;
 	}
@@ -117,30 +117,30 @@ public final class KeybindEbounceTravelHelper{
 		if (blockPos == null) return false;
 
 		// Check y level
-		if(!World.isValid(blockPos)) return false;
+		if(!Level.isInSpawnableBounds(blockPos)) return false;
 
 		// Check if current block is replaceable
-		if (!client.world.getBlockState(blockPos).isReplaceable()) return false;
+		if (!client.level.getBlockState(blockPos).canBeReplaced()) return false;
 
 		// Check if intersects entities
-		return /*!checkEntities || */client.world.canPlace(Blocks.NETHERRACK.getDefaultState(), blockPos, ShapeContext.absent());
+		return /*!checkEntities || */client.level.isUnobstructed(Blocks.NETHERRACK.defaultBlockState(), blockPos, CollisionContext.empty());
 	}
 
 	private boolean selectBlocksInHotbar(String path){
-		if(client.player.getMainHandStack().getItem() instanceof BlockItem) return false;
+		if(client.player.getMainHandItem().getItem() instanceof BlockItem) return false;
 		int i=0;
 		for(; i<9; ++i){
-			Item item = client.player.getInventory().getStack(i).getItem();
+			Item item = client.player.getInventory().getItem(i).getItem();
 			if(client.player.getInventory().getSelectedSlot() == i || item instanceof BlockItem == false) continue;
-			if(path == null || Registries.ITEM.getId(item).getPath().equals(path)) break;
+			if(path == null || BuiltInRegistries.ITEM.getKey(item).getPath().equals(path)) break;
 		}
 		if(i == 9){
-			client.player.sendMessage(Text.literal("(!) No blocks in hotbar"), true);
+			client.player.sendOverlayMessage(Component.literal("(!) No blocks in hotbar"));
 			return false;
 		}
 		client.player.getInventory().setSelectedSlot(i);
-		client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(i));
-		client.player.sendMessage(Text.literal("Selected hotbar blocks"), true);
+		client.getConnection().send(new ServerboundSetCarriedItemPacket(i));
+		client.player.sendOverlayMessage(Component.literal("Selected hotbar blocks"));
 //		Main.LOGGER.info("Selected hotbar blocks");
 		return true;
 	}
@@ -148,42 +148,42 @@ public final class KeybindEbounceTravelHelper{
 	private final double aheadDist = 0.9, placeRange=2;
 	private boolean fillHighwayHole(String useBlock){
 		boolean holdingBlock = true;
-		Item mainHandItem = client.player.getMainHandStack().getItem();
-		Item offHandItem = client.player.getOffHandStack().getItem();
-		Hand hand = (mainHandItem == null || mainHandItem instanceof BlockItem == false) ? Hand.OFF_HAND : Hand.MAIN_HAND;
-		if(hand == Hand.OFF_HAND && (offHandItem == null || offHandItem instanceof BlockItem == false)) holdingBlock = false;
+		Item mainHandItem = client.player.getMainHandItem().getItem();
+		Item offHandItem = client.player.getOffhandItem().getItem();
+		InteractionHand hand = (mainHandItem == null || mainHandItem instanceof BlockItem == false) ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+		if(hand == InteractionHand.OFF_HAND && (offHandItem == null || offHandItem instanceof BlockItem == false)) holdingBlock = false;
 		//param: Class<? extends Block> useBlock
 //		Block block = ((BlockItem)client.player.getStackInHand(hand).getItem()).getBlock();
 //		if(!useBlock.isInstance(block)) return false;
 
-		Vec3d vec = client.player.getEntityPos().add(client.player.getVelocity()).add(0, -0.75, 0);
+		Vec3 vec = client.player.position().add(client.player.getDeltaMovement()).add(0, -0.75, 0);
 
-		Vec3d pos = client.player.getEntityPos();
-		if(aheadDist != 0 && !client.world.getBlockState(client.player.getBlockPos().down())
-				.getCollisionShape(client.world, client.player.getBlockPos()).isEmpty()) {
-			Vec3d dir = Vec3d.fromPolar(0, client.player.getYaw()).multiply(aheadDist, 0, aheadDist);
+		Vec3 pos = client.player.position();
+		if(aheadDist != 0 && !client.level.getBlockState(client.player.blockPosition().below())
+				.getCollisionShape(client.level, client.player.blockPosition()).isEmpty()) {
+			Vec3 dir = Vec3.directionFromRotation(0, client.player.getYRot()).multiply(aheadDist, 0, aheadDist);
 			pos = pos.add(dir.x, 0, dir.z);
 		}
-		BlockPos.Mutable bp = new BlockPos.Mutable();
+		BlockPos.MutableBlockPos bp = new BlockPos.MutableBlockPos();
 		bp.set(pos.x, vec.y, pos.z);
-		if(client.options.sneakKey.isPressed() && !client.options.jumpKey.isPressed() && client.player.getY() + vec.y > -1){
+		if(client.options.keyShift.isDown() && !client.options.keyJump.isDown() && client.player.getY() + vec.y > -1){
 			bp.setY(bp.getY() - 1);
 		}
-		if(bp.getY() >= client.player.getBlockPos().getY()){
-			bp.setY(client.player.getBlockPos().getY() - 1);
+		if(bp.getY() >= client.player.blockPosition().getY()){
+			bp.setY(client.player.blockPosition().getY() - 1);
 		}
-		BlockPos targetBlock = bp.toImmutable();
+		BlockPos targetBlock = bp.immutable();
 
 		if(getPlaceSide(bp) == null){
-			pos = client.player.getEntityPos();
+			pos = client.player.position();
 			pos = pos.add(0, -0.98f, 0);
-			pos.add(client.player.getVelocity());
+			pos.add(client.player.getDeltaMovement());
 
 			ArrayList<BlockPos> blockPosArray = new ArrayList<>();
 			for(int x = (int)(client.player.getX() - placeRange); x < client.player.getX() + placeRange; ++x){
 				for (int z = (int)(client.player.getZ() - placeRange); z < client.player.getZ() + placeRange; ++z){
-					for (int y = (int)Math.max(client.world.getBottomY(), client.player.getY() - placeRange);
-							y < Math.min(client.world.getHeight(), client.player.getY() + placeRange); ++y)
+					for (int y = (int)Math.max(client.level.getMinY(), client.player.getY() - placeRange);
+							y < Math.min(client.level.getHeight(), client.player.getY() + placeRange); ++y)
 					{
 						bp.set(x, y, z);
 						if(getPlaceSide(bp) == null) continue;
@@ -194,51 +194,51 @@ public final class KeybindEbounceTravelHelper{
 				}
 			}
 			if(blockPosArray.isEmpty()) return false;
-			blockPosArray.sort(Comparator.comparingDouble((blockPos) -> blockPos.getSquaredDistance(targetBlock)));
+			blockPosArray.sort(Comparator.comparingDouble((blockPos) -> blockPos.distSqr(targetBlock)));
 			bp.set(blockPosArray.getFirst());
 		}
-		if(!client.world.getBlockState(bp).isReplaceable()) return false;
+		if(!client.level.getBlockState(bp).canBeReplaced()) return false;
 		if(!holdingBlock) selectBlocksInHotbar(useBlock);
-		String path = Registries.ITEM.getId(client.player.getStackInHand(hand).getItem()).getPath();
+		String path = BuiltInRegistries.ITEM.getKey(client.player.getItemInHand(hand).getItem()).getPath();
 		if(useBlock != null && !path.equals(useBlock)){
-			client.player.sendMessage(Text.literal("(!) Missing block: "+useBlock), true);
+			client.player.sendOverlayMessage(Component.literal("(!) Missing block: "+useBlock));
 			//return false;
 		}
 		return placeBlock(bp, hand);
 	}
 
-	private Vec3d getEyesPos(){
+	private Vec3 getEyesPos(){
 		float eyeHeight = client.player.getEyeHeight(client.player.getPose());
-		return client.player.getEntityPos().add(0, eyeHeight, 0);
+		return client.player.position().add(0, eyeHeight, 0);
 	}
 	private Direction getBlockBreakingSide(BlockPos bp){
-		Vec3d eyes = getEyesPos();
+		Vec3 eyes = getEyesPos();
 		Direction[] sides = Direction.values();
 
-		BlockState state = client.world.getBlockState(bp);
-		VoxelShape shape = state.getOutlineShape(client.world, bp);
+		BlockState state = client.level.getBlockState(bp);
+		VoxelShape shape = state.getShape(client.level, bp);
 		if(shape.isEmpty()) return null;
 
-		Box box = shape.getBoundingBox();
-		Vec3d halfSize = new Vec3d(box.maxX - box.minX, box.maxY - box.minY, box.maxZ - box.minZ).multiply(0.5);
-		Vec3d center = Vec3d.of(bp).add(box.getCenter());
+		AABB box = shape.bounds();
+		Vec3 halfSize = new Vec3(box.maxX - box.minX, box.maxY - box.minY, box.maxZ - box.minZ).scale(0.5);
+		Vec3 center = Vec3.atLowerCornerOf(bp).add(box.getCenter());
 
-		Vec3d[] hitVecs = new Vec3d[sides.length];
+		Vec3[] hitVecs = new Vec3[sides.length];
 		for(int i=0; i<sides.length; ++i){
-			Vec3i dirVec = sides[i].getVector();
-			Vec3d relHitVec = new Vec3d(halfSize.x * dirVec.getX(), halfSize.y * dirVec.getY(), halfSize.z * dirVec.getZ());
+			Vec3i dirVec = sides[i].getUnitVec3i();
+			Vec3 relHitVec = new Vec3(halfSize.x * dirVec.getX(), halfSize.y * dirVec.getY(), halfSize.z * dirVec.getZ());
 			hitVecs[i] = center.add(relHitVec);
 		}
-		double distanceSqToCenter = eyes.squaredDistanceTo(center);
+		double distanceSqToCenter = eyes.distanceToSqr(center);
 		double[] distancesSq = new double[sides.length];
 		boolean[] linesOfSight = new boolean[sides.length];
 
 		for(int i=0; i<sides.length; ++i){
-			distancesSq[i] = eyes.squaredDistanceTo(hitVecs[i]);
+			distancesSq[i] = eyes.distanceToSqr(hitVecs[i]);
 			if(distancesSq[i] >= distanceSqToCenter) continue;
-			RaycastContext context = new RaycastContext(eyes, hitVecs[i], RaycastContext.ShapeType.COLLIDER,
-					RaycastContext.FluidHandling.NONE, client.player);
-			linesOfSight[i] = client.world.raycast(context).getType() == HitResult.Type.MISS;
+			ClipContext context = new ClipContext(eyes, hitVecs[i], ClipContext.Block.COLLIDER,
+					ClipContext.Fluid.NONE, client.player);
+			linesOfSight[i] = client.level.clip(context).getType() == HitResult.Type.MISS;
 		}
 		Direction side = sides[0];
 		for(int i=1; i<sides.length; ++i){
@@ -261,69 +261,69 @@ public final class KeybindEbounceTravelHelper{
 		int bestI=client.player.getInventory().getSelectedSlot();
 		float bestSpeed=0;
 		for(int i=0; i<9; ++i){
-			float speed = client.player.getInventory().getStack(i).getMiningSpeedMultiplier(bs);
+			float speed = client.player.getInventory().getItem(i).getDestroySpeed(bs);
 			if(speed > bestSpeed){bestSpeed=speed; bestI=i;}
 		}
 		if(bestSpeed == 0){
-			client.player.sendMessage(Text.literal("(!) No matching tool in hotbar"), true);
+			client.player.sendOverlayMessage(Component.literal("(!) No matching tool in hotbar"));
 			return false;
 		}
 		if(bestI == client.player.getInventory().getSelectedSlot()){
-			client.player.sendMessage(Text.literal("Best tool in hotbar already selected"), true);
+			client.player.sendOverlayMessage(Component.literal("Best tool in hotbar already selected"));
 			return false;
 		}
 		client.player.getInventory().setSelectedSlot(bestI);
-		client.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(bestI));
-		client.player.sendMessage(Text.literal("Selected hotbar pickaxe"), true);
+		client.getConnection().send(new ServerboundSetCarriedItemPacket(bestI));
+		client.player.sendOverlayMessage(Component.literal("Selected hotbar pickaxe"));
 //		Main.LOGGER.info("Selected hotbar pickaxe");
 		return true;
 	}
 	private int isMining;
 	private boolean putOutFireAndMineObstacles(){
-		BlockPos bp = client.player.getBlockPos();
-		if(bp.getY() == targetY+1) bp = bp.offset(Direction.DOWN);
+		BlockPos bp = client.player.blockPosition();
+		if(bp.getY() == targetY+1) bp = bp.relative(Direction.DOWN);
 
-		Vec3d dir = Vec3d.fromPolar(0, client.player.getYaw());
+		Vec3 dir = Vec3.directionFromRotation(0, client.player.getYRot());
 		int dx = (int)Math.round(dir.x);
 		int dz = (int)Math.round(dir.z);
 		final boolean diag = dx != 0 && dz != 0;
 		for(int i=0; i<(diag ? 1 : 3); ++i){
-			BlockPos aheadPos = bp.add(i*dx, 0, i*dz);
-			if(client.world.getBlockState(aheadPos).getBlock() instanceof AbstractFireBlock){
-				client.interactionManager.updateBlockBreakingProgress(aheadPos, getBlockBreakingSide(aheadPos));
-				client.player.sendMessage(Text.literal("Put out a fire"), true);
+			BlockPos aheadPos = bp.offset(i*dx, 0, i*dz);
+			if(client.level.getBlockState(aheadPos).getBlock() instanceof BaseFireBlock){
+				client.gameMode.continueDestroyBlock(aheadPos, getBlockBreakingSide(aheadPos));
+				client.player.sendOverlayMessage(Component.literal("Put out a fire"));
 				return true;
 			}
 		}
 		// Don't try to mine blocks if the player isn't stuck
-		if(client.player.lastX != client.player.getX() || client.player.lastZ != client.player.getZ()) return false;
+		if(client.player.xo != client.player.getX() || client.player.zo != client.player.getZ()) return false;
 
 		ArrayList<BlockPos> mineSpots = new ArrayList<>();
-		Vec3d pos = client.player.getEntityPos();
-		if(pos.getY() > targetY) pos = new Vec3d(pos.x, targetY, pos.z);
+		Vec3 pos = client.player.position();
+		if(pos.y() > targetY) pos = new Vec3(pos.x, targetY, pos.z);
 		if(dx != 0){
-			mineSpots.add(bp.add(dx, 0, 0));
-			if(diag) mineSpots.add(bp.add(dx, 0, Math.round(pos.getZ()) > pos.getZ() ? 1 : -1));
-			else if(pos.getZ()+.3 > Math.floor(pos.getZ())+1) mineSpots.add(bp.add(dx, 0, 1));
-			else if(pos.getZ()-.3 < Math.floor(pos.getZ())) mineSpots.add(bp.add(dx, 0, -1));
+			mineSpots.add(bp.offset(dx, 0, 0));
+			if(diag) mineSpots.add(bp.offset(dx, 0, Math.round(pos.z()) > pos.z() ? 1 : -1));
+			else if(pos.z()+.3 > Math.floor(pos.z())+1) mineSpots.add(bp.offset(dx, 0, 1));
+			else if(pos.z()-.3 < Math.floor(pos.z())) mineSpots.add(bp.offset(dx, 0, -1));
 		}
 		if(dz != 0){
-			mineSpots.add(bp.add(0, 0, dz));
-			if(diag) mineSpots.add(bp.add(Math.round(pos.getZ()) > pos.getZ() ? 1 : -1, 0, dz));
-			else if(pos.getX()+.3 > Math.floor(pos.getX())+1) mineSpots.add(bp.add(1, 0, dz));
-			else if(pos.getX()-.3 < Math.floor(pos.getX())) mineSpots.add(bp.add(-1, 0, -dz));
+			mineSpots.add(bp.offset(0, 0, dz));
+			if(diag) mineSpots.add(bp.offset(Math.round(pos.z()) > pos.z() ? 1 : -1, 0, dz));
+			else if(pos.x()+.3 > Math.floor(pos.x())+1) mineSpots.add(bp.offset(1, 0, dz));
+			else if(pos.x()-.3 < Math.floor(pos.x())) mineSpots.add(bp.offset(-1, 0, -dz));
 		}
 		mineSpots.add(bp);
-		if(diag) mineSpots.add(bp.add(dx, 0, dz));
+		if(diag) mineSpots.add(bp.offset(dx, 0, dz));
 
 		BlockState bs = null;
 		for(BlockPos bpDig : mineSpots){
 			boolean foundDig = false;
 			for(int i=0; i<2; ++i){
-				if(i==1) bpDig = bpDig.add(0, 2, 0);
-				else if(i==2) bpDig = bpDig.add(0, -1, 0);
-				bs = client.world.getBlockState(bpDig);
-				if(bs.getBlock() != Blocks.BEDROCK && !bs.getCollisionShape(client.world, bpDig).isEmpty()){foundDig = true; break;}
+				if(i==1) bpDig = bpDig.offset(0, 2, 0);
+				else if(i==2) bpDig = bpDig.offset(0, -1, 0);
+				bs = client.level.getBlockState(bpDig);
+				if(bs.getBlock() != Blocks.BEDROCK && !bs.getCollisionShape(client.level, bpDig).isEmpty()){foundDig = true; break;}
 			}
 			if(foundDig == false) continue;
 			// Same as above, but goes 0->1->2 instead of 0->2->1
@@ -335,18 +335,18 @@ public final class KeybindEbounceTravelHelper{
 			if(selectPickaxeInHotbar(bs)) return true;
 			if(isMining == 0) isMining = 4;
 			//if(client.player.getMainHandStack().getItem() instanceof PickaxeItem) return false;
-			client.interactionManager.updateBlockBreakingProgress(bpDig, getBlockBreakingSide(bpDig));
-			client.player.sendMessage(Text.literal("Mining: ").copy().append(bs.getBlock().getName())
+			client.gameMode.continueDestroyBlock(bpDig, getBlockBreakingSide(bpDig));
+			client.player.sendOverlayMessage(Component.literal("Mining: ").copy().append(bs.getBlock().getName())
 //					.append(" yaw:"+client.player.getYaw()+", dirX:"+dir.x+",dirZ:"+dir.z+", xyz: ")
 //					.append(bp.getX()+","+bp.getY()+","+bp.getZ())
-					, true);
+					);
 //			Main.LOGGER.info("Mining block: "+client.world.getBlockState(bp).getBlock().getName().getLiteralString());
 			return true;
 		}
 		if(isMining > 0){
 			if(--isMining == 0){
 				selectBlocksInHotbar(null);
-				client.player.sendMessage(Text.literal("Mined: ").copy().append(bs.getBlock().getName()), true);
+				client.player.sendOverlayMessage(Component.literal("Mined: ").copy().append(bs.getBlock().getName()));
 			}
 			return true; // Wait a bit before declaring it done
 		}
@@ -354,15 +354,15 @@ public final class KeybindEbounceTravelHelper{
 	}
 
 	private boolean barfTrash(KeybindEjectJunk ejectJunk){
-		if(client.currentScreen instanceof HandledScreen) return false;
+		if(client.gui.screen() instanceof AbstractContainerScreen) return false;
 
 		boolean didBarf = false;
-		for(int i=9; i<36; ++i) if(ejectJunk.shouldEject(client.player.getInventory().getStack(i))){
+		for(int i=9; i<36; ++i) if(ejectJunk.shouldEject(client.player.getInventory().getItem(i))){
 //			if(!didBarf){
 //				client.player.sendMessage(Text.literal("Tossed item: ").copy().append(client.player.getInventory().getStack(i).getName()), true);
 //				Main.LOGGER.info("Tossed item: "+client.player.getInventory().getStack(i).getName().getLiteralString());
 //			}
-			client.interactionManager.clickSlot(0, i, 1, SlotActionType.THROW, client.player);
+			client.gameMode.handleContainerInput(0, i, 1, ContainerInput.THROW, client.player);
 			didBarf = true;
 		}
 		return didBarf;
@@ -370,7 +370,7 @@ public final class KeybindEbounceTravelHelper{
 
 	private void registerClientTickListener(){
 		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
-			if(client.player == null || client.world == null){isEnabled = false; enabledTs = 0; return;}
+			if(client.player == null || client.level == null){isEnabled = false; enabledTs = 0; return;}
 			if(enabledTs != 0){
 				final long timeSinceEnabled = System.currentTimeMillis() - enabledTs;
 				if(timeSinceEnabled > ENABLE_DELAY){
@@ -378,22 +378,22 @@ public final class KeybindEbounceTravelHelper{
 //					Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setBooleanValue(true); // May already be true
 					targetY = Long.MIN_VALUE;
 					enabledTs = 0;
-					client.player.sendMessage(Text.literal("eBounce Helper: enabled"), true);
-					client.player.sendMessage(Text.literal("eBounce Helper: enabled"), false);
+					client.player.sendOverlayMessage(Component.literal("eBounce Helper: enabled"));
+					client.player.sendSystemMessage(Component.literal("eBounce Helper: enabled"));
 				}
 				else{
-					client.player.sendMessage(Text.literal("Enabling in "+String.format("%.2f", ((ENABLE_DELAY-timeSinceEnabled)/1000d))+"s..."), true);
+					client.player.sendOverlayMessage(Component.literal("Enabling in "+String.format("%.2f", ((ENABLE_DELAY-timeSinceEnabled)/1000d))+"s..."));
 				}
 			}
 			if(!isEnabled) return;
-			if(client.player.getEquippedStack(EquipmentSlot.CHEST).getItem() != Items.ELYTRA){
-				client.player.sendMessage(Text.literal("Not wearing elytra"), true);
+			if(client.player.getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA){
+				client.player.sendOverlayMessage(Component.literal("Not wearing elytra"));
 				return;
 			}
 			final int y = client.player.getBlockY();
 			if(targetY == Long.MIN_VALUE) targetY = y;
 			if(targetY != y){
-				client.player.sendMessage(Text.literal("Y-height has changed!"), true);
+				client.player.sendOverlayMessage(Component.literal("Y-height has changed!"));
 				return;
 			}
 //			if(y == 118){
@@ -403,7 +403,7 @@ public final class KeybindEbounceTravelHelper{
 //			if(y != 119 && y != 120) return;
 
 			if(fillHighwayHole(y == 119 ? null : "obsidian")){
-				client.player.sendMessage(Text.literal("Filled a hole"), true);
+				client.player.sendOverlayMessage(Component.literal("Filled a hole"));
 //				Main.LOGGER.info("Filled a hole");
 				return;
 			}
@@ -420,7 +420,7 @@ public final class KeybindEbounceTravelHelper{
 //		Main.LOGGER.info("ebounce_travel_helper key pressed");
 		if(client == null){
 			Main.LOGGER.info("ebounce_travel_helper registered");
-			client = MinecraftClient.getInstance();
+			client = Minecraft.getInstance();
 			registerClientTickListener();
 		}
 //		client.player.sendMessage(Text.literal("eBounceHelper: key pressed, setEnabled="+enable), true);
@@ -431,7 +431,7 @@ public final class KeybindEbounceTravelHelper{
 			isEnabled = false;
 			enabledTs = 0;
 //			client.player.sendMessage(Text.literal("eBounceHelper: disabled"), true);
-			client.player.sendMessage(Text.literal("eBounceHelper: disabled"), false);
+			client.player.sendSystemMessage(Component.literal("eBounceHelper: disabled"));
 			return;
 		}
 //		ItemStack chestStack = client.player.getInventory().getArmorStack(2);
@@ -450,7 +450,7 @@ public final class KeybindEbounceTravelHelper{
 //		}
 
 //		client.player.sendMessage(Text.literal("eBounce Helper: enabling..."), true);
-		client.player.sendMessage(Text.literal("eBounce Helper: enabling..."), false);
+		client.player.sendSystemMessage(Component.literal("eBounce Helper: enabling..."));
 		enabledTs = System.currentTimeMillis();
 	}
 

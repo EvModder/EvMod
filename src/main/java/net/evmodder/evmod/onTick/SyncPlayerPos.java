@@ -9,38 +9,38 @@ import net.evmodder.evmod.apis.PlayerPosIPC;
 import net.evmodder.evmod.apis.TickListener;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.OtherClientPlayerEntity;
-import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.entity.EntityPose;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.player.RemotePlayer;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 
 public final class SyncPlayerPos implements TickListener{
 	private final static boolean ONLY_SHOW_PLAYERS_IN_LOADED_CHUNKS = true;
 	private final static ByteBuffer bb = ByteBuffer.allocate(PlayerPosIPC.DATA_SIZE);
-	private final MinecraftClient client = MinecraftClient.getInstance();
+	private final Minecraft client = Minecraft.getInstance();
 
 	private boolean wasNull = true;
-	@Override public final void onTickEnd(final MinecraftClient client){
-		final PlayerEntity player = client.player;
-		if(player == null || client.world == null){wasNull = true; return;}
+	@Override public final void onTickEnd(final Minecraft client){
+		final Player player = client.player;
+		if(player == null || client.level == null){wasNull = true; return;}
 		if(wasNull){wasNull = false; Main.LOGGER.info("[EvMod] Registered SyncPlayerPos for player: "+client.player.getName().getString());}
 		bb.putInt(MiscUtils.getServerAddressHashCode());
-		bb.putInt(MiscUtils.getDimensionId(client.world));
-		bb.putLong(player.getUuid().getMostSignificantBits()).putLong(player.getUuid().getLeastSignificantBits());
+		bb.putInt(MiscUtils.getDimensionId(client.level));
+		bb.putLong(player.getUUID().getMostSignificantBits()).putLong(player.getUUID().getLeastSignificantBits());
 		bb.putDouble(player.getX()).putDouble(player.getY()).putDouble(player.getZ());
-		bb.putFloat(player.getYaw()).putFloat(player.getPitch()).putFloat(player.getHeadYaw());
-		bb.putDouble(player.getVelocity().getX()).putDouble(player.getVelocity().getY()).putDouble(player.getVelocity().getZ());
-		bb.putInt(player.getPose().getIndex());
+		bb.putFloat(player.getYRot()).putFloat(player.getXRot()).putFloat(player.getYHeadRot());
+		bb.putDouble(player.getDeltaMovement().x()).putDouble(player.getDeltaMovement().y()).putDouble(player.getDeltaMovement().z());
+		bb.putInt(player.getPose().id());
 //		bb.putFloat(player.getHealth());
 		PlayerPosIPC.getInstance().postData(bb.array());
 		bb.rewind();
 	}
 
-	private final HashMap<UUID, OtherClientPlayerEntity> fakePlayers = new HashMap<>();
+	private final HashMap<UUID, RemotePlayer> fakePlayers = new HashMap<>();
 	public final boolean removeFakePlayer(final UUID uuid){ // Accessor: MixinClientPlayNetworkHandler
-		final OtherClientPlayerEntity dummy = fakePlayers.remove(uuid);
+		final RemotePlayer dummy = fakePlayers.remove(uuid);
 		if(dummy != null) dummy.discard();
 		return dummy != null;
 	}
@@ -49,7 +49,7 @@ public final class SyncPlayerPos implements TickListener{
 	public SyncPlayerPos(){
 		ClientPlayConnectionEvents.DISCONNECT.register((_handler, _client) -> fakePlayers.clear());
 		//WorldRenderEvents.AFTER_ENTITIES.register(context -> {
-		ClientTickEvents.END_WORLD_TICK.register(world -> {
+		ClientTickEvents.END_LEVEL_TICK.register(world -> {
 			final int myServerHash = MiscUtils.getServerAddressHashCode(), myWorldHash = MiscUtils.getDimensionId(world);
 			PlayerPosIPC.getInstance().readData(b -> {
 //				if(client.getNetworkHandler() == null) return;
@@ -60,12 +60,12 @@ public final class SyncPlayerPos implements TickListener{
 					if(removeFakePlayer(uuid)) Main.LOGGER.info("[EvMod] Removed dummy player (different world): "+uuid);
 					return;
 				}
-				final PlayerListEntry entry = client.getNetworkHandler().getPlayerListEntry(uuid);
+				final PlayerInfo entry = client.getConnection().getPlayerInfo(uuid);
 				if(entry == null){ // Not online!
 					if(removeFakePlayer(uuid)) Main.LOGGER.info("[EvMod] Removed dummy player (not online): "+uuid);
 					return;
 				}
-				final PlayerEntity existingPlayer1 = world.getPlayerByUuid(uuid);
+				final Player existingPlayer1 = world.getPlayerByUUID(uuid);
 				if(existingPlayer1 != null && existingPlayer1.getId() >= 0){ // Already loaded 1
 					if(removeFakePlayer(uuid)) Main.LOGGER.info("[EvMod] Removed dummy player (real player loaded 1): "+existingPlayer1.getName().getString());
 					return;
@@ -76,7 +76,7 @@ public final class SyncPlayerPos implements TickListener{
 					return;
 				}*/
 				final double x = bb.getDouble(), y = bb.getDouble(), z = bb.getDouble();
-				if(!world.getChunkManager().isChunkLoaded(((int)x) >> 4, ((int)z) >> 4)){
+				if(!world.getChunkSource().hasChunk(((int)x) >> 4, ((int)z) >> 4)){
 					if(ONLY_SHOW_PLAYERS_IN_LOADED_CHUNKS){
 						if(removeFakePlayer(uuid)) Main.LOGGER.info("[EvMod] Removed dummy player (unloaded chunks): "+entry.getProfile().name());
 						return;
@@ -84,8 +84,8 @@ public final class SyncPlayerPos implements TickListener{
 				}
 				final float yaw = bb.getFloat(), pitch = bb.getFloat();
 //				final double velX = bb.getDouble(), velY = bb.getDouble(), velZ = bb.getDouble();
-				final OtherClientPlayerEntity dummy = fakePlayers.computeIfAbsent(uuid, _0->{
-					final OtherClientPlayerEntity d = new OtherClientPlayerEntity(world, entry.getProfile());
+				final RemotePlayer dummy = fakePlayers.computeIfAbsent(uuid, _0->{
+					final RemotePlayer d = new RemotePlayer(world, entry.getProfile());
 					d.setId(--NEXT_DUMMY_ID);
 					Main.LOGGER.info(String.format("[EvMod] Adding dummy player '%s' at %d %d %d", d.getName().getString(), (int)x, (int)y, (int)z));
 //					d.getDataTracker().set(net.minecraft.entity.player.PlayerEntity.PLAYER_MODEL_PARTS, (byte)0x7F);
@@ -96,16 +96,16 @@ public final class SyncPlayerPos implements TickListener{
 //					final boolean skinHasHat = textures.secure() && textures.texture() != null; 
 //					d.getSkinTextures()
 //					d.getDataTracker().set(PlayerEntity., modelParts);
-					d.refreshPositionAndAngles(x, y, z, yaw, pitch);
+					d.snapTo(x, y, z, yaw, pitch);
 //					d.resetPosition(); // Sets prev X,Y,Z,yaw,pitch - already called by refreshPositionAndAngles()
 					world.addEntity(d); // Inject into world
 					return d;
 				});
-				dummy.setHeadYaw(bb.getFloat());
-				dummy.setVelocity(bb.getDouble(), bb.getDouble(), bb.getDouble());
-				dummy.setPose(EntityPose.INDEX_TO_VALUE.apply(bb.getInt()));
-				dummy.updateTrackedPositionAndAngles(new Vec3d(x, y, z), yaw, pitch);
-				dummy.updatePositionAndAngles(x, y, z, yaw, pitch);
+				dummy.setYHeadRot(bb.getFloat());
+				dummy.setDeltaMovement(bb.getDouble(), bb.getDouble(), bb.getDouble());
+				dummy.setPose(Pose.BY_ID.apply(bb.getInt()));
+				dummy.moveOrInterpolateTo(new Vec3(x, y, z), yaw, pitch);
+				dummy.absSnapTo(x, y, z, yaw, pitch);
 //				dummy.setHealth(bb.getFloat());
 				dummy.tick();
 //				final int light;
