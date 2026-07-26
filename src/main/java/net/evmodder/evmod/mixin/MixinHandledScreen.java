@@ -35,7 +35,7 @@ abstract class MixinHandledScreen<T extends AbstractContainerMenu> extends Scree
 	@Inject(method="extractLabels", at=@At("TAIL"))
 	private final void replaceScreenTitleForCurrentContainer(GuiGraphicsExtractor context, int _mouseX, int _mouseY, CallbackInfo _ci){
 		if(UpdateContainerContents.customTitle == null) return;
-		context.text(font, UpdateContainerContents.customTitle, titleLabelX, titleLabelY, 4210752, false);
+		context.text(font, UpdateContainerContents.customTitle, titleLabelX, titleLabelY, 0xFF404040, false);
 	}
 
 	// Credit to Enderkill for the idea:

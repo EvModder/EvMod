@@ -1,6 +1,8 @@
 package net.evmodder.evmod;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -523,16 +525,13 @@ public final class Configs implements IConfigHandler{
 		return allConfigs;
 	}
 
-	private static final String CONFIG_NAME = "configs.json";
+	private static final Path CONFIG_DIR = Path.of(Main.CONFIG_DIR);
+	private static final Path CONFIG_FILE = CONFIG_DIR.resolve("configs.json");
 	@Override public void load(){
-//		Path configFile = FileUtils.getConfigDirectoryAsPath().resolve(Main.MOD_ID+"/"+Main.MOD_ID+".json");
-//		if(!Files.exists(configFile) || !Files.isReadable(configFile)) return;
-//		final JsonElement element = JsonUtils.parseJsonFileAsPath(configFile);
-		final File file = new File(Main.CONFIG_DIR+CONFIG_NAME);
-		if(!file.exists() || !file.canRead()) return;
-		final JsonElement element = JsonUtils.parseJsonFile(file.toPath());
+		if(!Files.exists(CONFIG_FILE) || !Files.isReadable(CONFIG_FILE)) return;
+		final JsonElement element = JsonUtils.parseJsonFile(CONFIG_FILE);
 		if(element == null || !element.isJsonObject()){
-			Main.LOGGER.error("Configs.load(): Failed to load config file '{}'.", file.getAbsolutePath());
+			Main.LOGGER.error("Configs.load(): Failed to load config file '{}'.", CONFIG_FILE.toAbsolutePath());
 			return;
 		}
 		final JsonObject root = element.getAsJsonObject();
@@ -542,14 +541,13 @@ public final class Configs implements IConfigHandler{
 		ConfigUtils.readConfigBase(root, "Visuals", getVisualsConfigs());
 		ConfigUtils.readConfigBase(root, "Hotkeys", getHotkeysConfigs());
 		if(settings.database) ConfigUtils.readConfigBase(root, "Database", getDatabaseConfigs());
-//		Main.LOGGER.debug("Configs.load(): Successfully loaded config file '{}'.", file.getAbsolutePath());
+//		Main.LOGGER.debug("Configs.load(): Successfully loaded config file '{}'.", CONFIG_FILE.toAbsolutePath());
 	}
 
 	@Override public void save(){
-		final File dir = new File(Main.CONFIG_DIR);
-		if(!dir.exists()) dir.mkdir();
-		if(!dir.isDirectory()){
-			Main.LOGGER.error("Configs.save(): Config Folder '{}' not found!", dir.getAbsolutePath());
+		try{Files.createDirectories(CONFIG_DIR);}
+		catch(IOException e){
+			Main.LOGGER.error("Configs.save(): Failed to create config folder '{}'.", CONFIG_DIR.toAbsolutePath(), e);
 			return;
 		}
 		final JsonObject root = new JsonObject();
@@ -558,7 +556,8 @@ public final class Configs implements IConfigHandler{
 		ConfigUtils.writeConfigBase(root, "Visuals", getVisualsConfigs());
 		ConfigUtils.writeConfigBase(root, "Hotkeys", getHotkeysConfigs());
 		if(settings.database) ConfigUtils.writeConfigBase(root, "Database", getDatabaseConfigs());
-		JsonUtils.writeJsonToFile(root, new File(Main.CONFIG_DIR+CONFIG_NAME).toPath());
-//		Main.LOGGER.debug("Configs.save(): Successfully saved config file '{}'.", file.getAbsolutePath());
+		if(!JsonUtils.writeJsonToFile(root, CONFIG_FILE)){
+			Main.LOGGER.error("Configs.save(): Failed to write config file '{}'.", CONFIG_FILE.toAbsolutePath());
+		}
 	}
 }
