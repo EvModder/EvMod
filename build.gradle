@@ -33,7 +33,10 @@ repositories {
 	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
 	// You should only use this when depending on other mods.
 
-	maven { url = 'https://maven.fallenbreath.me/releases' } // MaLiLib dep, in 1.21.11
+	maven {
+		url = "https://maven.fallenbreath.me/releases" // conditional-mixin, a transitive MaLiLib dependency
+		content { includeGroup("me.fallenbreath") }
+	}
 	maven { url = "https://jitpack.io" } // MaLiLib
 }
 
@@ -47,7 +50,37 @@ dependencies {
 }
 
 // https://github.com/EvModder/EvLib
-sourceSets { main { java { srcDirs "src/main/java", "../../Plugins/EvLib/src/net/evmodder/EvLib/util/" } } }
+def evLibSourceDir = file("../../Plugins/EvLib/src")
+sourceSets.main.java {
+	srcDir evLibSourceDir
+	include "net/evmodder/evmod/**"
+	include "net/evmodder/EvLib/util/**"
+}
+
+eclipse {
+	project.file.whenMerged { eclipseProject ->
+		eclipseProject.linkedResources.removeAll { link ->
+			link.name in ["EvLib", "util"] && link.location?.endsWith("/EvLib/src")
+		}
+		eclipseProject.linkedResources.find { link ->
+			link.name == "src" && link.location == evLibSourceDir.absolutePath
+		}.name = "EvLib"
+	}
+	classpath.file.whenMerged { eclipseClasspath ->
+		eclipseClasspath.entries.removeAll { entry ->
+			entry.kind == "src" && entry.path in ["EvLib", "util"]
+		}
+		eclipseClasspath.entries.find { entry ->
+			entry.kind == "src" && entry.path == "src" &&
+					entry.includes.contains("net/evmodder/EvLib/util/**")
+		}.path = "EvLib"
+		eclipseClasspath.entries.find { entry ->
+			entry.kind == "con" && entry.path.startsWith("org.eclipse.jdt.launching.JRE_CONTAINER")
+		}.path = "org.eclipse.jdt.launching.JRE_CONTAINER"
+	}
+}
+
+tasks.named("eclipseJdt") { enabled = false }
 
 java {
 	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and add to the "build" task.
