@@ -263,7 +263,7 @@ public final class KeybindMapLoad{
 		final int numFullBatches = clicks.size()/(hbButtons.length*2);
 		Main.LOGGER.info("MapLoad: STARTED, clicks: "+clicks.size()+" == ("+hbButtons.length+"x"+numFullBatches+" + "+hbi+")x2");
 		clickIndex = 0;
-		ClickUtils.executeClicks(c->{
+		ClickUtils.executeClicks((InvAction _)->{
 			if(client.player == null || client.level == null) return true;
 
 			// Not the start of a putback click sequence

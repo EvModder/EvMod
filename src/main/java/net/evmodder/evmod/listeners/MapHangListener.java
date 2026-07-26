@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import org.jspecify.annotations.Nullable;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapRelationUtils;
@@ -25,6 +26,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ContainerInput;
@@ -38,6 +40,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.EntityHitResult;
 
 public final class MapHangListener{
 	private final boolean JUST_PICK_A_MAP = true;
@@ -501,7 +504,7 @@ public final class MapHangListener{
 //						clicks.add(new ClickEvent(restockFromSlotFinal, 0, SlotActionType.PICKUP)); // Putback bundle
 						clicks.add(new InvAction(restockFromSlotFinal, 1, ActionType.CLICK)); // Take last from bundle
 						clicks.add(new InvAction(36+player.getInventory().getSelectedSlot(), 0, ActionType.CLICK)); // Place in active hb slot
-						ClickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("HandRestockFromBundle: DONE"), clicks);
+						ClickUtils.executeClicks(/*canProceed=*/_->true, ()->Main.LOGGER.info("HandRestockFromBundle: DONE"), clicks);
 						Main.LOGGER.info("MapRestock: Extracted from bundle: s="+restockFromSlotFinal+" -> hb="+player.getInventory().getSelectedSlot());
 					}
 					else if(isHotbarSlot){
@@ -526,7 +529,7 @@ public final class MapHangListener{
 				stack->tryToStockNextMap(stack, InteractionHand.MAIN_HAND)) : null;
 		final AutoRemoveMapArt autoRemover = allowAutoRemover ? new AutoRemoveMapArt() : null;
 		if(allowAutoPlacer || allowAutoRemover){
-			AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
+			AttackEntityCallback.EVENT.register((Player _, Level _, InteractionHand _, Entity entity, @Nullable EntityHitResult _) -> {
 				if(allowAutoPlacer && autoPlacer.hasKnownLayout()){
 					BlockPos placement;
 					if(entity instanceof ItemFrame ife && ife.getItem().getItem() == Items.FILLED_MAP && autoPlacer.ifePosFilter().test(ife)
@@ -548,7 +551,7 @@ public final class MapHangListener{
 			});
 		}
 
-		UseEntityCallback.EVENT.register((player, _0, hand, entity, _1) -> {
+		UseEntityCallback.EVENT.register((Player player, Level _, InteractionHand hand, Entity entity, EntityHitResult _) -> {
 			if(!(entity instanceof ItemFrame ife)) return InteractionResult.PASS;
 			//Main.LOGGER.info("clicked item frame");
 			if(allowAutoRemover && autoRemover.isActivelyRemoving()){

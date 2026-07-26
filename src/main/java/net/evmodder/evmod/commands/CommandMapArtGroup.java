@@ -393,8 +393,7 @@ public class CommandMapArtGroup{
 				@Override public void sendError(Component message){Main.LOGGER.warn(message.getString());}
 			}, Command.SET, defaultGroupName.split("[,+]"), null);
 		}
-		ClientCommandRegistrationCallback.EVENT.register(
-				(dispatcher, _0) -> {
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> {
 			dispatcher.register(
 				ClientCommands.literal(getClass().getSimpleName().substring(7).toLowerCase())
 				.executes(ctx->{
@@ -404,7 +403,7 @@ public class CommandMapArtGroup{
 				})
 				.then(
 					ClientCommands.argument("command", StringArgumentType.word())
-					.suggests((ctx, builder) -> {
+					.suggests((_, builder) -> {
 						for(Command cmd : Command.values()) builder.suggest(cmd.translation);
 						return builder.buildFuture();
 					})

@@ -339,7 +339,7 @@ public final class KeybindMapCopy{
 		if(numEmptyMapsInGrid > 0) clicks.add(new InvAction(f.INPUT_START+1, 0, ActionType.SHIFT_CLICK));
 
 		//Main.LOGGER.info("MapCopyBundle: STARTED");
-		ClickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("MapCopyBundle: DONE"), clicks);
+		ClickUtils.executeClicks(/*canProceed=*/_->true, ()->Main.LOGGER.info("MapCopyBundle: DONE"), clicks);
 	}
 
 	private boolean isMapArtBundle(ItemStack stack){

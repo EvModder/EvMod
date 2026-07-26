@@ -25,7 +25,7 @@ public class CommandTimeOnline{
 	}
 	public CommandTimeOnline(RemoteServerSender rms){
 		ClientCommandRegistrationCallback.EVENT.register(
-			(dispatcher, _0) -> dispatcher.register(
+			(dispatcher, _) -> dispatcher.register(
 				ClientCommands.literal("timeonline")
 				.executes(ctx->{
 					Minecraft client = Minecraft.getInstance();

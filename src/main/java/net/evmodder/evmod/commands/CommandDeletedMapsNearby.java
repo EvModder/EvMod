@@ -33,7 +33,7 @@ public class CommandDeletedMapsNearby{
 
 	public CommandDeletedMapsNearby(){
 		ClientCommandRegistrationCallback.EVENT.register(
-			(dispatcher, _0) -> dispatcher.register(ClientCommands.literal("DeletedMapsNearby").executes(this::displayHashCode))
+			(dispatcher, _) -> dispatcher.register(ClientCommands.literal("DeletedMapsNearby").executes(this::displayHashCode))
 		);
 	}
 }

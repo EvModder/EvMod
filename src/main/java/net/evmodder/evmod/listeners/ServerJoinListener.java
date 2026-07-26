@@ -10,6 +10,7 @@ import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.evmodder.evmod.config.OptionMapStateCache;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 
@@ -31,7 +32,7 @@ public class ServerJoinListener{
 	public ServerJoinListener(final RemoteServerSender rms){
 		ClientPlayConnectionEvents.JOIN.register(
 				//ServerPlayNetworkHandler handler, PacketSender sender, MinecraftServer server
-				(handler, _1, _2) ->
+				(ClientPacketListener _, PacketSender _, Minecraft _) ->
 		{
 			lastJoinTs = System.currentTimeMillis();
 

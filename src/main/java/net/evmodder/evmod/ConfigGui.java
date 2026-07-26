@@ -2,6 +2,7 @@ package net.evmodder.evmod;
 
 import java.util.List;
 import fi.dy.masa.malilib.gui.GuiConfigsBase;
+import fi.dy.masa.malilib.gui.button.ButtonBase;
 import fi.dy.masa.malilib.gui.button.ButtonGeneric;
 import fi.dy.masa.malilib.util.StringUtils;
 
@@ -29,7 +30,7 @@ public class ConfigGui extends GuiConfigsBase{
 	private int createButton(int x, int y, ConfigGuiTab tab){
 		ButtonGeneric button = new ButtonGeneric(x, y, -1, 20, tab.getDisplayName(), tab.getDescription());
 		button.setEnabled(tab.ordinal() != configs.guiTab);
-		addButton(button, (b, mb)->{
+		addButton(button, (ButtonBase _, int _)->{
 			if(configs.guiTab == tab.ordinal()) return;
 			configs.guiTab = tab.ordinal();
 			reCreateListWidget();

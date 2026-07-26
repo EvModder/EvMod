@@ -422,7 +422,7 @@ public final class KeybindInventoryOrganize{
 			if(onComplete != null) onComplete.run();
 			return;
 		}
-		ClickUtils.executeClicks(_0->true,
+		ClickUtils.executeClicks(/*canProceed=*/_->true,
 //				_0->{
 //					//client.player.sendMessage(Text.literal("click "+c.slotId()+" "+c.button()+" "+c.actionType()), false);
 //					return true;

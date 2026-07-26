@@ -11,6 +11,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.EndTick;
 import net.fabricmc.fabric.api.event.player.UseBlockCallback;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.commands.arguments.EntityAnchorArgument.Anchor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -18,6 +19,7 @@ import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -194,7 +196,7 @@ public final class AutoPlaceItemFrames{
 			return InteractionResult.PASS;
 		});
 		//TODO: prefer entity attack event? (like mapart autoplacer)
-		ClientEntityEvents.ENTITY_UNLOAD.register((entity, world) -> {
+		ClientEntityEvents.ENTITY_UNLOAD.register((Entity entity, ClientLevel _) -> {
 			if(dir != null && entity instanceof ItemFrame ife
 					&& ife.getNearestViewDirection() == dir && distFromPlane(ife.blockPosition().relative(dir.getOpposite())) == 0
 					// Filter out "ghost" itemframes (failed auto-place attempts that appear client-side for a tick)

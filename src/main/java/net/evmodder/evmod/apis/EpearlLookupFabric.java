@@ -10,12 +10,14 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -51,7 +53,7 @@ public final class EpearlLookupFabric extends EpearlLookup{
 
 	public EpearlLookupFabric(final RemoteServerSender rms){
 		super(rms, Main.LOGGER);
-		ClientChunkEvents.CHUNK_LOAD.register((phase, listener)->{
+		ClientChunkEvents.CHUNK_LOAD.register((ClientLevel _, LevelChunk listener)->{
 			if(isDisabled()) return;
 			synchronized(recentlyLoadedChunks){
 				recentlyLoadedChunks.put(listener.getPos(), System.currentTimeMillis()+CHUNK_LOAD_WAIT);
@@ -60,7 +62,7 @@ public final class EpearlLookupFabric extends EpearlLookup{
 //				assert added;
 			}
 		});
-		ClientChunkEvents.CHUNK_UNLOAD.register((phase, listener)->{
+		ClientChunkEvents.CHUNK_UNLOAD.register((ClientLevel _, LevelChunk listener)->{
 			if(isDisabled()) return;
 			synchronized(recentlyLoadedChunks){
 				recentlyLoadedChunks.remove(listener.getPos());
@@ -85,7 +87,7 @@ public final class EpearlLookupFabric extends EpearlLookup{
 					final boolean fullyLoadedChunk = recentlyLoadedChunks.entrySet().removeIf(entry -> now > entry.getValue());
 
 					final AABB box = client.player.getBoundingBox().inflate(DIST_XZ, DIST_Y, DIST_XZ);
-					loadedEpearls = world.getEntities(EntityTypes.ENDER_PEARL, box, _0->true);
+					loadedEpearls = world.getEntities(EntityTypes.ENDER_PEARL, box, _->true);
 
 					// Schedule faster recentlyLoadedChunks updates if loaded epearls are detected
 					final long epearlLoadShortcut = now + CHUNK_LOAD_WAIT_AFTER_EPEARL;

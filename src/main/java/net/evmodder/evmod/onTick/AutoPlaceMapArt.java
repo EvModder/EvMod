@@ -841,7 +841,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				}
 				if(isMovingTooFast(player.getDeltaMovement())) return;
 				// Swap from upper inv to main hand
-				ClickUtils.executeClicks(_0->true, onDone, new InvAction(slot, selectedSlot, ActionType.HOTBAR_SWAP));
+				ClickUtils.executeClicks(/*canProceed=*/_->true, onDone, new InvAction(slot, selectedSlot, ActionType.HOTBAR_SWAP));
 				Main.LOGGER.info("AutoPlaceMapArt: Swapped nextMap to inv.selectedSlot: s="+slot+"->hb="+(selectedSlot));
 			}
 		}
@@ -859,7 +859,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				else{
 					if(isMovingTooFast(player.getDeltaMovement())) return;
 					// Try to move item out of main hand
-					ClickUtils.executeClicks(_0->true, onDone, new InvAction(selectedSlot+36, 0, ActionType.SHIFT_CLICK));
+					ClickUtils.executeClicks(/*canProceed=*/_->true, onDone, new InvAction(selectedSlot+36, 0, ActionType.SHIFT_CLICK));
 					Main.LOGGER.info("AutoPlaceMapArt: Shift-clicking item out of mainhand (to upper inv), hb="+selectedSlot);
 					return;
 				}
@@ -874,7 +874,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			}
 			clicks.add(new InvAction(slot, 1, ActionType.CLICK)); // Take from bundle
 			clicks.add(new InvAction(player.getInventory().getSelectedSlot()+36, 0, ActionType.CLICK)); // Place in hand (intentionally using inv.selectedSlot here)
-			ClickUtils.executeClicks(_0->true, onDone, clicks);
+			ClickUtils.executeClicks(/*canProceed=*/_->true, onDone, clicks);
 			Main.LOGGER.info("AutoPlaceMapArt: Extracted map from bundle into mainhand");
 		}
 	}
@@ -968,7 +968,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			Main.LOGGER.warn("AutoPlaceMapArt: item stuck on cursor! attempting to place into empty slot");
 			for(int i=44; i>=0; --i) if(!player.inventoryMenu.slots.get(i).hasItem()){
 				// Place stack on cursor
-				ClickUtils.executeClicks(_0->true, ()->{}, new InvAction(i, 0, ActionType.CLICK));
+				ClickUtils.executeClicks(/*canProceed=*/_->true, ()->{}, new InvAction(i, 0, ActionType.CLICK));
 				return;
 			} 
 			disableAndReset(); return;

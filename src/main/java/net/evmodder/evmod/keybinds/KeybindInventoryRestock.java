@@ -144,7 +144,7 @@ public final class KeybindInventoryRestock{
 		if(clicks.isEmpty()) return;
 
 		Main.LOGGER.info("InvRestock: Scheduled with "+clicks.size()+" clicks");
-		ClickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("InvRestock: DONE!"), clicks);
+		ClickUtils.executeClicks(/*canProceed=*/_->true, ()->Main.LOGGER.info("InvRestock: DONE!"), clicks);
 	}
 
 	private void organizeThenRestock(int i){

@@ -9,11 +9,12 @@ import net.evmodder.evmod.apis.RemoteServerSender;
 import net.evmodder.evmod.config.OptionMapStateCache;
 import net.evmodder.evmod.onTick.ContainerOpenCloseListener;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 
 public final class ServerQuitListener{
 	public ServerQuitListener(final RemoteServerSender rms){
-		//ClientLoginNetworkHandler handler/_0
-		ClientPlayConnectionEvents.DISCONNECT.register((handler, client)->{
+		ClientPlayConnectionEvents.DISCONNECT.register((ClientPacketListener _, Minecraft client)->{
 			if(Configs.Generic.LOG_COORDS_ON_SERVER_QUIT.getBooleanValue() && client.player != null){
 				Main.LOGGER.info(client.player.getName().getString()+" logged out at: "+client.player.blockPosition().toShortString());
 			}

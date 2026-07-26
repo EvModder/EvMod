@@ -21,7 +21,7 @@ public class CommandSeen{
 			})
 		);*/
 		ClientCommandRegistrationCallback.EVENT.register(
-			(dispatcher, _0) -> dispatcher.register(
+			(dispatcher, _) -> dispatcher.register(
 				ClientCommands.literal("seen").then(
 					//ClientCommands.argument("name", EntityArgumentType.player())
 					ClientCommands.argument("name", StringArgumentType.word())

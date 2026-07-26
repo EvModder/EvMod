@@ -35,7 +35,7 @@ public class CommandMapHashCode{
 
 	public CommandMapHashCode(){
 		ClientCommandRegistrationCallback.EVENT.register(
-			(dispatcher, _0) -> dispatcher.register(ClientCommands.literal("maphashcode").executes(this::displayHashCode))
+			(dispatcher, _) -> dispatcher.register(ClientCommands.literal("maphashcode").executes(this::displayHashCode))
 		);
 	}
 }

@@ -369,7 +369,7 @@ public final class KeybindEbounceTravelHelper{
 	}
 
 	private void registerClientTickListener(){
-		ClientTickEvents.START_CLIENT_TICK.register(_0 -> {
+		ClientTickEvents.START_CLIENT_TICK.register((Minecraft _) -> {
 			if(client.player == null || client.level == null){isEnabled = false; enabledTs = 0; return;}
 			if(enabledTs != 0){
 				final long timeSinceEnabled = System.currentTimeMillis() - enabledTs;

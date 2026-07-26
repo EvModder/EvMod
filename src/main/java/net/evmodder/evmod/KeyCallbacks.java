@@ -22,17 +22,19 @@ import fi.dy.masa.malilib.config.options.ConfigBase;
 import fi.dy.masa.malilib.event.InputEventHandler;
 import fi.dy.masa.malilib.gui.GuiBase;
 import fi.dy.masa.malilib.hotkeys.IHotkey;
+import fi.dy.masa.malilib.hotkeys.IKeybind;
 import fi.dy.masa.malilib.hotkeys.IKeybindManager;
 import fi.dy.masa.malilib.hotkeys.IKeybindProvider;
+import fi.dy.masa.malilib.hotkeys.KeyAction;
 
 final class KeyCallbacks{
 	private final void valueChangeCallback(final ConfigBase<?> hotkey, final Runnable callback){
-		hotkey.setValueChangeCallback(_0 -> callback.run());
+		hotkey.setValueChangeCallback(_ -> callback.run());
 	}
 
 	private final void keybindCallback(final IHotkey hotkey, final Function<Screen, Boolean> allowInScreen, final Runnable callback){
-		if(allowInScreen == null) hotkey.getKeybind().setCallback((_0, _1) -> {callback.run(); return true;});
-		else hotkey.getKeybind().setCallback((_0, _1) -> {
+		if(allowInScreen == null) hotkey.getKeybind().setCallback((KeyAction _, IKeybind _) -> {callback.run(); return true;});
+		else hotkey.getKeybind().setCallback((KeyAction _, IKeybind _) -> {
 			if(allowInScreen.apply(Minecraft.getInstance().gui.screen())){callback.run(); return true;}
 			return false;
 		});

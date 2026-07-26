@@ -207,7 +207,7 @@ public final class KeybindMapMoveBundle{
 			clicks.add(new InvAction(bundleSlot, 0, ActionType.CLICK)); // Put back bundle in src slot
 		}
 
-		ClickUtils.executeClicks(_0->true, ()->Main.LOGGER.info("MapBundleOp: DONE!"), clicks);
+		ClickUtils.executeClicks(/*canProceed=*/_->true, ()->Main.LOGGER.info("MapBundleOp: DONE!"), clicks);
 	}
 
 	/*public KeybindMapMoveBundle(boolean regular, boolean reverse){

@@ -62,7 +62,7 @@ abstract class MixinEntityRenderer{
 				//else Main.LOGGER.info("Found pearl set at XZ: "+xyz.x()+","+xyz.z());
 			}
 		}
-		final HashSet<Integer> pearlsForName = pearls.computeIfAbsent(name, _k->new HashSet<>(1));
+		final HashSet<Integer> pearlsForName = pearls.computeIfAbsent(name, (String _)->new HashSet<>(1));
 		pearlsForName.add(e.getId());
 		final boolean alreadyRenderedThisTick = renderedOnTick == client.level.getGameTime();
 		if(alreadyRenderedThisTick && e.getId() != lastRenderedId) return;

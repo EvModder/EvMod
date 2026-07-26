@@ -10,7 +10,7 @@ import net.minecraft.network.chat.Component;
 public class CommandSendAs{
 	public CommandSendAs(RemoteServerSender rms){
 		ClientCommandRegistrationCallback.EVENT.register(
-			(dispatcher, _0) -> dispatcher.register(
+			(dispatcher, _) -> dispatcher.register(
 				ClientCommands.literal("sendas")
 					.then(ClientCommands.argument("name", StringArgumentType.word())
 					.then(ClientCommands.argument("message", StringArgumentType.greedyString()))

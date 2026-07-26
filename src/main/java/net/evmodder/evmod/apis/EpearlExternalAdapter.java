@@ -54,7 +54,7 @@ public final class EpearlExternalAdapter{
 		assert pearlId != null && pearlId.matches("[A-Za-z0-9_-]{1,64}") : "Bad pearlId";
 
 		return post(baseUrl, token, "/pearlplus/load", "{\"playerName\":\"" + playerName + "\",\"pearlId\":\"" + pearlId + "\"}")
-				.thenAccept(_0 -> {});
+				.thenAccept((String _) -> {});
 	}
 
 	public static final CompletableFuture<Void> trigger(final String baseUrl, final String token, final String playerName){

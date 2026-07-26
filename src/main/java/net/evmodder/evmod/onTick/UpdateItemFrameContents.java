@@ -77,7 +77,7 @@ public final class UpdateItemFrameContents implements TickListener{
 			final UUID oldColorsIdForXYZD = colorsId != null ? hangLocsReverse.put(xyzd, colorsId) : hangLocsReverse.remove(xyzd);
 			if(colorsId != null){
 				if(trackingDistSq == 0 || centerPos.distanceToSqr(xyzd.x, xyzd.y, xyzd.z) <= trackingDistSq){
-					anyMapGroupUpdate |= iFrameMapGroup.computeIfAbsent(colorsId, _0 -> new HashSet<XYZD>()).add(xyzd);
+					anyMapGroupUpdate |= iFrameMapGroup.computeIfAbsent(colorsId, (UUID _) -> new HashSet<XYZD>()).add(xyzd);
 				}
 //				if(oldColorsIdForXYZ == null) Main.LOGGER.info("IFHU: Added map at xyzd");
 			}
@@ -135,7 +135,7 @@ public final class UpdateItemFrameContents implements TickListener{
 //		client.world.getEntitiesByClass(ItemFrameEntity.class, client.player.getBoundingBox().expand(200, 200, 200), _0->true)
 //					.forEach(ife -> updateItemFrameEntity(client, ife));
 
-		final List<ItemFrame> ifes = client.level.getEntitiesOfClass(ItemFrame.class, client.player.getBoundingBox().inflate(200, 200, 200), _0->true);
+		final List<ItemFrame> ifes = client.level.getEntitiesOfClass(ItemFrame.class, client.player.getBoundingBox().inflate(200, 200, 200), _->true);
 
 		final double TRACKING_DIST_SQ = Configs.Generic.MAX_IFRAME_TRACKING_DIST_SQ;
 		final Vec3 playerPos = /*TRACKING_DIST_SQ == 0 ? null : */client.player.position();

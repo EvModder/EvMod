@@ -109,7 +109,7 @@ public class CommandAssignPearl{
 	public CommandAssignPearl(EpearlLookupFabric epl){
 		epearlLookup = epl;
 		ClientCommandRegistrationCallback.EVENT.register(
-			(dispatcher, _0) -> dispatcher.register(
+			(dispatcher, _) -> dispatcher.register(
 				ClientCommands.literal("assignpearl").then(
 					ClientCommands.argument("name", /*EntityArgumentType.players()*/StringArgumentType.word())
 					.executes(this::assignPearl)

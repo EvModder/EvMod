@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -464,6 +465,7 @@ public final class CommandExportMapImg{
 	}
 
 	private final record MapWall(Direction dir, int axis){}
+	private BinaryOperator<ItemFrame> pickFirst = (o, _) -> o;
 	private final int runCommandForAllWalls(final CommandContext<FabricClientCommandSource> ctx){
 		final Pair<Integer, Integer> shape = getShapeArgOrNull(ctx);
 		final Map<MapWall, List<ItemFrame>> mapWalls = getItemFramesWithMaps(ctx.getSource().getPlayer()).stream().collect(Collectors.groupingBy(
@@ -477,7 +479,7 @@ public final class CommandExportMapImg{
 			final Map<Vec3i, ItemFrame> ifeLookup = mapWall.stream().collect(Collectors.toMap(
 					ItemFrame::blockPosition, // Key
 					Function.identity(), // Value
-					(o, n) -> o, // Merge function (for key collisions)
+					pickFirst, // Merge function (for key collisions)
 					HashMap::new // Map supplier
 				));
 //			Main.LOGGER.info("CmdImgExport: mapWall size B: "+ifeLookup.size());
@@ -512,7 +514,7 @@ public final class CommandExportMapImg{
 			final Map<Vec3i, ItemFrame> ifeLookup = mapWall.stream().collect(Collectors.toMap(
 					ItemFrame::blockPosition, // Key
 					Function.identity(), // Value
-					(o, n) -> o, // Merge function (for key collisions)
+					pickFirst, // Merge function (for key collisions)
 					HashMap::new // Map supplier
 				));
 			while(!ifeLookup.isEmpty()){
@@ -520,7 +522,7 @@ public final class CommandExportMapImg{
 				IdentityHashMap<ItemStack, ItemFrame> stackToIfe = ifes.stream().collect(Collectors.toMap(
 						ItemFrame::getItem, // Key: ItemStack (address)
 						Function.identity(), // Equivalent to `ife -> ife`
-						(o, n) -> o, // Merge function for duplicates (will never be called for this case)
+						pickFirst, // Merge function for duplicates (will never be called for this case)
 						IdentityHashMap::new // Map supplier
 				));
 				List<ItemStack> mapItems = new LinkedList<>(stackToIfe.keySet());
@@ -567,7 +569,7 @@ public final class CommandExportMapImg{
 		IdentityHashMap<ItemStack, ItemFrame> stackToIfe = getItemFramesWithMaps(ctx.getSource().getPlayer()).stream().collect(Collectors.toMap(
 				ItemFrame::getItem, // Key: ItemStack (address)
 				Function.identity(), // Equivalent to `ife -> ife`
-				(o, n) -> o, // Merge function for duplicates (will never be called for this case)
+				pickFirst, // Merge function for duplicates (will never be called for this case)
 				IdentityHashMap::new // Map supplier
 		));
 				//.collect(Collectors.toMap(ItemFrameEntity::getHeldItemStack, ife -> ife));
@@ -667,7 +669,7 @@ public final class CommandExportMapImg{
 	}
 
 	public CommandExportMapImg(){
-		ClientCommandRegistrationCallback.EVENT.register((dispatcher, _0) -> {
+		ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> {
 			dispatcher.register(
 				ClientCommands.literal(getClass().getSimpleName().substring(7).toLowerCase()/*"mapwallimg"*/)
 				.executes(this::runCommandNoArg)

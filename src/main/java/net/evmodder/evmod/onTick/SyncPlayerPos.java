@@ -10,6 +10,7 @@ import net.evmodder.evmod.apis.TickListener;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.world.entity.Pose;
@@ -47,7 +48,7 @@ public final class SyncPlayerPos implements TickListener{
 
 	private int NEXT_DUMMY_ID = -1000; // Custom ID for the client-side entity
 	public SyncPlayerPos(){
-		ClientPlayConnectionEvents.DISCONNECT.register((_handler, _client) -> fakePlayers.clear());
+		ClientPlayConnectionEvents.DISCONNECT.register((ClientPacketListener _, Minecraft _) -> fakePlayers.clear());
 		//WorldRenderEvents.AFTER_ENTITIES.register(context -> {
 		ClientTickEvents.END_LEVEL_TICK.register(world -> {
 			final int myServerHash = MiscUtils.getServerAddressHashCode(), myWorldHash = MiscUtils.getDimensionId(world);
@@ -84,7 +85,7 @@ public final class SyncPlayerPos implements TickListener{
 				}
 				final float yaw = bb.getFloat(), pitch = bb.getFloat();
 //				final double velX = bb.getDouble(), velY = bb.getDouble(), velZ = bb.getDouble();
-				final RemotePlayer dummy = fakePlayers.computeIfAbsent(uuid, _0->{
+				final RemotePlayer dummy = fakePlayers.computeIfAbsent(uuid, (UUID _)->{
 					final RemotePlayer d = new RemotePlayer(world, entry.getProfile());
 					d.setId(--NEXT_DUMMY_ID);
 					Main.LOGGER.info(String.format("[EvMod] Adding dummy player '%s' at %d %d %d", d.getName().getString(), (int)x, (int)y, (int)z));
