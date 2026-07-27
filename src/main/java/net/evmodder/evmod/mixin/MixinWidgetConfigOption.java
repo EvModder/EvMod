@@ -32,9 +32,16 @@ import fi.dy.masa.malilib.gui.interfaces.IGuiIcon;
 import fi.dy.masa.malilib.gui.interfaces.IKeybindConfigGui;
 import fi.dy.masa.malilib.gui.widgets.*;
 import fi.dy.masa.malilib.gui.widgets.WidgetConfigOption.ListenerSliderToggle;
+//? >=1.21.11 {
 import fi.dy.masa.malilib.gui.wrappers.TextFieldType;
+//?}
 import fi.dy.masa.malilib.hotkeys.*;
+//? >=1.21.11 {
 import fi.dy.masa.malilib.render.GuiContext;
+//?}
+//? 1.21.4 {
+/*import net.minecraft.client.gui.GuiGraphics;*/
+//?}
 import net.evmodder.evmod.ConfigGui;
 import net.evmodder.evmod.config.ConfigStringHotkeyed;
 import net.evmodder.evmod.config.ConfigYawPitchHotkeyed;
@@ -88,7 +95,11 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 			}
 		}, resetButton, null);
 
+		//? >=1.21.11 {
 		addTextField(textField, listenerChange, TextFieldType.STRING.setMaxLength(maxTextfieldTextLength));
+		//?} else {
+		/*addTextField(textField, listenerChange);*/
+		//?}
 		addButton(keybindButton, host.getButtonPressListener());
 		addButton(resetButton, resetListener);
 
@@ -104,11 +115,27 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 		WidgetConfigOptionBase<ConfigOptionWrapper> fakeChildWidget = new WidgetConfigOptionBase<>(
 				textFieldI.getX(), textFieldI.getY(), textFieldI.getWidth(), textFieldI.getHeight(), parent, wrapper, 1){
 			{
+				//? >=1.21.11 {
 				addTextField(textFieldI, changeListener, TextFieldType.FLOAT);
+				//?} else {
+				/*addTextField(textFieldI, changeListener);*/
+				//?}
 			}
+			//? >=26.1 {
 			@Override public void render(GuiContext guiContext, int mouseX, int mouseY, boolean selected){
 				textFieldI.extractRenderState(guiContext.getGuiGraphics(), mouseX, mouseY, 0f);
 			}
+			//?}
+			//? 1.21.11 {
+			/*@Override public void render(GuiContext guiContext, int mouseX, int mouseY, boolean selected){
+				textFieldI.render(guiContext.getGuiGraphics(), mouseX, mouseY, 0f);
+			}
+			*///?}
+			//? 1.21.4 {
+			/*@Override public void render(int mouseX, int mouseY, boolean selected, GuiGraphics drawContext){
+				textFieldI.render(drawContext, mouseX, mouseY, 0f);
+			}*/
+			//?}
 
 			@Override public boolean wasConfigModified(){
 				return yaw ? initialYaw$OURS != config.getYaw() : initialPitch$OURS != config.getPitch();
@@ -182,7 +209,11 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 
 	@Inject(method="addConfigOption", at=@At(value="FIELD",
 			target="Lfi/dy/masa/malilib/config/ConfigType;BOOLEAN:Lfi/dy/masa/malilib/config/ConfigType;"), cancellable=true)
+	//? >=1.21.11 {
 	private final void customConfigGui(int x, int y, int labelWidth, int configWidth, IConfigBase config, CallbackInfo ci){
+	//?} else {
+	/*private final void customConfigGui(int x, int y, float zLevel, int labelWidth, int configWidth, IConfigBase config, CallbackInfo ci){*/
+	//?}
 		if(!isOurConfigGui() || !(config instanceof IHotkey)) return;
 
 		boolean modified = true;

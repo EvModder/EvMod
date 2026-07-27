@@ -1,5 +1,7 @@
 package net.evmodder.evmod.onTick;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.screen;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -53,7 +55,7 @@ public final class UpdateContainerContents implements TickListener{
 	}
 	@Override public final void onTickStart(final Minecraft client){
 		if(client.player == null || client.level == null || !client.player.isAlive() ||
-			client.gui.screen() == null || !(client.gui.screen() instanceof AbstractContainerScreen hs) ||
+			screen(client) == null || !(screen(client) instanceof AbstractContainerScreen hs) ||
 			hs.getMenu().containerId == 0 || // InventoryScreen/CreativeScreen/RecipeBookScreen (NOT a container)
 			hs instanceof AnvilScreen || // These get false-flagged for "duplicate map in container" with i/o slots
 			hs instanceof CraftingScreen ||

@@ -1,5 +1,8 @@
 package net.evmodder.evmod.onTick;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.sendOverlay;
+import static net.evmodder.evmod.compat.MinecraftCompat.selectSlot;
+
 import java.awt.image.BufferedImage;
 import baritone.api.BaritoneAPI;
 import baritone.api.IBaritone;
@@ -53,7 +56,7 @@ public final class MapLoaderBot implements TickListener{
 	}
 
 	private static final void walkTo(Player player, final int x, final int z){
-		player.getInventory().setSelectedSlot((mapSlot+1)%9);
+		selectSlot(player.getInventory(), (mapSlot+1)%9);
 		isWalking = true;
 		baritone.getCustomGoalProcess().setGoalAndPath(new GoalXZ(x, z));
 	}
@@ -66,7 +69,7 @@ public final class MapLoaderBot implements TickListener{
 		if(baritone.getCustomGoalProcess().isActive()) return;
 		if(isWalking){
 			isWalking = false;
-			client.player.getInventory().setSelectedSlot(mapSlot);
+			selectSlot(client.player.getInventory(), mapSlot);
 //			Main.LOGGER.info("debug: finished walking, setting slot back to "+mapSlot);
 		}
 //		Main.LOGGER.info("debug: baritone pathing is available");
@@ -115,14 +118,14 @@ public final class MapLoaderBot implements TickListener{
 				final int prevColX = pixelX+1, prevColZ = pixelZ + (pixelZ == 0 || pixelZ == 126 ? +1 : -1);
 				final boolean atEnd = prevColX + 128*prevColZ == 128*128;
 				if(atEnd || pairsMatch(state.colors, desiredColors, prevColX, prevColZ, /*TODO: detemine for prevXZ!*/false)){
-					client.player.sendOverlayMessage(Component.literal("Waiting for next column"));
+					sendOverlay(client.player, Component.literal("Waiting for next column"));
 				}
 				else{
-					client.player.sendOverlayMessage(Component.literal("Previous column mismatch!"));
+					sendOverlay(client.player, Component.literal("Previous column mismatch!"));
 //					walkTo(client.player, playerX+1, playerZ+prevColZ-pixelZ);
 				}
 			}
-			else client.player.sendOverlayMessage(Component.literal("Waiting for correct color"));
+			else sendOverlay(client.player, Component.literal("Waiting for correct color"));
 			return;
 		}
 		mapSlot = client.player.getInventory().getSelectedSlot();
@@ -131,14 +134,14 @@ public final class MapLoaderBot implements TickListener{
 		for(z=pixelZ-2; z>=0 && pairsMatch(state.colors, desiredColors, pixelX, z, isInMap); z-=2);
 		if(z < 0) for(z=pixelZ+2; z<128 && pairsMatch(state.colors, desiredColors, pixelX, z, isInMap); z+=2);
 		if(z < 128){
-			client.player.sendOverlayMessage(Component.literal("Walking to next incomplete row"));
+			sendOverlay(client.player, Component.literal("Walking to next incomplete row"));
 			walkTo(client.player, playerX, playerZ + (z-pixelZ));
 		}
 		else{
 			final boolean isEven = (pixelZ&1)==0;
 			if(isEven) z = pixelZ < 64 ? 1 : 127;
 			else z = pixelZ < 64 ? 0 : 126;
-			client.player.sendOverlayMessage(Component.literal("Walking to start of next column"));
+			sendOverlay(client.player, Component.literal("Walking to start of next column"));
 			walkTo(client.player, playerX-1, playerZ+(z-pixelZ));
 		}
 	}

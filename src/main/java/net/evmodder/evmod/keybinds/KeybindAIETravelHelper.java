@@ -1,5 +1,8 @@
 package net.evmodder.evmod.keybinds;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.sendOverlay;
+import static net.evmodder.evmod.compat.MinecraftCompat.disconnect;
+
 import net.evmodder.EvLib.util.TextUtils_New;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
@@ -64,7 +67,7 @@ public final class KeybindAIETravelHelper{
 					if(stoppedFlyingTs == 0) stoppedFlyingTs = System.currentTimeMillis();
 					final long countDownToKick = SAFE_KICK_DELAY - (System.currentTimeMillis() - stoppedFlyingTs);
 					if(countDownToKick > 0){
-						client.player.sendOverlayMessage(Component.literal("AIE Helper: will disconnect due to not-flying in: " + TextUtils_New.formatTime(countDownToKick)));
+						sendOverlay(client.player, Component.literal("AIE Helper: will disconnect due to not-flying in: " + TextUtils_New.formatTime(countDownToKick)));
 						return;
 					}
 					stoppedFlyingTs = 0;
@@ -72,8 +75,7 @@ public final class KeybindAIETravelHelper{
 				String disconnectMsg = (goingDownInEnd?"FALLING!":"no longer flying")+", y="+y+", dur="+dur;
 				Main.LOGGER.warn("AIE Helper: Disconnecting player: "+disconnectMsg);
 				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
-				client.disconnectFromWorld(Component.literal("[AIE Helper] "+disconnectMsg));
-				client.level.disconnect(Component.literal("[AIE Helper] "+disconnectMsg));
+				disconnect(client, Component.literal("[AIE Helper] "+disconnectMsg));
 				return;
 			}
 
@@ -88,27 +90,26 @@ public final class KeybindAIETravelHelper{
 						}
 						else client.gameMode.handleContainerInput(0, 6, i-36, ContainerInput.SWAP, client.player); // Swap with hotbar
 						if(!atKickY){
-							client.player.sendOverlayMessage(Component.literal("AIE Helper: Swapped to fresh elytra"));
+							sendOverlay(client.player, Component.literal("AIE Helper: Swapped to fresh elytra"));
 							return;
 						}
 					}
 					if(!atKickY && dur > kickDur && waitForSafePitch && (pitch < safePitchLower || pitch > safePitchUpper || pitch <= lastPitch)){
-						client.player.sendOverlayMessage(Component.literal("AIE Helper: will trigger disconnect due to too low dur"));
+						sendOverlay(client.player, Component.literal("AIE Helper: will trigger disconnect due to too low dur"));
 						return;
 					}
 				}
 				if(!atKickY && dur > kickDur){
 					final long countDownToKick = SAFE_KICK_DELAY - (System.currentTimeMillis() - enabledTs);
 					if(countDownToKick > 0){
-						client.player.sendOverlayMessage(Component.literal("AIE Helper: will trigger disconnect due to too low "
+						sendOverlay(client.player, Component.literal("AIE Helper: will trigger disconnect due to too low "
 								+(atUnsafeY?"Y":"dur")+" in: "+TextUtils_New.formatTime(countDownToKick)));
 						return;
 					}
 				}
 				Main.LOGGER.warn("AIE Helper: Disconnecting player: y="+y+", dur="+dur);
 				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
-				client.disconnectFromWorld(Component.literal("[AIE Helper] y="+y+", dur="+dur));
-				client.level.disconnect(Component.literal("[AIE Helper] y="+y+", dur="+dur));
+				disconnect(client, Component.literal("[AIE Helper] y="+y+", dur="+dur));
 				return;
 			}
 			lastPitch = client.player.getXRot();
@@ -125,7 +126,7 @@ public final class KeybindAIETravelHelper{
 		}
 		if(enable){
 			if(!client.player.isFallFlying()){
-				client.player.sendOverlayMessage(Component.literal("AIE Helper: You need to be flying first"));
+				sendOverlay(client.player, Component.literal("AIE Helper: You need to be flying first"));
 				Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
 				return;
 			}

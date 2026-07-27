@@ -1,5 +1,10 @@
 package net.evmodder.evmod.keybinds;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.screen;
+import static net.evmodder.evmod.compat.MinecraftCompat.sendOverlay;
+import static net.evmodder.evmod.compat.MinecraftCompat.bundleItem;
+import static net.evmodder.evmod.compat.MinecraftCompat.bundleWeight;
+
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils;
@@ -244,9 +249,9 @@ public final class KeybindMapCopy{
 			bundlesToCopy.put(i, copyDests);
 		}
 		final int emptyMapsNeeded = bundlesToCopy.entrySet().stream().mapToInt(
-				e -> getNumStored(bundles[e.getKey()].weight().getOrThrow())*e.getValue().size()).sum();
+				e -> getNumStored(bundleWeight(bundles[e.getKey()]))*e.getValue().size()).sum();
 		if(totalEmptyMaps < emptyMapsNeeded){
-			Minecraft.getInstance().player.sendOverlayMessage(Component.nullToEmpty("Insufficient empty maps"));
+			sendOverlay(Minecraft.getInstance().player, Component.nullToEmpty("Insufficient empty maps"));
 			Main.LOGGER.warn("MapCopyBundle: Insufficient empty maps");
 			return;
 		}
@@ -285,7 +290,7 @@ public final class KeybindMapCopy{
 			//2+4+2 vs 2+3+2
 			//bundles[k].stream().mapToInt(stack -> stack.getCount()).forEach(count -> {
 			for(int i=0; i<content.size(); ++i){
-				final int count = content.items().get(i).count();
+				final int count = bundleItem(content, i).getCount();
 
 				if(USE_TEMP_BUNDLE) clicks.add(new InvAction(tempBundleSlot, 1, ActionType.CLICK)); // Take map from temp bundle
 				else{
@@ -352,9 +357,9 @@ public final class KeybindMapCopy{
 		if(ClickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapCopy: Already ongoing"); return;}
 		//
 		Minecraft client = Minecraft.getInstance();
-		final boolean isCrafter = client.gui.screen() instanceof CraftingScreen;
-		final boolean isCartographyTable = client.gui.screen() instanceof CartographyTableScreen;
-		if(!(client.gui.screen() instanceof InventoryScreen || isCrafter || isCartographyTable)){
+		final boolean isCrafter = screen(client) instanceof CraftingScreen;
+		final boolean isCartographyTable = screen(client) instanceof CartographyTableScreen;
+		if(!(screen(client) instanceof InventoryScreen || isCrafter || isCartographyTable)){
 			Main.LOGGER.warn("MapCopy: not in InventoryScreen/CraftingScreen/CartographyTableScreen");
 			return;
 		}
@@ -362,7 +367,7 @@ public final class KeybindMapCopy{
 		if(ts - lastCopy < copyCooldown){Main.LOGGER.warn("MapCopy: In cooldown"); return;}
 		lastCopy = ts;
 		//
-		final AbstractContainerMenu xsh = ((AbstractContainerScreen<?>)client.gui.screen()).getMenu();
+		final AbstractContainerMenu xsh = ((AbstractContainerScreen<?>)screen(client)).getMenu();
 		final ItemStack[] slots = xsh.slots.stream().map(Slot::getItem).toArray(ItemStack[]::new);
 		//for(int i=0; i<xsh.slots.size(); ++i) slots[i] = xsh.slots.get(i).getStack();
 
@@ -458,7 +463,7 @@ public final class KeybindMapCopy{
 		final int emptyMapsPerCopy = secondMinMapCount - minMapCount;
 		if(availableEmptyMaps < numSlotsToCopy*emptyMapsPerCopy){
 			Main.LOGGER.warn("MapCopy: Insufficient empty maps (have:"+availableEmptyMaps+",need:"+numSlotsToCopy*emptyMapsPerCopy+")");
-			client.player.sendOverlayMessage(Component.nullToEmpty("Insufficient empty maps"));
+			sendOverlay(client.player, Component.nullToEmpty("Insufficient empty maps"));
 			return;
 		}
 

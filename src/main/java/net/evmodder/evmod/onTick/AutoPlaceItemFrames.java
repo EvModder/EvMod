@@ -1,5 +1,7 @@
 package net.evmodder.evmod.onTick;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.selectSlot;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -167,7 +169,7 @@ public final class AutoPlaceItemFrames{
 //						Main.LOGGER.info("iFramePlacer: Out of iFrames in hotbar/offhand");
 						return;
 					}
-					client.player.getInventory().setSelectedSlot(hbSlot);
+					selectSlot(client.player.getInventory(), hbSlot);
 					/*if(!test)*/ return; // TODO: remove once test outcome is known (in AutoPlaceMapArt as well)
 				}
 			}

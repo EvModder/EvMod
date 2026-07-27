@@ -1,5 +1,7 @@
 package net.evmodder.evmod.keybinds;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.screen;
+
 import java.util.Set;
 import net.evmodder.evmod.Main;
 import net.minecraft.client.Minecraft;
@@ -144,7 +146,7 @@ public final class KeybindEjectJunk{
 		Minecraft client = Minecraft.getInstance();
 		final int syncId = client.player.containerMenu.containerId;
 
-		if(client.gui.screen() instanceof AbstractContainerScreen hs){
+		if(screen(client) instanceof AbstractContainerScreen hs){
 			final int invStart, invEnd;
 			if(hs instanceof ShulkerBoxScreen){Main.LOGGER.info("EjectJunk: ShulkerBox"); invStart = 0; invEnd = 27;}
 			else if(hs instanceof InventoryScreen){Main.LOGGER.info("EjectJunk: Inventory"); invStart = 9; invEnd = 45;}

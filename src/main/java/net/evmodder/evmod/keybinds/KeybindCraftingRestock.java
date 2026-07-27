@@ -1,5 +1,7 @@
 package net.evmodder.evmod.keybinds;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.screen;
+
 import java.util.List;
 import java.util.stream.IntStream;
 import net.evmodder.evmod.Main;
@@ -79,7 +81,7 @@ public final class KeybindCraftingRestock{
 	public void restockInputSlots(){
 //		Main.LOGGER.info("CraftRestock: restockInputSlots() called");
 		Minecraft client = Minecraft.getInstance();
-		if(lastScreen == null || !(client.gui.screen() instanceof AbstractContainerScreen hs) || !lastScreen.isInstance(hs.getMenu())) return;
+		if(lastScreen == null || !(screen(client) instanceof AbstractContainerScreen hs) || !lastScreen.isInstance(hs.getMenu())) return;
 		assert inputItems != null;
 		final List<Slot> slots = hs.getMenu().slots;
 		final int[] restockFrom = new int[inputItems.size()];
@@ -106,7 +108,7 @@ public final class KeybindCraftingRestock{
 		}
 
 		final int syncId = hs.getMenu().containerId;
-		if(client.gui.screen() instanceof AnvilScreen as && THREAD_START == 0 && restockFrom[0] != -1){
+		if(screen(client) instanceof AnvilScreen as && THREAD_START == 0 && restockFrom[0] != -1){
 			Main.LOGGER.info("CraftRestock: Restocking for anvil ("+restockFrom[0]+"->INPUT_1"+")");
 			client.gameMode.handleContainerInput(syncId, restockFrom[0], 0, ContainerInput.QUICK_MOVE, client.player);
 			if(restockFrom[1] != -1) client.gameMode.handleContainerInput(syncId, restockFrom[1], 0, ContainerInput.QUICK_MOVE, client.player);
@@ -123,9 +125,9 @@ public final class KeybindCraftingRestock{
 //					int attempts = 0;
 					boolean lastWasGood = false;
 					while(true){
-						if(!(client.gui.screen() instanceof AnvilScreen as)){
-							Main.LOGGER.info("not in anvilscreen! is forgingscreen:"+(client.gui.screen() instanceof ItemCombinerScreen));
-							if(client.gui.screen() instanceof ItemCombinerScreen){Thread.yield(); continue;}
+						if(!(screen(client) instanceof AnvilScreen as)){
+							Main.LOGGER.info("not in anvilscreen! is forgingscreen:"+(screen(client) instanceof ItemCombinerScreen));
+							if(screen(client) instanceof ItemCombinerScreen){Thread.yield(); continue;}
 							break;
 						}
 						if(System.currentTimeMillis() - THREAD_START >= THREAD_TIMEOUT){

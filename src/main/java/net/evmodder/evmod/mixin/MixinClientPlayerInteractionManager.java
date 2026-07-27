@@ -1,5 +1,7 @@
 package net.evmodder.evmod.mixin;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.sendSystem;
+
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,7 +36,7 @@ abstract class MixinClientPlayerInteractionManager{
 		if(Configs.Generic.CLICK_FILTER_USER_INPUT.getBooleanValue() && !isBotted && ClickUtils.hasOngoingClicks()){
 			ci.cancel();
 			if(syncId == 0 && slot == 0 && button == 0 && action == ContainerInput.QUICK_MOVE) return; // QUICK_CRAFT sometimes sends duplicate fake QUICK_MOVE?
-			Minecraft.getInstance().player.sendSystemMessage(Component.literal("Discarding user click to protect an ongoing ClickOp").withColor(/*&c=*/16733525));
+			sendSystem(Minecraft.getInstance().player, Component.literal("Discarding user click to protect an ongoing ClickOp").withColor(/*&c=*/16733525));
 //			MinecraftClient.getInstance().player.sendMessage(Text.literal("syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
 			return;
 		}
@@ -48,7 +50,7 @@ abstract class MixinClientPlayerInteractionManager{
 			if(isBotted){
 				String err = "Botted click somehow triggered click limit! VERY BAD!!";
 				Main.LOGGER.error(err);
-				Minecraft.getInstance().player.sendSystemMessage(Component.literal(err));
+				sendSystem(Minecraft.getInstance().player, Component.literal(err));
 			}
 			else if(!Configs.Generic.CLICK_LIMIT_USER_INPUT.getBooleanValue()) return;
 //			else if(syncId == 0 && slot == 0 && button == 0 && action == SlotActionType.QUICK_MOVE) return; // QUICK_CRAFT sends duplicate fake QUICK_MOVE?
@@ -63,7 +65,7 @@ abstract class MixinClientPlayerInteractionManager{
 			if(discardedClicks.getAndIncrement() == 0){
 				CompletableFuture.delayedExecutor(ClickUtils.TICK_DURATION_NANOS, TimeUnit.NANOSECONDS).execute(() -> {
 					final int clicks = discardedClicks.getAndSet(0);
-					Minecraft.getInstance().player.sendSystemMessage(
+					sendSystem(Minecraft.getInstance().player,
 							Component.literal("Unsafe clicks! | limit:"+Configs.Generic.CLICK_LIMIT_COUNT.getIntegerValue()
 									+" | window:"+Configs.Generic.CLICK_LIMIT_WINDOW.getIntegerValue()+"gt"
 									+" | discarded: "+clicks

@@ -1,5 +1,7 @@
 package net.evmodder.evmod.keybinds;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.screen;
+
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -131,7 +133,7 @@ public final class KeybindInventoryOrganize{
 		if(ClickUtils.hasOngoingClicks()) return;
 
 		Minecraft client = Minecraft.getInstance();
-		if(!(client.gui.screen() instanceof AbstractContainerScreen hs)){
+		if(!(screen(client) instanceof AbstractContainerScreen hs)){
 			Main.LOGGER.warn("InvOrganize: not in InventoryScreen");
 			return;
 		}
@@ -139,7 +141,7 @@ public final class KeybindInventoryOrganize{
 //			Main.LOGGER.warn("InvOrganize: Inventory too small to restock from (due to limitations in current code)");
 			return;
 		}
-		final boolean isInvScreen = client.gui.screen() instanceof InventoryScreen;
+		final boolean isInvScreen = screen(client) instanceof InventoryScreen;
 
 		ItemStack[] simSlots = new ItemStack[hs.getMenu().slots.size()];
 		boolean[] emptySlots = new boolean[simSlots.length];

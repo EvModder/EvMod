@@ -1,5 +1,8 @@
 package net.evmodder.evmod.commands;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.nonEmptyItems;
+import static net.evmodder.evmod.compat.MinecraftCompat.openFile;
+
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -45,7 +48,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Direction.Axis;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.item.ItemStack;
@@ -162,7 +164,7 @@ public final class CommandExportMapImg{
 			final Component nameText = stack.getCustomName();
 			final String containerName = nameText != null ? nameText.getString() : name+"-slot"+i+":"+stack.getItemName().getString();
 			if(container != null){
-				List<ItemStack> subItems = container.nonEmptyItemCopyStream().toList();
+				List<ItemStack> subItems = nonEmptyItems(container).toList();
 				boolean subCombine = subItems.stream().noneMatch(s -> MapItem.getSavedData(s, source.getLevel()) != null); // TODO: ?
 				int w = subCombine ? (int)Math.ceil(Math.sqrt(subItems.size())) : 9;
 				numExports += genImgForMapsInInv(source, subItems, containerName, w, subCombine);
@@ -301,7 +303,7 @@ public final class CommandExportMapImg{
 
 		final Component text = Component.literal("Saved mapwall to ").withColor(16755200).append(
 				Component.literal(relFilePath).withColor(43520).withStyle(ChatFormatting.UNDERLINE)
-				.withStyle(style -> style.withClickEvent(new ClickEvent.OpenFile(imgFile.getAbsolutePath())))
+				.withStyle(style -> style.withClickEvent(openFile(imgFile.getAbsolutePath())))
 		);
 		source.sendFeedback(text);
 	}
@@ -414,13 +416,13 @@ public final class CommandExportMapImg{
 			final String absolutePath = new File(lastRelPath).getAbsolutePath();
 			ctx.getSource().sendFeedback(Component.literal("Saved map shulk img to ").withColor(16755200).append(
 					Component.literal(lastRelPath).withColor(43520).withStyle(ChatFormatting.UNDERLINE)
-					.withStyle(style -> style.withClickEvent(new ClickEvent.OpenFile(absolutePath)))
+					.withStyle(style -> style.withClickEvent(openFile(absolutePath)))
 			));
 		}
 		if(numSaved > 1){
 			ctx.getSource().sendFeedback(Component.literal("Saved "+numSaved+" map shulk imgs to ").withColor(16755200).append(
 					Component.literal(FileIO.DIR+MAP_EXPORT_DIR).withColor(43520).withStyle(ChatFormatting.UNDERLINE)
-					.withStyle(style -> style.withClickEvent(new ClickEvent.OpenFile(new File(FileIO.DIR+MAP_EXPORT_DIR).getAbsolutePath())))
+					.withStyle(style -> style.withClickEvent(openFile(new File(FileIO.DIR+MAP_EXPORT_DIR).getAbsolutePath())))
 			));
 		}
 		return numSaved == 0 ? 1 : 0;

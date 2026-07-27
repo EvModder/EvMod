@@ -1,12 +1,13 @@
 package net.evmodder.evmod.commands;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.copyToClipboard;
+
 import java.util.stream.Collectors;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.item.Items;
@@ -27,7 +28,7 @@ public class CommandDeletedMapsNearby{
 
 		final String displayText = mapNames.length() < 1000 ? mapNames : "[Click to copy]";
 		ctx.getSource().sendFeedback(Component.literal(displayText)
-				.withStyle(style -> style.withClickEvent(new ClickEvent.CopyToClipboard(mapNames))));
+				.withStyle(style -> style.withClickEvent(copyToClipboard(mapNames))));
 		return 1;
 	}
 

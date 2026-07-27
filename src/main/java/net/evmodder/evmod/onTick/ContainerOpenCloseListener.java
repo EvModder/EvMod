@@ -1,5 +1,7 @@
 package net.evmodder.evmod.onTick;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.screen;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -59,7 +61,7 @@ public final class ContainerOpenCloseListener implements TickListener{
 				currentlyViewingContainer = true;
 				// Don't reload from echest-cache unless player leaves and rejoins server
 				if(Configs.Generic.MAP_CACHE_BY_EC_POS.getBooleanValue() && (
-					currentlyViewingEchest=client.gui.screen().getTitle().contains(Component.translatable("container.enderchest")))
+					currentlyViewingEchest=screen(client).getTitle().contains(Component.translatable("container.enderchest")))
 				){
 					waitingForEcToLoad = true;
 				}

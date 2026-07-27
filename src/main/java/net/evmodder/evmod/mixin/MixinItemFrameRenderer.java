@@ -1,10 +1,16 @@
 package net.evmodder.evmod.mixin;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.isHudHidden;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+//? 1.21.4 {
+/*import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;*/
+//?}
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
@@ -55,6 +61,7 @@ abstract class MixinItemFrameRenderer<T extends ItemFrame>{
 		return e > 1.0d - asdf / d;
 	}
 
+	//? >=26.1 {
 	@Inject(method="extractRenderState", at=@At("TAIL"))
 	private final void disableItemFrameFrameRenderingWhenHoldingMaps(
 			T _0, ItemFrameRenderState ifers, float _1, CallbackInfo _2){
@@ -63,11 +70,27 @@ abstract class MixinItemFrameRenderer<T extends ItemFrame>{
 			ifers.frameModel.clear();
 		}
 	}
+	//?}
+	//? 1.21.11 {
+	/*@Inject(method="extractRenderState", at=@At("TAIL"))
+	private final void disableItemFrameFrameRenderingWhenHoldingMaps(
+			T ignoredFrame, ItemFrameRenderState ifers, float ignoredPartialTick, CallbackInfo ignoredCallback){
+		ifers.isInvisible |= shouldBeInvis(ifers);
+	}
+	*///?}
+	//? 1.21.4 {
+	/*@Inject(method="render", at=@At("HEAD"))
+	private final void disableItemFrameFrameRenderingWhenHoldingMaps(
+			ItemFrameRenderState ifers, PoseStack ignoredPose, MultiBufferSource ignoredBuffers,
+			int ignoredLight, CallbackInfo ignoredCallback){
+		ifers.isInvisible |= shouldBeInvis(ifers);
+	}*/
+	//?}
 
 	@Inject(method="shouldShowName", at=@At("HEAD"), cancellable=true)
 	private final void modifyHasLableBasedOnMapState(T itemFrameEntity, double squaredDistanceToCamera, CallbackInfoReturnable<Boolean> cir){
 		if(!Configs.Visuals.MAP_HIGHLIGHT_IFRAME.getBooleanValue()) return; // Feature is disabled
-		if(client.gui.hud.isHidden()) return;
+		if(isHudHidden(client)) return;
 
 		final ItemStack stack = itemFrameEntity.getItem();
 		if(stack.isEmpty()) return;

@@ -1,12 +1,13 @@
 package net.evmodder.evmod.commands;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.copyToClipboard;
+
 import com.mojang.brigadier.context.CommandContext;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -29,7 +30,7 @@ public class CommandMapHashCode{
 
 		final String colorsId = MapGroupUtils.getIdForMapState(state, /*evict=*/true).toString();
 		ctx.getSource().sendFeedback(Component.literal(colorsId+" \u2398")
-				.withStyle(style -> style.withClickEvent(new ClickEvent.CopyToClipboard(colorsId))));
+				.withStyle(style -> style.withClickEvent(copyToClipboard(colorsId))));
 		return 1;
 	}
 

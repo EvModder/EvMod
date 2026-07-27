@@ -1,5 +1,7 @@
 package net.evmodder.evmod;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.screen;
+
 import net.evmodder.evmod.apis.ChatBroadcaster;
 import net.evmodder.evmod.apis.EpearlExternalAdapter;
 import net.evmodder.evmod.apis.EpearlLookup;
@@ -35,7 +37,7 @@ final class KeyCallbacks{
 	private final void keybindCallback(final IHotkey hotkey, final Function<Screen, Boolean> allowInScreen, final Runnable callback){
 		if(allowInScreen == null) hotkey.getKeybind().setCallback((KeyAction _, IKeybind _) -> {callback.run(); return true;});
 		else hotkey.getKeybind().setCallback((KeyAction _, IKeybind _) -> {
-			if(allowInScreen.apply(Minecraft.getInstance().gui.screen())){callback.run(); return true;}
+			if(allowInScreen.apply(screen(Minecraft.getInstance()))){callback.run(); return true;}
 			return false;
 		});
 	}

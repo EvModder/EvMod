@@ -1,5 +1,7 @@
 package net.evmodder.evmod.mixin;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.isHudHidden;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Timer;
@@ -28,7 +30,7 @@ abstract class MixinEntityRenderer{
 	// TODO: mixin onTick instead of hasLabel, or setName somehow
 	@Inject(method="shouldShowName", at=@At("HEAD"), cancellable=true)
 	private final void fetchPearlOwnerNameInHasLabel_shouldDoThisInOnTickTBH(Entity e, double _distSqToCamera, CallbackInfoReturnable<Boolean> cir){
-		if(client.gui.hud.isHidden()) return; // HUD is hidden
+		if(isHudHidden(client)) return;
 		if(e instanceof ThrownEnderpearl == false) return;
 		final EpearlLookupFabric eplf = AccessorMain.getInstance().epearlLookup;
 		if(eplf == null || eplf.isDisabled()) return; // Feature is disabled

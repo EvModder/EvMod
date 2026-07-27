@@ -11,7 +11,9 @@ import net.evmodder.evmod.mixin.AccessorProjectileEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.world.entity.Entity;
+//? >=1.21.11 {
 import net.minecraft.world.entity.EntityReference;
+//?}
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -107,10 +109,18 @@ public class MiscUtils{
 	}
 
 	public static final UUID getPearlUUID(final ThrownEnderpearl epearl){
+		//? >=1.21.11 {
 		var ref = ((AccessorProjectileEntity)epearl).getOwnerReference();
 		return ref == null ? null : ref.getUUID();
+		//?} else {
+		/*return ((AccessorProjectileEntity)epearl).getOwnerUUID();*/
+		//?}
 	}
 	public static final void setPearlUUID(final ThrownEnderpearl epearl, final UUID owner){
+		//? >=1.21.11 {
 		((AccessorProjectileEntity)epearl).setOwnerReference(EntityReference.of(owner));
+		//?} else {
+		/*((AccessorProjectileEntity)epearl).setOwnerUUID(owner);*/
+		//?}
 	}
 }

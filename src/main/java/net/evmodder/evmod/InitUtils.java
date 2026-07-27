@@ -1,5 +1,7 @@
 package net.evmodder.evmod;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.sendOverlay;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Timer;
@@ -60,7 +62,7 @@ final class InitUtils{
 				lastClickRenderWasMax = true;
 			}
 			else lastClickRenderWasMax = false;
-			client.player.sendOverlayMessage(Component.literal("Clicks available: "+clicks+"/"+ClickUtils.getMaxClicks()).withColor(15777300));
+			sendOverlay(client.player, Component.literal("Clicks available: "+clicks+"/"+ClickUtils.getMaxClicks()).withColor(15777300));
 		}}, 1l, 50l); // Runs every tick
 	}
 

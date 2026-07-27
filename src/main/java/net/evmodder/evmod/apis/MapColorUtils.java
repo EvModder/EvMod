@@ -1,5 +1,7 @@
 package net.evmodder.evmod.apis;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.sendOverlay;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.UUID;
@@ -222,7 +224,7 @@ public abstract class MapColorUtils{
 //			Main.LOGGER.info("numShaded: "+numShaded+", numTransparent: "+numTransparent+", percentStaircase: "+percentStaircase);
 			final int j = staircasedPixels[0];
 			final int x = j%128, y = j/128;
-			Minecraft.getInstance().player.sendOverlayMessage(Component.literal("First staircased pixel: "+x+","+y+"  (id:"+(colors[j]&0xFF)/4+")"));
+			sendOverlay(Minecraft.getInstance().player, Component.literal("First staircased pixel: "+x+","+y+"  (id:"+(colors[j]&0xFF)/4+")"));
 			final double numShadedAtTop = Arrays.stream(staircasedPixels).filter(i -> i<128).count();
 			if(numShadedAtTop/numShaded > .8) noobline = true; // If 80%+ of the shading is only the top row, consider it a noobline
 		}

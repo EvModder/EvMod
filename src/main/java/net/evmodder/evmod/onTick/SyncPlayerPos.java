@@ -97,7 +97,11 @@ public final class SyncPlayerPos implements TickListener{
 //					final boolean skinHasHat = textures.secure() && textures.texture() != null; 
 //					d.getSkinTextures()
 //					d.getDataTracker().set(PlayerEntity., modelParts);
+					//? >=1.21.11 {
 					d.snapTo(x, y, z, yaw, pitch);
+					//?} else {
+					/*d.moveTo(x, y, z, yaw, pitch);*/
+					//?}
 //					d.resetPosition(); // Sets prev X,Y,Z,yaw,pitch - already called by refreshPositionAndAngles()
 					world.addEntity(d); // Inject into world
 					return d;
@@ -105,8 +109,13 @@ public final class SyncPlayerPos implements TickListener{
 				dummy.setYHeadRot(bb.getFloat());
 				dummy.setDeltaMovement(bb.getDouble(), bb.getDouble(), bb.getDouble());
 				dummy.setPose(Pose.BY_ID.apply(bb.getInt()));
+				//? >=1.21.11 {
 				dummy.moveOrInterpolateTo(new Vec3(x, y, z), yaw, pitch);
 				dummy.absSnapTo(x, y, z, yaw, pitch);
+				//?} else {
+				/*dummy.lerpTo(x, y, z, yaw, pitch, 0);
+				dummy.absMoveTo(x, y, z, yaw, pitch);*/
+				//?}
 //				dummy.setHealth(bb.getFloat());
 				dummy.tick();
 //				final int light;

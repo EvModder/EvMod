@@ -1,5 +1,8 @@
 package net.evmodder.evmod.keybinds;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.screen;
+import static net.evmodder.evmod.compat.MinecraftCompat.bundleWeight;
+
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.stream.IntStream;
@@ -37,7 +40,7 @@ public final class KeybindMapMoveBundle{
 		if(ClickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapBundleOp: Already ongoing"); return;}
 		//
 		Minecraft client = Minecraft.getInstance();
-		if(!(client.gui.screen() instanceof AbstractContainerScreen hs)) return;
+		if(!(screen(client) instanceof AbstractContainerScreen hs)) return;
 		//
 		final long ts = System.currentTimeMillis();
 		if(ts - lastBundleOp < bundleOpCooldown){Main.LOGGER.warn("MapBundleOp: in cooldown"); return;}
@@ -78,8 +81,8 @@ public final class KeybindMapMoveBundle{
 			return;
 		}
 
-		final boolean cursorBundleHasSpace = cursorIsUsableBundle && cursorBundleContents.weight().getOrThrow().intValue() != 1;
-		final boolean anyBundleWithSpace = cursorBundleHasSpace || Arrays.stream(bundles).anyMatch(b -> b.weight().getOrThrow().intValue() != 1);
+		final boolean cursorBundleHasSpace = cursorIsUsableBundle && bundleWeight(cursorBundleContents).intValue() != 1;
+		final boolean anyBundleWithSpace = cursorBundleHasSpace || Arrays.stream(bundles).anyMatch(b -> bundleWeight(b).intValue() != 1);
 		final boolean doStow = slotsWithMapArt.length > 0 && anyBundleWithSpace && (Configs.Hotkeys.MAP_MOVE_BUNDLE_PREFER_STOW.getBooleanValue() || !anyBundleWithMaps);
 
 		long numMapsWithCount2 = -1;
@@ -99,7 +102,7 @@ public final class KeybindMapMoveBundle{
 			if(pickup1of2){Main.LOGGER.warn("MapBundleOp: Cannot use cursor-bundle when splitting stacked maps"); return;}
 			bundleSlot = -1;
 			pickedUpBundle = true;
-			stored = getNumStored(cursorStack.get(DataComponents.BUNDLE_CONTENTS).weight().getOrThrow());
+			stored = getNumStored(bundleWeight(cursorStack.get(DataComponents.BUNDLE_CONTENTS)));
 		}
 		else if(!cursorStack.isEmpty()){Main.LOGGER.warn("MapBundleOp: Non-bundle item on cursor"); return;}
 		else{
@@ -115,7 +118,7 @@ public final class KeybindMapMoveBundle{
 			for(int i=0; i<slots.length; ++i){ // Hmm, allow using bundles from outside the container screen
 				final BundleContents contents = slots[i].get(DataComponents.BUNDLE_CONTENTS);
 				if(contents == null) continue;
-				final Fraction occ = contents.weight().getOrThrow();
+				final Fraction occ = bundleWeight(contents);
 //				if(doStow && occ.intValue() == 1) continue; // Skip full bundles
 //				if(!doStow && occ.getNumerator() == 0) continue; // Skip empty bundles
 				if(doStow ? occ.intValue() == 1 : occ.getNumerator() == 0) continue; // Same logic as above

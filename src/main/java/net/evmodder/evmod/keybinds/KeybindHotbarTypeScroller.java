@@ -1,5 +1,7 @@
 package net.evmodder.evmod.keybinds;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.selectSlot;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -87,7 +89,7 @@ public final class KeybindHotbarTypeScroller{
 				}
 				if(j != inventory.getNonEquipmentItems().size()){
 					//use the item (change selected hotbar slot or swap with main inv)
-					if(Inventory.isHotbarSlot(j)) inventory.setSelectedSlot(j);
+					if(Inventory.isHotbarSlot(j)) selectSlot(inventory, j);
 					else{
 						inventory.getNonEquipmentItems().set(inventory.getSelectedSlot(), inventory.getNonEquipmentItems().get(j));
 						inventory.getNonEquipmentItems().set(j, is);

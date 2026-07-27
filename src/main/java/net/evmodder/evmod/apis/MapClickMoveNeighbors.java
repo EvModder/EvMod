@@ -1,5 +1,7 @@
 package net.evmodder.evmod.apis;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.sendOverlay;
+
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -189,7 +191,7 @@ public abstract class MapClickMoveNeighbors{
 		ClickUtils.executeClicks(/*canProceed=*/_->true, ()->{
 			ongoingClickMove = false;
 			Main.LOGGER.info("MapMoveClick: DONE (clicks:"+numClicks+")");
-			player.sendOverlayMessage(Component.literal("MapMoveClick: DONE (clicks:"+numClicks+")"));
+			sendOverlay(player, Component.literal("MapMoveClick: DONE (clicks:"+numClicks+")"));
 		}, clicks);
 //		if(Main.inventoryUtils.addClick(null) >= Main.inventoryUtils.MAX_CLICKS){
 //			Main.LOGGER.warn("Not enough clicks available to execute MapMoveNeighbors :(");

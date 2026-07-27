@@ -1,5 +1,9 @@
 package net.evmodder.evmod.keybinds;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.screen;
+import static net.evmodder.evmod.compat.MinecraftCompat.sendOverlay;
+import static net.evmodder.evmod.compat.MinecraftCompat.sendSystem;
+
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -44,7 +48,7 @@ public final class KeybindMapMove{
 		if(ClickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapMove cancelled: Already ongoing"); return;}
 		//
 		Minecraft client = Minecraft.getInstance();
-		if(!(client.gui.screen() instanceof AbstractContainerScreen hs)){/*Main.LOGGER.warn("MapMove cancelled: Not in ShulkerBoxScreen"); */return;}
+		if(!(screen(client) instanceof AbstractContainerScreen hs)){/*Main.LOGGER.warn("MapMove cancelled: Not in ShulkerBoxScreen"); */return;}
 		//
 		if(hs.getMenu().slots.size() != 63/*27+36*/){
 			Main.LOGGER.warn("MapMove cancelled: Unexpected slot count for MapMove: "+hs.getMenu().slots.size());
@@ -85,8 +89,8 @@ public final class KeybindMapMove{
 			else if(stack.getItem() == Items.FILLED_MAP){
 				if(isFillerMap(slots, stack, client.level)){++fillerInShulk; continue;}
 				if(!ALLOW_AIR_POCKETS && emptySlotsShulk != 0 && numInInv != 0){
-					client.player.sendOverlayMessage(Component.literal("MapMove: Air gap between items in shulker currently disabled"));
-					client.player.sendSystemMessage(Component.literal("MapMove: Air gap between items in shulker currently disabled"));
+					sendOverlay(client.player, Component.literal("MapMove: Air gap between items in shulker currently disabled"));
+					sendSystem(client.player, Component.literal("MapMove: Air gap between items in shulker currently disabled"));
 					return;
 				}
 				++numInShulk;

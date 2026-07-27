@@ -1,5 +1,7 @@
 package net.evmodder.evmod.keybinds;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.screen;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,7 +45,7 @@ public final class KeybindInventoryRestock{
 		//
 		Minecraft client = Minecraft.getInstance();
 		if(client.player == null || client.level == null || !client.player.isAlive()) return;
-		if(client.gui.screen() == null || !(client.gui.screen() instanceof AbstractContainerScreen hs)) return;
+		if(screen(client) == null || !(screen(client) instanceof AbstractContainerScreen hs)) return;
 		if(hs instanceof AnvilScreen || hs instanceof CraftingScreen || hs instanceof CartographyTableScreen) return;
 		//
 		final ItemStack[] slots = hs.getMenu().slots.stream().map(s -> s.getItem().copy()).toArray(ItemStack[]::new);

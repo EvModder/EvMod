@@ -1,5 +1,8 @@
 package net.evmodder.evmod.keybinds;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.screen;
+import static net.evmodder.evmod.compat.MinecraftCompat.bundleItem;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -62,7 +65,7 @@ public final class KeybindMapLoad{
 	}
 
 	private int[] getUsableHotbarButtons(Minecraft client){
-		if(client.gui.screen() instanceof ShulkerBoxScreen == false) IntStream.range(0, 9).toArray();
+		if(screen(client) instanceof ShulkerBoxScreen == false) IntStream.range(0, 9).toArray();
 		return IntStream.range(0, 9).filter(hb -> isUsable(client.player.getInventory().getItem(hb))).toArray();
 	}
 
@@ -70,7 +73,7 @@ public final class KeybindMapLoad{
 	private long stateUpdateWaitStart, stateLoadWaitStart, textureUpdateRequestClickIndex;
 	private final void loadMapArtFromBundles(){
 		final Minecraft client = Minecraft.getInstance();
-		final InventoryScreen is = (InventoryScreen)client.gui.screen();
+		final InventoryScreen is = (InventoryScreen)screen(client);
 		final ItemStack[] slots = is.getMenu().slots.stream().map(s -> s.getItem()).toArray(ItemStack[]::new);
 		final int[] slotsWithMapArtBundles = IntStream.range(9, 45).filter(i -> {
 			BundleContents content = slots[i].get(DataComponents.BUNDLE_CONTENTS);
@@ -106,7 +109,7 @@ public final class KeybindMapLoad{
 			final int depthToLoad;
 			{
 				int j;
-				for(j=0; j<contents.size() && !isUnloadedMapArt(client.level, contents.items().get(BUNDLES_ARE_REVERSED ? j : contents.size()-1-j).create()); ++j);
+				for(j=0; j<contents.size() && !isUnloadedMapArt(client.level, bundleItem(contents, BUNDLES_ARE_REVERSED ? j : contents.size()-1-j)); ++j);
 				depthToLoad = contents.size()-j;
 //				if(j>0) Main.LOGGER.info("MapLoadBundle: Able to skip loading for bundle in slot"+i+": "+j);
 			}
@@ -226,7 +229,7 @@ public final class KeybindMapLoad{
 		if(ClickUtils.hasOngoingClicks()){Main.LOGGER.warn("MapLoad cancelled: Already ongoing"); return;}
 
 		Minecraft client = Minecraft.getInstance();
-		if(!(client.gui.screen() instanceof AbstractContainerScreen hs)){Main.LOGGER.warn("MapLoad cancelled: not in HandledScreen"); return;}
+		if(!(screen(client) instanceof AbstractContainerScreen hs)){Main.LOGGER.warn("MapLoad cancelled: not in HandledScreen"); return;}
 
 		final long ts = System.currentTimeMillis();
 		if(ts - lastLoad < loadCooldown){Main.LOGGER.warn("MapLoad cancelled: Cooldown"); return;}

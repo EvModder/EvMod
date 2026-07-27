@@ -1,5 +1,9 @@
 package net.evmodder.evmod.listeners;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.sendOverlay;
+import static net.evmodder.evmod.compat.MinecraftCompat.bundleItem;
+import static net.evmodder.evmod.compat.MinecraftCompat.selectSlot;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -430,7 +434,7 @@ public final class MapHangListener{
 			BundleContents contents = slots.get(i).get(DataComponents.BUNDLE_CONTENTS);
 			if(contents == null || contents.isEmpty()) continue;
 			int topBundleSlot = Configs.Generic.BUNDLES_ARE_REVERSED.getBooleanValue() ? contents.size()-1 : 0;
-			ItemStack stack = contents.items().get(topBundleSlot).create();
+			ItemStack stack = bundleItem(contents, topBundleSlot);
 			if(stack.getItem() != Items.FILLED_MAP) continue;
 			if(slots.stream().anyMatch(s -> ItemStack.isSameItemSameComponents(s, stack))) continue; // If map is also present unbundled in inv
 			if(stack.getCount() == 1 && isInNearbyItemFrame(stack, player, 20)) continue;
@@ -510,7 +514,7 @@ public final class MapHangListener{
 					else if(isHotbarSlot){
 //						player.networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(restockFromSlotFinal - 36));
 //						player.getInventory().selectedSlot = restockFromSlotFinal - 36;
-						player.getInventory().setSelectedSlot(restockFromSlotFinal - 36);
+						selectSlot(player.getInventory(), restockFromSlotFinal - 36);
 						Main.LOGGER.info("MapRestock: Changed selected hotbar slot to nextMap: hb="+player.getInventory().getSelectedSlot());
 					}
 					else{
@@ -580,7 +584,7 @@ public final class MapHangListener{
 			if(waitingForRestock && (stack.isEmpty() || stack.getItem() == Items.FILLED_MAP)){
 				// Little safety net to keep player from placing offhand item into iFrame if right-clicking faster than hand restock can handle
 				Main.LOGGER.warn("MapRestock: Player right-clicking iFrame before previous tryToStockNextMap() has finished!");
-				player.sendOverlayMessage(Component.literal("Warn: right-clicking iFrame before AutoHandRestock has finished"));
+				sendOverlay(player, Component.literal("Warn: right-clicking iFrame before AutoHandRestock has finished"));
 				return InteractionResult.FAIL;
 			}
 			if(stack.getItem() != Items.FILLED_MAP) return InteractionResult.PASS;

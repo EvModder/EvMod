@@ -1,5 +1,10 @@
 package net.evmodder.evmod.keybinds;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.screen;
+import static net.evmodder.evmod.compat.MinecraftCompat.sendOverlay;
+import static net.evmodder.evmod.compat.MinecraftCompat.sendSystem;
+import static net.evmodder.evmod.compat.MinecraftCompat.selectSlot;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import net.evmodder.evmod.Main;
@@ -135,12 +140,12 @@ public final class KeybindEbounceTravelHelper{
 			if(path == null || BuiltInRegistries.ITEM.getKey(item).getPath().equals(path)) break;
 		}
 		if(i == 9){
-			client.player.sendOverlayMessage(Component.literal("(!) No blocks in hotbar"));
+			sendOverlay(client.player, Component.literal("(!) No blocks in hotbar"));
 			return false;
 		}
-		client.player.getInventory().setSelectedSlot(i);
+		selectSlot(client.player.getInventory(), i);
 		client.getConnection().send(new ServerboundSetCarriedItemPacket(i));
-		client.player.sendOverlayMessage(Component.literal("Selected hotbar blocks"));
+		sendOverlay(client.player, Component.literal("Selected hotbar blocks"));
 //		Main.LOGGER.info("Selected hotbar blocks");
 		return true;
 	}
@@ -201,7 +206,7 @@ public final class KeybindEbounceTravelHelper{
 		if(!holdingBlock) selectBlocksInHotbar(useBlock);
 		String path = BuiltInRegistries.ITEM.getKey(client.player.getItemInHand(hand).getItem()).getPath();
 		if(useBlock != null && !path.equals(useBlock)){
-			client.player.sendOverlayMessage(Component.literal("(!) Missing block: "+useBlock));
+			sendOverlay(client.player, Component.literal("(!) Missing block: "+useBlock));
 			//return false;
 		}
 		return placeBlock(bp, hand);
@@ -265,16 +270,16 @@ public final class KeybindEbounceTravelHelper{
 			if(speed > bestSpeed){bestSpeed=speed; bestI=i;}
 		}
 		if(bestSpeed == 0){
-			client.player.sendOverlayMessage(Component.literal("(!) No matching tool in hotbar"));
+			sendOverlay(client.player, Component.literal("(!) No matching tool in hotbar"));
 			return false;
 		}
 		if(bestI == client.player.getInventory().getSelectedSlot()){
-			client.player.sendOverlayMessage(Component.literal("Best tool in hotbar already selected"));
+			sendOverlay(client.player, Component.literal("Best tool in hotbar already selected"));
 			return false;
 		}
-		client.player.getInventory().setSelectedSlot(bestI);
+		selectSlot(client.player.getInventory(), bestI);
 		client.getConnection().send(new ServerboundSetCarriedItemPacket(bestI));
-		client.player.sendOverlayMessage(Component.literal("Selected hotbar pickaxe"));
+		sendOverlay(client.player, Component.literal("Selected hotbar pickaxe"));
 //		Main.LOGGER.info("Selected hotbar pickaxe");
 		return true;
 	}
@@ -291,7 +296,7 @@ public final class KeybindEbounceTravelHelper{
 			BlockPos aheadPos = bp.offset(i*dx, 0, i*dz);
 			if(client.level.getBlockState(aheadPos).getBlock() instanceof BaseFireBlock){
 				client.gameMode.continueDestroyBlock(aheadPos, getBlockBreakingSide(aheadPos));
-				client.player.sendOverlayMessage(Component.literal("Put out a fire"));
+				sendOverlay(client.player, Component.literal("Put out a fire"));
 				return true;
 			}
 		}
@@ -336,7 +341,7 @@ public final class KeybindEbounceTravelHelper{
 			if(isMining == 0) isMining = 4;
 			//if(client.player.getMainHandStack().getItem() instanceof PickaxeItem) return false;
 			client.gameMode.continueDestroyBlock(bpDig, getBlockBreakingSide(bpDig));
-			client.player.sendOverlayMessage(Component.literal("Mining: ").copy().append(bs.getBlock().getName())
+			sendOverlay(client.player, Component.literal("Mining: ").copy().append(bs.getBlock().getName())
 //					.append(" yaw:"+client.player.getYaw()+", dirX:"+dir.x+",dirZ:"+dir.z+", xyz: ")
 //					.append(bp.getX()+","+bp.getY()+","+bp.getZ())
 					);
@@ -346,7 +351,7 @@ public final class KeybindEbounceTravelHelper{
 		if(isMining > 0){
 			if(--isMining == 0){
 				selectBlocksInHotbar(null);
-				client.player.sendOverlayMessage(Component.literal("Mined: ").copy().append(bs.getBlock().getName()));
+				sendOverlay(client.player, Component.literal("Mined: ").copy().append(bs.getBlock().getName()));
 			}
 			return true; // Wait a bit before declaring it done
 		}
@@ -354,7 +359,7 @@ public final class KeybindEbounceTravelHelper{
 	}
 
 	private boolean barfTrash(KeybindEjectJunk ejectJunk){
-		if(client.gui.screen() instanceof AbstractContainerScreen) return false;
+		if(screen(client) instanceof AbstractContainerScreen) return false;
 
 		boolean didBarf = false;
 		for(int i=9; i<36; ++i) if(ejectJunk.shouldEject(client.player.getInventory().getItem(i))){
@@ -378,22 +383,22 @@ public final class KeybindEbounceTravelHelper{
 //					Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setBooleanValue(true); // May already be true
 					targetY = Long.MIN_VALUE;
 					enabledTs = 0;
-					client.player.sendOverlayMessage(Component.literal("eBounce Helper: enabled"));
-					client.player.sendSystemMessage(Component.literal("eBounce Helper: enabled"));
+					sendOverlay(client.player, Component.literal("eBounce Helper: enabled"));
+					sendSystem(client.player, Component.literal("eBounce Helper: enabled"));
 				}
 				else{
-					client.player.sendOverlayMessage(Component.literal("Enabling in "+String.format("%.2f", ((ENABLE_DELAY-timeSinceEnabled)/1000d))+"s..."));
+					sendOverlay(client.player, Component.literal("Enabling in "+String.format("%.2f", ((ENABLE_DELAY-timeSinceEnabled)/1000d))+"s..."));
 				}
 			}
 			if(!isEnabled) return;
 			if(client.player.getItemBySlot(EquipmentSlot.CHEST).getItem() != Items.ELYTRA){
-				client.player.sendOverlayMessage(Component.literal("Not wearing elytra"));
+				sendOverlay(client.player, Component.literal("Not wearing elytra"));
 				return;
 			}
 			final int y = client.player.getBlockY();
 			if(targetY == Long.MIN_VALUE) targetY = y;
 			if(targetY != y){
-				client.player.sendOverlayMessage(Component.literal("Y-height has changed!"));
+				sendOverlay(client.player, Component.literal("Y-height has changed!"));
 				return;
 			}
 //			if(y == 118){
@@ -403,7 +408,7 @@ public final class KeybindEbounceTravelHelper{
 //			if(y != 119 && y != 120) return;
 
 			if(fillHighwayHole(y == 119 ? null : "obsidian")){
-				client.player.sendOverlayMessage(Component.literal("Filled a hole"));
+				sendOverlay(client.player, Component.literal("Filled a hole"));
 //				Main.LOGGER.info("Filled a hole");
 				return;
 			}
@@ -431,7 +436,7 @@ public final class KeybindEbounceTravelHelper{
 			isEnabled = false;
 			enabledTs = 0;
 //			client.player.sendMessage(Text.literal("eBounceHelper: disabled"), true);
-			client.player.sendSystemMessage(Component.literal("eBounceHelper: disabled"));
+			sendSystem(client.player, Component.literal("eBounceHelper: disabled"));
 			return;
 		}
 //		ItemStack chestStack = client.player.getInventory().getArmorStack(2);
@@ -450,7 +455,7 @@ public final class KeybindEbounceTravelHelper{
 //		}
 
 //		client.player.sendMessage(Text.literal("eBounce Helper: enabling..."), true);
-		client.player.sendSystemMessage(Component.literal("eBounce Helper: enabling..."));
+		sendSystem(client.player, Component.literal("eBounce Helper: enabling..."));
 		enabledTs = System.currentTimeMillis();
 	}
 

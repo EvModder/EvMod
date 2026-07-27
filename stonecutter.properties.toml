@@ -1,0 +1,31 @@
+# Shared metadata and dependency pins.
+mod.id = "evmod"
+mod.name = "Ev's Mod"
+mod.group = "net.evmodder"
+
+#2 = public db, NewMapNotifier, /mapartgroup seen/2b2t.org, x/SIZE, configs refactor, better tooltips
+#2 = crash fixes, click-limit spam reduction, (PLANNED): bulk-analysis (map stats for containers/walls)
+mod.version = "2.2"
+
+# https://fabricmc.net/develop
+# https://jitpack.io/com/github/sakura-ryoko/malilib/
+# https://github.com/cabaletta/baritone/releases
+# https://github.com/LlamaLad7/MixinExtras
+
+deps.fabric_loader = "0.19.3"
+loomx.loom_version = "1.17-SNAPSHOT"
+
+["26.2"]
+deps.fabric_api = "0.154.2+26.2"
+deps.malilib = "0.29.2"
+deps.baritone = "26.2"
+
+["1.21.11"]
+deps.fabric_api = "0.141.3+1.21.11"
+deps.malilib = "0.27.6"
+deps.baritone = "1.21.11"
+
+["1.21.4"]
+deps.fabric_api = "0.119.4+1.21.4"
+deps.malilib = "0.23.4"
+deps.baritone = "1.13.1"

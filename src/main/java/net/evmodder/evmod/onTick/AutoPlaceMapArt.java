@@ -1,5 +1,8 @@
 package net.evmodder.evmod.onTick;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.bundleItem;
+import static net.evmodder.evmod.compat.MinecraftCompat.selectSlot;
+
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -668,8 +671,14 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		lastIfeAuto = ife;
 
 		final Vec3 interactionPos = ife.position().add(0, 0.0625, 0);
+		//? >=26.1 {
 		player.connection.send(new ServerboundInteractPacket(ife.getId(), InteractionHand.MAIN_HAND, interactionPos, player.isShiftKeyDown()));
 		Minecraft.getInstance().gameMode.interact(player, ife, new EntityHitResult(ife, interactionPos), InteractionHand.MAIN_HAND);
+		//?} else {
+		/*player.connection.send(ServerboundInteractPacket.createInteractionPacket(
+				ife, player.isShiftKeyDown(), InteractionHand.MAIN_HAND, interactionPos));
+		Minecraft.getInstance().gameMode.interact(player, ife, InteractionHand.MAIN_HAND);*/
+		//?}
 		if(Configs.Generic.MAPART_AUTOPLACE_SWING_HAND.getBooleanValue()) player.connection.send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
 //		nearestIfe.interactAt(player, ife.getEyePos(), Hand.MAIN_HAND);
 //		player.interact(ife, Hand.MAIN_HAND);
@@ -736,7 +745,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				final ItemStack mapStack;
 				if(j == -1) mapStack = slots.get(i);
 				else if(ALLOW_ONLY_TOP_SLOT && j != TOP_SLOT) continue;
-				else mapStack = contents.items().get(j).create();
+				else mapStack = bundleItem(contents, j);
 				if(mapStack.getItem() != Items.FILLED_MAP) continue;
 				++numMaps;
 				BlockPos ifeBp = getPlacement(mapStack);
@@ -812,7 +821,9 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 
 	private final void getMapIntoMainHand(LocalPlayer player, int slot, int bundleSlot){
 		assert slot != player.getInventory().getSelectedSlot()+36 || bundleSlot != -1;
+		//? >=26.1 {
 		assert player.getMainHandItem() == player.getInventory().getSelectedItem();
+		//?}
 		assert player.getMainHandItem() == player.getInventory().getItem(player.getInventory().getSelectedSlot());
 
 		final int TICKS_BETWEEN_INV_ACTIONS = Configs.Generic.MAPART_AUTOPLACE_INV_DELAY.getIntegerValue();
@@ -826,7 +837,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		if(bundleSlot == -1){
 			final int nextHbSlot;
 			if(slot >= 36 && slot < 45){
-				player.getInventory().setSelectedSlot(slot - 36);
+				selectSlot(player.getInventory(), slot - 36);
 				Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to nearestMap: hb="+(slot-36));
 				if(test) placeNearestMap(player);
 				else ticksSinceInvAction = 0;
@@ -835,7 +846,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				if(isIFrame(player.getInventory().getItem(selectedSlot).getItem()) &&
 					!isIFrame(player.getInventory().getItem(nextHbSlot=(selectedSlot+1)%9).getItem()))
 				{
-					player.getInventory().setSelectedSlot(nextHbSlot);
+					selectSlot(player.getInventory(), nextHbSlot);
 					Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to avoid losing iFrame stack");
 					if(!test) return;
 				}
@@ -852,7 +863,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				int hbSlot = 0;
 				while(hbSlot < 9 && !player.getInventory().getNonEquipmentItems().get(hbSlot).isEmpty()) ++hbSlot;
 				if(hbSlot != 9){
-					player.getInventory().setSelectedSlot(hbSlot);
+					selectSlot(player.getInventory(), hbSlot);
 					Main.LOGGER.info("AutoPlaceMapArt: Changed selected hotbar slot to empty slot: hb="+hbSlot);
 					if(!test){ticksSinceInvAction = 0; return;}
 				}
@@ -989,7 +1000,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 					hasWarnedMissingIfe = true;
 					return;
 				}
-				player.getInventory().setSelectedSlot(hbSlot);
+				selectSlot(player.getInventory(), hbSlot);
 				if(!test){ticksSinceInvAction = 0; return;}
 				else hand = InteractionHand.MAIN_HAND;
 			}

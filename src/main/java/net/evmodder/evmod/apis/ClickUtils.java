@@ -1,5 +1,8 @@
 package net.evmodder.evmod.apis;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.tabList;
+import static net.evmodder.evmod.compat.MinecraftCompat.sendOverlay;
+
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.List;
@@ -143,7 +146,7 @@ public final class ClickUtils{
 	private static final long /*getTPS*/getMillisPerTick(Minecraft client){
 		// Alternative: client.getNetworkHandler().onPlayerListHeader(PlayerListHeaderS2CPacket plhp)
 
-		final AccessorPlayerListHud playerListHudAccessor = (AccessorPlayerListHud)client.gui.hud.getTabList();
+		final AccessorPlayerListHud playerListHudAccessor = (AccessorPlayerListHud)tabList(client);
 		final Component footerText = playerListHudAccessor.getFooter();
 		if(footerText == null) return TICK_DURATION_NANOS/1_000_000l;
 		final MutableComponent text = Component.empty(); footerText.toFlatList().forEach(text::append);
@@ -171,7 +174,7 @@ public final class ClickUtils{
 		synchronized(tickDurationArr){
 			if(clickOpOngoing){
 				Main.LOGGER.warn("executeClicks() already has an ongoing operation");
-				client.player.sendOverlayMessage(Component.literal("Clicks cancelled: current operation needs to finish before starting a new one"));
+				sendOverlay(client.player, Component.literal("Clicks cancelled: current operation needs to finish before starting a new one"));
 				onComplete.run();
 				return;
 			}
@@ -200,11 +203,11 @@ public final class ClickUtils{
 				}
 				if(client.player.containerMenu.containerId != syncId){
 					Main.LOGGER.error("executeClicks() failed due to syncId changing mid-operation ("+syncId+" -> "+client.player.containerMenu.containerId+")");
-					client.player.sendOverlayMessage(Component.literal("Clicks cancelled: container ID changed").withColor(SYNC_ID_CHANGED_COLOR));
+					sendOverlay(client.player, Component.literal("Clicks cancelled: container ID changed").withColor(SYNC_ID_CHANGED_COLOR));
 					stopTask(); return;
 				}
 				if(clicks.isEmpty()){
-					if(estimatedMsLeft != Integer.MAX_VALUE) client.player.sendOverlayMessage(Component.literal("Clicks finished early!"));
+					if(estimatedMsLeft != Integer.MAX_VALUE) sendOverlay(client.player, Component.literal("Clicks finished early!"));
 					stopTask(); return;
 				}
 				client.executeIfPossible(()->{
@@ -231,7 +234,7 @@ public final class ClickUtils{
 					}
 					if(clicks.isEmpty()){
 						stopTask();
-						if(estimatedMsLeft != Integer.MAX_VALUE) client.player.sendOverlayMessage(Component.translatable(Main.MOD_ID+".clickutils.clicksDone"));
+						if(estimatedMsLeft != Integer.MAX_VALUE) sendOverlay(client.player, Component.translatable(Main.MOD_ID+".clickutils.clicksDone"));
 						return;
 					}
 					if(tickDurationArr != null){
@@ -239,7 +242,7 @@ public final class ClickUtils{
 						final int msLeft = 1000 + calcRemainingTicks(clicks.size())*(int)(TICK_DURATION_NANOS/1_000_000l);
 						estimatedMsLeft = Math.min(estimatedMsLeft, msLeft);
 //						StringUtils.translate("");
-						client.player.sendOverlayMessage(
+						sendOverlay(client.player,
 							Component.translatable(
 									Main.MOD_ID+".clickutils.waitingForClicks",
 									clicks.size(), TextUtils_New.formatTime(estimatedMsLeft)

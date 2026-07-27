@@ -527,9 +527,27 @@ public final class Configs implements IConfigHandler{
 
 	private static final Path CONFIG_DIR = Path.of(Main.CONFIG_DIR);
 	private static final Path CONFIG_FILE = CONFIG_DIR.resolve("configs.json");
+
+	private static JsonElement readConfig(Path file){
+		//? >=1.21.11 {
+		return JsonUtils.parseJsonFile(file);
+		//?} else {
+		/*return JsonUtils.parseJsonFile(file.toFile());*/
+		//?}
+	}
+
+	private static boolean writeConfig(JsonObject root, Path file){
+		//? >=1.21.11 {
+		return JsonUtils.writeJsonToFile(root, file);
+		//?} else {
+		/*JsonUtils.writeJsonToFile(root, file.toFile());
+		return true;*/
+		//?}
+	}
+
 	@Override public void load(){
 		if(!Files.exists(CONFIG_FILE) || !Files.isReadable(CONFIG_FILE)) return;
-		final JsonElement element = JsonUtils.parseJsonFile(CONFIG_FILE);
+		final JsonElement element = readConfig(CONFIG_FILE);
 		if(element == null || !element.isJsonObject()){
 			Main.LOGGER.error("Configs.load(): Failed to load config file '{}'.", CONFIG_FILE.toAbsolutePath());
 			return;
@@ -556,7 +574,7 @@ public final class Configs implements IConfigHandler{
 		ConfigUtils.writeConfigBase(root, "Visuals", getVisualsConfigs());
 		ConfigUtils.writeConfigBase(root, "Hotkeys", getHotkeysConfigs());
 		if(settings.database) ConfigUtils.writeConfigBase(root, "Database", getDatabaseConfigs());
-		if(!JsonUtils.writeJsonToFile(root, CONFIG_FILE)){
+		if(!writeConfig(root, CONFIG_FILE)){
 			Main.LOGGER.error("Configs.save(): Failed to write config file '{}'.", CONFIG_FILE.toAbsolutePath());
 		}
 	}

@@ -1,115 +1,232 @@
+import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.plugins.ide.eclipse.model.SourceFolder
+
 plugins {
-	id 'net.fabricmc.fabric-loom' version "${loom_version}"
-	id "maven-publish"
+	// Selects remapping Loom for obfuscated Minecraft versions and native Loom for 26.1+.
+	id 'dev.kikugie.loom-back-compat'
+	id 'maven-publish'
 }
 
-group = project.maven_group
-version = project.mod_version
-base { archivesName = project.mod_name + "-" + project.minecraft_version}
+def mavenGroup = property('mod.group')
+def modId = property('mod.id')
+def modName = property('mod.name')
+def modVersion = property('mod.version')
+def loaderVersion = property('deps.fabric_loader')
+def fabricApiVersion = property('deps.fabric_api')
+def malilibVersion = property('deps.malilib')
+def baritoneVersion = property('deps.baritone')
+def baritoneJar = rootProject.file("libs/baritone-api-fabric-${baritoneVersion}.jar")
 
-// These get passed to src/main/java/resources/fabric.mod.json
-processResources {
-	inputs.property("mod_id", mod_id)
-	inputs.property("mod_name", mod_name)
-	inputs.property("mod_version", mod_version)
-	inputs.property("loader_version", loader_version)
-	inputs.property("minecraft_version", minecraft_version)
-	inputs.property("malilib_version", malilib_version)
+group = mavenGroup
+version = modVersion
+base.archivesName = "${modName}-${sc.current.version}"
 
-	filesMatching("fabric.mod.json") {
-		expand([
-			mod_id				: mod_id,
-			mod_name			: mod_name,
-			mod_version			: mod_version,
-			loader_version		: loader_version,
-			minecraft_version	: minecraft_version,
-			malilib_version		: malilib_version
-		])
-	}
-}
+def requiredJava = JavaVersion.VERSION_25
 
 repositories {
-	// https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// You should only use this when depending on other mods.
-
-	maven {
-		url = "https://maven.fallenbreath.me/releases" // conditional-mixin, a transitive MaLiLib dependency
-		content { includeGroup("me.fallenbreath") }
+	exclusiveContent {
+		forRepository {
+			maven {
+				name = 'FallenBreath Releases'
+				url = 'https://maven.fallenbreath.me/releases'
+			}
+		}
+		filter { includeGroup 'me.fallenbreath' }
 	}
-	maven { url = "https://jitpack.io" } // MaLiLib
+	maven {
+		name = 'JitPack'
+		url = 'https://jitpack.io'
+		content { includeGroup 'com.github.sakura-ryoko' }
+	}
 }
 
 dependencies {
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
+	minecraft "com.mojang:minecraft:${sc.current.version}"
+	loomx.applyMojangMappings()
 
-	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}" // Technically optional
-	implementation "com.github.sakura-ryoko:malilib:${project.minecraft_version}-${project.malilib_version}"
-	implementation files("libs/baritone-api-fabric-${project.baritone_version}.jar")
+	modImplementation "net.fabricmc:fabric-loader:${loaderVersion}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${fabricApiVersion}"
+	modImplementation "com.github.sakura-ryoko:malilib:${sc.current.version}-${malilibVersion}"
+	modImplementation files(baritoneJar)
+
+	// Loom strips the nested-jar declaration while remapping Baritone 1.13.1.
+	// Expose its already-embedded native pathfinder to Fabric's development runtime.
+	if (sc.current.version == '1.21.4') {
+		modRuntimeOnly files(zipTree(baritoneJar).matching {
+			include 'META-INF/jars/nether-pathfinder-1.4.1.jar'
+		})
+	}
 }
 
 // https://github.com/EvModder/EvLib
-def evLibSourceDir = file("../../Plugins/EvLib/src")
-sourceSets.main.java {
-	srcDir evLibSourceDir
-	include "net/evmodder/evmod/**"
-	include "net/evmodder/EvLib/util/**"
+def evLibSourceDir = rootProject.file('../../Plugins/EvLib/src')
+def evLibUtilDir = new File(evLibSourceDir, 'net/evmodder/EvLib/util')
+def evLibEclipseLocation = 'PARENT-2-PROJECT_LOC/Plugins/EvLib/src'
+sourceSets.main.java.srcDir evLibUtilDir
+
+loom {
+	fabricModJsonPath = rootProject.file('src/main/resources/fabric.mod.json')
+	runConfigs.clear()
 }
+
+def isPrimaryEclipseVersion = sc.current.version == '26.2'
 
 eclipse {
-	project.file.whenMerged { eclipseProject ->
-		eclipseProject.linkedResources.removeAll { link ->
-			link.name in ["EvLib", "util"] && link.location?.endsWith("/EvLib/src")
+	project {
+		if (isPrimaryEclipseVersion) {
+			name = rootProject.name
+			linkedResource name: 'EvLib', type: '2', locationUri: evLibEclipseLocation
 		}
-		eclipseProject.linkedResources.find { link ->
-			link.name == "src" && link.location == evLibSourceDir.absolutePath
-		}.name = "EvLib"
+
+		file.whenMerged { eclipseProject ->
+			def seenLinkedResources = [] as Set
+			eclipseProject.linkedResources.removeAll { link ->
+				isPrimaryEclipseVersion && (link.name in ['java', 'resources', 'src', 'util'] ||
+						!seenLinkedResources.add(link.name))
+			}
+			def evLibLink = eclipseProject.linkedResources.find { link -> link.name == 'EvLib' }
+			if (evLibLink != null) {
+				evLibLink.location = null
+				evLibLink.locationUri = evLibEclipseLocation
+			}
+		}
 	}
 	classpath.file.whenMerged { eclipseClasspath ->
-		eclipseClasspath.entries.removeAll { entry ->
-			entry.kind == "src" && entry.path in ["EvLib", "util"]
+		if (isPrimaryEclipseVersion) {
+			eclipseClasspath.entries.each { entry ->
+				if (entry.kind == 'src') {
+					if (entry.path == 'java') entry.path = 'src/main/java'
+					if (entry.path == 'resources') entry.path = 'src/main/resources'
+					if (!entry.excludes.contains('**/.DS_Store')) entry.excludes.add('**/.DS_Store')
+				}
+			}
+
+			eclipseClasspath.entries.removeAll { entry ->
+				entry.kind == 'src' && entry.path in ['EvLib', 'src', 'util']
+			}
+			def evLibEntry = new SourceFolder('EvLib', null)
+			evLibEntry.includes = ['net/evmodder/EvLib/util/**']
+			evLibEntry.excludes = ['**/.DS_Store']
+			evLibEntry.entryAttributes['gradle_scope'] = 'main'
+			evLibEntry.entryAttributes['gradle_used_by_scope'] = 'main,test'
+			eclipseClasspath.entries.add(evLibEntry)
+
+			def seenSourcePaths = [] as Set
+			eclipseClasspath.entries.removeAll { entry ->
+				entry.kind == 'src' && !seenSourcePaths.add(entry.path)
+			}
+
+			def jreEntry = eclipseClasspath.entries.find { entry ->
+				entry.kind == 'con' && entry.path.startsWith('org.eclipse.jdt.launching.JRE_CONTAINER')
+			}
+			if (jreEntry != null) jreEntry.path = 'org.eclipse.jdt.launching.JRE_CONTAINER'
+
+			def outputEntries = eclipseClasspath.entries.findAll { entry -> entry.kind == 'output' }
+			eclipseClasspath.entries.removeAll { entry -> entry.kind == 'output' }
+			eclipseClasspath.entries.addAll(outputEntries)
 		}
-		eclipseClasspath.entries.find { entry ->
-			entry.kind == "src" && entry.path == "src" &&
-					entry.includes.contains("net/evmodder/EvLib/util/**")
-		}.path = "EvLib"
-		eclipseClasspath.entries.find { entry ->
-			entry.kind == "con" && entry.path.startsWith("org.eclipse.jdt.launching.JRE_CONTAINER")
-		}.path = "org.eclipse.jdt.launching.JRE_CONTAINER"
 	}
 }
 
-tasks.named("eclipseJdt") { enabled = false }
+def preferredOneDrivePath = new File(System.getProperty('user.home'), 'OneDrive').absolutePath
+def resolvedOneDrivePath = new File(preferredOneDrivePath).canonicalPath
+def finalizeEclipseFile = { File file ->
+	def text = file.getText('UTF-8')
+	text = text.replace(resolvedOneDrivePath, preferredOneDrivePath)
+	if (text.endsWith('\r\n')) text = text.substring(0, text.length() - 2)
+	else if (text.endsWith('\n')) text = text.substring(0, text.length() - 1)
+	file.setText(text, 'UTF-8')
+}
+
+if (isPrimaryEclipseVersion) {
+	tasks.named('eclipseClasspath') {
+		inputFile = rootProject.file('.classpath')
+		outputFile = rootProject.file('.classpath')
+		doLast { finalizeEclipseFile(outputFile) }
+	}
+	tasks.named('eclipseProject') {
+		inputFile = rootProject.file('.project')
+		outputFile = rootProject.file('.project')
+		doLast { finalizeEclipseFile(outputFile) }
+	}
+} else {
+	tasks.named('eclipseClasspath') { enabled = false }
+	tasks.named('eclipseProject') { enabled = false }
+}
+
+def disabledRunTasks = [
+	'configureClientLaunch',
+	'configureLaunch',
+	'downloadAssets',
+	'extractNatives',
+	'genEclipseRuns',
+	'generateDLIConfig',
+	'generateLog4jConfig',
+	'generateRemapClasspath',
+	'runClient',
+	'runServer',
+	'vscode',
+]
+afterEvaluate {
+	tasks.configureEach {
+		if (name in disabledRunTasks) {
+			enabled = false
+			group = null
+		}
+	}
+}
+tasks.named('eclipse') { setFinalizedBy([]) }
+tasks.named('eclipseJdt') { enabled = false }
+
+processResources {
+	def props = [
+		mod_id				: modId,
+		mod_name			: modName,
+		mod_version			: modVersion,
+		loader_version		: loaderVersion,
+		minecraft_version	: sc.current.version,
+		malilib_version		: malilibVersion,
+		java_version		: requiredJava.majorVersion,
+		java_compatibility	: "JAVA_${requiredJava.majorVersion}",
+	]
+	inputs.properties props
+
+	filesMatching('fabric.mod.json') { expand props }
+	filesMatching('mixins.evmod.json') { expand props }
+}
 
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and add to the "build" task.
-	// If you remove this line, sources will not be generated.
-//	withSourcesJar()
-
-	sourceCompatibility = JavaVersion.VERSION_25
-	targetCompatibility = JavaVersion.VERSION_25
+	sourceCompatibility = requiredJava
+	targetCompatibility = requiredJava
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(requiredJava.majorVersion)
+	}
 }
 
-compileJava.options.encoding = "UTF-8"
-tasks.withType(JavaCompile).configureEach { it.options.release = 25 }
+tasks.withType(JavaCompile).configureEach {
+	options.encoding = 'UTF-8'
+	options.release = requiredJava.majorVersion as int
+}
 
 jar {
-	from("LICENSE") { rename { "${it}_${base.archivesName}"} }
+	from(rootProject.file('LICENSE')) {
+		rename { "${it}_${base.archivesName.get()}" }
+	}
 }
 
+tasks.register('buildAndCollect', Copy) {
+	group = 'build'
+	description = "Builds the versioned EvMod JAR and copies it to build/${modVersion}."
+
+	from loomx.modJar.flatMap { it.archiveFile }
+	into rootProject.layout.buildDirectory.dir(modVersion)
+}
 
 publishing {
-	// https://docs.gradle.org/current/userguide/publishing_maven.html
 	publications {
-		create("mavenJava", MavenPublication) {
-			artifactId = project.base.archivesName
+		create('mavenJava', MavenPublication) {
+			artifactId = base.archivesName.get()
 			from components.java
 		}
-	}
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// Repositories here are used for publishing your artifact, not retrieving dependencies.
 	}
 }

@@ -1,5 +1,7 @@
 package net.evmodder.evmod.listeners;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.sendOverlay;
+
 import java.util.HashSet;
 import java.util.UUID;
 import net.evmodder.EvLib.util.Command;
@@ -54,11 +56,11 @@ public final class GameMessageListener{
 				if(msg != null && msg.length == 1){
 					if(msg[0] != 0){
 						Main.LOGGER.info("[IgnoreSync] Updated ignore="+ignored+" in remote DB");
-						client.player.sendOverlayMessage(Component.literal("Updated ignore="+ignored+" in remote DB"));
+						sendOverlay(client.player, Component.literal("Updated ignore="+ignored+" in remote DB"));
 					}
 					else{
 						Main.LOGGER.info("[IgnoreSync] Remote DB reported ignoreState out of sync!");
-						client.player.sendOverlayMessage(Component.literal("Remote DB reported ignoreState out of sync!"));
+						sendOverlay(client.player, Component.literal("Remote DB reported ignoreState out of sync!"));
 					}
 				}
 				else Main.LOGGER.info("[IgnoreSync] Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_UUID: "+msg);
