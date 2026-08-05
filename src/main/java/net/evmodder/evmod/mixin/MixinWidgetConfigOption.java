@@ -75,7 +75,6 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 		int configHeight = 20;
 		GuiTextFieldGeneric textField = createTextField(x, y + 1, textFieldWidth, configHeight - 3);
 		textField.setMaxLength(maxTextfieldTextLength);
-		textField.setValue(config.getStringValue());
 
 		x += textFieldWidth + 3;
 		configWidth -= textFieldWidth + 23;
@@ -100,6 +99,10 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 		//?} else {
 		/*addTextField(textField, listenerChange);*/
 		//?}
+		// MaLiLib may lower the limit while registering legacy text fields. Restore ours
+		// before assigning the value so the cursor remains within the field's bounds.
+		textField.setMaxLength(maxTextfieldTextLength);
+		textField.setValue(config.getStringValue());
 		addButton(keybindButton, host.getButtonPressListener());
 		addButton(resetButton, resetListener);
 

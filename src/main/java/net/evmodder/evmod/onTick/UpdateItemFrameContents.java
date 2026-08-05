@@ -10,6 +10,7 @@ import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.NewMapNotifier;
 import net.evmodder.evmod.apis.TickListener;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -33,6 +34,15 @@ public final class UpdateItemFrameContents implements TickListener{
 
 	private static Vec3 clientRotationNormalized; // Accessor: MixinItemFrameRenderer (cached/calculated here for performance)
 	public static long lastIFrameMapGroupUpdateTs; // Only accessor: CommandExportMapImg::getNearbyMapNames
+
+	public UpdateItemFrameContents(){
+		ClientEntityEvents.ENTITY_UNLOAD.register((entity, _) -> {
+			if(!(entity instanceof ItemFrame)) return;
+			highlightedIFrames.remove(entity.getId());
+			hasLabelCache.remove(entity.getId());
+			displayNameCache.remove(entity.getId());
+		});
+	}
 
 	public static final boolean isHungMultiplePlaces(final UUID colorsId){
 		final HashSet<XYZD> l = iFrameMapGroup.get(colorsId);
