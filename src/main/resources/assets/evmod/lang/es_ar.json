@@ -148,6 +148,8 @@
 	"evmod.config.visuals.name.repairCostInHotbarHUD": "muestra el costo de reparacion en el HUD",
 	"evmod.config.visuals.name.repairCostTooltip": "informa el costo de reparacion",
 	"evmod.config.visuals.name.invisIFrames": "marcos de item invisibles",
+	"evmod.config.visuals.name.staticEntityRenderRange": "staticEntityRenderRange",
+	"evmod.config.visuals.comment.staticEntityRenderRange": "Distancia máxima de renderizado de entidades estáticas en bloques.\nLos marcos cargados y en caché solo se renderizan donde el cliente tiene terreno (incluido Voxy); las demás entidades siguen bajo el control de Minecraft o Sodium.",
 	"evmod.config.visuals.name.mapHighlightInIFrame": "destaca mapas en marcos de item",
 	"evmod.config.visuals.name.mapHighlightInTooltip": "destaca mapas en descripcion",
 	"evmod.config.visuals.name.mapHighlightInHotbarHUD": "destaca mapas en HUD",

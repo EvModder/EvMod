@@ -41,6 +41,7 @@ import net.evmodder.evmod.onTick.TooltipRepairCost;
 import net.evmodder.evmod.onTick.UpdateContainerContents;
 import net.evmodder.evmod.onTick.UpdateInventoryContents;
 import net.evmodder.evmod.onTick.UpdateItemFrameContents;
+import net.evmodder.evmod.render.StaticEntityRenderCache;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 
@@ -174,5 +175,6 @@ public class Main{
 		ConfigManager.getInstance().registerConfigHandler(MOD_ID, configs);
 		Registry.CONFIG_SCREEN.registerConfigScreenFactory(new ModInfo(MOD_ID, MOD_NAME, ()->new ConfigGui(configs)));
 		new KeyCallbacks(configs, remoteSender, epearlLookup, kbCraftRestock, whisperPlaySound, gameMessageFilter, kbInvOrgs, kbInvRestock);
+		StaticEntityRenderCache.init();
 	}
 }

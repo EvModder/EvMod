@@ -13,11 +13,12 @@
 		"AccessorProjectileEntity",
 		"MixinClientPlayerInteractionManager",
 		"MixinClientPlayNetworkHandler",
-//		"MixinClientWorld",
+		"MixinClientLevel",
 		"MixinEntityRenderer",
 		"MixinHandledScreen",
 		"MixinInGameHud",
 		"MixinItemFrameRenderer",
+		"${level_entity_visibility_mixin}",
 //		"MixinItemRenderer",
 		"MixinScreenHandler",
 

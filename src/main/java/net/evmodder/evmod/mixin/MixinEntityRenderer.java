@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Timer;
 import java.util.TimerTask;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -13,7 +14,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.evmodder.evmod.apis.EpearlLookup.XYZ;
 import net.evmodder.evmod.apis.EpearlLookupFabric;
 import net.evmodder.evmod.apis.MiscUtils;
+import net.evmodder.evmod.render.StaticEntityRenderCache;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
@@ -26,6 +29,12 @@ abstract class MixinEntityRenderer{
 	private long renderedOnTick = 0;
 	private long lastRenderedId;
 	private long lastClear = 0;
+
+	@ModifyExpressionValue(method="shouldRender", at=@At(value="INVOKE", target="Lnet/minecraft/world/entity/Entity;shouldRender(DDD)Z"))
+	private boolean applyConfiguredStaticEntityRenderRange(final boolean original, final Entity entity, final Frustum frustum,
+			final double cameraX, final double cameraY, final double cameraZ){
+		return StaticEntityRenderCache.useConfiguredRenderDistance(original, entity, cameraX, cameraY, cameraZ);
+	}
 
 	// TODO: mixin onTick instead of hasLabel, or setName somehow
 	@Inject(method="shouldShowName", at=@At("HEAD"), cancellable=true)

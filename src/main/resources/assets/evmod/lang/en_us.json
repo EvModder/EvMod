@@ -217,6 +217,8 @@
 //	"evmod.config.visuals.comment.repairCostTooltip": "",
 	"evmod.config.visuals.name.invisIFrames": "invisIFrames",
 	"evmod.config.visuals.comment.invisIFrames": "When should iFrame be invisible",
+	"evmod.config.visuals.name.staticEntityRenderRange": "staticEntityRenderRange",
+	"evmod.config.visuals.comment.staticEntityRenderRange": "Maximum static-entity rendering distance in blocks.\nLoaded and cached item frames render only where the client has terrain coverage (including Voxy); other entities remain controlled by Minecraft or Sodium.",
 	"evmod.config.visuals.name.mapHighlightInIFrame": "enableMapHighlights: iFrames",
 	"evmod.config.visuals.comment.mapHighlightInIFrame": "Enable highlights for maps in iFrames",
 	"evmod.config.visuals.name.mapHighlightInTooltip": "enableMapHighlights: Tooltips",

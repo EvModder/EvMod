@@ -188,6 +188,7 @@ processResources {
 		malilib_version		: malilibVersion,
 		java_version		: requiredJava.majorVersion,
 		java_compatibility	: "JAVA_${requiredJava.majorVersion}",
+		level_entity_visibility_mixin: sc.current.version == '26.2' ? 'MixinLevelExtractor' : 'MixinLevelRenderer',
 	]
 	inputs.properties props
 
