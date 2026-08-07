@@ -562,9 +562,10 @@ public final class MapHangListener{
 				autoRemover.disableAndReset();
 				Main.LOGGER.info("MapRestock: Disabling AutoRemoveMapArt due to EntityInteractEvent");
 			}
-			if(hand != InteractionHand.MAIN_HAND){
+			if(Configs.Generic.IFRAME_DISALLOW_OFFHAND.getBooleanValue() && hand != InteractionHand.MAIN_HAND){
 				Main.LOGGER.info("MapHandRestock: not main hand: "+hand.name());
-				if(Configs.Generic.IFRAME_DISALLOW_OFFHAND.getBooleanValue()) return InteractionResult.FAIL;
+				sendOverlay(player, Component.literal("Warn: cancelled placing offhand item in iFrame"));
+				return InteractionResult.FAIL;
 			}
 			//Main.LOGGER.info("placed item from mainhand");
 			if(!ife.getItem().isEmpty()){
@@ -581,10 +582,10 @@ public final class MapHangListener{
 			//Main.LOGGER.info("item frame is empty");
 
 			final ItemStack stack = player.getItemInHand(hand);
-			if(waitingForRestock && (stack.isEmpty() || stack.getItem() == Items.FILLED_MAP)){
+			if(Configs.Generic.IFRAME_DISALLOW_OFFHAND.getBooleanValue() && waitingForRestock && (stack.isEmpty() || stack.getItem() == Items.FILLED_MAP)){
 				// Little safety net to keep player from placing offhand item into iFrame if right-clicking faster than hand restock can handle
-				Main.LOGGER.warn("MapRestock: Player right-clicking iFrame before previous tryToStockNextMap() has finished!");
-				sendOverlay(player, Component.literal("Warn: right-clicking iFrame before AutoHandRestock has finished"));
+				Main.LOGGER.info("MapRestock: Player right-clicking iFrame before previous tryToStockNextMap() has finished!");
+				sendOverlay(player, Component.literal("Warn: cancelled iFrame click during AutoHandRestock"));
 				return InteractionResult.FAIL;
 			}
 			if(stack.getItem() != Items.FILLED_MAP) return InteractionResult.PASS;

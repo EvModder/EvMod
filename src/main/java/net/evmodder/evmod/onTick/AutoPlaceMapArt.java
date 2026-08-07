@@ -31,7 +31,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -671,13 +670,12 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		lastIfeAuto = ife;
 
 		final Vec3 interactionPos = ife.position().add(0, 0.0625, 0);
+		final EntityHitResult hitResult = new EntityHitResult(ife, interactionPos);
 		//? >=26.1 {
-		player.connection.send(new ServerboundInteractPacket(ife.getId(), InteractionHand.MAIN_HAND, interactionPos, player.isShiftKeyDown()));
-		Minecraft.getInstance().gameMode.interact(player, ife, new EntityHitResult(ife, interactionPos), InteractionHand.MAIN_HAND);
+		Minecraft.getInstance().gameMode.interact(player, ife, hitResult, InteractionHand.MAIN_HAND);
 		//?} else {
-		/*player.connection.send(ServerboundInteractPacket.createInteractionPacket(
-				ife, player.isShiftKeyDown(), InteractionHand.MAIN_HAND, interactionPos));
-		Minecraft.getInstance().gameMode.interact(player, ife, InteractionHand.MAIN_HAND);*/
+		/*if(!Minecraft.getInstance().gameMode.interactAt(player, ife, hitResult, InteractionHand.MAIN_HAND).consumesAction())
+			Minecraft.getInstance().gameMode.interact(player, ife, InteractionHand.MAIN_HAND);*/
 		//?}
 		if(Configs.Generic.MAPART_AUTOPLACE_SWING_HAND.getBooleanValue()) player.connection.send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
 //		nearestIfe.interactAt(player, ife.getEyePos(), Hand.MAIN_HAND);
