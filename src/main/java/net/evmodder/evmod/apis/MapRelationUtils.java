@@ -145,8 +145,8 @@ public abstract class MapRelationUtils{
 				continue;
 			}
 			if(validMatchingPosStrs){
-				boolean keepFullNumberPrefix = posStr.charAt(0) >= '0' && posStr.charAt(0) >= '9';
-				boolean keepFullNumberSuffix = posStr.charAt(posStr.length()-1) >= '0' && posStr.charAt(posStr.length()-1) >= '9';
+				boolean keepFullNumberPrefix = posStr.charAt(0) >= '0' && posStr.charAt(0) <= '9';
+				boolean keepFullNumberSuffix = posStr.charAt(posStr.length()-1) >= '0' && posStr.charAt(posStr.length()-1) <= '9';
 				if(keepFullNumberPrefix){
 					while(a > 0 && name2.charAt(a-1) >= '0' && name2.charAt(a-1) <= '9') --a;
 					if(a != prefixLen){

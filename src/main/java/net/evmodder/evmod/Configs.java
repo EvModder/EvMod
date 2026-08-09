@@ -467,7 +467,7 @@ public final class Configs implements IConfigHandler{
 	private static final String DATABASE_KEY = Main.MOD_ID+".config.database";
 	public static class Database{
 //		public static final ConfigOptionList PLACEMENT_WARN = new ConfigOptionList("placementWarn", MessageOutputType.ACTIONBAR).apply(DATABASE_KEY);
-		public static final ConfigInteger CLIENT_ID = new ConfigInteger("clientId", InitUtils.DUMMY_CLIENT_ID, 0, 1000000).apply(DATABASE_KEY);
+		public static final ConfigInteger CLIENT_ID = new ConfigInteger("clientId", InitUtils.DUMMY_CLIENT_ID, 0, Integer.MAX_VALUE).apply(DATABASE_KEY);
 		public static final ConfigString CLIENT_KEY = new ConfigString("clientKey", "").apply(DATABASE_KEY);
 		public static final ConfigString ADDRESS = new ConfigString("address", Main.mapArtFeaturesOnly ? "" : "db.evmodder.net").apply(DATABASE_KEY);
 		public static final ConfigBoolean SAVE_MAPART = new ConfigBoolean("saveSeenMapArt", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);

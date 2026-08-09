@@ -24,6 +24,8 @@ public final class PlayerPosIPC{
 	public static final int CPU_CACHE_LINE_SIZE = 128;
 	private static final int SLOT_SIZE = Math.ceilDiv(METADATA_SIZE + DATA_SIZE, CPU_CACHE_LINE_SIZE) * CPU_CACHE_LINE_SIZE;
 	// Treat PID as "dead" if no update for > 15s
+	// NOTE: Java only specifies nanoTime comparisons within one JVM. This IPC assumes the supported HotSpot
+	// runtimes expose the same host monotonic clock; SyncPlayerPos also expires dummies using reader-local time.
 	private static final long TIMEOUT_NS = 15_000l * 1000000l;
 
 	private static final int CLAIM_LOOP_MAX_ATTEMPTS = 3;

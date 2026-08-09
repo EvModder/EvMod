@@ -877,9 +877,14 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			BundleContents contents = player.inventoryMenu.slots.get(slot).getItem().get(DataComponents.BUNDLE_CONTENTS);
 			assert contents != null && contents.size() > bundleSlot;
 			ArrayDeque<InvAction> clicks = new ArrayDeque<>();
-			if(bundleSlot != contents.size()-1){
-				int bundleSlotUsed = Configs.Generic.BUNDLES_ARE_REVERSED.getBooleanValue() ? contents.size()-(bundleSlot+1) : bundleSlot;
-				clicks.add(new InvAction(slot, bundleSlotUsed, ActionType.BUNDLE_SELECT)); // Select bundle slot
+			if(Configs.Generic.USE_BUNDLE_PACKET.getBooleanValue()){
+				player.inventoryMenu.setSelectedBundleItemIndex(slot, bundleSlot); // Match vanilla client-side prediction
+				final boolean reversed = Configs.Generic.BUNDLES_ARE_REVERSED.getBooleanValue();
+				final int topBundleSlot = reversed ? contents.size()-1 : 0;
+				if(bundleSlot != topBundleSlot){
+					int bundleSlotUsed = reversed ? contents.size()-(bundleSlot+1) : bundleSlot;
+					clicks.add(new InvAction(slot, bundleSlotUsed, ActionType.BUNDLE_SELECT)); // Select bundle slot
+				}
 			}
 			clicks.add(new InvAction(slot, 1, ActionType.CLICK)); // Take from bundle
 			clicks.add(new InvAction(player.getInventory().getSelectedSlot()+36, 0, ActionType.CLICK)); // Place in hand (intentionally using inv.selectedSlot here)
