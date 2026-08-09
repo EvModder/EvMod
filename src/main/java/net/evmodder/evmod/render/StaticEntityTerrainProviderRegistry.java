@@ -15,11 +15,11 @@ final class StaticEntityTerrainProviderRegistry{
 		for(final StaticEntityTerrainProvider provider : PROVIDERS) provider.tick();
 	}
 
-	static final boolean hasTerrainAt(
-			final ClientLevel level, final int blockX, final int blockZ,
+	static final boolean hasTerrainInChunk(
+			final ClientLevel level, final int chunkX, final int chunkZ,
 			final double cameraX, final double cameraZ){
 		for(final StaticEntityTerrainProvider provider : PROVIDERS){
-			if(provider.hasTerrainAt(level, blockX, blockZ, cameraX, cameraZ)) return true;
+			if(provider.hasTerrainInChunk(level, chunkX, chunkZ, cameraX, cameraZ)) return true;
 		}
 		return false;
 	}

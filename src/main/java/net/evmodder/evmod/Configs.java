@@ -194,7 +194,8 @@ public final class Configs implements IConfigHandler{
 				Main.mapArtFeaturesOnly ? OptionTooltipDisplay.OFF : OptionTooltipDisplay.ADVANCED_TOOLTIPS).apply(VISUALS_KEY);
 		public static final ConfigOptionList INVIS_IFRAMES = new ConfigOptionList("invisIFrames",
 				OptionInvisIframes.SEMI_TRANSPARENT_MAPART).apply(VISUALS_KEY);
-		public static final ConfigInteger STATIC_ENTITY_RENDER_RANGE = new ConfigInteger("staticEntityRenderRange", 160, 0, 10_000_000).apply(VISUALS_KEY);
+		public static final ConfigInteger STATIC_ENTITY_RENDER_RANGE = new ConfigInteger("staticEntityRenderRange", 0, 0, 10_000_000).apply(VISUALS_KEY);
+		public static final ConfigInteger STATIC_ENTITY_RENDER_LIMIT = new ConfigInteger("staticEntityRenderLimit", 16_000, 0, 1_000_000).apply(VISUALS_KEY);
 
 		public static final ConfigBoolean MAP_HIGHLIGHT_IFRAME = new ConfigBoolean("mapHighlightInIFrame", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean MAP_HIGHLIGHT_TOOLTIP = new ConfigBoolean("mapHighlightInTooltip", true).apply(VISUALS_KEY);
@@ -248,7 +249,7 @@ public final class Configs implements IConfigHandler{
 				if(settings.tooltipRepairCost) configs.add(REPAIR_COST_TOOLTIP);
 			}
 			configs.add(INVIS_IFRAMES);
-			configs.add(STATIC_ENTITY_RENDER_RANGE);
+			configs.addAll(List.of(STATIC_ENTITY_RENDER_RANGE, STATIC_ENTITY_RENDER_LIMIT));
 			if(settings.tooltipMapHighlights || settings.onTickIframes/* || settings.hotbarHudMixin*/){
 				if(settings.onTickIframes) configs.add(MAP_HIGHLIGHT_IFRAME);
 				if(settings.onTickContainer) configs.add(MAP_HIGHLIGHT_CONTAINER_NAME);

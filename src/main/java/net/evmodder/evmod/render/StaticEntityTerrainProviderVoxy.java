@@ -68,5 +68,16 @@ final class StaticEntityTerrainProviderVoxy implements StaticEntityTerrainProvid
 		return dx*dx + dz*dz <= renderDistanceSq;
 	}
 
+	@Override public final boolean hasTerrainInChunk(
+			final ClientLevel level, final int chunkX, final int chunkZ,
+			final double cameraX, final double cameraZ){
+		if(!active) return false;
+		final double minX = (chunkX << 4)+0.5, minZ = (chunkZ << 4)+0.5;
+		final double nearestX = Math.max(minX, Math.min(cameraX, minX+15));
+		final double nearestZ = Math.max(minZ, Math.min(cameraZ, minZ+15));
+		final double dx = nearestX-cameraX, dz = nearestZ-cameraZ;
+		return dx*dx + dz*dz <= renderDistanceSq;
+	}
+
 	@Override public final boolean extendsVanillaSectionVisibility(){return true;}
 }

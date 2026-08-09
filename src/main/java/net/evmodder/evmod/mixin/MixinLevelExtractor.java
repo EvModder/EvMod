@@ -1,10 +1,9 @@
 package net.evmodder.evmod.mixin;
 
 //? >=26.1 {
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.evmodder.evmod.render.StaticEntityRenderCache;
 import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.extract.LevelExtractor;
@@ -12,11 +11,16 @@ import net.minecraft.world.entity.Entity;
 
 @Mixin(LevelExtractor.class)
 abstract class MixinLevelExtractor{
-	@Inject(method="isEntityVisible", at=@At("HEAD"), cancellable=true)
-	private void includeStaticEntitiesOnExtendedTerrain(final Entity entity, final Frustum frustum,
-			final double cameraX, final double cameraY, final double cameraZ,
-			final CallbackInfoReturnable<Boolean> cir){
-		if(StaticEntityRenderCache.shouldRenderInExtendedTerrain(entity, frustum, cameraX, cameraY, cameraZ)) cir.setReturnValue(true);
+	@ModifyExpressionValue(method="isEntityVisible", at=@At(value="INVOKE", target="Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;shouldRender(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/culling/Frustum;DDD)Z"))
+	private boolean includeStaticEntitiesOnExtendedTerrain(final boolean original, final Entity entity, final Frustum frustum,
+			final double cameraX, final double cameraY, final double cameraZ){
+		return original || StaticEntityRenderCache.shouldRenderInExtendedTerrain(entity, frustum, cameraX, cameraY, cameraZ);
+	}
+
+	@ModifyExpressionValue(method="isEntityVisible", at=@At(value="INVOKE", target="Lnet/minecraft/client/renderer/LevelRenderer;isSectionCompiledAndVisible(Lnet/minecraft/core/BlockPos;)Z"))
+	private boolean includeExtendedTerrainSection(final boolean original, final Entity entity, final Frustum frustum,
+			final double cameraX, final double cameraY, final double cameraZ){
+		return original || StaticEntityRenderCache.hasExtendedTerrainAt(entity, cameraX, cameraZ);
 	}
 }
 //?}
