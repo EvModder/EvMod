@@ -53,7 +53,7 @@ public class CommandAssignPearl{
 //			final PearlDataClient pdc = new PearlDataClient(uuid, epearl.getBlockX(), epearl.getBlockY(), epearl.getBlockZ());
 //			if(remoteSender == null) epearlLookup.assignPearlOwner(friend, key, pdc, cmd);
 //			else{
-//				remoteSender.sendBotMessage(cmd, /*udp=*/true, /*timeout=*/3000, PacketHelper.toByteArray(key, uuid), (reply)->{
+//				remoteSender.sendBotMessage(cmd, /*udp=*/true, /*timeout=*/3000, PacketCodec.toByteArray(key, uuid), (reply)->{
 //					if(reply != null && reply.length == 1){
 //						if(reply[0] == -1/*aka (byte)255*/) ctx.getSource().sendFeedback(Text.literal("Added pearl owner to remote DB!").withColor(16755200));
 //						else ctx.getSource().sendError(Text.literal("Remote DB already contains pearl owner").withColor(16755200));

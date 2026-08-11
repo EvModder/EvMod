@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.UUID;
 import net.evmodder.EvLib.util.Command;
 import net.evmodder.EvLib.util.FileIO;
-import net.evmodder.EvLib.util.PacketHelper;
+import net.evmodder.EvLib.util.PacketCodec;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MiscUtils;
@@ -52,7 +52,7 @@ public final class GameMessageFilter{
 			return;
 		}
 
-		final byte[] args = PacketHelper.toByteArray(uuid, /*tsForDelta=*/new UUID(0, lastFetchTs));
+		final byte[] args = PacketCodec.toByteArray(uuid, /*tsForDelta=*/new UUID(0, lastFetchTs));
 		remoteSender.sendBotMessage(Command.DB_PLAYER_FETCH_IGNORES, /*udp=*/false, /*timeout=*/5000, args, reply -> {
 			final String nameOrUUID = MojangProfileLookup.nameOrUUID(uuid);
 			if(reply == null || (reply.length != 1 && reply.length % 16 != 0)){

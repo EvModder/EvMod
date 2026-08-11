@@ -35,6 +35,7 @@ public class ServerJoinListener{
 				(ClientPacketListener _, PacketSender _, Minecraft _) ->
 		{
 			lastJoinTs = System.currentTimeMillis();
+			if(rms != null) rms.minecraftServerConnected();
 
 //			assert MiscUtils.getServerAddressHashCode(handler.getServerInfo()) == MiscUtils.getServerAddressHashCode();
 
@@ -55,7 +56,7 @@ public class ServerJoinListener{
 				}
 			}
 			if(Configs.Database.SHARE_JOIN_QUIT.getBooleanValue() && rms != null){
-				rms.sendBotMessage(Command.DB_PLAYER_STORE_JOIN_TS, /*udp=*/true, 5000, MiscUtils.getEncodedPlayerIds(client), /*recv=*/null);
+				rms.sendBotMessage(Command.DB_PLAYER_STORE_JOIN_TS, /*udp=*/false, 5000, MiscUtils.getEncodedPlayerIds(client), /*recv=*/null);
 			}
 
 //			if(currServerHashCode != Main.HASHCODE_2B2T) return;

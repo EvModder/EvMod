@@ -15,13 +15,15 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 public final class ServerQuitListener{
 	public ServerQuitListener(final RemoteServerSender rms){
 		ClientPlayConnectionEvents.DISCONNECT.register((ClientPacketListener _, Minecraft client)->{
+			if(rms != null) rms.minecraftServerDisconnecting();
 			if(Configs.Generic.LOG_COORDS_ON_SERVER_QUIT.getBooleanValue() && client.player != null){
 				Main.LOGGER.info(client.player.getName().getString()+" logged out at: "+client.player.blockPosition().toShortString());
 			}
 
 			if(Configs.Database.SHARE_JOIN_QUIT.getBooleanValue() && rms != null){
-				rms.sendBotMessage(Command.DB_PLAYER_STORE_QUIT_TS, /*udp=*/true, 5000, MiscUtils.getEncodedPlayerIds(client), /*recv=*/null);
+				rms.sendBotMessage(Command.DB_PLAYER_STORE_QUIT_TS, /*udp=*/false, 5000, MiscUtils.getEncodedPlayerIds(client), /*recv=*/null);
 			}
+			if(rms != null) rms.minecraftServerDisconnected();
 
 			if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
 				if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK){

@@ -1,12 +1,15 @@
 package net.evmodder.evmod.apis;
 
 import java.net.InetAddress;
+import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.text.Normalizer;
+import java.util.Locale;
 import java.util.UUID;
-import net.evmodder.EvLib.util.PacketHelper;
+import net.evmodder.EvLib.util.PacketCodec;
 import net.evmodder.evmod.Main;
+import net.evmodder.evmod.apis.RemoteServerSender.ServerDescriptor;
 import net.evmodder.evmod.mixin.AccessorProjectileEntity;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
@@ -46,18 +49,25 @@ public class MiscUtils{
 
 	private static final String ADDRESS_2B2T = "2b2t.org"; // TODO: make EvMod more server-independent 
 	public static final int HASHCODE_2B2T = ADDRESS_2B2T.hashCode(); // -437714968;
+	private static final String normalizeServerName(final String name){
+		return Normalizer.normalize(name, Normalizer.Form.NFKD).toLowerCase(Locale.ROOT)
+				.replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", "");
+	}
+	private static final boolean is2b2tAddress(final String address){
+		final String normalized = address.toLowerCase(Locale.ROOT);
+		return normalized.equals(ADDRESS_2B2T) || normalized.equals(ADDRESS_2B2T+":25565")
+				|| normalized.equals("connect.2b2t.org") || normalized.equals("connect.2b2t.org:25565")
+				|| normalized.equals("play.2b2t.org") || normalized.equals("play.2b2t.org:25565");
+	}
 	private static final String getServerAddress(final ServerData serverInfo, final boolean USE_CANONICAL_IP){
 //		if(serverInfo == null) return null;
-		final String name = Normalizer.normalize(serverInfo.name, Normalizer.Form.NFKD).toLowerCase().replaceAll("[^\\p{IsAlphabetic}\\p{IsDigit}]+", "");
+		final String name = normalizeServerName(serverInfo.name);
 		// TODO: Sync with proxy via some API, and have it tell us what server the backend is connecting to?
 		if(name.contains("2b2tproxy")) return ADDRESS_2B2T;
 
-		final String address = serverInfo.ip.toLowerCase();
-		switch(address){
-			case ADDRESS_2B2T: // "2b2t.org"
-			case "connect.2b2t.org":
-				return ADDRESS_2B2T;
-			default:
+		final String address = serverInfo.ip.toLowerCase(Locale.ROOT);
+		if(is2b2tAddress(address)) return ADDRESS_2B2T;
+		else{
 				if(USE_CANONICAL_IP){
 					final int i = address.lastIndexOf(':');
 					try{
@@ -90,6 +100,24 @@ public class MiscUtils{
 			default -> address.hashCode();
 		};
 	}
+	public static final ServerDescriptor getRemoteServerDescriptor(){
+		final Minecraft client = Minecraft.getInstance();
+		final ServerData serverInfo = client.getCurrentServer();
+		if(serverInfo == null){
+			if(client.getSingleplayerServer() == null) return null;
+			final String singleplayerName = client.getSingleplayerServer().getWorldData().getLevelName();
+			return new ServerDescriptor(null, singleplayerName, null,
+					singleplayerName == null ? 0 : singleplayerName.hashCode(), /*singleplayer=*/true);
+		}
+		String endpoint = null;
+		if(client.getConnection() != null){
+			final SocketAddress remoteAddress = client.getConnection().getConnection().getRemoteAddress();
+			if(remoteAddress != null) endpoint = remoteAddress.toString();
+		}
+		final boolean is2b2t = normalizeServerName(serverInfo.name).contains("2b2tproxy") || is2b2tAddress(serverInfo.ip);
+		return new ServerDescriptor(serverInfo.ip, serverInfo.name, endpoint,
+				is2b2t ? HASHCODE_2B2T : null, /*singleplayer=*/false);
+	}
 
 	// TODO: on db-side, create a function that can reverse uuid -> username
 	private static final UUID encodeAsUUID(final String str){
@@ -105,7 +133,7 @@ public class MiscUtils{
 		final String sessionName = client.getUser().getName(), playerName = client.player.getGameProfile().name();
 		final UUID sessionUUID = client.getUser().getProfileId(), playerUUID = client.player.getGameProfile().id();
 		final UUID usableSessionUUID = sessionUUID != null ? sessionUUID : MiscUtils.encodeAsUUID(sessionName);
-		return sessionName.equals(playerName) ? PacketHelper.toByteArray(usableSessionUUID) : PacketHelper.toByteArray(usableSessionUUID, playerUUID);
+		return sessionName.equals(playerName) ? PacketCodec.toByteArray(usableSessionUUID) : PacketCodec.toByteArray(usableSessionUUID, playerUUID);
 	}
 
 	public static final UUID getPearlUUID(final ThrownEnderpearl epearl){

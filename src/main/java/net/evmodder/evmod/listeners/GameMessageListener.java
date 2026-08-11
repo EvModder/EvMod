@@ -6,7 +6,7 @@ import java.util.HashSet;
 import java.util.UUID;
 import net.evmodder.EvLib.util.Command;
 import net.evmodder.EvLib.util.FileIO;
-import net.evmodder.EvLib.util.PacketHelper;
+import net.evmodder.EvLib.util.PacketCodec;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.EpearlActivator;
@@ -51,7 +51,7 @@ public final class GameMessageListener{
 		}
 		Main.LOGGER.info("Sending "+(ignored?"":"un")+"ignore packet to RMS");
 		rms.sendBotMessage(ignored ? Command.DB_PLAYER_STORE_IGNORE : Command.DB_PLAYER_STORE_UNIGNORE, /*udp=*/true, 2000,
-			PacketHelper.toByteArray(client.player.getUUID(), ignoredUUID),
+			PacketCodec.toByteArray(client.player.getUUID(), ignoredUUID),
 			msg->{
 				if(msg != null && msg.length == 1){
 					if(msg[0] != 0){

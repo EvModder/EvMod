@@ -8,7 +8,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
 import net.evmodder.EvLib.util.Command;
-import net.evmodder.EvLib.util.PacketHelper;
+import net.evmodder.EvLib.util.PacketCodec;
 import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.fabricmc.loader.api.FabricLoader;
@@ -103,7 +103,7 @@ final class InitUtils{
 
 		final User session = Minecraft.getInstance().getUser();
 		final UUID uuid = session.getProfileId() != null ? session.getProfileId() : UUID.nameUUIDFromBytes(session.getName().getBytes());
-		final byte[] msg = PacketHelper.toByteArray(uuid);
+		final byte[] msg = PacketCodec.toByteArray(uuid);
 		rms.sendBotMessage(Command.REQUEST_CLIENT_KEY, /*udp=*/false, /*timeout=*/5000, msg, reply->{
 			if(reply == null || reply.length != 20){
 				Main.LOGGER.info("ClientAuth: Invalid response from RMS for REQUEST_CLIENT_KEY: "+(reply == null ? null : new String(reply)+",len="+reply.length));
@@ -140,12 +140,13 @@ final class InitUtils{
 			return;
 		}
 		final byte[] byteMsg;
-		try{byteMsg = PacketHelper.toByteArray(Arrays.stream(Arrays.copyOfRange(arr, 1, arr.length)).map(UUID::fromString).toArray(UUID[]::new));}
+		try{byteMsg = PacketCodec.toByteArray(Arrays.stream(Arrays.copyOfRange(arr, 1, arr.length)).map(UUID::fromString).toArray(UUID[]::new));}
 		catch(IllegalArgumentException e){
 			Main.LOGGER.error("Invalid remote msg syntax, unable to parse UUID(s): "+msg.substring(msg.indexOf(',')+1));
 			return;
 		}
-		rms.sendBotMessage(command, /*udp=*/true, /*timeout=*/5000, byteMsg, /*recv=*/null);
+		rms.sendBotMessage(command, /*udp=*/true, /*timeout=*/5000, byteMsg,
+				command.sendsResponse() ? reply->Main.LOGGER.info("RMS response for "+command+": "+Arrays.toString(reply)) : null);
 	}
 
 	static final void sendChatMsg(final String msg){ // Accessor: KeybindCallbacks

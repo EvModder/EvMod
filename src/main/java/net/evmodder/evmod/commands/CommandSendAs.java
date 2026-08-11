@@ -1,5 +1,6 @@
 package net.evmodder.evmod.commands;
 
+import java.nio.charset.StandardCharsets;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.evmodder.evmod.apis.RemoteServerSender;
 //import net.minecraft.client.multiplayer.PlayerInfo;
@@ -28,9 +29,9 @@ public class CommandSendAs{
 							ctx.getSource().sendFeedback(Component.literal("Request message >200 chars, trimming it"));
 							message = message.substring(0, 200);
 						}
-						while((name.length() + message.length()) % 16 != 0) name += ' ';
+						while(((name+message).getBytes(StandardCharsets.UTF_8).length&15) != 0) name += ' ';
 						message = name + message;//if name.length==16, there will be no space between name and msg, otherwise there will be.
-						rms.sendBotMessage(net.evmodder.EvLib.util.Command.P2P_CHAT_AS, /*udp=*/true, 5000, message.getBytes(), null);
+						rms.sendBotMessage(net.evmodder.EvLib.util.Command.P2P_CHAT_AS, /*udp=*/false, 5000, message.getBytes(StandardCharsets.UTF_8), null);
 						return com.mojang.brigadier.Command.SINGLE_SUCCESS;
 					})
 				)

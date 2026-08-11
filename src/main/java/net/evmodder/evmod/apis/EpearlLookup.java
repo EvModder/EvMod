@@ -1,17 +1,22 @@
 package net.evmodder.evmod.apis;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import org.slf4j.Logger;
 import net.evmodder.EvLib.util.Command;
 import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.EvLib.util.LoadingCache;
-import net.evmodder.EvLib.util.PacketHelper;
+import net.evmodder.EvLib.util.PacketCodec;
 import static net.evmodder.evmod.apis.MojangProfileLookupConstants.*;
 
 public abstract class EpearlLookup{
@@ -22,6 +27,8 @@ public abstract class EpearlLookup{
 
 	private static final PearlDataClient PDC_404 = new PearlDataClient(UUID_404, 0, 0, 0);
 	private static final PearlDataClient PDC_LOADING = new PearlDataClient(UUID_LOADING, 0, 0, 0);
+	private static final byte[] REMOTE_UNAVAILABLE = "unavailable".getBytes(StandardCharsets.UTF_8);
+	private static final long STORE_PENDING = Long.MAX_VALUE, STORE_RETRY_DELAY_MILLIS = 30_000;
 
 	private static final String DB_FILENAME_UUID = "epearl_cache_uuid";
 	private static final String DB_FILENAME_XZ = "epearl_cache_xz";
@@ -30,6 +37,9 @@ public abstract class EpearlLookup{
 	private HashMap<Integer, UUID> updateKeyXZ; // Map of epearl.id -> keyXZ
 	private final HashMap<UUID, XYZ> idToPosTemp; // Map of epearl.uuid -> epearl.pos
 	protected final HashMap<UUID, Long> requestStartTimes;
+	// Values are STORE_PENDING while in flight, otherwise the next eligible retry timestamp.
+	private final ConcurrentHashMap<UUID, Long> storeByUuidRetryAfter = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<UUID, Long> storeByXzRetryAfter = new ConcurrentHashMap<>();
 
 	private final long FETCH_TIMEOUT = 5_000, STORE_TIMEOUT = 15_000;
 
@@ -175,7 +185,7 @@ public abstract class EpearlLookup{
 
 			// Request UUID of epearl for <Server>,<ePearlPosEncrypted>
 			requestStartTimes.put(key, System.currentTimeMillis());
-			remoteSender.sendBotMessage(DB_FETCH_COMMAND, /*udp=*/true, FETCH_TIMEOUT, PacketHelper.toByteArray(key),
+			remoteSender.sendBotMessage(DB_FETCH_COMMAND, /*udp=*/true, FETCH_TIMEOUT, PacketCodec.toByteArray(key),
 				msg->{
 					final XYZ xyz = idToPosTemp.remove(key);
 					assert xyz != null;
@@ -236,7 +246,7 @@ public abstract class EpearlLookup{
 		keysToRemove.forEach(key->{
 			remoteSender.sendBotMessage(
 				DB_FILENAME == DB_FILENAME_UUID ? Command.DB_PEARL_STORE_BY_UUID : Command.DB_PEARL_STORE_BY_XZ,
-				/*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key),
+				/*udp=*/true, STORE_TIMEOUT, PacketCodec.toByteArray(key),
 				msg->{
 					if(msg != null && msg.length > 0 && msg[0] != 0) LOGGER.info("[EPL] RemoteDB reported pearl removed");
 					else LOGGER.warn("[EPL] Remote DB was unable to remove pearl! key="+key);
@@ -298,19 +308,37 @@ public abstract class EpearlLookup{
 		final String DB_FILENAME = (keyIsUUID ? DB_FILENAME_UUID : DB_FILENAME_XZ);
 		if(remoteSender == null || !cache.USE_REMOTE_DB.get()){
 			appendToClientFile(DB_FILENAME, key, pdc);
+			cache.put(key, pdc);
 			return;
 		}
 //		Main.LOGGER.debug("[EpearlLookup] Sending STORE_OWNER("+keyIsUUID+") '"+ownerName+"' for pearl at "+pdc.x+","+pdc.z);
 		final Command cmd = keyIsUUID ? Command.DB_PEARL_STORE_BY_UUID : Command.DB_PEARL_STORE_BY_XZ;
+		final ConcurrentHashMap<UUID, Long> storeRetryAfter = keyIsUUID ? storeByUuidRetryAfter : storeByXzRetryAfter;
+		final long now = System.currentTimeMillis();
+		while(true){
+			final Long retryAt = storeRetryAfter.putIfAbsent(key, STORE_PENDING);
+			if(retryAt == null) break;
+			if(retryAt == STORE_PENDING || now < retryAt) return;
+			if(storeRetryAfter.replace(key, retryAt, STORE_PENDING)) break;
+		}
 		remoteSender.sendBotMessage(
-				cmd, /*udp=*/true, STORE_TIMEOUT, PacketHelper.toByteArray(key, pdc.owner()),
+				cmd, /*udp=*/true, STORE_TIMEOUT, PacketCodec.toByteArray(key, pdc.owner()),
 				msg->{
 					if(msg != null && msg.length == 1){
+						storeRetryAfter.remove(key, STORE_PENDING);
 						if(msg[0] != 0) LOGGER.info("[EPL] Added pearl UUID to remote DB!");
 						else LOGGER.info("[EPL] Remote DB already contains pearl UUID");
 						appendToClientFile(DB_FILENAME, key, pdc);
+						cache.put(key, pdc);
 					}
-					else LOGGER.info("[EPL] Unexpected response from RMS for "+cmd.name()+": "+msg);
+					else{
+						final long retryAt = System.currentTimeMillis()+STORE_RETRY_DELAY_MILLIS;
+						storeRetryAfter.replace(key, STORE_PENDING, retryAt);
+						CompletableFuture.delayedExecutor(STORE_RETRY_DELAY_MILLIS, TimeUnit.MILLISECONDS)
+								.execute(()->storeRetryAfter.remove(key, retryAt));
+						if(Arrays.equals(msg, REMOTE_UNAVAILABLE)) LOGGER.warn("[EPL] Mojang profile validation is temporarily unavailable; pearl store will retry");
+						else LOGGER.info("[EPL] Unexpected response from RMS for "+cmd.name()+": "+msg);
+					}
 				}
 		);
 	}
