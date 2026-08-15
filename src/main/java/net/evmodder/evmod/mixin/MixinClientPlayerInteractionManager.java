@@ -1,5 +1,6 @@
 package net.evmodder.evmod.mixin;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.screen;
 import static net.evmodder.evmod.compat.MinecraftCompat.sendSystem;
 
 import java.util.concurrent.CompletableFuture;
@@ -12,10 +13,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils;
+import net.evmodder.evmod.keybinds.KeybindCraftingRestock.AnvilNameController;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.inventory.ContainerInput;
 
 @Mixin(MultiPlayerGameMode.class)
@@ -43,8 +46,11 @@ abstract class MixinClientPlayerInteractionManager{
 		final boolean success = ClickUtils.addClick();
 
 		if(success){
+			if(player.containerMenu instanceof AnvilMenu && (slot == AnvilMenu.INPUT_SLOT || slot == AnvilMenu.RESULT_SLOT)
+					&& screen(Minecraft.getInstance()) instanceof AnvilNameController controller)
+				controller.evmod$clearNameProtection();
 			if(AccessorMain.getInstance().kbCraftRestock != null && Configs.Hotkeys.CRAFT_RESTOCK.getKeybind().isValid())
-				AccessorMain.getInstance().kbCraftRestock.checkIfCraftAction(player.containerMenu, slot, button, action);
+				AccessorMain.getInstance().kbCraftRestock.checkIfCraftAction(player.containerMenu, slot, button, action, isBotted);
 		}
 		else{
 			if(isBotted){

@@ -346,7 +346,7 @@
 	"evmod.config.hotkeys.name.ejectJunkItems": "ejectJunkItems",
 	"evmod.config.hotkeys.comment.ejectJunkItems": "Toss out inventory crap",
 	"evmod.config.hotkeys.name.craftingRestock": "craftingRestock",
-	"evmod.config.hotkeys.comment.craftingRestock": "Refills crafting/cartography table/enchanter/anvil to repeat the last action (WIP)",
+	"evmod.config.hotkeys.comment.craftingRestock": "Restocks the last crafting recipe; hold Shift to craft afterward",
 
 	// TODO: better solution (scroll wheel)
 	"evmod.config.hotkeys.name.hotbarSlotItemTypeIncrement": "hotbarSlotItemTypeIncrement",

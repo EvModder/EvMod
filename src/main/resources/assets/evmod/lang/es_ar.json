@@ -226,6 +226,7 @@
 	"evmod.config.hotkeys.name.eBounceTravelHelper": "eBounceTravelHelper",
 	"evmod.config.hotkeys.name.ejectJunkItems": "ejectJunkItems",
 	"evmod.config.hotkeys.name.craftingRestock": "craftingRestock",
+	"evmod.config.hotkeys.comment.craftingRestock": "Repone los ingredientes de la última receta; mantené Shift para fabricar después",
 	"evmod.config.hotkeys.name.hotbarSlotItemTypeIncrement": "hotbarSlotItemTypeIncrement",
 	"evmod.config.hotkeys.name.hotbarSlotItemTypeDecrement": "hotbarSlotItemTypeDecrement",
 	"evmod.config.hotkeys.name.inventoryOrganize1": "inventoryOrganize1",

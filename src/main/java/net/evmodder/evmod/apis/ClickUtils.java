@@ -28,6 +28,7 @@ public final class ClickUtils{
 		SHIFT_CLICK(ContainerInput.QUICK_MOVE),
 		HOTBAR_SWAP(ContainerInput.SWAP),
 		THROW(ContainerInput.THROW),
+		QUICK_CRAFT(ContainerInput.QUICK_CRAFT),
 		BUNDLE_SELECT(null);
 
 		ContainerInput action;

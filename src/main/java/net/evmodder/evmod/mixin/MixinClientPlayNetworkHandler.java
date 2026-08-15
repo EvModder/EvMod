@@ -14,6 +14,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
+import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.network.protocol.game.ClientboundMapItemDataPacket;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.level.saveddata.maps.MapId;
@@ -32,6 +34,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientPacketListener.class)
 abstract class MixinClientPlayNetworkHandler{
+	@Inject(method="handleContainerSetSlot", at=@At("TAIL"))
+	private final void confirmCraftResult(final ClientboundContainerSetSlotPacket packet, final CallbackInfo _ci){
+		if(AccessorMain.getInstance().kbCraftRestock != null) AccessorMain.getInstance().kbCraftRestock
+				.onServerSlotUpdate(packet.getContainerId(), packet.getSlot(), packet.getItem());
+	}
+
+	@Inject(method="handleContainerContent", at=@At("TAIL"))
+	private final void confirmCraftContents(final ClientboundContainerSetContentPacket packet, final CallbackInfo _ci){
+		if(AccessorMain.getInstance().kbCraftRestock != null) AccessorMain.getInstance().kbCraftRestock.onServerContainerContent();
+	}
+
 	@Inject(method="handleAddEntity", at=@At("HEAD"))
 	private final void onSpawn(final ClientboundAddEntityPacket packet, final CallbackInfo _ci){
 		// If the incoming entity is a player and matches your target's UUID

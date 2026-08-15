@@ -11,6 +11,7 @@
 		"AccessorAnvilScreen",
 		"AccessorPlayerListHud",
 		"AccessorProjectileEntity",
+		"MixinAnvilScreen",
 		"MixinClientPlayerInteractionManager",
 		"MixinClientPlayNetworkHandler",
 		"MixinClientLevel",
