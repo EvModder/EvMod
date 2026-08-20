@@ -136,17 +136,17 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			if(numericPosA){a = Integer.parseInt(posA)-1; b = Integer.parseInt(posB)-1;}
 			else{a = posA.charAt(0)-'A'; b = posB.charAt(0)-'A';}
 			if(rowWidth != null) return new Pos2DPair(a%rowWidth, a/rowWidth, b%rowWidth, b/rowWidth);
-			else return new Pos2DPair(a, 0, b, 0);
+			return null;
 		}
-		if(posA.matches("[TMB][LMR]") && posB.matches("[TMB][LMR]")){
-			assert currentData.slots().stream().allMatch(i -> getPosStrFromItem(allMapItems.get(i)).matches("[TMB][LMR]"));
+		if(posA.matches("[TMB] [LMR]") && posB.matches("[TMB] [LMR]")){
+			assert currentData.slots().stream().allMatch(i -> getPosStrFromItem(allMapItems.get(i)).matches("[TMB] [LMR]"));
 			final boolean hasM1 =  currentData.slots().stream().anyMatch(i -> getPosStrFromItem(allMapItems.get(i)).charAt(0) == 'M');
-			final boolean hasM2 =  currentData.slots().stream().anyMatch(i -> getPosStrFromItem(allMapItems.get(i)).charAt(1) == 'M');
+			final boolean hasM2 =  currentData.slots().stream().anyMatch(i -> getPosStrFromItem(allMapItems.get(i)).charAt(2) == 'M');
 //			final boolean hasM1 = posA.charAt(0) == 'M' || posB.charAt(0) == 'M';
-//			final boolean hasM2 = posA.charAt(1) == 'M' || posB.charAt(1) == 'M';
+//			final boolean hasM2 = posA.charAt(2) == 'M' || posB.charAt(2) == 'M';
 			return new Pos2DPair(
-					intFromTLBR(posA.charAt(0), hasM1), intFromTLBR(posA.charAt(1), hasM2),
-					intFromTLBR(posB.charAt(0), hasM1), intFromTLBR(posB.charAt(1), hasM2)
+					intFromTLBR(posA.charAt(0), hasM1), intFromTLBR(posA.charAt(2), hasM2),
+					intFromTLBR(posB.charAt(0), hasM1), intFromTLBR(posB.charAt(2), hasM2)
 			);
 		}
 		int cutA, cutB, cutSpaceA, cutSpaceB;
@@ -514,6 +514,10 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		}
 		final Pos2DPair pos2dPair = getRelativePosPair(currPosStr, lastPosStr);
 		if(pos2dPair == null){
+			if(ofSize != null && rowWidth == null){
+				Main.LOGGER.info("AutoPlaceMapArt: waiting to determine rowWidth for 1d pos data");
+				return false;
+			}
 			Main.LOGGER.warn("AutoPlaceMapArt: unable to parse pos2dPair from pos strs ("+currPosStr+","+lastPosStr+")");
 			disableAndReset(); return false;
 		}
