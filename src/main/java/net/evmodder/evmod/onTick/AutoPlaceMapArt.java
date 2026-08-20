@@ -186,11 +186,12 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		}
 	}
 
-	private final String getPosStrFromName(final String name){
+	private final String getPosStrFromName(final String name, final RelatedMapsData data){
 		final String nameWoArtist = MapRelationUtils.removeByArtist(name);
-		if(currentData.prefixLen() == -1) return name;
-		return MapRelationUtils.simplifyPosStr(nameWoArtist.substring(currentData.prefixLen(), nameWoArtist.length()-currentData.suffixLen()));
+		if(data.prefixLen() == -1) return name;
+		return MapRelationUtils.simplifyPosStr(nameWoArtist.substring(data.prefixLen(), nameWoArtist.length()-data.suffixLen()));
 	}
+	private final String getPosStrFromName(final String name){return getPosStrFromName(name, currentData);}
 	private final String getPosStrFromItem(final ItemStack stack){return getPosStrFromName(stack.getHoverName().getString());}
 
 	private final boolean isPartOfCurrentAutoPlace(final ItemStack stack){
@@ -303,6 +304,45 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		return false;
 	}
 
+	private final boolean tryActivateFromSymbolicPos(final Player player, final ItemFrame ife, final ItemStack stack){
+		if(ife.getRotation()%4 != 0) return false;
+		final ArrayList<ItemStack> mapItems = new ArrayList<>();
+		mapItems.add(stack);
+		InvUtils.getAllNestedItems(player.getInventory().getNonEquipmentItems().stream()).filter(s -> s.getItem() == Items.FILLED_MAP).forEach(mapItems::add);
+		final Direction ifeDir = ife.getNearestViewDirection();
+		final AxisData ifeAxisData = getAxisData(ife);
+		final double scanDist = Configs.Generic.MAPART_AUTOPLACE_REACH.getDoubleValue()+2;
+		player.level().getEntitiesOfClass(ItemFrame.class, player.getBoundingBox().inflate(scanDist), otherIfe ->
+				otherIfe.getNearestViewDirection() == ifeDir && getAxisData(otherIfe).constAxis == ifeAxisData.constAxis)
+				.stream().map(ItemFrame::getItem).filter(s -> s.getItem() == Items.FILLED_MAP).forEach(mapItems::add);
+
+		final RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(mapItems, player.level());
+		if(data.prefixLen() == -1) return false;
+		final HashSet<String> posStrs = new HashSet<>();
+		for(final int slot : data.slots()){
+			final String posStr = getPosStrFromName(mapItems.get(slot).getHoverName().getString(), data);
+			if(!posStr.matches("[TMB] [LMR]")) return false;
+			posStrs.add(posStr);
+		}
+		final boolean hasM1 = posStrs.stream().anyMatch(pos -> pos.charAt(0) == 'M');
+		final boolean hasM2 = posStrs.stream().anyMatch(pos -> pos.charAt(2) == 'M');
+		if(posStrs.size() != (hasM1 ? 3 : 2)*(hasM2 ? 3 : 2)) return false;
+
+		dir = ifeDir; world = ife.level(); lastPosStr = getPosStrFromName(stack.getHoverName().getString(), data);
+		currentData = data; allMapItems.addAll(mapItems);
+		switch(dir){
+			case UP    -> {axisMatch = false; varAxis1Neg = false; varAxis2Neg = false;}
+			case DOWN  -> {axisMatch = false; varAxis1Neg = false; varAxis2Neg = true;}
+			case NORTH -> {axisMatch = false; varAxis1Neg = true;  varAxis2Neg = true;}
+			case SOUTH -> {axisMatch = false; varAxis1Neg = false; varAxis2Neg = true;}
+			case WEST  -> {axisMatch = true;  varAxis1Neg = true;  varAxis2Neg = false;}
+			case EAST  -> {axisMatch = true;  varAxis1Neg = true;  varAxis2Neg = true;}
+		}
+		currentData.slots().stream().map(i -> ItemStack.hashItemAndComponents(allMapItems.get(i))).forEach(stacksHashesForCurrentData::add);
+		Main.LOGGER.info("AutoPlaceMapArt: activated from symbolic pos data! dir="+dir);
+		return true;
+	}
+
 	public final boolean recalcLayout(final Player player, final ItemFrame currIfe, final ItemStack currStack){
 		synchronized(stacksHashesForCurrentData){
 		final Component currNameText = currStack.getCustomName();
@@ -316,7 +356,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		{
 			disableAndReset(); return false;
 		}
-		if(lastIfe == null) return false;
+		if(lastIfe == null) return tryActivateFromSymbolicPos(player, currIfe, currStack);
 
 		if((dir=currIfe.getNearestViewDirection()) != lastIfe.getNearestViewDirection()){
 			Main.LOGGER.info("AutoPlaceMapArt: currIfe and lastIfe are not facing the same dir");
@@ -618,7 +658,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			if(updateLastIfe){
 				lastIfe = currIfe;
 				lastStack = currStack;
-				lastPosStr = currPosStr;
+				if(currPosStr != null) lastPosStr = currPosStr;
 			}
 		}
 		}
