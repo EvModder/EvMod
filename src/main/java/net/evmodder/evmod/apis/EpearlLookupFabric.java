@@ -16,7 +16,6 @@ import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -27,7 +26,7 @@ public final class EpearlLookupFabric extends EpearlLookup{
 
 	private final HashMap<ChunkPos, Long> recentlyLoadedChunks = new HashMap<>();
 	private final HashSet<ChunkPos> loadedChunks = new HashSet<>();
-	private Level world;
+	private ClientLevel world;
 	private List<ThrownEnderpearl> loadedEpearls;
 	private int epearlCount;
 
@@ -48,23 +47,32 @@ public final class EpearlLookupFabric extends EpearlLookup{
 		return new UUID(Double.doubleToRawLongBits(epearl.getX()), Double.doubleToRawLongBits(epearl.getZ()));
 	}
 	private final ChunkPos toChunkPos(final PearlDataClient pdc){
-		return new ChunkPos(pdc.x()<<4, pdc.z()<<4);
+		return new ChunkPos(pdc.x()>>4, pdc.z()>>4);
+	}
+	private final void switchWorld(final ClientLevel level){
+		world = level;
+		recentlyLoadedChunks.clear();
+		loadedChunks.clear();
+		loadedEpearls = null;
+		epearlCount = -1;
 	}
 
 	public EpearlLookupFabric(final RemoteServerSender rms){
 		super(rms, Main.LOGGER);
-		ClientChunkEvents.CHUNK_LOAD.register((ClientLevel _, LevelChunk listener)->{
-			if(isDisabled()) return;
+		ClientChunkEvents.CHUNK_LOAD.register((ClientLevel level, LevelChunk listener)->{
+			if(isDisabled() || level != Minecraft.getInstance().level) return;
 			synchronized(recentlyLoadedChunks){
+				if(world != level) switchWorld(level);
 				recentlyLoadedChunks.put(listener.getPos(), System.currentTimeMillis()+CHUNK_LOAD_WAIT);
 				final boolean added = loadedChunks.add(listener.getPos());
 				if(!added) Main.LOGGER.error("EPLF: Loading chunk "+listener.getPos().toString()+" before it was unloaded!");
 //				assert added;
 			}
 		});
-		ClientChunkEvents.CHUNK_UNLOAD.register((ClientLevel _, LevelChunk listener)->{
+		ClientChunkEvents.CHUNK_UNLOAD.register((ClientLevel level, LevelChunk listener)->{
 			if(isDisabled()) return;
 			synchronized(recentlyLoadedChunks){
+				if(level != world) return; // Ignore delayed unload callbacks from the previous world.
 				recentlyLoadedChunks.remove(listener.getPos());
 				final boolean removed = loadedChunks.remove(listener.getPos());
 				if(!removed) Main.LOGGER.error("EPLF: Unloading chunk "+listener.getPos().toString()+" before it was loaded!");
@@ -76,12 +84,9 @@ public final class EpearlLookupFabric extends EpearlLookup{
 			@Override public void onTickStart(final Minecraft client){
 				if(isDisabled()) return;
 				synchronized(recentlyLoadedChunks){
-					if(client == null || client.player == null || world != client.level || client.level == null){
-						world = client.level;
-						recentlyLoadedChunks.clear();
-						loadedChunks.clear();
-						return;
-					}
+					final ClientLevel level = client == null ? null : client.level;
+					if(world != level) switchWorld(level);
+					if(client == null || client.player == null || level == null) return;
 					final long now = System.currentTimeMillis();
 					// Update recentlyLoadedChunks
 					final boolean fullyLoadedChunk = recentlyLoadedChunks.entrySet().removeIf(entry -> now > entry.getValue());
