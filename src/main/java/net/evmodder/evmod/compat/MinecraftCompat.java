@@ -127,10 +127,8 @@ public final class MinecraftCompat{
 	public static void disconnect(Minecraft client, Component reason){
 		//? >=1.21.11 {
 		client.disconnectFromWorld(reason);
-		client.level.disconnect(reason);
 		//?} else {
-		/*client.disconnect(new GenericMessageScreen(reason));
-		client.level.disconnect();*/
+		/*client.disconnect(new GenericMessageScreen(reason));*/
 		//?}
 	}
 
