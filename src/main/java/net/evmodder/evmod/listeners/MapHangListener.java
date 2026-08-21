@@ -449,7 +449,7 @@ public final class MapHangListener{
 	}
 
 	private boolean waitingForRestock;
-	private final ItemStack tryToStockNextMap(ItemStack prevMap, InteractionHand hand){
+	private final ItemStack tryToStockNextMap(ItemStack prevMap, InteractionHand hand, final boolean ALLOW_OTHER_MAPART){
 		assert prevMap != null && prevMap.getItem() == Items.FILLED_MAP;
 
 		final Minecraft client = Minecraft.getInstance();
@@ -467,14 +467,14 @@ public final class MapHangListener{
 				restockFromSlot = getNextSlotByName(slotsWithBundleSub, prevMap, prevSlot, player.level());
 			}
 		}
-		if(Configs.Generic.PLACEMENT_HELPER_MAPART_USE_IMAGE.getBooleanValue() && restockFromSlot == -1 && !posData2dForName.containsKey(prevName)){
+		if(ALLOW_OTHER_MAPART && Configs.Generic.PLACEMENT_HELPER_MAPART_USE_IMAGE.getBooleanValue() && restockFromSlot == -1 && !posData2dForName.containsKey(prevName)){
 			final MapItemSavedData state = MapItem.getSavedData(prevMap, player.level());
 			if(state != null){
 				Main.LOGGER.info("MapRestock: finding next map by img-edge");
 				restockFromSlot = getNextSlotByImage(/*slotsWithBundleSub*/slots, prevMap, prevSlot, player.level());
 			}
 		}
-		if(JUST_PICK_A_MAP && restockFromSlot == -1){
+		if(ALLOW_OTHER_MAPART && JUST_PICK_A_MAP && restockFromSlot == -1){
 			Main.LOGGER.info("MapRestock: finding next map by ANY (count->locked->named->related)");
 			restockFromSlot = getNextSlotFirstMap(/*slotsWithBundleSub*/slots, prevMap, prevSlot, player.level());
 		}
@@ -530,7 +530,7 @@ public final class MapHangListener{
 
 	public MapHangListener(final boolean allowAutoPlacer, final boolean allowAutoRemover){
 		final AutoPlaceMapArt autoPlacer = allowAutoPlacer ? new AutoPlaceMapArt(
-				stack->tryToStockNextMap(stack, InteractionHand.MAIN_HAND)) : null;
+				stack->tryToStockNextMap(stack, InteractionHand.MAIN_HAND, false)) : null;
 		final AutoRemoveMapArt autoRemover = allowAutoRemover ? new AutoRemoveMapArt() : null;
 		if(allowAutoPlacer || allowAutoRemover){
 			AttackEntityCallback.EVENT.register((Player _, Level _, InteractionHand _, Entity entity, @Nullable EntityHitResult _) -> {
@@ -606,7 +606,7 @@ public final class MapHangListener{
 				final int prevSlot = hand == InteractionHand.MAIN_HAND ? player.getInventory().getSelectedSlot()+36 : InventoryMenu.SHIELD_SLOT;
 				final ItemStack mapInHand = player.getItemInHand(hand);
 				assert mapInHand == player.inventoryMenu.slots.get(prevSlot).getItem();
-				tryToStockNextMap(mapInHand, hand);
+				tryToStockNextMap(mapInHand, hand, true);
 			}
 			return InteractionResult.PASS;
 		});

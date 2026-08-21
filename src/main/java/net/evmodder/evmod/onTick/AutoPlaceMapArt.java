@@ -252,7 +252,8 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 				.stream().collect(Collectors.toMap(ItemFrame::blockPosition, Function.identity()));
 
 		final int rowOffset = a-b;
-		final ItemFrame ifeExtendingRow = ifes.get(getRelativeBp(currAxisData, axisMatch, /*neg=*/rowOffset<0));
+		final boolean rowAxisNeg = axisMatch ? varAxis1Neg : varAxis2Neg;
+		final ItemFrame ifeExtendingRow = ifes.get(getRelativeBp(currAxisData, axisMatch, /*neg=*/(rowOffset > 0) == rowAxisNeg));
 		if(ifeExtendingRow != null && isPartOfCurrentAutoPlace(ifeExtendingRow.getItem())) return false;
 		final boolean emptyRowExtend = ifeExtendingRow != null && ifeExtendingRow.getItem().isEmpty();
 
@@ -276,7 +277,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		if(ifeColNeg != null && isPartOfCurrentAutoPlace(ifeColNeg.getItem())){
 			Main.LOGGER.info("AutoPlaceMapArt: sub-call to recalcLayout() with col-1");
 			//TODO: current, this can trigger disableAndReset, killing the process
-			final boolean result = recalcLayout(player, ifeColNeg, ifeColNeg.getItem()/*, sandbox=true*/);
+			final boolean result = recalcLayout(player, ifeColNeg, ifeColNeg.getItem(), /*updateLastIfe=*/false);
 			if(result) assert rowWidth != null;
 			return result;
 		}
@@ -284,7 +285,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		if(ifeColPos != null && isPartOfCurrentAutoPlace(ifeColPos.getItem())){
 			Main.LOGGER.info("AutoPlaceMapArt: sub-call to recalcLayout() with col+1");
 			//TODO: current, this can trigger disableAndReset, killing the process
-			final boolean result = recalcLayout(player, ifeColPos, ifeColPos.getItem()/*, sandbox=true*/);
+			final boolean result = recalcLayout(player, ifeColPos, ifeColPos.getItem(), /*updateLastIfe=*/false);
 			if(result) assert rowWidth != null;
 			return result;
 		}
@@ -344,12 +345,14 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 	}
 
 	public final boolean recalcLayout(final Player player, final ItemFrame currIfe, final ItemStack currStack){
+		return recalcLayout(player, currIfe, currStack, /*updateLastIfe=*/true);
+	}
+	private final boolean recalcLayout(final Player player, final ItemFrame currIfe, final ItemStack currStack, boolean updateLastIfe){
 		synchronized(stacksHashesForCurrentData){
 		final Component currNameText = currStack.getCustomName();
 		if(currNameText == null) return false;
 		final String currName = currNameText.getString();
 		String currPosStr = null;
-		boolean updateLastIfe = true;
 		try{
 		if(!Generic.MAPART_AUTOPLACE.getBooleanValue()
 			|| currIfe == null || currStack == null || currStack.getCount() != 1)
@@ -415,7 +418,7 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 			}
 		}
 		currPosStr = getPosStrFromName(currName);
-		if(lastPosStr == null) lastPosStr = getPosStrFromItem(lastStack);
+		if(fetchData || lastPosStr == null) lastPosStr = getPosStrFromItem(lastStack);
 		if(fetchData && ofSize == null && posStrIs1D(currPosStr)){
 			if(!posStrIs1D(lastPosStr)){
 				Main.LOGGER.info("AutoPlaceMapArt: currStack and lastStack have different posStr dimensionality! (1d)");
