@@ -12,6 +12,7 @@ import net.evmodder.evmod.listeners.GameMessageFilter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.AnvilScreen;
 import net.minecraft.client.gui.screens.inventory.CartographyTableScreen;
 import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CraftingScreen;
@@ -151,7 +152,8 @@ final class KeyCallbacks{
 
 		keybindCallback(Configs.Hotkeys.MAP_COPY, s->s instanceof InventoryScreen
 				|| s instanceof CraftingScreen || s instanceof CartographyTableScreen, kbMapCopy::copyMapArtInInventory);
-		keybindCallback(Configs.Hotkeys.MAP_LOAD, AbstractContainerScreen.class::isInstance, kbMapLoad::loadMapArtFromContainer);
+		keybindCallback(Configs.Hotkeys.MAP_LOAD,
+				s->s instanceof AbstractContainerScreen && !(s instanceof AnvilScreen), kbMapLoad::loadMapArtFromContainer);
 		keybindCallback(Configs.Hotkeys.MAP_MOVE,
 				s->s instanceof AbstractContainerScreen && s instanceof InventoryScreen == false, kbMapMove::moveMapArtToFromShulker);
 		Function<Screen, Boolean> allowInScreenBundleMove = //InventoryScreen.class::isInstance
