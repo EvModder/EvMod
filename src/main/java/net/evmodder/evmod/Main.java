@@ -34,6 +34,7 @@ import net.evmodder.evmod.listeners.*;
 import net.evmodder.evmod.onTick.AutoPlaceItemFrames;
 import net.evmodder.evmod.onTick.ContainerOpenCloseListener;
 import net.evmodder.evmod.onTick.MapLoaderBot;
+import net.evmodder.evmod.onTick.MuteMusicOnMenuScreen;
 import net.evmodder.evmod.onTick.SyncPlayerPos;
 import net.evmodder.evmod.onTick.TooltipMapLoreMetadata;
 import net.evmodder.evmod.onTick.TooltipMapNameColor;
@@ -163,6 +164,7 @@ public class Main{
 		if(settings.onTickInventory) TickListener.register(new UpdateInventoryContents());
 		if(settings.onTickIframes) TickListener.register(new UpdateItemFrameContents());
 		if(settings.onTickContainer) TickListener.register(new UpdateContainerContents());
+		if(settings.muteMusicOnMenuScreen) TickListener.register(new MuteMusicOnMenuScreen());
 		if(settings.containerOpenCloseListener) TickListener.register(new ContainerOpenCloseListener(kbInvRestock));
 		if(settings.mapLoaderBot){
 			if(FabricLoader.getInstance().isModLoaded("baritone")) TickListener.register(new MapLoaderBot());

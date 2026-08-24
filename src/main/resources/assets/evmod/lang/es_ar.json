@@ -82,6 +82,7 @@
 
 	"evmod.config.generic.name.whisperPlaySound": "whisperPlaySound",
 	"evmod.config.generic.name.whisperPlaySoundUnfocusedOnly": "whisperPlaySoundUnfocusedOnly",
+	"evmod.config.generic.name.muteMusicOnMenuScreen": "Silenciar música en la pantalla de título",
 	"evmod.config.generic.name.whisperPearlPull": "whisperPearlPull",
 	"evmod.config.generic.name.mapArtDefaultGroup": "mapArtDefaultGroup",
 	"evmod.config.generic.name.mapArtGroupIncludeUnlocked": "mapArtGroupIncludeUnlocked",
@@ -100,6 +101,7 @@
 	"evmod.config.generic.name.inventoryRestockAutoForOrganization": "inventoryRestockAutoForOrganization",
 
 	"evmod.config.generic.comment.whisperPlaySound": "emite un sonido al recibir un whisper",
+	"evmod.config.generic.comment.muteMusicOnMenuScreen": "Silencia la música mientras no haya un mundo cargado.\nLa música vuelve a su volumen configurado al entrar a un mundo.",
 	"evmod.config.generic.comment.whisperPearlPull": "/w msg to trigger a pearl",
 	"evmod.config.generic.comment.mapArtGroupIncludeUnlocked": "Include unlocked maps in MapGroups (not recommended)",
 	"evmod.config.generic.comment.mapArtGroupTreatUnlockedAsUnique": "If true, identical-image locked/vs/unlocked maps will be treated as if they are distinct maparts",

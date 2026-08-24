@@ -177,6 +177,8 @@
 	"evmod.config.generic.comment.whisperPlaySound": "Sound played for /w, while ingame",
 	"evmod.config.generic.name.whisperPlaySoundUnfocused": "whisperPlaySoundUnfocused",
 	"evmod.config.generic.comment.whisperPlaySoundUnfocused": "Sound played for /w, if tabbed out of the game",
+	"evmod.config.generic.name.muteMusicOnMenuScreen": "Mute music on menu screen",
+	"evmod.config.generic.comment.muteMusicOnMenuScreen": "Mute music while no world is loaded.\nMusic returns to its configured volume after joining a world.",
 	"evmod.config.generic.name.whisperPearlPull": "whisperPearlPull",
 	"evmod.config.generic.comment.whisperPearlPull": "/w msg to trigger a pearl",
 

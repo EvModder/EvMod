@@ -13,6 +13,7 @@ store_data_in_instance_folder: true
 on_tick.inventory: true
 on_tick.iframes: true
 on_tick.container: true
+mute_music_on_menu_screen: false
 tooltip.map_highlights: true
 tooltip.map_metadata: true
 tooltip.repair_cost: true

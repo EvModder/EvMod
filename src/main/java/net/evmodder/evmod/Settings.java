@@ -17,7 +17,7 @@ final class Settings{
 	final boolean storeDataInInstanceFolder, database, epearlOwners;
 	final boolean placementHelperIframeAutoPlace, placementHelperMapArt, placementHelperMapArtAutoPlace, placementHelperMapArtAutoRemove;
 	final boolean serverJoinListener, serverQuitListener, gameMessageListener, gameMessageFilter, blockClickListener;
-	final boolean onTickInventory, onTickContainer, onTickIframes, containerOpenCloseListener, mapLoaderBot, playerMoveListener, broadcaster;
+	final boolean onTickInventory, onTickContainer, onTickIframes, muteMusicOnMenuScreen, containerOpenCloseListener, mapLoaderBot, playerMoveListener, broadcaster;
 	final boolean tooltipMapHighlights, tooltipMapMetadata, tooltipRepairCost;
 	final boolean cmdAssignPearl, cmdDeletedMapsNearby, cmdExportMapImg, cmdMapArtGroup, cmdMapHashCode, cmdSeen, cmdSendAs, cmdTimeOnline;
 
@@ -73,6 +73,7 @@ final class Settings{
 		onTickInventory = extractConfigValue(settings, "on_tick.inventory");
 		onTickIframes = extractConfigValue(settings, "on_tick.iframes");
 		onTickContainer = extractConfigValue(settings, "on_tick.container");
+		muteMusicOnMenuScreen = extractConfigValue(settings, "mute_music_on_menu_screen");
 		containerOpenCloseListener = extractConfigValue(settings, "listener.container_open");
 		placementHelperMapArt = onTickInventory && extractConfigValue(settings, "placement_helper.mapart");
 		placementHelperMapArtAutoPlace = placementHelperMapArt && extractConfigValue(settings, "placement_helper.mapart.autoplace");

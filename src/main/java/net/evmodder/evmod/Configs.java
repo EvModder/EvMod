@@ -92,6 +92,7 @@ public final class Configs implements IConfigHandler{
 				Main.mapArtFeaturesOnly ? "" : "{sound:block.note_block.bass, category:PLAYERS, volume:4, pitch:2}").apply(GENERIC_KEY);
 		public static final ConfigString WHISPER_PEARL_PULL = new ConfigString("whisperPearlPull",
 				Main.mapArtFeaturesOnly ? "" : "(load|go|14|tp|teleport|e?p|e?pearl|([iI]'?m ?)?r(ea)?dy)( me)?( pl(ea)?se?)?.?").apply(GENERIC_KEY);
+		public static final ConfigBoolean MUTE_MUSIC_ON_MENU_SCREEN = new ConfigBoolean("muteMusicOnMenuScreen", false).apply(GENERIC_KEY);
 
 //		public static final ConfigBoolean MAPART_GROUP_INCLUDE_UNLOCKED = new ConfigBoolean("mapArtGroupIncludeUnlocked", true).apply(GENERIC_KEY);
 //		public static final ConfigBoolean MAPART_GROUP_ENFORCE_LOCKEDNESS_MATCH = new ConfigBoolean("mapArtGroupTreatUnlockedAsUnique", false).apply(GENERIC_KEY);
@@ -168,6 +169,7 @@ public final class Configs implements IConfigHandler{
 			configs.addAll(List.of(SKIP_NULL_MAPS, SKIP_VOID_MAPS, SKIP_MONO_COLOR_MAPS));
 
 			if(settings.gameMessageListener) configs.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PLAY_SOUND_UNFOCUSED, WHISPER_PEARL_PULL));
+			if(settings.muteMusicOnMenuScreen) configs.add(MUTE_MUSIC_ON_MENU_SCREEN);
 			if(!Main.mapArtFeaturesOnly){
 				configs.add(SCROLL_ORDER);
 				if(settings.serverJoinListener) configs.add(SEND_ON_SERVER_JOIN);
