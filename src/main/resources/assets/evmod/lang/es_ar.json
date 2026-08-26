@@ -329,7 +329,11 @@
 	"evmod.config.hotkeys.name.ejectJunkItems": "ejectJunkItems",
 	"evmod.config.hotkeys.comment.ejectJunkItems": "Toss out inventory crap",
 	"evmod.config.hotkeys.name.craftingRestock": "craftingRestock",
-	"evmod.config.hotkeys.comment.craftingRestock": "Repone los ingredientes de la última receta; mantené Shift para fabricar después",
+	"evmod.config.hotkeys.comment.craftingRestock": "Repone una receta de fabricación guardada; mantené craftingBulkModifier para fabricar repetidamente",
+	"evmod.config.hotkeys.name.craftingRestockSmart": "craftingRestockSmart",
+	"evmod.config.hotkeys.comment.craftingRestockSmart": "Usa la receta guardada más reciente que pueda reponerse con el inventario actual",
+	"evmod.config.hotkeys.name.craftingBulkModifier": "craftingBulkModifier",
+	"evmod.config.hotkeys.comment.craftingBulkModifier": "Mantené este modificador al presionar craftingRestock para reponer y fabricar repetidamente la receta elegida",
 
 	"evmod.config.hotkeys.name.hotbarSlotItemTypeIncrement": "hotbarSlotItemTypeIncrement",
 	"evmod.config.hotkeys.name.hotbarSlotItemTypeDecrement": "hotbarSlotItemTypeDecrement",

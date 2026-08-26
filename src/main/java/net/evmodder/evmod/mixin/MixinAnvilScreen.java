@@ -34,5 +34,11 @@ abstract class MixinAnvilScreen implements AnvilNameController{
 		finally{evmod$syncingInputName = false;}
 	}
 
-	@Override public void evmod$clearNameProtection(){evmod$protectName = false;}
+	@Override public void evmod$clearNameProtection(){
+		evmod$protectName = false;
+		final AnvilScreen screen = (AnvilScreen)(Object)this;
+		final AnvilMenu menu = screen.getMenu();
+		// The original slotChanged may have run while the old name was still protected.
+		screen.slotChanged(menu, AnvilMenu.INPUT_SLOT, menu.getSlot(AnvilMenu.INPUT_SLOT).getItem());
+	}
 }

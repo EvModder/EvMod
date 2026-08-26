@@ -37,7 +37,7 @@ abstract class MixinClientPlayNetworkHandler{
 	@Inject(method="handleContainerSetSlot", at=@At("TAIL"))
 	private final void confirmCraftResult(final ClientboundContainerSetSlotPacket packet, final CallbackInfo _ci){
 		if(AccessorMain.getInstance().kbCraftRestock != null) AccessorMain.getInstance().kbCraftRestock
-				.onServerSlotUpdate(packet.getContainerId(), packet.getSlot(), packet.getItem());
+				.onServerSlotUpdate(packet.getContainerId(), packet.getStateId(), packet.getSlot(), packet.getItem());
 	}
 
 	@Inject(method="handleContainerContent", at=@At("TAIL"))

@@ -370,7 +370,11 @@
 	"evmod.config.hotkeys.name.ejectJunkItems": "ejectJunkItems",
 	"evmod.config.hotkeys.comment.ejectJunkItems": "Toss out inventory crap",
 	"evmod.config.hotkeys.name.craftingRestock": "craftingRestock",
-	"evmod.config.hotkeys.comment.craftingRestock": "Restocks the last crafting recipe; hold Shift to craft afterward",
+	"evmod.config.hotkeys.comment.craftingRestock": "Restocks a cached crafting recipe; hold craftingBulkModifier to craft repeatedly",
+	"evmod.config.hotkeys.name.craftingRestockSmart": "craftingRestockSmart",
+	"evmod.config.hotkeys.comment.craftingRestockSmart": "Uses the newest cached recipe that can be restocked from the current inventory",
+	"evmod.config.hotkeys.name.craftingBulkModifier": "craftingBulkModifier",
+	"evmod.config.hotkeys.comment.craftingBulkModifier": "Hold while pressing craftingRestock to repeatedly restock and craft the selected recipe",
 
 	// TODO: better solution (scroll wheel)
 	"evmod.config.hotkeys.name.hotbarSlotItemTypeIncrement": "hotbarSlotItemTypeIncrement",

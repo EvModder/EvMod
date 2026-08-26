@@ -333,6 +333,9 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigHotkey EJECT_JUNK_ITEMS = new ConfigHotkey("ejectJunkItems",
 				Main.mapArtFeaturesOnly ? "" : "R", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey CRAFT_RESTOCK = new ConfigHotkey("craftingRestock", "TAB", GUI_ALLOW_EXTRA_KEYS).apply(HOTKEYS_KEY);
+		public static final ConfigBoolean CRAFT_RESTOCK_SMART = new ConfigBoolean("craftingRestockSmart", true).apply(HOTKEYS_KEY);
+		public static final ConfigHotkey CRAFT_BULK_MODIFIER = new ConfigHotkey(
+				"craftingBulkModifier", "LEFT_SHIFT", KeybindSettings.MODIFIER_GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey HOTBAR_TYPE_INCR = new ConfigHotkey("hotbarSlotItemTypeIncrement", "").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey HOTBAR_TYPE_DECR = new ConfigHotkey("hotbarSlotItemTypeDecrement", "").apply(HOTKEYS_KEY);
 
@@ -444,7 +447,7 @@ public final class Configs implements IConfigHandler{
 					AIE_TRAVEL_HELPER,
 					EBOUNCE_TRAVEL_HELPER,
 					EJECT_JUNK_ITEMS,
-					CRAFT_RESTOCK,
+					CRAFT_RESTOCK, CRAFT_RESTOCK_SMART, CRAFT_BULK_MODIFIER,
 					HOTBAR_TYPE_INCR, HOTBAR_TYPE_DECR,
 
 					INV_RESTOCK, INV_RESTOCK_IF, INV_RESTOCK_LEAVE, INV_RESTOCK_BLACKLIST, INV_RESTOCK_WHITELIST,
