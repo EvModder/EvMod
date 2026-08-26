@@ -4,8 +4,8 @@ mod.name = "Ev's Mod"
 mod.group = "net.evmodder"
 
 #2 = public db, NewMapNotifier, /mapartgroup seen/2b2t.org, x/SIZE, configs refactor, better tooltips
-#2 = crash fixes, click-limit spam reduction, (PLANNED): bulk-analysis (map stats for containers/walls)
-mod.version = "2.2"
+#3 = db fixes, autoplacer improvements, static entity render range, (PLANNED): bulk-analysis (map stats for containers/walls)
+mod.version = "2.3"
 
 # https://fabricmc.net/develop
 # https://jitpack.io/com/github/sakura-ryoko/malilib/

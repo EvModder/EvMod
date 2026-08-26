@@ -57,10 +57,12 @@ public class Main{
 	//https://evmodder.net/PNG-to-NBT/?preset=RXYncyBQcmVzZXR8MSwxLDAsMCwxLDksMCw3LDAsMjYsMywxLDAsNiwxMyw0LDMsMywzLDMsMywzLDQsOCwxLDExLDMsMTEsMTgsMCwxLDAsMCwxLDAsMCwyLDAsMCwwLDAsMCwxLDAsMCwwLDAsMSwwLDEsMCwwLDAsMCwwLDAsMCwwLDEsMCwxfHJlc2luX2Jsb2NrfG5vbmV8c3VwcHJlc3NfcGFpcnNfZXd8fDE
 	// Splash potion harming, weakness (spider eyes, sugar, gunpowder, brewing stand)
 	//TODO:
-	// AIE Helper: no low-Y kick if connected to a proxy!!
+	// Bulk-analysis stats (for containers/walls), e.g., replacing colored '*' with '{count}'
+	// EpearlPullCommand: if received (by EvMod or EvModZP), if requester has their own pearl in render range, pull any pearl they request.
+	// AIE Helper: no low-Y kick if connected to a proxy!! (or use illegal disconnect)
 	// fix NULL map detection (bundle stow isn't sucking up unloaded maps rn)
 	// map-click-move: work multiple copies of same NxM map in inventory(s)
-	// map load from bundle skip loaded maps
+	// map load from bundle skip already-loaded maps
 	// support non-QWERTY?
 	// GUI: StringHotkeyed, SlotListHotkeyed, ServerAddress(addr:port)
 	// Investigate https://github.com/Siphalor/amecs-api (potential better alternative to MaLiLib?)
