@@ -23,11 +23,29 @@ public abstract class MapRelationUtils{
 	public static final int commonSuffixLen(String a, String b){
 		int i=0; while(a.length()-i > 0 && b.length()-i > 0 && a.codePointAt(a.length()-i-1) == b.codePointAt(b.length()-i-1)) ++i; return i;
 	}
+	private static final String normalizeCornerGlyphs(final String pos){
+		StringBuilder normalized = null;
+		for(int i=0; i<pos.length(); ++i){
+			final String corner = switch(pos.charAt(i)){
+				case '┌', '┍', '┎', '┏', '╒', '╓', '╔', '╭', '⌈', '⌜', '⎡', '⸢' -> "TL";
+				case '┐', '┑', '┒', '┓', '╕', '╖', '╗', '╮', '⌉', '⌝', '⎤', '⸣' -> "TR";
+				case '└', '┕', '┖', '┗', '╘', '╙', '╚', '╰', '⌊', '⌞', '⎣', '⸤' -> "BL";
+				case '┘', '┙', '┚', '┛', '╛', '╜', '╝', '╯', '⌋', '⌟', '⎦', '⸥' -> "BR";
+				default -> null;
+			};
+			if(corner == null){if(normalized != null) normalized.append(pos.charAt(i));}
+			else{
+				if(normalized == null) normalized = new StringBuilder(pos.length()+1).append(pos, 0, i);
+				normalized.append(corner);
+			}
+		}
+		return normalized == null ? pos : normalized.toString();
+	}
 
 	// Will only return [0-9A-Z ]+
 	public static final String simplifyPosStr(String pos){
 		pos = Normalizer.normalize(pos, Normalizer.Form.NFKD).toUpperCase();
-		pos = pos.replace("\u250c", "TL").replace("\u2510", "TR").replace("\u2514", "BL").replace("\u2518", "BR");
+		pos = normalizeCornerGlyphs(pos);
 		pos = pos.replaceAll("[^-\\p{IsAlphabetic}\\p{IsDigit}]+", " ").trim().replaceAll("\\s+", " ");
 		pos = pos.replaceAll("(?<=\\d)-(?=\\d)", " "); // e.g., "5-4" == "5,4" == "5 4"
 		pos = pos.replace("TOP", "T").replace("BOTTOM", "B").replace("LEFT", "L").replace("RIGHT", "R").replace("MIDDLE", "M");
@@ -98,6 +116,48 @@ public abstract class MapRelationUtils{
 		final MapItemSavedData state = world.getMapData(mapId);
 		return state != null && state.locked != locked;
 	}
+	private static final List<Integer> getRelatedMapSlotsForBounds(final List<ItemStack> slots, final String sourceName,
+			final int prefixLen, final int suffixLen, final int originalPrefixLen, final int originalSuffixLen,
+			final int count, final Boolean locked, final Level world,
+			final List<Integer> relatedMapSlots, final boolean rejectInvalidPos, final boolean warnOnMismatch){
+		final String sourcePosStr = simplifyPosStr(sourceName.substring(prefixLen, sourceName.length()-suffixLen));
+		final boolean sourcePosIs2d = sourcePosStr.indexOf(' ') != -1;
+		final boolean validateOriginalBounds = originalPrefixLen != -1;
+		final boolean originalSourcePosIs2d = validateOriginalBounds && simplifyPosStr(
+				sourceName.substring(originalPrefixLen, sourceName.length()-originalSuffixLen)).indexOf(' ') != -1;
+		final Iterator<ItemStack> it = slots.iterator();
+		for(int i=0; i<slots.size(); ++i){
+			final ItemStack item = it.next();
+			final Component nameText = item.getCustomName();
+			if(!isMapArtWithCount(item, count) || nameText == null) continue;
+			if(differentLockedState(locked, item, world)) continue;
+
+			final String name = nameText.getString();
+			if(name == null) continue;
+			final String name2 = removeByArtist(name);
+			if(name2.equals(sourceName)) continue;
+			if(validateOriginalBounds && name2.length() >= originalPrefixLen+originalSuffixLen+1
+					&& sourceName.regionMatches(0, name2, 0, originalPrefixLen) && sourceName.regionMatches(
+							sourceName.length()-originalSuffixLen, name2, name2.length()-originalSuffixLen, originalSuffixLen)){
+				final String originalPosStr = simplifyPosStr(name2.substring(originalPrefixLen, name2.length()-originalSuffixLen));
+				if(isValidPosStr(originalPosStr) && (originalPosStr.indexOf(' ') != -1) != originalSourcePosIs2d) return null;
+			}
+			if(name2.length() < prefixLen+suffixLen+1) continue;
+			if(!sourceName.regionMatches(0, name2, 0, prefixLen) || !sourceName.regionMatches(
+					sourceName.length()-suffixLen, name2, name2.length()-suffixLen, suffixLen)) continue;
+			final String posStr = simplifyPosStr(name2.substring(prefixLen, name2.length()-suffixLen));
+			if(!isValidPosStr(posStr)){
+				if(rejectInvalidPos) return null;
+				continue;
+			}
+			if((posStr.indexOf(' ') != -1) != sourcePosIs2d){
+				if(warnOnMismatch) Main.LOGGER.warn("MapAdjUtil: mismatched pos data: "+name2);
+				return null;
+			}
+			relatedMapSlots.add(i);
+		}
+		return relatedMapSlots;
+	}
 	// Output inclues input map
 	public static final RelatedMapsData getRelatedMapsByName(final List<ItemStack> slots, final String sourceName,
 			final int count, final Boolean locked, final Level world){
@@ -108,6 +168,7 @@ public abstract class MapRelationUtils{
 //		Main.LOGGER.info("MapAdjUtil: getRelatedMapsByName() called, sourceName2="+sourceName2);
 
 		int prefixLen = -1, suffixLen = -1;
+		int minValidPrefixLen = -1, minValidSuffixLen = -1, minSuffixLenAtMinPrefix = -1;
 //		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
 //			final int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
 		Iterator<ItemStack> it = slots.iterator();
@@ -128,6 +189,7 @@ public abstract class MapRelationUtils{
 			int a = commonPrefixLen(sourceName2, name2), b = commonSuffixLen(sourceName2, name2);
 			int o = a-(Math.min(name2.length(), sourceName2.length())-b);
 			if(o>0){a-=o; b-=o;}//Handle special case: "a 11/x"+"a 111/x", a=len(a 11)=4,b=len(11/x)=4,o=2 => a=len(a ),b=len(/x)
+			final int rawPrefixLen = a, rawSuffixLen = b;
 			//if(a == 0 && b == 0) continue; // No shared prefix/suffix
 //			Main.LOGGER.info("MapAdjUtil: map"+i+" prefixLen|suffixLen: "+a+"|"+b);
 			if(prefixLen == a && suffixLen == b) continue;// No change to prefix/suffix
@@ -137,18 +199,26 @@ public abstract class MapRelationUtils{
 			//if(posStr.isBlank()) Main.LOGGER.info("Empty posStr for name in slot "+i+": "+name2+", prefix/suffix: "+a+"/"+b);
 			final boolean validMatchingPosStrs = isValidPosStr(posStr) && isValidPosStr(sourcePosStr) && 
 					(posStr.indexOf(' ') != -1) == (sourcePosStr.indexOf(' ') != -1);
+			final boolean keepFullNumberPrefix = validMatchingPosStrs && posStr.charAt(0) >= '0' && posStr.charAt(0) <= '9';
+			final boolean keepFullNumberSuffix = validMatchingPosStrs && posStr.charAt(posStr.length()-1) >= '0' && posStr.charAt(posStr.length()-1) <= '9';
+			if(validMatchingPosStrs){
+				if(keepFullNumberPrefix) while(a > 0 && name2.charAt(a-1) >= '0' && name2.charAt(a-1) <= '9') --a;
+				if(keepFullNumberSuffix) while(b > 0 && name2.charAt(name2.length()-b) >= '0' && name2.charAt(name2.length()-b) <= '9') --b;
+				if(minValidPrefixLen == -1 || a < minValidPrefixLen){
+					minValidPrefixLen = a; minSuffixLenAtMinPrefix = b;
+				}
+				else if(a == minValidPrefixLen) minSuffixLenAtMinPrefix = Math.min(minSuffixLenAtMinPrefix, b);
+				if(minValidSuffixLen == -1 || b < minValidSuffixLen) minValidSuffixLen = b;
+			}
 //			Main.LOGGER.info("slot: "+i+ ", posStr: "+posStr+", sourcePosStr: "+sourcePosStr+", bothValid: "+validMatchingPosStrs);
 			if(prefixLen == -1 && suffixLen == -1){ // Prefix/suffix not yet determined
-				if(validMatchingPosStrs){prefixLen = a; suffixLen = b;}
+				if(validMatchingPosStrs){prefixLen = rawPrefixLen; suffixLen = rawSuffixLen;}
 				else if(a != 0 || b != 0)
 					Main.LOGGER.debug("MapAdjUtil: found matching prefix/suffix ("+a+"/"+b+"), but invalid PosStr: "+name2.substring(a, name2.length()-b));
 				continue;
 			}
 			if(validMatchingPosStrs){
-				boolean keepFullNumberPrefix = posStr.charAt(0) >= '0' && posStr.charAt(0) <= '9';
-				boolean keepFullNumberSuffix = posStr.charAt(posStr.length()-1) >= '0' && posStr.charAt(posStr.length()-1) <= '9';
 				if(keepFullNumberPrefix){
-					while(a > 0 && name2.charAt(a-1) >= '0' && name2.charAt(a-1) <= '9') --a;
 					if(a != prefixLen){
 //						assert a < prefixLen : "a="+a+",prefixLen="+prefixLen;
 						Main.LOGGER.info("MapAdjUtil: decreasing prefix len from "+prefixLen+" to "+a+" to capture full number for name: "+name2);
@@ -156,7 +226,6 @@ public abstract class MapRelationUtils{
 					}
 				}
 				if(keepFullNumberSuffix){
-					while(b > 0 && name2.charAt(name2.length()-b) >= '0' && name2.charAt(name2.length()-b) <= '9') --b;
 					if(b != suffixLen){
 //						assert b < suffixLen : "b="+b+",suffixLen="+suffixLen;
 						Main.LOGGER.info("MapAdjUtil: decreasing suffix len from "+suffixLen+" to "+b+" to capture full number for name: "+name2);
@@ -184,39 +253,24 @@ public abstract class MapRelationUtils{
 //			if(relatedMapSlots.size() == 1) Main.LOGGER.warn("MapAdjUtil: only one shared prefix/suffix named maps found for name: "+sourceName);
 			return new RelatedMapsData(prefixLen, suffixLen, relatedMapSlots);
 		}
-		//Main.LOGGER.info("MapAdjUtil: prefixLen="+prefixLen+", suffixLen="+suffixLen);
-		final String sourcePosStr = simplifyPosStr(sourceName2.substring(prefixLen, sourceName2.length()-suffixLen));
-		final boolean sourcePosIs2d = sourcePosStr.indexOf(' ') != -1;
-		//Main.LOGGER.info("AdjacentMapUtils:sourcePosStr: "+sourcePosStr);
-//		for(int f=0; f<=(count==1 ? 36 : 9); ++f){
-//			final int i = (f+27)%37 + 9; // Hotbar+Offhand [36->45], then Inv [9->35]
-		it = slots.iterator();
-		for(int i=0; i<slots.size(); ++i){
-			final ItemStack item = it.next();
-			final Component nameText = item.getCustomName();
-			if(!isMapArtWithCount(item, count) || nameText == null) continue;
-			if(differentLockedState(locked, item, world)) continue;
-
-			final String name = nameText.getString();
-			if(name == null) continue;
-			final String name2 = removeByArtist(name);
-			if(name2.length() < prefixLen+suffixLen+1 || name2.equals(sourceName2)) continue;
-			if(!sourceName2.regionMatches(0, name2, 0, prefixLen) || !sourceName2.regionMatches(
-					sourceName2.length()-suffixLen, name2, name2.length()-suffixLen, suffixLen)){
-				//Main.LOGGER.info("MapAdjUtil: name does not match: "+name);
-				continue;
+		final int expandedPrefixLen = Math.min(prefixLen, minValidPrefixLen);
+		final int expandedSuffixLen = Math.min(suffixLen, minValidSuffixLen);
+		final int sameNameSlotCount = relatedMapSlots.size();
+		if(minSuffixLenAtMinPrefix > minValidSuffixLen && (expandedPrefixLen != prefixLen || expandedSuffixLen != suffixLen)
+				&& isValidPosStr(simplifyPosStr(sourceName2.substring(expandedPrefixLen, sourceName2.length()-expandedSuffixLen)))){
+			if(getRelatedMapSlotsForBounds(slots, sourceName2, expandedPrefixLen, expandedSuffixLen, prefixLen, suffixLen,
+					count, locked, world, relatedMapSlots, /*rejectInvalidPos=*/true, /*warnOnMismatch=*/false) != null){
+				Main.LOGGER.info("MapAdjUtil: expanding position bounds from "+prefixLen+"/"+suffixLen+" to "+expandedPrefixLen+"/"+expandedSuffixLen);
+				return new RelatedMapsData(expandedPrefixLen, expandedSuffixLen, relatedMapSlots);
 			}
-			final String posStr = simplifyPosStr(name2.substring(prefixLen, name2.length()-suffixLen));
-			if(!isValidPosStr(posStr)){
-				//Main.LOGGER.info("MapAdjUtil: unrecognized pos data: '"+posStr+"' for name:'"+name+"'");
-				continue;
-			}
-			final boolean pos2d = posStr.indexOf(' ') != -1;
-			//TODO: finding next map by name: "Flag 2/8" -> mismatched pos data: "Flag 4&8/8"
-			if(pos2d != sourcePosIs2d){Main.LOGGER.warn("MapAdjUtil: mismatched pos data: "+name2); return new RelatedMapsData(-1, -1, new ArrayList<>());}
-			relatedMapSlots.add(i);
+			while(relatedMapSlots.size() > sameNameSlotCount) relatedMapSlots.remove(relatedMapSlots.size()-1);
 		}
-		return new RelatedMapsData(prefixLen, suffixLen, relatedMapSlots);
+		final List<Integer> currentRelatedMapSlots = getRelatedMapSlotsForBounds(
+				slots, sourceName2, prefixLen, suffixLen, /*originalPrefixLen=*/-1, /*originalSuffixLen=*/-1,
+				count, locked, world, relatedMapSlots,
+				/*rejectInvalidPos=*/false, /*warnOnMismatch=*/true);
+		if(currentRelatedMapSlots == null) return new RelatedMapsData(-1, -1, new ArrayList<>());
+		return new RelatedMapsData(prefixLen, suffixLen, currentRelatedMapSlots);
 	}
 
 	public static final RelatedMapsData getRelatedMapsByName0(final List<ItemStack> slots, final Level world){
