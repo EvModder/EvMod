@@ -32,8 +32,8 @@ public final class EpearlLookupFabric extends EpearlLookup{
 
 	@Override protected boolean enableKeyUUID(){return Configs.Database.EPEARL_OWNERS_BY_UUID.getBooleanValue();}
 	@Override protected boolean enableKeyXZ(){return Configs.Database.EPEARL_OWNERS_BY_XZ.getBooleanValue();}
-	@Override protected boolean enableRemoteDbUUID(){return enableKeyUUID() && Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue();}
-	@Override protected boolean enableRemoteDbXZ(){return enableKeyXZ() && Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue();}
+	@Override protected boolean enableRemoteDbUUID(){return enableKeyUUID() && Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue() && !Configs.Database.ADDRESS.getStringValue().isBlank();}
+	@Override protected boolean enableRemoteDbXZ(){return enableKeyXZ() && Configs.Database.SHARE_EPEARL_OWNERS.getBooleanValue() && !Configs.Database.ADDRESS.getStringValue().isBlank();}
 	public final boolean isDisabled(){return !enableKeyUUID() && !enableKeyXZ();} // Only accessor: MixinEntityRenderer
 
 	private final double DIST_XZ = 64, DIST_Y = 128; // Max dist for which to track/remove pearls
@@ -61,64 +61,58 @@ public final class EpearlLookupFabric extends EpearlLookup{
 		super(rms, Main.LOGGER);
 		ClientChunkEvents.CHUNK_LOAD.register((ClientLevel level, LevelChunk listener)->{
 			if(isDisabled() || level != Minecraft.getInstance().level) return;
-			synchronized(recentlyLoadedChunks){
-				if(world != level) switchWorld(level);
-				recentlyLoadedChunks.put(listener.getPos(), System.currentTimeMillis()+CHUNK_LOAD_WAIT);
-				final boolean added = loadedChunks.add(listener.getPos());
-				if(!added) Main.LOGGER.error("EPLF: Loading chunk "+listener.getPos().toString()+" before it was unloaded!");
-//				assert added;
-			}
+			if(world != level) switchWorld(level);
+			recentlyLoadedChunks.put(listener.getPos(), System.currentTimeMillis()+CHUNK_LOAD_WAIT);
+			final boolean added = loadedChunks.add(listener.getPos());
+			if(!added) Main.LOGGER.error("EPLF: Loading chunk "+listener.getPos().toString()+" before it was unloaded!");
+//			assert added;
 		});
 		ClientChunkEvents.CHUNK_UNLOAD.register((ClientLevel level, LevelChunk listener)->{
 			if(isDisabled()) return;
-			synchronized(recentlyLoadedChunks){
-				if(level != world) return; // Ignore delayed unload callbacks from the previous world.
-				recentlyLoadedChunks.remove(listener.getPos());
-				final boolean removed = loadedChunks.remove(listener.getPos());
-				if(!removed) Main.LOGGER.error("EPLF: Unloading chunk "+listener.getPos().toString()+" before it was loaded!");
-//				assert removed;
-			}
+			if(level != world) return; // Ignore delayed unload callbacks from the previous world.
+			recentlyLoadedChunks.remove(listener.getPos());
+			final boolean removed = loadedChunks.remove(listener.getPos());
+			if(!removed) Main.LOGGER.error("EPLF: Unloading chunk "+listener.getPos().toString()+" before it was loaded!");
+//			assert removed;
 		});
 
 		TickListener.register(new TickListener(){
 			@Override public void onTickStart(final Minecraft client){
 				if(isDisabled()) return;
-				synchronized(recentlyLoadedChunks){
-					final ClientLevel level = client == null ? null : client.level;
-					if(world != level) switchWorld(level);
-					if(client == null || client.player == null || level == null) return;
-					final long now = System.currentTimeMillis();
-					// Update recentlyLoadedChunks
-					final boolean fullyLoadedChunk = recentlyLoadedChunks.entrySet().removeIf(entry -> now > entry.getValue());
+				final ClientLevel level = client == null ? null : client.level;
+				if(world != level) switchWorld(level);
+				if(client == null || client.player == null || level == null) return;
+				final long now = System.currentTimeMillis();
+				// Update recentlyLoadedChunks
+				final boolean fullyLoadedChunk = recentlyLoadedChunks.entrySet().removeIf(entry -> now > entry.getValue());
 
-					final AABB box = client.player.getBoundingBox().inflate(DIST_XZ, DIST_Y, DIST_XZ);
-					loadedEpearls = world.getEntities(EntityTypes.ENDER_PEARL, box, _->true);
+				final AABB box = client.player.getBoundingBox().inflate(DIST_XZ, DIST_Y, DIST_XZ);
+				loadedEpearls = world.getEntities(EntityTypes.ENDER_PEARL, box, _->true);
 
-					// Schedule faster recentlyLoadedChunks updates if loaded epearls are detected
-					final long epearlLoadShortcut = now + CHUNK_LOAD_WAIT_AFTER_EPEARL;
-					loadedEpearls.stream().map(Entity::chunkPosition).distinct().forEach(chunk -> {
-						final Long wait = recentlyLoadedChunks.get(chunk);
-						if(wait != null && epearlLoadShortcut < wait) recentlyLoadedChunks.put(chunk, epearlLoadShortcut);
-					});
+				// Schedule faster recentlyLoadedChunks updates if loaded epearls are detected
+				final long epearlLoadShortcut = now + CHUNK_LOAD_WAIT_AFTER_EPEARL;
+				loadedEpearls.stream().map(Entity::chunkPosition).distinct().forEach(chunk -> {
+					final Long wait = recentlyLoadedChunks.get(chunk);
+					if(wait != null && epearlLoadShortcut < wait) recentlyLoadedChunks.put(chunk, epearlLoadShortcut);
+				});
 
-					// If any epearl changes (or chunk is fully loaded), update owners for all loaded epearls
-					if(epearlCount != loadedEpearls.size() || fullyLoadedChunk){
-						epearlCount = loadedEpearls.size();
-//						Main.LOGGER.info("Change to chunks/epearls loaded, calling getOwner() on all epearls and running removal check");
-						if(enableKeyUUID()){
-							final HashSet<UUID> seenKeyUUIDs = new HashSet<>(epearlCount);
-							loadedEpearls.stream().map(Entity::getUUID).forEach(seenKeyUUIDs::add);
-							runRemovalCheckUUID(e -> isWithinDist(client.player, e.getValue()) && !seenKeyUUIDs.contains(e.getKey())
-//									&& loadedChunks.contains(toChunkPos(e.getValue()))
-									&& !recentlyLoadedChunks.containsKey(toChunkPos(e.getValue())));
-						}
-						if(enableKeyXZ()){
-							final HashSet<UUID> seenKeyXZs = new HashSet<>(epearlCount);
-							loadedEpearls.stream().map(EpearlLookupFabric.this::toKeyXZ).forEach(seenKeyXZs::add);
-							runRemovalCheckXZ(e -> isWithinDist(client.player, e.getValue()) && !seenKeyXZs.contains(e.getKey())
-//									&& loadedChunks.contains(toChunkPos(e.getValue()))
-									&& !recentlyLoadedChunks.containsKey(toChunkPos(e.getValue())));
-						}
+				// If any epearl changes (or chunk is fully loaded), update owners for all loaded epearls
+				if(epearlCount != loadedEpearls.size() || fullyLoadedChunk){
+					epearlCount = loadedEpearls.size();
+//					Main.LOGGER.info("Change to chunks/epearls loaded, calling getOwner() on all epearls and running removal check");
+					if(enableKeyUUID()){
+						final HashSet<UUID> seenKeyUUIDs = new HashSet<>(epearlCount);
+						loadedEpearls.stream().map(Entity::getUUID).forEach(seenKeyUUIDs::add);
+						runRemovalCheckUUID(e -> isWithinDist(client.player, e.getValue()) && !seenKeyUUIDs.contains(e.getKey())
+//								&& loadedChunks.contains(toChunkPos(e.getValue()))
+								&& !recentlyLoadedChunks.containsKey(toChunkPos(e.getValue())));
+					}
+					if(enableKeyXZ()){
+						final HashSet<UUID> seenKeyXZs = new HashSet<>(epearlCount);
+						loadedEpearls.stream().map(EpearlLookupFabric.this::toKeyXZ).forEach(seenKeyXZs::add);
+						runRemovalCheckXZ(e -> isWithinDist(client.player, e.getValue()) && !seenKeyXZs.contains(e.getKey())
+//								&& loadedChunks.contains(toChunkPos(e.getValue()))
+								&& !recentlyLoadedChunks.containsKey(toChunkPos(e.getValue())));
 					}
 				}
 			}
@@ -135,8 +129,8 @@ public final class EpearlLookupFabric extends EpearlLookup{
 
 	public final String getDynamicUsername(final UUID owner, final UUID key){
 		if(owner == null) return "null";
-		if(owner.equals(UUID_404)) return NAME_U_404;
-		if(owner.equals(UUID_LOADING)){
+		if(owner == UUID_404) return NAME_U_404;
+		if(owner == UUID_LOADING){
 			final Long startTs = requestStartTimes.get(key);
 			if(startTs == null) return NAME_U_LOADING+" ERROR";
 			return NAME_U_LOADING+" "+TextUtils_New.formatTime(System.currentTimeMillis()-startTs);
@@ -153,11 +147,13 @@ public final class EpearlLookupFabric extends EpearlLookup{
 		assert epearl != null;
 		UUID ownerUUID = MiscUtils.getPearlUUID(epearl);
 		if(isDisabled()) return getDynamicUsername(ownerUUID, epearl.getUUID());
+		UUID lookupKey = epearl.getUUID();
 
 		if(ownerUUID == null){
 			if(enableKeyUUID()) ownerUUID = getOwnerFromDb(epearl, /*byUUID=*/true);
 			if(enableKeyXZ() && (ownerUUID == null || ownerUUID == UUID_404 || ownerUUID == UUID_LOADING)){
 				if(isMoving(epearl)) return getDynamicUsername(ownerUUID == null ? UUID_404 : ownerUUID, epearl.getUUID());
+				lookupKey = toKeyXZ(epearl);
 				ownerUUID = getOwnerFromDb(epearl, /*byUUID=*/false);
 			}
 			assert ownerUUID != null : "Expected at least one of [enableKeyUUID() or enableKeyXZ()] to be enabled, and return one of [404, LOADING, <result>]";
@@ -169,6 +165,6 @@ public final class EpearlLookupFabric extends EpearlLookup{
 			if(enableKeyUUID()) putPearlOwner(epearl.getUUID(), pdc, /*keyIsUUID=*/true);
 			if(enableKeyXZ() && !isMoving(epearl)) putPearlOwner(toKeyXZ(epearl), pdc, /*keyIsUUID=*/false);
 		}
-		return getDynamicUsername(ownerUUID, epearl.getUUID());
+		return getDynamicUsername(ownerUUID, lookupKey);
 	}
 }

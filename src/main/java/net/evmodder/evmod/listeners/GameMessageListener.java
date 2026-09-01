@@ -63,7 +63,7 @@ public final class GameMessageListener{
 						sendOverlay(client.player, Component.literal("Remote DB reported ignoreState out of sync!"));
 					}
 				}
-				else Main.LOGGER.info("[IgnoreSync] Unexpected/Invalid response from RMS for DB_PEARL_STORE_BY_UUID: "+msg);
+				else Main.LOGGER.info("[IgnoreSync] Unexpected/Invalid response from RMS for DB_PLAYER_STORE_IGNORE: "+msg);
 				// Important that we update local cache AFTER db, for cache-priority reasons (Note: assumes decent clock synchronization, eesh)
 				saveMyIgnores(client.player.getUUID(), ignoredUUID, ignored);
 			}

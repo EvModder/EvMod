@@ -35,8 +35,8 @@ public abstract class EpearlLookup{
 
 	private final RemoteServerSender remoteSender;
 	private HashMap<Integer, UUID> updateKeyXZ; // Map of epearl.id -> keyXZ
-	private final HashMap<UUID, XYZ> idToPosTemp; // Map of epearl.uuid -> epearl.pos
-	protected final HashMap<UUID, Long> requestStartTimes;
+	private final ConcurrentHashMap<UUID, XYZ> idToPosTemp; // Map of epearl.uuid -> epearl.pos
+	protected final ConcurrentHashMap<UUID, Long> requestStartTimes;
 	// Values are STORE_PENDING while in flight, otherwise the next eligible retry timestamp.
 	private final ConcurrentHashMap<UUID, Long> storeByUuidRetryAfter = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<UUID, Long> storeByXzRetryAfter = new ConcurrentHashMap<>();
@@ -89,7 +89,7 @@ public abstract class EpearlLookup{
 		}
 	}
 
-	private final synchronized HashMap<UUID, PearlDataClient> loadFromClientFile(String filename){
+	private final HashMap<UUID, PearlDataClient> loadFromClientFile(String filename){
 		final byte[] data = FileIO.loadFileBytes(filename);
 		if(data == null) return new HashMap<>(0);
 //		// Old data format
@@ -142,7 +142,10 @@ public abstract class EpearlLookup{
 		if(removed == 0) return 0;
 		assert bbOut.position() == data.length - removed*44;
 		//A
-		FileIO.saveFileBytes(filename, bbOut.array(), 0, bbOut.position(), /*append=*/false);
+		if(!FileIO.saveFileBytes(filename, bbOut.array(), 0, bbOut.position(), /*append=*/false)){
+			LOGGER.error("[EpearlLookup] Error occurred while trying to update the local cache");
+			return -1;
+		}
 		//B
 //		final byte[] remData = Arrays.copyOfRange(bbOut.array(), 0, bbOut.position());
 //		FileIO.saveFileBytes(filename, remData, /*append=*/false);
@@ -212,12 +215,18 @@ public abstract class EpearlLookup{
 						}
 						else{
 							LOGGER.info("[EpearlLookup] Got ownerUUID for pearlUUID: "+key+" at "+xyz+", appending to clientFile");
-							pdc = new PearlDataClient(fetchedUUID, xyz.x(), xyz.x(), xyz.z());
+							pdc = new PearlDataClient(fetchedUUID, xyz.x(), xyz.y(), xyz.z());
 							appendToClientFile(DB_FILENAME, key, pdc);
 						}
 					}
 					final PearlDataClient oldPdc = getCached(key);
-					if(oldPdc != null) LOGGER.warn("[EpearlLookup] Owner UUID was already added to prior to receiving DB response! owner="+oldPdc.owner);
+					if(oldPdc != null){
+						LOGGER.warn("[EpearlLookup] Owner UUID was already added to prior to receiving DB response! owner="+oldPdc.owner);
+						if(pdc.owner() != UUID_404 && !oldPdc.owner().equals(pdc.owner())){
+							LOGGER.error("[EpearlLookup] Remote owner disagrees with local owner for "+key
+									+": remote="+pdc.owner()+", local="+oldPdc.owner());
+						}
+					}
 					else putIfAbsent(key, pdc);
 					requestStartTimes.remove(key);
 				}
@@ -227,7 +236,7 @@ public abstract class EpearlLookup{
 	}
 	private RSLoadingCache cacheByUUID, cacheByXZ;
 
-	private final void removeEpearls(final RSLoadingCache cache, final String DB_FILENAME, final HashSet<UUID> keysToRemove){
+	private final void removeEpearls(final RSLoadingCache cache, final HashSet<UUID> keysToRemove){
 		final int numToRemove = keysToRemove.size();
 		assert numToRemove > 0;
 		final int oldCacheSize = cache.size();
@@ -236,7 +245,7 @@ public abstract class EpearlLookup{
 		if(removedInMem != numToRemove){
 			LOGGER.error("[EPL] Unable to delete ePearls from MemDB! got: "+removedInMem+"/"+numToRemove);
 		}
-		final int removedInFile = removeFromClientFile(DB_FILENAME, keysToRemove);
+		final int removedInFile = removeFromClientFile(cache.DB_FILENAME, keysToRemove);
 		if(removedInFile != keysToRemove.size()){
 			LOGGER.error("[EPL] Unable to delete ePearls from FileDB! got: "+removedInFile+"/"+numToRemove);
 		}
@@ -245,7 +254,7 @@ public abstract class EpearlLookup{
 		if(remoteSender == null || !cache.USE_REMOTE_DB.get()) return;
 		keysToRemove.forEach(key->{
 			remoteSender.sendBotMessage(
-				DB_FILENAME == DB_FILENAME_UUID ? Command.DB_PEARL_STORE_BY_UUID : Command.DB_PEARL_STORE_BY_XZ,
+				cache.DB_FILENAME == DB_FILENAME_UUID ? Command.DB_PEARL_STORE_BY_UUID : Command.DB_PEARL_STORE_BY_XZ,
 				/*udp=*/true, STORE_TIMEOUT, PacketCodec.toByteArray(key),
 				msg->{
 					if(msg != null && msg.length > 0 && msg[0] != 0) LOGGER.info("[EPL] RemoteDB reported pearl removed");
@@ -254,18 +263,19 @@ public abstract class EpearlLookup{
 			);
 		});
 	}
+	private final void runRemovalCheck(final RSLoadingCache cache, final Predicate<Entry<UUID, PearlDataClient>> shouldRemove){
+		final HashSet<UUID> keysToRemove = new HashSet<>();
+		cache.getCache().entrySet().forEach(entry->{if(shouldRemove.test(entry)) keysToRemove.add(entry.getKey());});
+		if(!keysToRemove.isEmpty()) removeEpearls(cache, keysToRemove); // Remove from inMemDB, FileDB, and RemoteDB
+	}
 	protected final void runRemovalCheckUUID(Predicate<Entry<UUID, PearlDataClient>> shouldRemove){
 		assert enableKeyUUID();
 //		if(!Configs.Database.EPEARL_OWNERS_BY_UUID.getBooleanValue()) return;
-		HashSet<UUID> keysToRemove = new HashSet<>();
-		cacheByUUID.getCache().entrySet().forEach(entry->{if(shouldRemove.test(entry)) keysToRemove.add(entry.getKey());});
-		if(!keysToRemove.isEmpty()) removeEpearls(cacheByUUID, DB_FILENAME_UUID, keysToRemove); // Remove from inMemDB, FileDB, and RemoteDB
+		runRemovalCheck(cacheByUUID, shouldRemove);
 	}
 	protected final void runRemovalCheckXZ(Predicate<Entry<UUID, PearlDataClient>> shouldRemove){
 		assert enableKeyXZ();
-		HashSet<UUID> keysToRemove = new HashSet<>();
-		cacheByUUID.getCache().entrySet().forEach(entry->{if(shouldRemove.test(entry)) keysToRemove.add(entry.getKey());});
-		if(!keysToRemove.isEmpty()) removeEpearls(cacheByXZ, DB_FILENAME_XZ, keysToRemove); // Remove from inMemDB, FileDB, and RemoteDB
+		runRemovalCheck(cacheByXZ, shouldRemove);
 	}
 
 	public final void loadEpearlCacheUUID(){
@@ -276,7 +286,7 @@ public abstract class EpearlLookup{
 	}
 	public final void loadEpearlCacheXZ(){
 		if(cacheByXZ == null){
-			updateKeyXZ = new HashMap<Integer, UUID>();
+			updateKeyXZ = new HashMap<>();
 			cacheByXZ = new RSLoadingCache(DB_FILENAME_XZ, Command.DB_PEARL_FETCH_BY_XZ, this::enableRemoteDbXZ);
 			LOGGER.info("[EpearlLookup] stored by XZ: "+cacheByXZ.size());
 		}
@@ -285,7 +295,7 @@ public abstract class EpearlLookup{
 	public EpearlLookup(RemoteServerSender rms, Logger logger){
 		remoteSender = rms;
 		LOGGER = logger;
-		if(rms != null){idToPosTemp = new HashMap<>(); requestStartTimes = new HashMap<>();}
+		if(rms != null){idToPosTemp = new ConcurrentHashMap<>(); requestStartTimes = new ConcurrentHashMap<>();}
 		else{idToPosTemp = null; requestStartTimes = null;}
 
 		if(enableKeyUUID()) loadEpearlCacheUUID();
@@ -299,10 +309,11 @@ public abstract class EpearlLookup{
 		final RSLoadingCache cache = keyIsUUID ? cacheByUUID : cacheByXZ;
 		assert cache != null;
 		final PearlDataClient oldPdc = cache.getCached(key);
-		if(oldPdc != null && oldPdc.owner != UUID_404){ // Owner already stored
+		if(oldPdc != null && oldPdc.owner() != UUID_404){
 //			LOGGER.info("Currently stored owner: "+key+" <- "+MojangProfileLookup.nameOrUUID(cache.getSync(key).owner));
 //			LOGGER.info("Requested update owner: "+key+" <- "+MojangProfileLookup.nameOrUUID(pdc.owner));
 			assert oldPdc.owner.equals(pdc.owner);
+			if(!oldPdc.equals(pdc)) cache.put(key, pdc); // Keep the in-memory position current without appending every movement.
 			return;
 		}
 		final String DB_FILENAME = (keyIsUUID ? DB_FILENAME_UUID : DB_FILENAME_XZ);
@@ -355,12 +366,18 @@ public abstract class EpearlLookup{
 					assert owner != UUID_LOADING;
 					if(owner != UUID_404) putPearlOwner(key, new PearlDataClient(owner, x, y, z), /*keyIsUUID=*/false);
 				}
+				updateKeyXZ.put(pearlId, key);
 			}
 		}
-		if(cache.contains(key)) return cache.getSync(key);
-		if(idToPosTemp != null) idToPosTemp.put(key, new XYZ(x, y, z)); // equivalent: if(DB_ENABLED)
+		if(cache.contains(key)){
+			final PearlDataClient pdc = cache.getSync(key);
+			if(!keyIsUUID && pdc.owner() != UUID_404 && pdc.owner() != UUID_LOADING) updateKeyXZ.put(pearlId, key);
+			return pdc;
+		}
+		if(remoteSender == null || !cache.USE_REMOTE_DB.get()) return new PearlDataClient(UUID_404, x, y, z);
+		idToPosTemp.put(key, new XYZ(x, y, z));
 		return cache.get(key, pdc->{
-			if(!keyIsUUID && pdc.owner != UUID_404 && pdc.owner != UUID_LOADING){
+			if(!keyIsUUID && pdc.owner() != UUID_404 && pdc.owner() != UUID_LOADING){
 				updateKeyXZ.put(pearlId, key);
 			}
 		});

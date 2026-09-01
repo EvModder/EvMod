@@ -12,6 +12,7 @@ import net.evmodder.evmod.apis.MojangProfileLookupConstants;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityTypes;
@@ -67,7 +68,7 @@ public class CommandAssignPearl{
 //		return 1;
 //	}
 
-	private final boolean isOverwritableName(String name){return name == null || name.equals(NAME_404) || name.equals(NAME_U_404);}
+	private final boolean isOverwritableName(String name){return name == null || name == NAME_404 || name == NAME_U_404;}
 
 	private final int assignPearl(CommandContext<FabricClientCommandSource> ctx){
 		if(epearlLookup.isDisabled()){
@@ -90,19 +91,19 @@ public class CommandAssignPearl{
 
 		final String name = ctx.getArgument("name", String.class);
 //		ctx.getSource().sendFeedback(Text.literal("Fetching UUID for name: "+name+"..."));
-		MojangProfileLookup.uuidLookup.get(name, (uuid)->{
+		MojangProfileLookup.uuidLookup.get(name, uuid->Minecraft.getInstance().execute(()->{
 			if(uuid == MojangProfileLookupConstants.UUID_404){
 				ctx.getSource().sendError(Component.literal("Invalid player name"));
 				return;
 			}
-			if(epearl == null || epearl.isRemoved()){
+			if(epearl.isRemoved()){
 				ctx.getSource().sendError(Component.literal("Epearl disappeared while fetching player UUID!"));
 				return;
 			}
 			MiscUtils.setPearlUUID(epearl, uuid);
 			epearlLookup.getOwnerName(epearl); // Calling this updates EpearlOwners using the uuid we just provided
 			ctx.getSource().sendFeedback(Component.literal("Assigned owner for epearl: "+epearl.getStringUUID()+" <- "+name));
-		});
+		}));
 		return 1;
 	}
 
