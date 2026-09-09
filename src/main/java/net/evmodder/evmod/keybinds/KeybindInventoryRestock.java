@@ -15,6 +15,8 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
+import net.evmodder.evmod.apis.InventoryTransferPlanner;
+import net.evmodder.evmod.apis.InventoryTransferPlanner.HotbarSlot;
 import net.evmodder.evmod.config.OptionInventoryRestockIf;
 import net.evmodder.evmod.config.OptionInventoryRestockLeave;
 import net.evmodder.evmod.keybinds.KeybindInventoryOrganize.SlotAndItemName;
@@ -25,6 +27,11 @@ import net.minecraft.client.gui.screens.inventory.CartographyTableScreen;
 import net.minecraft.client.gui.screens.inventory.CraftingScreen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.DispenserMenu;
+import net.minecraft.world.inventory.HopperMenu;
+import net.minecraft.world.inventory.ShulkerBoxMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -47,6 +54,10 @@ public final class KeybindInventoryRestock{
 		if(client.player == null || client.level == null || !client.player.isAlive()) return;
 		if(screen(client) == null || !(screen(client) instanceof AbstractContainerScreen hs)) return;
 		if(hs instanceof AnvilScreen || hs instanceof CraftingScreen || hs instanceof CartographyTableScreen) return;
+		if(!hs.getMenu().getCarried().isEmpty()) return;
+		final Class<?> menuClass = hs.getMenu().getClass();
+		final boolean reverseQuickMove = menuClass == ChestMenu.class || menuClass == ShulkerBoxMenu.class
+				|| menuClass == HopperMenu.class || menuClass == DispenserMenu.class;
 		//
 		final ItemStack[] slots = hs.getMenu().slots.stream().map(s -> s.getItem().copy()).toArray(ItemStack[]::new);
 
@@ -107,35 +118,49 @@ public final class KeybindInventoryRestock{
 				if(!ItemStack.isSameItemSameComponents(slots[i], slots[j])) continue;
 //				Main.LOGGER.info("Adding clicks to restock "+slots[i].getItem().getName().getString()+" from slot "+j+" -> "+i);
 
-				int combinedCount = slots[i].getCount() + slots[j].getCount();
+				final int sourceCount = slots[j].getCount(), destinationCount = slots[i].getCount();
 				final boolean needToLeave1 = leave == OptionInventoryRestockLeave.ONE_ITEM
-						&& combinedCount <= maxCount && (totalInContainer -= slots[j].getCount()) == 0;
+						&& totalInContainer == sourceCount;
+				final int amount = Math.min(maxCount-destinationCount, sourceCount-(needToLeave1 ? 1 : 0));
+				if(amount <= 0) continue;
 
-				if(needToLeave1 || combinedCount != maxCount) clicks.add(new InvAction(j, 0, ActionType.CLICK)); // Pickup all
-				else{
+				boolean quickMoveToTarget = reverseQuickMove && amount == sourceCount && destinationCount+sourceCount == maxCount;
+				// These menus merge from the hotbar backwards, not in our destination-loop order.
+				if(quickMoveToTarget) for(int k=slots.length-1; k>i; --k){
+					if(slots[k].getCount() < maxCount && ItemStack.isSameItemSameComponents(slots[k], slots[j])){
+						quickMoveToTarget = false;
+						break;
+					}
+				}
+				if(quickMoveToTarget){
 					clicks.add(new InvAction(j, 0, ActionType.SHIFT_CLICK)); // Shift-click
-					totalInContainer -= slots[j].getCount();
-					slots[i].setCount(maxCount);
-					slots[j] = ItemStack.EMPTY;
-					break;
-				}
-				if(needToLeave1){
-					clicks.add(new InvAction(j, 1, ActionType.CLICK)); // Leave 1
-					--combinedCount;
-				}
-				clicks.add(new InvAction(i, 0, ActionType.CLICK)); // Place as many as possible
-				if(combinedCount <= maxCount){
-					totalInContainer -= (combinedCount - slots[i].getCount());
-					slots[i].setCount(combinedCount);
-					slots[j] = ItemStack.EMPTY;
 				}
 				else{
-					clicks.add(new InvAction(j, 0, ActionType.CLICK)); // Put back extras
-					totalInContainer -= (maxCount - slots[i].getCount());
-					slots[i].setCount(maxCount);
-					slots[j].setCount(combinedCount - maxCount);
+					final int destinationInventorySlot = hs.getMenu().getSlot(i).container == client.player.getInventory()
+							? hs.getMenu().getSlot(i).getContainerSlot() : -1;
+					final int destinationButton = Inventory.isHotbarSlot(destinationInventorySlot) ? destinationInventorySlot : -1;
+					List<HotbarSlot> hotbarSlots = List.of();
+					if(destinationButton < 0 && destinationCount == sourceCount-amount && amount != Math.ceilDiv(sourceCount, 2)){
+						for(int k=slots.length-9; k<slots.length; ++k){
+							if(slots[k].getCount() != destinationCount || !ItemStack.isSameItemSameComponents(slots[k], slots[j])) continue;
+							final int button = hs.getMenu().getSlot(k).getContainerSlot();
+							if(hs.getMenu().getSlot(k).container != client.player.getInventory() || !Inventory.isHotbarSlot(button)) continue;
+							hotbarSlots = List.of(new HotbarSlot(k, button, destinationCount));
+							break;
+						}
+					}
+					InventoryTransferPlanner.transferAmount(clicks,
+							j, i, sourceCount, destinationCount, maxCount, amount,
+							/*sourceHotbarButton=*/-1,
+							destinationButton, hotbarSlots);
 				}
-				if(combinedCount >= maxCount) break;
+
+				totalInContainer -= leave == OptionInventoryRestockLeave.ONE_STACK
+						? (amount == sourceCount ? 1 : 0) : amount;
+				slots[i].setCount(destinationCount+amount);
+				if(amount == sourceCount) slots[j] = ItemStack.EMPTY;
+				else slots[j].setCount(sourceCount-amount);
+				if(slots[i].getCount() == maxCount) break;
 			}
 			if(LEAVE_ONE) supply.put(slots[i].getItem(), totalInContainer);
 		}

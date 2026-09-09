@@ -11,6 +11,7 @@ import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
@@ -116,12 +117,13 @@ public abstract class MapClickMoveNeighbors{
 			fromSlot = s;
 		}
 		assert fromSlot != -1;
+		if(fromSlot == destSlot) return;
 //		if(!unaccounted.isEmpty()){Main.LOGGER.info("MapMoveClick: Maps not in a rectangle (B)"); return;}
 
 		final int tlDest = tl + destSlot - fromSlot;
 		final int brDest = br + destSlot - fromSlot;
 //		final int brDest = tlDest + (br-tl);//equivalent: destSlot+(br-fromSlot);//destSlot-(fromSlot-br);
-		if(brDest > slots.length){Main.LOGGER.info("MapMoveClick: Destination is outside inv window"); return;}
+		if(tlDest < 0 || brDest >= slots.length){Main.LOGGER.info("MapMoveClick: Destination is outside inv window"); return;}
 
 		Main.LOGGER.info("MapMoveClick: "+w+"x"+h+" [tl="+tl+",br="+br+"] -> [tl="+tlDest+",br="+brDest+"], "+fromSlot+"->"+destSlot);
 		//player.sendMessage(Text.literal("MapMoveClick: tl="+tl+",br="+br+" | h="+h+",w="+w+" | "+fromSlot+"->"+destSlot), false);////
@@ -146,22 +148,17 @@ public abstract class MapClickMoveNeighbors{
 			final boolean fromHotbar = br >= hbStart, toHotbar = brDest >= hbStart;
 			//Main.LOGGER.warn("MapMoveClick: fromHotbar:"+fromHotbar+", toHotbar:"+toHotbar+", brDest:"+brDest+", last  hotbar if to: "+(brDest-hbStart));
 			for(int i=0; i<9; ++i){
-				if(fromHotbar && (tl-hbStart)%9 <= i && i <= (br-hbStart)%9) continue;		// Avoid hotbar slots the map might be moving from
-				if(toHotbar && (tlDest-hbStart)%9 <= i && i <= (brDest-hbStart)%9) continue;// Avoid hotbar slots the map might be moving into
+				if((fromHotbar || toHotbar) && slotsInvolved.contains(hbStart+i)) continue; // Avoid slots the map is moving from or into
 				if(player.getInventory().getItem(i).isEmpty()){hotbarButton = i; break;}
 			}
 			if(hotbarButton == 40) Main.LOGGER.warn("MapMoveClick: Using offhand for swaps");
 		}
-
 		int tempSlot = -1;
-		if(!moveHalf && !player.getInventory().getItem(hotbarButton).isEmpty()){
-			for(int i=0; i<slots.length; ++i) if(slots[i].isEmpty() && !slotsInvolved.contains(i)){tempSlot = i; break;}
-			if(tempSlot == -1) Main.LOGGER.warn("MapMoveClick: No available slot with which to free up offhand");
-		}
 
 //		final MinecraftClient client = MinecraftClient.getInstance();
 		final ArrayDeque<InvAction> clicks = new ArrayDeque<>();
-		if(tempSlot != -1) clicks.add(new InvAction(tempSlot, hotbarButton, ActionType.HOTBAR_SWAP));
+		boolean temporaryEmpty = player.getInventory().getItem(hotbarButton).isEmpty();
+		boolean usesTemporary = false;
 
 		final int mult, sStart, dStart;
 		if(tl > tlDest){mult = 1; sStart = tl; dStart = tlDest;}
@@ -178,13 +175,42 @@ public abstract class MapClickMoveNeighbors{
 				clicks.add(new InvAction(d, 0, ActionType.CLICK));
 			}
 			else{
-				clicks.add(new InvAction(s, hotbarButton, ActionType.HOTBAR_SWAP));
-				clicks.add(new InvAction(d, hotbarButton, ActionType.HOTBAR_SWAP));
+				final Slot source = player.containerMenu.getSlot(s), destination = player.containerMenu.getSlot(d);
+				final int sourceButton = source.container == player.getInventory()
+						&& (Inventory.isHotbarSlot(source.getContainerSlot()) || source.getContainerSlot() == 40) ? source.getContainerSlot() : -1;
+				final int destinationButton = destination.container == player.getInventory()
+						&& (Inventory.isHotbarSlot(destination.getContainerSlot()) || destination.getContainerSlot() == 40) ? destination.getContainerSlot() : -1;
+				if(sourceButton < 0 && destinationButton < 0 && !usesTemporary){
+					if(hotbarButton == 40 && slotsInvolved.stream().map(player.containerMenu::getSlot)
+							.anyMatch(slot -> slot.container == player.getInventory() && slot.getContainerSlot() == 40)){
+						Main.LOGGER.warn("MapMoveClick: Offhand is part of the move and cannot serve as temporary storage");
+						return;
+					}
+					if(!temporaryEmpty){
+						final ItemStack temporaryStack = player.getInventory().getItem(hotbarButton);
+						for(int k=0; k<slots.length; ++k) if(slots[k].isEmpty() && !slotsInvolved.contains(k)
+								&& player.containerMenu.getSlot(k).mayPlace(temporaryStack)
+								&& player.containerMenu.getSlot(k).getMaxStackSize(temporaryStack) >= temporaryStack.getCount()){
+							tempSlot = k; break;
+						}
+						temporaryEmpty = tempSlot != -1;
+						if(tempSlot == -1) Main.LOGGER.warn("MapMoveClick: No available slot with which to free up offhand");
+					}
+					usesTemporary = true;
+				}
+				InventoryTransferPlanner.swapStacks(clicks, s, d, sourceButton, destinationButton,
+						hotbarButton, !temporaryEmpty || !slots[d].isEmpty());
+				final ItemStack displaced = slots[d];
+				slots[d] = slots[s];
+				slots[s] = displaced;
 			}
 //			client.interactionManager.clickSlot(syncId, s, hotbarButton, ClickAction.HOTBAR_SWAP, player);
 //			client.interactionManager.clickSlot(syncId, d, hotbarButton, ClickAction.HOTBAR_SWAP, player);
 		}
-		if(tempSlot != -1) clicks.add(new InvAction(tempSlot, hotbarButton, ActionType.HOTBAR_SWAP));
+		if(tempSlot != -1){
+			clicks.addFirst(new InvAction(tempSlot, hotbarButton, ActionType.HOTBAR_SWAP));
+			clicks.add(new InvAction(tempSlot, hotbarButton, ActionType.HOTBAR_SWAP));
+		}
 
 		final int numClicks = clicks.size();
 		ongoingClickMove = true;

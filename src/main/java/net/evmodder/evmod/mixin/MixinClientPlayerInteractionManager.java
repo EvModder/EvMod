@@ -49,7 +49,7 @@ abstract class MixinClientPlayerInteractionManager{
 //		MinecraftClient.getInstance().player.sendMessage(Text.literal("clickSlot: syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
 		if(player.isCreative()) return;
 //		if(action == SlotActionType.CLONE/* || action == SlotActionType.THROW || action == SlotActionType.QUICK_CRAFT*/) return;
-		if(slot == -999) return; // comment this out to test things
+		if(syncId != player.containerMenu.containerId) return; // Vanilla sends no packet for a mismatched menu.
 		final boolean isBotted = ClickUtils.isThisClickBotted(/*friend*/);
 		if(Configs.Generic.CLICK_FILTER_USER_INPUT.getBooleanValue() && !isBotted && ClickUtils.hasOngoingClicks()){
 			ci.cancel();
@@ -58,7 +58,7 @@ abstract class MixinClientPlayerInteractionManager{
 //			MinecraftClient.getInstance().player.sendMessage(Text.literal("syncId="+syncId+",slot="+slot+",button="+button+",action="+action.name()), false);
 			return;
 		}
-		final boolean success = ClickUtils.addClick();
+		final boolean success = ClickUtils.addClick(/*action, */isBotted || !Configs.Generic.CLICK_LIMIT_USER_INPUT.getBooleanValue());
 
 		if(success){
 			if(AccessorMain.getInstance().kbCraftRestock != null && Configs.Hotkeys.CRAFT_RESTOCK.getKeybind().isValid())
@@ -69,6 +69,7 @@ abstract class MixinClientPlayerInteractionManager{
 				String err = "Botted click somehow triggered click limit! VERY BAD!!";
 				Main.LOGGER.error(err);
 				sendSystem(Minecraft.getInstance().player, Component.literal(err));
+				return;
 			}
 			else if(!Configs.Generic.CLICK_LIMIT_USER_INPUT.getBooleanValue()) return;
 //			else if(syncId == 0 && slot == 0 && button == 0 && action == SlotActionType.QUICK_MOVE) return; // QUICK_CRAFT sends duplicate fake QUICK_MOVE?

@@ -13,6 +13,7 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
+import net.evmodder.evmod.apis.InventoryTransferPlanner;
 import net.evmodder.evmod.config.OptionInventoryRestockIf;
 import net.evmodder.evmod.config.OptionInventoryRestockLeave;
 import net.minecraft.client.Minecraft;
@@ -334,13 +335,9 @@ public final class KeybindInventoryOrganize{
 				}
 			}
 //			client.player.sendMessage(Text.literal("Click: "+srcSlot+"->"+dstSlot+" UpperInv->Hotbar->UpperInv"), false);
-			clicks.add(new InvAction(srcSlot, hb, ActionType.HOTBAR_SWAP));
-			clicks.add(new InvAction(dstSlot, hb, ActionType.HOTBAR_SWAP));
-			if(!emptySlots[dstSlot] || !emptySlots[hb == 40 ? 45 : hb+36]){
-				//Main.LOGGER.info("putting back original displaced item");
-				// Put back the displaced hotbar/offhand item
-				clicks.add(new InvAction(srcSlot, hb, ActionType.HOTBAR_SWAP));
-			}
+			InventoryTransferPlanner.swapStacks(clicks, srcSlot, dstSlot,
+					isInvScreen && srcSlot == 45 ? 40 : srcSlot >= HOTBAR_START ? srcSlot-HOTBAR_START : -1,
+					-1, hb, !emptySlots[dstSlot] || !emptySlots[hb == 40 ? 45 : hb+HOTBAR_START]);
 			swapSlots(simSlots, emptySlots, srcSlot, dstSlot);
 			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && !isInvScreen) alreadyRestockedItems.add(simSlots[dstSlot].getItem());
 			doneSlots[dstSlot] = true;

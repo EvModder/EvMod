@@ -10,6 +10,7 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
+import net.evmodder.evmod.apis.InventoryTransferPlanner;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.CartographyTableScreen;
@@ -128,19 +129,12 @@ public final class KeybindMapCopy{
 				else slots[j].setCount(combinedCnt - 64);
 				amtInGrid = Math.min(combinedCnt, 64);
 			}
-			else if(!leaveOne && combinedCnt <= 64){
-				clicks.add(new InvAction(j, 0, ActionType.CLICK)); // Pickup all
-				clicks.add(new InvAction(f.INPUT_START+1, 0, ActionType.CLICK)); // Place all in input
-				slots[j] = ItemStack.EMPTY;
-				amtInGrid = combinedCnt;
-			}
-			else if(slots[j].getCount() > 1 && combinedHalfCnt >= amtNeeded && combinedHalfCnt <= 64){
-				clicks.add(new InvAction(j, 1, ActionType.CLICK)); // Pickup half
-				clicks.add(new InvAction(f.INPUT_START+1, 0, ActionType.CLICK)); // Place all in input
-				slots[j].setCount(slots[j].getCount()/2);
-				amtInGrid = combinedHalfCnt;
-			}
-			else if(!leaveOne || combinedCnt > 64){
+			else{
+				final int sourceCount = slots[j].getCount();
+				final int amount;
+				if(!leaveOne && combinedCnt <= 64) amount = sourceCount;
+				else if(sourceCount > 1 && combinedHalfCnt >= amtNeeded && combinedHalfCnt <= 64) amount = Math.ceilDiv(sourceCount, 2);
+				else if(!leaveOne || combinedCnt > 64){
 //				clicks.add(new ClickEvent(j, 0, ClickAction.SHIFT_CLICK)); // Move all to input + overflow
 //				clicks.add(new ClickEvent(INPUT_START+1, 0, ClickAction.SHIFT_CLICK)); // Move back overflow
 //				ItemStack temp = slots[j];
@@ -148,18 +142,14 @@ public final class KeybindMapCopy{
 //				temp.setCount(combinedCnt - 64);
 //				slots[lastEmptySlot(slots, HOTBAR_END, INV_START)] = temp;
 //				amtInGrid = 64;
-				clicks.add(new InvAction(j, 0, ActionType.CLICK)); // Pickup all
-				clicks.add(new InvAction(f.INPUT_START+1, 0, ActionType.CLICK)); // Place in input
-				clicks.add(new InvAction(j, 0, ActionType.CLICK)); // Putback leftovers
-				slots[j].setCount(combinedCnt - 64);
-				amtInGrid = 64;
-			}
-			else{
-				clicks.add(new InvAction(j, 0, ActionType.CLICK)); // Pickup all
-				clicks.add(new InvAction(j, 1, ActionType.CLICK)); // Putback one
-				clicks.add(new InvAction(f.INPUT_START+1, 0, ActionType.CLICK)); // Place all in input
-				slots[j].setCount(1);
-				amtInGrid = combinedCnt - 1;
+					amount = 64-amtInGrid;
+				}
+				else amount = sourceCount-1;
+				InventoryTransferPlanner.transferAmount(clicks, j, f.INPUT_START+1, sourceCount, amtInGrid, 64, amount,
+						j >= f.HOTBAR_START ? j-f.HOTBAR_START : -1, -1, List.of());
+				if(amount == sourceCount) slots[j] = ItemStack.EMPTY;
+				else slots[j].setCount(sourceCount-amount);
+				amtInGrid += amount;
 			}
 		}
 		return amtInGrid;
@@ -496,8 +486,7 @@ public final class KeybindMapCopy{
 			if(copyAll && i >= f.HOTBAR_START) clicks.add(firstClick=new InvAction(f.INPUT_START, i-f.HOTBAR_START, ActionType.HOTBAR_SWAP));
 			else if(copyAll && f != INV) clicks.add(firstClick=new InvAction(i, 0, ActionType.SHIFT_CLICK));
 			else{
-				clicks.add(firstClick=new InvAction(i, pickupHalf ? 1 : 0, ActionType.CLICK)); // Pickup all or half
-				if(moveExactToCrafter) for(int j=emptyMapsPerCopy; j<amtPickedUp; ++j) clicks.add(new InvAction(i, 1, ActionType.CLICK)); // Put back one
+				firstClick = InventoryTransferPlanner.pickupAmount(clicks, i, minMapCount, moveExactToCrafter ? emptyMapsPerCopy : amtPickedUp);
 				clicks.add(new InvAction(f.INPUT_START, 0, ActionType.CLICK)); // Place all
 			}
 

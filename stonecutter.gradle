@@ -11,6 +11,7 @@ stonecutter.parameters {
 		string(current.parsed >= '26.1') {
 			replace 'ClickType', 'ContainerInput'
 			replace 'handleInventoryMouseClick', 'handleContainerInput'
+			replace 'contents.getSelectedItem()', 'contents.getSelectedItemIndex()'
 			replace 'EntityType', 'EntityTypes'
 			replace 'ClientCommandManager', 'ClientCommands'
 			replace 'GuiGraphics', 'GuiGraphicsExtractor'

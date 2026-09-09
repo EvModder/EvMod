@@ -18,6 +18,7 @@ import net.evmodder.evmod.apis.MapRelationUtils;
 import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
+import net.evmodder.evmod.apis.InventoryTransferPlanner;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -49,6 +50,7 @@ public final class KeybindMapMove{
 		//
 		Minecraft client = Minecraft.getInstance();
 		if(!(screen(client) instanceof AbstractContainerScreen hs)){/*Main.LOGGER.warn("MapMove cancelled: Not in ShulkerBoxScreen"); */return;}
+		if(!hs.getMenu().getCarried().isEmpty()){Main.LOGGER.warn("MapMove cancelled: Cursor is not empty"); return;}
 		//
 		if(hs.getMenu().slots.size() != 63/*27+36*/){
 			Main.LOGGER.warn("MapMove cancelled: Unexpected slot count for MapMove: "+hs.getMenu().slots.size());
@@ -151,25 +153,15 @@ public final class KeybindMapMove{
 				clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK));
 			}
 			else{ // put 1 into shulk
-				if(count == 2 || (count == 3 && numInShulk != 0)){
-					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // pickup half
-					if(numInShulk == 0){
-						if(ClickUtils.getMaxClicks() >= 2) reserveClicks.put(clicks.peekLast(), 2);
-						clicks.add(new InvAction(j, 0, ActionType.CLICK)); // place into next empty slot
-					}
-					else{
-						if(ClickUtils.getMaxClicks() >= 3) reserveClicks.put(clicks.peekLast(), 3);
-						clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK)); // shift-move remaining (1)
-						clicks.add(new InvAction(i, 0, ActionType.CLICK)); // place back
-					}
+				final int clicksAtStart = clicks.size();
+				final InvAction firstClick;
+				if(count == 2 && numInShulk == 0){
+					firstClick = InventoryTransferPlanner.pickupAmount(clicks, i, count, 1);
+					clicks.add(new InvAction(j, 0, ActionType.CLICK)); // place into next empty slot
 				}
-				else{
-					clicks.add(new InvAction(i, 0, ActionType.CLICK)); // pickup all
-					if(ClickUtils.getMaxClicks() >= 4) reserveClicks.put(clicks.peekLast(), 4);
-					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // place one
-					clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK)); // shift-move the one
-					clicks.add(new InvAction(i, 0, ActionType.CLICK)); // place all (-1)
-				}
+				else firstClick = InventoryTransferPlanner.quickMoveAmount(clicks, i, count, 1);
+				final int clicksUsed = clicks.size()-clicksAtStart;
+				if(ClickUtils.getMaxClicks() >= clicksUsed) reserveClicks.put(firstClick, clicksUsed);
 			}
 			if(numInShulk == 0) ++j;
 		}
@@ -190,25 +182,15 @@ public final class KeybindMapMove{
 				clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK));
 			}
 			else{ // take 1 from shulk
-				if(count == 2 || (count == 3 && numInInv != 0)){
-					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // pickup half
-					if(numInInv == 0){
-						if(ClickUtils.getMaxClicks() >= 2) reserveClicks.put(clicks.peekLast(), 2);
-						clicks.add(new InvAction(j, 0, ActionType.CLICK)); // place into next empty slot
-					}
-					else{
-						if(ClickUtils.getMaxClicks() >= 3) reserveClicks.put(clicks.peekLast(), 3);
-						clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK)); // shift-move remaining (1)
-						clicks.add(new InvAction(i, 0, ActionType.CLICK)); // place back
-					}
+				final int clicksAtStart = clicks.size();
+				final InvAction firstClick;
+				if(count == 2 && numInInv == 0){
+					firstClick = InventoryTransferPlanner.pickupAmount(clicks, i, count, 1);
+					clicks.add(new InvAction(j, 0, ActionType.CLICK)); // place into next empty slot
 				}
-				else{
-					clicks.add(new InvAction(i, 0, ActionType.CLICK)); // pickup all
-					if(ClickUtils.getMaxClicks() >= 4) reserveClicks.put(clicks.peekLast(), 4);
-					clicks.add(new InvAction(i, 1, ActionType.CLICK)); // place one
-					clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK)); // shift-move the one
-					clicks.add(new InvAction(i, 0, ActionType.CLICK)); // place all (-1)
-				}
+				else firstClick = InventoryTransferPlanner.quickMoveAmount(clicks, i, count, 1);
+				final int clicksUsed = clicks.size()-clicksAtStart;
+				if(ClickUtils.getMaxClicks() >= clicksUsed) reserveClicks.put(firstClick, clicksUsed);
 			}
 			if(numInInv == 0) --j;
 		}

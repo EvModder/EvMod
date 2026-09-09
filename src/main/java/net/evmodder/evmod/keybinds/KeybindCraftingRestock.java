@@ -15,6 +15,7 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
+import net.evmodder.evmod.apis.InventoryTransferPlanner;
 import net.evmodder.evmod.apis.TickListener;
 import net.evmodder.evmod.mixin.AccessorAnvilScreen;
 import net.minecraft.client.Minecraft;
@@ -321,7 +322,8 @@ public final class KeybindCraftingRestock implements TickListener{
 				final Source source = sources.stream().filter(candidate -> candidate.count > 0)
 						.max(Comparator.comparingInt(candidate -> candidate.count)).orElseThrow();
 				final int assign = Math.min(source.count, destinations.size());
-				clicks.add(new InvAction(source.slot, 0, ActionType.CLICK));
+				final int pickedUp = destinations.size() > 1 && Math.ceilDiv(source.count, 2) == assign ? assign : source.count;
+				InventoryTransferPlanner.pickupAmount(clicks, source.slot, source.count, pickedUp);
 				if(destinations.size() == 1){
 					clicks.add(new InvAction(destination, 0, ActionType.CLICK));
 					final ItemStack moved = group.stack.copy();
@@ -339,7 +341,7 @@ public final class KeybindCraftingRestock implements TickListener{
 						plannedInputs.put(assignedDestination, moved);
 					}
 					source.count -= assign;
-					if(source.count > 0) clicks.add(new InvAction(source.slot, 0, ActionType.CLICK));
+					if(pickedUp > assign) clicks.add(new InvAction(source.slot, 0, ActionType.CLICK));
 				}
 			}
 		}
