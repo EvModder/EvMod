@@ -219,15 +219,13 @@ public abstract class MapRelationUtils{
 			}
 			if(validMatchingPosStrs){
 				if(keepFullNumberPrefix){
-					if(a != prefixLen){
-//						assert a < prefixLen : "a="+a+",prefixLen="+prefixLen;
+					if(a < prefixLen){
 						Main.LOGGER.info("MapAdjUtil: decreasing prefix len from "+prefixLen+" to "+a+" to capture full number for name: "+name2);
 						prefixLen=a;
 					}
 				}
 				if(keepFullNumberSuffix){
-					if(b != suffixLen){
-//						assert b < suffixLen : "b="+b+",suffixLen="+suffixLen;
+					if(b < suffixLen){
 						Main.LOGGER.info("MapAdjUtil: decreasing suffix len from "+suffixLen+" to "+b+" to capture full number for name: "+name2);
 						suffixLen=b;
 					}
@@ -256,7 +254,9 @@ public abstract class MapRelationUtils{
 		final int expandedPrefixLen = Math.min(prefixLen, minValidPrefixLen);
 		final int expandedSuffixLen = Math.min(suffixLen, minValidSuffixLen);
 		final int sameNameSlotCount = relatedMapSlots.size();
-		if(minSuffixLenAtMinPrefix > minValidSuffixLen && (expandedPrefixLen != prefixLen || expandedSuffixLen != suffixLen)
+		// NOTE: >= (not >), since on a full 2D grid the diagonal pairs supply both the min prefix and the min suffix,
+		// which would otherwise collapse these two to the same value and skip the expansion entirely.
+		if(minSuffixLenAtMinPrefix >= minValidSuffixLen && (expandedPrefixLen != prefixLen || expandedSuffixLen != suffixLen)
 				&& isValidPosStr(simplifyPosStr(sourceName2.substring(expandedPrefixLen, sourceName2.length()-expandedSuffixLen)))){
 			if(getRelatedMapSlotsForBounds(slots, sourceName2, expandedPrefixLen, expandedSuffixLen, prefixLen, suffixLen,
 					count, locked, world, relatedMapSlots, /*rejectInvalidPos=*/true, /*warnOnMismatch=*/false) != null){

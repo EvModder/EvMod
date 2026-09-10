@@ -24,6 +24,7 @@ public final class UpdateInventoryContents implements TickListener{
 	private static ItemStack currentlyBeingPlacedIntoItemFrame;
 	private static int slotUsedForCurrentlyBeingPlacedItem;
 	private static int mapsInInvHash;
+	private static boolean warnedNullMapId, sawNullMapIdThisTick;
 //	private static int itemsInInvHash;
 
 	public static final int getMapsInInvHash(){return mapsInInvHash;}
@@ -45,7 +46,11 @@ public final class UpdateInventoryContents implements TickListener{
 		if(stack.getItem() == Items.FILLED_MAP){
 			final MapId mapId = stack.get(DataComponents.MAP_ID);
 			if(mapId == null){
-				Main.LOGGER.warn("UpdateInv: mapId is null! stack="+stack.getHoverName().getString());
+				sawNullMapIdThisTick = true;
+				if(!warnedNullMapId){
+					Main.LOGGER.warn("UpdateInv: mapId is null! stack="+stack.getHoverName().getString());
+					warnedNullMapId = true;
+				}
 				return false;
 			}
 			final MapItemSavedData state = world.getMapData(mapId);
@@ -93,8 +98,10 @@ public final class UpdateInventoryContents implements TickListener{
 		nestedInventoryMapGroup.clear();
 		final AbstractContainerMenu sh = player.containerMenu;
 //		boolean anyNewMap = false;
+		sawNullMapIdThisTick = false;
 		for(int i=0; i<41; ++i) /*anyNewMap |=*/ addMapStateIds(player.getInventory().getItem(i), player.level());
 		if(sh != null) /*anyNewMap |=*/ addMapStateIds(sh.getCarried(), player.level());
+		if(!sawNullMapIdThisTick) warnedNullMapId = false;
 
 		final int syncId = sh == null ? 0 : sh.containerId;
 		mapsInInvHash = syncId + inventoryMapGroup.hashCode() + nestedInventoryMapGroup.hashCode();// * (mapPlaceStillOngoing ? 7 : 1);

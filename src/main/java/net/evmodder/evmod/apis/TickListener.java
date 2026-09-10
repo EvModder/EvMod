@@ -9,9 +9,9 @@ public interface TickListener{
 
 	public static void register(final TickListener tickListener){
 		try{
-			if(!tickListener.getClass().getMethod("onTickStart", Minecraft.class).getDeclaringClass().equals(TickListener.class))
+			if(tickListener.getClass().getMethod("onTickStart", Minecraft.class).getDeclaringClass() != TickListener.class)
 				ClientTickEvents.START_CLIENT_TICK.register(tickListener::onTickStart);
-			if(!tickListener.getClass().getMethod("onTickEnd", Minecraft.class).getDeclaringClass().equals(TickListener.class))
+			if(tickListener.getClass().getMethod("onTickEnd", Minecraft.class).getDeclaringClass() != TickListener.class)
 				ClientTickEvents.END_CLIENT_TICK.register(tickListener::onTickEnd);
 		}
 		catch(NoSuchMethodException | SecurityException e){
@@ -23,8 +23,8 @@ public interface TickListener{
 	public static boolean addToRegistrationList(TickListener tickListener){
 		boolean added = false;
 		try{
-			if(!tickListener.getClass().getMethod("onTickStart").getDeclaringClass().equals(TickListener.class)) added |= tickStartListeners.add(tickListener);
-			if(!tickListener.getClass().getMethod("onTickEnd").getDeclaringClass().equals(TickListener.class)) added |= tickEndListeners.add(tickListener);
+			if(tickListener.getClass().getMethod("onTickStart").getDeclaringClass() != TickListener.class) added |= tickStartListeners.add(tickListener);
+			if(tickListener.getClass().getMethod("onTickEnd").getDeclaringClass() != TickListener.class) added |= tickEndListeners.add(tickListener);
 		}
 		catch(NoSuchMethodException | SecurityException e){
 			e.printStackTrace();
