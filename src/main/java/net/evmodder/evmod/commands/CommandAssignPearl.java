@@ -26,7 +26,7 @@ public class CommandAssignPearl{
 //	private static final Friend friend = new Friend();
 
 //	private int assignPearl(CommandContext<FabricClientCommandSource> ctx, Command cmd){
-//		assert cmd == Command.DB_PEARL_STORE_BY_UUID || cmd == Command.DB_PEARL_STORE_BY_XZ;
+//		assert cmd == Command.DB_PEARL_STORE_BY_UUID || cmd == Command.DB_PEARL_STORE_BY_WYXZ;
 //		final Entity player = ctx.getSource().getPlayer();
 //		final Box box = player.getBoundingBox().expand(8, 6, 8);
 //		List<EnderPearlEntity> epearls =  player.getWorld().getEntitiesByType(EntityType.ENDER_PEARL, box, e->{

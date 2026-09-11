@@ -31,6 +31,7 @@ public final class RemoteServerSender{
 		return thread;
 	});
 	static{SERVER_ID_TIMEOUT_EXECUTOR.setRemoveOnCancelPolicy(true);}
+	// Immutable routing metadata; the wire ID is a known hash (2b2t) or a DB-assigned ID, not this record's hashCode().
 	public record ServerDescriptor(String address, String name, String endpoint, Integer knownServerId, boolean singleplayer){}
 
 	private final Logger LOGGER;
@@ -114,6 +115,7 @@ public final class RemoteServerSender{
 		CURRENT_SERVER = serverGetter;
 	}
 	public final void minecraftServerConnected(){activeServer = CURRENT_SERVER.get(); disconnectingFromMinecraftServer = false;}
+	public final ServerDescriptor currentMinecraftServer(){return CURRENT_SERVER.get();}
 	public final void minecraftServerDisconnecting(){
 		final ServerDescriptor current = CURRENT_SERVER.get();
 		if(current != null) activeServer = current;
@@ -258,16 +260,20 @@ public final class RemoteServerSender{
 	}
 
 	public final void sendBotMessage(final Command command, final boolean udp, final long timeout, final byte[] message, final Consumer<byte[]> recv){
+		ServerDescriptor server = command.requiresServerId() ? CURRENT_SERVER.get() : null;
+		if(server == null && disconnectingFromMinecraftServer) server = activeServer;
+		sendBotMessage(server, command, udp, timeout, message, recv);
+	}
+	// Capture the originating world before asynchronous lookup/cleanup; never route an old request to the new server.
+	public final void sendBotMessage(final ServerDescriptor server, final Command command, final boolean udp,
+			final long timeout, final byte[] message, final Consumer<byte[]> recv){
 		if(timeout <= 0 || timeout > PacketCodec.MAX_REQUEST_TIMEOUT_MILLIS){
 			throw new IllegalArgumentException("RMS timeout must be 1-"+PacketCodec.MAX_REQUEST_TIMEOUT_MILLIS+"ms: "+timeout);
 		}
 		if(command.sendsResponse() != (recv != null)){
 			throw new IllegalArgumentException(command+" sendsResponse="+command.sendsResponse()+", callback="+(recv != null));
 		}
-		ServerDescriptor server = null;
 		if(command.requiresServerId()){
-			server = CURRENT_SERVER.get();
-			if(server == null && disconnectingFromMinecraftServer) server = activeServer;
 			if(server == null || server.singleplayer()){
 				LOGGER.debug("RMS: suppressing "+command+" because no multiplayer server is active");
 				if(recv != null) recv.accept(null);

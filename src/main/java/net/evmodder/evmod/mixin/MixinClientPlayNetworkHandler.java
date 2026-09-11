@@ -17,6 +17,8 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.network.protocol.game.ClientboundMapItemDataPacket;
+import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTimePacket;
 import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.level.saveddata.maps.MapId;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
@@ -34,6 +36,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientPacketListener.class)
 abstract class MixinClientPlayNetworkHandler{
+	@Inject(method="handleSetTime", at=@At("TAIL"))
+	private final void pearlReadinessTime(final ClientboundSetTimePacket packet, final CallbackInfo ci){
+		// Vanilla has already moved this packet onto the client thread, behind earlier entity updates.
+		if(Minecraft.getInstance().getConnection() == (Object)this && AccessorMain.getInstance().epearlLookup != null)
+			AccessorMain.getInstance().epearlLookup.onServerTime(packet.gameTime());
+	}
+
+	@Inject(method="handleMovePlayer", at=@At("TAIL"))
+	private final void pearlReadinessCorrection(final ClientboundPlayerPositionPacket packet, final CallbackInfo ci){
+		if(Minecraft.getInstance().getConnection() == (Object)this && AccessorMain.getInstance().epearlLookup != null)
+			AccessorMain.getInstance().epearlLookup.resetConnectionReadiness();
+	}
+
 	@Inject(method="handleContainerSetSlot", at=@At("TAIL"))
 	private final void confirmCraftResult(final ClientboundContainerSetSlotPacket packet, final CallbackInfo _ci){
 		if(AccessorMain.getInstance().kbCraftRestock != null) AccessorMain.getInstance().kbCraftRestock
