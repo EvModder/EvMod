@@ -10,6 +10,7 @@ import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.NewMapNotifier;
 import net.evmodder.evmod.apis.TickListener;
+import net.evmodder.evmod.commands.CommandExportMapNames;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
@@ -86,6 +87,8 @@ public final class UpdateItemFrameContents implements TickListener{
 			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getNearestViewDirection().ordinal(), ife.level().hashCode());
 			final UUID oldColorsIdForXYZD = colorsId != null ? hangLocsReverse.put(xyzd, colorsId) : hangLocsReverse.remove(xyzd);
 			if(colorsId != null){
+				if(!colorsId.equals(oldColorsIdForXYZD) && stack.getCustomName() != null)
+					CommandExportMapNames.addMapName(stack.getCustomName().getString());
 				if(trackingDistSq == 0 || centerPos.distanceToSqr(xyzd.x, xyzd.y, xyzd.z) <= trackingDistSq){
 					anyMapGroupUpdate |= iFrameMapGroup.computeIfAbsent(colorsId, (UUID _) -> new HashSet<XYZD>()).add(xyzd);
 				}

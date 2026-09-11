@@ -19,7 +19,7 @@ final class Settings{
 	final boolean serverJoinListener, serverQuitListener, gameMessageListener, gameMessageFilter, blockClickListener;
 	final boolean onTickInventory, onTickContainer, onTickIframes, muteMusicOnMenuScreen, containerOpenCloseListener, mapLoaderBot, playerMoveListener, broadcaster;
 	final boolean tooltipMapHighlights, tooltipMapMetadata, tooltipRepairCost;
-	final boolean cmdAssignPearl, cmdDeletedMapsNearby, cmdExportMapImg, cmdMapArtGroup, cmdMapHashCode, cmdSeen, cmdSendAs, cmdTimeOnline;
+	final boolean cmdAssignPearl, cmdDeletedMapsNearby, cmdExportMapImg, cmdExportMapNames, cmdMapArtGroup, cmdMapHashCode, cmdSeen, cmdSendAs, cmdTimeOnline;
 
 
 	private final HashMap<String, Boolean> loadSettings(){
@@ -92,6 +92,7 @@ final class Settings{
 		cmdAssignPearl = epearlOwners && extractConfigValue(settings, "command.assignpearl");
 		cmdDeletedMapsNearby = extractConfigValue(settings, "command.deletedmapsnearby");
 		cmdExportMapImg = extractConfigValue(settings, "command.exportmapimg");
+		cmdExportMapNames = extractConfigValue(settings, "command.exportmapnames");
 		cmdMapArtGroup = extractConfigValue(settings, "command.mapartgroup");
 		cmdMapHashCode = extractConfigValue(settings, "command.maphashcode");
 		cmdSeen = database && extractConfigValue(settings, "command.seen");

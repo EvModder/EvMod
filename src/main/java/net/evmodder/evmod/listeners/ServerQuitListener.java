@@ -6,6 +6,7 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.RemoteServerSender;
+import net.evmodder.evmod.commands.CommandExportMapNames;
 import net.evmodder.evmod.config.OptionMapStateCache;
 import net.evmodder.evmod.onTick.ContainerOpenCloseListener;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -15,6 +16,7 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 public final class ServerQuitListener{
 	public ServerQuitListener(final RemoteServerSender rms){
 		ClientPlayConnectionEvents.DISCONNECT.register((ClientPacketListener _, Minecraft client)->{
+			CommandExportMapNames.clearMapNames();
 			if(rms != null) rms.minecraftServerDisconnecting();
 			if(Configs.Generic.LOG_COORDS_ON_SERVER_QUIT.getBooleanValue() && client.player != null){
 				Main.LOGGER.info(client.player.getName().getString()+" logged out at: "+client.player.blockPosition().toShortString());

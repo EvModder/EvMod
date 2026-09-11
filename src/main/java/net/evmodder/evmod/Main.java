@@ -157,6 +157,7 @@ public class Main{
 		if(/*!mapArtFeaturesOnly && */settings.cmdAssignPearl) new CommandAssignPearl(epearlLookup);
 		if(settings.cmdDeletedMapsNearby) new CommandDeletedMapsNearby();
 		if(settings.cmdExportMapImg) new CommandExportMapImg();
+		if(settings.cmdExportMapNames) new CommandExportMapNames();
 		if(settings.cmdMapArtGroup) new CommandMapArtGroup();
 		if(settings.cmdMapHashCode) new CommandMapHashCode();
 		if(/*!mapArtFeaturesOnly && */settings.cmdSeen) new CommandSeen();

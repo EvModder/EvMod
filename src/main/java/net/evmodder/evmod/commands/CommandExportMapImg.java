@@ -8,7 +8,6 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,6 +25,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.imageio.ImageIO;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -42,6 +42,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -55,14 +56,12 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MapItem;
 import net.minecraft.world.item.component.BundleContents;
 import net.minecraft.world.item.component.ItemContainerContents;
-import net.minecraft.world.level.entity.EntityTypeTest;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class CommandExportMapImg{
-	final int RENDER_DIST = 10*16;
 	final String MAP_EXPORT_DIR = "mapart_exports/";
 
 	// Matrix math from the internet:
@@ -178,52 +177,6 @@ public final class CommandExportMapImg{
 		return numExports;
 	}
 
-	private final String getCleanedName(String itemName0, RelatedMapsData data){
-//		if(data.prefixLen() == -1) return itemName0;
-//		else{
-//			final String nameWoArtist = MapRelationUtils.removeByArtist(itemName0);
-//			return itemName0.substring(0, data.prefixLen())
-//					+ "*"
-//					+ nameWoArtist.substring(nameWoArtist.length()-data.suffixLen())
-//					+ itemName0.substring(nameWoArtist.length());
-//		}
-		if(data.prefixLen() == -1) return itemName0.trim();
-		else{
-			String nameWithoutArtist = MapRelationUtils.removeByArtist(itemName0);
-			String prefixStr = nameWithoutArtist.substring(0, data.prefixLen());
-			String suffixStr = nameWithoutArtist.substring(nameWithoutArtist.length() - data.suffixLen());
-			if(itemName0.startsWith(nameWithoutArtist)) suffixStr += itemName0.substring(nameWithoutArtist.length());
-			else if(itemName0.endsWith(nameWithoutArtist)) prefixStr = prefixStr + itemName0.substring(0, itemName0.length()-nameWithoutArtist.length());
-			else Main.LOGGER.info("CmdExportImg: trouble re-attaching artist name (not at start or end)");
-			if(REMOVE_MAX_CNT){
-				final String szCntStr = ""+data.slots().size();
-				final int idx = suffixStr.indexOf(szCntStr);
-				if(idx != -1 && Normalizer.normalize(suffixStr.substring(0, idx), Normalizer.Form.NFKD).toLowerCase().matches("\\s*(of|/)\\s*")){
-					suffixStr = suffixStr.substring(idx + szCntStr.length());
-				}
-			}
-			// Trim leading/trailing whitespace
-			final String prefixStrTrimmed = prefixStr.stripTrailing();
-			final String suffixStrTrimmed =  suffixStr.stripLeading();
-			final boolean hadSpace = prefixStrTrimmed.length() < prefixStr.length() || suffixStrTrimmed.length() < suffixStr.length();
-			prefixStr = prefixStrTrimmed + (hadSpace ? " " : "");
-			suffixStr = suffixStrTrimmed;
-
-			if(REMOVE_BRACKET_SYMBOLS){
-				int a=prefixStr.length()-1, b=0;
-				while(true){
-					while(a >= 0 && Character.isWhitespace(prefixStr.charAt(a))) --a;
-					while(b < suffixStr.length() && Character.isWhitespace(suffixStr.charAt(b))) ++b;
-					if(a == -1 || b == suffixStr.length() || !isReflectedChar(prefixStr.charAt(a), suffixStr.charAt(b))) break;
-					--a; ++b;
-				}
-				prefixStr = prefixStr.substring(0, a+1) + (hadSpace ? " " : "");
-				suffixStr = suffixStr.substring(b);
-			}
-			return (prefixStr + suffixStr).trim();
-		}
-	}
-
 	private int atomic = 0;
 	private int overwritten;
 	private final void buildMapImgFile(final FabricClientCommandSource source, final Map<Vec3i, ItemFrame> ifeLookup,
@@ -288,7 +241,7 @@ public final class CommandExportMapImg{
 					ifeLookup.get(mapWall.reversed().stream().filter(ifeLookup::containsKey).findFirst().get()).getItem()
 				);
 				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName0(sampleStacks, source.getLevel());
-				tempName = getCleanedName(nameStr, data);
+				tempName = CommandExportMapNames.getCleanedName(nameStr, data);
 			}
 			imgName = namePrefix + tempName.trim().replaceAll("[.\\\\/<>:\"|?*$]", "_");
 		}
@@ -389,11 +342,10 @@ public final class CommandExportMapImg{
 		return connected.stream().map(ifeLookup::get).toList();
 	}
 
-	private final List<ItemFrame> getItemFramesWithMaps(final LocalPlayer player){
-		final AABB everythingBox = AABB.ofSize(player.position(), RENDER_DIST, RENDER_DIST, RENDER_DIST);
-
-		return player.level().getEntities(EntityTypeTest.forClass(ItemFrame.class), everythingBox,
-				e -> e.getItem().getItem() == Items.FILLED_MAP);
+	static final List<ItemFrame> getItemFramesWithMaps(final LocalPlayer player){
+		return StreamSupport.stream(((ClientLevel)player.level()).entitiesForRendering().spliterator(), false)
+				.filter(ItemFrame.class::isInstance).map(ItemFrame.class::cast)
+				.filter(ife -> ife.getItem().getItem() == Items.FILLED_MAP).toList();
 	}
 
 	private final Pattern pNxM = Pattern.compile("(?:as_)?([1-9][0-9]*)[x*]([1-9][0-9]*)");
@@ -507,7 +459,7 @@ public final class CommandExportMapImg{
 		final HashSet<String> seen = new HashSet<>();
 		final Map<MapWall, List<ItemFrame>> mapWalls = getItemFramesWithMaps(ctx.getSource().getPlayer()).stream()
 				.filter(ife -> ife.getItem().getCustomName() != null) // Only consider named maps
-				.filter(ife -> !seen.add(ife.getItem().getCustomName().getString())) // Remove duplicate names
+				.filter(ife -> seen.add(ife.getItem().getCustomName().getString())) // Remove duplicate names
 				.collect(Collectors.groupingBy(
 						ife -> new MapWall(ife.getNearestViewDirection(), ife.blockPosition().get(ife.getNearestViewDirection().getAxis())) // Group by MapWall
 		));
@@ -618,18 +570,7 @@ public final class CommandExportMapImg{
 		return numSaved > 0 ? 0 : 1;
 	}
 
-	private final boolean isReflectedChar(final char l, final char r){
-		switch(l){
-			case '[': return r == ']';
-			case '(': return r == ')';
-			case '{': return r == '}';
-			case '<': return r == '>';
-			case '-': return r == '-';
-			default:
-				return Character.isWhitespace(l) && Character.isWhitespace(r);
-		}
-	}
-	private final boolean SHOW_ONLY_IF_HAS_AZ = true, REMOVE_MAX_CNT = true, REMOVE_BRACKET_SYMBOLS = true;
+	private final boolean SHOW_ONLY_IF_HAS_AZ = true;
 	private final HashMap<String, String> cmdMapNames = new HashMap<>();
 	private long lastNameComputeTs;
 	private final Set<String> getNearbyMapNames(final LocalPlayer player){
@@ -652,7 +593,7 @@ public final class CommandExportMapImg{
 				final MapItemSavedData state = MapItem.getSavedData(mapItems.getFirst(), player.level());
 				final Boolean locked = state == null ? null : state.locked;
 				RelatedMapsData data = MapRelationUtils.getRelatedMapsByName(mapItems, name, 1, locked, player.level());
-				final String nameKey = getCleanedName(name, data);
+				final String nameKey = CommandExportMapNames.getCleanedName(name, data);
 				if(!SHOW_ONLY_IF_HAS_AZ || nameKey.matches(".*[a-zA-Z].*")) cmdMapNames.put(nameKey, name);
 //				assert data.slots().size() > 0; // Can be size=0 for mismatched pos data
 				if(data.slots().size() <= 1) mapItems.removeFirst();

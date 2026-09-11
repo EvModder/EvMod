@@ -14,6 +14,7 @@ import net.evmodder.evmod.apis.InvUtils;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.TickListener;
+import net.evmodder.evmod.commands.CommandExportMapNames;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -73,7 +74,10 @@ public final class UpdateContainerContents implements TickListener{
 		}
 
 		final List<ItemStack> mapItems = getAllMapItemsInContainer(hs.getMenu().slots);
-		mapsInContainerHash = hs.getMenu().containerId + mapItems.hashCode();
+		final int newMapsInContainerHash = hs.getMenu().containerId + mapItems.hashCode();
+		if(newMapsInContainerHash != mapsInContainerHash) mapItems.stream().map(ItemStack::getCustomName)
+				.filter(Objects::nonNull).map(Component::getString).forEach(CommandExportMapNames::addMapName);
+		mapsInContainerHash = newMapsInContainerHash;
 
 		final boolean SHOW_ASTERISKS = Configs.Visuals.MAP_HIGHLIGHT_CONTAINER_NAME.getBooleanValue();
 		if(!SHOW_ASTERISKS && !Configs.Visuals.MAP_HIGHLIGHT_TOOLTIP.getBooleanValue()) return;

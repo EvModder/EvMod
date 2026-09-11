@@ -43,5 +43,6 @@ epearl_owners: false
 #
 command.deletedmapsnearby: false
 command.exportmapimg: true
+command.exportmapnames: true
 command.mapartgroup: true
 command.maphashcode: true

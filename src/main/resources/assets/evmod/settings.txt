@@ -43,6 +43,7 @@ epearl_owners: true  # registers: onTick(), listener.chunkLoad, listener.chunkUn
 command.assignpearl: true
 command.deletedmapsnearby: false
 command.exportmapimg: true
+command.exportmapnames: true
 command.mapartgroup: true
 command.maphashcode: true
 command.seen: true
