@@ -24,8 +24,8 @@ import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 public final class UpdateInventoryContents implements TickListener{
 	private static HashSet<UUID> inventoryMapGroup = new HashSet<>(), nestedInventoryMapGroup = new HashSet<>();
-	private static ItemStack currentlyBeingPlacedIntoItemFrame;
-	private static int slotUsedForCurrentlyBeingPlacedItem;
+	private static volatile ItemStack currentlyBeingPlacedIntoItemFrame;
+	private static int slotUsedForCurrentlyBeingPlacedItem, placementWaitTicks;
 	private static int mapsInInvHash;
 	private static boolean warnedNullMapId, sawNullMapIdThisTick;
 //	private static int itemsInInvHash;
@@ -42,6 +42,7 @@ public final class UpdateInventoryContents implements TickListener{
 		}
 		currentlyBeingPlacedIntoItemFrame = stack.copy();
 		slotUsedForCurrentlyBeingPlacedItem = slot;
+		placementWaitTicks = 0;
 	}
 
 	private static final void addMapName(final ItemStack stack){
@@ -88,7 +89,10 @@ public final class UpdateInventoryContents implements TickListener{
 	}
 	@Override public final void onTickStart(final Minecraft client){
 		final Player player = client.player;
-		if(player == null || player.level() == null || !player.isAlive()) return;
+		if(player == null || player.level() == null || !player.isAlive()){
+			currentlyBeingPlacedIntoItemFrame = null;
+			return;
+		}
 
 		{
 			// Constantly force-refresh mapstate-colorsId cache for held unlocked maps
@@ -97,9 +101,9 @@ public final class UpdateInventoryContents implements TickListener{
 			if(state != null && !state.locked) MapGroupUtils.getIdForMapState(state, /*evict*/true);
 		}
 		{
-			// Check if the currentlyBeingPlacedIntoItemFrame slot has changed value (indicates it's done being placed)
+			// Slot change confirms placement; expire unconfirmed attempts so a rejected click cannot block forever.
 			if(currentlyBeingPlacedIntoItemFrame != null && 
-					!ItemStack.matches(player.getInventory().getItem(slotUsedForCurrentlyBeingPlacedItem), currentlyBeingPlacedIntoItemFrame)){
+					(++placementWaitTicks > 60 || !ItemStack.matches(player.getInventory().getItem(slotUsedForCurrentlyBeingPlacedItem), currentlyBeingPlacedIntoItemFrame))){
 //				MapState state = FilledMapItem.getMapState(currentlyBeingPlacedIntoItemFrame, player.getWorld());
 //				UUID colorsId = MapGroupUtils.getIdForMapState(state);
 //				if(UpdateItemFrameHighlights.isInItemFrame(colorsId)){

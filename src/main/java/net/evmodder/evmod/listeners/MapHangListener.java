@@ -448,7 +448,7 @@ public final class MapHangListener{
 		return slotsWithBundleSub;
 	}
 
-	private boolean waitingForRestock;
+	private volatile long restockDeadlineNanos;
 	private final ItemStack tryToStockNextMap(ItemStack prevMap, InteractionHand hand, final boolean ALLOW_OTHER_MAPART){
 		assert prevMap != null && prevMap.getItem() == Items.FILLED_MAP;
 
@@ -489,11 +489,13 @@ public final class MapHangListener{
 
 		// Wait for hand to be free
 		final int restockFromSlotFinal = restockFromSlot;
-		waitingForRestock = true;
+		final ItemStack prevMapCopy = prevMap.copy();
+		final long deadline = restockDeadlineNanos = System.nanoTime()+3_000_000_000L;
 		new Thread(()->{
 //			Main.LOGGER.info("MapRestock: waiting for currently placed map to load");
-			while(player != null && !player.hasInfiniteMaterials() && UpdateInventoryContents.hasCurrentlyBeingPlacedMapArt()) Thread.yield();
-			if(player == null){waitingForRestock = false; return;}
+			while(restockDeadlineNanos == deadline && client.player == player && !player.hasInfiniteMaterials()
+					&& UpdateInventoryContents.hasCurrentlyBeingPlacedMapArt() && System.nanoTime() < deadline) Thread.yield();
+			if(restockDeadlineNanos != deadline || client.player != player || System.nanoTime() >= deadline) return;
 
 //			Main.LOGGER.info("MapRestock: ok, sync client execution");
 			client.executeIfPossible(()->{
@@ -501,6 +503,9 @@ public final class MapHangListener{
 //					try{sleep(50l);}catch(InterruptedException e){e.printStackTrace();waitingForRestock=false;} // 50ms = 1tick
 //					Main.LOGGER.info("MapRestock: ok, doing restock click(s)");
 
+					if(restockDeadlineNanos != deadline || client.player != player || !player.isAlive() || System.nanoTime() >= deadline) return;
+					if(!(ALLOW_OTHER_MAPART ? Configs.Generic.PLACEMENT_HELPER_MAPART : Configs.Generic.MAPART_AUTOPLACE).getBooleanValue()) return;
+					if(!player.hasInfiniteMaterials() && ItemStack.matches(player.inventoryMenu.slots.get(prevSlot).getItem(), prevMapCopy)) return;
 					if(slots.get(restockFromSlotFinal).get(DataComponents.BUNDLE_CONTENTS) != null){
 						ArrayDeque<InvAction> clicks = new ArrayDeque<>();
 //						clicks.add(new ClickEvent(restockFromSlotFinal, 0, SlotActionType.PICKUP)); // Pickup bundle
@@ -522,7 +527,7 @@ public final class MapHangListener{
 						Main.LOGGER.info("MapRestock: Swapped inv.selectedSlot to nextMap: s="+restockFromSlotFinal);
 					}
 				}
-				finally{waitingForRestock = false;}
+				finally{if(restockDeadlineNanos == deadline) restockDeadlineNanos = 0;}
 			});
 		}).start();
 		return slots.get(restockFromSlot);
@@ -582,7 +587,8 @@ public final class MapHangListener{
 			//Main.LOGGER.info("item frame is empty");
 
 			final ItemStack stack = player.getItemInHand(hand);
-			if(Configs.Generic.IFRAME_DISALLOW_OFFHAND.getBooleanValue() && waitingForRestock && (stack.isEmpty() || stack.getItem() == Items.FILLED_MAP)){
+			if(Configs.Generic.IFRAME_DISALLOW_OFFHAND.getBooleanValue() && restockDeadlineNanos != 0 && System.nanoTime() < restockDeadlineNanos
+					&& (stack.isEmpty() || stack.getItem() == Items.FILLED_MAP)){
 				// Little safety net to keep player from placing offhand item into iFrame if right-clicking faster than hand restock can handle
 				Main.LOGGER.info("MapRestock: Player right-clicking iFrame before previous tryToStockNextMap() has finished!");
 				sendOverlay(player, Component.literal("Warn: cancelled iFrame click during AutoHandRestock"));
