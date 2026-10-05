@@ -31,7 +31,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.decoration.ItemFrame;
@@ -724,7 +723,6 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/{
 		/*if(!Minecraft.getInstance().gameMode.interactAt(player, ife, hitResult, InteractionHand.MAIN_HAND).consumesAction())
 			Minecraft.getInstance().gameMode.interact(player, ife, InteractionHand.MAIN_HAND);*/
 		//?}
-		if(Configs.Generic.MAPART_AUTOPLACE_SWING_HAND.getBooleanValue()) player.connection.send(new ServerboundSwingPacket(InteractionHand.MAIN_HAND));
 //		nearestIfe.interactAt(player, ife.getEyePos(), Hand.MAIN_HAND);
 //		player.interact(ife, Hand.MAIN_HAND);
 	}

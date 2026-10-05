@@ -1,31 +1,38 @@
 # Shared metadata and dependency pins.
+# Legacy Minecraft: earliest compatible version in the best available channel (release > beta > alpha).
+# Current Minecraft: newest compatible version in the best available channel from the configured sources.
 mod.id = "evmod"
 mod.name = "Ev's Mod"
 mod.group = "net.evmodder"
 
 #2 = public db, NewMapNotifier, /mapartgroup seen/2b2t.org, x/SIZE, configs refactor, better tooltips
-#3 = db fixes, autoplacer improvements, static entity render range, (PLANNED): bulk-analysis (map stats for containers/walls)
-mod.version = "2.3"
+#4 = map-name-relation improvements, smart-recipe-repeat, epearlLookup stability fixes, optimized inv click sequences, PLANNED: bulk-analysis (map stats for containers/walls),
+mod.version = "2.4"
 
 # https://fabricmc.net/develop
 # https://jitpack.io/com/github/sakura-ryoko/malilib/
 # https://github.com/cabaletta/baritone/releases
 # https://github.com/LlamaLad7/MixinExtras
 
-deps.fabric_loader = "0.19.3"
 loomx.loom_version = "1.17-SNAPSHOT"
 
-["26.2"]
-deps.fabric_api = "0.154.2+26.2"
-deps.malilib = "0.29.2"
-deps.baritone = "26.2"
+["1.21.4"]
+deps.java = "22"
+deps.fabric_loader = "0.16.9"
+deps.fabric_api = "0.110.5+1.21.4"
+deps.malilib = "0.23.2"
+deps.baritone = "1.13.1"
 
 ["1.21.11"]
-deps.fabric_api = "0.141.3+1.21.11"
+deps.java = "22"
+deps.fabric_loader = "0.17.3"
+deps.fabric_api = "0.139.4+1.21.11"
 deps.malilib = "0.27.6"
-deps.baritone = "1.21.11"
+deps.baritone = "1.17.0"
 
-["1.21.4"]
-deps.fabric_api = "0.119.4+1.21.4"
-deps.malilib = "0.23.4"
-deps.baritone = "1.13.1"
+["26.2"]
+deps.java = "25"
+deps.fabric_loader = "0.19.3"
+deps.fabric_api = "0.152.1+26.2"
+deps.malilib = "0.29.0"
+deps.baritone = "1.19.0"

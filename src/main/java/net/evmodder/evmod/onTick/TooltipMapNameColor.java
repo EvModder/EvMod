@@ -45,7 +45,7 @@ public final class TooltipMapNameColor implements Tooltip{
 		if(cachedLines != null){lines.clear(); lines.addAll(cachedLines); return;}
 
 		if(item.getItem() != Items.FILLED_MAP){
-			final List<ItemStack> mapItems = InvUtils.getAllNestedItems(item).filter(s -> s.get(DataComponents.MAP_ID) != null).toList();
+			final var mapItems = InvUtils.getAllNestedItemViews(item).filter(s -> s.get(DataComponents.MAP_ID) != null).toList();
 			if(mapItems.isEmpty()) return;
 			final List<MapItemSavedData> states = mapItems.stream().map(i -> context.mapData(i.get(DataComponents.MAP_ID))).filter(Objects::nonNull).toList();
 //			final List<UUID> nonFillerIds = states.stream().filter(Predicate.not(MapRelationUtils::isFillerMap)).map(MapGroupUtils::getIdForMapState).toList();
@@ -66,7 +66,7 @@ public final class TooltipMapNameColor implements Tooltip{
 				asterisks.add(MAP_COLOR_UNLOADED);
 			}
 			else if(UpdateItemFrameContents.mixedOnDisplayAndNotOnDisplay(unskippedIds)) asterisks.add(MAP_COLOR_IN_IFRAME);
-			if(mapItems.stream().anyMatch(i -> i.getCustomName() == null)) asterisks.add(MAP_COLOR_UNNAMED);
+			if(mapItems.stream().anyMatch(i -> i.get(DataComponents.CUSTOM_NAME) == null)) asterisks.add(MAP_COLOR_UNNAMED);
 
 			if(!asterisks.isEmpty()){
 				asterisks = asterisks.stream().distinct().toList();

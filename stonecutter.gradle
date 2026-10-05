@@ -2,39 +2,14 @@ plugins {
 	id 'dev.kikugie.stonecutter'
 }
 
-// The checked-in source tree always represents the current 26.2 implementation.
+// Keep the newest supported version native; advance active and vcsVersion together on version bumps.
 stonecutter.active '26.2'
 
 stonecutter.parameters {
 	replacements {
-		// Mojang and Fabric renamed these APIs for the unobfuscated 26.x line.
-		string(current.parsed >= '26.1') {
-			replace 'ClickType', 'ContainerInput'
-			replace 'handleInventoryMouseClick', 'handleContainerInput'
-			replace 'contents.getSelectedItem()', 'contents.getSelectedItemIndex()'
-			replace 'EntityType', 'EntityTypes'
-			replace 'ClientCommandManager', 'ClientCommands'
-			replace 'GuiGraphics', 'GuiGraphicsExtractor'
-
-			replace 'import net.minecraft.client.gui.Gui;', 'import net.minecraft.client.gui.Hud;'
-			replace '@Mixin(Gui.class)', '@Mixin(Hud.class)'
-			replace 'method="renderSelectedItemName"', 'method="extractSelectedItemName"'
-			replace 'method="renderLabels"', 'method="extractLabels"'
-			replace 'ClientTickEvents.END_WORLD_TICK', 'ClientTickEvents.END_LEVEL_TICK'
-			replace 'source.getWorld()', 'source.getLevel()'
-			replace 'getSource().getWorld()', 'getSource().getLevel()'
-			replace(
-				'context.drawString(font, UpdateContainerContents.customTitle, titleLabelX, titleLabelY, 4210752, false)',
-				'context.text(font, UpdateContainerContents.customTitle, titleLabelX, titleLabelY, 0xFF404040, false)',
-			)
-		}
-
-			string(current.parsed < '1.21.11') {
-				replace 'updateCategoryVolume', 'updateSourceVolume'
-			}
-
 		// 1.21.11 adopted the new resource/key-mapping names.
 		string(current.parsed >= '1.21.11') {
+			replace 'updateSourceVolume', 'updateCategoryVolume'
 			replace 'ResourceLocation', 'Identifier'
 			replace 'net.fabricmc.fabric.api.client.keybinding', 'net.fabricmc.fabric.api.client.keymapping'
 			replace 'KeyBindingHelper', 'KeyMappingHelper'
@@ -58,6 +33,30 @@ stonecutter.parameters {
 			replace '.getGameProfile().getId()', '.getGameProfile().id()'
 			replace 'client.getMinecraftSessionService()', 'client.services().sessionService()'
 			replace '.absRotateTo(', '.absSnapRotationTo('
+		}
+
+		// Mojang and Fabric renamed these APIs for the unobfuscated 26.x line.
+		string(current.parsed >= '26.1') {
+			replace 'ClickType', 'ContainerInput'
+			replace 'handleInventoryMouseClick', 'handleContainerInput'
+			replace 'contents.getSelectedItem()', 'contents.getSelectedItemIndex()'
+			replace 'net.minecraft.world.entity.EntityType;', 'net.minecraft.world.entity.EntityTypes;'
+			replace 'EntityType.', 'EntityTypes.'
+			replace 'ClientCommandManager', 'ClientCommands'
+			replace 'net.minecraft.client.gui.GuiGraphics;', 'net.minecraft.client.gui.GuiGraphicsExtractor;'
+			replace 'GuiGraphics context', 'GuiGraphicsExtractor context'
+
+			replace 'import net.minecraft.client.gui.Gui;', 'import net.minecraft.client.gui.Hud;'
+			replace '@Mixin(Gui.class)', '@Mixin(Hud.class)'
+			replace 'method="renderSelectedItemName"', 'method="extractSelectedItemName"'
+			replace 'method="renderLabels"', 'method="extractLabels"'
+			replace 'ClientTickEvents.END_WORLD_TICK', 'ClientTickEvents.END_LEVEL_TICK'
+			replace 'source.getWorld()', 'source.getLevel()'
+			replace 'getSource().getWorld()', 'getSource().getLevel()'
+			replace(
+				'context.drawString(font, UpdateContainerContents.customTitle, titleLabelX, titleLabelY, 4210752, false)',
+				'context.text(font, UpdateContainerContents.customTitle, titleLabelX, titleLabelY, 0xFF404040, false)',
+			)
 		}
 	}
 }

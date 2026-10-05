@@ -18,7 +18,6 @@ import net.minecraft.commands.arguments.EntityAnchorArgument.Anchor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
-import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
@@ -104,16 +103,12 @@ public final class AutoPlaceItemFrames{
 //				client.player.prevPitch = grimPitch;
 			}
 			client.gameMode.useItemOn(client.player, hand, hitResult);
-//			client.player.swingHand(Hand.MAIN_HAND, false);
-//			client.getNetworkHandler().sendPacket(new HandSwingC2SPacket(hand));
 		}
 		else{
 			BlockHitResult hitResult = new BlockHitResult(Vec3.atCenterOf(bp), dir, bp, /*insideBlock=*/true);
 //			if(ROTATE_PLAYER) client.player.lookAt(EntityAnchor.EYES, hitResult.getPos());
 			client.gameMode.useItemOn(client.player, hand, hitResult);
 			// Airplace, basically
-			client.player.swing(InteractionHand.MAIN_HAND, false);
-			client.getConnection().send(new ServerboundSwingPacket(hand));
 			client.getConnection().send(new ServerboundPlayerActionPacket(ServerboundPlayerActionPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ZERO, Direction.DOWN));
 		}
 	}

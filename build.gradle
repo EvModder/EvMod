@@ -15,13 +15,14 @@ def loaderVersion = property('deps.fabric_loader')
 def fabricApiVersion = property('deps.fabric_api')
 def malilibVersion = property('deps.malilib')
 def baritoneVersion = property('deps.baritone')
+def requiredJava = JavaVersion.toVersion(property('deps.java'))
 def baritoneJar = rootProject.file("libs/baritone-api-fabric-${baritoneVersion}.jar")
 
 group = mavenGroup
 version = modVersion
 base.archivesName = "${modName}-${sc.current.version}"
 
-def requiredJava = JavaVersion.VERSION_25
+def buildJava = JavaVersion.VERSION_25
 
 repositories {
 	exclusiveContent {
@@ -188,7 +189,7 @@ processResources {
 		malilib_version		: malilibVersion,
 		java_version		: requiredJava.majorVersion,
 		java_compatibility	: "JAVA_${requiredJava.majorVersion}",
-		level_entity_visibility_mixin: sc.current.version == '26.2' ? 'MixinLevelExtractor' : 'MixinLevelRenderer',
+		level_entity_visibility_mixin: sc.current.parsed >= '26.2' ? 'MixinLevelExtractor' : 'MixinLevelRenderer',
 	]
 	inputs.properties props
 
@@ -200,7 +201,7 @@ java {
 	sourceCompatibility = requiredJava
 	targetCompatibility = requiredJava
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(requiredJava.majorVersion)
+		languageVersion = JavaLanguageVersion.of(buildJava.majorVersion)
 	}
 }
 

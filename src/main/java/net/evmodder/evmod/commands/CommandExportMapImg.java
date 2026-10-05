@@ -1,6 +1,8 @@
 package net.evmodder.evmod.commands;
 
-import static net.evmodder.evmod.compat.MinecraftCompat.nonEmptyItems;
+import static net.evmodder.evmod.compat.MinecraftCompat.nonEmptyItemViews;
+import static net.evmodder.evmod.compat.MinecraftCompat.bundleItems;
+import static net.evmodder.evmod.compat.MinecraftCompat.itemStack;
 import static net.evmodder.evmod.compat.MinecraftCompat.openFile;
 
 import java.awt.Graphics2D;
@@ -52,6 +54,9 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.item.ItemStack;
+//? >=26.1 {
+import net.minecraft.world.item.ItemInstance;
+//?}
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MapItem;
 import net.minecraft.world.item.component.BundleContents;
@@ -136,11 +141,15 @@ public final class CommandExportMapImg{
 	}
 
 	private String lastRelPath = null;
-	private final int genImgForMapsInInv(final FabricClientCommandSource source, final List<ItemStack> inventory, final String name, final int width,
+	//? >=26.1 {
+	private final int genImgForMapsInInv(final FabricClientCommandSource source, final List<? extends ItemInstance> inventory, final String name, final int width,
+	//?} else {
+	/*private final int genImgForMapsInInv(final FabricClientCommandSource source, final List<? extends ItemStack> inventory, final String name, final int width,*/
+	//?}
 			final boolean combine){
-		final List<MapItemSavedData> unnestedMaps = inventory.stream().map(s -> MapItem.getSavedData(s, source.getLevel())).filter(Objects::nonNull).toList();
-		List<MapItemSavedData> allMaps = InvUtils.getAllNestedItems(inventory.stream())
-				.map(s -> MapItem.getSavedData(s, source.getLevel()))
+		final List<MapItemSavedData> unnestedMaps = inventory.stream().map(s -> MapItem.getSavedData(s.get(DataComponents.MAP_ID), source.getLevel())).filter(Objects::nonNull).toList();
+		List<MapItemSavedData> allMaps = InvUtils.getAllNestedItemViews(inventory.stream())
+				.map(s -> MapItem.getSavedData(s.get(DataComponents.MAP_ID), source.getLevel()))
 				.filter(Objects::nonNull).toList();
 
 		int numExports = 0;
@@ -156,20 +165,20 @@ public final class CommandExportMapImg{
 			//else: handle sub-maps (TODO)
 		}
 		for(int i=0; i<inventory.size(); ++i){
-			final ItemStack stack = inventory.get(i);
+			final var stack = inventory.get(i);
 			final ItemContainerContents container = stack.get(DataComponents.CONTAINER);
 			final BundleContents contents = stack.get(DataComponents.BUNDLE_CONTENTS);
 			if(container == null && contents == null) continue;
-			final Component nameText = stack.getCustomName();
-			final String containerName = nameText != null ? nameText.getString() : name+"-slot"+i+":"+stack.getItemName().getString();
+			final Component nameText = stack.get(DataComponents.CUSTOM_NAME);
+			final String containerName = nameText != null ? nameText.getString() : name+"-slot"+i+":"+itemStack(stack).getItemName().getString();
 			if(container != null){
-				List<ItemStack> subItems = nonEmptyItems(container).toList();
-				boolean subCombine = subItems.stream().noneMatch(s -> MapItem.getSavedData(s, source.getLevel()) != null); // TODO: ?
+				var subItems = nonEmptyItemViews(container).toList();
+				boolean subCombine = subItems.stream().noneMatch(s -> MapItem.getSavedData(s.get(DataComponents.MAP_ID), source.getLevel()) != null); // TODO: ?
 				int w = subCombine ? (int)Math.ceil(Math.sqrt(subItems.size())) : 9;
 				numExports += genImgForMapsInInv(source, subItems, containerName, w, subCombine);
 			}
 			else/*if(contents != null) already implied*/{
-				List<ItemStack> subItems = contents.itemCopyStream().toList();
+				var subItems = bundleItems(contents).toList();
 				int w = (int)Math.ceil(Math.sqrt(subItems.size())); // Should max out at 8
 				numExports += genImgForMapsInInv(source, subItems, containerName, w, /*combine=*/true); // Combine nested bundles
 			}

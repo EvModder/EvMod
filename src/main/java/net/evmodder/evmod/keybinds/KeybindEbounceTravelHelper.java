@@ -17,7 +17,6 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
-import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -112,8 +111,6 @@ public final class KeybindEbounceTravelHelper{
 
 		InteractionResult result = client.gameMode.useItemOn(client.player, hand, bhr);
 		if(!result.consumesAction()) return false;
-
-		client.getConnection().send(new ServerboundSwingPacket(hand));
 
 		return true;
 	}

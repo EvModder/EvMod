@@ -1,6 +1,7 @@
 package net.evmodder.evmod.compat;
 
 import java.util.stream.Stream;
+import com.google.common.collect.Streams;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.PlayerTabOverlay;
@@ -18,6 +19,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 //? >=26.1 {
+import net.minecraft.world.item.ItemInstance;
 import net.minecraft.world.item.ItemStackTemplate;
 //?}
 import net.minecraft.world.item.component.BundleContents;
@@ -78,6 +80,46 @@ public final class MinecraftCompat{
 		//?} else {
 		/*return contents.nonEmptyStream();*/
 		//?}
+	}
+
+	/** Ordered, borrowed item views; callers must not mutate legacy ItemStacks. */
+	//? >=26.1 {
+	public static Stream<? extends ItemInstance> bundleItems(BundleContents contents){
+	//?} else {
+	/*public static Stream<ItemStack> bundleItems(BundleContents contents){*/
+	//?}
+		return Streams.stream(contents.items());
+	}
+	//? >=26.1 {
+	public static Stream<? extends ItemInstance> nonEmptyItemViews(ItemContainerContents contents){
+	//?} else {
+	/*public static Stream<ItemStack> nonEmptyItemViews(ItemContainerContents contents){*/
+	//?}
+		return Streams.stream(contents.nonEmptyItems());
+	}
+	//? >=26.1 {
+	public static int itemCount(ItemInstance item){
+		return item.count();
+	//?} else {
+	/*public static int itemCount(ItemStack item){
+		return item.getCount();*/
+	//?}
+	}
+	//? >=26.1 {
+	public static ItemInstance bundleItemView(BundleContents contents, int index){
+		return contents.items().get(index);
+	//?} else {
+	/*public static ItemStack bundleItemView(BundleContents contents, int index){
+		return contents.getItemUnsafe(index);*/
+	//?}
+	}
+	//? >=26.1 {
+	public static ItemStack itemStack(ItemInstance item){
+		return item instanceof ItemStack stack ? stack : ((ItemStackTemplate)item).create();
+	//?} else {
+	/*public static ItemStack itemStack(ItemStack item){
+		return item;*/
+	//?}
 	}
 
 	public static Fraction bundleWeight(BundleContents contents){

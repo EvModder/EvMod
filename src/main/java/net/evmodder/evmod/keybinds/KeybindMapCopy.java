@@ -2,7 +2,9 @@ package net.evmodder.evmod.keybinds;
 
 import static net.evmodder.evmod.compat.MinecraftCompat.screen;
 import static net.evmodder.evmod.compat.MinecraftCompat.sendOverlay;
-import static net.evmodder.evmod.compat.MinecraftCompat.bundleItem;
+import static net.evmodder.evmod.compat.MinecraftCompat.bundleItems;
+import static net.evmodder.evmod.compat.MinecraftCompat.bundleItemView;
+import static net.evmodder.evmod.compat.MinecraftCompat.itemCount;
 import static net.evmodder.evmod.compat.MinecraftCompat.bundleWeight;
 
 import net.evmodder.evmod.Configs;
@@ -176,7 +178,7 @@ public final class KeybindMapCopy{
 			int numEmptyMapsInGrid, final int totalEmptyMaps){
 		final int[] slotsWithBundles = IntStream.range(f.INV_START, f.HOTBAR_END).filter(i -> {
 			BundleContents contents = slots[i].get(DataComponents.BUNDLE_CONTENTS);
-			return contents != null && contents.itemCopyStream().allMatch(s -> s.getItem() == Items.FILLED_MAP);
+			return contents != null && bundleItems(contents).allMatch(s -> s.is(Items.FILLED_MAP));
 		}).toArray();
 		final BundleContents[] bundles = Arrays.stream(slotsWithBundles)
 				.mapToObj(i -> slots[i].get(DataComponents.BUNDLE_CONTENTS)).toArray(BundleContents[]::new);
@@ -185,7 +187,7 @@ public final class KeybindMapCopy{
 		final int USABLE_EMPTY_BUNDLES = bundles.length - SRC_BUNDLES - (USE_TEMP_BUNDLE ? 1 : 0);
 		if(USABLE_EMPTY_BUNDLES <= 0){Main.LOGGER.warn("MapCopyBundle: Could not find a usable empty bundle"); return;}
 		int LAST_EMPTY_SLOT = lastEmptySlot(slots, f.HOTBAR_END, f.INV_START);
-		if(LAST_EMPTY_SLOT == -1 && Arrays.stream(bundles).anyMatch(b -> b.itemCopyStream().anyMatch(s -> s.getCount() > 1))){
+		if(LAST_EMPTY_SLOT == -1 && Arrays.stream(bundles).anyMatch(b -> bundleItems(b).anyMatch(s -> itemCount(s) > 1))){
 			Main.LOGGER.warn("MapCopyBundle: Unable to copy bundles containing maps with stackSize>1 without an empty inv slot");
 			return;
 		}
@@ -280,7 +282,7 @@ public final class KeybindMapCopy{
 			//2+4+2 vs 2+3+2
 			//bundles[k].stream().mapToInt(stack -> stack.getCount()).forEach(count -> {
 			for(int i=0; i<content.size(); ++i){
-				final int count = bundleItem(content, i).getCount();
+				final int count = itemCount(bundleItemView(content, i));
 
 				if(USE_TEMP_BUNDLE) clicks.add(new InvAction(tempBundleSlot, 1, ActionType.CLICK)); // Take map from temp bundle
 				else{
@@ -339,7 +341,7 @@ public final class KeybindMapCopy{
 
 	private boolean isMapArtBundle(ItemStack stack){
 		BundleContents contents = stack.get(DataComponents.BUNDLE_CONTENTS);
-		return contents != null && !contents.isEmpty() && contents.itemCopyStream().allMatch(s -> s.getItem() == Items.FILLED_MAP);
+		return contents != null && !contents.isEmpty() && bundleItems(contents).allMatch(s -> s.is(Items.FILLED_MAP));
 	}
 
 	@SuppressWarnings("unused")

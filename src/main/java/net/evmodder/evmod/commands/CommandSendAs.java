@@ -1,7 +1,10 @@
 package net.evmodder.evmod.commands;
 
+import static com.mojang.brigadier.Command.SINGLE_SUCCESS;
+
 import java.nio.charset.StandardCharsets;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import net.evmodder.EvLib.util.Command;
 import net.evmodder.evmod.apis.RemoteServerSender;
 //import net.minecraft.client.multiplayer.PlayerInfo;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
@@ -31,8 +34,8 @@ public class CommandSendAs{
 						}
 						while(((name+message).getBytes(StandardCharsets.UTF_8).length&15) != 0) name += ' ';
 						message = name + message;//if name.length==16, there will be no space between name and msg, otherwise there will be.
-						rms.sendBotMessage(net.evmodder.EvLib.util.Command.P2P_CHAT_AS, /*udp=*/false, 5000, message.getBytes(StandardCharsets.UTF_8), null);
-						return com.mojang.brigadier.Command.SINGLE_SUCCESS;
+						rms.sendBotMessage(Command.P2P_CHAT_AS, /*udp=*/false, 5000, message.getBytes(StandardCharsets.UTF_8), null);
+						return SINGLE_SUCCESS;
 					})
 				)
 			)

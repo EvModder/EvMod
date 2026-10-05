@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 import net.evmodder.EvLib.util.FileIO;
@@ -48,7 +49,7 @@ public class MapStateCacher{
 
 //	public static final byte CACHED_MARKER_SCALE = (byte)128;
 	private static final MapDecoration CACHED_MARKER_DECORATION
-		= new MapDecoration(MapDecorationTypes.BLUE_MARKER, /*x=*/(byte)-1, /*z=*/(byte)-1, /*rot=*/(byte)-1, java.util.Optional.empty());
+		= new MapDecoration(MapDecorationTypes.BLUE_MARKER, /*x=*/(byte)-1, /*z=*/(byte)-1, /*rot=*/(byte)-1, Optional.empty());
 
 	public static final boolean hasCacheMarker(MapItemSavedData state){
 		Iterator<MapDecoration> iter = state.getDecorations().iterator();
@@ -169,10 +170,10 @@ public class MapStateCacher{
 	@SuppressWarnings("unchecked")
 	public static final boolean saveMapStatesByPos(Stream<ItemStack> items, String cache){
 		Minecraft client = Minecraft.getInstance();
-		Stream<MapItemSavedData> states = InvUtils.getAllNestedItems(items/*.sequential()*/)
+		Stream<MapItemSavedData> states = InvUtils.getAllNestedItemViews(items/*.sequential()*/)
 				.sequential()
-				.filter(s -> s.getItem() == Items.FILLED_MAP)
-				.map(s -> MapItem.getSavedData(s, client.level));
+				.filter(s -> s.is(Items.FILLED_MAP))
+				.map(s -> MapItem.getSavedData(s.get(DataComponents.MAP_ID), client.level));
 		if(!Configs.Generic.MAP_CACHE_UNLOCKED.getBooleanValue()) states = states.map(s -> s == null || s.locked ? s : null);
 		final List<MapStateSerializable> serialStates = states.map(MapStateSerializable::fromMapState).toList();
 

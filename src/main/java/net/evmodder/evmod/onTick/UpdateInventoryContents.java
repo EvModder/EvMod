@@ -1,5 +1,7 @@
 package net.evmodder.evmod.onTick;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.bundleItems;
+
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.UUID;
@@ -15,6 +17,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+//? >=26.1 {
+import net.minecraft.world.item.ItemInstance;
+//?}
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MapItem;
 import net.minecraft.world.item.component.BundleContents;
@@ -45,14 +50,18 @@ public final class UpdateInventoryContents implements TickListener{
 		placementWaitTicks = 0;
 	}
 
-	private static final void addMapName(final ItemStack stack){
-		if(stack.getItem() == Items.FILLED_MAP){
-			final Component name = stack.getCustomName();
+	//? >=26.1 {
+	private static final void addMapName(final ItemInstance stack){
+	//?} else {
+	/*private static final void addMapName(final ItemStack stack){*/
+	//?}
+		if(stack.is(Items.FILLED_MAP)){
+			final Component name = stack.get(DataComponents.CUSTOM_NAME);
 			if(name != null) CommandExportMapNames.addMapName(name.getString());
 		}
 		else{
 			final BundleContents contents = stack.get(DataComponents.BUNDLE_CONTENTS);
-			if(contents != null) InvUtils.getAllNestedItems(contents.itemCopyStream()).forEach(UpdateInventoryContents::addMapName);
+			if(contents != null) InvUtils.getAllNestedItemViews(bundleItems(contents)).forEach(UpdateInventoryContents::addMapName);
 		}
 	}
 	private static final boolean addMapStateIds(final ItemStack stack, final Level world){
@@ -81,10 +90,10 @@ public final class UpdateInventoryContents implements TickListener{
 		//else
 		return nestedInventoryMapGroup.addAll(
 				(Configs.Visuals.MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES.getBooleanValue()
-						? InvUtils.getAllNestedItems(stack)
-						: InvUtils.getAllNestedItemsExcludingBundles(stack))
+						? InvUtils.getAllNestedItemViews(stack)
+						: InvUtils.getAllNestedItemViewsExcludingBundles(stack))
 				.peek(UpdateInventoryContents::addMapName)
-				.map(s -> MapItem.getSavedData(s, world)).filter(Objects::nonNull)
+				.map(s -> MapItem.getSavedData(s.get(DataComponents.MAP_ID), world)).filter(Objects::nonNull)
 				.map(MapGroupUtils::getIdForMapState).toList());
 	}
 	@Override public final void onTickStart(final Minecraft client){

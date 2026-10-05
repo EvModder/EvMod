@@ -2,6 +2,7 @@ package net.evmodder.evmod.listeners;
 
 import static net.evmodder.evmod.compat.MinecraftCompat.sendOverlay;
 import static net.evmodder.evmod.compat.MinecraftCompat.bundleItem;
+import static net.evmodder.evmod.compat.MinecraftCompat.bundleItems;
 import static net.evmodder.evmod.compat.MinecraftCompat.selectSlot;
 
 import java.util.ArrayDeque;
@@ -428,7 +429,7 @@ public final class MapHangListener{
 	private final List<ItemStack> getSlotsWithBundleSub(List<ItemStack> slots, Player player, String prevName){
 		if(!Configs.Generic.PLACEMENT_HELPER_MAPART_FROM_BUNDLE.getBooleanValue()) return slots;
 		if(!slots.stream().map(s -> s.get(DataComponents.BUNDLE_CONTENTS))
-				.anyMatch(b -> b != null && !b.isEmpty() && b.itemCopyStream().allMatch(s -> s.getItem() == Items.FILLED_MAP))) return slots;
+				.anyMatch(b -> b != null && !b.isEmpty() && bundleItems(b).allMatch(s -> s.is(Items.FILLED_MAP)))) return slots;
 		ArrayList<ItemStack> slotsWithBundleSub = new ArrayList<>(slots);
 		for(int i=0; i<slots.size(); ++i){
 			BundleContents contents = slots.get(i).get(DataComponents.BUNDLE_CONTENTS);

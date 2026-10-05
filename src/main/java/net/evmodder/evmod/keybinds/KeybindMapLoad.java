@@ -1,7 +1,8 @@
 package net.evmodder.evmod.keybinds;
 
 import static net.evmodder.evmod.compat.MinecraftCompat.screen;
-import static net.evmodder.evmod.compat.MinecraftCompat.bundleItem;
+import static net.evmodder.evmod.compat.MinecraftCompat.bundleItems;
+import static net.evmodder.evmod.compat.MinecraftCompat.bundleItemView;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -24,6 +25,9 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+//? >=26.1 {
+import net.minecraft.world.item.ItemInstance;
+//?}
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MapItem;
 import net.minecraft.world.item.component.BundleContents;
@@ -32,14 +36,22 @@ import net.minecraft.world.level.saveddata.maps.MapId;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 public final class KeybindMapLoad{
-	private boolean isUnloadedMapArt(Level world, ItemStack stack){
-		if(stack.getItem() != Items.FILLED_MAP) return false;
-		MapItemSavedData state = MapItem.getSavedData(stack, world);
+	//? >=26.1 {
+	private boolean isUnloadedMapArt(Level world, ItemInstance stack){
+	//?} else {
+	/*private boolean isUnloadedMapArt(Level world, ItemStack stack){*/
+	//?}
+		if(!stack.is(Items.FILLED_MAP)) return false;
+		MapItemSavedData state = MapItem.getSavedData(stack.get(DataComponents.MAP_ID), world);
 		return state == null || state.colors == null || state.colors.length != 128*128;
 	}
-	private boolean isLoadedMapArt(Level world, ItemStack stack){
-		if(stack.getItem() != Items.FILLED_MAP) return false;
-		MapItemSavedData state = MapItem.getSavedData(stack, world);
+	//? >=26.1 {
+	private boolean isLoadedMapArt(Level world, ItemInstance stack){
+	//?} else {
+	/*private boolean isLoadedMapArt(Level world, ItemStack stack){*/
+	//?}
+		if(!stack.is(Items.FILLED_MAP)) return false;
+		MapItemSavedData state = MapItem.getSavedData(stack.get(DataComponents.MAP_ID), world);
 		return state != null && state.colors != null && state.colors.length == 128*128;
 	}
 
@@ -77,7 +89,7 @@ public final class KeybindMapLoad{
 		final ItemStack[] slots = is.getMenu().slots.stream().map(s -> s.getItem()).toArray(ItemStack[]::new);
 		final int[] slotsWithMapArtBundles = IntStream.range(9, 45).filter(i -> {
 			BundleContents content = slots[i].get(DataComponents.BUNDLE_CONTENTS);
-			return content != null && !content.isEmpty() && content.itemCopyStream().allMatch(s -> s.getItem() == Items.FILLED_MAP);
+			return content != null && !content.isEmpty() && bundleItems(content).allMatch(s -> s.is(Items.FILLED_MAP));
 		}).toArray();
 		if(slotsWithMapArtBundles.length == 0){
 			Main.LOGGER.warn("MapLoadBundle: No mapart bundles in inventory");
@@ -102,14 +114,14 @@ public final class KeybindMapLoad{
 			BundleContents contents = slots[i].get(DataComponents.BUNDLE_CONTENTS);
 			if(contents.isEmpty()) continue;
 //			if(contents.stream().anyMatch(s -> s.getItem() != Items.FILLED_MAP)) continue; // Skip bundles with non-mapart contents
-			final int numToLoad = (int)contents.itemCopyStream().filter(s -> isUnloadedMapArt(client.level, s)).count();
+			final int numToLoad = (int)bundleItems(contents).filter(s -> isUnloadedMapArt(client.level, s)).count();
 			if(numToLoad == 0) continue; // Skip bundles with already-loaded mapart
 //			Main.LOGGER.info("MapLoadBundle: found bundle with "+contents.size()+" maps");
 
 			final int depthToLoad;
 			{
 				int j;
-				for(j=0; j<contents.size() && !isUnloadedMapArt(client.level, bundleItem(contents, BUNDLES_ARE_REVERSED ? j : contents.size()-1-j)); ++j);
+				for(j=0; j<contents.size() && !isUnloadedMapArt(client.level, bundleItemView(contents, BUNDLES_ARE_REVERSED ? j : contents.size()-1-j)); ++j);
 				depthToLoad = contents.size()-j;
 //				if(j>0) Main.LOGGER.info("MapLoadBundle: Able to skip loading for bundle in slot"+i+": "+j);
 			}
@@ -192,7 +204,7 @@ public final class KeybindMapLoad{
 			if(skipIfLoaded != null){
 				//Main.LOGGER.info("MapLoadBundle: potentially skippable");
 				final BundleContents contents = client.player.containerMenu.slots.get(c.slot()).getItem().get(DataComponents.BUNDLE_CONTENTS);
-				if(contents != null && contents.itemCopyStream().allMatch(s -> isLoadedMapArt(client.level, s))){
+				if(contents != null && bundleItems(contents).allMatch(s -> isLoadedMapArt(client.level, s))){
 //						Main.LOGGER.info("MapLoadBundle: skippable! whoop whoop: "+(skipIfLoaded));
 					for(int i=0; i<skipIfLoaded; ++i) clicks.remove();
 					return false;

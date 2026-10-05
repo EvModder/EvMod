@@ -2,6 +2,7 @@ package net.evmodder.evmod.keybinds;
 
 import static net.evmodder.evmod.compat.MinecraftCompat.screen;
 import static net.evmodder.evmod.compat.MinecraftCompat.bundleWeight;
+import static net.evmodder.evmod.compat.MinecraftCompat.bundleItems;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -32,7 +33,6 @@ public final class KeybindMapMoveBundle{
 		assert 64 % fraction.getDenominator() == 0;
 		return (64/fraction.getDenominator())*fraction.getNumerator();
 	}
-	private final boolean isMapItem(ItemStack stack){return stack.getItem() == Items.FILLED_MAP;}
 
 	private long lastBundleOp = 0;
 	private final long bundleOpCooldown = 250l;
@@ -65,14 +65,14 @@ public final class KeybindMapMoveBundle{
 				.toArray();
 		final int[] slotsWithBundles = IntStream.range(BUNDLE_SLOT_START, slots.length).filter(i -> {
 			BundleContents contents = slots[i].get(DataComponents.BUNDLE_CONTENTS);
-			return contents != null && contents.itemCopyStream().allMatch(this::isMapItem);
+			return contents != null && bundleItems(contents).allMatch(s -> s.is(Items.FILLED_MAP));
 		}).toArray();
 		final BundleContents[] bundles = Arrays.stream(slotsWithBundles)
 				.mapToObj(i -> slots[i].get(DataComponents.BUNDLE_CONTENTS)).toArray(BundleContents[]::new);
 
 		final ItemStack cursorStack = hs.getMenu().getCarried();
 		final BundleContents cursorBundleContents = cursorStack.get(DataComponents.BUNDLE_CONTENTS);
-		final boolean cursorIsUsableBundle = cursorBundleContents != null && cursorBundleContents.itemCopyStream().allMatch(this::isMapItem);
+		final boolean cursorIsUsableBundle = cursorBundleContents != null && bundleItems(cursorBundleContents).allMatch(s -> s.is(Items.FILLED_MAP));
 		final boolean cursorBundleHasMaps = cursorIsUsableBundle && !cursorBundleContents.isEmpty();
 		final boolean anyBundleWithMaps = cursorBundleHasMaps || !Arrays.stream(bundles).allMatch(BundleContents::isEmpty);
 
@@ -122,7 +122,7 @@ public final class KeybindMapMoveBundle{
 //				if(doStow && occ.intValue() == 1) continue; // Skip full bundles
 //				if(!doStow && occ.getNumerator() == 0) continue; // Skip empty bundles
 				if(doStow ? occ.intValue() == 1 : occ.getNumerator() == 0) continue; // Same logic as above
-				if(!contents.itemCopyStream().allMatch(this::isMapItem)) continue; // Skip bundles with non-mapart contents
+				if(!bundleItems(contents).allMatch(s -> s.is(Items.FILLED_MAP))) continue; // Skip bundles with non-mapart contents
 				final int storedI = getNumStored(occ);
 				if(switch(pickBy){
 					case FIRST, LAST -> true;
