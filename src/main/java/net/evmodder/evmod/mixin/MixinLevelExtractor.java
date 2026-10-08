@@ -11,15 +11,31 @@ import net.minecraft.world.entity.Entity;
 
 @Mixin(LevelExtractor.class)
 abstract class MixinLevelExtractor{
-	@ModifyExpressionValue(method="isEntityVisible", at=@At(value="INVOKE", target="Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;shouldRender(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/culling/Frustum;DDD)Z"))
+	//? >=26.3 {
+	@ModifyExpressionValue(method="isEntityVisible", at=@At(value="INVOKE", target="Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;shouldRender(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/culling/Frustum;DDDF)Z"))
+	//?} else {
+	/*@ModifyExpressionValue(method="isEntityVisible", at=@At(value="INVOKE", target="Lnet/minecraft/client/renderer/entity/EntityRenderDispatcher;shouldRender(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/culling/Frustum;DDD)Z"))
+	*///?}
 	private boolean includeStaticEntitiesOnExtendedTerrain(final boolean original, final Entity entity, final Frustum frustum,
-			final double cameraX, final double cameraY, final double cameraZ){
+			//? >=26.3 {
+			final double cameraX, final double cameraY, final double cameraZ, final float partialTick, final long frameTime){
+			//?} else {
+			/*final double cameraX, final double cameraY, final double cameraZ){
+			*///?}
 		return original || StaticEntityRenderCache.shouldRenderInExtendedTerrain(entity, frustum, cameraX, cameraY, cameraZ);
 	}
 
-	@ModifyExpressionValue(method="isEntityVisible", at=@At(value="INVOKE", target="Lnet/minecraft/client/renderer/LevelRenderer;isSectionCompiledAndVisible(Lnet/minecraft/core/BlockPos;)Z"))
+	//? >=26.3 {
+	@ModifyExpressionValue(method="isEntityVisible", at=@At(value="INVOKE", target="Lnet/minecraft/client/renderer/LevelRenderer;isSectionCompiledAndVisible(Lnet/minecraft/core/BlockPos;J)Z"))
+	//?} else {
+	/*@ModifyExpressionValue(method="isEntityVisible", at=@At(value="INVOKE", target="Lnet/minecraft/client/renderer/LevelRenderer;isSectionCompiledAndVisible(Lnet/minecraft/core/BlockPos;)Z"))
+	*///?}
 	private boolean includeExtendedTerrainSection(final boolean original, final Entity entity, final Frustum frustum,
-			final double cameraX, final double cameraY, final double cameraZ){
+			//? >=26.3 {
+			final double cameraX, final double cameraY, final double cameraZ, final float partialTick, final long frameTime){
+			//?} else {
+			/*final double cameraX, final double cameraY, final double cameraZ){
+			*///?}
 		return original || StaticEntityRenderCache.hasExtendedTerrainAt(entity, cameraX, cameraZ);
 	}
 }

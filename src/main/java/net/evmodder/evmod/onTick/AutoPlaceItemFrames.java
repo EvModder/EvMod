@@ -6,6 +6,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
+//? >=26.3 {
+import java.util.stream.StreamSupport;
+//?}
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
@@ -146,7 +149,12 @@ public final class AutoPlaceItemFrames{
 			List<ItemFrame> ifes = client.level.getEntitiesOfClass(ItemFrame.class, box, filter);
 
 			Vec3 eyePos = client.player.getEyePosition();
-			Optional<BlockPos> closestValidPlacement = BlockPos.withinManhattanStream(clientBp, SCAN_DIST, SCAN_DIST, SCAN_DIST)
+			//? >=26.3 {
+			Optional<BlockPos> closestValidPlacement = StreamSupport.stream(
+				BlockPos.withinBoxByManhattanDistance(clientBp, SCAN_DIST, SCAN_DIST, SCAN_DIST).spliterator(), false)
+			//?} else {
+			/*Optional<BlockPos> closestValidPlacement = BlockPos.withinManhattanStream(clientBp, SCAN_DIST, SCAN_DIST, SCAN_DIST)
+			*///?}
 				.filter(bp -> isValidIframePlacement(bp, client.level, ifes))
 				.filter(bp -> getPlaceAgainstSurface(bp).distanceToSqr(eyePos) <= MAX_REACH*MAX_REACH)
 				.filter(bp -> Arrays.stream(recentPlaceAttempts).noneMatch(attempt -> attempt != null && bp.equals(attempt)))

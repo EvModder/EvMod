@@ -10,6 +10,7 @@ Usage details are over [on Modrinth](https://modrinth.com/mod/evmod).
 - Minecraft 1.21.4
 - Minecraft 1.21.11
 - Minecraft 26.2
+- Minecraft 26.3
 
 ## Build commands
 

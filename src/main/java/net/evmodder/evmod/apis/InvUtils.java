@@ -52,7 +52,7 @@ public final class InvUtils{
 	// Stack/snapshot consumers retain the copying API rather than borrowing mutable legacy contents.
 	public static final Stream<ItemStack> getAllNestedItems(ItemStack item){
 		final BundleContents contents = item.get(DataComponents.BUNDLE_CONTENTS);
-		if(contents != null) return getAllNestedItems(contents.itemCopyStream()/*.sequential()*/);
+		if(contents != null) return getAllNestedItems(contents.itemCopies()/*.sequential()*/);
 		final ItemContainerContents container = item.get(DataComponents.CONTAINER);
 		if(container != null) return getAllNestedItems(nonEmptyItems(container)/*.sequential()*/);
 		return Stream.of(item);

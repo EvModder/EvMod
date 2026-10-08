@@ -70,7 +70,7 @@ loom {
 	runConfigs.clear()
 }
 
-def isPrimaryEclipseVersion = sc.current.version == '26.2'
+def isPrimaryEclipseVersion = sc.current.version == '26.3'
 
 eclipse {
 	project {

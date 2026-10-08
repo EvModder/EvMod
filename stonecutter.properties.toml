@@ -36,3 +36,10 @@ deps.fabric_loader = "0.19.3"
 deps.fabric_api = "0.152.1+26.2"
 deps.malilib = "0.29.0"
 deps.baritone = "1.19.0"
+
+["26.3"]
+deps.java = "25"
+deps.fabric_loader = "0.19.5"
+deps.fabric_api = "0.162.0+26.3"
+deps.malilib = "0.30.1"
+deps.baritone = "1.20.0"

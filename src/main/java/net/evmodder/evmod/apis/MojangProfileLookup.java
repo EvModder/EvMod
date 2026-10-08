@@ -1,7 +1,7 @@
 package net.evmodder.evmod.apis;
 
 import java.util.UUID;
-import com.mojang.authlib.yggdrasil.ProfileResult;
+import com.mojang.authlib.services.ProfileResult;
 import net.evmodder.EvLib.util.LoadingCache;
 import net.evmodder.EvLib.util.WebHook;
 import net.evmodder.evmod.Main;

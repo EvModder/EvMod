@@ -1,6 +1,8 @@
 package net.evmodder.evmod.apis;
 
-import java.util.Arrays;
+//? <26.3 {
+/*import java.util.Arrays;*/
+//?}
 import java.util.Objects;
 import com.google.common.collect.Streams;
 import net.evmodder.evmod.Main;
@@ -15,6 +17,9 @@ import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnder
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.NoteBlock;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
+//? >=26.3 {
+import net.minecraft.world.level.block.entity.SignTextSlot;
+//?}
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
@@ -93,9 +98,13 @@ public final class EpearlActivator{
 	}
 	private final BlockPos findSignWithName(Minecraft client, String name){
 		final BlockPos playerPos = client.player.blockPosition();
-		for(BlockPos pos : BlockPos.withinManhattan(playerPos, REACH, REACH, REACH)){
+		for(BlockPos pos : BlockPos.withinBoxByManhattanDistance(playerPos, REACH, REACH, REACH)){
 			if(client.level.getBlockEntity(pos) instanceof SignBlockEntity sbe &&
-					Streams.concat(Arrays.stream(sbe.getFrontText().getMessages(/*filtered=*/false)), Arrays.stream(sbe.getBackText().getMessages(false))
+					//? >=26.3 {
+					Streams.concat(sbe.getText(SignTextSlot.FRONT).getMessages(false).stream(), sbe.getText(SignTextSlot.BACK).getMessages(false).stream()
+					//?} else {
+					/*Streams.concat(Arrays.stream(sbe.getFrontText().getMessages(/^filtered=^/false)), Arrays.stream(sbe.getBackText().getMessages(false))
+					*///?}
 					).map(Component::tryCollapseToString)
 					.filter(Objects::nonNull)
 					.map(s -> s.replaceAll("[^a-zA-Z0-9_]+", ""))
@@ -113,7 +122,7 @@ public final class EpearlActivator{
 		double closestDistSq = Double.MAX_VALUE;
 		BlockPos buttonPos = null;
 		final Vec3 centerPos = Vec3.atCenterOf(startPos);
-		for(BlockPos pos : BlockPos.withinManhattan(startPos, REACH, REACH, REACH)){
+		for(BlockPos pos : BlockPos.withinBoxByManhattanDistance(startPos, REACH, REACH, REACH)){
 			BlockState bs = client.level.getBlockState(pos);
 			if(isClickableTrigger(bs)){
 				Vec3 closestPoint = bs.getShape(client.level, pos).closestPointTo(centerPos).get();

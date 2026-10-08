@@ -191,7 +191,7 @@ public final class KeybindEbounceTravelHelper{
 						if(getPlaceSide(bp) == null) continue;
 						if(!canPlaceBlock(bp)) continue;
 						//if(client.player.getEyePos().squaredDistanceTo(Vec3d.ofCenter(bp.offset(getClosestPlaceSide(bp)))) > 36) continue;
-						blockPosArray.add(new BlockPos(bp));
+						blockPosArray.add(bp.immutable());
 					}
 				}
 			}

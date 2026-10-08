@@ -32,7 +32,11 @@ abstract class MixinEntityRenderer{
 
 	@ModifyExpressionValue(method="shouldRender", at=@At(value="INVOKE", target="Lnet/minecraft/world/entity/Entity;shouldRender(DDD)Z"))
 	private boolean applyConfiguredStaticEntityRenderRange(final boolean original, final Entity entity, final Frustum frustum,
-			final double cameraX, final double cameraY, final double cameraZ){
+			//? >=26.3 {
+			final double cameraX, final double cameraY, final double cameraZ, final float partialTick){
+			//?} else {
+			/*final double cameraX, final double cameraY, final double cameraZ){
+			*///?}
 		return StaticEntityRenderCache.useConfiguredRenderDistance(original, entity, cameraX, cameraY, cameraZ);
 	}
 
