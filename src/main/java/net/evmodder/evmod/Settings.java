@@ -29,7 +29,7 @@ public final class Settings{
 	}
 	public boolean usesClicks(){
 		return any(Setting.CLICK_SAFETY, Setting.MAP_ACTIONS, Setting.MAP_PLACE_HAND_RESTOCK, Setting.MAP_AUTO_PLACE,
-				Setting.MAP_AUTO_REMOVE, Setting.INVENTORY_TOOLS, Setting.CRAFTING);
+				Setting.MAP_AUTO_REMOVE, Setting.INVENTORY_TOOLS, Setting.CRAFTING, Setting.ARMOR_SWAP);
 	}
 	public boolean usesMapPackets(){
 		return any(Setting.MAP_ACTIONS, Setting.MAP_CACHE, Setting.MAP_SCAN_INVENTORY, Setting.MAP_SCAN_CONTAINERS,

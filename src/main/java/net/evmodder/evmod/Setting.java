@@ -31,7 +31,7 @@ public enum Setting{
 	DATABASE_MAP_HISTORY("data.map_history", true, null),
 	DATABASE_REMOTE("data.remote_db", false, "database"),
 
-	APPEARANCE("player.keybind_toggle.skin_layers", false, null),
+	APPEARANCE("player.keybind_toggle.skin_layers", false, null), ARMOR_SWAP("player.keybind_toggle.armor", false, null),
 	BROADCASTER("chat.broadcaster", false, "broadcaster"), CHAT_ACTIONS("chat.shortcuts", false, null),
 	CRAFTING("inventory.crafting_restock", false, null), FIREWORK_BOOST("elytra.prevent_firework_waste", false, null),
 	INVENTORY_TOOLS("inventory.utility_keybinds", false, null),

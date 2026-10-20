@@ -310,15 +310,15 @@
 	"evmod.config.hotkeys.name.mapMoveBundleSelectPrioForTake": "mapMoveBundleSelectPrioForTake",
 	"evmod.config.hotkeys.comment.mapMoveBundleSelectPrioForTake": "When there is no bundle on the cursor, and multiple bundles with mapart in the inventory,\nwhat selection strategy do we use for bundle-extract?",
 
-	"evmod.config.hotkeys.name.toggleCape": "toggleCape",
-	"evmod.config.hotkeys.name.syncCapeWithElytra": "syncCapeWithElytra",
-	"evmod.config.hotkeys.comment.syncCapeWithElytra": "When toggling off elytra, also turn off cape",
 	"evmod.config.hotkeys.name.toggleHat": "toggleHat",
 	"evmod.config.hotkeys.name.toggleJacket": "toggleJacket",
 	"evmod.config.hotkeys.name.toggleSleeveLeft": "toggleSleeveLeft",
 	"evmod.config.hotkeys.name.toggleSleeveRight": "toggleSleeveRight",
 	"evmod.config.hotkeys.name.togglePantsLegLeft": "togglePantsLegLeft",
 	"evmod.config.hotkeys.name.togglePantsLegRight": "togglePantsLegRight",
+	"evmod.config.hotkeys.name.toggleCape": "toggleCape",
+	"evmod.config.hotkeys.name.syncCapeWithElytra": "syncCapeWithElytra",
+	"evmod.config.hotkeys.comment.syncCapeWithElytra": "When toggling off elytra, also turn off cape",
 
 	"evmod.config.hotkeys.name.automaticInfiniteElytraTravelHelper": "autoInfElytraTravelHelper",
 	"evmod.config.hotkeys.prettyName.automaticInfiniteElytraTravelHelper": "AIE Travel Helper",

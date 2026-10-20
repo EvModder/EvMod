@@ -366,14 +366,23 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigOptionList MAP_MOVE_BUNDLE_SELECT_PRIORITY_TAKE = new ConfigOptionList(
 				"mapMoveBundleSelectPrioForTake", OptionBundleSelectPrioTake.EMPTIEST_NOT_EMPTY).apply(HOTKEYS_KEY);
 
-		public static final ConfigHotkey TOGGLE_CAPE = new ConfigHotkey("toggleCape", "").apply(HOTKEYS_KEY);
-		public static final ConfigBoolean SYNC_CAPE_WITH_ELYTRA = new ConfigBoolean("syncCapeWithElytra", false).apply(HOTKEYS_KEY);
+		private static final KeybindSettings ARMOR_SWAP_SETTINGS = KeybindSettings.create(Context.INGAME,
+				KeyAction.PRESS, /*allowExtraKeys=*/true, /*orderSensitive=*/true, /*exclusive=*/false, /*cancel=*/false);
+		public static final ConfigHotkey SWAP_SPECIAL_HELMET = new ConfigHotkey("swapSpecialHelmet", MAPART_ONLY_DEFAULTS ? "" : "COMMA", ARMOR_SWAP_SETTINGS).apply(HOTKEYS_KEY);
+		public static final ConfigHotkey SWAP_LEATHER_BOOTS = new ConfigHotkey("swapLeatherBoots", MAPART_ONLY_DEFAULTS ? "" : "COMMA", ARMOR_SWAP_SETTINGS).apply(HOTKEYS_KEY);
+		public static final ConfigHotkey SWAP_GOLD_HELMET = new ConfigHotkey("swapGoldHelmet", MAPART_ONLY_DEFAULTS ? "" : "COMMA", ARMOR_SWAP_SETTINGS).apply(HOTKEYS_KEY);
+		public static final ConfigHotkey SWAP_GOLD_LEGGINGS = new ConfigHotkey("swapGoldLeggings", MAPART_ONLY_DEFAULTS ? "" : "COMMA", ARMOR_SWAP_SETTINGS).apply(HOTKEYS_KEY);
+		public static final ConfigHotkey SWAP_GOLD_BOOTS = new ConfigHotkey("swapGoldBoots", MAPART_ONLY_DEFAULTS ? "" : "COMMA", ARMOR_SWAP_SETTINGS).apply(HOTKEYS_KEY);
+
 		public static final ConfigHotkey TOGGLE_HAT = new ConfigHotkey("toggleHat", "").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TOGGLE_JACKET = new ConfigHotkey("toggleJacket", MAPART_ONLY_DEFAULTS ? "" : "I").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TOGGLE_SLEEVE_LEFT = new ConfigHotkey("toggleSleeveLeft", MAPART_ONLY_DEFAULTS ? "" : "I").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TOGGLE_SLEEVE_RIGHT = new ConfigHotkey("toggleSleeveRight", MAPART_ONLY_DEFAULTS ? "" : "I").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TOGGLE_PANTS_LEG_LEFT = new ConfigHotkey("togglePantsLegLeft", MAPART_ONLY_DEFAULTS ? "" : "I").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TOGGLE_PANTS_LEG_RIGHT = new ConfigHotkey("togglePantsLegRight", MAPART_ONLY_DEFAULTS ? "" : "I").apply(HOTKEYS_KEY);
+		public static final ConfigHotkey TOGGLE_CAPE = new ConfigHotkey("toggleCape", "").apply(HOTKEYS_KEY);
+		public static final ConfigBoolean SYNC_CAPE_WITH_ELYTRA = new ConfigBoolean("syncCapeWithElytra", false).apply(HOTKEYS_KEY);
+		public static final ConfigBoolean SYNC_ARMOR_WITH_ELYTRA = new ConfigBoolean("syncArmorWithElytra", true).apply(HOTKEYS_KEY);
 
 		public static final ConfigBooleanHotkeyed AIE_TRAVEL_HELPER = new ConfigBooleanHotkeyed("automaticInfiniteElytraTravelHelper", false,
 				MAPART_ONLY_DEFAULTS ? "" : "SEMICOLON", KeybindSettings.NOCANCEL).apply(HOTKEYS_KEY);
@@ -434,8 +443,11 @@ public final class Configs implements IConfigHandler{
 						MAP_MOVE_BUNDLE_PREFER_STOW, MAP_MOVE_BUNDLE_STOW_NON_SINGLE_MAPS, MAP_MOVE_BUNDLE_TAKE_MAX,
 						MAP_MOVE_BUNDLE_SELECT_PRIORITY_STOW, MAP_MOVE_BUNDLE_SELECT_PRIORITY_TAKE));
 			}
-			if(settings.enabled(Setting.APPEARANCE)) configs.addAll(List.of(TOGGLE_CAPE, SYNC_CAPE_WITH_ELYTRA, TOGGLE_HAT,
-					TOGGLE_JACKET, TOGGLE_SLEEVE_LEFT, TOGGLE_SLEEVE_RIGHT, TOGGLE_PANTS_LEG_LEFT, TOGGLE_PANTS_LEG_RIGHT));
+			if(settings.enabled(Setting.ARMOR_SWAP)) configs.addAll(List.of(SWAP_SPECIAL_HELMET, SWAP_LEATHER_BOOTS,
+					SWAP_GOLD_HELMET, SWAP_GOLD_LEGGINGS, SWAP_GOLD_BOOTS));
+			if(settings.enabled(Setting.APPEARANCE)) configs.addAll(List.of(TOGGLE_HAT, TOGGLE_JACKET, TOGGLE_SLEEVE_LEFT,
+					TOGGLE_SLEEVE_RIGHT, TOGGLE_PANTS_LEG_LEFT, TOGGLE_PANTS_LEG_RIGHT, TOGGLE_CAPE, SYNC_CAPE_WITH_ELYTRA));
+			if(settings.enabled(Setting.ARMOR_SWAP)) configs.add(SYNC_ARMOR_WITH_ELYTRA);
 			if(settings.enabled(Setting.TRAVEL)) configs.addAll(List.of(AIE_TRAVEL_HELPER, EBOUNCE_TRAVEL_HELPER, SNAP_ANGLE_1, SNAP_ANGLE_2));
 			if(settings.any(Setting.TRAVEL, Setting.INVENTORY_TOOLS)) configs.add(EJECT_JUNK_ITEMS);
 			if(settings.enabled(Setting.CRAFTING)) configs.addAll(List.of(CRAFT_RESTOCK, CRAFT_RESTOCK_SMART, CRAFT_BULK_MODIFIER));

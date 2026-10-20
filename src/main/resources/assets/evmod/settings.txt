@@ -58,6 +58,7 @@ data.remote_db: false                     # Link to a remote database; data shar
 #----- Player / Misc
 player.pull_pearls_on_request: false      # Whisper activation requires data.epearl_owners; external-trigger hotkey does not
 player.keybind_toggle.skin_layers: false  # Toggle cape, hat, jacket, sleeves, and pants layers; optional cape/elytra sync
+player.keybind_toggle.armor: false        # Swap specialty/gold armor and leather boots; optional elytra sync
 
 elytra.prevent_firework_waste: false      # Boost instead of placing rockets when gliding at blocks; excludes explosive rockets
 elytra.travel_helpers: false              # AIE/eBounce, angle snapping, and junk ejection

@@ -6,6 +6,7 @@ import net.evmodder.evmod.apis.ChatBroadcaster;
 import net.evmodder.evmod.apis.EpearlExternalAdapter;
 import net.evmodder.evmod.apis.EpearlLookup;
 import net.evmodder.evmod.apis.RemoteServerSender;
+import net.evmodder.evmod.apis.TickListener;
 import net.evmodder.evmod.apis.WhisperPlaySound;
 import net.evmodder.evmod.keybinds.*;
 import net.evmodder.evmod.listeners.GameMessageFilter;
@@ -62,6 +63,8 @@ final class KeyCallbacks{
 			}
 		});
 
+		final KeybindArmorSwap kbArmorSwap = settings.enabled(Setting.ARMOR_SWAP) ? new KeybindArmorSwap() : null;
+		if(kbArmorSwap != null) TickListener.register(kbArmorSwap);
 		final KeybindAIETravelHelper kbAIE = settings.enabled(Setting.TRAVEL) ? new KeybindAIETravelHelper() : null;
 		final KeybindEjectJunk kbej = settings.any(Setting.TRAVEL, Setting.INVENTORY_TOOLS) ? new KeybindEjectJunk() : null;
 		final KeybindEbounceTravelHelper kbEbounce = settings.enabled(Setting.TRAVEL) ? new KeybindEbounceTravelHelper(kbej) : null;
@@ -100,6 +103,13 @@ final class KeyCallbacks{
 		}
 
 		// Keybind callbacks
+		if(kbArmorSwap != null){
+			keybindCallback(Configs.Hotkeys.SWAP_SPECIAL_HELMET, Objects::isNull, ()->kbArmorSwap.request(KeybindArmorSwap.Swap.SPECIAL_HELMET));
+			keybindCallback(Configs.Hotkeys.SWAP_LEATHER_BOOTS, Objects::isNull, ()->kbArmorSwap.request(KeybindArmorSwap.Swap.LEATHER_BOOTS));
+			keybindCallback(Configs.Hotkeys.SWAP_GOLD_HELMET, Objects::isNull, ()->kbArmorSwap.request(KeybindArmorSwap.Swap.GOLD_HELMET));
+			keybindCallback(Configs.Hotkeys.SWAP_GOLD_LEGGINGS, Objects::isNull, ()->kbArmorSwap.request(KeybindArmorSwap.Swap.GOLD_LEGGINGS));
+			keybindCallback(Configs.Hotkeys.SWAP_GOLD_BOOTS, Objects::isNull, ()->kbArmorSwap.request(KeybindArmorSwap.Swap.GOLD_BOOTS));
+		}
 		if(settings.enabled(Setting.APPEARANCE)){
 			keybindCallback(Configs.Hotkeys.TOGGLE_CAPE, null, ()->InitUtils.toggleSkinLayer(PlayerModelPart.CAPE));
 			keybindCallback(Configs.Hotkeys.TOGGLE_HAT, null, ()->InitUtils.toggleSkinLayer(PlayerModelPart.HAT));
