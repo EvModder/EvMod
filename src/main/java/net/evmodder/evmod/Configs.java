@@ -22,6 +22,7 @@ import net.evmodder.evmod.config.ConfigPlayerList.NameAndUUID;
 
 public final class Configs implements IConfigHandler{
 	int guiTab;  // used by ConfigGui
+	private static final boolean MAPART_ONLY_DEFAULTS = Main.mapArtFeaturesOnly;
 
 	//====================================================================================================
 	// Generic
@@ -34,26 +35,15 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean CLICK_LIMIT_ADJUST_FOR_TPS = new ConfigBoolean("clickLimitAdjustForTPS", false).apply(GENERIC_KEY);
 		public static final ConfigBoolean CLICK_LIMIT_USER_INPUT = new ConfigBoolean("clickLimitUserInputs", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean CLICK_FILTER_USER_INPUT = new ConfigBoolean("clickBlockUserInputsDuringOperation", true).apply(GENERIC_KEY);
-		public static final ConfigBoolean CLICK_DISPLAY_AVAILABLE_PERSISTENT = new ConfigBoolean("clickDisplayAvailablePersistent", false).apply(GENERIC_KEY);
 
 		public static final ConfigBoolean USE_BUNDLE_PACKET = new ConfigBoolean("useBundlePacket", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean BUNDLES_ARE_REVERSED = new ConfigBoolean("bundlesAreReversed", true).apply(GENERIC_KEY);
-
-		public static final ConfigOptionList MAP_CACHE = new ConfigOptionList("mapStateCache", OptionMapStateCache.MEMORY_AND_DISK).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAP_CACHE_UNLOCKED = new ConfigBoolean("mapStateCacheUnlocked", true).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAP_CACHE_BY_ID = new ConfigBoolean("mapStateCacheById", false).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAP_CACHE_BY_NAME = new ConfigBoolean("mapStateCacheByName", true).apply(GENERIC_KEY);
-		//ConfigOptionList MAP_CACHE_BY_NAME{UNIQUE, FIRST}
-		public static final ConfigBoolean MAP_CACHE_BY_INV_POS = new ConfigBoolean("mapStateCacheByInvPos", false).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAP_CACHE_BY_EC_POS = new ConfigBoolean("mapStateCacheByEchestPos", true).apply(GENERIC_KEY);
-		public static final ConfigBoolean MAP_CACHE_BY_CONTAINER_POS = new ConfigBoolean("mapStateCacheByContainerPos", false).apply(GENERIC_KEY);
 
 		public static final ConfigString MAPART_GROUP_DEFAULT = new ConfigString("mapArtDefaultGroup", "seen/2b2t.org").apply(GENERIC_KEY);
 		public static final ConfigOptionList MAPART_GROUP_UNLOCKED_HANDLING = new ConfigOptionList("mapArtGroupUnlockedMapHandling",
 				OptionUnlockedMapHandling.SKIP).apply(GENERIC_KEY);
 
 //		public static final ConfigBoolean NEW_MAP_NOTIFIER_ITEM_ENTITY = new ConfigBoolean("itemEntityNewMapNotifier", false).apply(GENERIC_KEY);
-		public static final ConfigBoolean NEW_MAP_NOTIFIER_IFRAME = new ConfigBoolean("iFrameNewMapNotifier", false).apply(GENERIC_KEY);
 
 		public static final ConfigInteger MAX_IFRAME_TRACKING_DIST = new ConfigInteger("iFrameTrackingDist", /*default=*/128, 0, 10_000_000).apply(GENERIC_KEY);
 		public static double MAX_IFRAME_TRACKING_DIST_SQ;
@@ -88,28 +78,85 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean SKIP_MONO_COLOR_MAPS = new ConfigBoolean("ignoreMonoColorMapsInHightlights", false).apply(GENERIC_KEY);
 
 		public static final ConfigString WHISPER_PLAY_SOUND = new ConfigString("whisperPlaySound",
-				Main.mapArtFeaturesOnly ? "" : "{sound:block.note_block.bass, category:PLAYERS, volume:.7, pitch:2}").apply(GENERIC_KEY);
+				MAPART_ONLY_DEFAULTS ? "" : "{sound:block.note_block.bass, category:PLAYERS, volume:.7, pitch:2}").apply(GENERIC_KEY);
 		public static final ConfigString WHISPER_PLAY_SOUND_UNFOCUSED = new ConfigString("whisperPlaySoundUnfocused",
-				Main.mapArtFeaturesOnly ? "" : "{sound:block.note_block.bass, category:PLAYERS, volume:4, pitch:2}").apply(GENERIC_KEY);
+				MAPART_ONLY_DEFAULTS ? "" : "{sound:block.note_block.bass, category:PLAYERS, volume:4, pitch:2}").apply(GENERIC_KEY);
 		public static final ConfigString WHISPER_PEARL_PULL = new ConfigString("whisperPearlPull",
-				Main.mapArtFeaturesOnly ? "" : "!?(load|go|14|tp|teleport|e?p|e?pearl|([iI]'?m ?)?r(ea)?dy)( me)?( pl(ea)?se?)?[.!?]?").apply(GENERIC_KEY);
+				MAPART_ONLY_DEFAULTS ? "" : "!?(load|go|14|tp|teleport|e?p|e?pearl|([iI]'?m ?)?r(ea)?dy)( me)?( pl(ea)?se?)?[.!?]?").apply(GENERIC_KEY);
 		public static final ConfigBoolean MUTE_MUSIC_ON_MENU_SCREEN = new ConfigBoolean("muteMusicOnMenuScreen", false).apply(GENERIC_KEY);
-		public static final ConfigBoolean DONT_WASTE_FIREWORKS = new ConfigBoolean("dontWasteFireworks", !Main.mapArtFeaturesOnly).apply(GENERIC_KEY);
+		public static final ConfigBoolean DONT_WASTE_FIREWORKS = new ConfigBoolean("dontWasteFireworks", !MAPART_ONLY_DEFAULTS).apply(GENERIC_KEY);
 
 //		public static final ConfigBoolean MAPART_GROUP_INCLUDE_UNLOCKED = new ConfigBoolean("mapArtGroupIncludeUnlocked", true).apply(GENERIC_KEY);
 //		public static final ConfigBoolean MAPART_GROUP_ENFORCE_LOCKEDNESS_MATCH = new ConfigBoolean("mapArtGroupTreatUnlockedAsUnique", false).apply(GENERIC_KEY);
 
-		public static final ConfigStringList SCROLL_ORDER = new ConfigStringList("hotbarSlotItemTypeScrollOrder", ImmutableList.of(
-				"white, light_gray, gray, black, brown, red, orange, yellow, lime, green, cyan, light_blue, blue, purple, magenta, pink",
-				", exposed, weathered, oxidized",
-				",powered,detector,activator",
-				"tube, brain, bubble, fire, horn",
-				"oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry, bamboo, crimson, warped"
-		)).apply(GENERIC_KEY);
 		public static final ConfigStringList SEND_ON_SERVER_JOIN = new ConfigStringList("sendChatsOnServerJoin", ImmutableList.of()).apply(GENERIC_KEY);
-		public static final ConfigBoolean LOG_COORDS_ON_SERVER_QUIT = new ConfigBoolean("logCoordsOnServerQuit", !Main.mapArtFeaturesOnly).apply(GENERIC_KEY);
+		public static final ConfigBoolean LOG_COORDS_ON_SERVER_QUIT = new ConfigBoolean("logCoordsOnServerQuit", !MAPART_ONLY_DEFAULTS).apply(GENERIC_KEY);
 
-		public static final ConfigBoolean INV_RESTOCK_AUTO = new ConfigBoolean("inventoryRestockAuto", !Main.mapArtFeaturesOnly).apply(GENERIC_KEY);
+		public static final ConfigOptionList INV_RESTOCK_IF = new ConfigOptionList("inventoryRestockIf", OptionInventoryRestockIf.RESUPPLY).apply(GENERIC_KEY);
+		public static final ConfigOptionList INV_RESTOCK_LEAVE = new ConfigOptionList("inventoryRestockLeave", OptionInventoryRestockLeave.ONE_ITEM).apply(GENERIC_KEY);
+		public static final ConfigStringList INV_RESTOCK_BLACKLIST = new ConfigStringList("inventoryRestockBlacklist", ImmutableList.of(
+//				"ender_chest", "filled_map"
+		)).apply(GENERIC_KEY);
+		public static final ConfigStringList INV_RESTOCK_WHITELIST = new ConfigStringList("inventoryRestockWhitelist", ImmutableList.of(
+				"firework_rocket", "end_crystal", "respawn_anchor", "obsidian", "ender_pearl", "chorus_fruit", "wind_charge", "experience_bottle",
+				"arrow", "spectral_arrow", "tipped_arrow", "golden_carrot", "enchanted_golden_apple", "cooked_beef", "cooked_porkchop", "cooked_chicken"
+		)).apply(GENERIC_KEY);
+		public static final ConfigStringList INV_ORGANIZE_1 = new ConfigStringList("inventoryOrganize1", ImmutableList.of(
+				"# Armor",
+				"5:carved_pumpkin", "6:elytra",
+				"5:netherite_helmet", "6:netherite_chestplate", "7:netherite_leggings", "8:netherite_boots",
+				"5:diamond_helmet", "6:diamond_chestplate", "7:diamond_leggings", "8:diamond_boots",
+
+				"# Offhand",
+				"45:totem_of_undying", "45:enchanted_golden_apple", "45:golden_carrot", "45:cooked_beef",
+
+				"# Hotbar LHS",
+				"36:netherite_sword", "36:diamond_sword", "36:netherite_axe", "36:diamond_axe",
+				"37:netherite_pickaxe", "37:diamond_pickaxe",
+				"38:netherite_axe", "38:diamond_axe", "38:netherite_shovel", "38:diamond_shovel", "38:diamond_hoe", "38:netherite_hoe",
+					"38:firework_rocket", "38:end_crystal",
+				"39:netherite_shovel", "39:diamond_shovel", "39:diamond_hoe", "39:netherite_hoe", "39:fishing_rod", "39:firework_rocket",
+				"40:diamond_hoe", "40:netherite_hoe", "40:fishing_rod", "40:firework_rocket",
+				"41:firework_rocket",
+
+				"# Hotbar RHS",
+				"44:golden_carrot", "44:cooked_beef", "44:enchanted_golden_apple",
+				"43:enchanted_golden_apple",
+
+				"# Inventory top LHS",
+				"9:netherite_chestplate", "9:diamond_chestplate", "9:elytra", "9:netherite_helmet", "9:diamond_helmet", "9:ender_chest", "9:totem_of_undying",
+				"10:netherite_helmet", "10:diamond_helmet", "10:ender_chest", "10:totem_of_undying",
+				"11:ender_chest", "11:totem_of_undying", "12:totem_of_undying", "13:totem_of_undying",
+
+				"# Extra rockets, food",
+				"30:firework_rocket", "21:firework_rocket",
+				"35:enchanted_golden_apple", "35:golden_carrot", "35:cooked_beef", "35:cooked_porkchop", "35:pumpkin_pie",
+
+				"# Fill extra hotbar slots with crystals",
+				"36:end_crystal", "37:end_crystal", "38:end_crystal", "39:end_crystal", "40:end_crystal", "41:end_crystal", "42:end_crystal"
+		)).apply(GENERIC_KEY);
+		public static final ConfigStringList INV_ORGANIZE_2 = new ConfigStringList("inventoryOrganize2", ImmutableList.of(
+				"# Armor",
+				"5:carved_pumpkin",
+				"6:elytra",
+				"5:netherite_helmet", "6:netherite_chestplate", "7:netherite_leggings", "8:netherite_boots",
+				"5:diamond_helmet", "6:diamond_chestplate", "7:diamond_leggings", "8:diamond_boots",
+
+				"# Offhand",
+				"45:totem_of_undying",
+
+				"# Hotbar LHS",
+				"36:netherite_sword", "36:diamond_sword", "36:netherite_axe", "36:diamond_axe",
+				"37:netherite_pickaxe", "37:diamond_pickaxe",
+				"38:netherite_axe", "38:diamond_axe", "38:netherite_shovel", "38:diamond_shovel", "38:firework_rocket",
+				"39:firework_rocket",
+
+				"# Hotbar RHS",
+				"44:golden_carrot", "44:cooked_beef", "44:enchanted_golden_apple"
+		)).apply(GENERIC_KEY);
+		public static final ConfigStringList INV_ORGANIZE_3 = new ConfigStringList("inventoryOrganize3", ImmutableList.of()).apply(GENERIC_KEY);
+
+		public static final ConfigBoolean INV_RESTOCK_AUTO = new ConfigBoolean("inventoryRestockAuto", !MAPART_ONLY_DEFAULTS).apply(GENERIC_KEY);
 		public static final ConfigStringList INV_RESTOCK_AUTO_FOR_INV_ORGS = new ConfigStringList("inventoryRestockAutoForOrganization",
 				ImmutableList.of("2")).apply(GENERIC_KEY);
 
@@ -124,18 +171,10 @@ public final class Configs implements IConfigHandler{
 			if(configs != null) return configs;
 			configs = new ArrayList<>();
 			configs.addAll(List.of(CLICK_LIMIT_COUNT, CLICK_LIMIT_WINDOW, CLICK_LIMIT_ADJUST_FOR_TPS, CLICK_LIMIT_USER_INPUT, CLICK_FILTER_USER_INPUT));
-			if(settings.showNicheConfigs) configs.add(CLICK_DISPLAY_AVAILABLE_PERSISTENT);
 			configs.addAll(List.of(USE_BUNDLE_PACKET, BUNDLES_ARE_REVERSED));
-			final boolean CAN_CACHE_MAPS = (settings.serverJoinListener && settings.serverQuitListener) || settings.containerOpenCloseListener;
-			if(CAN_CACHE_MAPS) configs.addAll(List.of(MAP_CACHE, MAP_CACHE_UNLOCKED));
-			if(settings.serverJoinListener) configs.add(MAP_CACHE_BY_ID);
-			if(settings.containerOpenCloseListener) configs.add(MAP_CACHE_BY_NAME);
-			if(settings.serverJoinListener && settings.serverQuitListener) configs.add(MAP_CACHE_BY_INV_POS);
-			if(settings.containerOpenCloseListener) configs.addAll(List.of(MAP_CACHE_BY_EC_POS, MAP_CACHE_BY_CONTAINER_POS));
 
 			if(settings.cmdMapArtGroup){
 				configs.addAll(List.of(MAPART_GROUP_DEFAULT, MAPART_GROUP_UNLOCKED_HANDLING));
-				if(settings.onTickIframes) configs.add(NEW_MAP_NOTIFIER_IFRAME);
 			}
 			if(settings.onTickIframes) configs.add(MAX_IFRAME_TRACKING_DIST);
 			if(settings.placementHelperIframeAutoPlace){
@@ -167,12 +206,13 @@ public final class Configs implements IConfigHandler{
 
 			if(settings.gameMessageListener) configs.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PLAY_SOUND_UNFOCUSED, WHISPER_PEARL_PULL));
 			if(settings.muteMusicOnMenuScreen) configs.add(MUTE_MUSIC_ON_MENU_SCREEN);
-			if(!Main.mapArtFeaturesOnly){
+			if(!MAPART_ONLY_DEFAULTS){
 				if(settings.blockClickListener) configs.add(DONT_WASTE_FIREWORKS);
-				configs.add(SCROLL_ORDER);
 				if(settings.serverJoinListener) configs.add(SEND_ON_SERVER_JOIN);
 				if(settings.serverQuitListener) configs.add(LOG_COORDS_ON_SERVER_QUIT);
 			}
+			if(!MAPART_ONLY_DEFAULTS) configs.addAll(List.of(INV_RESTOCK_IF, INV_RESTOCK_LEAVE, INV_RESTOCK_BLACKLIST, INV_RESTOCK_WHITELIST,
+					INV_ORGANIZE_1, INV_ORGANIZE_2, INV_ORGANIZE_3));
 			if(settings.containerOpenCloseListener) configs.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
 			if(settings.broadcaster) configs.addAll(List.of(TEMP_BROADCAST_ACCOUNT, TEMP_BROADCAST_TIMESTAMP, TEMP_BROADCAST_MSGS));
 			if(settings.showNicheConfigs) configs.add(DISABLE_DRAG_CLICK_ON_MAPS_AND_BUNDLES);
@@ -187,11 +227,14 @@ public final class Configs implements IConfigHandler{
 	public static final class Visuals{
 		private static final String VISUALS_KEY = Main.MOD_ID+".config.visuals";
 
+		public static final ConfigBoolean CLICK_DISPLAY_AVAILABLE_PERSISTENT = new ConfigBoolean("clickDisplayAvailablePersistent", false).apply(VISUALS_KEY);
+		public static final ConfigBoolean NEW_MAP_NOTIFIER_IFRAME = new ConfigBoolean("iFrameNewMapNotifier", false).apply(VISUALS_KEY);
+
 //		public static final ConfigBoolean DISPLAY_TOTEM_COUNT = new ConfigBoolean("displayTotemCount", true).apply(VISUALS_KEY);
 //		public static final ConfigBoolean SPAWNER_ACTIVATION_HIGHLIGHT = new ConfigBoolean("spawnerActivationHighlight", true).apply(VISUALS_KEY);
 		public static final ConfigBoolean REPAIR_COST_HOTBAR_HUD = new ConfigBoolean("repairCostInHotbarHUD", false).apply(VISUALS_KEY);
 		public static final ConfigOptionList REPAIR_COST_TOOLTIP = new ConfigOptionList("repairCostTooltip",
-				Main.mapArtFeaturesOnly ? OptionTooltipDisplay.OFF : OptionTooltipDisplay.ADVANCED_TOOLTIPS).apply(VISUALS_KEY);
+				MAPART_ONLY_DEFAULTS ? OptionTooltipDisplay.OFF : OptionTooltipDisplay.ADVANCED_TOOLTIPS).apply(VISUALS_KEY);
 		public static final ConfigOptionList INVIS_IFRAMES = new ConfigOptionList("invisIFrames",
 				OptionInvisIframes.SEMI_TRANSPARENT_MAPART).apply(VISUALS_KEY);
 		public static final ConfigInteger STATIC_ENTITY_RENDER_RANGE = new ConfigInteger("staticEntityRenderRange", 0, 0, 10_000_000).apply(VISUALS_KEY);
@@ -244,7 +287,9 @@ public final class Configs implements IConfigHandler{
 		private static final List<IConfigBase> getConfigs(Settings settings){
 			if(configs != null) return configs;
 			configs = new ArrayList<>();
-			if(!Main.mapArtFeaturesOnly){
+			if(settings.showNicheConfigs) configs.add(CLICK_DISPLAY_AVAILABLE_PERSISTENT);
+			if(settings.cmdMapArtGroup && settings.onTickIframes) configs.add(NEW_MAP_NOTIFIER_IFRAME);
+			if(!MAPART_ONLY_DEFAULTS){
 				configs.add(REPAIR_COST_HOTBAR_HUD);
 				if(settings.tooltipRepairCost) configs.add(REPAIR_COST_TOOLTIP);
 			}
@@ -314,107 +359,51 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigOptionList MAP_MOVE_BUNDLE_SELECT_PRIORITY_TAKE = new ConfigOptionList(
 				"mapMoveBundleSelectPrioForTake", OptionBundleSelectPrioTake.EMPTIEST_NOT_EMPTY).apply(HOTKEYS_KEY);
 
-		public static final ConfigHotkey TOGGLE_CAPE = new ConfigHotkey("toggleCape", /*!Main.mapArtFeaturesOnly ? "," : */"").apply(HOTKEYS_KEY);
+		public static final ConfigHotkey TOGGLE_CAPE = new ConfigHotkey("toggleCape", /*!MAPART_ONLY_DEFAULTS ? "," : */"").apply(HOTKEYS_KEY);
 		public static final ConfigBoolean SYNC_CAPE_WITH_ELYTRA = new ConfigBoolean("syncCapeWithElytra", false).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TOGGLE_HAT = new ConfigHotkey("toggleHat", "").apply(HOTKEYS_KEY);
-		public static final ConfigHotkey TOGGLE_JACKET = new ConfigHotkey("toggleJacket", Main.mapArtFeaturesOnly ? "" : "I").apply(HOTKEYS_KEY);
-		public static final ConfigHotkey TOGGLE_SLEEVE_LEFT = new ConfigHotkey("toggleSleeveLeft", Main.mapArtFeaturesOnly ? "" : "I").apply(HOTKEYS_KEY);
-		public static final ConfigHotkey TOGGLE_SLEEVE_RIGHT = new ConfigHotkey("toggleSleeveRight", Main.mapArtFeaturesOnly ? "" : "I").apply(HOTKEYS_KEY);
-		public static final ConfigHotkey TOGGLE_PANTS_LEG_LEFT = new ConfigHotkey("togglePantsLegLeft", Main.mapArtFeaturesOnly ? "" : "I").apply(HOTKEYS_KEY);
-		public static final ConfigHotkey TOGGLE_PANTS_LEG_RIGHT = new ConfigHotkey("togglePantsLegRight", Main.mapArtFeaturesOnly ? "" : "I").apply(HOTKEYS_KEY);
+		public static final ConfigHotkey TOGGLE_JACKET = new ConfigHotkey("toggleJacket", MAPART_ONLY_DEFAULTS ? "" : "I").apply(HOTKEYS_KEY);
+		public static final ConfigHotkey TOGGLE_SLEEVE_LEFT = new ConfigHotkey("toggleSleeveLeft", MAPART_ONLY_DEFAULTS ? "" : "I").apply(HOTKEYS_KEY);
+		public static final ConfigHotkey TOGGLE_SLEEVE_RIGHT = new ConfigHotkey("toggleSleeveRight", MAPART_ONLY_DEFAULTS ? "" : "I").apply(HOTKEYS_KEY);
+		public static final ConfigHotkey TOGGLE_PANTS_LEG_LEFT = new ConfigHotkey("togglePantsLegLeft", MAPART_ONLY_DEFAULTS ? "" : "I").apply(HOTKEYS_KEY);
+		public static final ConfigHotkey TOGGLE_PANTS_LEG_RIGHT = new ConfigHotkey("togglePantsLegRight", MAPART_ONLY_DEFAULTS ? "" : "I").apply(HOTKEYS_KEY);
 
 		public static final ConfigBooleanHotkeyed AIE_TRAVEL_HELPER = new ConfigBooleanHotkeyed("automaticInfiniteElytraTravelHelper", false,
-				Main.mapArtFeaturesOnly ? "" : "SEMICOLON", KeybindSettings.NOCANCEL).apply(HOTKEYS_KEY);
+				MAPART_ONLY_DEFAULTS ? "" : "SEMICOLON", KeybindSettings.NOCANCEL).apply(HOTKEYS_KEY);
 		public static final ConfigBooleanHotkeyed EBOUNCE_TRAVEL_HELPER = new ConfigBooleanHotkeyed("eBounceTravelHelper", false,
-				Main.mapArtFeaturesOnly ? "" : "A", KeybindSettings.PRESS_ALLOWEXTRA).apply(HOTKEYS_KEY);
+				MAPART_ONLY_DEFAULTS ? "" : "A", KeybindSettings.PRESS_ALLOWEXTRA).apply(HOTKEYS_KEY);
 		public static final ConfigYawPitchHotkeyed SNAP_ANGLE_1 = new ConfigYawPitchHotkeyed("snapAngle1", 148, -73, "").apply(HOTKEYS_KEY);
 		public static final ConfigYawPitchHotkeyed SNAP_ANGLE_2 = new ConfigYawPitchHotkeyed("snapAngle2", -159, -51, "").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey EJECT_JUNK_ITEMS = new ConfigHotkey("ejectJunkItems",
-				Main.mapArtFeaturesOnly ? "" : "R", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
+				MAPART_ONLY_DEFAULTS ? "" : "R", GUI_OR_INGAME_SETTINGS).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey CRAFT_RESTOCK = new ConfigHotkey("craftingRestock", "TAB", GUI_ALLOW_EXTRA_KEYS).apply(HOTKEYS_KEY);
 		public static final ConfigBoolean CRAFT_RESTOCK_SMART = new ConfigBoolean("craftingRestockSmart", true).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey CRAFT_BULK_MODIFIER = new ConfigHotkey(
 				"craftingBulkModifier", "LEFT_SHIFT", KeybindSettings.MODIFIER_GUI).apply(HOTKEYS_KEY);
+		public static final ConfigStringList SCROLL_ORDER = new ConfigStringList("hotbarSlotItemTypeScrollOrder", ImmutableList.of(
+				"white, light_gray, gray, black, brown, red, orange, yellow, lime, green, cyan, light_blue, blue, purple, magenta, pink",
+				", exposed, weathered, oxidized",
+				",powered,detector,activator",
+				"tube, brain, bubble, fire, horn",
+				"oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry, bamboo, crimson, warped"
+		)).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey HOTBAR_TYPE_INCR = new ConfigHotkey("hotbarSlotItemTypeIncrement", "").apply(HOTKEYS_KEY);
 		public static final ConfigHotkey HOTBAR_TYPE_DECR = new ConfigHotkey("hotbarSlotItemTypeDecrement", "").apply(HOTKEYS_KEY);
 
 		//TODO: ConfigSlotList, ConfigSlotListHotkeyed
 		public static final ConfigHotkey INV_RESTOCK = new ConfigHotkey("inventoryRestock",
-				Main.mapArtFeaturesOnly ? "" : "R", KeybindSettings.GUI).apply(HOTKEYS_KEY);
-		public static final ConfigOptionList INV_RESTOCK_IF = new ConfigOptionList("inventoryRestockIf", OptionInventoryRestockIf.RESUPPLY).apply(HOTKEYS_KEY);
-		public static final ConfigOptionList INV_RESTOCK_LEAVE = new ConfigOptionList("inventoryRestockLeave", OptionInventoryRestockLeave.ONE_ITEM).apply(HOTKEYS_KEY);
-		public static final ConfigStringList INV_RESTOCK_BLACKLIST = new ConfigStringList("inventoryRestockBlacklist", ImmutableList.of(
-//				"ender_chest", "filled_map"
-		)).apply(HOTKEYS_KEY);
-		public static final ConfigStringList INV_RESTOCK_WHITELIST = new ConfigStringList("inventoryRestockWhitelist", ImmutableList.of(
-				"firework_rocket", "end_crystal", "respawn_anchor", "obsidian", "ender_pearl", "chorus_fruit", "wind_charge", "experience_bottle",
-				"arrow", "spectral_arrow", "tipped_arrow", "golden_carrot", "enchanted_golden_apple", "cooked_beef", "cooked_porkchop", "cooked_chicken"
-		)).apply(HOTKEYS_KEY);
+				MAPART_ONLY_DEFAULTS ? "" : "R", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 
-		public static final ConfigStringList INV_ORGANIZE_1 = new ConfigStringList("inventoryOrganize1", ImmutableList.of(
-				"# Armor",
-				"5:carved_pumpkin", "6:elytra",
-				"5:netherite_helmet", "6:netherite_chestplate", "7:netherite_leggings", "8:netherite_boots",
-				"5:diamond_helmet", "6:diamond_chestplate", "7:diamond_leggings", "8:diamond_boots",
-
-				"# Offhand",
-				"45:totem_of_undying", "45:enchanted_golden_apple", "45:golden_carrot", "45:cooked_beef",
-
-				"# Hotbar LHS",
-				"36:netherite_sword", "36:diamond_sword", "36:netherite_axe", "36:diamond_axe",
-				"37:netherite_pickaxe", "37:diamond_pickaxe",
-				"38:netherite_axe", "38:diamond_axe", "38:netherite_shovel", "38:diamond_shovel", "38:diamond_hoe", "38:netherite_hoe",
-					"38:firework_rocket", "38:end_crystal",
-				"39:netherite_shovel", "39:diamond_shovel", "39:diamond_hoe", "39:netherite_hoe", "39:fishing_rod", "39:firework_rocket",
-				"40:diamond_hoe", "40:netherite_hoe", "40:fishing_rod", "40:firework_rocket",
-				"41:firework_rocket",
-
-				"# Hotbar RHS",
-				"44:golden_carrot", "44:cooked_beef", "44:enchanted_golden_apple",
-				"43:enchanted_golden_apple",
-
-				"# Inventory top LHS",
-				"9:netherite_chestplate", "9:diamond_chestplate", "9:elytra", "9:netherite_helmet", "9:diamond_helmet", "9:ender_chest", "9:totem_of_undying",
-				"10:netherite_helmet", "10:diamond_helmet", "10:ender_chest", "10:totem_of_undying",
-				"11:ender_chest", "11:totem_of_undying", "12:totem_of_undying", "13:totem_of_undying",
-
-				"# Extra rockets, food",
-				"30:firework_rocket", "21:firework_rocket",
-				"35:enchanted_golden_apple", "35:golden_carrot", "35:cooked_beef", "35:cooked_porkchop", "35:pumpkin_pie",
-
-				"# Fill extra hotbar slots with crystals",
-				"36:end_crystal", "37:end_crystal", "38:end_crystal", "39:end_crystal", "40:end_crystal", "41:end_crystal", "42:end_crystal"
-		)).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TRIGGER_INV_ORGANIZE_1 = new ConfigHotkey("triggerInventoryOrganize1",
-				Main.mapArtFeaturesOnly ? "" : "E", KeybindSettings.GUI).apply(HOTKEYS_KEY);
-		public static final ConfigStringList INV_ORGANIZE_2 = new ConfigStringList("inventoryOrganize2", ImmutableList.of(
-				"# Armor",
-				"5:carved_pumpkin",
-				"6:elytra",
-				"5:netherite_helmet", "6:netherite_chestplate", "7:netherite_leggings", "8:netherite_boots",
-				"5:diamond_helmet", "6:diamond_chestplate", "7:diamond_leggings", "8:diamond_boots",
-
-				"# Offhand",
-				"45:totem_of_undying",
-
-				"# Hotbar LHS",
-				"36:netherite_sword", "36:diamond_sword", "36:netherite_axe", "36:diamond_axe",
-				"37:netherite_pickaxe", "37:diamond_pickaxe",
-				"38:netherite_axe", "38:diamond_axe", "38:netherite_shovel", "38:diamond_shovel", "38:firework_rocket",
-				"39:firework_rocket",
-
-				"# Hotbar RHS",
-				"44:golden_carrot", "44:cooked_beef", "44:enchanted_golden_apple"
-		)).apply(HOTKEYS_KEY);
+				MAPART_ONLY_DEFAULTS ? "" : "E", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TRIGGER_INV_ORGANIZE_2 = new ConfigHotkey("triggerInventoryOrganize2", "", KeybindSettings.GUI).apply(HOTKEYS_KEY);
-		public static final ConfigStringList INV_ORGANIZE_3 = new ConfigStringList("inventoryOrganize3", ImmutableList.of()).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey TRIGGER_INV_ORGANIZE_3 = new ConfigHotkey("triggerInventoryOrganize3", "", KeybindSettings.GUI).apply(HOTKEYS_KEY);
 
 		public static final ConfigStringHotkeyed CHAT_MSG_1 = new ConfigStringHotkeyed("chatMessage1", "meow :3", "").apply(HOTKEYS_KEY);
 		public static final ConfigStringHotkeyed CHAT_MSG_2 = new ConfigStringHotkeyed("chatMessage2", "/home", "").apply(HOTKEYS_KEY);
 		public static final ConfigStringHotkeyed CHAT_MSG_3 = new ConfigStringHotkeyed("chatMessage3",
 				"/cgetdata entity @e[type=item,distance=..5,limit=1] Item.components.minecraft:repair_cost",
-				Main.mapArtFeaturesOnly ? "" : "Z").apply(HOTKEYS_KEY);
+				MAPART_ONLY_DEFAULTS ? "" : "Z").apply(HOTKEYS_KEY);
 
 		public static final ConfigStringHotkeyed REMOTE_MSG_1 = new ConfigStringHotkeyed("remoteMessage1",
 				"EPEARL_TRIGGER,6f7fa766-4fe6-42fe-b589-22e4ec9a077c", "").apply(HOTKEYS_KEY);
@@ -439,7 +428,7 @@ public final class Configs implements IConfigHandler{
 					configs.addAll(List.of(MAP_MOVE_BUNDLE_PREFER_STOW, MAP_MOVE_BUNDLE_STOW_NON_SINGLE_MAPS, MAP_MOVE_BUNDLE_TAKE_MAX,
 							MAP_MOVE_BUNDLE_SELECT_PRIORITY_STOW, MAP_MOVE_BUNDLE_SELECT_PRIORITY_TAKE)); 
 //			}
-			if(!Main.mapArtFeaturesOnly){
+			if(!MAPART_ONLY_DEFAULTS){
 				configs.addAll(List.of(
 					TOGGLE_CAPE, SYNC_CAPE_WITH_ELYTRA,
 					TOGGLE_HAT, TOGGLE_JACKET, TOGGLE_SLEEVE_LEFT, TOGGLE_SLEEVE_RIGHT, TOGGLE_PANTS_LEG_LEFT, TOGGLE_PANTS_LEG_RIGHT,
@@ -447,12 +436,12 @@ public final class Configs implements IConfigHandler{
 					EBOUNCE_TRAVEL_HELPER,
 					EJECT_JUNK_ITEMS,
 					CRAFT_RESTOCK, CRAFT_RESTOCK_SMART, CRAFT_BULK_MODIFIER,
-					HOTBAR_TYPE_INCR, HOTBAR_TYPE_DECR,
+					HOTBAR_TYPE_INCR, HOTBAR_TYPE_DECR, SCROLL_ORDER,
 
-					INV_RESTOCK, INV_RESTOCK_IF, INV_RESTOCK_LEAVE, INV_RESTOCK_BLACKLIST, INV_RESTOCK_WHITELIST,
-					INV_ORGANIZE_1, TRIGGER_INV_ORGANIZE_1,
-					INV_ORGANIZE_2, TRIGGER_INV_ORGANIZE_2,
-					INV_ORGANIZE_3, TRIGGER_INV_ORGANIZE_3,
+					INV_RESTOCK, 
+					TRIGGER_INV_ORGANIZE_1,
+					TRIGGER_INV_ORGANIZE_2,
+					TRIGGER_INV_ORGANIZE_3,
 
 					CHAT_MSG_1, CHAT_MSG_2, CHAT_MSG_3
 				));
@@ -470,10 +459,19 @@ public final class Configs implements IConfigHandler{
 	//====================================================================================================
 	private static final String DATABASE_KEY = Main.MOD_ID+".config.database";
 	public static class Database{
-		public static final ConfigBoolean SAVE_MAPART = new ConfigBoolean("saveSeenMapArt", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
-		public static final ConfigBoolean EPEARL_OWNERS_BY_UUID = new ConfigBoolean("saveEpearlOwnersByUUID", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
+		public static final ConfigOptionList MAP_CACHE = new ConfigOptionList("mapStateCache", OptionMapStateCache.MEMORY_AND_DISK).apply(DATABASE_KEY);
+		public static final ConfigBoolean MAP_CACHE_UNLOCKED = new ConfigBoolean("mapStateCacheUnlocked", true).apply(DATABASE_KEY);
+		public static final ConfigBoolean MAP_CACHE_BY_ID = new ConfigBoolean("mapStateCacheById", false).apply(DATABASE_KEY);
+		public static final ConfigBoolean MAP_CACHE_BY_NAME = new ConfigBoolean("mapStateCacheByName", true).apply(DATABASE_KEY);
+		//ConfigOptionList MAP_CACHE_BY_NAME{UNIQUE, FIRST}
+		public static final ConfigBoolean MAP_CACHE_BY_INV_POS = new ConfigBoolean("mapStateCacheByInvPos", false).apply(DATABASE_KEY);
+		public static final ConfigBoolean MAP_CACHE_BY_EC_POS = new ConfigBoolean("mapStateCacheByEchestPos", true).apply(DATABASE_KEY);
+		public static final ConfigBoolean MAP_CACHE_BY_CONTAINER_POS = new ConfigBoolean("mapStateCacheByContainerPos", false).apply(DATABASE_KEY);
+
+		public static final ConfigBoolean SAVE_MAPART = new ConfigBoolean("saveSeenMapArt", !MAPART_ONLY_DEFAULTS).apply(DATABASE_KEY);
+		public static final ConfigBoolean EPEARL_OWNERS_BY_UUID = new ConfigBoolean("saveEpearlOwnersByUUID", !MAPART_ONLY_DEFAULTS).apply(DATABASE_KEY);
 		public static final ConfigBoolean EPEARL_OWNERS_BY_XZ = new ConfigBoolean("saveEpearlOwnersByXZ", false).apply(DATABASE_KEY);
-		public static final ConfigBoolean SAVE_IGNORES = new ConfigBoolean("saveIgnoreList", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
+		public static final ConfigBoolean SAVE_IGNORES = new ConfigBoolean("saveIgnoreList", !MAPART_ONLY_DEFAULTS).apply(DATABASE_KEY);
 		// Requires SAVE_IGNORES=true
 		public static final ConfigPlayerList BORROW_IGNORES = (ConfigPlayerList)new ConfigPlayerList("borrowIgnoreLists", 
 			List.of(
@@ -485,27 +483,36 @@ public final class Configs implements IConfigHandler{
 //		public static final ConfigOptionList PLACEMENT_WARN = new ConfigOptionList("placementWarn", MessageOutputType.ACTIONBAR).apply(DATABASE_KEY);
 		public static final ConfigInteger CLIENT_ID = new ConfigInteger("clientId", InitUtils.DUMMY_CLIENT_ID, 0, Integer.MAX_VALUE).apply(DATABASE_KEY);
 		public static final ConfigString CLIENT_KEY = new ConfigString("clientKey", "").apply(DATABASE_KEY);
-		public static final ConfigString ADDRESS = new ConfigString("address", Main.mapArtFeaturesOnly ? "" : "db.evmodder.net").apply(DATABASE_KEY);
-		public static final ConfigBoolean SHARE_MAPART = new ConfigBoolean("shareSeenMapArt", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
-		public static final ConfigBoolean SHARE_EPEARL_OWNERS = new ConfigBoolean("shareEpearlOwners", !Main.mapArtFeaturesOnly).apply(DATABASE_KEY);
+		public static final ConfigString ADDRESS = new ConfigString("address", MAPART_ONLY_DEFAULTS ? "" : "db.evmodder.net").apply(DATABASE_KEY);
+		public static final ConfigBoolean SHARE_MAPART = new ConfigBoolean("shareSeenMapArt", !MAPART_ONLY_DEFAULTS).apply(DATABASE_KEY);
+		public static final ConfigBoolean SHARE_EPEARL_OWNERS = new ConfigBoolean("shareEpearlOwners", !MAPART_ONLY_DEFAULTS).apply(DATABASE_KEY);
 		public static final ConfigBoolean SHARE_IGNORES = new ConfigBoolean("shareIgnoreList", false).apply(DATABASE_KEY);
 		// Note: I decided to disable this by default, and hide it, because running a single proxy/bot is much better suited for collecting this data
 		public static final ConfigBoolean SHARE_JOIN_QUIT = new ConfigBoolean("shareJoinQuit", false).apply(DATABASE_KEY);
 
 		private static List<IConfigBase> configs;
 		private static final List<IConfigBase> getConfigs(Settings settings){
-			if(configs != null || !settings.database) return configs;
+			if(configs != null) return configs;
 			configs = new ArrayList<>();
-			configs.add(SAVE_MAPART);
-			if(settings.epearlOwners) configs.addAll(List.of(EPEARL_OWNERS_BY_UUID, EPEARL_OWNERS_BY_XZ));
-			if(settings.gameMessageListener || settings.gameMessageFilter) configs.add(SAVE_IGNORES);
-			if(settings.gameMessageFilter) configs.add(BORROW_IGNORES);
+			final boolean CAN_CACHE_MAPS = (settings.serverJoinListener && settings.serverQuitListener) || settings.containerOpenCloseListener;
+			if(CAN_CACHE_MAPS) configs.addAll(List.of(MAP_CACHE, MAP_CACHE_UNLOCKED));
+			if(settings.serverJoinListener) configs.add(MAP_CACHE_BY_ID);
+			if(settings.containerOpenCloseListener) configs.add(MAP_CACHE_BY_NAME);
+			if(settings.serverJoinListener && settings.serverQuitListener) configs.add(MAP_CACHE_BY_INV_POS);
+			if(settings.containerOpenCloseListener) configs.addAll(List.of(MAP_CACHE_BY_EC_POS, MAP_CACHE_BY_CONTAINER_POS));
 
-			if(settings.database) configs.addAll(List.of(CLIENT_ID, CLIENT_KEY, ADDRESS));
-			if(settings.database) configs.add(SHARE_MAPART);
-			if(settings.epearlOwners && settings.database) configs.add(SHARE_EPEARL_OWNERS);
-			if(settings.database && settings.gameMessageListener) configs.add(SHARE_IGNORES);
-			if(settings.database && (settings.serverJoinListener || settings.serverQuitListener) && settings.showNicheConfigs) configs.add(SHARE_JOIN_QUIT);
+			if(settings.database){
+				configs.add(SAVE_MAPART);
+				if(settings.epearlOwners) configs.addAll(List.of(EPEARL_OWNERS_BY_UUID, EPEARL_OWNERS_BY_XZ));
+				if(settings.gameMessageListener || settings.gameMessageFilter) configs.add(SAVE_IGNORES);
+				if(settings.gameMessageFilter) configs.add(BORROW_IGNORES);
+
+				if(settings.database) configs.addAll(List.of(CLIENT_ID, CLIENT_KEY, ADDRESS));
+				if(settings.database) configs.add(SHARE_MAPART);
+				if(settings.epearlOwners && settings.database) configs.add(SHARE_EPEARL_OWNERS);
+				if(settings.database && settings.gameMessageListener) configs.add(SHARE_IGNORES);
+				if(settings.database && (settings.serverJoinListener || settings.serverQuitListener) && settings.showNicheConfigs) configs.add(SHARE_JOIN_QUIT);
+			}
 			return configs;
 		}
 	}
@@ -514,7 +521,11 @@ public final class Configs implements IConfigHandler{
 	// Config option saving/loading/fetching
 	//====================================================================================================
 	private final Settings settings;
-	Configs(Settings settings){this.settings = settings;}
+	final String dataTabTranslationKey;
+	Configs(Settings settings){
+		this.settings = settings;
+		dataTabTranslationKey = Main.MOD_ID+".gui.button."+(settings.database ? "database" : "data");
+	}
 
 	final List<IConfigBase> getGenericConfigs(){return Generic.getConfigs(settings);}
 	final List<IConfigBase> getVisualsConfigs(){return Visuals.getConfigs(settings);}
@@ -528,7 +539,7 @@ public final class Configs implements IConfigHandler{
 		allConfigs.addAll(getGenericConfigs());
 		allConfigs.addAll(getVisualsConfigs());
 		allConfigs.addAll(getHotkeysConfigs());
-		if(settings.database) allConfigs.addAll(getDatabaseConfigs());
+		allConfigs.addAll(getDatabaseConfigs());
 		return allConfigs;
 	}
 
@@ -565,7 +576,7 @@ public final class Configs implements IConfigHandler{
 		ConfigUtils.readConfigBase(root, "Generic", getGenericConfigs());
 		ConfigUtils.readConfigBase(root, "Visuals", getVisualsConfigs());
 		ConfigUtils.readConfigBase(root, "Hotkeys", getHotkeysConfigs());
-		if(settings.database) ConfigUtils.readConfigBase(root, "Database", getDatabaseConfigs());
+		ConfigUtils.readConfigBase(root, "Database", getDatabaseConfigs());
 //		Main.LOGGER.debug("Configs.load(): Successfully loaded config file '{}'.", CONFIG_FILE.toAbsolutePath());
 	}
 
@@ -580,7 +591,7 @@ public final class Configs implements IConfigHandler{
 		ConfigUtils.writeConfigBase(root, "Generic", getGenericConfigs());
 		ConfigUtils.writeConfigBase(root, "Visuals", getVisualsConfigs());
 		ConfigUtils.writeConfigBase(root, "Hotkeys", getHotkeysConfigs());
-		if(settings.database) ConfigUtils.writeConfigBase(root, "Database", getDatabaseConfigs());
+		ConfigUtils.writeConfigBase(root, "Database", getDatabaseConfigs());
 		if(!writeConfig(root, CONFIG_FILE)){
 			Main.LOGGER.error("Configs.save(): Failed to write config file '{}'.", CONFIG_FILE.toAbsolutePath());
 		}

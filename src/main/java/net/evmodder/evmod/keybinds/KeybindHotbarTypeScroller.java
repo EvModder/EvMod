@@ -108,7 +108,7 @@ public final class KeybindHotbarTypeScroller{
 	}
 
 	public void refreshColorLists(){
-		List<String> colorLists = Configs.Generic.SCROLL_ORDER.getStrings();
+		List<String> colorLists = Configs.Hotkeys.SCROLL_ORDER.getStrings();
 		if(variantLists == null){
 			variantLists = new ArrayList<>();
 			scrollableItems = new HashMap<>();

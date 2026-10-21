@@ -28,7 +28,7 @@ public final class BlockClickListener{
 		posData = ByteBuffer.allocate(13);
 		// TODO: add later phase, after ActionResult is determined to be PASS
 		UseBlockCallback.EVENT.register((Player _, Level world, InteractionHand _, BlockHitResult hitResult) -> {
-			if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue()){
+			if(Configs.Database.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue()){
 //				lastClickedBlock = hitResult.getBlockPos();
 				lastClickedBlockHash = getIdForBlockPos(world, hitResult.getBlockPos());
 			}

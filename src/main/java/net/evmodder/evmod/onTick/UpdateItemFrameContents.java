@@ -126,7 +126,7 @@ public final class UpdateItemFrameContents implements TickListener{
 				highlight = Highlight.INV_OR_NESTED_INV;
 			else if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)){
 				highlight = Highlight.NOT_IN_CURR_GROUP;
-				if(Configs.Generic.NEW_MAP_NOTIFIER_IFRAME.getBooleanValue()) NewMapNotifier.call(ife, colorsId);
+				if(Configs.Visuals.NEW_MAP_NOTIFIER_IFRAME.getBooleanValue()) NewMapNotifier.call(ife, colorsId);
 			}
 			else if(isHungMultiplePlaces(colorsId)) highlight = Highlight.MULTI_HUNG;
 			else if(!state.locked || stack.getCustomName() == null) highlight = Highlight.UNLOCKED_OR_UNNAMED;

@@ -27,10 +27,10 @@ public final class ServerQuitListener{
 			}
 			if(rms != null) rms.minecraftServerDisconnected();
 
-			if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
-				if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK){
-					if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.saveMapStatesByIdToFile();
-					if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) MapStateCacher.saveMapStatesByNameToFile();
+			if(Configs.Database.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
+				if(Configs.Database.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK){
+					if(Configs.Database.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.saveMapStatesByIdToFile();
+					if(Configs.Database.MAP_CACHE_BY_NAME.getBooleanValue()) MapStateCacher.saveMapStatesByNameToFile();
 				}
 				MapStateCacher.saveMapStatesByPos(client.player.getInventory().getNonEquipmentItems().stream(), MapStateCacher.BY_PLAYER_INV);
 				ContainerOpenCloseListener.echestCacheLoaded = false;  // TODO: ewww

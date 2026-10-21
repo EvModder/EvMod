@@ -142,7 +142,7 @@ abstract class MixinItemFrameRenderer<T extends ItemFrame>{
 		final Component cachedName = AccessorUpdateItemFrameContents.displayNameCache().get(itemFrameEntity.getId());
 		if(cachedName != null){cir.setReturnValue(cachedName); return;}
 
-		if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue() && stack.getCustomName() != null)
+		if(Configs.Database.MAP_CACHE_BY_NAME.getBooleanValue() && stack.getCustomName() != null)
 			MapStateCacher.addMapStateByName(stack, state);
 
 		final MutableComponent name = stack.getHoverName().copy();

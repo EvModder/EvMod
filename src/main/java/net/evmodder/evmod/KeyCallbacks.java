@@ -79,17 +79,17 @@ final class KeyCallbacks{
 			valueChangeCallback(Configs.Generic.TEMP_BROADCAST_ACCOUNT, ChatBroadcaster::refreshBroadcast);
 			valueChangeCallback(Configs.Generic.TEMP_BROADCAST_TIMESTAMP, ChatBroadcaster::refreshBroadcast);
 			valueChangeCallback(Configs.Generic.TEMP_BROADCAST_MSGS, ChatBroadcaster::refreshBroadcast);
-			valueChangeCallback(Configs.Generic.SCROLL_ORDER, kbHbScroll::refreshColorLists);
+			valueChangeCallback(Configs.Hotkeys.SCROLL_ORDER, kbHbScroll::refreshColorLists);
 
 			if(kbInvRestock != null){
-				valueChangeCallback(Configs.Hotkeys.INV_RESTOCK_BLACKLIST, kbInvRestock::refreshLists);
-				valueChangeCallback(Configs.Hotkeys.INV_RESTOCK_WHITELIST, kbInvRestock::refreshLists);
+				valueChangeCallback(Configs.Generic.INV_RESTOCK_BLACKLIST, kbInvRestock::refreshLists);
+				valueChangeCallback(Configs.Generic.INV_RESTOCK_WHITELIST, kbInvRestock::refreshLists);
 				valueChangeCallback(Configs.Generic.INV_RESTOCK_AUTO_FOR_INV_ORGS, ()->kbInvRestock.refreshLayouts(kbInvOrgs));
 			}
 			if(kbInvOrgs != null){
-				Configs.Hotkeys.INV_ORGANIZE_1.setValueChangeCallback(newValue -> kbInvOrgs[0].refreshLayout(newValue.getStrings()));
-				Configs.Hotkeys.INV_ORGANIZE_2.setValueChangeCallback(newValue -> kbInvOrgs[1].refreshLayout(newValue.getStrings()));
-				Configs.Hotkeys.INV_ORGANIZE_3.setValueChangeCallback(newValue -> kbInvOrgs[2].refreshLayout(newValue.getStrings()));
+				Configs.Generic.INV_ORGANIZE_1.setValueChangeCallback(newValue -> kbInvOrgs[0].refreshLayout(newValue.getStrings()));
+				Configs.Generic.INV_ORGANIZE_2.setValueChangeCallback(newValue -> kbInvOrgs[1].refreshLayout(newValue.getStrings()));
+				Configs.Generic.INV_ORGANIZE_3.setValueChangeCallback(newValue -> kbInvOrgs[2].refreshLayout(newValue.getStrings()));
 			}
 			if(whisperPlaySound != null){
 				valueChangeCallback(Configs.Generic.WHISPER_PLAY_SOUND, whisperPlaySound::recomputeSound);
@@ -146,7 +146,7 @@ final class KeyCallbacks{
 
 		valueChangeCallback(Configs.Generic.CLICK_LIMIT_COUNT, InitUtils::refreshClickLimits);
 		valueChangeCallback(Configs.Generic.CLICK_LIMIT_WINDOW, InitUtils::refreshClickLimits);
-		valueChangeCallback(Configs.Generic.CLICK_DISPLAY_AVAILABLE_PERSISTENT, InitUtils::refreshClickRenderer);
+		valueChangeCallback(Configs.Visuals.CLICK_DISPLAY_AVAILABLE_PERSISTENT, InitUtils::refreshClickRenderer);
 
 		keybindCallback(Configs.Hotkeys.OPEN_CONFIG_GUI, Objects::isNull, ()->GuiBase.openGui(new ConfigGui(configs)));
 

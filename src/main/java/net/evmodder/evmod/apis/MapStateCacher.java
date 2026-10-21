@@ -174,7 +174,7 @@ public class MapStateCacher{
 				.sequential()
 				.filter(s -> s.is(Items.FILLED_MAP))
 				.map(s -> MapItem.getSavedData(s.get(DataComponents.MAP_ID), client.level));
-		if(!Configs.Generic.MAP_CACHE_UNLOCKED.getBooleanValue()) states = states.map(s -> s == null || s.locked ? s : null);
+		if(!Configs.Database.MAP_CACHE_UNLOCKED.getBooleanValue()) states = states.map(s -> s == null || s.locked ? s : null);
 		final List<MapStateSerializable> serialStates = states.map(MapStateSerializable::fromMapState).toList();
 
 		final boolean deleteCache = serialStates.isEmpty() || serialStates.stream().allMatch(Objects::isNull);
@@ -187,7 +187,7 @@ public class MapStateCacher{
 			if(deleteCache) return false;  // Already deleted
 			if(bySlotPerServer == null){
 				if(bySlot == null) bySlot = new HashMap<>();
-				if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK){
+				if(Configs.Database.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK){
 					bySlotPerServer = (HashMap<UUID, List<MapStateSerializable>>)createInMemCacheFromFile(server, cache);
 				}
 				else bySlot.put(server, bySlotPerServer=new HashMap<>());
@@ -206,7 +206,7 @@ public class MapStateCacher{
 		else if(bySlotPerServer != null) bySlotPerServer.remove(key);
 
 		boolean success = true;
-		if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK) success &= saveCacheFile(server, cache);
+		if(Configs.Database.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK) success &= saveCacheFile(server, cache);
 		Main.LOGGER.info("MapStateCacher: type="+cache+",stored="+serialStates.size());
 		return success;
 	}
@@ -217,7 +217,7 @@ public class MapStateCacher{
 		final String server = MiscUtils.getServerAddress();
 		final Object specificCache = getInMemCacheSpecific(server, cache);
 		if(specificCache == null && getInMemCachePerServer(server, cache) == null){
-			if(Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK && !createInMemCacheFromFile(server, cache).isEmpty()){
+			if(Configs.Database.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK && !createInMemCacheFromFile(server, cache).isEmpty()){
 				return getInMemCacheSpecific(server, cache);
 			}
 			switch(cache){
@@ -281,7 +281,7 @@ public class MapStateCacher{
 
 	public static final boolean addMapStateById(int id, MapItemSavedData state){
 		if(state == null || state.colors == null) return false;
-		if(!state.locked && !Configs.Generic.MAP_CACHE_UNLOCKED.getBooleanValue()) return false;
+		if(!state.locked && !Configs.Database.MAP_CACHE_UNLOCKED.getBooleanValue()) return false;
 		@SuppressWarnings("unchecked")
 		HashMap<Integer, MapStateSerializable> cache = (HashMap<Integer, MapStateSerializable>) commonCacheLoad(BY_ID);
 		assert cache != null;  // commonCacheLoad creates a server-level cache if one does not already exist
@@ -295,7 +295,7 @@ public class MapStateCacher{
 		if(mss.equals(oldMss)) return false;  // No update
 		if(oldMss != null && oldMss.locked && !MapColorUtils.sameMapExceptForMissingPixels(mss.colors, oldMss.colors)){
 			Main.LOGGER.error("MapStateCacher: Different MapStates found for same ID! Unable to use cache-by-id on current server, disabling it");
-			Configs.Generic.MAP_CACHE_BY_ID.setBooleanValue(false);
+			Configs.Database.MAP_CACHE_BY_ID.setBooleanValue(false);
 			return false;
 		}
 		idCacheUpdated = true;
@@ -313,7 +313,7 @@ public class MapStateCacher{
 	}
 	public static final boolean saveMapStatesByIdToFile(){
 		if(!idCacheUpdated) return false;
-		assert Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK;
+		assert Configs.Database.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK;
 		final String server = MiscUtils.getServerAddress();
 		boolean ret = saveCacheFile(server, BY_ID);  // All of the above checks are already handled by saveCacheFile()
 		if(!ret) return false;
@@ -328,7 +328,7 @@ public class MapStateCacher{
 		assert MapItem.getSavedData(stack, Minecraft.getInstance().level) == state;
 		assert stack.getCustomName() != null;
 
-		if(!state.locked && !Configs.Generic.MAP_CACHE_UNLOCKED.getBooleanValue()) return false;
+		if(!state.locked && !Configs.Database.MAP_CACHE_UNLOCKED.getBooleanValue()) return false;
 		final String name = stack.getCustomName().getString();
 		final String server = MiscUtils.getServerAddress();
 		HashSet<String> unusable = unusableNames == null ? null : unusableNames.get(server);
@@ -378,7 +378,7 @@ public class MapStateCacher{
 	}
 	public static final boolean saveMapStatesByNameToFile(){
 		if(!namesCacheUpdated) return false;
-		assert Configs.Generic.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK;
+		assert Configs.Database.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK;
 		final String server = MiscUtils.getServerAddress();
 		boolean ret = saveCacheFile(server, BY_NAME);
 		if(!ret) return false;

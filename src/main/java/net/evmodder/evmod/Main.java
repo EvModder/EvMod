@@ -154,9 +154,9 @@ public class Main{
 			if(settings.gameMessageListener) new GameMessageListener(remoteSender, epearlLookup, whisperPlaySound);
 			gameMessageFilter = settings.gameMessageFilter ? new GameMessageFilter(remoteSender) : null;
 			kbInvOrgs = new KeybindInventoryOrganize[]{
-					new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_1.getStrings()),
-					new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_2.getStrings()),
-					new KeybindInventoryOrganize(Configs.Hotkeys.INV_ORGANIZE_3.getStrings())
+					new KeybindInventoryOrganize(Configs.Generic.INV_ORGANIZE_1.getStrings()),
+					new KeybindInventoryOrganize(Configs.Generic.INV_ORGANIZE_2.getStrings()),
+					new KeybindInventoryOrganize(Configs.Generic.INV_ORGANIZE_3.getStrings())
 			};
 			kbInvRestock = new KeybindInventoryRestock(kbInvOrgs);
 			kbCraftRestock = new KeybindCraftingRestock();

@@ -82,7 +82,7 @@ abstract class MixinClientPacketListener{
 			target="Lnet/minecraft/client/multiplayer/ClientLevel;getMapData(Lnet/minecraft/world/level/saveddata/maps/MapId;)Lnet/minecraft/world/level/saveddata/maps/MapItemSavedData;"))
 	private final MapItemSavedData replaceIfClientMaps(ClientLevel instance, MapId id){
 		final MapItemSavedData s = instance.getMapData(id);
-		if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.MEMORY_AND_DISK) return s;
+		if(Configs.Database.MAP_CACHE.getOptionListValue() != OptionMapStateCache.MEMORY_AND_DISK) return s;
 		return s == null || MapStateCacher.hasCacheMarker(s) ? null : s;
 	}
 
@@ -136,7 +136,7 @@ abstract class MixinClientPacketListener{
 				Main.LOGGER.warn("MixinClientPacketListener: fully transparent map state! id="+id);
 		MapGroupUtils.markMapAvailable(id);
 		assert !MapStateCacher.hasCacheMarker(state);
-		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.addMapStateById(id, state);
+		if(Configs.Database.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.addMapStateById(id, state);
 
 		if(!Configs.Database.SAVE_MAPART.getBooleanValue()) return;
 		if(!state.locked && Configs.Generic.MAPART_GROUP_UNLOCKED_HANDLING.getOptionListValue() == OptionUnlockedMapHandling.SKIP) return;

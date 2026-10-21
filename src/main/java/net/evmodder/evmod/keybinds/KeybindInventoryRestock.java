@@ -67,8 +67,8 @@ public final class KeybindInventoryRestock{
 		HashMap<Item, Integer> supply = new HashMap<>();
 
 
-		OptionInventoryRestockIf limits = (OptionInventoryRestockIf)Configs.Hotkeys.INV_RESTOCK_IF.getOptionListValue();
-		OptionInventoryRestockLeave leave = (OptionInventoryRestockLeave)Configs.Hotkeys.INV_RESTOCK_LEAVE.getOptionListValue();
+		OptionInventoryRestockIf limits = (OptionInventoryRestockIf)Configs.Generic.INV_RESTOCK_IF.getOptionListValue();
+		OptionInventoryRestockLeave leave = (OptionInventoryRestockLeave)Configs.Generic.INV_RESTOCK_LEAVE.getOptionListValue();
 //		Main.LOGGER.info("InvRestock: restock limits: "+limits.name());
 		final boolean LEAVE_ONE = leave == OptionInventoryRestockLeave.ONE_ITEM || leave == OptionInventoryRestockLeave.ONE_STACK;
 		HashSet<String> itemNamesInLayout;
@@ -191,8 +191,8 @@ public final class KeybindInventoryRestock{
 		).toList();
 	}
 	public void refreshLists(){
-		List<String> blacklist = Configs.Hotkeys.INV_RESTOCK_BLACKLIST.getStrings();
-		List<String> whitelist = Configs.Hotkeys.INV_RESTOCK_BLACKLIST.getStrings();
+		List<String> blacklist = Configs.Generic.INV_RESTOCK_BLACKLIST.getStrings();
+		List<String> whitelist = Configs.Generic.INV_RESTOCK_BLACKLIST.getStrings();
 		if(whitelist == null || whitelist.isEmpty() || (whitelist.size() == 1 && whitelist.get(0).isBlank())){
 			IS_WHITELIST = false;
 			itemList = blacklist != null ? new HashSet<Item>(parseItemList(blacklist)) : Collections.emptySet();

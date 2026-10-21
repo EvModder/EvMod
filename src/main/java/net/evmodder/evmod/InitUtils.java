@@ -50,7 +50,7 @@ final class InitUtils{
 	private static boolean lastClickRenderWasMax;
 	static final void refreshClickRenderer(){
 		if(clickRenderTimer != null) clickRenderTimer.cancel();
-		if(!Configs.Generic.CLICK_DISPLAY_AVAILABLE_PERSISTENT.getBooleanValue()) return;
+		if(!Configs.Visuals.CLICK_DISPLAY_AVAILABLE_PERSISTENT.getBooleanValue()) return;
 		clickRenderTimer = new Timer(/*isDaemon=*/true);
 		clickRenderTimer.scheduleAtFixedRate(new TimerTask(){@Override public void run(){
 			Minecraft client = Minecraft.getInstance();

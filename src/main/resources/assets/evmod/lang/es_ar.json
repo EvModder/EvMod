@@ -99,8 +99,8 @@
 	"evmod.config.generic.comment.clickLimitUserInputs": "Helpful to avoid AntiCheat kicks from exceeding click limits due to other mods or player actions",
 	"evmod.config.generic.name.clickBlockUserInputsDuringOperation": "blockUserInputsDuringClickOperation",
 	"evmod.config.generic.comment.clickBlockUserInputsDuringOperation": "Discard all other-mod/user-generated clicks while a mapcopy/mapmove/etc. keybind is processing",
-	"evmod.config.generic.name.clickDisplayAvailablePersistent": "clickDisplayAvailablePersistent",
-	"evmod.config.generic.comment.clickDisplayAvailablePersistent": "Popup to constantly display available clicks in the actionbar",
+	"evmod.config.visuals.name.clickDisplayAvailablePersistent": "clickDisplayAvailablePersistent",
+	"evmod.config.visuals.comment.clickDisplayAvailablePersistent": "Popup to constantly display available clicks in the actionbar",
 
 	"evmod.config.generic.name.useBundlePacket": "useBundlePacket",
 	"evmod.config.generic.comment.useBundlePacket": "Enable internal bundle select packets (makes bundle copy faster)",
@@ -129,8 +129,8 @@
 	// Dormant (commented out in Configs.java):
 	// "evmod.config.generic.name.itemEntityNewMapNotifier": "itemEntityNewMapNotifier",
 	// "evmod.config.generic.comment.itemEntityNewMapNotifier": "",
-	"evmod.config.generic.name.iFrameNewMapNotifier": "iFrameNewMapNotifier",
-	"evmod.config.generic.comment.iFrameNewMapNotifier": "Popup in chat/actionbar when map not in the current group are detected nearby;\nsuper useful for map hunting around spawn, but can get annoying",
+	"evmod.config.visuals.name.iFrameNewMapNotifier": "iFrameNewMapNotifier",
+	"evmod.config.visuals.comment.iFrameNewMapNotifier": "Popup in chat/actionbar when map not in the current group are detected nearby;\nsuper useful for map hunting around spawn, but can get annoying",
 
 	"evmod.config.generic.name.iFrameTrackingDist": "iFrameTrackingDist",
 	"evmod.config.generic.comment.iFrameTrackingDist": "Set to 0 to disable recalculating nearby iFrames (slightly better performance)",
@@ -194,7 +194,7 @@
 	// "evmod.config.generic.name.mapArtGroupTreatUnlockedAsUnique": "mapArtGroupEnforceLockedMatch",
 	// "evmod.config.generic.comment.mapArtGroupTreatUnlockedAsUnique": "If true, identical-image locked/vs/unlocked maps will be treated as if they are distinct maparts",
 
-	"evmod.config.generic.name.hotbarSlotItemTypeScrollOrder": "hotbarSlotItemTypeScrollOrder",
+	"evmod.config.hotkeys.name.hotbarSlotItemTypeScrollOrder": "hotbarSlotItemTypeScrollOrder",
 	"evmod.config.generic.name.sendChatsOnServerJoin": "Envia Mensaje al Unirse",
 	"evmod.config.generic.comment.sendChatsOnServerJoin": "Automatically send chats/commands upon joining a server",
 	"evmod.config.generic.name.logCoordsOnServerQuit": "Guarda Coordenadas al Salir en log",
@@ -339,18 +339,18 @@
 
 	"evmod.config.hotkeys.name.inventoryRestock": "inventoryRestock",
 	"evmod.config.hotkeys.comment.inventoryRestock": "Press while viewing a container to restock inventory items from the container",
-	"evmod.config.hotkeys.name.inventoryRestockIf": "inventoryRestockIf",
-	"evmod.config.hotkeys.comment.inventoryRestockIf": "Restrictions container items eligibility for restock",
-	"evmod.config.hotkeys.name.inventoryRestockLeave": "inventoryRestockLeave",
-	"evmod.config.hotkeys.comment.inventoryRestockLeave": "Should we take the last cookie in the jar?",
-	"evmod.config.hotkeys.name.inventoryRestockBlacklist": "inventoryRestockBlacklist",
-	"evmod.config.hotkeys.name.inventoryRestockWhitelist": "inventoryRestockWhitelist",
+	"evmod.config.generic.name.inventoryRestockIf": "inventoryRestockIf",
+	"evmod.config.generic.comment.inventoryRestockIf": "Restrictions container items eligibility for restock",
+	"evmod.config.generic.name.inventoryRestockLeave": "inventoryRestockLeave",
+	"evmod.config.generic.comment.inventoryRestockLeave": "Should we take the last cookie in the jar?",
+	"evmod.config.generic.name.inventoryRestockBlacklist": "inventoryRestockBlacklist",
+	"evmod.config.generic.name.inventoryRestockWhitelist": "inventoryRestockWhitelist",
 
-	"evmod.config.hotkeys.name.inventoryOrganize1": "inventoryOrganize1",
+	"evmod.config.generic.name.inventoryOrganize1": "inventoryOrganize1",
 	"evmod.config.hotkeys.name.triggerInventoryOrganize1": "triggerInventoryOrganize1",
-	"evmod.config.hotkeys.name.inventoryOrganize2": "inventoryOrganize2",
+	"evmod.config.generic.name.inventoryOrganize2": "inventoryOrganize2",
 	"evmod.config.hotkeys.name.triggerInventoryOrganize2": "triggerInventoryOrganize2",
-	"evmod.config.hotkeys.name.inventoryOrganize3": "inventoryOrganize3",
+	"evmod.config.generic.name.inventoryOrganize3": "inventoryOrganize3",
 	"evmod.config.hotkeys.name.triggerInventoryOrganize3": "triggerInventoryOrganize3",
 
 	"evmod.config.hotkeys.name.chatMessage1": "chatMessage1",

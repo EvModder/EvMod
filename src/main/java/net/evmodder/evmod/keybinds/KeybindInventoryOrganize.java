@@ -251,8 +251,8 @@ public final class KeybindInventoryOrganize{
 		final HashSet<Item> itemsInInv;
 		if(isInvScreen){alreadyRestockedItems = null; countainerCounts = null; itemsInInv = null; LEAVE_ONE = false;}
 		else{
-			final OptionInventoryRestockIf limits = (OptionInventoryRestockIf)Configs.Hotkeys.INV_RESTOCK_IF.getOptionListValue();
-			final OptionInventoryRestockLeave leave = (OptionInventoryRestockLeave)Configs.Hotkeys.INV_RESTOCK_LEAVE.getOptionListValue();
+			final OptionInventoryRestockIf limits = (OptionInventoryRestockIf)Configs.Generic.INV_RESTOCK_IF.getOptionListValue();
+			final OptionInventoryRestockLeave leave = (OptionInventoryRestockLeave)Configs.Generic.INV_RESTOCK_LEAVE.getOptionListValue();
 			LEAVE_ONE = leave == OptionInventoryRestockLeave.ONE_ITEM || leave == OptionInventoryRestockLeave.ONE_STACK;
 
 			if(!RESTOCK_ONLY_1_SLOT_PER_TYPE) alreadyRestockedItems = null;

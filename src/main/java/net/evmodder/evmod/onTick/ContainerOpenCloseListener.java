@@ -45,7 +45,7 @@ public final class ContainerOpenCloseListener implements TickListener{
 		final AbstractContainerMenu sh = client.player.containerMenu;
 		final int newSyncId = sh == null ? 0 : sh.containerId;
 		if(newSyncId == syncId){
-			if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
+			if(Configs.Database.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
 				if(currentlyViewingContainer){
 					slots = sh.slots;
 					if(waitingForEcToLoad && IntStream.range(0, 27).anyMatch(i -> !slots.get(i).getItem().isEmpty())){
@@ -62,21 +62,21 @@ public final class ContainerOpenCloseListener implements TickListener{
 //			Main.LOGGER.info("ContainerOpenCloseListener: container opened, syncId="+newSyncId+", name="+client.currentScreen.getTitle().toString());
 			if(Configs.Generic.INV_RESTOCK_AUTO.getBooleanValue()) kbInvRestock.organizeThenRestock();
 
-			if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
+			if(Configs.Database.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
 				waitingForEcToLoad = false;
 				currentlyViewingContainer = true;
 				slots = sh.slots;
 				// Don't reload from echest-cache unless player leaves and rejoins server
-				if(currentlyViewingEchest=(Configs.Generic.MAP_CACHE_BY_EC_POS.getBooleanValue() &&
+				if(currentlyViewingEchest=(Configs.Database.MAP_CACHE_BY_EC_POS.getBooleanValue() &&
 					screen(client).getTitle().contains(Component.translatable("container.enderchest")))
 				){
 					waitingForEcToLoad = true;
 				}
 				else{
-					if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue() && containerCachesLoaded.add(BlockClickListener.lastClickedBlockHash)){
+					if(Configs.Database.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue() && containerCachesLoaded.add(BlockClickListener.lastClickedBlockHash)){
 						MapStateCacher.loadMapStatesByPos(sh.getItems(), MapStateCacher.BY_CONTAINER);
 					}
-					if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) sh.getItems().stream()
+					if(Configs.Database.MAP_CACHE_BY_NAME.getBooleanValue()) sh.getItems().stream()
 						.filter(s -> s.getItem() == Items.FILLED_MAP && s.getCustomName() != null)
 						.forEach(s -> {
 							MapItemSavedData state = MapItem.getSavedData(s, client.level);
@@ -88,7 +88,7 @@ public final class ContainerOpenCloseListener implements TickListener{
 		}
 		else{
 //			Main.LOGGER.info("ContainerOpenCloseListener: container closed, wasViewingEchest="+currentlyViewingEchest);
-			if(Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
+			if(Configs.Database.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
 				if(currentlyViewingContainer){
 					currentlyViewingContainer = false;
 					if(currentlyViewingEchest){
@@ -96,10 +96,10 @@ public final class ContainerOpenCloseListener implements TickListener{
 						if(!waitingForEcToLoad) MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getItem), MapStateCacher.BY_PLAYER_EC);
 					}
 					else{
-						if(Configs.Generic.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue()){
+						if(Configs.Database.MAP_CACHE_BY_CONTAINER_POS.getBooleanValue()){
 							MapStateCacher.saveMapStatesByPos(slots.stream().map(Slot::getItem), MapStateCacher.BY_CONTAINER);
 						}
-						if(Configs.Generic.MAP_CACHE_BY_NAME.getBooleanValue()) slots.stream().map(Slot::getItem)
+						if(Configs.Database.MAP_CACHE_BY_NAME.getBooleanValue()) slots.stream().map(Slot::getItem)
 							.filter(s -> s.getItem() == Items.FILLED_MAP && s.getCustomName() != null)
 							.forEach(s -> {
 								MapItemSavedData state = MapItem.getSavedData(s, client.level);

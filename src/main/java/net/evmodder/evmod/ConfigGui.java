@@ -30,7 +30,8 @@ public class ConfigGui extends GuiConfigsBase{
 	}
 
 	private int createButton(int x, int y, ConfigGuiTab tab){
-		ButtonGeneric button = new ButtonGeneric(x, y, -1, 20, tab.getDisplayName(), tab.getDescription());
+		ButtonGeneric button = new ButtonGeneric(x, y, -1, 20,
+				tab == ConfigGuiTab.DATABASE ? StringUtils.translate(configs.dataTabTranslationKey) : tab.getDisplayName(), tab.getDescription());
 		button.setEnabled(tab.ordinal() != configs.guiTab);
 		addButton(button, (ButtonBase _, int _)->{
 			if(configs.guiTab == tab.ordinal()) return;
@@ -53,7 +54,7 @@ public class ConfigGui extends GuiConfigsBase{
 		x += createButton(x, y, ConfigGuiTab.GENERIC);
 		x += createButton(x, y, ConfigGuiTab.VISUALS);
 		x += createButton(x, y, ConfigGuiTab.HOTKEYS);
-		if(configs.getDatabaseConfigs() != null) x += createButton(x, y, ConfigGuiTab.DATABASE);
+		if(!configs.getDatabaseConfigs().isEmpty()) x += createButton(x, y, ConfigGuiTab.DATABASE);
 	}
 
 	@Override protected boolean useKeybindSearch(){return configs.guiTab == ConfigGuiTab.HOTKEYS.ordinal();}

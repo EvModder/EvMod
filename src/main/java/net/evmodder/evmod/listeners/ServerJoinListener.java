@@ -23,8 +23,8 @@ public final class ServerJoinListener{
 	public static long lastJoinTs;  // TODO: remove horrible public static eww
 
 	private void loadMapStateCaches(Minecraft client){
-		if(Configs.Generic.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.loadMapStatesById();
-		if(Configs.Generic.MAP_CACHE_BY_INV_POS.getBooleanValue())
+		if(Configs.Database.MAP_CACHE_BY_ID.getBooleanValue()) MapStateCacher.loadMapStatesById();
+		if(Configs.Database.MAP_CACHE_BY_INV_POS.getBooleanValue())
 			MapStateCacher.loadMapStatesByPos(client.player.getInventory().getNonEquipmentItems(), MapStateCacher.BY_PLAYER_INV);
 		waitingForInventory = false;
 	}
@@ -78,7 +78,7 @@ public final class ServerJoinListener{
 			//joinedAt = System.currentTimeMillis();
 			loadedAt = 0;
 			waitingForJoinCommands = !Configs.Generic.SEND_ON_SERVER_JOIN.getStrings().isEmpty();
-			waitingForInventory = Configs.Generic.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF;
+			waitingForInventory = Configs.Database.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF;
 			if(waitingForInventory && !client.player.getInventory().isEmpty()) loadMapStateCaches(client);
 			if(!waitingForInventory && !waitingForJoinCommands) return;
 			final Timer timer = joinPollTimer = new Timer(/*isDaemon=*/true);
