@@ -4,7 +4,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 import net.evmodder.EvLib.util.Command;
 import net.evmodder.evmod.Configs;
+import net.evmodder.evmod.Setting;
 import net.evmodder.evmod.Main;
+import net.evmodder.evmod.Settings;
 import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.RemoteServerSender;
@@ -65,35 +67,38 @@ public final class ServerJoinListener{
 	}
 
 	public ServerJoinListener(final RemoteServerSender rms){
-		ClientPlayConnectionEvents.JOIN.register((_, _, _) -> lastJoinTs = System.currentTimeMillis());
+		final Settings settings = Settings.get();
+		if(settings.enabled(Setting.CMD_TIMEONLINE)) ClientPlayConnectionEvents.JOIN.register((_, _, _) -> lastJoinTs = System.currentTimeMillis());
 		if(rms != null) ClientPlayConnectionEvents.JOIN.register((_, _, client) -> {
 			rms.minecraftServerConnected();
 //			assert MiscUtils.getServerAddressHashCode(handler.getServerInfo()) == MiscUtils.getServerAddressHashCode();
 			if(Configs.Database.SHARE_JOIN_QUIT.getBooleanValue())
 				rms.sendBotMessage(Command.DB_PLAYER_STORE_JOIN_TS, /*udp=*/false, 5000, MiscUtils.getEncodedPlayerIds(client), /*recv=*/null);
 		});
-		ClientPlayConnectionEvents.JOIN.register((_, _, client) -> {
-			if(joinPollTimer != null){joinPollTimer.cancel(); joinPollTimer = null;}
-//			if(currServerHashCode != Main.HASHCODE_2B2T) return;
-			//joinedAt = System.currentTimeMillis();
-			loadedAt = 0;
-			waitingForJoinCommands = !Configs.Generic.SEND_ON_SERVER_JOIN.getStrings().isEmpty();
-			waitingForInventory = Configs.Database.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF;
-			if(waitingForInventory && !client.player.getInventory().isEmpty()) loadMapStateCaches(client);
-			if(!waitingForInventory && !waitingForJoinCommands) return;
-			final Timer timer = joinPollTimer = new Timer(/*isDaemon=*/true);
-			timer.schedule(new TimerTask(){@Override public void run(){
-				client.submit(() -> {
-					if(joinPollTimer != timer) return;  // A disconnect/rejoin can precede an already queued poll.
-					if(waitingForInventory && client.player != null && !client.player.getInventory().isEmpty()) loadMapStateCaches(client);
-					if(waitingForJoinCommands) sendJoinCommands(client);
-					if(!waitingForInventory && !waitingForJoinCommands){timer.cancel(); joinPollTimer = null;}
-				}).join();  // Do not queue another poll while the client is busy.
-			}}, 1L, 50L);  // Only while waiting; game state is read on the client thread.
-		});
-		ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> {
-			if(joinPollTimer != null){joinPollTimer.cancel(); joinPollTimer = null;}
-			waitingForInventory = waitingForJoinCommands = false;
-		});
+		if(settings.any(Setting.MAP_CACHE, Setting.CHAT_ACTIONS)){
+			ClientPlayConnectionEvents.JOIN.register((_, _, client) -> {
+				if(joinPollTimer != null){joinPollTimer.cancel(); joinPollTimer = null;}
+//				if(currServerHashCode != Main.HASHCODE_2B2T) return;
+				//joinedAt = System.currentTimeMillis();
+				loadedAt = 0;
+				waitingForJoinCommands = settings.enabled(Setting.CHAT_ACTIONS) && !Configs.Generic.SEND_ON_SERVER_JOIN.getStrings().isEmpty();
+				waitingForInventory = settings.enabled(Setting.MAP_CACHE) && Configs.Database.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF;
+				if(waitingForInventory && !client.player.getInventory().isEmpty()) loadMapStateCaches(client);
+				if(!waitingForInventory && !waitingForJoinCommands) return;
+				final Timer timer = joinPollTimer = new Timer(/*isDaemon=*/true);
+				timer.schedule(new TimerTask(){@Override public void run(){
+					client.submit(() -> {
+						if(joinPollTimer != timer) return;  // A disconnect/rejoin can precede an already queued poll.
+						if(waitingForInventory && client.player != null && !client.player.getInventory().isEmpty()) loadMapStateCaches(client);
+						if(waitingForJoinCommands) sendJoinCommands(client);
+						if(!waitingForInventory && !waitingForJoinCommands){timer.cancel(); joinPollTimer = null;}
+					}).join();  // Do not queue another poll while the client is busy.
+				}}, 1L, 50L);  // Only while waiting; game state is read on the client thread.
+			});
+			ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> {
+				if(joinPollTimer != null){joinPollTimer.cancel(); joinPollTimer = null;}
+				waitingForInventory = waitingForJoinCommands = false;
+			});
+		}
 	}
 }

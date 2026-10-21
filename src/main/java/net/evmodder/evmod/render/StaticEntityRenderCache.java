@@ -167,7 +167,7 @@ public final class StaticEntityRenderCache{
 
 	private static final boolean isWithinConfiguredRange(final double distanceSq){return distanceSq <= renderRangeSq;}
 
-	// Accessed by: MixinEntityRendererPearl
+	// Accessed by: MixinEntityRendererStatic
 	public static final boolean useConfiguredRenderDistance(
 			final boolean original, final Entity entity, final double cameraX, final double cameraY, final double cameraZ){
 		return renderRange > 0 && isCacheable(entity)

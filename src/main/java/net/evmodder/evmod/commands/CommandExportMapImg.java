@@ -620,8 +620,16 @@ public final class CommandExportMapImg{
 		return cmdMapNames.keySet();
 	}
 
-	public CommandExportMapImg(){
+	public CommandExportMapImg(final boolean trackFrames){
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, _) -> {
+			final var byName = ClientCommands.argument("map_name", StringArgumentType.greedyString()).executes(this::runCommandForMapName);
+			// Suggestions reuse an existing tracker; image export never starts background scanning itself.
+			if(trackFrames) byName.suggests((ctx, builder) -> {
+				final int i = ctx.getInput().lastIndexOf(' ');
+				final String lastArg = i == -1 ? "" : ctx.getInput().substring(i+1);
+				getNearbyMapNames(ctx.getSource().getPlayer()).stream().filter(name -> name.startsWith(lastArg)).forEach(builder::suggest);
+				return builder.buildFuture();
+			});
 			dispatcher.register(
 				ClientCommands.literal(getClass().getSimpleName().substring(7).toLowerCase()/*"mapwallimg"*/)
 				.executes(this::runCommandNoArg)
@@ -640,19 +648,7 @@ public final class CommandExportMapImg{
 					.executes(this::runCommandInInventory)
 					.then(ClientCommands.argument("as_NxM", StringArgumentType.word()).executes(this::runCommandInInventory))
 				)
-				.then(
-					ClientCommands.literal("by_name")
-					.then(
-						ClientCommands.argument("map_name", StringArgumentType.greedyString())
-						.suggests((ctx, builder) -> {
-							final int i = ctx.getInput().lastIndexOf(' ');
-							final String lastArg = i == -1 ? "" : ctx.getInput().substring(i+1);
-							getNearbyMapNames(ctx.getSource().getPlayer()).stream().filter(name -> name.startsWith(lastArg)).forEach(builder::suggest);
-							return builder.buildFuture();
-						})
-						.executes(this::runCommandForMapName)
-					)
-				)
+				.then(ClientCommands.literal("by_name").then(byName))
 				.then(
 					ClientCommands.argument("pos1", ClientBlockPosArgumentType.blockPos())
 					.then(

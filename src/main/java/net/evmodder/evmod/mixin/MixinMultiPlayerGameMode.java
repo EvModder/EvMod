@@ -1,13 +1,10 @@
 package net.evmodder.evmod.mixin;
 
-import static net.evmodder.evmod.compat.MinecraftCompat.screen;
 import static net.evmodder.evmod.compat.MinecraftCompat.sendSystem;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,31 +12,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.ClickUtils;
-import net.evmodder.evmod.keybinds.KeybindCraftingRestock.AnvilNameController;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.inventory.ContainerInput;
-import net.minecraft.world.item.ItemStack;
 
 @Mixin(MultiPlayerGameMode.class)
 abstract class MixinMultiPlayerGameMode{
 
 	private final AtomicInteger discardedClicks = new AtomicInteger();
-
-	@WrapOperation(method="handleContainerInput", at=@At(value="INVOKE",
-			target="Lnet/minecraft/world/inventory/AbstractContainerMenu;clicked(IILnet/minecraft/world/inventory/ContainerInput;Lnet/minecraft/world/entity/player/Player;)V"))
-	private void clearAnvilNameAfterInputChange(AbstractContainerMenu menu, int slot, int button,
-			ContainerInput action, Player player, Operation<Void> original){
-		final ItemStack inputBefore = menu instanceof AnvilMenu ? menu.getSlot(AnvilMenu.INPUT_SLOT).getItem().copy() : null;
-		original.call(menu, slot, button, action, player);
-		if(inputBefore != null && !ItemStack.matches(inputBefore, menu.getSlot(AnvilMenu.INPUT_SLOT).getItem())
-				&& screen(Minecraft.getInstance()) instanceof AnvilNameController controller)
-			controller.evmod$clearNameProtection();
-	}
 
 	@Inject(method="handleContainerInput", at=@At("HEAD"), cancellable=true)
 	private final void avoidSendingTooManyClicks(int syncId, int slot, int button, ContainerInput action, Player player, CallbackInfo ci){
@@ -57,11 +39,7 @@ abstract class MixinMultiPlayerGameMode{
 		}
 		final boolean success = AccessorClickUtils.callAddClick(/*action, */isBotted || !Configs.Generic.CLICK_LIMIT_USER_INPUT.getBooleanValue());
 
-		if(success){
-			if(AccessorMain.getKbCraftRestock() != null && Configs.Hotkeys.CRAFT_RESTOCK.getKeybind().isValid())
-				((AccessorKeybindCraftingRestock)(Object)AccessorMain.getKbCraftRestock()).callCheckIfCraftAction(player.containerMenu, slot, button, action, isBotted);
-		}
-		else{
+		if(!success){
 			if(isBotted){
 				String err = "Botted click somehow triggered click limit! VERY BAD!!";
 				Main.LOGGER.error(err);

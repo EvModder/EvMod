@@ -65,11 +65,11 @@ public class CommandMapArtGroup{
 		};
 	}
 
-	// Accessed by: MixinClientPacketListener
+	// Accessed by: MixinClientPacketListenerSeenMaps
 	public static final byte[] loadGroupFile(final String name){
 		return FileIO.loadFileBytes(new File(FileIO.DIR+DIR+name+FILE_EXT).exists() ? DIR+name+FILE_EXT : DIR+name);
 	}
-	// Accessed by: MixinClientPacketListener
+	// Accessed by: MixinClientPacketListenerSeenMaps
 	public static final boolean saveGroupFile(final String name, final byte[] data){
 		final int i = name.lastIndexOf('/');
 		final String resolvedDirs = i == -1 ? "" : name.substring(0, i+1);

@@ -8,7 +8,7 @@ import net.evmodder.evmod.onTick.UpdateItemFrameContents.Highlight;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
 
-// Used by MixinItemFrameRenderer
+// Used by MixinItemFrameRenderer, MixinUpdateItemFrameContentsTracking
 @Mixin(value=UpdateItemFrameContents.class, remap=false)
 interface AccessorUpdateItemFrameContents{
 	@Accessor("highlightedIFrames") static HashMap<Integer, Highlight> highlightedIFrames(){throw new AssertionError();}

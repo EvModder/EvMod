@@ -2,7 +2,8 @@
 	"required": true,
 	"package": "net.evmodder.evmod.mixin",
 	"compatibilityLevel": "${java_compatibility}",
-	"mixins": [
+	"plugin": "net.evmodder.evmod.bootstrap.EvModMixinPlugin",
+	"client": [
 		// EvMod access bridges:
 		"AccessorClickUtils",  // Automated click accounting
 		"AccessorCommandPearlRescue",  // Player-info packet callback
@@ -13,17 +14,33 @@
 		"AccessorMapGroupUtils",  // Loaded-map bookkeeping
 		"AccessorUpdateItemFrameContents",  // Item-frame highlight and render caches
 
+		// Év’s Mod feature hooks:
+		"MixinUpdateInventoryContentsMapNames",
+		"MixinUpdateContainerContentsMapNames",
+		"MixinUpdateItemFrameContentsMapNames",
+		"MixinUpdateItemFrameContentsTracking",
+		"MixinUpdateItemFrameContentsNotifications",  // Optional new-mapart alerts during the existing frame scan
+
 		// Minecraft mixins:
 		"AccessorAnvilScreen",
 		"AccessorPlayerTabOverlay",
 		"AccessorProjectile",
 		"MixinAnvilScreen",
 		"MixinMultiPlayerGameMode",
+		"MixinMultiPlayerGameModeCrafting",
+		"MixinClientPacketListenerCrafting",
 		"MixinClientPacketListener",
+		"MixinClientPacketListenerPlayerPosition",
+		"MixinClientPacketListenerMapCache",
+		"MixinClientPacketListenerMaps",
+		"MixinClientPacketListenerSeenMaps",
 		"MixinClientLevel",
+		"MixinEntityRendererStatic",
 		"MixinEntityRendererPearl",
+		"MixinAbstractContainerScreenTitle",
 		"MixinAbstractContainerScreenGhostItems",
 		"MixinHudMap",
+		"MixinHudRepairCost",
 		"MixinItemFrameRenderer",
 		"${level_entity_visibility_mixin}",
 //		"MixinItemModelManager",

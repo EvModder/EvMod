@@ -1,51 +1,74 @@
 # Év’s Mod startup settings
 
-# What separates these from configs.json?
-# The settings controlled by this file either cannot be easily changed while the game is running, or doing so incurs a performance hit. Hence, they are here.
-# Anything in configs.json can be configured ingame (default keybind for GUI is M+N).
-# Any changes you make to *this* file will require a game restart to take effect.
+# What separates this file from configs.json?
+# Anything in configs.json can be configured ingame (default GUI keybind is M+N).
+# Settings HERE cannot be changed while the game is running (performance reasons).
+# Any changes you make to this file will require a game restart to take effect.
 
-enable_non_mapart_features: true
-show_niche_config_settings: false
-store_data_in_instance_folder: true
+# Sets defaults for in-game controls; hides remote-command hotkeys
+# Delete configs.json after changing this if you wish to re-apply ALL defaults
+mapart_only_mode: true
 
-#
-on_tick.inventory: true  # registers: onTick(), allows: map_highlights.inventory, placement_helper.mapart
-on_tick.iframes: true  # registers: onTick(), allows: map_highlights.iframes, new_map_notifier, soft: CmdExportMapImg (IframeUpdates)
-on_tick.container: true  # registers: onTick(), allows: map_highlights.container
-mute_music_on_menu_screen: true  # Mute menu music when not in a world
-tooltip.map_highlights: true  # registers: tooltip
-tooltip.map_metadata: true  # registers: tooltip
-tooltip.repair_cost: true  # registers: tooltip
+#----- Maps
+map.inventory_keybinds: true              # Load/copy/move/bundle hotkeys and neighbor moves; uses inv scans
+map.iframe_visuals: true                  # Exposes toggles for highlights, name-visibility, and invis iFrames; uses inv/iFrame scans
+map.highlights.containers: true           # Highlight container titles; uses inventory/iFrame/container scans
+map.highlights.hotbar: true               # Highlight the selected name above the hotbar; uses iFrame scans
+map.highlights.tooltips: true             # Highlight hovered item names; uses inventory/iFrame/container scans
+map.state_cache: true                     # Retain map previews in memory or on disk, by name, ID, or inventory/container slot
+map.track_inventory: true                 # Note: other enabled map settings may keep tracking active even when false
+map.hand_restock_on_place: true           # Uses inventory/iFrame scans
 
-placement_helper.mapart: true  # registers: onTick(), listener.entityInteractEvent, allows: mapart.autoplace, mapart.autoremove
-placement_helper.mapart.autoplace: true  # registers: onTick(), listener.entityAttackEvent
-placement_helper.mapart.autoremove: true  # registers: onTick(), listener.entityAttackEvent
-placement_helper.iframe.autoplace: true  # registers: onTick()
+#----- Automatic placement/removal
+auto_place.iframes: true                  # Place empty iFrames along a wall after an initial manual placement
+auto_place.mapart: true                   # Requires map.hand_restock_on_place
+auto_remove.mapart: true                  # Requires map.hand_restock_on_place
 
-#
-listener.server_join: true  # allows: map_cache.inv, send_on_srvr_join
-listener.server_quit: true  # allows: map_cache.inv, log_logout_coords
-listener.container_open: true  # registers: onTick(), allows: inventory_restock.auto, map_cache.echest, map_cache.container
-listener.click_block: true  # registers: listener, allows: map_cache.container, dontWasteFireworks
+#----- Commands
+#command.assignpearl                      # requires data.epearl_owners
+#command.deletedmapsnearby                # always available
+#command.evmod                            # always available; opens the config GUI
+#command.exportmapimg                     # always available; nearby-name suggestions need iFrame scans
+command.exportmapnames: true              # Collects map names; uses inventory/iFrame/container scans
+command.mapartgroup: true                 # Tracks loaded maps from packets and maintains the selected group
+#command.maphashcode                      # always available
+#command.pearlrescue                      # requires data.epearl_owners
+#command.seen                             # requires data.remote_db
+#command.sendas                           # requires data.remote_db
+command.timeonline: false                 # Records local join time; remote access can provide the server-side join time
 
-#
-database: true
+#----- Inventory actions
+inventory.crafting_restock: false         # Recipe input restocking and extended bulk crafting
+inventory.click_safety: true              # Apply to manual/other-mod clicks; Év’s Mod actions already limit their own clicks
+inventory.utility_keybinds: false         # Organize, auto/manual restock, cycle item variants, and eject junk
+inventory.prevent_drag_ghost_items: true  # 2b2t drag-splitting workaround for nonstackables, banners, and non-monocolor maps
 
-#
-listener.game_message.read: true  # registers: listener, allows: share_ignores, whisper_sound, whisper_pearl_pull
-listener.game_message.filter: true  # registers: listener, allows: borrow_ignores
-listener.player_move: true  # registers: onTick(), listener.worldTick, listener.disconnect, allows: player_pos_sync
-broadcaster: false  # registers: onTimer()
-epearl_owners: true  # registers: onTick(), listener.chunkLoad, listener.chunkUnload, allows: uuid/xz
+#----- Item tooltips
+item_info.map_metadata: true              # Map-analysis tooltips; uses inventory/container scans; name colors are separate
+item_info.repair_cost: false              # Repair-cost tooltip and hotbar HUD
 
-command.assignpearl: true
-command.deletedmapsnearby: false
-#command.evmod  # always available; opens the config GUI
-command.exportmapimg: true
-command.exportmapnames: true
-command.mapartgroup: true
-command.maphashcode: true
-command.seen: true
-command.sendas: true
-command.timeonline: true
+#----- Data storage (local + remote)
+data.store_in_config_folder: false        # <GameDir>/evmod/ vs <ConfigDir>/evmod/ (on change, existing data needs manual relocation)
+data.epearl_owners: false                 # Required by pearl commands and whisper activation; remote access is optional
+data.ignorelist_sync: false               # Save /ignore changes and filter borrowed lists; remote sharing/fetching is optional
+data.map_history: true                    # Save hashes of seen maparts per server; optional remote sharing of map images
+data.ipc.player_pos: false                # Purely local communication channel for running game instances
+data.remote_db: false                     # Link to a remote database; data sharing is off by default (read only)
+
+#----- Player / Misc
+player.pull_pearls_on_request: false      # Whisper activation requires data.epearl_owners; external-trigger hotkey does not
+player.keybind_toggle.skin_layers: false  # Toggle cape, hat, jacket, sleeves, and pants layers; optional cape/elytra sync
+
+elytra.prevent_firework_waste: false      # Boost instead of placing rockets when gliding at blocks; excludes explosive rockets
+elytra.travel_helpers: false              # AIE/eBounce, angle snapping, and junk ejection
+
+chat.broadcaster: false                   # Scheduled event-countdown chat announcements from a designated account
+chat.shortcuts: false                     # Message hotkeys, automatic join commands, and logout-coordinate logging
+
+notify.chat.whisper: false                # Play a sound for incoming whispers
+notify.new_mapart.iframe: true            # Nearby "not in my collection" alert; requires command.mapartgroup & inv/iFrame scans
+
+client.mute_main_menu_music: false        # Mute music while outside a world; restore the configured volume on joining
+client.static_entity_rendering: true      # Static-entity rendering distance and limits, including iFrames
+
+gui.show_niche_config_settings: false     # Show stuff in GUI that even I (Év) leave hidden; things you really don't need to edit

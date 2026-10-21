@@ -79,7 +79,7 @@ public final class SyncPlayerPos implements TickListener{
 		fakePlayers.clear();
 	}
 
-	// Accessed by: MixinClientPacketListener
+	// Accessed by: MixinClientPacketListenerPlayerPosition
 	public final boolean removeFakePlayer(final UUID uuid){
 		final SyncedPlayer dummy = fakePlayers.remove(uuid);
 		if(dummy != null) dummy.entity.discard();

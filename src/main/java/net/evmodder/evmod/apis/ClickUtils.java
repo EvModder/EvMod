@@ -51,9 +51,9 @@ public final class ClickUtils{
 	public static volatile long TICK_DURATION_NANOS = 50_100_000l;
 	private static boolean IS_NEW_TICK;
 
-	// Accessed by: MixinMultiPlayerGameMode
+	// Accessed by: MixinMultiPlayerGameMode, MixinMultiPlayerGameModeCrafting
 	private static boolean thisClickIsBotted;
-	// Accessed by: MixinMultiPlayerGameMode
+	// Accessed by: MixinMultiPlayerGameMode, MixinMultiPlayerGameModeCrafting
 	public static final boolean isThisClickBotted(){return thisClickIsBotted;}
 
 	public static final void refreshLimits(final int MAX_CLICKS, int FOR_TICKS){

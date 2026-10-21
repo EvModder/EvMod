@@ -43,7 +43,7 @@ final class KeyCallbacks{
 		});
 	}
 
-	KeyCallbacks(Configs configs,
+	KeyCallbacks(Settings settings, Configs configs,
 			RemoteServerSender remoteSender, EpearlLookup epearlLookup, KeybindCraftingRestock kbCraftRestock,
 			WhisperPlaySound whisperPlaySound, GameMessageFilter gameMessageFilter, KeybindInventoryOrganize[] kbInvOrgs, KeybindInventoryRestock kbInvRestock
 	){
@@ -62,41 +62,45 @@ final class KeyCallbacks{
 			}
 		});
 
-		if(!Main.mapArtFeaturesOnly){
-			final KeybindAIETravelHelper kbAIE = new KeybindAIETravelHelper();
-			final KeybindEjectJunk kbej = new KeybindEjectJunk();
-			final KeybindEbounceTravelHelper kbEbounce = new KeybindEbounceTravelHelper(kbej);
-			final KeybindHotbarTypeScroller kbHbScroll = new KeybindHotbarTypeScroller();
+		final KeybindAIETravelHelper kbAIE = settings.enabled(Setting.TRAVEL) ? new KeybindAIETravelHelper() : null;
+		final KeybindEjectJunk kbej = settings.any(Setting.TRAVEL, Setting.INVENTORY_TOOLS) ? new KeybindEjectJunk() : null;
+		final KeybindEbounceTravelHelper kbEbounce = settings.enabled(Setting.TRAVEL) ? new KeybindEbounceTravelHelper(kbej) : null;
+		final KeybindHotbarTypeScroller kbHbScroll = settings.enabled(Setting.INVENTORY_TOOLS) ? new KeybindHotbarTypeScroller() : null;
 
-			// Value change callbacks
+		// Value change callbacks
+		if(remoteSender != null){
 			valueChangeCallback(Configs.Database.ADDRESS, ()->InitUtils.refreshRemoteServerSender(remoteSender));
 			valueChangeCallback(Configs.Database.CLIENT_ID, ()->InitUtils.refreshRemoteServerSender(remoteSender));
 			valueChangeCallback(Configs.Database.CLIENT_KEY, ()->InitUtils.refreshRemoteServerSender(remoteSender));
-			if(gameMessageFilter != null) valueChangeCallback(Configs.Database.BORROW_IGNORES, gameMessageFilter::recomputeIgnoreLists);
-			Configs.Database.EPEARL_OWNERS_BY_UUID.setValueChangeCallback(newValue -> {if(newValue.getBooleanValue()) epearlLookup.loadEpearlCacheUUID();});
-			Configs.Database.EPEARL_OWNERS_BY_XZ.setValueChangeCallback(newValue -> {if(newValue.getBooleanValue()) epearlLookup.loadEpearlCacheXZ();});
+		}
+		if(gameMessageFilter != null) valueChangeCallback(Configs.Database.BORROW_IGNORES, gameMessageFilter::recomputeIgnoreLists);
+		if(epearlLookup != null) Configs.Database.EPEARL_OWNERS_BY_UUID.setValueChangeCallback(newValue -> {if(newValue.getBooleanValue()) epearlLookup.loadEpearlCacheUUID();});
+		if(epearlLookup != null) Configs.Database.EPEARL_OWNERS_BY_XZ.setValueChangeCallback(newValue -> {if(newValue.getBooleanValue()) epearlLookup.loadEpearlCacheXZ();});
 
+		if(settings.broadcaster){
 			valueChangeCallback(Configs.Generic.TEMP_BROADCAST_ACCOUNT, ChatBroadcaster::refreshBroadcast);
 			valueChangeCallback(Configs.Generic.TEMP_BROADCAST_TIMESTAMP, ChatBroadcaster::refreshBroadcast);
 			valueChangeCallback(Configs.Generic.TEMP_BROADCAST_MSGS, ChatBroadcaster::refreshBroadcast);
-			valueChangeCallback(Configs.Hotkeys.SCROLL_ORDER, kbHbScroll::refreshColorLists);
+		}
+		if(kbHbScroll != null) valueChangeCallback(Configs.Hotkeys.SCROLL_ORDER, kbHbScroll::refreshColorLists);
 
-			if(kbInvRestock != null){
-				valueChangeCallback(Configs.Generic.INV_RESTOCK_BLACKLIST, kbInvRestock::refreshLists);
-				valueChangeCallback(Configs.Generic.INV_RESTOCK_WHITELIST, kbInvRestock::refreshLists);
-				valueChangeCallback(Configs.Generic.INV_RESTOCK_AUTO_FOR_INV_ORGS, ()->kbInvRestock.refreshLayouts(kbInvOrgs));
-			}
-			if(kbInvOrgs != null){
-				Configs.Generic.INV_ORGANIZE_1.setValueChangeCallback(newValue -> kbInvOrgs[0].refreshLayout(newValue.getStrings()));
-				Configs.Generic.INV_ORGANIZE_2.setValueChangeCallback(newValue -> kbInvOrgs[1].refreshLayout(newValue.getStrings()));
-				Configs.Generic.INV_ORGANIZE_3.setValueChangeCallback(newValue -> kbInvOrgs[2].refreshLayout(newValue.getStrings()));
-			}
-			if(whisperPlaySound != null){
-				valueChangeCallback(Configs.Generic.WHISPER_PLAY_SOUND, whisperPlaySound::recomputeSound);
-				valueChangeCallback(Configs.Generic.WHISPER_PLAY_SOUND_UNFOCUSED, whisperPlaySound::recomputeSoundUnfocused);
-			}
+		if(kbInvRestock != null){
+			valueChangeCallback(Configs.Generic.INV_RESTOCK_BLACKLIST, kbInvRestock::refreshLists);
+			valueChangeCallback(Configs.Generic.INV_RESTOCK_WHITELIST, kbInvRestock::refreshLists);
+			valueChangeCallback(Configs.Generic.INV_RESTOCK_AUTO_FOR_INV_ORGS, ()->kbInvRestock.refreshLayouts(kbInvOrgs));
+		}
+		if(kbInvOrgs != null){
+			Configs.Generic.INV_ORGANIZE_1.setValueChangeCallback(newValue -> kbInvOrgs[0].refreshLayout(newValue.getStrings()));
+			Configs.Generic.INV_ORGANIZE_2.setValueChangeCallback(newValue -> kbInvOrgs[1].refreshLayout(newValue.getStrings()));
+			Configs.Generic.INV_ORGANIZE_3.setValueChangeCallback(newValue -> kbInvOrgs[2].refreshLayout(newValue.getStrings()));
+		}
+		if(whisperPlaySound != null){
+			valueChangeCallback(Configs.Generic.WHISPER_PLAY_SOUND, whisperPlaySound::recomputeSound);
+			valueChangeCallback(Configs.Generic.WHISPER_PLAY_SOUND_UNFOCUSED, whisperPlaySound::recomputeSoundUnfocused);
+		}
 
-			// Keybind callbacks
+		// Keybind callbacks
+		if(settings.enabled(Setting.APPEARANCE)){
 			keybindCallback(Configs.Hotkeys.TOGGLE_CAPE, null, ()->InitUtils.toggleSkinLayer(PlayerModelPart.CAPE));
 			keybindCallback(Configs.Hotkeys.TOGGLE_HAT, null, ()->InitUtils.toggleSkinLayer(PlayerModelPart.HAT));
 			keybindCallback(Configs.Hotkeys.TOGGLE_JACKET, null, ()->InitUtils.toggleSkinLayer(PlayerModelPart.JACKET));
@@ -104,62 +108,72 @@ final class KeyCallbacks{
 			keybindCallback(Configs.Hotkeys.TOGGLE_SLEEVE_RIGHT, null, ()->InitUtils.toggleSkinLayer(PlayerModelPart.RIGHT_SLEEVE));
 			keybindCallback(Configs.Hotkeys.TOGGLE_PANTS_LEG_LEFT, null, ()->InitUtils.toggleSkinLayer(PlayerModelPart.LEFT_PANTS_LEG));
 			keybindCallback(Configs.Hotkeys.TOGGLE_PANTS_LEG_RIGHT, null, ()->InitUtils.toggleSkinLayer(PlayerModelPart.RIGHT_PANTS_LEG));
+		}
 
 //			keybindCallback(Configs.Hotkeys.AIE_TRAVEL_HELPER, null, kbAIE::toggle);
 //			keybindCallback(Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER, null, kbEbounce::toggle);
-			Configs.Hotkeys.AIE_TRAVEL_HELPER.setValueChangeCallback(newValue->kbAIE.updateEnabled(newValue.getBooleanValue()));
-			Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setValueChangeCallback(newValue->kbEbounce.updateEnabled(newValue.getBooleanValue()));
-			if(kbCraftRestock != null) keybindCallback(Configs.Hotkeys.CRAFT_RESTOCK, null/*HandledScreen.class::isInstance*/, kbCraftRestock::restockInputSlots);
-			keybindCallback(Configs.Hotkeys.EJECT_JUNK_ITEMS, s->s==null || s instanceof AbstractContainerScreen, kbej::ejectJunkItems);
-			keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_INCR, null, ()->kbHbScroll.scrollHotbarSlot(true));
-			keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_DECR, null, ()->kbHbScroll.scrollHotbarSlot(false));
+		if(kbAIE != null) Configs.Hotkeys.AIE_TRAVEL_HELPER.setValueChangeCallback(newValue->kbAIE.updateEnabled(newValue.getBooleanValue()));
+		if(kbEbounce != null) Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setValueChangeCallback(newValue->kbEbounce.updateEnabled(newValue.getBooleanValue()));
+		if(kbCraftRestock != null) keybindCallback(Configs.Hotkeys.CRAFT_RESTOCK, null/*HandledScreen.class::isInstance*/, kbCraftRestock::restockInputSlots);
+		if(kbej != null) keybindCallback(Configs.Hotkeys.EJECT_JUNK_ITEMS, s->s==null || s instanceof AbstractContainerScreen, kbej::ejectJunkItems);
+		if(kbHbScroll != null) keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_INCR, null, ()->kbHbScroll.scrollHotbarSlot(true));
+		if(kbHbScroll != null) keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_DECR, null, ()->kbHbScroll.scrollHotbarSlot(false));
 
-			if(kbInvOrgs != null){
-				keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_1, null, ()->kbInvOrgs[0].organizeInventory(false, null));
-				keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_2, null, ()->kbInvOrgs[1].organizeInventory(false, null));
-				keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_3, null, ()->kbInvOrgs[2].organizeInventory(false, null));
-			}
-			if(kbInvRestock != null){
-				keybindCallback(Configs.Hotkeys.INV_RESTOCK, s->s instanceof AbstractContainerScreen && s instanceof InventoryScreen == false, kbInvRestock::doRestock);
-			}
+		if(kbInvOrgs != null){
+			keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_1, null, ()->kbInvOrgs[0].organizeInventory(false, null));
+			keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_2, null, ()->kbInvOrgs[1].organizeInventory(false, null));
+			keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_3, null, ()->kbInvOrgs[2].organizeInventory(false, null));
+		}
+		if(kbInvRestock != null){
+			keybindCallback(Configs.Hotkeys.INV_RESTOCK, s->s instanceof AbstractContainerScreen && s instanceof InventoryScreen == false, kbInvRestock::doRestock);
+		}
 
+		if(settings.enabled(Setting.CHAT_ACTIONS)){
 			keybindCallback(Configs.Hotkeys.CHAT_MSG_1, null, ()->InitUtils.sendChatMsg(Configs.Hotkeys.CHAT_MSG_1.getStringValue()));
 			keybindCallback(Configs.Hotkeys.CHAT_MSG_2, null, ()->InitUtils.sendChatMsg(Configs.Hotkeys.CHAT_MSG_2.getStringValue()));
 			keybindCallback(Configs.Hotkeys.CHAT_MSG_3, null, ()->InitUtils.sendChatMsg(Configs.Hotkeys.CHAT_MSG_3.getStringValue()));
-			if(remoteSender != null){
-				keybindCallback(Configs.Hotkeys.REMOTE_MSG_1, null, ()->InitUtils.sendRemoteMsg(remoteSender, Configs.Hotkeys.REMOTE_MSG_1.getStringValue()));
-				keybindCallback(Configs.Hotkeys.REMOTE_MSG_2, null, ()->InitUtils.sendRemoteMsg(remoteSender, Configs.Hotkeys.REMOTE_MSG_2.getStringValue()));
-				keybindCallback(Configs.Hotkeys.REMOTE_MSG_3, null, ()->InitUtils.sendRemoteMsg(remoteSender, Configs.Hotkeys.REMOTE_MSG_3.getStringValue()));
-			}
+		}
+		if(settings.usesRemoteCommandHotkeys()){
+			keybindCallback(Configs.Hotkeys.REMOTE_MSG_1, null, ()->InitUtils.sendRemoteMsg(remoteSender, Configs.Hotkeys.REMOTE_MSG_1.getStringValue()));
+			keybindCallback(Configs.Hotkeys.REMOTE_MSG_2, null, ()->InitUtils.sendRemoteMsg(remoteSender, Configs.Hotkeys.REMOTE_MSG_2.getStringValue()));
+			keybindCallback(Configs.Hotkeys.REMOTE_MSG_3, null, ()->InitUtils.sendRemoteMsg(remoteSender, Configs.Hotkeys.REMOTE_MSG_3.getStringValue()));
+		}
+		if(settings.enabled(Setting.PEARL_MESSAGES)){
 			keybindCallback(Configs.Hotkeys.PP_HOTKEY_1, null,
 					()->EpearlExternalAdapter.trigger(Configs.Hotkeys.PP_IP_1.getStringValue(), Configs.Hotkeys.PP_TOKEN_1.getStringValue()));
+		}
+		if(settings.enabled(Setting.TRAVEL)){
 			keybindCallback(Configs.Hotkeys.SNAP_ANGLE_1, null,
 					()->Minecraft.getInstance().player.absSnapRotationTo(Configs.Hotkeys.SNAP_ANGLE_1.getYaw(), Configs.Hotkeys.SNAP_ANGLE_1.getPitch()));
 			keybindCallback(Configs.Hotkeys.SNAP_ANGLE_2, null,
 					()->Minecraft.getInstance().player.absSnapRotationTo(Configs.Hotkeys.SNAP_ANGLE_2.getYaw(), Configs.Hotkeys.SNAP_ANGLE_2.getPitch()));
 		}
 
-		final KeybindMapCopy kbMapCopy = new KeybindMapCopy();
-		final KeybindMapLoad kbMapLoad = new KeybindMapLoad();
-		final KeybindMapMove kbMapMove = new KeybindMapMove();
-		final KeybindMapMoveBundle kbMapMoveBundle = new KeybindMapMoveBundle();
-
-		valueChangeCallback(Configs.Generic.CLICK_LIMIT_COUNT, InitUtils::refreshClickLimits);
-		valueChangeCallback(Configs.Generic.CLICK_LIMIT_WINDOW, InitUtils::refreshClickLimits);
-		valueChangeCallback(Configs.Visuals.CLICK_DISPLAY_AVAILABLE_PERSISTENT, InitUtils::refreshClickRenderer);
+		if(settings.usesClicks()){
+			valueChangeCallback(Configs.Generic.CLICK_LIMIT_COUNT, InitUtils::refreshClickLimits);
+			valueChangeCallback(Configs.Generic.CLICK_LIMIT_WINDOW, InitUtils::refreshClickLimits);
+			valueChangeCallback(Configs.Visuals.CLICK_DISPLAY_AVAILABLE_PERSISTENT, InitUtils::refreshClickRenderer);
+		}
 
 		keybindCallback(Configs.Hotkeys.OPEN_CONFIG_GUI, Objects::isNull, ()->GuiBase.openGui(new ConfigGui(configs)));
 
-		keybindCallback(Configs.Hotkeys.MAP_COPY, s->s instanceof InventoryScreen
-				|| s instanceof CraftingScreen || s instanceof CartographyTableScreen, kbMapCopy::copyMapArtInInventory);
-		keybindCallback(Configs.Hotkeys.MAP_LOAD,
-				s->s instanceof AbstractContainerScreen && !(s instanceof AnvilScreen), kbMapLoad::loadMapArtFromContainer);
-		keybindCallback(Configs.Hotkeys.MAP_MOVE,
-				s->s instanceof AbstractContainerScreen && s instanceof InventoryScreen == false, kbMapMove::moveMapArtToFromShulker);
-		Function<Screen, Boolean> allowInScreenBundleMove = //InventoryScreen.class::isInstance
-				s->s instanceof InventoryScreen || s instanceof ContainerScreen || s instanceof ShulkerBoxScreen || s instanceof CraftingScreen;
-		keybindCallback(Configs.Hotkeys.MAP_MOVE_BUNDLE, allowInScreenBundleMove, ()->kbMapMoveBundle.moveMapArtToFromBundle(false));
-		keybindCallback(Configs.Hotkeys.MAP_MOVE_BUNDLE_REVERSE, allowInScreenBundleMove, ()->kbMapMoveBundle.moveMapArtToFromBundle(true));
+		if(settings.enabled(Setting.MAP_ACTIONS)){
+			final KeybindMapCopy kbMapCopy = new KeybindMapCopy();
+			final KeybindMapLoad kbMapLoad = new KeybindMapLoad();
+			final KeybindMapMove kbMapMove = new KeybindMapMove();
+			final KeybindMapMoveBundle kbMapMoveBundle = new KeybindMapMoveBundle();
+
+			keybindCallback(Configs.Hotkeys.MAP_COPY, s->s instanceof InventoryScreen
+					|| s instanceof CraftingScreen || s instanceof CartographyTableScreen, kbMapCopy::copyMapArtInInventory);
+			keybindCallback(Configs.Hotkeys.MAP_LOAD,
+					s->s instanceof AbstractContainerScreen && !(s instanceof AnvilScreen), kbMapLoad::loadMapArtFromContainer);
+			keybindCallback(Configs.Hotkeys.MAP_MOVE,
+					s->s instanceof AbstractContainerScreen && s instanceof InventoryScreen == false, kbMapMove::moveMapArtToFromShulker);
+			Function<Screen, Boolean> allowInScreenBundleMove = //InventoryScreen.class::isInstance
+					s->s instanceof InventoryScreen || s instanceof ContainerScreen || s instanceof ShulkerBoxScreen || s instanceof CraftingScreen;
+			keybindCallback(Configs.Hotkeys.MAP_MOVE_BUNDLE, allowInScreenBundleMove, ()->kbMapMoveBundle.moveMapArtToFromBundle(false));
+			keybindCallback(Configs.Hotkeys.MAP_MOVE_BUNDLE_REVERSE, allowInScreenBundleMove, ()->kbMapMoveBundle.moveMapArtToFromBundle(true));
+		}
 
 		//new KeybindSpamclick();
 	}

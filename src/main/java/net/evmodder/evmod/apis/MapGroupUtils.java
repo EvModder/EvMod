@@ -16,19 +16,19 @@ import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 public final class MapGroupUtils{
 	private static int mapsInGroupHash;
 	private static HashSet<UUID> currentMapGroup;
-	// Accessed by: MixinClientPacketListener
+	// Accessed by: MixinClientPacketListenerMaps
 	private static final HashSet<Integer> loadedMapIds = new HashSet<>();
-	// Accessed by: MixinClientPacketListener
+	// Accessed by: MixinClientPacketListenerMaps
 	private static final HashSet<Integer> nullMapIds = new HashSet<>();
 
-	// Accessed by: MixinClientPacketListener
+	// Accessed by: MixinClientPacketListenerSeenMaps
 	private static final HashMap<byte[], UUID> stateToIdCache = new HashMap<>(), unlockedStateToIdCache = new HashMap<>();
-	// Accessed by: MixinClientPacketListener
+	// Accessed by: MixinClientPacketListenerMaps
 	@SuppressWarnings("unused") private static boolean markMapLoaded(int id){return loadedMapIds.add(id);}
 	public static final void markMapMissing(int id){nullMapIds.add(id);}
 	public static final void markMapAvailable(int id){nullMapIds.remove(id);}
 
-	// Accessed by: MixinClientPacketListener
+	// Accessed by: MixinClientPacketListenerSeenMaps
 	public static final UUID getCachedIdForMapStateOrNull(MapItemSavedData state){return (state.locked ? stateToIdCache : unlockedStateToIdCache).get(state.colors);}
 //	private static final Random rand = new Random();
 	public static final UUID getIdForMapState(MapItemSavedData state, boolean evict){

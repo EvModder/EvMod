@@ -13,7 +13,6 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.TickListener;
-import net.evmodder.evmod.commands.CommandExportMapNames;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -37,8 +36,9 @@ import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 public final class UpdateContainerContents implements TickListener{
 	private static final HashSet<UUID> duplicatesInContainer = new HashSet<>(), inContainerAndInInv = new HashSet<>();
 	// Cache invalidation token, not an item hash. Never reset on menu transitions.
+	// Accessed by: MixinUpdateContainerContentsMapNames
 	private static int mapsInContainerRevision;
-	// Accessed by: MixinAbstractContainerScreenGhostItems
+	// Accessed by: MixinAbstractContainerScreenTitle
 	@SuppressWarnings("unused") private static MutableComponent customTitle;
 
 	public static final int getMapsInContainerRevision(){return mapsInContainerRevision;}  // Accessed by: TooltipMapNameColor, TooltipMapLoreMetadata
@@ -123,8 +123,6 @@ public final class UpdateContainerContents implements TickListener{
 		final int containerHash = hasNestedMapItems ? 0 : mapItems.hashCode();
 		final int newRevision = mapsInContainerRevision + (hasNestedMapItems || hadNestedMapItems
 				|| lastMenu != hs.getMenu() || lastContainerHash != containerHash ? 1 : 0);
-		if(newRevision != mapsInContainerRevision) mapItems.stream().map(stack -> stack.get(DataComponents.CUSTOM_NAME))
-				.filter(Objects::nonNull).map(Component::getString).forEach(CommandExportMapNames::addMapName);
 		mapsInContainerRevision = newRevision;
 		lastContainerHash = containerHash;
 		lastMenu = hs.getMenu();

@@ -25,7 +25,6 @@ public final class ContainerOpenCloseListener implements TickListener{
 	private final KeybindInventoryRestock kbInvRestock;
 	public ContainerOpenCloseListener(final KeybindInventoryRestock kbInvRestock){
 		this.kbInvRestock = kbInvRestock;
-		new BlockClickListener();
 		ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> {
 			syncId = 0;
 			waitingForEcToLoad = currentlyViewingEchest = currentlyViewingContainer = false;
@@ -60,7 +59,7 @@ public final class ContainerOpenCloseListener implements TickListener{
 		syncId = newSyncId;
 		if(newSyncId != 0){
 //			Main.LOGGER.info("ContainerOpenCloseListener: container opened, syncId="+newSyncId+", name="+client.currentScreen.getTitle().toString());
-			if(Configs.Generic.INV_RESTOCK_AUTO.getBooleanValue()) kbInvRestock.organizeThenRestock();
+			if(kbInvRestock != null && Configs.Generic.INV_RESTOCK_AUTO.getBooleanValue()) kbInvRestock.organizeThenRestock();
 
 			if(Configs.Database.MAP_CACHE.getOptionListValue() != OptionMapStateCache.OFF){
 				waitingForEcToLoad = false;

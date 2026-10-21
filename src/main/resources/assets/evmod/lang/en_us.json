@@ -105,9 +105,6 @@
 	"evmod.config.generic.comment.clickLimitUserInputs": "Helpful to avoid AntiCheat kicks from exceeding click limits due to other mods or player actions",
 	"evmod.config.generic.name.clickBlockUserInputsDuringOperation": "blockUserInputsDuringClickOperation",
 	"evmod.config.generic.comment.clickBlockUserInputsDuringOperation": "Discard all other-mod/user-generated clicks while a mapcopy/mapmove/etc. keybind is processing",
-	"evmod.config.visuals.name.clickDisplayAvailablePersistent": "clickDisplayAvailablePersistent",
-	"evmod.config.visuals.comment.clickDisplayAvailablePersistent": "Popup to constantly display available clicks in the actionbar",
-
 	"evmod.config.generic.name.useBundlePacket": "useBundlePacket",
 	"evmod.config.generic.comment.useBundlePacket": "Enable internal bundle select packets (makes bundle copy faster)",
 	"evmod.config.generic.name.bundlesAreReversed": "bundlesAreReversed",
@@ -217,6 +214,9 @@
 	"evmod.config.generic.comment.fix2b2tGhostItems": "Disables drag-clicking for certain items (bundles, maps, and banners);\ncredit to EnderKill98 for telling me how to fix this",
 
 	// VISUALS:
+	"evmod.config.visuals.name.clickDisplayAvailablePersistent": "clickDisplayAvailablePersistent",
+	"evmod.config.visuals.comment.clickDisplayAvailablePersistent": "Popup to constantly display available clicks in the actionbar",
+
 	// Dormant (commented out in Configs.java):
 	// "evmod.config.visuals.name.displayTotemCount": "displayTotemCount",
 	// "evmod.config.visuals.comment.displayTotemCount": "",

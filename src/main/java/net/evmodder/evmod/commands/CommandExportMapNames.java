@@ -1,6 +1,7 @@
 package net.evmodder.evmod.commands;
 
 import static net.evmodder.evmod.compat.MinecraftCompat.openFile;
+import static net.evmodder.evmod.compat.MinecraftCompat.bundleItems;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 import com.mojang.brigadier.context.CommandContext;
 import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.Main;
+import net.evmodder.evmod.apis.InvUtils;
 import net.evmodder.evmod.apis.MapRelationUtils;
 import net.evmodder.evmod.apis.MapRelationUtils.RelatedMapsData;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -27,7 +29,11 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+//? >=26.1 {
+import net.minecraft.world.item.ItemInstance;
+//?}
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.BundleContents;
 import net.minecraft.world.item.Items;
 
 public final class CommandExportMapNames{
@@ -46,7 +52,23 @@ public final class CommandExportMapNames{
 		}
 	}
 
+	// Accessed by: MixinUpdateContainerContentsMapNames, MixinUpdateItemFrameContentsMapNames
 	public static final void addMapName(final String name){MAP_NAMES.add(name);}
+	//? >=26.1 {
+	// Accessed by: MixinUpdateInventoryContentsMapNames
+	public static final void addMapName(final ItemInstance stack){
+	//?} else {
+	/*public static final void addMapName(final ItemStack stack){*/
+	//?}
+		if(stack.is(Items.FILLED_MAP)){
+			final Component name = stack.get(DataComponents.CUSTOM_NAME);
+			if(name != null) addMapName(name.getString());
+		}
+		else{
+			final BundleContents contents = stack.get(DataComponents.BUNDLE_CONTENTS);
+			if(contents != null) InvUtils.getAllNestedItemViews(bundleItems(contents)).forEach(CommandExportMapNames::addMapName);
+		}
+	}
 	public static final void clearMapNames(){MAP_NAMES.clear();}
 
 	private static final boolean isReflectedChar(final char l, final char r){

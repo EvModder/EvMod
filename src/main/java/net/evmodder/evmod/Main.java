@@ -94,38 +94,40 @@ public class Main{
 		LOGGER = LoggerFactory.getLogger(MOD_ID);
 	}
 
-	static boolean mapArtFeaturesOnly = true;  // TODO: eww hacky
-
-	// Accessed by: MixinClientPacketListener, MixinEntityRendererPearl, MixinMultiPlayerGameMode
+	// Accessed by: MixinClientPacketListener, MixinClientPacketListenerCrafting, MixinClientPacketListenerPlayerPosition,
+	//              MixinClientPacketListenerSeenMaps, MixinEntityRendererPearl, MixinMultiPlayerGameModeCrafting
 	private static Main instance;
-	// Accessed by: MixinClientPacketListener
+	// Accessed by: MixinClientPacketListenerSeenMaps
 	private final RemoteServerSender remoteSender;
 	// Accessed by: MixinClientPacketListener, MixinEntityRendererPearl
 	private final EpearlLookupFabric epearlLookup;
-	// Accessed by: MixinClientPacketListener, MixinMultiPlayerGameMode
+	// Accessed by: MixinClientPacketListenerCrafting, MixinMultiPlayerGameModeCrafting
 	private final KeybindCraftingRestock kbCraftRestock;
-	// Accessed by: MixinClientPacketListener
+	// Accessed by: MixinClientPacketListenerPlayerPosition
 	private final SyncPlayerPos syncPlayerPos;
 
-	// Accessed by: MixinClientPacketListener
+	// Accessed by: MixinClientPacketListenerSeenMaps
 	@SuppressWarnings("unused") private static RemoteServerSender getRemoteSenderForMixin(){return instance.remoteSender;}
 	// Accessed by: MixinClientPacketListener, MixinEntityRendererPearl
 	@SuppressWarnings("unused") private static EpearlLookupFabric getEpearlLookupForMixin(){return instance.epearlLookup;}
-	// Accessed by: MixinClientPacketListener, MixinMultiPlayerGameMode
+	// Accessed by: MixinClientPacketListenerCrafting, MixinMultiPlayerGameModeCrafting
 	@SuppressWarnings("unused") private static KeybindCraftingRestock getKbCraftRestockForMixin(){return instance.kbCraftRestock;}
-	// Accessed by: MixinClientPacketListener
+	// Accessed by: MixinClientPacketListenerPlayerPosition
 	@SuppressWarnings("unused") private static SyncPlayerPos getSyncPlayerPosForMixin(){return instance.syncPlayerPos;}
 
 	Main(){
 		Main.LOGGER.info("Loading "+MOD_NAME+" "+MOD_VERSION);
 		instance = this;
-		final Settings settings = new Settings();
-		if(settings.storeDataInInstanceFolder) FileIO.DIR = FabricLoader.getInstance().getGameDir()+"/"+MOD_ID+"/";
+		final Settings settings = Settings.get();
+		LegacySettingsMigration.mapGroups(!settings.enabled(Setting.STORE_DATA_IN_CONFIG_FOLDER));
+		if(!settings.enabled(Setting.STORE_DATA_IN_CONFIG_FOLDER)) FileIO.DIR = FabricLoader.getInstance().getGameDir()+"/"+MOD_ID+"/";
 		final Configs configs = new Configs(settings);
 		configs.load();
 
-		InitUtils.refreshClickLimits();
-		InitUtils.refreshClickRenderer();
+		if(settings.usesClicks()){
+			InitUtils.refreshClickLimits();
+			InitUtils.refreshClickRenderer();
+		}
 
 		if(!settings.database) remoteSender = null;
 		else{
@@ -136,51 +138,40 @@ public class Main{
 
 		epearlLookup = settings.epearlOwners ? new EpearlLookupFabric(remoteSender) : null;
 
-		if(settings.serverJoinListener || settings.cmdTimeOnline) new ServerJoinListener(remoteSender);
+		if(settings.serverJoinListener) new ServerJoinListener(remoteSender);
 		if(settings.serverQuitListener) new ServerQuitListener(remoteSender);
-		if(settings.blockClickListener){
-			if(!mapArtFeaturesOnly) new FireworkBoostListener();
-			new BlockClickListener();
-		}
-		final WhisperPlaySound whisperPlaySound;
-		final GameMessageFilter gameMessageFilter;
-		final KeybindInventoryOrganize[] kbInvOrgs;
-		final KeybindInventoryRestock kbInvRestock;
-		if(mapArtFeaturesOnly){
-			whisperPlaySound = null; gameMessageFilter = null; kbInvOrgs = null; kbInvRestock = null; kbCraftRestock = null; syncPlayerPos = null;
-		}
-		else{
-			whisperPlaySound = new WhisperPlaySound();
-			if(settings.gameMessageListener) new GameMessageListener(remoteSender, epearlLookup, whisperPlaySound);
-			gameMessageFilter = settings.gameMessageFilter ? new GameMessageFilter(remoteSender) : null;
-			kbInvOrgs = new KeybindInventoryOrganize[]{
-					new KeybindInventoryOrganize(Configs.Generic.INV_ORGANIZE_1.getStrings()),
-					new KeybindInventoryOrganize(Configs.Generic.INV_ORGANIZE_2.getStrings()),
-					new KeybindInventoryOrganize(Configs.Generic.INV_ORGANIZE_3.getStrings())
-			};
-			kbInvRestock = new KeybindInventoryRestock(kbInvOrgs);
-			kbCraftRestock = new KeybindCraftingRestock();
+		if(settings.enabled(Setting.FIREWORK_BOOST)) new FireworkBoostListener();
+		if(settings.blockClickListener) new BlockClickListener();
+		final WhisperPlaySound whisperPlaySound = settings.enabled(Setting.WHISPER_SOUND) ? new WhisperPlaySound() : null;
+		if(settings.gameMessageListener) new GameMessageListener(remoteSender, epearlLookup, whisperPlaySound);
+		final GameMessageFilter gameMessageFilter = settings.gameMessageFilter ? new GameMessageFilter(remoteSender) : null;
+		final KeybindInventoryOrganize[] kbInvOrgs = !settings.enabled(Setting.INVENTORY_TOOLS) ? null : new KeybindInventoryOrganize[]{
+				new KeybindInventoryOrganize(Configs.Generic.INV_ORGANIZE_1.getStrings()),
+				new KeybindInventoryOrganize(Configs.Generic.INV_ORGANIZE_2.getStrings()),
+				new KeybindInventoryOrganize(Configs.Generic.INV_ORGANIZE_3.getStrings())
+		};
+		final KeybindInventoryRestock kbInvRestock = settings.enabled(Setting.INVENTORY_TOOLS) ? new KeybindInventoryRestock(kbInvOrgs) : null;
+		kbCraftRestock = settings.enabled(Setting.CRAFTING) ? new KeybindCraftingRestock() : null;
 
-			if(settings.broadcaster) ChatBroadcaster.refreshBroadcast();
-			if(settings.tooltipRepairCost) Tooltip.register(new TooltipRepairCost());
-			if(settings.playerMoveListener) TickListener.register(syncPlayerPos = new SyncPlayerPos());
-			else syncPlayerPos = null;
-		}
+		if(settings.broadcaster) ChatBroadcaster.refreshBroadcast();
+		if(settings.tooltipRepairCost) Tooltip.register(new TooltipRepairCost());
+		if(settings.playerMoveListener) TickListener.register(syncPlayerPos = new SyncPlayerPos());
+		else syncPlayerPos = null;
 
 		if(settings.placementHelperIframeAutoPlace) new AutoPlaceItemFrames();
 		if(settings.placementHelperMapArt) new MapHangListener(settings.placementHelperMapArtAutoPlace, settings.placementHelperMapArtAutoRemove);
 
-		if(/*!mapArtFeaturesOnly && */settings.cmdAssignPearl) new CommandAssignPearl(epearlLookup);
+		if(settings.epearlOwners) new CommandAssignPearl(epearlLookup);
 		if(settings.epearlOwners) new CommandPearlRescue();
 		new CommandEvMod(()->new ConfigGui(configs));
-		if(settings.cmdDeletedMapsNearby) new CommandDeletedMapsNearby();
-		if(settings.cmdExportMapImg) new CommandExportMapImg();
+		new CommandDeletedMapsNearby();
+		new CommandExportMapImg(settings.onTickIframes);
 		if(settings.cmdExportMapNames) new CommandExportMapNames();
 		if(settings.cmdMapArtGroup) new CommandMapArtGroup();
-		if(settings.cmdMapHashCode) new CommandMapHashCode();
-		if(/*!mapArtFeaturesOnly && */settings.cmdSeen) new CommandSeen();
-		if(/*!mapArtFeaturesOnly && */settings.cmdSendAs) new CommandSendAs(remoteSender);
-		if(/*!mapArtFeaturesOnly && */settings.cmdTimeOnline) new CommandTimeOnline(remoteSender);
+		new CommandMapHashCode();
+		if(settings.database) new CommandSeen();
+		if(settings.database) new CommandSendAs(remoteSender);
+		if(settings.cmdTimeOnline) new CommandTimeOnline(remoteSender);
 
 		if(settings.onTickInventory) TickListener.register(new UpdateInventoryContents());
 		if(settings.onTickIframes) TickListener.register(new UpdateItemFrameContents());
@@ -193,7 +184,7 @@ public class Main{
 
 		ConfigManager.getInstance().registerConfigHandler(MOD_ID, configs);
 		Registry.CONFIG_SCREEN.registerConfigScreenFactory(new ModInfo(MOD_ID, MOD_NAME, ()->new ConfigGui(configs)));
-		new KeyCallbacks(configs, remoteSender, epearlLookup, kbCraftRestock, whisperPlaySound, gameMessageFilter, kbInvOrgs, kbInvRestock);
-		StaticEntityRenderCache.init();
+		new KeyCallbacks(settings, configs, remoteSender, epearlLookup, kbCraftRestock, whisperPlaySound, gameMessageFilter, kbInvOrgs, kbInvRestock);
+		if(settings.enabled(Setting.STATIC_ENTITY_RENDERING)) StaticEntityRenderCache.init();
 	}
 }

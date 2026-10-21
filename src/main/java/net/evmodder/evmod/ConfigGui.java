@@ -9,7 +9,7 @@ import fi.dy.masa.malilib.gui.button.ButtonGeneric;
 import fi.dy.masa.malilib.util.StringUtils;
 
 public class ConfigGui extends GuiConfigsBase{
-	private enum ConfigGuiTab{
+	enum ConfigGuiTab{
 		ALL(Main.MOD_ID+".gui.button.all"),
 		GENERIC(Main.MOD_ID+".gui.button.generic"),
 		VISUALS(Main.MOD_ID+".gui.button.visuals"),
@@ -50,11 +50,7 @@ public class ConfigGui extends GuiConfigsBase{
 		int x = 10;
 		int y = 26;
 
-		if(!Main.mapArtFeaturesOnly) x += createButton(x, y, ConfigGuiTab.ALL);
-		x += createButton(x, y, ConfigGuiTab.GENERIC);
-		x += createButton(x, y, ConfigGuiTab.VISUALS);
-		x += createButton(x, y, ConfigGuiTab.HOTKEYS);
-		if(!configs.getDatabaseConfigs().isEmpty()) x += createButton(x, y, ConfigGuiTab.DATABASE);
+		for(ConfigGuiTab tab : configs.guiTabs) x += createButton(x, y, tab);
 	}
 
 	@Override protected boolean useKeybindSearch(){return configs.guiTab == ConfigGuiTab.HOTKEYS.ordinal();}

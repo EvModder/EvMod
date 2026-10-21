@@ -24,7 +24,7 @@ public final class BlockClickListener{
 		return UUID.nameUUIDFromBytes(posData.array());
 	}
 
-	public BlockClickListener(){  // TODO: currently called by ContainerOpenCloseListener
+	public BlockClickListener(){
 		posData = ByteBuffer.allocate(13);
 		// TODO: add later phase, after ActionResult is determined to be PASS
 		UseBlockCallback.EVENT.register((Player _, Level world, InteractionHand _, BlockHitResult hitResult) -> {

@@ -9,7 +9,9 @@ import net.evmodder.EvLib.util.Command;
 import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.EvLib.util.PacketCodec;
 import net.evmodder.evmod.Configs;
+import net.evmodder.evmod.Setting;
 import net.evmodder.evmod.Main;
+import net.evmodder.evmod.Settings;
 import net.evmodder.evmod.apis.EpearlActivator;
 import net.evmodder.evmod.apis.EpearlLookupFabric;
 import net.evmodder.evmod.apis.RemoteServerSender;
@@ -73,9 +75,23 @@ public final class GameMessageListener{
 	}
 
 	public GameMessageListener(RemoteServerSender rms, EpearlLookupFabric epl, WhisperPlaySound wps){
-		final EpearlActivator pearlActivator = epl == null ? null : new EpearlActivator(epl);
-
-		ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {
+		final Settings settings = Settings.get();
+		final EpearlActivator pearlActivator = settings.enabled(Setting.PEARL_MESSAGES) && epl != null ? new EpearlActivator(epl) : null;
+		if(wps != null || pearlActivator != null){
+			ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {
+				if(overlay) return;
+				final String literal = msg.getString();
+				if(!WHISPER_PATTERN.matcher(literal).matches()) return;  // TODO: per-server format support
+//				Main.LOGGER.info("GameMsgListener: whisper detected");
+				if(wps != null) wps.playSound();
+				if(pearlActivator == null) return;
+				final String trigger = Configs.Generic.WHISPER_PEARL_PULL.getStringValue();
+				if(trigger.isBlank()) return;
+				final String name = literal.substring(0, literal.indexOf(' '));
+				if(literal.substring(name.length()+" whispers: ".length()).matches(trigger)) pearlActivator.triggerPearl(name);
+			});
+		}
+		if(settings.enabled(Setting.DATABASE_IGNORELIST_SYNC)) ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {
 			if(overlay) return;
 
 //			//========== TODO: remove this
@@ -89,21 +105,8 @@ public final class GameMessageListener{
 //			//==========
 
 			final String literal = msg.getString();
-			if(literal == null) return;
 //			if(literal.contains(myName)) Main.LOGGER.info("GameMsgListener: Account mentioned (literal):\n"+literal);
 
-			if(WHISPER_PATTERN.matcher(literal).matches()){  // TODO: per-server format support
-//				Main.LOGGER.info("GameMsgListener: whisper detected");
-				if(wps != null) wps.playSound();
-
-				final String PEARL_PULL_TRIGGER = Configs.Generic.WHISPER_PEARL_PULL.getStringValue();
-				if(!PEARL_PULL_TRIGGER.isBlank() && pearlActivator != null){
-					final String name = literal.substring(0, literal.indexOf(' '));
-					if(literal.substring(name.length()+" whispers: ".length()).matches(PEARL_PULL_TRIGGER)){
-						pearlActivator.triggerPearl(name);
-					}
-				}
-			}
 			//"Permanently ignoring ___. This is saved in /ignorelist."
 			if(Configs.Database.SAVE_IGNORES.getBooleanValue() || Configs.Database.SHARE_IGNORES.getBooleanValue()
 					/*&& MiscUtils.getCurrentServerAddressHashCode() == Main.HASHCODE_2B2T*/){

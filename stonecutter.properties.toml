@@ -7,7 +7,12 @@ mod.group = "net.evmodder"
 
 #2 = public db, NewMapNotifier, /mapartgroup seen/2b2t.org, x/SIZE, configs refactor, better tooltips
 #4 = map-name-relation improvements, smart-recipe-repeat, epearlLookup stability fixes, optimized inv click sequences, PLANNED: bulk-analysis (map stats for containers/walls),
-mod.version = "2.4"
+#mod.version = "2.4"
+
+#3 = per-feature hooks, config tab regrouping
+#0 = /evmod, pearl rescue, anti rocket waste,
+# PLANNED: bulk-analysis (map stats for containers/walls)
+mod.version = "3.0"
 
 # https://fabricmc.net/develop
 # https://jitpack.io/com/github/sakura-ryoko/malilib/

@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Timer;
 import java.util.TimerTask;
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -14,9 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.evmodder.evmod.apis.EpearlLookup.XYZ;
 import net.evmodder.evmod.apis.EpearlLookupFabric;
 import net.evmodder.evmod.apis.MiscUtils;
-import net.evmodder.evmod.render.StaticEntityRenderCache;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
@@ -30,23 +27,13 @@ abstract class MixinEntityRendererPearl{
 	private long lastRenderedId;
 	private long lastClear = 0;
 
-	@ModifyExpressionValue(method="shouldRender", at=@At(value="INVOKE", target="Lnet/minecraft/world/entity/Entity;shouldRender(DDD)Z"))
-	private boolean applyConfiguredStaticEntityRenderRange(final boolean original, final Entity entity, final Frustum frustum,
-			//? >=26.3 {
-			final double cameraX, final double cameraY, final double cameraZ, final float partialTick){
-			//?} else {
-			/*final double cameraX, final double cameraY, final double cameraZ){
-			*///?}
-		return StaticEntityRenderCache.useConfiguredRenderDistance(original, entity, cameraX, cameraY, cameraZ);
-	}
-
 	// TODO: mixin onTick instead of hasLabel, or setName somehow
 	@Inject(method="shouldShowName", at=@At("HEAD"), cancellable=true)
 	private final void fetchPearlOwnerNameInHasLabel_shouldDoThisInOnTickTBH(Entity e, double _distSqToCamera, CallbackInfoReturnable<Boolean> cir){
 		if(isHudHidden(client)) return;
 		if(e instanceof ThrownEnderpearl == false) return;
 		final EpearlLookupFabric eplf = AccessorMain.getEpearlLookup();
-		if(eplf == null || eplf.isDisabled()) return;  // Feature is disabled
+		if(eplf.isDisabled()) return;  // Both runtime cache toggles are disabled.
 
 		String name = eplf.getOwnerName((ThrownEnderpearl)e);
 		if(name == null) return;

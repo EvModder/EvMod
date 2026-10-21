@@ -7,11 +7,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapGroupUtils;
-import net.evmodder.evmod.apis.MiscUtils;
-import net.evmodder.evmod.apis.NewMapNotifier;
 import net.evmodder.evmod.apis.TickListener;
-import net.evmodder.evmod.commands.CommandExportMapNames;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientEntityEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
@@ -30,25 +26,16 @@ public final class UpdateItemFrameContents implements TickListener{
 	private static int lastGroupInvHash, numLoadedIfes;
 
 	public enum Highlight{INV_OR_NESTED_INV, NOT_IN_CURR_GROUP, MULTI_HUNG, UNLOCKED_OR_UNNAMED};  // Accessed by: MixinItemFrameRenderer
-	// Accessed by: MixinItemFrameRenderer
+	// Accessed by: MixinItemFrameRenderer, MixinUpdateItemFrameContentsTracking
 	private static final HashMap<Integer, Highlight> highlightedIFrames = new HashMap<>();
-	// Accessed by: MixinItemFrameRenderer
-	private static final HashMap<Integer, Boolean> hasLabelCache = new HashMap<>();
-	// Accessed by: MixinItemFrameRenderer
-	private static final HashMap<Integer, Component> displayNameCache = new HashMap<>();
+	// Accessed by: MixinItemFrameRenderer, MixinUpdateItemFrameContentsTracking
+	@SuppressWarnings("unused") private static final HashMap<Integer, Boolean> hasLabelCache = new HashMap<>();
+	// Accessed by: MixinItemFrameRenderer, MixinUpdateItemFrameContentsTracking
+	@SuppressWarnings("unused") private static final HashMap<Integer, Component> displayNameCache = new HashMap<>();
 
-	// Accessed by: MixinItemFrameRenderer
-	private static Vec3 clientRotationNormalized;
+	// Accessed by: MixinItemFrameRenderer, MixinUpdateItemFrameContentsTracking
+	@SuppressWarnings("unused") private static Vec3 clientRotationNormalized;
 	public static long lastIFrameMapGroupUpdateTs;  // Accessed by: CommandExportMapImg::getNearbyMapNames
-
-	public UpdateItemFrameContents(){
-		ClientEntityEvents.ENTITY_UNLOAD.register((entity, _) -> {
-			if(!(entity instanceof ItemFrame)) return;
-			highlightedIFrames.remove(entity.getId());
-			hasLabelCache.remove(entity.getId());
-			displayNameCache.remove(entity.getId());
-		});
-	}
 
 	// Accessed by: MixinItemFrameRenderer
 	public static final boolean isHungMultiplePlaces(final UUID colorsId){
@@ -93,8 +80,6 @@ public final class UpdateItemFrameContents implements TickListener{
 			final XYZD xyzd = new XYZD(ife.getBlockX(), ife.getBlockY(), ife.getBlockZ(), ife.getNearestViewDirection().ordinal(), ife.level().hashCode());
 			final UUID oldColorsIdForXYZD = colorsId != null ? hangLocsReverse.put(xyzd, colorsId) : hangLocsReverse.remove(xyzd);
 			if(colorsId != null){
-				if(!colorsId.equals(oldColorsIdForXYZD) && stack.getCustomName() != null)
-					CommandExportMapNames.addMapName(stack.getCustomName().getString());
 				if(trackingDistSq == 0 || centerPos.distanceToSqr(xyzd.x, xyzd.y, xyzd.z) <= trackingDistSq){
 					anyMapGroupUpdate |= iFrameMapGroup.computeIfAbsent(colorsId, (UUID _) -> new HashSet<XYZD>()).add(xyzd);
 				}
@@ -102,7 +87,6 @@ public final class UpdateItemFrameContents implements TickListener{
 			}
 			if(oldColorsIdForXYZD != null && !oldColorsIdForXYZD.equals(colorsId)){
 //				Main.LOGGER.info("IFHU: "+(colorsId == null ? "Removed" : "Replaced")+" map at xyzd");
-				if(colorsId == null) highlightedIFrames.remove(ife.getId());  // IFHU: Removed map at xyzd
 				anyMapGroupUpdate = true;
 				final HashSet<XYZD> oldLocs = iFrameMapGroup.get(oldColorsIdForXYZD);
 				if(oldLocs != null && oldLocs.remove(xyzd) && oldLocs.isEmpty()) iFrameMapGroup.remove(oldColorsIdForXYZD);
@@ -110,6 +94,7 @@ public final class UpdateItemFrameContents implements TickListener{
 		}
 		return anyMapGroupUpdate;
 	}
+	// Accessed by: MixinUpdateItemFrameContentsTracking, MixinUpdateItemFrameContentsNotifications
 	private static final boolean updateIframeHighlights(final List<ItemFrame> ifes){
 		boolean anyHighlightUpdate = false;
 		for(final ItemFrame ife : ifes){
@@ -126,7 +111,6 @@ public final class UpdateItemFrameContents implements TickListener{
 				highlight = Highlight.INV_OR_NESTED_INV;
 			else if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)){
 				highlight = Highlight.NOT_IN_CURR_GROUP;
-				if(Configs.Visuals.NEW_MAP_NOTIFIER_IFRAME.getBooleanValue()) NewMapNotifier.call(ife, colorsId);
 			}
 			else if(isHungMultiplePlaces(colorsId)) highlight = Highlight.MULTI_HUNG;
 			else if(!state.locked || stack.getCustomName() == null) highlight = Highlight.UNLOCKED_OR_UNNAMED;
@@ -141,11 +125,6 @@ public final class UpdateItemFrameContents implements TickListener{
 
 	@Override public final void onTickStart(final Minecraft client){
 		if(client.level == null) return;
-		final Vec3 newClientRot = client.player.getViewVector(1.0F).normalize();
-		if(!newClientRot.equals(clientRotationNormalized) || MiscUtils.hasMoved(client.player)){
-			clientRotationNormalized = newClientRot;
-			hasLabelCache.clear();  // Depends on client looking direction
-		}
 
 //		final boolean anyHangLocUpdate = client.world.getEntitiesByClass(ItemFrameEntity.class,
 //			client.player.getBoundingBox().expand(200, 200, 200), _0->true).stream().anyMatch(ife -> updateItemFrameEntity(client, ife));
@@ -183,11 +162,5 @@ public final class UpdateItemFrameContents implements TickListener{
 		}
 
 //		Main.LOGGER.info("IframeHighlighter: Recomputing highlight cache, due to "+(anyMapGroupUpdate?"hung iframe update":"inv update"));
-		final boolean anyHighlightUpdate = updateIframeHighlights(ifes);
-		if(!anyHighlightUpdate) return;
-
-//		Main.LOGGER.info("IframeHighlighter: Recomputing hasLabel/getDisplayName cache");
-		hasLabelCache.clear();
-		displayNameCache.clear();
 	}
 }
