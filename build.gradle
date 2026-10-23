@@ -179,6 +179,7 @@ processResources {
 		java_version		: requiredJava.majorVersion,
 		java_compatibility	: "JAVA_${requiredJava.majorVersion}",
 		level_entity_visibility_mixin: sc.current.parsed >= '26.2' ? 'MixinLevelExtractor' : 'MixinLevelRenderer',
+		mac_fullscreen_mixin: sc.current.parsed >= '26.3' ? '"MixinWindow",' : '',
 	]
 	inputs.properties props
 

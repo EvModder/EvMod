@@ -35,6 +35,7 @@ public enum Setting{
 	BROADCASTER("chat.broadcaster", false, "broadcaster"), CHAT_ACTIONS("chat.shortcuts", false, null),
 	CRAFTING("inventory.crafting_restock", false, null), FIREWORK_BOOST("elytra.prevent_firework_waste", false, null),
 	INVENTORY_TOOLS("inventory.utility_keybinds", false, null),
+	MAC_INSTANT_FULLSCREEN("client.mac_instant_fullscreen", false, null),
 	MUTE_MAIN_MENU_MUSIC("client.mute_main_menu_music", false, "mute_music_on_menu_screen"),
 	PEARL_MESSAGES("player.pull_pearls_on_request", false, null), PLAYER_POSITION_SYNC("data.ipc.player_pos", false, "listener.player_move"),
 	REPAIR_COST_TOOLTIP("item_info.repair_cost", false, "tooltip.repair_cost"),

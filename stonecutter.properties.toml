@@ -10,7 +10,7 @@ mod.group = "net.evmodder"
 #mod.version = "2.4"
 
 #3 = per-feature hooks, config tab regrouping
-#0 = /evmod, pearl rescue, anti rocket waste,
+#0 = /evmod, pearl rescue, anti rocket waste, instant fullscreen on macOS,
 # PLANNED: bulk-analysis (map stats for containers/walls)
 mod.version = "3.0"
 

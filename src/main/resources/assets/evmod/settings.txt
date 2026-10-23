@@ -68,6 +68,7 @@ chat.shortcuts: false                     # Message hotkeys, automatic join comm
 notify.chat.whisper: false                # Play a sound for incoming whispers
 notify.new_mapart.iframe: true            # Nearby "not in my collection" alert; requires command.mapartgroup & inv/iFrame scans
 
+client.mac_instant_fullscreen: false      # macOS / 26.3+: disable fullscreen animation
 client.mute_main_menu_music: false        # Mute music while outside a world; restore the configured volume on joining
 client.static_entity_rendering: true      # Static-entity rendering distance and limits, including iFrames
 

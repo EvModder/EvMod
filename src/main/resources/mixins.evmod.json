@@ -4,6 +4,7 @@
 	"compatibilityLevel": "${java_compatibility}",
 	"plugin": "net.evmodder.evmod.bootstrap.EvModMixinPlugin",
 	"client": [
+		${mac_fullscreen_mixin}
 		// EvMod access bridges:
 		"AccessorClickUtils",  // Automated click accounting
 		"AccessorCommandPearlRescue",  // Player-info packet callback

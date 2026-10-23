@@ -3,6 +3,7 @@ package net.evmodder.evmod.bootstrap;
 import java.util.List;
 import java.util.Set;
 import org.objectweb.asm.tree.ClassNode;
+import org.lwjgl.system.Platform;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import net.evmodder.evmod.Setting;
@@ -25,6 +26,7 @@ public final class EvModMixinPlugin implements IMixinConfigPlugin{
 			case "AccessorCommandPearlRescue", "AccessorEpearlLookup" -> settings.enabled(Setting.DATABASE_EPEARL_OWNERS);
 			case "AccessorKeybindCraftingRestock" -> settings.enabled(Setting.CRAFTING);
 			case "AccessorUpdateContainerContents" -> settings.enabled(Setting.MAP_SCAN_CONTAINERS);
+			case "MixinWindow" -> settings.enabled(Setting.MAC_INSTANT_FULLSCREEN) && Platform.get() == Platform.MACOSX;
 			case "AccessorMain" -> settings.any(Setting.DATABASE_EPEARL_OWNERS, Setting.CRAFTING, Setting.PLAYER_POSITION_SYNC, Setting.DATABASE_MAP_HISTORY);
 			case "AccessorMapGroupUtils", "MixinClientPacketListenerMaps" -> settings.usesMapPackets();
 			case "MixinUpdateInventoryContentsMapNames", "MixinUpdateContainerContentsMapNames", "MixinUpdateItemFrameContentsMapNames" -> settings.enabled(Setting.CMD_EXPORT_MAPNAMES);
