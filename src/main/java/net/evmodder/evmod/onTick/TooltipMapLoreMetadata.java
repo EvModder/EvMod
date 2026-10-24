@@ -35,8 +35,8 @@ public final class TooltipMapLoreMetadata implements Tooltip{
 	private static int lastHash;
 
 	@Override public final void get(ItemStack item, TooltipContext context, TooltipFlag type, List<Component> lines){
-		final int currHash = UpdateInventoryContents.getMapsInInvHash() + UpdateContainerContents.getMapsInContainerHash();
-		if(lastHash != currHash){lastHash = currHash; tooltipCache.clear();}
+		final int hash = UpdateInventoryContents.getMapsInInvHash() + UpdateContainerContents.getMapsInContainerRevision();
+		if(lastHash != hash){lastHash = hash; tooltipCache.clear();}
 		List<Component> cachedLines = tooltipCache.get(item);
 		if(cachedLines != null){lines.clear(); lines.addAll(cachedLines); return;}
 

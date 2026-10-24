@@ -64,8 +64,8 @@ public final class UpdateInventoryContents implements TickListener{
 			if(contents != null) InvUtils.getAllNestedItemViews(bundleItems(contents)).forEach(UpdateInventoryContents::addMapName);
 		}
 	}
-	private static final boolean addMapStateIds(final ItemStack stack, final Level world){
-		if(stack.isEmpty()) return false;
+	private static final void addMapStateIds(final ItemStack stack, final Level world){
+		if(stack.isEmpty()) return;
 		if(stack.getItem() == Items.FILLED_MAP){
 			addMapName(stack);
 			final MapId mapId = stack.get(DataComponents.MAP_ID);
@@ -75,26 +75,25 @@ public final class UpdateInventoryContents implements TickListener{
 					Main.LOGGER.warn("UpdateInv: mapId is null! stack="+stack.getHoverName().getString());
 					warnedNullMapId = true;
 				}
-				return false;
+				return;
 			}
 			final MapItemSavedData state = world.getMapData(mapId);
 			if(state != null){
 				MapGroupUtils.markMapAvailable(mapId.id());
-				return inventoryMapGroup.add(MapGroupUtils.getIdForMapState(state));
+				inventoryMapGroup.add(MapGroupUtils.getIdForMapState(state));
 			}
 			else{
 				MapGroupUtils.markMapMissing(mapId.id());
-				return false;
 			}
+			return;
 		}
 		//else
-		return nestedInventoryMapGroup.addAll(
-				(Configs.Visuals.MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES.getBooleanValue()
-						? InvUtils.getAllNestedItemViews(stack)
-						: InvUtils.getAllNestedItemViewsExcludingBundles(stack))
+		(Configs.Visuals.MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES.getBooleanValue()
+				? InvUtils.getAllNestedItemViews(stack)
+				: InvUtils.getAllNestedItemViewsExcludingBundles(stack))
 				.peek(UpdateInventoryContents::addMapName)
 				.map(s -> MapItem.getSavedData(s.get(DataComponents.MAP_ID), world)).filter(Objects::nonNull)
-				.map(MapGroupUtils::getIdForMapState).toList());
+				.map(MapGroupUtils::getIdForMapState).forEach(nestedInventoryMapGroup::add);
 	}
 	@Override public final void onTickStart(final Minecraft client){
 		final Player player = client.player;

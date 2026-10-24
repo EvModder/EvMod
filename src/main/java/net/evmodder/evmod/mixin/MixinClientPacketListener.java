@@ -117,10 +117,11 @@ abstract class MixinClientPacketListener{
 			if(pendingFileSave) return;
 			pendingFileSave = true;
 		}
-		new Timer().schedule(new TimerTask(){@Override public void run(){
+		final Timer timer = new Timer();
+		timer.schedule(new TimerTask(){@Override public void run(){
 			synchronized(mapsSaved){
-				saveMapsForServer(addr, seenForServer);
-				pendingFileSave = false;
+				try{saveMapsForServer(addr, seenForServer);}
+				finally{pendingFileSave = false; timer.cancel();}
 			}
 		}}, 5_000l);  // 5s
 	}

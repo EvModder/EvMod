@@ -4,6 +4,7 @@ import static net.evmodder.evmod.compat.MinecraftCompat.sendOverlay;
 
 import java.util.HashSet;
 import java.util.UUID;
+import java.util.regex.Pattern;
 import net.evmodder.EvLib.util.Command;
 import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.EvLib.util.PacketCodec;
@@ -26,6 +27,7 @@ import net.minecraft.network.chat.Component;
 //import com.mojang.serialization.JsonOps;
 
 public final class GameMessageListener{
+	private static final Pattern WHISPER_PATTERN = Pattern.compile("^\\w+ whispers: .*");
 	private final void saveMyIgnores(final UUID myUUID, final UUID ignoredUUID, final boolean ignored){
 		if(!Configs.Database.SAVE_IGNORES.getBooleanValue()) return;
 		Main.LOGGER.info("Writing "+(ignored?"":"un")+"ignore update to local file cache");
@@ -90,7 +92,7 @@ public final class GameMessageListener{
 			if(literal == null) return;
 //			if(literal.contains(myName)) Main.LOGGER.info("GameMsgListener: Account mentioned (literal):\n"+literal);
 
-			if(literal.matches("^\\w+ whispers: .*")){  // TODO: per-server format support
+			if(WHISPER_PATTERN.matcher(literal).matches()){  // TODO: per-server format support
 //				Main.LOGGER.info("GameMsgListener: whisper detected");
 				if(wps != null) wps.playSound();
 

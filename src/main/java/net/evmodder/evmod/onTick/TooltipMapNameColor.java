@@ -35,12 +35,8 @@ public final class TooltipMapNameColor implements Tooltip{
 		final int MAP_COLOR_IN_IFRAME = Configs.Visuals.MAP_COLOR_IN_IFRAME.getIntegerValue();
 		final int MAP_COLOR_UNNAMED = Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue();
 
-		final int currHash = UpdateInventoryContents.getMapsInInvHash() + UpdateContainerContents.getMapsInContainerHash();
-		if(lastHash != currHash){
-			lastHash = currHash;
-			tooltipCache.clear();
-//			Main.LOGGER.info("TooltipMapNameColor: Clearing cache");
-		}
+		final int hash = UpdateInventoryContents.getMapsInInvHash() + UpdateContainerContents.getMapsInContainerRevision();
+		if(lastHash != hash){lastHash = hash; tooltipCache.clear();}
 		List<Component> cachedLines = tooltipCache.get(item);
 		if(cachedLines != null){lines.clear(); lines.addAll(cachedLines); return;}
 
