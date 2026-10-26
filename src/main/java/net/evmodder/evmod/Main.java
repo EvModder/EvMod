@@ -162,7 +162,7 @@ public class Main{
 		if(settings.placementHelperMapArt) new MapHangListener(settings.placementHelperMapArtAutoPlace, settings.placementHelperMapArtAutoRemove);
 
 		if(settings.epearlOwners) new CommandAssignPearl(epearlLookup);
-		if(settings.epearlOwners) new CommandPearlRescue();
+		if(settings.epearlOwners) new CommandPearlRescue(epearlLookup);
 		new CommandEvMod(()->new ConfigGui(configs));
 		new CommandDeletedMapsNearby();
 		new CommandExportMapImg(settings.onTickIframes);
