@@ -25,7 +25,6 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 public final class KeybindInventoryOrganize{
 	// TODO: move to config?
@@ -61,19 +60,13 @@ public final class KeybindInventoryOrganize{
 		slots[j] = tempStack;
 	}
 
-	// NOTE: BREAKS for various unsupported shift-click cases (current support: armorslot->inv, inv-hotbar->inv-upper)
-	private int simulateShiftClick(ItemStack[] simSlots, boolean[] emptySlots, boolean fromArmor, int i){
+	// Player inventory only: crafting/armor/offhand -> inventory, or hotbar -> upper inventory.
+	private int simulateShiftClick(ItemStack[] simSlots, boolean[] emptySlots, boolean includeHotbar, int i){
 		final ItemStack stackToMove = simSlots[i];
-		for(int j=9; j<(fromArmor? 45 : 36); ++j){
-			if(j == i) continue;
-			if(emptySlots[j]){
-				simSlots[j] = stackToMove.copy();
-				simSlots[i] = new ItemStack(Items.AIR);
-				emptySlots[j] = false;
-				emptySlots[i] = true;
-				return 0;
-			}
-			if(!stackToMove.isStackable()) continue;
+		final int end = includeHotbar ? 45 : 36;
+		// Vanilla merges existing stacks before considering any empty slots.
+		if(stackToMove.isStackable()) for(int j=9; j<end; ++j){
+			if(j == i || emptySlots[j]) continue;
 			final ItemStack stackToFill = simSlots[j];
 			if(stackToFill.getCount() == stackToFill.getMaxStackSize()) continue;
 			if(!ItemStack.isSameItemSameComponents(stackToFill, stackToMove)) continue;
@@ -84,6 +77,13 @@ public final class KeybindInventoryOrganize{
 				emptySlots[i] = true;
 				return 0;
 			}
+		}
+		for(int j=9; j<end; ++j) if(j != i && emptySlots[j]){
+			simSlots[j] = stackToMove.copy();
+			simSlots[i] = ItemStack.EMPTY;
+			emptySlots[j] = false;
+			emptySlots[i] = true;
+			return 0;
 		}
 		return stackToMove.getCount();
 	}
@@ -161,6 +161,16 @@ public final class KeybindInventoryOrganize{
 //				+", hotbarStart="+HOTBAR_START+", invStart="+MAIN_INV_START);
 
 		ArrayDeque<InvAction> clicks = new ArrayDeque<>();
+
+		// Clear crafting inputs before sorting the player's inventory.
+		if(!RESTOCK_ONLY && isInvScreen && depth == 0){
+			for(int i=1; i<=4; ++i) if(!emptySlots[i]){
+				final int originalCount = simSlots[i].getCount();
+				if(simulateShiftClick(simSlots, emptySlots, /*includeHotbar=*/true, i) < originalCount)
+					clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK));
+			}
+		}
+		if(isInvScreen) doneSlots[0] = true;  // The crafting result is not an independently movable stack.
 		checkDoneSlots(simSlots, doneSlots, isInvScreen);
 		boolean[] plannedSlots;
 		if(isInvScreen){
@@ -183,7 +193,7 @@ public final class KeybindInventoryOrganize{
 				final int srcSlot = findSlotWithItem(simSlots, p.name, doneSlots);
 				if(srcSlot == -1) continue;
 				if(!simSlots[dstSlot].isEmpty()){
-					if(simulateShiftClick(simSlots, emptySlots, /*fromArmor=*/true, p.slot) != 0){
+					if(simulateShiftClick(simSlots, emptySlots, /*includeHotbar=*/true, p.slot) != 0){
 						Main.LOGGER.warn("InvOrganize: Unable to unequip incorrect armor - no room in inventory!");
 						return;
 					}
@@ -235,7 +245,7 @@ public final class KeybindInventoryOrganize{
 		if(CLEAN_UNUSED_HOTBAR_SLOTS && isInvScreen){
 			for(int i=HOTBAR_START; i<simSlots.length; ++i) if(!doneSlots[i] && !emptySlots[i]/* && !usedHotbarAndOffhandSlots[i-HOTBAR_START]*/){
 				final int originalCount = simSlots[i].getCount();
-				if(simulateShiftClick(simSlots, emptySlots, /*fromArmor=*/false, i) < originalCount){
+				if(simulateShiftClick(simSlots, emptySlots, /*includeHotbar=*/i == 45, i) < originalCount){
 //					client.player.sendMessage(Text.literal("Click: "+i+" Hotbar->UpperInv (cleaning)"), false);
 					clicks.add(new InvAction(i, 0, ActionType.SHIFT_CLICK));
 				}
@@ -317,8 +327,8 @@ public final class KeybindInventoryOrganize{
 			if(srcSlot == -1 || doneSlots[srcSlot]) continue;
 			if(RESTOCK_ONLY && srcSlot >= MAIN_INV_START) continue;
 			if(!CAN_RESTOCK_FROM_CONTAINER && srcSlot < MAIN_INV_START) continue;
-			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && srcSlot < MAIN_INV_START && alreadyRestockedItems.contains(simSlots[srcSlot].getItem())) continue;
-			if(DONT_RESTOCK_IF_ALREADY_IN_INV && srcSlot < MAIN_INV_START && itemsInInv.contains(simSlots[srcSlot].getItem())) continue;
+			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && !isInvScreen && srcSlot < MAIN_INV_START && alreadyRestockedItems.contains(simSlots[srcSlot].getItem())) continue;
+			if(DONT_RESTOCK_IF_ALREADY_IN_INV && !isInvScreen && srcSlot < MAIN_INV_START && itemsInInv.contains(simSlots[srcSlot].getItem())) continue;
 			if(srcSlot < MAIN_INV_START && LEAVE_ONE){  // Avoid taking 100% of any item type from src container
 				Integer occ = countainerCounts.get(simSlots[srcSlot].getItem());
 				assert occ != null && occ > 0;
@@ -359,8 +369,8 @@ public final class KeybindInventoryOrganize{
 			if(srcSlot == -1 || doneSlots[srcSlot]) continue;
 			if(RESTOCK_ONLY && srcSlot >= MAIN_INV_START) continue;
 			if(!CAN_RESTOCK_FROM_CONTAINER && srcSlot < MAIN_INV_START) continue;
-			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && srcSlot < MAIN_INV_START && alreadyRestockedItems.contains(simSlots[srcSlot].getItem())) continue;
-			if(DONT_RESTOCK_IF_ALREADY_IN_INV && srcSlot < MAIN_INV_START && itemsInInv.contains(simSlots[srcSlot].getItem())) continue;
+			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && !isInvScreen && srcSlot < MAIN_INV_START && alreadyRestockedItems.contains(simSlots[srcSlot].getItem())) continue;
+			if(DONT_RESTOCK_IF_ALREADY_IN_INV && !isInvScreen && srcSlot < MAIN_INV_START && itemsInInv.contains(simSlots[srcSlot].getItem())) continue;
 			if(srcSlot < MAIN_INV_START && LEAVE_ONE){  // Avoid taking 100% of any item type from src container
 				Integer occ = countainerCounts.get(simSlots[srcSlot].getItem());
 				assert occ != null && occ > 0;
