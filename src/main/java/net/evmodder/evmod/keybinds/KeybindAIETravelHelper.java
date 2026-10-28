@@ -124,6 +124,11 @@ public final class KeybindAIETravelHelper{
 			registerClientTickListener();
 			Main.LOGGER.info("AIE Helper: registered");
 		}
+		if(client.player == null){
+			// Config reloads can invoke this before joining a world.
+			if(enable) Configs.Hotkeys.AIE_TRAVEL_HELPER.setBooleanValue(false);
+			return;
+		}
 		if(enable){
 			if(!client.player.isFallFlying()){
 				sendOverlay(client.player, Component.literal("AIE Helper: You need to be flying first"));

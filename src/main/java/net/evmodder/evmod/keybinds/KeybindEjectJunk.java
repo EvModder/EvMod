@@ -56,7 +56,7 @@ public final class KeybindEjectJunk{
 	private JunkCategory junkType = null;
 	public boolean shouldEject(ItemStack stack){
 		if(stack == null || stack.isEmpty()) return false;
-		final int rc = stack.getComponents().get(DataComponents.REPAIR_COST);
+		final int rc = stack.getOrDefault(DataComponents.REPAIR_COST, 0);
 		if(rc != 0) return false;
 
 		final ItemEnchantments iec = stack.getEnchantments();

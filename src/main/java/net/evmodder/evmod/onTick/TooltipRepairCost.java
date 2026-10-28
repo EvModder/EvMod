@@ -18,7 +18,7 @@ public final class TooltipRepairCost implements Tooltip{
 			case ADVANCED_TOOLTIPS: if(type == TooltipFlag.NORMAL) return;
 			case ON:  /*no op*/
 		}
-		final int rc = item.getComponents().get(DataComponents.REPAIR_COST);
+		final int rc = item.getOrDefault(DataComponents.REPAIR_COST, 0);
 		if(rc == 0 && !item.isEnchanted() && !item.getComponents().has(DataComponents.STORED_ENCHANTMENTS)) return;
 		//lines.add(Text.literal("RepairCost: ").formatted(Formatting.GRAY).append(Text.literal(""+rc).formatted(Formatting.GOLD)));
 		lines.add(lines.removeLast().copy().append(Component.literal(", rc:").withStyle(ChatFormatting.GRAY).append(Component.literal(""+rc).withStyle(ChatFormatting.GOLD))));

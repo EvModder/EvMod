@@ -7,6 +7,7 @@ import static net.evmodder.evmod.compat.MinecraftCompat.selectSlot;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
@@ -428,6 +429,13 @@ public final class KeybindEbounceTravelHelper{
 //		client.player.sendMessage(Text.literal("eBounceHelper: key pressed, setEnabled="+enable), true);
 //		client.player.sendMessage(Text.literal("eBounceHelper: key pressed, setEnabled="+enable), false);
 
+		if(client.player == null){
+			// Config reloads can invoke this before joining a world.
+			isEnabled = false;
+			enabledTs = 0;
+			if(enable) Configs.Hotkeys.EBOUNCE_TRAVEL_HELPER.setBooleanValue(false);
+			return;
+		}
 		if(enable == isEnabled) return;
 		if(!enable || enabledTs != 0){
 			isEnabled = false;
