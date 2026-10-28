@@ -33,6 +33,20 @@ public final class InventoryTransferPlanner{
 		}
 	}
 
+	/**
+	 * Remove adjacent, identical swaps from a whole-stack swap sequence.
+	 * Each swap must exchange both stacks completely, without truncation or side effects.
+	 * Consecutive pairwise swaps can then share their temporary hotbar/offhand slot.
+	 */
+	public static ArrayDeque<InvAction> compactWholeStackSwaps(final Iterable<InvAction> swaps){
+		final ArrayDeque<InvAction> result = new ArrayDeque<>();
+		for(final InvAction swap : swaps){
+			if(swap.equals(result.peekLast())) result.removeLast();
+			else result.addLast(swap);
+		}
+		return result;
+	}
+
 	private static int pickupCost(final int count, final int amount){
 		final int half = Math.ceilDiv(count, 2);
 		return 1 + (amount <= half ? Math.min(half-amount, count-amount) : count-amount);
