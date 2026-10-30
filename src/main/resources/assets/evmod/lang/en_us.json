@@ -182,6 +182,8 @@
 	"evmod.config.generic.name.whisperPearlPull": "whisperPearlPull",
 	"evmod.config.generic.comment.whisperPearlPull": "/w msg to trigger a pearl",
 	"evmod.config.generic.name.muteMusicOnMenuScreen": "Mute music on menu screen",
+	"evmod.config.generic.name.rememberServerListScroll": "Remember server list scroll",
+	"evmod.config.generic.comment.rememberServerListScroll": "Remember multiplayer server list scroll across menus, disconnects, and game restarts.\nDisabling stops restoring and saving the position; no restart required.",
 	"evmod.config.generic.comment.muteMusicOnMenuScreen": "Mute music while no world is loaded.\nMusic returns to its configured volume after joining a world.",
 	"evmod.config.generic.name.dontWasteFireworks": "dontWasteFireworks",
 	"evmod.config.generic.comment.dontWasteFireworks": "While gliding, use rockets without explosion effects to boost even when aiming at a block.\nBehaves like using the rocket in air; ground use and rockets with explosion effects are unchanged.",

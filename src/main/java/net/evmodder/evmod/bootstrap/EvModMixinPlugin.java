@@ -22,6 +22,7 @@ public final class EvModMixinPlugin implements IMixinConfigPlugin{
 		final Settings settings = Settings.get();
 		final String mixin = mixinClassName.substring(mixinClassName.lastIndexOf('.')+1);
 		return switch(mixin){
+			case "AccessorJoinMultiplayerScreen" -> true;  // Runtime config; no per-tick hook.
 			case "AccessorClickUtils" -> settings.usesClicks();
 			case "AccessorCommandPearlRescue", "AccessorEpearlLookup" -> settings.enabled(Setting.DATABASE_EPEARL_OWNERS);
 			case "AccessorKeybindCraftingRestock" -> settings.enabled(Setting.CRAFTING);

@@ -202,7 +202,7 @@ final class LegacySettingsMigration{
 				changed |= moveOption(root, hotkeys.getAsJsonObject(), "Generic", key);
 			}
 		}
-		final Set<String> sections = new HashSet<>(List.of("guiTab"));
+		final Set<String> sections = new HashSet<>(List.of("guiTab", "serverListScroll"));
 		for(Class<?> section : List.of(Configs.Generic.class, Configs.Visuals.class, Configs.Hotkeys.class, Configs.Database.class)){
 			sections.add(section.getSimpleName());
 			final JsonElement options = root.get(section.getSimpleName());

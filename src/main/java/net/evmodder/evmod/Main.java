@@ -123,6 +123,8 @@ public class Main{
 		if(!settings.enabled(Setting.STORE_DATA_IN_CONFIG_FOLDER)) FileIO.DIR = FabricLoader.getInstance().getGameDir()+"/"+MOD_ID+"/";
 		final Configs configs = new Configs(settings);
 		configs.load();
+		new ServerListScrollListener(configs.getServerListScroll(), configs::setServerListScroll,
+				Configs.Generic.REMEMBER_SERVER_LIST_SCROLL::getBooleanValue);
 
 		if(settings.usesClicks()){
 			InitUtils.refreshClickLimits();

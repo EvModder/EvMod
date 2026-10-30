@@ -23,6 +23,13 @@ import net.evmodder.evmod.config.ConfigPlayerList.NameAndUUID;
 
 public final class Configs implements IConfigHandler{
 	int guiTab;  // used by ConfigGui
+	private double serverListScroll;
+	double getServerListScroll(){return serverListScroll;}
+	void setServerListScroll(double scroll){
+		if(serverListScroll == scroll) return;
+		serverListScroll = scroll;
+		save();
+	}
 	private static final boolean MAPART_ONLY_DEFAULTS = Settings.get().enabled(Setting.MAPART_ONLY_DEFAULTS);
 
 	//====================================================================================================
@@ -85,6 +92,7 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigString WHISPER_PEARL_PULL = new ConfigString("whisperPearlPull",
 				MAPART_ONLY_DEFAULTS ? "" : "!?(load|go|14|tp|teleport|e?p|e?pearl|([iI]'?m ?)?r(ea)?dy)( me)?( pl(ea)?se?)?[.!?]?").apply(GENERIC_KEY);
 		public static final ConfigBoolean MUTE_MUSIC_ON_MENU_SCREEN = new ConfigBoolean("muteMusicOnMenuScreen", false).apply(GENERIC_KEY);
+		public static final ConfigBoolean REMEMBER_SERVER_LIST_SCROLL = new ConfigBoolean("rememberServerListScroll", false).apply(GENERIC_KEY);
 		public static final ConfigBoolean DONT_WASTE_FIREWORKS = new ConfigBoolean("dontWasteFireworks", !MAPART_ONLY_DEFAULTS).apply(GENERIC_KEY);
 
 //		public static final ConfigBoolean MAPART_GROUP_INCLUDE_UNLOCKED = new ConfigBoolean("mapArtGroupIncludeUnlocked", true).apply(GENERIC_KEY);
@@ -214,6 +222,7 @@ public final class Configs implements IConfigHandler{
 			if(settings.enabled(Setting.WHISPER_SOUND)) configs.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PLAY_SOUND_UNFOCUSED));
 			if(settings.enabled(Setting.PEARL_MESSAGES)) configs.add(WHISPER_PEARL_PULL);
 			if(settings.muteMusicOnMenuScreen) configs.add(MUTE_MUSIC_ON_MENU_SCREEN);
+			configs.add(REMEMBER_SERVER_LIST_SCROLL);
 			if(settings.enabled(Setting.FIREWORK_BOOST)) configs.add(DONT_WASTE_FIREWORKS);
 			if(settings.enabled(Setting.CHAT_ACTIONS)) configs.addAll(List.of(SEND_ON_SERVER_JOIN, LOG_COORDS_ON_SERVER_QUIT));
 			if(settings.enabled(Setting.INVENTORY_TOOLS)) configs.addAll(List.of(INV_RESTOCK_IF, INV_RESTOCK_LEAVE, INV_RESTOCK_BLACKLIST, INV_RESTOCK_WHITELIST,
@@ -599,6 +608,14 @@ public final class Configs implements IConfigHandler{
 		}
 		final JsonElement curTab = root.get("guiTab");
 		if(curTab != null) guiTab = curTab.getAsInt();
+		final JsonElement scroll = root.get("serverListScroll");
+		if(scroll != null){
+			try{
+				final double value = scroll.getAsDouble();
+				if(Double.isFinite(value) && value >= 0) serverListScroll = value;
+			}
+			catch(RuntimeException e){Main.LOGGER.warn("Ignoring invalid server-list scroll position", e);}
+		}
 		ConfigUtils.readConfigBase(root, "Generic", getGenericConfigs());
 		ConfigUtils.readConfigBase(root, "Visuals", getVisualsConfigs());
 		ConfigUtils.readConfigBase(root, "Hotkeys", getHotkeysConfigs());
@@ -616,6 +633,7 @@ public final class Configs implements IConfigHandler{
 		final JsonElement saved = Files.exists(CONFIG_FILE) ? readConfig(CONFIG_FILE) : null;
 		final JsonObject root = saved != null && saved.isJsonObject() ? saved.getAsJsonObject() : new JsonObject();
 		root.addProperty("guiTab", guiTab);
+		root.addProperty("serverListScroll", serverListScroll);
 		ConfigUtils.writeConfigBase(root, "Generic", getGenericConfigs());
 		ConfigUtils.writeConfigBase(root, "Visuals", getVisualsConfigs());
 		ConfigUtils.writeConfigBase(root, "Hotkeys", getHotkeysConfigs());

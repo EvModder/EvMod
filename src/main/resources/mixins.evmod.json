@@ -24,6 +24,7 @@
 
 		// Minecraft mixins:
 		"AccessorAnvilScreen",
+		"AccessorJoinMultiplayerScreen",
 		"AccessorPlayerTabOverlay",
 		"AccessorProjectile",
 		"MixinAnvilScreen",
