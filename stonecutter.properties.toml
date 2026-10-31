@@ -11,7 +11,7 @@ mod.group = "net.evmodder"
 
 #3 = per-feature hooks, config tab regrouping
 #0 = /evmod, pearl rescue, anti rocket waste, more armor-swaps, instant fullscreen on macOS,
-#  = server-list scroll preservation, click optimizations, 3rd-party pearl requests,
+#  = server-list scroll preservation, junk eject tweaks, click optimizations, 3rd-party pearl requests,
 # PLANNED: bulk-analysis (map stats for containers/walls)
 mod.version = "3.0"
 

@@ -111,6 +111,7 @@ public final class KeybindEjectJunk{
 			case "enchanted_book": {
 				final ItemEnchantments siec = stack.getComponents().get(DataComponents.STORED_ENCHANTMENTS);
 				final Set<Holder<Enchantment>> sEnchs = siec.keySet();
+				if(sEnchs.stream().anyMatch(r -> r.is(Enchantments.SOUL_SPEED) && siec.getLevel(r) >= r.value().getMaxLevel())) return false;
 				isJunk = sEnchs.size() == 1 || (sEnchs.size() < 4 && sEnchs.stream().noneMatch(r -> isUnrenewOutsideFishing(r, siec.getLevel(r), sEnchs)));
 				if(isJunk) junkType = JunkCategory.FISHING;
 				return isJunk;
