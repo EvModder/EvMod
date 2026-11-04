@@ -54,7 +54,7 @@ public final class GameMessageFilter{
 
 		final byte[] args = PacketCodec.toByteArray(uuid, /*tsForDelta=*/new UUID(0, lastFetchTs));
 		remoteSender.sendBotMessage(Command.DB_PLAYER_FETCH_IGNORES, /*udp=*/false, /*timeout=*/5000, args, reply -> {
-			final String nameOrUUID = MojangProfileLookup.nameOrUUID(uuid);
+			final String nameOrUUID = MojangProfileLookup.cachedNameOrUUID(uuid);
 			if(reply == null || (reply.length != 1 && reply.length % 16 != 0)){
 				Main.LOGGER.error("MsgFilter: Fetch ignorelist for '"+nameOrUUID+"' got invalid response! "+(reply==null?"null":"len%16 != 0"));
 				return;
