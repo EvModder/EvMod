@@ -4,6 +4,7 @@ package net.evmodder.evmod.apis;
 /*import java.util.Arrays;*/
 //?}
 import java.util.Objects;
+import java.util.UUID;
 import com.google.common.collect.Streams;
 import net.evmodder.evmod.Main;
 import net.minecraft.client.Minecraft;
@@ -71,18 +72,22 @@ public final class EpearlActivator{
 		return fallback;
 	}
 
-	private final BlockPos findNearestPearlWithOwnerName(Minecraft client, String name){
+	private final BlockPos findNearestPearlWithOwnerName(Minecraft client, String name, UUID owner){
 		final Vec3 playerPos = client.player.position();
 		double closestDistSq = Double.MAX_VALUE;
 		Vec3 closestPos = null;
 		for(ThrownEnderpearl pearl : client.level.getEntitiesOfClass(ThrownEnderpearl.class,
 				client.player.getBoundingBox().inflate(REACH, REACH, REACH),
-				pearl->name.equalsIgnoreCase(epearlLookup.getOwnerName(pearl)))
+				pearl->{
+					if(pearl.isRemoved()) return false;
+					final String knownName = epearlLookup.getOwnerName(pearl);
+					return owner == null ? name.equalsIgnoreCase(knownName) : owner.equals(MiscUtils.getPearlUUID(pearl));
+				})
 		){
 			final double distSq = pearl.position().distanceToSqr(playerPos);
 			if(distSq < closestDistSq){closestDistSq = distSq; closestPos = pearl.position();}
 		}
-		return BlockPos.containing(closestPos);
+		return closestPos == null ? null : BlockPos.containing(closestPos);
 	}
 	private final BlockPos findSignWithName(Minecraft client, String name){
 		final BlockPos playerPos = client.player.blockPosition();
@@ -120,6 +125,12 @@ public final class EpearlActivator{
 		}
 		return buttonPos;
 	}
+	private boolean canPullOwnPearl(final Minecraft client, final UUID sender){
+		final BlockPos pearl = findNearestPearlWithOwnerName(client, "", sender);
+		if(pearl == null) return false;
+		final BlockPos trigger = findNearestTrigger(client, pearl);
+		return trigger != null && getHitResult(client, trigger) != null;
+	}
 
 	private final void sendFeedback(Minecraft client, final String who, final String msg){
 		if(!msgFailureFeedback) return;
@@ -131,10 +142,26 @@ public final class EpearlActivator{
 		client.getConnection().sendCommand("w "+who+" "+msg);
 	}
 
-	public final void triggerPearl(final String who){
+	public final void triggerPearl(final String who, final PearlWhisperRequest request){
 		Minecraft client = Minecraft.getInstance();
-		BlockPos signPos = findSignWithName(client, who);
-		if(signPos == null && (signPos=findNearestPearlWithOwnerName(client, who)) == null){
+		final boolean thirdParty = !who.equalsIgnoreCase(request.target());
+		final var player = client.getConnection().getOnlinePlayers().stream()
+				.filter(info -> info.getProfile().name().equalsIgnoreCase(request.target())).findFirst().orElse(null);
+		if(thirdParty && (player == null || player.getProfile().id().equals(client.player.getUUID()))) return;
+		if(thirdParty){
+			final var sender = client.getConnection().getOnlinePlayers().stream()
+					.filter(info -> info.getProfile().name().equalsIgnoreCase(who)).findFirst().orElse(null);
+			if(sender == null || !canPullOwnPearl(client, sender.getProfile().id())){
+				sendFeedback(client, who, "[AutoPearl] Third-party requests require your own reachable pearl here.");
+				return;
+			}
+		}
+		final String name = player == null ? who : player.getProfile().name();
+		final UUID owner = player == null ? null : player.getProfile().id();
+		// Third-party requests require an owned, loaded pearl, not just a sign bearing that name.
+		BlockPos signPos = thirdParty ? findNearestPearlWithOwnerName(client, name, owner) : findSignWithName(client, name);
+		if(signPos == null && !thirdParty) signPos = findNearestPearlWithOwnerName(client, name, owner);
+		if(signPos == null){
 //			sendFeedback(client, who, "[AutoPearl] I do not recognize any pearl of yours nearby");
 			Main.LOGGER.warn("[AutoPearl] no nearby pearl found for requester: "+who);
 			return;
@@ -143,14 +170,18 @@ public final class EpearlActivator{
 
 		BlockPos buttonPos = findNearestTrigger(client, signPos);
 		if(buttonPos == null){
-			sendFeedback(client, who, "[AutoPearl] I see your pearl, but not how to activate it");
+			sendFeedback(client, who, "[AutoPearl] I see "+name+"'s pearl, but not how to activate it");
 			Main.LOGGER.warn("[AutoPearl] pearl found, but activation not found");
 			return;
 		}
 		Main.LOGGER.info("[AutoPearl]: found button at "+buttonPos.toShortString());
 
 		final BlockHitResult hitResult = getHitResult(client, buttonPos);
-		if(hitResult == null){sendFeedback(client, who, "[AutoPearl] Your pearl's trigger is out of reach"); return;}
+		if(hitResult == null){sendFeedback(client, who, "[AutoPearl] "+name+"'s pearl trigger is out of reach"); return;}
+		if(thirdParty && !request.confirmed()){
+			sendFeedback(client, who, request.confirmationPrompt(name));
+			return;
+		}
 		client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND, hitResult);
 //		Main.LOGGER.info("AutoPearlActivator: button pressed!");
 	}

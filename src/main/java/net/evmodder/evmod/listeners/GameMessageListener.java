@@ -14,6 +14,7 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.Settings;
 import net.evmodder.evmod.apis.EpearlActivator;
 import net.evmodder.evmod.apis.EpearlLookupFabric;
+import net.evmodder.evmod.apis.PearlWhisperRequest;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.evmodder.evmod.apis.WhisperPlaySound;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
@@ -88,7 +89,8 @@ public final class GameMessageListener{
 				final String trigger = Configs.Generic.WHISPER_PEARL_PULL.getStringValue();
 				if(trigger.isBlank()) return;
 				final String name = literal.substring(0, literal.indexOf(' '));
-				if(literal.substring(name.length()+" whispers: ".length()).matches(trigger)) pearlActivator.triggerPearl(name);
+				final var request = PearlWhisperRequest.parse(Pattern.compile(trigger), literal.substring(name.length()+" whispers: ".length()), name);
+				if(request != null) pearlActivator.triggerPearl(name, request);
 			});
 		}
 		if(settings.enabled(Setting.DATABASE_IGNORELIST_SYNC)) ClientReceiveMessageEvents.GAME.register((msg, overlay) -> {

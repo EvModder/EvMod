@@ -105,8 +105,8 @@ public abstract class EpearlLookup{
 	private boolean serverReady;
 	// Accessed by: MixinClientPacketListener
 	protected final void resetConnectionReadiness(){lastServerUpdate = serverTickLead = 0; serverReady = false; resetCleanup();}
-	// Accessed by: MixinClientPacketListener
-	@SuppressWarnings("unused") private final void onServerTime(long gameTime){
+	// Accessed by: MixinClientPacketListener, EpearlLookupZenith
+	protected final void onServerTime(long gameTime){
 		final long now = System.nanoTime()/1_000_000;
 		// Accumulate accelerated server ticks: draining queued time packets is not evidence of being caught up.
 		serverTickLead = Math.max(0, serverTickLead+(gameTime-lastServerTick)*50-(now-lastServerUpdate));
