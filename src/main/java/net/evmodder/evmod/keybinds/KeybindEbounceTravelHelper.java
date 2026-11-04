@@ -5,25 +5,30 @@ import static net.evmodder.evmod.compat.MinecraftCompat.sendOverlay;
 import static net.evmodder.evmod.compat.MinecraftCompat.sendSystem;
 import static net.evmodder.evmod.compat.MinecraftCompat.selectSlot;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Queue;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
+import net.evmodder.evmod.apis.ClickUtils;
+import net.evmodder.evmod.apis.ClickUtils.ActionType;
+import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
@@ -51,13 +56,15 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.inventory.InventoryMenu;
 
 public final class KeybindEbounceTravelHelper{
 	private boolean isEnabled;
 	private long enabledTs, targetY;
 	private final long ENABLE_DELAY = 1500l;
 	private Minecraft client;
-	private KeybindEjectJunk ejectJunk;
+	private final KeybindEjectJunk ejectJunk;
+	private boolean inventoryFullWarned;
 
 	private boolean hasRightClickFunction(Block block) {
 		return block instanceof CraftingTableBlock
@@ -356,19 +363,44 @@ public final class KeybindEbounceTravelHelper{
 		return false;
 	}
 
-	private boolean barfTrash(KeybindEjectJunk ejectJunk){
-		if(screen(client) instanceof AbstractContainerScreen) return false;
+	private boolean manageInventory(){
+		final InventoryMenu menu = client.player.inventoryMenu;
+		if(screen(client) != null || client.player.containerMenu != menu || !menu.getCarried().isEmpty()) return false;
+		if(ClickUtils.hasOngoingClicks()) return true;
+		int empty = 0;
+		for(int i=9; i<45; ++i) if(menu.getSlot(i).getItem().isEmpty()) ++empty;
+		if(empty != 0) inventoryFullWarned = false;
+		if(empty > Configs.Hotkeys.EBOUNCE_EMPTY_SLOTS.getIntegerValue()) return false;
 
-		boolean didBarf = false;
-		for(int i=9; i<36; ++i) if(ejectJunk.shouldEject(client.player.getInventory().getItem(i))){
-//			if(!didBarf){
-//				client.player.sendMessage(Text.literal("Tossed item: ").copy().append(client.player.getInventory().getStack(i).getName()), true);
-//				Main.LOGGER.info("Tossed item: "+client.player.getInventory().getStack(i).getName().getLiteralString());
-//			}
-			client.gameMode.handleContainerInput(0, i, 1, ContainerInput.THROW, client.player);
-			didBarf = true;
+		// Detect the category before selecting drops; retain it across sweeps, like manual ejection.
+		for(int i=9; i<36; ++i) ejectJunk.shouldEject(menu.getSlot(i).getItem());
+		Queue<InvAction> drops = null;
+		final Queue<ItemStack> expected = new ArrayDeque<>();
+		for(int i=9; i<36; ++i){
+			final ItemStack stack = menu.getSlot(i).getItem();
+			if(!ejectJunk.shouldEject(stack)) continue;
+			if(drops == null) drops = new ArrayDeque<>();
+			drops.add(new InvAction(i, 1, ActionType.THROW));
+			expected.add(stack.copy());
 		}
-		return didBarf;
+		if(drops == null){
+			if(empty == 0 && !inventoryFullWarned && Configs.Hotkeys.EBOUNCE_FULL_ALERT.getBooleanValue()){
+				inventoryFullWarned = true;
+				final Component message = Component.translatable(Main.MOD_ID+".ebounce.inventoryFull").withColor(0xFFAA00);
+				sendOverlay(client.player, message);
+				sendSystem(client.player, message);
+				client.player.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 1, 1);
+			}
+			return false;
+		}
+		final Queue<InvAction> clicks = drops;
+		ClickUtils.executeClicks(action -> {
+			if(isEnabled && Configs.Hotkeys.EBOUNCE_EJECT_JUNK.getBooleanValue() && screen(client) == null
+					&& ItemStack.matches(menu.getSlot(action.slot()).getItem(), expected.remove())) return true;
+			clicks.clear();  // Stop if a planned stack changed, rather than dropping its replacement.
+			return false;
+		}, ()->{}, clicks);
+		return true;
 	}
 
 	private void registerClientTickListener(){
@@ -393,6 +425,7 @@ public final class KeybindEbounceTravelHelper{
 				sendOverlay(client.player, Component.literal("Not wearing elytra"));
 				return;
 			}
+			if(Configs.Hotkeys.EBOUNCE_EJECT_JUNK.getBooleanValue() && manageInventory()) return;
 			final int y = client.player.getBlockY();
 			if(targetY == Long.MIN_VALUE) targetY = y;
 			if(targetY != y){
@@ -411,15 +444,11 @@ public final class KeybindEbounceTravelHelper{
 				return;
 			}
 			if(putOutFireAndMineObstacles()) return;
-
-			if(ejectJunk != null && barfTrash(ejectJunk)){
-//				client.player.sendMessage(Text.literal("Tossed trashed"), true);
-//				Main.LOGGER.info("Tossed trash");
-			}
 		});
 	}
 
 	public void updateEnabled(boolean enable){
+		inventoryFullWarned = false;
 //		Main.LOGGER.info("ebounce_travel_helper key pressed");
 		if(client == null){
 			Main.LOGGER.info("ebounce_travel_helper registered");

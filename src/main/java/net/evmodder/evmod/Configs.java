@@ -397,6 +397,9 @@ public final class Configs implements IConfigHandler{
 				MAPART_ONLY_DEFAULTS ? "" : "SEMICOLON", KeybindSettings.NOCANCEL).apply(HOTKEYS_KEY);
 		public static final ConfigBooleanHotkeyed EBOUNCE_TRAVEL_HELPER = new ConfigBooleanHotkeyed("eBounceTravelHelper", false,
 				MAPART_ONLY_DEFAULTS ? "" : "A", KeybindSettings.PRESS_ALLOWEXTRA).apply(HOTKEYS_KEY);
+		public static final ConfigBoolean EBOUNCE_EJECT_JUNK = new ConfigBoolean("eBounceEjectJunk", true).apply(HOTKEYS_KEY);
+		public static final ConfigInteger EBOUNCE_EMPTY_SLOTS = new ConfigInteger("eBounceEmptySlots", 2, 0, 35).apply(HOTKEYS_KEY);
+		public static final ConfigBoolean EBOUNCE_FULL_ALERT = new ConfigBoolean("eBounceFullAlert", true).apply(HOTKEYS_KEY);
 		public static final ConfigYawPitchHotkeyed SNAP_ANGLE_1 = new ConfigYawPitchHotkeyed("snapAngle1", 148, -73, "").apply(HOTKEYS_KEY);
 		public static final ConfigYawPitchHotkeyed SNAP_ANGLE_2 = new ConfigYawPitchHotkeyed("snapAngle2", -159, -51, "").apply(HOTKEYS_KEY);
 
@@ -457,7 +460,8 @@ public final class Configs implements IConfigHandler{
 			if(settings.enabled(Setting.APPEARANCE)) configs.addAll(List.of(TOGGLE_HAT, TOGGLE_JACKET, TOGGLE_SLEEVE_LEFT,
 					TOGGLE_SLEEVE_RIGHT, TOGGLE_PANTS_LEG_LEFT, TOGGLE_PANTS_LEG_RIGHT, TOGGLE_CAPE, SYNC_CAPE_WITH_ELYTRA));
 			if(settings.enabled(Setting.ARMOR_SWAP)) configs.add(SYNC_ARMOR_WITH_ELYTRA);
-			if(settings.enabled(Setting.TRAVEL)) configs.addAll(List.of(AIE_TRAVEL_HELPER, EBOUNCE_TRAVEL_HELPER));
+			if(settings.enabled(Setting.TRAVEL)) configs.addAll(List.of(AIE_TRAVEL_HELPER, EBOUNCE_TRAVEL_HELPER,
+					EBOUNCE_EJECT_JUNK, EBOUNCE_EMPTY_SLOTS, EBOUNCE_FULL_ALERT));
 			if(!MAPART_ONLY_DEFAULTS) configs.addAll(List.of(SNAP_ANGLE_1, SNAP_ANGLE_2));
 			if(settings.any(Setting.TRAVEL, Setting.INVENTORY_TOOLS)) configs.add(EJECT_JUNK_ITEMS);
 			if(settings.enabled(Setting.CRAFTING)) configs.addAll(List.of(CRAFT_RESTOCK, CRAFT_RESTOCK_SMART, CRAFT_BULK_MODIFIER));
