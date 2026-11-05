@@ -129,18 +129,19 @@ public final class KeybindInventoryOrganize{
 	}
 
 	private int depth;  // TODO: instead of running up to 3 times, just sort things properly the first time
-	public void organizeInventory(final boolean RESTOCK_ONLY, Runnable onComplete){
+	/** @return whether any clicks were started */
+	public boolean organizeInventory(final boolean RESTOCK_ONLY, Runnable onComplete){
 		//Main.LOGGER.info("InvOrganize: keybind pressed");
-		if(ClickUtils.hasOngoingClicks()) return;
+		if(ClickUtils.hasOngoingClicks()) return false;
 
 		Minecraft client = Minecraft.getInstance();
 		if(!(screen(client) instanceof AbstractContainerScreen hs)){
 			Main.LOGGER.warn("InvOrganize: not in InventoryScreen");
-			return;
+			return false;
 		}
 		if(hs.getMenu().slots.size() < 46){
 //			Main.LOGGER.warn("InvOrganize: Inventory too small to restock from (due to limitations in current code)");
-			return;
+			return false;
 		}
 		final boolean isInvScreen = screen(client) instanceof InventoryScreen;
 
@@ -195,7 +196,7 @@ public final class KeybindInventoryOrganize{
 				if(!simSlots[dstSlot].isEmpty()){
 					if(simulateShiftClick(simSlots, emptySlots, /*includeHotbar=*/true, p.slot) != 0){
 						Main.LOGGER.warn("InvOrganize: Unable to unequip incorrect armor - no room in inventory!");
-						return;
+						return false;
 					}
 					//client.player.sendMessage(Text.literal("Click: Unequipping armor"), false);
 					clicks.add(new InvAction(p.slot, 0, ActionType.SHIFT_CLICK));
@@ -437,7 +438,7 @@ public final class KeybindInventoryOrganize{
 			depth = 0;
 //			Main.LOGGER.info("InvOrganize: no clicks required");
 			if(onComplete != null) onComplete.run();
-			return;
+			return false;
 		}
 		ClickUtils.executeClicks(/*canProceed=*/_->true,
 //				_0->{
@@ -453,6 +454,7 @@ public final class KeybindInventoryOrganize{
 						if(onComplete != null) onComplete.run();
 					}
 				}, clicks);
+		return true;
 	}
 
 	public void refreshLayout(List<String> strings){

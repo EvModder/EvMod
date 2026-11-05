@@ -20,6 +20,7 @@ import net.minecraft.client.gui.screens.inventory.CraftingScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.gui.screens.inventory.ShulkerBoxScreen;
 import net.minecraft.world.entity.player.PlayerModelPart;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Function;
 import fi.dy.masa.malilib.config.options.ConfigBase;
@@ -30,8 +31,16 @@ import fi.dy.masa.malilib.hotkeys.IKeybind;
 import fi.dy.masa.malilib.hotkeys.IKeybindManager;
 import fi.dy.masa.malilib.hotkeys.IKeybindProvider;
 import fi.dy.masa.malilib.hotkeys.KeyAction;
+import fi.dy.masa.malilib.hotkeys.KeybindMulti;
 
 final class KeyCallbacks{
+	private boolean mapLoadSharesOrganizerBinding;
+
+	private static boolean overlapsMapLoad(IKeybind bind){
+		final IKeybind mapLoad = Configs.Hotkeys.MAP_LOAD.getKeybind();
+		return bind.overlaps(mapLoad) || mapLoad.overlaps(bind);
+	}
+
 	private final void valueChangeCallback(final ConfigBase<?> hotkey, final Runnable callback){
 		hotkey.setValueChangeCallback(_ -> callback.run());
 	}
@@ -48,12 +57,23 @@ final class KeyCallbacks{
 			RemoteServerSender remoteSender, EpearlLookup epearlLookup, KeybindCraftingRestock kbCraftRestock,
 			WhisperPlaySound whisperPlaySound, GameMessageFilter gameMessageFilter, KeybindInventoryOrganize[] kbInvOrgs, KeybindInventoryRestock kbInvRestock
 	){
+		// TODO: derive these from expandable layout/hotkey pairs instead of fixed entries.
+		final IHotkey[] organizerHotkeys = kbInvOrgs == null ? new IHotkey[0] : new IHotkey[]{
+				Configs.Hotkeys.TRIGGER_INV_ORGANIZE_1, Configs.Hotkeys.TRIGGER_INV_ORGANIZE_2, Configs.Hotkeys.TRIGGER_INV_ORGANIZE_3};
 		InputEventHandler.getKeybindManager().registerKeybindProvider(new IKeybindProvider(){
 			@Override public void addKeysToMap(IKeybindManager manager){
 //				configs.getHotkeysConfigs().stream().filter(IHotkey.class::isInstance)
 //						.map(IHotkey.class::cast).map(IHotkey::getKeybind).forEach(manager::addKeybindToMap);
-				configs.getHotkeysConfigs().forEach(opt ->{if(opt instanceof IHotkey hotkey) manager.addKeybindToMap(hotkey.getKeybind());});
+				mapLoadSharesOrganizerBinding = settings.enabled(Setting.MAP_ACTIONS)
+						&& Arrays.stream(organizerHotkeys).anyMatch(hotkey -> overlapsMapLoad(hotkey.getKeybind()));
+				configs.getHotkeysConfigs().forEach(opt ->{
+					if(opt instanceof IHotkey hotkey && (!mapLoadSharesOrganizerBinding || opt != Configs.Hotkeys.MAP_LOAD)){
+						manager.addKeybindToMap(hotkey.getKeybind());
+					}
+				});
 				configs.getGenericConfigs().forEach(opt ->{if(opt instanceof IHotkey hotkey) manager.addKeybindToMap(hotkey.getKeybind());});
+				// Only conflicting Map Load bindings are deferred; GUI order and separate-key dispatch stay unchanged.
+				if(mapLoadSharesOrganizerBinding) manager.addKeybindToMap(Configs.Hotkeys.MAP_LOAD.getKeybind());
 			}
 			@Override public void addHotkeys(IKeybindManager manager){
 				manager.addHotkeysForCategory(Main.MOD_NAME, Main.MOD_ID + ".hotkeys.category.hotkeys",
@@ -129,10 +149,12 @@ final class KeyCallbacks{
 		if(kbHbScroll != null) keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_INCR, null, ()->kbHbScroll.scrollHotbarSlot(true));
 		if(kbHbScroll != null) keybindCallback(Configs.Hotkeys.HOTBAR_TYPE_DECR, null, ()->kbHbScroll.scrollHotbarSlot(false));
 
-		if(kbInvOrgs != null){
-			keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_1, null, ()->kbInvOrgs[0].organizeInventory(false, null));
-			keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_2, null, ()->kbInvOrgs[1].organizeInventory(false, null));
-			keybindCallback(Configs.Hotkeys.TRIGGER_INV_ORGANIZE_3, null, ()->kbInvOrgs[2].organizeInventory(false, null));
+		for(int i=0; i<organizerHotkeys.length; ++i){
+			final KeybindInventoryOrganize organizer = kbInvOrgs[i];
+			organizerHotkeys[i].getKeybind().setCallback((_, bind)->{
+				// Consume the key unless Map Load shares it and nothing was organized: then Map Load, registered after, takes it.
+				return organizer.organizeInventory(false, null) || !settings.enabled(Setting.MAP_ACTIONS) || !overlapsMapLoad(bind);
+			});
 		}
 		if(kbInvRestock != null){
 			keybindCallback(Configs.Hotkeys.INV_RESTOCK, s->s instanceof AbstractContainerScreen && s instanceof InventoryScreen == false, kbInvRestock::doRestock);
@@ -173,8 +195,14 @@ final class KeyCallbacks{
 
 			keybindCallback(Configs.Hotkeys.MAP_COPY, s->s instanceof InventoryScreen
 					|| s instanceof CraftingScreen || s instanceof CartographyTableScreen, kbMapCopy::copyMapArtInInventory);
-			keybindCallback(Configs.Hotkeys.MAP_LOAD,
-					s->s instanceof AbstractContainerScreen && !(s instanceof AnvilScreen), kbMapLoad::loadMapArtFromContainer);
+			Configs.Hotkeys.MAP_LOAD.getKeybind().setCallback((_, _)->{
+				final Screen gui = screen(Minecraft.getInstance());
+				if(!(gui instanceof AbstractContainerScreen) || gui instanceof AnvilScreen) return false;
+				// Apply MaLiLib's exclusive/fallback behavior only when an organizer binding overlaps.
+				if(mapLoadSharesOrganizerBinding && KeybindMulti.getTriggeredCount() != 0) return false;
+				kbMapLoad.loadMapArtFromContainer();
+				return true;
+			});
 			keybindCallback(Configs.Hotkeys.MAP_MOVE,
 					s->s instanceof AbstractContainerScreen && s instanceof InventoryScreen == false, kbMapMove::moveMapArtToFromShulker);
 			Function<Screen, Boolean> allowInScreenBundleMove = //InventoryScreen.class::isInstance
