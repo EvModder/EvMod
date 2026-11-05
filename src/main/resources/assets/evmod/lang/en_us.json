@@ -42,7 +42,7 @@
 	"evmod.command.mapartgroup.invalidSubcommand": "Invalid subcommand: %s",
 
 	// CONFIG GUI:
-	"evmod.gui.title": "EvMod Configs - %s",
+	"evmod.gui.title": "Év’s Mod Configs - %s",
 	"evmod.gui.button.all": "All",
 	"evmod.gui.button.generic": "Generic",
 	"evmod.gui.button.visuals": "Visuals",
@@ -244,7 +244,7 @@
 	"evmod.config.visuals.name.invisIFrames": "invisIFrames",
 	"evmod.config.visuals.comment.invisIFrames": "When should iFrame be invisible",
 	"evmod.config.visuals.name.staticEntityRenderRange": "staticEntityRenderRange",
-	"evmod.config.visuals.comment.staticEntityRenderRange": "Maximum item-frame rendering distance, in blocks.\n0 disables EvMod's cache and custom range.\nThe entity limit can still restrict loaded frames.",
+	"evmod.config.visuals.comment.staticEntityRenderRange": "Maximum item-frame rendering distance, in blocks.\n0 disables Év’s Mod’s cache and custom range.\nThe entity limit can still restrict loaded frames.",
 	"evmod.config.visuals.name.staticEntityRenderLimit": "staticEntityRenderLimit",
 	"evmod.config.visuals.comment.staticEntityRenderLimit": "Maximum number of nearest item frames to render.\nIncludes loaded and cached frames; 0 disables the limit.\nSetting both range and limit to 0 uses vanilla/Sodium behavior.",
 

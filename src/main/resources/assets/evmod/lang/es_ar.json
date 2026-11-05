@@ -42,7 +42,7 @@
 	"evmod.command.mapartgroup.invalidSubcommand": "Invalid subcommand: %s",
 
 	// CONFIG GUI:
-	"evmod.gui.title": "Configuraciones de EvMod  - %s",
+	"evmod.gui.title": "Configuraciones de Év’s Mod - %s",
 	"evmod.gui.button.all": "All",
 	"evmod.gui.button.generic": "Genericos",
 	"evmod.gui.button.visuals": "Visuales",

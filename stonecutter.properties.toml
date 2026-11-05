@@ -2,7 +2,7 @@
 # Legacy Minecraft: earliest compatible version in the best available channel (release > beta > alpha).
 # Current Minecraft: newest compatible version in the best available channel from the configured sources.
 mod.id = "evmod"
-mod.name = "Ev's Mod"
+mod.name = "Év’s Mod"
 mod.group = "net.evmodder"
 
 #2 = public db, NewMapNotifier, /mapartgroup seen/2b2t.org, x/SIZE, configs refactor, better tooltips

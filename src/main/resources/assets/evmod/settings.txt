@@ -1,4 +1,4 @@
-# EvMod startup settings
+# Év’s Mod startup settings
 
 # What separates these from configs.json?
 # The settings controlled by this file either cannot be easily changed while the game is running, or doing so incurs a performance hit. Hence, they are here.
@@ -41,6 +41,7 @@ epearl_owners: true  # registers: onTick(), listener.chunkLoad, listener.chunkUn
 
 command.assignpearl: true
 command.deletedmapsnearby: false
+#command.evmod  # always available; opens the config GUI
 command.exportmapimg: true
 command.exportmapnames: true
 command.mapartgroup: true

@@ -207,7 +207,7 @@ jar {
 
 tasks.register('buildAndCollect', Copy) {
 	group = 'build'
-	description = "Builds the versioned EvMod JAR and copies it to build/${modVersion}."
+	description = "Builds the versioned ${modName} JAR and copies it to build/${modVersion}."
 
 	from loomx.modJar.flatMap { it.archiveFile }
 	into rootProject.layout.buildDirectory.dir(modVersion)

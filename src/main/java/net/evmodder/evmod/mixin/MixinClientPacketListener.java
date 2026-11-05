@@ -73,7 +73,7 @@ abstract class MixinClientPacketListener{
 		// If the incoming entity is a player and matches your target's UUID
 		if(packet.getType() == EntityTypes.PLAYER && AccessorMain.getSyncPlayerPos() != null &&
 				AccessorMain.getSyncPlayerPos().removeFakePlayer(packet.getUUID())){
-			Main.LOGGER.info("[EvMod] Removed dummy player (real player spawned): "+packet.getUUID());
+			Main.LOGGER.info("Removed dummy player (real player spawned): "+packet.getUUID());
 		}
 	}
 

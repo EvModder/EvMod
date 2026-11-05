@@ -172,6 +172,7 @@ public class Main{
 
 		if(/*!mapArtFeaturesOnly && */settings.cmdAssignPearl) new CommandAssignPearl(epearlLookup);
 		if(settings.epearlOwners) new CommandPearlRescue();
+		new CommandEvMod(()->new ConfigGui(configs));
 		if(settings.cmdDeletedMapsNearby) new CommandDeletedMapsNearby();
 		if(settings.cmdExportMapImg) new CommandExportMapImg();
 		if(settings.cmdExportMapNames) new CommandExportMapNames();
