@@ -58,6 +58,7 @@
 
 	// CONFIG OPTION LABELS:
 	"evmod.gui.label.remoteDatabase": "Remote database",
+	"evmod.gui.label.exportImage": "/exportmapimg",
 	"evmod.gui.label.bundleSelectionPriority.first": "First",
 	"evmod.gui.label.bundleSelectionPriority.last": "Last",
 	"evmod.gui.label.bundleSelectionPriority.fullest": "Fullest",

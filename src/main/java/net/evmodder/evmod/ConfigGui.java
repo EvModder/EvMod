@@ -55,8 +55,8 @@ public class ConfigGui extends GuiConfigsBase{
 
 	@Override protected boolean useKeybindSearch(){return configs.guiTab == ConfigGuiTab.HOTKEYS.ordinal();}
 
-	private String remoteDatabaseSeparator(){
-		final String label = StringUtils.translate(Main.MOD_ID+".gui.label.remoteDatabase");
+	private String sectionSeparator(String name){
+		final String label = StringUtils.translate(Main.MOD_ID+".gui.label."+name);
 		final int length = Math.max(0, (getBrowserWidth()-14-getStringWidth(" "+label+" ")) / (2*getStringWidth(" ")));
 		final String rule = "\u00a78\u00a7m"+" ".repeat(length)+"\u00a7r";
 		return rule+" \u00a77"+label+" "+rule;
@@ -74,7 +74,10 @@ public class ConfigGui extends GuiConfigsBase{
 		final List<ConfigOptionWrapper> wrappers = new ArrayList<>();
 		for(IConfigBase option : options){
 			if(option == Configs.Database.CLIENT_ID && !wrappers.isEmpty()){
-				wrappers.add(new ConfigOptionWrapper(remoteDatabaseSeparator()));
+				wrappers.add(new ConfigOptionWrapper(sectionSeparator("remoteDatabase")));
+			}
+			if(option == Configs.Visuals.EXPORT_MAP_IMG_UPSCALE){
+				wrappers.add(new ConfigOptionWrapper(sectionSeparator("exportImage")));
 			}
 			wrappers.add(new ConfigOptionWrapper(option));
 		}
