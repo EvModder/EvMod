@@ -225,9 +225,10 @@ public final class Configs implements IConfigHandler{
 			if(!MAPART_ONLY_DEFAULTS) configs.add(REMEMBER_SERVER_LIST_SCROLL);
 			if(settings.enabled(Setting.FIREWORK_BOOST)) configs.add(DONT_WASTE_FIREWORKS);
 			if(settings.enabled(Setting.CHAT_ACTIONS)) configs.addAll(List.of(SEND_ON_SERVER_JOIN, LOG_COORDS_ON_SERVER_QUIT));
-			if(settings.enabled(Setting.INVENTORY_TOOLS)) configs.addAll(List.of(INV_RESTOCK_IF, INV_RESTOCK_LEAVE, INV_RESTOCK_BLACKLIST, INV_RESTOCK_WHITELIST,
-					INV_ORGANIZE_1, INV_ORGANIZE_2, INV_ORGANIZE_3));
-			if(settings.enabled(Setting.INVENTORY_TOOLS)) configs.addAll(List.of(INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
+			if(settings.enabled(Setting.INVENTORY_TOOLS)) configs.addAll(List.of(
+					INV_RESTOCK_IF, INV_RESTOCK_LEAVE, INV_RESTOCK_BLACKLIST, INV_RESTOCK_WHITELIST,
+					INV_ORGANIZE_1, INV_ORGANIZE_2, INV_ORGANIZE_3,
+					INV_RESTOCK_AUTO, INV_RESTOCK_AUTO_FOR_INV_ORGS));
 			else INV_RESTOCK_AUTO.setBooleanValue(false);
 			if(settings.broadcaster) configs.addAll(List.of(TEMP_BROADCAST_ACCOUNT, TEMP_BROADCAST_TIMESTAMP, TEMP_BROADCAST_MSGS));
 			if(settings.enabled(Setting.SHOW_NICHE_CONFIG_SETTINGS) && settings.enabled(Setting.GHOST_ITEM_FIX)) configs.add(DISABLE_DRAG_CLICK_ON_MAPS_AND_BUNDLES);
@@ -409,6 +410,8 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean CRAFT_RESTOCK_SMART = new ConfigBoolean("craftingRestockSmart", true).apply(HOTKEYS_KEY);
 		public static final ConfigHotkey CRAFT_BULK_MODIFIER = new ConfigHotkey(
 				"craftingBulkModifier", "LEFT_SHIFT", KeybindSettings.MODIFIER_GUI).apply(HOTKEYS_KEY);
+		public static final ConfigHotkey HOTBAR_TYPE_INCR = new ConfigHotkey("hotbarSlotItemTypeIncrement", "").apply(HOTKEYS_KEY);
+		public static final ConfigHotkey HOTBAR_TYPE_DECR = new ConfigHotkey("hotbarSlotItemTypeDecrement", "").apply(HOTKEYS_KEY);
 		public static final ConfigStringList SCROLL_ORDER = new ConfigStringList("hotbarSlotItemTypeScrollOrder", ImmutableList.of(
 				"white, light_gray, gray, black, brown, red, orange, yellow, lime, green, cyan, light_blue, blue, purple, magenta, pink",
 				", exposed, weathered, oxidized",
@@ -416,8 +419,6 @@ public final class Configs implements IConfigHandler{
 				"tube, brain, bubble, fire, horn",
 				"oak, spruce, birch, jungle, acacia, dark_oak, mangrove, cherry, bamboo, crimson, warped"
 		)).apply(HOTKEYS_KEY);
-		public static final ConfigHotkey HOTBAR_TYPE_INCR = new ConfigHotkey("hotbarSlotItemTypeIncrement", "").apply(HOTKEYS_KEY);
-		public static final ConfigHotkey HOTBAR_TYPE_DECR = new ConfigHotkey("hotbarSlotItemTypeDecrement", "").apply(HOTKEYS_KEY);
 
 		//TODO: ConfigSlotList, ConfigSlotListHotkeyed
 		public static final ConfigHotkey INV_RESTOCK = new ConfigHotkey("inventoryRestock",
