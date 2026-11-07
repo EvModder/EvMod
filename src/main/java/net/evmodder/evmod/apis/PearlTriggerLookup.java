@@ -14,20 +14,21 @@ import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnder
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DoubleBlockHalf;
 import net.minecraft.world.level.block.state.properties.RedstoneSide;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.Shapes;
 
-/** Best-effort, read-only circuit trace; this does not simulate redstone timing or moving blocks. */
+/** Best-effort, read-only circuit trace; this does not simulate redstone timing or pushed block chains. */
 public final class PearlTriggerLookup{
 	private static final int MAX_DEPTH = 32, MAX_VISITS = 256, CHAMBER_DEPTH = 8;
 	private record Input(BlockPos pos, Direction from, boolean strong, boolean fromWire){}
 	private record Signal(Input input, int strength, int depth){}
 
-	/** Returns potentially affected loaded pearls beneath traced trapdoors, never a nearest-pearl guess. */
+	/** Returns loaded pearls affected by traced collision changes, never a nearest-pearl guess. */
 	public static List<ThrownEnderpearl> findAffectedPearls(final ClientLevel level, final BlockPos trigger){
 		final Trace trace = new Trace(level);
-		if(trace.state(trigger).is(BlockTags.TRAPDOORS)) trace.trapdoors.add(trigger);
-		trace.changed(trigger, 0);
+		trace.changed(trigger, trace.state(trigger), 0);
 		trace.run();
 		final Set<ThrownEnderpearl> pearls = new HashSet<>();
 		for(BlockPos door : trace.trapdoors){
@@ -39,6 +40,20 @@ public final class PearlTriggerLookup{
 			}
 			pearls.addAll(level.getEntitiesOfClass(ThrownEnderpearl.class,
 					new AABB(door.getX(), bottom, door.getZ(), door.getX()+1, door.getY()+1, door.getZ()+1), pearl -> !pearl.isRemoved()));
+		}
+		for(BlockPos piston : trace.pistons){
+			final BlockPos front = piston.relative(trace.state(piston).getValue(BlockStateProperties.FACING));
+			// Only direct head contact: a colliding block would require resolving its own movement first.
+			if(!trace.state(front).getCollisionShape(level, front).isEmpty()) continue;
+			pearls.addAll(level.getEntitiesOfClass(ThrownEnderpearl.class, new AABB(front), pearl -> !pearl.isRemoved()));
+		}
+		for(BlockPos barrier : trace.barriers){
+			final BlockState state = trace.state(barrier);
+			// Include either collision position: opening can release a pearl; closing can hit it.
+			for(AABB box : Shapes.or(state.getCollisionShape(level, barrier),
+					state.cycle(BlockStateProperties.OPEN).getCollisionShape(level, barrier)).toAabbs()){
+				pearls.addAll(level.getEntitiesOfClass(ThrownEnderpearl.class, box.move(barrier).inflate(1e-7), pearl -> !pearl.isRemoved()));
+			}
 		}
 		// A partial/unloaded/over-budget trace cannot establish which chambers are affected.
 		return trace.incomplete ? List.of() : new ArrayList<>(pearls);
@@ -58,7 +73,7 @@ public final class PearlTriggerLookup{
 		private final ClientLevel level;
 		private final ArrayDeque<Signal> pending = new ArrayDeque<>();
 		private final HashMap<Input, Integer> seen = new HashMap<>();
-		private final Set<BlockPos> changes = new HashSet<>(), trapdoors = new HashSet<>();
+		private final Set<BlockPos> changes = new HashSet<>(), trapdoors = new HashSet<>(), pistons = new HashSet<>(), barriers = new HashSet<>();
 		private int visits;
 		private boolean incomplete;
 		private Trace(final ClientLevel level){this.level = level;}
@@ -71,9 +86,17 @@ public final class PearlTriggerLookup{
 			if(depth > MAX_DEPTH){incomplete = true; return;}
 			pending.addLast(new Signal(new Input(pos, from, strong, fromWire), strength, depth));
 		}
-		private void changed(final BlockPos pos, final int depth){
+		private void changed(final BlockPos pos, final BlockState block, final int depth){
 			if(incomplete || !changes.add(pos)) return;
 			if(depth > MAX_DEPTH || ++visits > MAX_VISITS){incomplete = true; return;}
+			if(block.is(BlockTags.TRAPDOORS)) trapdoors.add(pos);
+			else if(block.is(BlockTags.DOORS) || block.is(BlockTags.FENCE_GATES)){
+				barriers.add(pos);
+				if(block.is(BlockTags.DOORS)){
+					final BlockPos other = block.getValue(BlockStateProperties.DOUBLE_BLOCK_HALF) == DoubleBlockHalf.LOWER ? pos.above() : pos.below();
+					changed(other, state(other), depth+1);
+				}
+			}
 			for(Direction direction : Direction.values()){
 				final BlockPos observer = pos.relative(direction);
 				final BlockState state = state(observer);
@@ -84,7 +107,7 @@ public final class PearlTriggerLookup{
 		}
 		private void emit(final BlockPos pos, final BlockState state, final int depth){
 			if(incomplete) return;
-			changed(pos, depth);
+			changed(pos, state, depth);
 			final boolean wire = state.is(Blocks.REDSTONE_WIRE);
 			for(Direction direction : Direction.values()){
 				final int strength = state.getSignal(level, pos, direction.getOpposite());
@@ -108,11 +131,10 @@ public final class PearlTriggerLookup{
 				seen.put(input, signal.strength);
 				if(++visits > MAX_VISITS){incomplete = true; break;}
 				final BlockState state = state(input.pos);
-				if(state.is(Blocks.NOTE_BLOCK)) changed(input.pos, signal.depth);
-				if(state.is(BlockTags.TRAPDOORS)){
-					trapdoors.add(input.pos);
-					changed(input.pos, signal.depth);
-				}
+				if((state.is(Blocks.PISTON) || state.is(Blocks.STICKY_PISTON)) && !state.getValue(BlockStateProperties.EXTENDED)
+						&& input.from != state.getValue(BlockStateProperties.FACING)) pistons.add(input.pos);
+				if(state.is(Blocks.NOTE_BLOCK)) changed(input.pos, state, signal.depth);
+				if(state.is(BlockTags.TRAPDOORS) || state.is(BlockTags.DOORS) || state.is(BlockTags.FENCE_GATES)) changed(input.pos, state, signal.depth);
 				else if(state.is(Blocks.REDSTONE_WIRE)){
 					final int strength = signal.strength-(input.fromWire ? 1 : 0);
 					if(strength > 0) emit(input.pos, state.setValue(BlockStateProperties.POWER, strength), signal.depth);
