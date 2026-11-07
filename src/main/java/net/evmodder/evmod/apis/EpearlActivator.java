@@ -151,15 +151,13 @@ public final class EpearlActivator{
 		if(thirdParty){
 			final var sender = client.getConnection().getOnlinePlayers().stream()
 					.filter(info -> info.getProfile().name().equalsIgnoreCase(who)).findFirst().orElse(null);
-			if(sender == null || !canPullOwnPearl(client, sender.getProfile().id())){
-				sendFeedback(client, who, "[AutoPearl] Third-party requests require your own reachable pearl here.");
-				return;
-			}
+			if(sender == null || !canPullOwnPearl(client, sender.getProfile().id())) return;
 		}
 		final String name = player == null ? who : player.getProfile().name();
 		final UUID owner = player == null ? null : player.getProfile().id();
 		// Third-party requests require an owned, loaded pearl, not just a sign bearing that name.
 		BlockPos signPos = thirdParty ? findNearestPearlWithOwnerName(client, name, owner) : findSignWithName(client, name);
+		final boolean fromSign = !thirdParty && signPos != null;
 		if(signPos == null && !thirdParty) signPos = findNearestPearlWithOwnerName(client, name, owner);
 		if(signPos == null){
 //			sendFeedback(client, who, "[AutoPearl] I do not recognize any pearl of yours nearby");
@@ -170,14 +168,19 @@ public final class EpearlActivator{
 
 		BlockPos buttonPos = findNearestTrigger(client, signPos);
 		if(buttonPos == null){
-			sendFeedback(client, who, "[AutoPearl] I see "+name+"'s pearl, but not how to activate it");
+			if(!fromSign || findNearestPearlWithOwnerName(client, name, owner) != null)
+				sendFeedback(client, who, "[AutoPearl] I see "+name+"'s pearl, but not how to activate it");
 			Main.LOGGER.warn("[AutoPearl] pearl found, but activation not found");
 			return;
 		}
 		Main.LOGGER.info("[AutoPearl]: found button at "+buttonPos.toShortString());
 
 		final BlockHitResult hitResult = getHitResult(client, buttonPos);
-		if(hitResult == null){sendFeedback(client, who, "[AutoPearl] "+name+"'s pearl trigger is out of reach"); return;}
+		if(hitResult == null){
+			if(!fromSign || findNearestPearlWithOwnerName(client, name, owner) != null)
+				sendFeedback(client, who, "[AutoPearl] "+name+"'s pearl trigger is out of reach");
+			return;
+		}
 		if(thirdParty && !request.confirmed()){
 			sendFeedback(client, who, request.confirmationPrompt(name));
 			return;
