@@ -34,17 +34,60 @@ public final class InventoryTransferPlanner{
 	}
 
 	/**
-	 * Remove adjacent, identical swaps from a whole-stack swap sequence.
-	 * Each swap must exchange both stacks completely, without truncation or side effects.
-	 * Consecutive pairwise swaps can then share their temporary hotbar/offhand slot.
+	 * Accumulates whole-stack swaps between menu slots, then emits the fewest
+	 * {@link ActionType#HOTBAR_SWAP} clicks that produce their combined arrangement.
+	 * Each swap must exchange both stacks completely, without truncation or slot
+	 * restrictions: flush before any click that is not such a swap.
+	 * A cycle containing a hotbar/offhand slot takes length-1 clicks; other cycles
+	 * take length+1 through the temporary button, whose slot is restored. Stack
+	 * identities are kept distinct, even for equal stacks: this minimizes clicks for
+	 * that arrangement, not merges or alternative arrangements of interchangeable stacks.
 	 */
-	public static ArrayDeque<InvAction> compactWholeStackSwaps(final Iterable<InvAction> swaps){
-		final ArrayDeque<InvAction> result = new ArrayDeque<>();
-		for(final InvAction swap : swaps){
-			if(swap.equals(result.peekLast())) result.removeLast();
-			else result.addLast(swap);
+	public static final class WholeStackSwaps{
+		private final int[] stackAt, cycle;  // stackAt[slot]: the slot its current stack started in
+		private final int hotbarStart, offhandSlot;
+
+		/** Swap button 40 is the offhand; pass {@code offhandSlot} -1 for menus without one. */
+		public WholeStackSwaps(final int slotCount, final int hotbarStart, final int offhandSlot){
+			stackAt = new int[slotCount];
+			cycle = new int[slotCount];
+			for(int i=0; i<slotCount; ++i) stackAt[i] = i;
+			this.hotbarStart = hotbarStart;
+			this.offhandSlot = offhandSlot;
 		}
-		return result;
+
+		public void swap(final int slotA, final int slotB){
+			final int stack = stackAt[slotA];
+			stackAt[slotA] = stackAt[slotB];
+			stackAt[slotB] = stack;
+		}
+
+		/** Appends the clicks for all swaps since the last flush. The temporary button is only used by cycles outside the hotbar/offhand. */
+		public void flush(final Queue<InvAction> plan, final int temporaryButton){
+			for(int i=0; i<stackAt.length; ++i){
+				int length = 0, anchor = -1;
+				for(int slot=i; stackAt[slot]!=slot;){  // Walk the cycle, resetting it for the next batch.
+					if((slot >= hotbarStart && slot < hotbarStart+9) || slot == offhandSlot) anchor = length;
+					cycle[length++] = slot;
+					final int next = stackAt[slot];
+					stackAt[slot] = slot;
+					slot = next;
+				}
+				if(length == 0) continue;
+				if(anchor >= 0){
+					final int button = cycle[anchor] == offhandSlot ? 40 : cycle[anchor]-hotbarStart;
+					for(int step=1; step<length; ++step)
+						plan.add(new InvAction(cycle[(anchor+length-step)%length], button, ActionType.HOTBAR_SWAP));
+				}
+				else{
+					if(temporaryButton < 0) throw new IllegalStateException("Swap cycle needs a temporary hotbar/offhand slot");
+					plan.add(new InvAction(cycle[0], temporaryButton, ActionType.HOTBAR_SWAP));
+					for(int step=length-1; step>0; --step)
+						plan.add(new InvAction(cycle[step], temporaryButton, ActionType.HOTBAR_SWAP));
+					plan.add(new InvAction(cycle[0], temporaryButton, ActionType.HOTBAR_SWAP));
+				}
+			}
+		}
 	}
 
 	private static int pickupCost(final int count, final int amount){

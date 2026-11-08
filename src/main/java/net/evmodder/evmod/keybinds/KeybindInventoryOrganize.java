@@ -14,6 +14,7 @@ import net.evmodder.evmod.apis.ClickUtils;
 import net.evmodder.evmod.apis.ClickUtils.ActionType;
 import net.evmodder.evmod.apis.ClickUtils.InvAction;
 import net.evmodder.evmod.apis.InventoryTransferPlanner;
+import net.evmodder.evmod.apis.InventoryTransferPlanner.WholeStackSwaps;
 import net.evmodder.evmod.config.OptionInventoryRestockIf;
 import net.evmodder.evmod.config.OptionInventoryRestockLeave;
 import net.minecraft.client.Minecraft;
@@ -50,6 +51,8 @@ public final class KeybindInventoryOrganize{
 		}
 		return -1;
 	}
+
+	private static boolean fitsSlot(ItemStack stack){return stack.getCount() <= stack.getMaxStackSize();}
 
 	private void swapSlots(ItemStack[] slots, boolean[] emptySlots, int i, int j){
 		final boolean tmpEmpty = emptySlots[i];
@@ -301,8 +304,7 @@ public final class KeybindInventoryOrganize{
 		}
 
 		// Sort upper-inventory items
-		final ArrayDeque<InvAction> upperInventorySwaps = new ArrayDeque<>();
-		boolean wholeInventorySwaps = true;
+		final WholeStackSwaps wholeSwaps = new WholeStackSwaps(simSlots.length, HOTBAR_START, isInvScreen ? 45 : -1);
 		plannedSlots = Arrays.copyOf(doneSlots, doneSlots.length);
 		int hb = -1; for(int i=0; i<9; ++i) if(emptySlots[i+HOTBAR_START]){hb = i; break;}  // Find usable hb slot
 		if(hb == -1 && isInvScreen) hb = 40;
@@ -349,19 +351,21 @@ public final class KeybindInventoryOrganize{
 			}
 //			client.player.sendMessage(Text.literal("Click: "+srcSlot+"->"+dstSlot+" UpperInv->Hotbar->UpperInv"), false);
 			final int temporarySlot = hb == 40 ? 45 : hb+HOTBAR_START;
-			// Only ordinary inventory stacks: restricted slots and oversized stacks need the original sequence.
-			wholeInventorySwaps &= srcSlot >= MAIN_INV_START && simSlots[srcSlot].getCount() <= simSlots[srcSlot].getMaxStackSize()
-					&& simSlots[dstSlot].getCount() <= simSlots[dstSlot].getMaxStackSize()
-					&& simSlots[temporarySlot].getCount() <= simSlots[temporarySlot].getMaxStackSize();
-			InventoryTransferPlanner.swapStacks(upperInventorySwaps, srcSlot, dstSlot,
-					isInvScreen && srcSlot == 45 ? 40 : srcSlot >= HOTBAR_START ? srcSlot-HOTBAR_START : -1,
-					-1, hb, !emptySlots[dstSlot] || !emptySlots[temporarySlot]);
+			// Restricted container slots and oversized stacks do not swap whole: click those out as-is.
+			if(srcSlot >= MAIN_INV_START && fitsSlot(simSlots[srcSlot]) && fitsSlot(simSlots[dstSlot]) && fitsSlot(simSlots[temporarySlot])){
+				wholeSwaps.swap(srcSlot, dstSlot);
+			}
+			else{
+				wholeSwaps.flush(clicks, hb);
+				InventoryTransferPlanner.swapStacks(clicks, srcSlot, dstSlot,
+						isInvScreen && srcSlot == 45 ? 40 : srcSlot >= HOTBAR_START ? srcSlot-HOTBAR_START : -1,
+						-1, hb, !emptySlots[dstSlot] || !emptySlots[temporarySlot]);
+			}
 			swapSlots(simSlots, emptySlots, srcSlot, dstSlot);
 			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && !isInvScreen) alreadyRestockedItems.add(simSlots[dstSlot].getItem());
 			doneSlots[dstSlot] = true;
 			plannedSlots[srcSlot] = false;
 		}
-		clicks.addAll(wholeInventorySwaps ? InventoryTransferPlanner.compactWholeStackSwaps(upperInventorySwaps) : upperInventorySwaps);
 
 		// Fill hotbar slots
 		for(SlotAndItemName p : layoutMap){
@@ -396,14 +400,18 @@ public final class KeybindInventoryOrganize{
 				}
 			}
 //			client.player.sendMessage(Text.literal("Click: "+srcSlot+"->"+dstSlot+" UpperInv->Hotbar"), false);
-			if(isInvScreen && dstSlot == 45) clicks.add(new InvAction(srcSlot, 40, ActionType.HOTBAR_SWAP));
-			else clicks.add(new InvAction(srcSlot, dstSlot-HOTBAR_START, ActionType.HOTBAR_SWAP));
+			if(srcSlot >= MAIN_INV_START && fitsSlot(simSlots[srcSlot]) && fitsSlot(simSlots[dstSlot])) wholeSwaps.swap(srcSlot, dstSlot);
+			else{
+				wholeSwaps.flush(clicks, hb);
+				clicks.add(new InvAction(srcSlot, isInvScreen && dstSlot == 45 ? 40 : dstSlot-HOTBAR_START, ActionType.HOTBAR_SWAP));
+			}
 
 			swapSlots(simSlots, emptySlots, srcSlot, dstSlot);
 			if(RESTOCK_ONLY_1_SLOT_PER_TYPE && !isInvScreen) alreadyRestockedItems.add(simSlots[dstSlot].getItem());
 			doneSlots[dstSlot] = true;
 			//needEarlier.remove(p.b().getPath());
 		}
+		wholeSwaps.flush(clicks, hb);  // Upper-inventory and hotbar swaps are minimized together.
 
 		// Handle leftover armor for container -> inventory
 		if(!isInvScreen && CAN_RESTOCK_FROM_CONTAINER) for(SlotAndItemName p : layoutMap){
