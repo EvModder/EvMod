@@ -22,6 +22,7 @@ public final class EvModMixinPlugin implements IMixinConfigPlugin{
 		final Settings settings = Settings.get();
 		final String mixin = mixinClassName.substring(mixinClassName.lastIndexOf('.')+1);
 		return switch(mixin){
+			case "MixinAddressCheck" -> true;
 			case "AccessorJoinMultiplayerScreen" -> true;  // Runtime config; no per-tick hook.
 			case "MixinClientPacketListenerUnload" -> true;  // Runs only when the player unloads.
 			case "AccessorClickUtils" -> settings.usesClicks();

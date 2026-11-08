@@ -23,6 +23,7 @@
 		"MixinUpdateItemFrameContentsNotifications",  // Optional new-mapart alerts during the existing frame scan
 
 		// Minecraft mixins:
+		"MixinAddressCheck",  // Skip remote server-blocklist providers
 		"AccessorAnvilScreen",
 		"AccessorJoinMultiplayerScreen",
 		"AccessorPlayerTabOverlay",
