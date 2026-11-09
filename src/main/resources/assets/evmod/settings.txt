@@ -61,7 +61,7 @@ player.keybind_toggle.skin_layers: false  # Toggle cape, hat, jacket, sleeves, a
 player.keybind_toggle.armor: false        # Swap specialty/gold armor and leather boots; optional elytra sync
 
 elytra.prevent_firework_waste: false      # Boost instead of placing rockets when gliding at blocks; excludes explosive rockets
-elytra.travel_helpers: false              # AIE/eBounce, angle snapping, and junk ejection
+elytra.travel_helpers: false              # AIE/eBounce and junk ejection
 
 chat.broadcaster: false                   # Scheduled event-countdown chat announcements from a designated account
 chat.shortcuts: false                     # Message hotkeys, automatic join commands, and logout-coordinate logging

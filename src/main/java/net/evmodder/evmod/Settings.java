@@ -38,7 +38,7 @@ public final class Settings{
 				Setting.CMD_EXPORT_MAPNAMES, Setting.DATABASE_MAP_HISTORY);
 	}
 	public boolean usesRemoteCommandHotkeys(){return database && !enabled(Setting.MAPART_ONLY_DEFAULTS);}
-	public boolean usesCustomWidgets(){return any(Setting.CHAT_ACTIONS, Setting.TRAVEL) || usesRemoteCommandHotkeys();}
+	public boolean usesCustomWidgets(){return !enabled(Setting.MAPART_ONLY_DEFAULTS) || enabled(Setting.CHAT_ACTIONS);}
 
 	private void require(Setting setting, Setting dependency){
 		if(!enabled(dependency) && enabled.remove(setting)) System.getLogger("evmod").log(System.Logger.Level.WARNING,

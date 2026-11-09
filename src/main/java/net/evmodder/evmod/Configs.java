@@ -222,7 +222,7 @@ public final class Configs implements IConfigHandler{
 			if(settings.enabled(Setting.WHISPER_SOUND)) configs.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PLAY_SOUND_UNFOCUSED));
 			if(settings.enabled(Setting.PEARL_MESSAGES)) configs.add(WHISPER_PEARL_PULL);
 			if(settings.muteMusicOnMenuScreen) configs.add(MUTE_MUSIC_ON_MENU_SCREEN);
-			configs.add(REMEMBER_SERVER_LIST_SCROLL);
+			if(!MAPART_ONLY_DEFAULTS) configs.add(REMEMBER_SERVER_LIST_SCROLL);
 			if(settings.enabled(Setting.FIREWORK_BOOST)) configs.add(DONT_WASTE_FIREWORKS);
 			if(settings.enabled(Setting.CHAT_ACTIONS)) configs.addAll(List.of(SEND_ON_SERVER_JOIN, LOG_COORDS_ON_SERVER_QUIT));
 			if(settings.enabled(Setting.INVENTORY_TOOLS)) configs.addAll(List.of(INV_RESTOCK_IF, INV_RESTOCK_LEAVE, INV_RESTOCK_BLACKLIST, INV_RESTOCK_WHITELIST,
@@ -457,7 +457,8 @@ public final class Configs implements IConfigHandler{
 			if(settings.enabled(Setting.APPEARANCE)) configs.addAll(List.of(TOGGLE_HAT, TOGGLE_JACKET, TOGGLE_SLEEVE_LEFT,
 					TOGGLE_SLEEVE_RIGHT, TOGGLE_PANTS_LEG_LEFT, TOGGLE_PANTS_LEG_RIGHT, TOGGLE_CAPE, SYNC_CAPE_WITH_ELYTRA));
 			if(settings.enabled(Setting.ARMOR_SWAP)) configs.add(SYNC_ARMOR_WITH_ELYTRA);
-			if(settings.enabled(Setting.TRAVEL)) configs.addAll(List.of(AIE_TRAVEL_HELPER, EBOUNCE_TRAVEL_HELPER, SNAP_ANGLE_1, SNAP_ANGLE_2));
+			if(settings.enabled(Setting.TRAVEL)) configs.addAll(List.of(AIE_TRAVEL_HELPER, EBOUNCE_TRAVEL_HELPER));
+			if(!MAPART_ONLY_DEFAULTS) configs.addAll(List.of(SNAP_ANGLE_1, SNAP_ANGLE_2));
 			if(settings.any(Setting.TRAVEL, Setting.INVENTORY_TOOLS)) configs.add(EJECT_JUNK_ITEMS);
 			if(settings.enabled(Setting.CRAFTING)) configs.addAll(List.of(CRAFT_RESTOCK, CRAFT_RESTOCK_SMART, CRAFT_BULK_MODIFIER));
 			if(settings.enabled(Setting.INVENTORY_TOOLS)) configs.addAll(List.of(HOTBAR_TYPE_INCR, HOTBAR_TYPE_DECR, SCROLL_ORDER,

@@ -152,12 +152,10 @@ final class KeyCallbacks{
 			keybindCallback(Configs.Hotkeys.PP_HOTKEY_1, null,
 					()->EpearlExternalAdapter.trigger(Configs.Hotkeys.PP_IP_1.getStringValue(), Configs.Hotkeys.PP_TOKEN_1.getStringValue()));
 		}
-		if(settings.enabled(Setting.TRAVEL)){
-			keybindCallback(Configs.Hotkeys.SNAP_ANGLE_1, null,
-					()->Minecraft.getInstance().player.absSnapRotationTo(Configs.Hotkeys.SNAP_ANGLE_1.getYaw(), Configs.Hotkeys.SNAP_ANGLE_1.getPitch()));
-			keybindCallback(Configs.Hotkeys.SNAP_ANGLE_2, null,
-					()->Minecraft.getInstance().player.absSnapRotationTo(Configs.Hotkeys.SNAP_ANGLE_2.getYaw(), Configs.Hotkeys.SNAP_ANGLE_2.getPitch()));
-		}
+		keybindCallback(Configs.Hotkeys.SNAP_ANGLE_1, null,
+				()->Minecraft.getInstance().player.absSnapRotationTo(Configs.Hotkeys.SNAP_ANGLE_1.getYaw(), Configs.Hotkeys.SNAP_ANGLE_1.getPitch()));
+		keybindCallback(Configs.Hotkeys.SNAP_ANGLE_2, null,
+				()->Minecraft.getInstance().player.absSnapRotationTo(Configs.Hotkeys.SNAP_ANGLE_2.getYaw(), Configs.Hotkeys.SNAP_ANGLE_2.getPitch()));
 
 		if(settings.usesClicks()){
 			valueChangeCallback(Configs.Generic.CLICK_LIMIT_COUNT, InitUtils::refreshClickLimits);
