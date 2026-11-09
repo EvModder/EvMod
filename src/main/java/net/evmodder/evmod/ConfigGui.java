@@ -73,6 +73,7 @@ public class ConfigGui extends GuiConfigsBase{
 		};
 		final List<ConfigOptionWrapper> wrappers = new ArrayList<>();
 		for(IConfigBase option : options){
+			if(option == Configs.Hotkeys.EBOUNCE_EMPTY_SLOTS) continue;  // Shown beside EBOUNCE_EJECT_JUNK.
 			if(option == Configs.Database.CLIENT_ID && !wrappers.isEmpty()){
 				wrappers.add(new ConfigOptionWrapper(sectionSeparator("remoteDatabase")));
 			}

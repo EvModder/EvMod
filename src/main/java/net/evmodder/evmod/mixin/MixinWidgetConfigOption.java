@@ -36,6 +36,7 @@ import fi.dy.masa.malilib.gui.widgets.WidgetConfigOption.ListenerSliderToggle;
 import fi.dy.masa.malilib.gui.wrappers.TextFieldType;
 //?}
 import fi.dy.masa.malilib.hotkeys.*;
+import fi.dy.masa.malilib.util.StringUtils;
 //? >=1.21.11 {
 import fi.dy.masa.malilib.render.GuiContext;
 //?}
@@ -43,6 +44,8 @@ import fi.dy.masa.malilib.render.GuiContext;
 /*import net.minecraft.client.gui.GuiGraphics;*/
 //?}
 import net.evmodder.evmod.ConfigGui;
+import net.evmodder.evmod.Configs.Hotkeys;
+import net.evmodder.evmod.Main;
 import net.evmodder.evmod.config.ConfigStringHotkeyed;
 import net.evmodder.evmod.config.ConfigYawPitchHotkeyed;
 import org.spongepowered.asm.mixin.*;
@@ -62,6 +65,9 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 
 	@Unique private String initialString$OURS;
 	@Unique private float initialYaw$OURS, initialPitch$OURS;
+	@Unique private GuiTextFieldGeneric junkSlots$OURS;
+	@Unique private int initialJunkSlots$OURS;
+	@Unique private boolean initialEjectJunk$OURS;
 //	@Unique private IConfigOptionListEntry initialOptionListEntry$OURS;
 
 	// Java requires we provide a constructor because of the <T>, but it'll never be called
@@ -204,6 +210,43 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 
 	}
 
+	@Unique private void addJunkEjectControls(int x, int y, int configWidth){
+		final ConfigButtonBoolean toggle = new ConfigButtonBoolean(x, y, 60, 20, Hotkeys.EBOUNCE_EJECT_JUNK);
+		final int numberX = x + configWidth - 40;
+		String label = StringUtils.translate(Main.MOD_ID+".gui.label.junkFreeSlots");
+		if(getStringWidth(label) > numberX-x-70) label = StringUtils.translate(Main.MOD_ID+".gui.label.junkSlots");
+		addLabel(x + 66, y + 7, numberX-x-70, 8, 0xFFFFFFFF, label);
+		addWidget(new WidgetHoverInfo(x + 66, y, configWidth-66, 20, Hotkeys.EBOUNCE_EMPTY_SLOTS.getComment()));
+		junkSlots$OURS = createTextField(numberX, y + 1, 36, 17);
+		final ButtonGeneric reset = createResetButton(x + configWidth + 2, y, Hotkeys.EBOUNCE_EJECT_JUNK);
+		final ConfigOptionChangeListenerTextField listener = new ConfigOptionChangeListenerTextField(Hotkeys.EBOUNCE_EMPTY_SLOTS, junkSlots$OURS, reset){
+			@Override public boolean onTextChange(GuiTextFieldGeneric field){
+				super.onTextChange(field);
+				if(Hotkeys.EBOUNCE_EJECT_JUNK.isModified()) reset.setEnabled(true);
+				return false;
+			}
+		};
+		//? >=1.21.11 {
+		addTextField(junkSlots$OURS, listener, TextFieldType.INTEGER);
+		//?} else {
+		/*addTextField(junkSlots$OURS, listener);*/
+		//?}
+		junkSlots$OURS.setValue(Hotkeys.EBOUNCE_EMPTY_SLOTS.getStringValue());
+		reset.setEnabled(Hotkeys.EBOUNCE_EJECT_JUNK.isModified() || Hotkeys.EBOUNCE_EMPTY_SLOTS.isModified());
+		addButton(toggle, (button, mouseButton)->{
+			reset.setEnabled(Hotkeys.EBOUNCE_EJECT_JUNK.isModified() || Hotkeys.EBOUNCE_EMPTY_SLOTS.isModified(junkSlots$OURS.getValue()));
+			host.getButtonPressListener().actionPerformedWithButton(button, mouseButton);
+		});
+		addButton(reset, (button, mouseButton)->{
+			Hotkeys.EBOUNCE_EJECT_JUNK.resetToDefault();
+			Hotkeys.EBOUNCE_EMPTY_SLOTS.resetToDefault();
+			junkSlots$OURS.setValue(Hotkeys.EBOUNCE_EMPTY_SLOTS.getStringValue());
+			toggle.updateDisplayString();
+			reset.setEnabled(false);
+			host.getButtonPressListener().actionPerformedWithButton(button, mouseButton);
+		});
+	}
+
 	@Unique private final boolean isOurConfigGui(){
 //		return parent instanceof WidgetListConfigOptions wlco && wlco.getParent() instanceof ConfigGui;
 		// Goofy but necessary: Using the above alternative breaks the custom config widgets
@@ -217,7 +260,13 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 	//?} else {
 	/*private final void customConfigGui(int x, int y, float zLevel, int labelWidth, int configWidth, IConfigBase config, CallbackInfo ci){*/
 	//?}
-		if(!isOurConfigGui() || !(config instanceof IHotkey)) return;
+		if(!isOurConfigGui()) return;
+		if(config == Hotkeys.EBOUNCE_EJECT_JUNK){
+			addJunkEjectControls(x, y, configWidth);
+			ci.cancel();
+			return;
+		}
+		if(!(config instanceof IHotkey)) return;
 
 		boolean modified = true;
 //		if(config instanceof IHotkeyTogglable iht){
@@ -254,6 +303,11 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 		if(!isOurConfigGui() || wrapper.getType() != GuiConfigsBase.ConfigOptionWrapper.Type.CONFIG) return;
 
 		IConfigBase config = wrapper.getConfig();
+		if(config == Hotkeys.EBOUNCE_EJECT_JUNK){
+			initialEjectJunk$OURS = Hotkeys.EBOUNCE_EJECT_JUNK.getBooleanValue();
+			initialJunkSlots$OURS = Hotkeys.EBOUNCE_EMPTY_SLOTS.getIntegerValue();
+			lastAppliedValue = Hotkeys.EBOUNCE_EMPTY_SLOTS.getStringValue();
+		}
 		if(config instanceof ConfigStringHotkeyed csh){
 			initialString$OURS = csh.getStringValue();
 			initialStringValue = csh.getKeybind().getStringValue();
@@ -272,11 +326,24 @@ abstract class MixinWidgetConfigOption extends WidgetConfigOptionBase<GuiConfigs
 //		}
 	}
 
+	@Inject(method="applyNewValueToConfig", at=@At("HEAD"), cancellable=true)
+	private void applyJunkSlots(CallbackInfo ci){
+		if(junkSlots$OURS == null) return;
+		if(hasPendingModifications()) Hotkeys.EBOUNCE_EMPTY_SLOTS.setValueFromString(junkSlots$OURS.getValue());
+		lastAppliedValue = Hotkeys.EBOUNCE_EMPTY_SLOTS.getStringValue();
+		ci.cancel();
+	}
+
 	@Inject(method="wasConfigModified", at=@At(value="INVOKE",
 			target="Lfi/dy/masa/malilib/gui/GuiConfigsBase$ConfigOptionWrapper;getConfig()Lfi/dy/masa/malilib/config/IConfigBase;",
 			ordinal=0), cancellable=true)
 	private final void specialJudgeCustomConfigValueHotkeyed(final CallbackInfoReturnable<Boolean> cir){
 		final IConfigBase config = wrapper.getConfig();
+		if(junkSlots$OURS != null){
+			cir.setReturnValue(initialEjectJunk$OURS != Hotkeys.EBOUNCE_EJECT_JUNK.getBooleanValue()
+					|| initialJunkSlots$OURS != Hotkeys.EBOUNCE_EMPTY_SLOTS.getIntegerValue());
+			return;
+		}
 //		if(!OurConfigs.hasConfig(config)) return;
 
 		if(config instanceof ConfigStringHotkeyed csh){

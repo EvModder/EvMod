@@ -374,6 +374,8 @@
 	"evmod.config.hotkeys.comment.eBounceTravelHelper": "Fills holes and mines obstacles without breaking stride, but can stil get stuck sometimes",
 	"evmod.config.hotkeys.name.eBounceEjectJunk": "eBounceEjectJunk",
 	"evmod.config.hotkeys.comment.eBounceEjectJunk": "While eBounce is active, sweep upper-inventory junk\nwhen free slots reach the threshold.\nIncludes partial stacks; keeps hotbar, gear,\nand useful items.",
+	"evmod.gui.label.junkFreeSlots": "Free slots ≤",
+	"evmod.gui.label.junkSlots": "Slots ≤",
 	"evmod.config.hotkeys.name.eBounceEmptySlots": "eBounceEmptySlots",
 	"evmod.config.hotkeys.comment.eBounceEmptySlots": "Sweep at this many free inventory slots or\nfewer (of 36).\n2 leaves pickup room; 0 waits until full.",
 	"evmod.config.hotkeys.name.eBounceFullAlert": "eBounceFullAlert",

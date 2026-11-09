@@ -327,6 +327,8 @@
 	"evmod.config.hotkeys.comment.eBounceTravelHelper": "Fills holes and mines obstacles without breaking stride, but can stil get stuck sometimes",
 	"evmod.config.hotkeys.name.eBounceEjectJunk": "eBounceEjectJunk",
 	"evmod.config.hotkeys.comment.eBounceEjectJunk": "Con eBounce activo, tira basura del inventario superior\nal alcanzar el umbral de espacios libres.\nIncluye pilas parciales; conserva barra rápida, equipo\ny objetos útiles.",
+	"evmod.gui.label.junkFreeSlots": "Espacios libres ≤",
+	"evmod.gui.label.junkSlots": "Espacios ≤",
 	"evmod.config.hotkeys.name.eBounceEmptySlots": "eBounceEmptySlots",
 	"evmod.config.hotkeys.comment.eBounceEmptySlots": "Tira basura al quedar estos espacios libres o\nmenos (de 36).\n2 deja margen para recoger;\n0 espera al inventario lleno.",
 	"evmod.config.hotkeys.name.eBounceFullAlert": "eBounceFullAlert",
