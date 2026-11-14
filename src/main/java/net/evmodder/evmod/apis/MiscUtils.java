@@ -12,6 +12,7 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.RemoteServerSender.ServerDescriptor;
 import net.evmodder.evmod.mixin.AccessorProjectile;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
@@ -126,9 +127,11 @@ public class MiscUtils{
 		return new UUID(bb.getLong(), bb.getLong());
 	}
 
-	public static final byte[] getEncodedPlayerIds(final Minecraft client){
-		final String sessionName = client.getUser().getName(), playerName = client.player.getGameProfile().name();
-		final UUID sessionUUID = client.getUser().getProfileId(), playerUUID = client.player.getGameProfile().id();
+	public static final byte[] getEncodedPlayerIds(final Minecraft client){return getEncodedPlayerIds(client, client.getConnection());}
+	// The connection keeps its profile after a disconnect has cleared `client.player`.
+	public static final byte[] getEncodedPlayerIds(final Minecraft client, final ClientPacketListener connection){
+		final String sessionName = client.getUser().getName(), playerName = connection.getLocalGameProfile().name();
+		final UUID sessionUUID = client.getUser().getProfileId(), playerUUID = connection.getLocalGameProfile().id();
 		final UUID usableSessionUUID = sessionUUID != null ? sessionUUID : MiscUtils.encodeAsUUID(sessionName);
 		return sessionName.equals(playerName) ? PacketCodec.toByteArray(usableSessionUUID) : PacketCodec.toByteArray(usableSessionUUID, playerUUID);
 	}

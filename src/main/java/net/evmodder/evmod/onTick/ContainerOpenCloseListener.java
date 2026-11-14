@@ -12,7 +12,7 @@ import net.evmodder.evmod.apis.TickListener;
 import net.evmodder.evmod.config.OptionMapStateCache;
 import net.evmodder.evmod.keybinds.KeybindInventoryRestock;
 import net.evmodder.evmod.listeners.BlockClickListener;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.evmodder.evmod.apis.PlayerUnload;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -25,7 +25,7 @@ public final class ContainerOpenCloseListener implements TickListener{
 	private final KeybindInventoryRestock kbInvRestock;
 	public ContainerOpenCloseListener(final KeybindInventoryRestock kbInvRestock){
 		this.kbInvRestock = kbInvRestock;
-		ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> {
+		PlayerUnload.register(_ -> {
 			syncId = 0;
 			waitingForEcToLoad = currentlyViewingEchest = currentlyViewingContainer = false;
 			slots = null;

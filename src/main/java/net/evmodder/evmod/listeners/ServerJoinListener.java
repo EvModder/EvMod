@@ -11,6 +11,7 @@ import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.RemoteServerSender;
 import net.evmodder.evmod.config.OptionMapStateCache;
+import net.evmodder.evmod.apis.PlayerUnload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -95,7 +96,7 @@ public final class ServerJoinListener{
 					}).join();  // Do not queue another poll while the client is busy.
 				}}, 1L, 50L);  // Only while waiting; game state is read on the client thread.
 			});
-			ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> {
+			PlayerUnload.register(_ -> {
 				if(joinPollTimer != null){joinPollTimer.cancel(); joinPollTimer = null;}
 				waitingForInventory = waitingForJoinCommands = false;
 			});

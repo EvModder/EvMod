@@ -7,11 +7,10 @@ import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.PlayerPosIPC;
 import net.evmodder.evmod.apis.TickListener;
+import net.evmodder.evmod.apis.PlayerUnload;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.util.Mth;
@@ -98,7 +97,7 @@ public final class SyncPlayerPos implements TickListener{
 
 	private int NEXT_DUMMY_ID = -1000;  // Custom ID for the client-side entity
 	public SyncPlayerPos(){
-		ClientPlayConnectionEvents.DISCONNECT.register((ClientPacketListener _, Minecraft _) ->{
+		PlayerUnload.register(_ -> {
 			clearFakePlayers();
 			syncLevel = null;
 		});

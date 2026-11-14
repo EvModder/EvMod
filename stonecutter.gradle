@@ -31,6 +31,8 @@ stonecutter.parameters {
 			replace '.profile().getName()', '.profile().name()'
 			replace '.getGameProfile().getName()', '.getGameProfile().name()'
 			replace '.getGameProfile().getId()', '.getGameProfile().id()'
+			replace '.getLocalGameProfile().getName()', '.getLocalGameProfile().name()'
+			replace '.getLocalGameProfile().getId()', '.getLocalGameProfile().id()'
 			replace 'client.getMinecraftSessionService()', 'client.services().sessionService()'
 			replace '.absRotateTo(', '.absSnapRotationTo('
 		}

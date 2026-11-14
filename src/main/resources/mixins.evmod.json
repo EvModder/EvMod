@@ -34,6 +34,7 @@
 		"MixinClientPacketListener",
 		"MixinClientPacketListenerPlayerPosition",
 		"MixinClientPacketListenerMapCache",
+		"MixinClientPacketListenerUnload",
 		"MixinClientPacketListenerMaps",
 		"MixinClientPacketListenerSeenMaps",
 		"MixinClientLevel",

@@ -10,10 +10,10 @@ import net.evmodder.evmod.apis.MiscUtils;
 import net.evmodder.evmod.apis.MojangProfileLookup;
 import net.evmodder.evmod.apis.MojangProfileLookupConstants;
 import net.evmodder.evmod.apis.PearlTriggerLookup;
+import net.evmodder.evmod.apis.PlayerUnload;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -174,7 +174,7 @@ public final class CommandPearlRescue{
 				.then(ClientCommands.argument("name", StringArgumentType.word())
 						.executes(ctx -> arm(StringArgumentType.getString(ctx, "name"), false))
 						.then(ClientCommands.literal("-f").executes(ctx -> arm(StringArgumentType.getString(ctx, "name"), true))))));
-		ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> watch = null);
+		PlayerUnload.register(_ -> watch = null);
 		ClientTickEvents.END_CLIENT_TICK.register(CommandPearlRescue::keepActive);
 	}
 
