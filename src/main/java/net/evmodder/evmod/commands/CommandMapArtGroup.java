@@ -52,6 +52,12 @@ public class CommandMapArtGroup{
 			translation = StringUtils.getTranslatedOrFallback(PREFIX+"subcommand."+name,
 					name.equals("expand") ? "append" : name.equals("add") ? "insert" : name);  //TODO: omg remove this hack
 		}
+		static Command fromName(final String name){
+			if(name.equalsIgnoreCase("select")) return SET;  // Alias
+			if(name.equalsIgnoreCase("add_hashcode")) return ADD;  // Former name
+			for(Command cmd : values()) if(cmd.translation.equalsIgnoreCase(name)) return cmd;
+			return null;
+		}
 	};
 
 	interface TextListener{
@@ -422,9 +428,8 @@ public class CommandMapArtGroup{
 						.executes(ctx->{
 							final String cmdStr = ctx.getArgument("command", String.class);
 							final String[] groups = ctx.getArgument("group", String.class).split("[,+]");
-							for(Command cmd : Command.values()) if(cmd.translation.equalsIgnoreCase(cmdStr)){
-								return runCommand(asTextListener(ctx.getSource()), cmd, groups, /*groups2=*/null);
-							}
+							final Command cmd = Command.fromName(cmdStr);
+							if(cmd != null) return runCommand(asTextListener(ctx.getSource()), cmd, groups, /*groups2=*/null);
 							ctx.getSource().sendError(Component.translatable(PREFIX+"invalidSubcommand", cmdStr).withColor(ERROR_COLOR));
 //							ctx.getSource().sendError(Text.literal("Invalid subcommand: "+cmdStr).withColor(ERROR_COLOR));
 							return 1;
@@ -458,9 +463,8 @@ public class CommandMapArtGroup{
 								final String cmdStr = ctx.getArgument("command", String.class);
 								final String[] groups = ctx.getArgument("group", String.class).split("[,+]");
 								final String[] groups2 = ctx.getArgument("group2", String.class).split("[,+]");
-								for(Command cmd : Command.values()) if(cmd.translation.equalsIgnoreCase(cmdStr)){
-									return runCommand(asTextListener(ctx.getSource()), cmd, groups, groups2);
-								}
+								final Command cmd = Command.fromName(cmdStr);
+								if(cmd != null) return runCommand(asTextListener(ctx.getSource()), cmd, groups, groups2);
 								ctx.getSource().sendError(Component.translatable(PREFIX+"invalidSubcommand", cmdStr).withColor(ERROR_COLOR));
 //								ctx.getSource().sendError(Text.literal("Invalid subcommand: "+cmdStr).withColor(ERROR_COLOR));
 								return 1;
