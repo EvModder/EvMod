@@ -319,6 +319,7 @@ public final class ClickUtils{
 		executeClicks(canProceed, onComplete, new ArrayDeque<>(List.of(clicks)));
 	}
 
+	/*
 	public static final void executeClicksLEGACY(
 			Minecraft client,
 			Queue<InvAction> clicks, final int MILLIS_BETWEEN_CLICKS, final int MAX_CLICKS_PER_SECOND,
@@ -407,4 +408,5 @@ public final class ClickUtils{
 			}
 		}, 0l, MILLIS_BETWEEN_CLICKS);
 	}
+	*/
 }
