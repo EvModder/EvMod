@@ -4,8 +4,6 @@ import static net.evmodder.evmod.compat.MinecraftCompat.isHudHidden;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Timer;
-import java.util.TimerTask;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -26,6 +24,7 @@ abstract class MixinEntityRendererPearl{
 	private long renderedOnTick = 0;
 	private long lastRenderedId;
 	private long lastClear = 0;
+	private long lastSweep = 0;
 
 	// TODO: mixin onTick instead of hasLabel, or setName somehow
 	@Inject(method="shouldShowName", at=@At("HEAD"), cancellable=true)
@@ -38,6 +37,12 @@ abstract class MixinEntityRendererPearl{
 		String name = eplf.getOwnerName((ThrownEnderpearl)e);
 		if(name == null) return;
 		//----------
+		final long tick = client.level.getGameTime();
+		// Every 10s, forget pearl stacks if none has been looked at for 5s.
+		if(tick - lastSweep >= 200 || tick < lastSweep){
+			lastSweep = tick;
+			if(tick - renderedOnTick > 100) pearlsAtXYZ.clear();
+		}
 		XYZ xyz = new XYZ(e.getBlockX(), e.getBlockY()/4, e.getBlockZ());
 		HashMap<String, HashSet<Integer>> pearls = pearlsAtXYZ.get(xyz);
 		if(pearls == null){
@@ -49,15 +54,6 @@ abstract class MixinEntityRendererPearl{
 				if(pearls == null){
 					xyz = new XYZ(xyz.x(), xyz.y()+1, xyz.z());  //restore to original Y and add pearl
 					pearls = new HashMap<>(1);
-					if(pearlsAtXYZ.isEmpty()){
-						new Timer().scheduleAtFixedRate(new TimerTask(){@Override public void run(){
-							if(client.level == null || client.level.getGameTime() - renderedOnTick > 100){
-								pearlsAtXYZ.clear();
-								//lastClear = client.world.getTime();
-								cancel();
-							}
-						}}, 10_000L, 10_000L);
-					}
 					pearlsAtXYZ.put(xyz, pearls);
 					//Main.LOGGER.info("Couldn't find pearl set at XZ: "+xyz.x()+","+xyz.z());
 				}
@@ -66,18 +62,18 @@ abstract class MixinEntityRendererPearl{
 		}
 		final HashSet<Integer> pearlsForName = pearls.computeIfAbsent(name, (String _)->new HashSet<>(1));
 		pearlsForName.add(e.getId());
-		final boolean alreadyRenderedThisTick = renderedOnTick == client.level.getGameTime();
+		final boolean alreadyRenderedThisTick = renderedOnTick == tick;
 		if(alreadyRenderedThisTick && e.getId() != lastRenderedId) return;
 		if(!MiscUtils.isLookingAt(e, client.player)) return;
-		renderedOnTick = client.level.getGameTime();
+		renderedOnTick = tick;
 		lastRenderedId = e.getId();
 		//if(pearlsForName.iterator().next() != e.getId()) return; // Only render the name for 1 pearl in a stack
 		if(pearlsForName.size() > 1){
 			name += " x"+pearlsForName.size();
 			// Only clear the list in sub-tick, since we can safely assume entities will be rendered (and hence readded) in the same order for the same world tick.
-			if(alreadyRenderedThisTick && lastClear != client.level.getGameTime()){
+			if(alreadyRenderedThisTick && lastClear != tick){
 				pearlsAtXYZ.clear();
-				lastClear = client.level.getGameTime();
+				lastClear = tick;
 			}
 		}
 		//----------
