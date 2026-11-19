@@ -142,7 +142,20 @@ public final class EpearlActivator{
 		client.getConnection().sendCommand("w "+who+" "+msg);
 	}
 
-	public final void triggerPearl(final String who, final PearlWhisperRequest request){
+	/** Ask the database afresh about the pearls nearby without a known owner that could be pulled (a trigger near them is in
+	 * reach; see {@link EpearlLookupFabric#reaskUnowned}); {@code found} runs once if any of them turns out to have one. */
+	private void reaskUnowned(Minecraft client, Runnable found){
+		final boolean[] ran = {false};
+		for(ThrownEnderpearl pearl : client.level.getEntitiesOfClass(ThrownEnderpearl.class,
+				client.player.getBoundingBox().inflate(REACH, REACH, REACH), pearl -> !pearl.isRemoved() && MiscUtils.getPearlUUID(pearl) == null)){
+			final BlockPos trigger = findNearestTrigger(client, BlockPos.containing(pearl.position()));
+			if(trigger == null || getHitResult(client, trigger) == null) continue;  // It could not be pulled anyway.
+			epearlLookup.reaskUnowned(pearl, () -> {if(!ran[0]){ran[0] = true; found.run();}});
+		}
+	}
+
+	/** @param retried whether this is the request's second try, after an owner turned up for a pearl nearby */
+	private void triggerPearl(final String who, final PearlWhisperRequest request, final boolean retried){
 		Minecraft client = Minecraft.getInstance();
 		final boolean thirdParty = !who.equalsIgnoreCase(request.target());
 		final var player = client.getConnection().getOnlinePlayers().stream()
@@ -162,6 +175,9 @@ public final class EpearlActivator{
 		if(signPos == null){
 //			sendFeedback(client, who, "[AutoPearl] I do not recognize any pearl of yours nearby");
 			Main.LOGGER.warn("[AutoPearl] no nearby pearl found for requester: "+who);
+			// One of the pearls here without a known owner may be the one asked for: a cached miss can be stale (another client
+			// may have stored the owner since), so those are asked about afresh, and an owner turning up tries the request once more.
+			if(!retried) reaskUnowned(client, () -> triggerPearl(who, request, true));
 			return;
 		}
 //		Main.LOGGER.info("[AutoPearl]: found sign/pearl");// at "+signPos.toShortString());
@@ -188,4 +204,5 @@ public final class EpearlActivator{
 		client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND, hitResult);
 //		Main.LOGGER.info("AutoPearlActivator: button pressed!");
 	}
+	public final void triggerPearl(final String who, final PearlWhisperRequest request){triggerPearl(who, request, false);}
 }

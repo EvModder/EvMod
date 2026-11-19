@@ -37,6 +37,9 @@ public final class EpearlLookupFabric extends EpearlLookup{
 	private final HashSet<ChunkPos> loadedChunks = new HashSet<>();
 	private ClientLevel world;
 	private long nextCleanup;
+	/** Per pearl (by UUID): when the database was last asked afresh about its owner ({@link #reaskUnowned}). */
+	private final HashMap<UUID, Long> reasked = new HashMap<>();
+	private static final long REASK_MS = 30_000;
 
 	@Override protected boolean enableKeyUUID(){return Configs.Database.EPEARL_OWNERS_BY_UUID.getBooleanValue();}
 	@Override protected boolean enableKeyXZ(){return Configs.Database.EPEARL_OWNERS_BY_XZ.getBooleanValue();}
@@ -71,6 +74,7 @@ public final class EpearlLookupFabric extends EpearlLookup{
 		world = level;
 		recentlyLoadedChunks.clear();
 		loadedChunks.clear();
+		reasked.clear();
 		nextCleanup = 0;
 		final Minecraft client = Minecraft.getInstance();
 		final var server = level == null ? null : MiscUtils.getRemoteServerDescriptor();
@@ -209,6 +213,28 @@ public final class EpearlLookupFabric extends EpearlLookup{
 			}
 		}
 		return getDynamicUsername(ownerUUID, lookupKey);
+	}
+	/** Ask the database afresh, past the session's cached miss, about a settled pearl whose owner is unknown: another client
+	 * may have stored the owner since. At most every 30 s per pearl. {@code found} runs on the client thread if an answer
+	 * names an owner, which the next lookup then gets. */
+	public final void reaskUnowned(final ThrownEnderpearl epearl, final Runnable found){
+		if(isDisabled() || world == null || epearl.level() != world || MiscUtils.getPearlUUID(epearl) != null || isMoving(epearl)) return;
+		final long now = System.currentTimeMillis();
+		final Long last = reasked.get(epearl.getUUID());
+		if(last != null && now-last < REASK_MS) return;
+		reasked.put(epearl.getUUID(), now);
+		final int x = epearl.getBlockX(), y = epearl.getBlockY(), z = epearl.getBlockZ();
+		final UUID xz = enableKeyXZ() ? toKeyXZ(epearl) : null;
+		for(final boolean byUUID : new boolean[]{true, false}){
+			final UUID key = byUUID ? (enableKeyUUID() ? epearl.getUUID() : null) : xz;
+			if(key != null) confirmUnowned(key, byUUID, x, y, z, unowned -> {
+				if(!unowned) Minecraft.getInstance().execute(() -> {
+					// False also for a timeout or a bad reply: only an owner now in the cache counts.
+					final UUID owner = getPearlOwner(key, epearl.getUUID(), x, y, z, byUUID).owner();
+					if(owner != UUID_404 && owner != UUID_LOADING) found.run();
+				});
+			});
+		}
 	}
 
 	// Accessed by: CommandAssignPearl

@@ -635,4 +635,32 @@ public abstract class EpearlLookup{
 			}
 		});
 	}
+	/** Ask the database again, past the session's cached miss, whether it knows {@code key}'s owner. For a caller about
+	 * to act on a pearl being unowned: a cached miss can be stale, since another client may have stored the owner since.
+	 * {@code unowned} gets true only for a fresh "unknown" answer (or, without a remote database, no local owner). An owner
+	 * returned now replaces the stale miss (at x, y, z) and gives false, as do a timeout and a bad reply. */
+	protected final void confirmUnowned(final UUID key, final boolean keyIsUUID, final int x, final int y, final int z, final Consumer<Boolean> unowned){
+		final RSLoadingCache cache = cacheFor(keyIsUUID);
+		final PearlDataClient cached = cache == null ? null : cache.getCached(key);
+		if(cache == null || cached != null && cached.owner() != UUID_404){unowned.accept(false); return;}
+		final RemoteServerSender.ServerDescriptor target = cache.remoteServer();
+		if(remoteSender == null || !cache.USE_REMOTE_DB.get()){unowned.accept(true); return;}
+		final UUID world = worldId;
+		remoteSender.sendBotMessage(target, cache.DB_FETCH_COMMAND, /*udp=*/true, FETCH_TIMEOUT, PacketCodec.toByteArray(key), msg->{
+			final boolean unknown;
+			synchronized(cache){
+				final PearlDataClient current = cache.getCached(key);
+				final boolean localOwner = current != null && current.owner() != UUID_404 && current.owner() != UUID_LOADING;
+				unknown = !localOwner && msg != null && msg.length == 1 && msg[0] == 0;
+				if(!localOwner && msg != null && msg.length == 16){
+					final ByteBuffer bb = ByteBuffer.wrap(msg);
+					final PearlDataClient pdc = new PearlDataClient(new UUID(bb.getLong(), bb.getLong()), x, y, z, world);
+					LOGGER.info("[EpearlLookup] Owner of pearl "+key+" is known after all: "+pdc.owner());
+					appendToClientFile(cache.DB_FILENAME, key, pdc);
+					cache.put(key, pdc);
+				}
+			}
+			unowned.accept(unknown);
+		});
+	}
 }
