@@ -99,6 +99,8 @@ public class MapStateCacher{
 		return new UUID(MiscUtils.setLSB(uuid.getMostSignificantBits(), !invOrEc), uuid.getLeastSignificantBits());
 	}
 
+	private static final String slotKey(String server, String cache){return server+'/'+cache;}
+
 	private static final HashMap<?, ?> getInMemCachePerServer(String server, String cache){
 		switch(cache){
 			case BY_ID: return byId == null ? null : byId.get(server);
@@ -106,7 +108,7 @@ public class MapStateCacher{
 			case BY_PLAYER_INV:
 			case BY_PLAYER_EC:
 			case BY_CONTAINER:
-				return bySlot == null ? null : bySlot.get(server);
+				return bySlot == null ? null : bySlot.get(slotKey(server, cache));
 			default:
 				throw new RuntimeException("MapStateCacher: Unknown cache type in getInMemCachePerServer()! "+cache);
 		}
@@ -118,11 +120,11 @@ public class MapStateCacher{
 			case BY_ID: return byId == null ? null : byId.get(server);  // Same as getInMemCacheServer()
 			case BY_NAME: return byName == null ? null : byName.get(server);  // Same as getInMemCacheServer()
 			case BY_PLAYER_INV:
-				return bySlot == null ? null : (subCache=bySlot.get(server)) == null ? null : subCache.get(getIdForPlayer(true));
+				return bySlot == null ? null : (subCache=bySlot.get(slotKey(server, cache))) == null ? null : subCache.get(getIdForPlayer(true));
 			case BY_PLAYER_EC:
-				return bySlot == null ? null : (subCache=bySlot.get(server)) == null ? null : subCache.get(getIdForPlayer(false));
+				return bySlot == null ? null : (subCache=bySlot.get(slotKey(server, cache))) == null ? null : subCache.get(getIdForPlayer(false));
 			case BY_CONTAINER:
-				return bySlot == null ? null : (subCache=bySlot.get(server)) == null ? null : subCache.get(BlockClickListener.lastClickedBlockHash);
+				return bySlot == null ? null : (subCache=bySlot.get(slotKey(server, cache))) == null ? null : subCache.get(BlockClickListener.lastClickedBlockHash);
 			default:
 				throw new RuntimeException("MapStateCacher: Unknown cache type in getInMemCacheSpecific()! "+cache);
 		}
@@ -161,7 +163,7 @@ public class MapStateCacher{
 			case BY_CONTAINER:
 				if(bySlot == null) bySlot = new HashMap<>();
 				if(loadedCache == null) loadedCache = new HashMap<UUID, List<MapStateSerializable>>();
-				bySlot.put(server, (HashMap<UUID, List<MapStateSerializable>>)loadedCache);
+				bySlot.put(slotKey(server, cache), (HashMap<UUID, List<MapStateSerializable>>)loadedCache);
 //				bySlot.putIfAbsent(server, new HashMap<>());
 //				bySlot.get(server).putAll((HashMap<UUID, List<MapStateSerializable>>)loadedCache);
 				return loadedCache;
@@ -194,7 +196,7 @@ public class MapStateCacher{
 				if(Configs.Database.MAP_CACHE.getOptionListValue() == OptionMapStateCache.MEMORY_AND_DISK){
 					bySlotPerServer = (HashMap<UUID, List<MapStateSerializable>>)createInMemCacheFromFile(server, cache);
 				}
-				else bySlot.put(server, bySlotPerServer=new HashMap<>());
+				else bySlot.put(slotKey(server, cache), bySlotPerServer=new HashMap<>());
 			}
 		}
 		else if(oldCache.equals(serialStates)) return false;  // No cache update
@@ -237,7 +239,7 @@ public class MapStateCacher{
 				case BY_PLAYER_EC:
 				case BY_CONTAINER:
 					if(bySlot == null) bySlot = new HashMap<>();
-					bySlot.put(server, new HashMap<UUID, List<MapStateSerializable>>());
+					bySlot.put(slotKey(server, cache), new HashMap<UUID, List<MapStateSerializable>>());
 					final UUID key;
 					switch(cache){
 						case BY_PLAYER_INV: key = getIdForPlayer(true); break;
@@ -245,7 +247,7 @@ public class MapStateCacher{
 						case BY_CONTAINER: key = BlockClickListener.lastClickedBlockHash; break;
 						default: throw new RuntimeException("MapStateCacher: Unreachable in commonCacheLoad()!");
 					}
-					return bySlot.get(server).get(key);
+					return bySlot.get(slotKey(server, cache)).get(key);
 				default:
 					throw new RuntimeException("MapStateCacher: Unknown cache type in commonCacheLoad()! "+cache);
 			}
