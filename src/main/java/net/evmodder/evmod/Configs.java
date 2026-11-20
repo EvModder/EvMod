@@ -263,15 +263,14 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigBoolean MAP_HIGHLIGHT_HOTBAR_HUD = new ConfigBoolean("mapHighlightInHotbarHUD", true).apply(VISUALS_KEY);
 
 		public static final ConfigColor MAP_COLOR_IN_INV = new ConfigColor("highlightColorInInv", "#FFB4FFFF").apply(VISUALS_KEY);  // 11862015 Aqua
-		public static final ConfigColor MAP_COLOR_NOT_IN_GROUP = new ConfigColor("highlightColorNotInGroup", "#FF0AC864").apply(VISUALS_KEY);  // 706660 Green
-		public static final ConfigColor MAP_COLOR_UNLOCKED = new ConfigColor("highlightColorUnlocked", "#FFE03165").apply(VISUALS_KEY);  // 14692709 Redish
-		public static final ConfigColor MAP_COLOR_UNLOADED = new ConfigColor("highlightColorUnloaded", "#FFC8AAD2").apply(VISUALS_KEY);  // 13150930 Peach
-		public static final ConfigColor MAP_COLOR_UNNAMED = new ConfigColor("highlightColorUnnamed", "#FFEED7D7").apply(VISUALS_KEY);  // 15652823 Pink
+		public static final ConfigBoolean MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES = new ConfigBoolean("mapHighlightInInvIncludeBundles", false).apply(VISUALS_KEY);
 		public static final ConfigColor MAP_COLOR_IN_IFRAME = new ConfigColor("highlightColorInIFrame", "#FF55AAE6").apply(VISUALS_KEY);  // 5614310 Blue
 		public static final ConfigColor MAP_COLOR_MULTI_IFRAME = new ConfigColor("highlightColorMultiIFrame", "#FFB450E6").apply(VISUALS_KEY);  // 11817190 Purple
 		public static final ConfigColor MAP_COLOR_MULTI_CONTAINER = new ConfigColor("highlightColorMultiContainer", "#FFB450E6").apply(VISUALS_KEY);  // 11817190 Purple
-
-		public static final ConfigBoolean MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES = new ConfigBoolean("mapHighlightInInvIncludeBundles", false).apply(VISUALS_KEY);
+		public static final ConfigColor MAP_COLOR_NOT_IN_GROUP = new ConfigColor("highlightColorNotInGroup", "#FF0AC864").apply(VISUALS_KEY);  // 706660 Green
+		public static final ConfigColor MAP_COLOR_UNLOCKED = new ConfigColor("highlightColorUnlocked", "#FFE03165").apply(VISUALS_KEY);  // 14692709 Redish
+		public static final ConfigColor MAP_COLOR_UNNAMED = new ConfigColor("highlightColorUnnamed", "#FFEED7D7").apply(VISUALS_KEY);  // 15652823 Pink
+		public static final ConfigColor MAP_COLOR_UNLOADED = new ConfigColor("highlightColorUnloaded", "#FFC8AAD2").apply(VISUALS_KEY);  // 13150930 Peach
 
 //		public static final ConfigBoolean MAP_METADATA_TOOLTIP = new ConfigBoolean("mapMetadataTooltip", true);
 		// Line 0: "59d2da2c-e527-38cd-8557-62216bf65a57"
@@ -320,10 +319,11 @@ public final class Configs implements IConfigHandler{
 				if(settings.tooltipMapHighlights) configs.add(MAP_HIGHLIGHT_TOOLTIP);
 				if(settings.enabled(Setting.MAP_HUD)) configs.add(MAP_HIGHLIGHT_HOTBAR_HUD);
 				configs.addAll(List.of(
-					MAP_COLOR_IN_INV, MAP_COLOR_NOT_IN_GROUP, MAP_COLOR_UNLOCKED,
-					MAP_COLOR_UNLOADED, MAP_COLOR_UNNAMED, MAP_COLOR_IN_IFRAME,
-					MAP_COLOR_MULTI_IFRAME, MAP_COLOR_MULTI_CONTAINER,
-					MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES
+					MAP_COLOR_IN_INV, MAP_HIGHLIGHT_IN_INV_INCLUDE_BUNDLES,
+					MAP_COLOR_IN_IFRAME, MAP_COLOR_MULTI_IFRAME, MAP_COLOR_MULTI_CONTAINER,
+					MAP_COLOR_NOT_IN_GROUP,
+					MAP_COLOR_UNLOCKED, MAP_COLOR_UNNAMED,
+					MAP_COLOR_UNLOADED
 				));
 			}
 			if(settings.tooltipMapMetadata) configs.addAll(List.of(
