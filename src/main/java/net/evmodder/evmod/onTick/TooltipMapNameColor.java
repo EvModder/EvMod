@@ -55,13 +55,13 @@ public final class TooltipMapNameColor implements Tooltip{
 			if(colorIds.stream().anyMatch(UpdateInventoryContents::isInInventory)) asterisks.add(MAP_COLOR_IN_INV);
 			if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(MAP_COLOR_NOT_IN_GROUP);
 			if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(MAP_COLOR_UNLOCKED);
-			if(unskippedIds.stream().anyMatch(UpdateContainerContents::hasDuplicateInContainer)) asterisks.add(MAP_COLOR_MULTI_CONTAINER);
 			if(mapItems.size() > states.size() + (!Configs.Generic.SKIP_NULL_MAPS.getBooleanValue() ? 0
 					: mapItems.stream().filter(stack -> MapGroupUtils.isConfirmedNull(stack.get(DataComponents.MAP_ID).id())).count()
 			)){
 				asterisks.add(MAP_COLOR_UNLOADED);
 			}
 			else if(UpdateItemFrameContents.mixedOnDisplayAndNotOnDisplay(unskippedIds)) asterisks.add(MAP_COLOR_IN_IFRAME);
+			if(unskippedIds.stream().anyMatch(UpdateContainerContents::hasDuplicateInContainer)) asterisks.add(MAP_COLOR_MULTI_CONTAINER);
 			if(mapItems.stream().anyMatch(i -> i.get(DataComponents.CUSTOM_NAME) == null)) asterisks.add(MAP_COLOR_UNNAMED);
 
 			if(!asterisks.isEmpty()){
