@@ -7,7 +7,7 @@
 	"evmod.command.mapartgroup.subcommand.set": "set",
 	"evmod.command.mapartgroup.subcommand.create": "create",
 	"evmod.command.mapartgroup.subcommand.expand": "append",
-	"evmod.command.mapartgroup.subcommand.add": "insert",
+	"evmod.command.mapartgroup.subcommand.insert": "insert",
 	"evmod.command.mapartgroup.subcommand.compare": "compare",
 	"evmod.command.mapartgroup.subcommand.reset": "reset",
 
@@ -29,9 +29,9 @@
 	"evmod.command.mapartgroup.create.expandedOtherGroup": "Expanded '%s' (ids: %s\u2192%s) and set as active.",
 	"evmod.command.mapartgroup.create.confirm": "confirm",
 
-	"evmod.command.mapartgroup.add.invalidArg": "Must provide a hashcode (UUID)",
-	"evmod.command.mapartgroup.add.noUpdate": "Group '%s' already contains %s",
-	"evmod.command.mapartgroup.add.updated": "Group '%s' updated to include %s",
+	"evmod.command.mapartgroup.insert.invalidArg": "Must provide a hashcode (UUID)",
+	"evmod.command.mapartgroup.insert.noUpdate": "Group '%s' already contains %s",
+	"evmod.command.mapartgroup.insert.updated": "Group '%s' updated to include %s",
 
 	"evmod.command.mapartgroup.noUpdate": "Active group: '%s' (ids: %s)",
 	"evmod.command.mapartgroup.fileUpdate": "Updated group from file: '%s' (ids: %s\u2192%s)",

@@ -42,7 +42,7 @@ public class CommandMapArtGroup{
 	private String activeGroupName;
 
 	private enum Command{
-		SET, CREATE, EXPAND, ADD, COMPARE, RESET;
+		SET, CREATE, EXPAND, INSERT, COMPARE, RESET;
 
 		final String translation;
 		Command(){
@@ -50,11 +50,11 @@ public class CommandMapArtGroup{
 //			translation = Text.translatableWithFallback(PREFIX+"subcommand."+name, name).getString();
 //			translation = StringUtils.getTranslatedOrFallback(PREFIX+"subcommand."+name, name);
 			translation = StringUtils.getTranslatedOrFallback(PREFIX+"subcommand."+name,
-					name.equals("expand") ? "append" : name.equals("add") ? "insert" : name);  //TODO: omg remove this hack
+					name.equals("expand") ? "append" : name);  //TODO: omg remove this hack
 		}
 		static Command fromName(final String name){
 			if(name.equalsIgnoreCase("select")) return SET;  // Alias
-			if(name.equalsIgnoreCase("add_hashcode")) return ADD;  // Former name
+			if(name.equalsIgnoreCase("add") || name.equalsIgnoreCase("add_hashcode")) return INSERT;  // Alias, former name
 			for(Command cmd : values()) if(cmd.translation.equalsIgnoreCase(name)) return cmd;
 			return null;
 		}
@@ -246,7 +246,7 @@ public class CommandMapArtGroup{
 
 		final HashSet<UUID> mapsInGroup = cmd == Command.CREATE ? new HashSet<>() : getGroupIdsOrSendError(source, groups);
 		if(mapsInGroup == null) return 1;
-		if(groups.length != 1 && (cmd == Command.CREATE || cmd == Command.EXPAND || cmd == Command.ADD)){
+		if(groups.length != 1 && (cmd == Command.CREATE || cmd == Command.EXPAND || cmd == Command.INSERT)){
 			source.sendError(Component.translatable(PREFIX+"create.needsName").withColor(CREATE_COLOR));
 //			source.sendError(Text.literal("Command requires a single MapArtGroup name (no commas)").withColor(ERROR_COLOR));
 			return 1;
@@ -258,25 +258,25 @@ public class CommandMapArtGroup{
 			return 1;
 		}
 		if(groups2 != null){
-			if(groups2.length != 1 || (cmd != Command.ADD && (cmd != Command.CREATE || !CONFIRM.equalsIgnoreCase(groups2[0])))){
+			if(groups2.length != 1 || (cmd != Command.INSERT && (cmd != Command.CREATE || !CONFIRM.equalsIgnoreCase(groups2[0])))){
 				source.sendError(Component.translatable(PREFIX+"create.tooManyArgs").withColor(ERROR_COLOR));
 //				source.sendError(Text.literal("Too many arguments provided").withColor(ERROR_COLOR));
 				return 1;
 			}
 		}
-		else if(cmd == Command.ADD){ //&& groups2 == null (also already implied groups2 len==1)
-			source.sendError(Component.translatable(PREFIX+"add.invalidArg").withColor(ERROR_COLOR));
+		else if(cmd == Command.INSERT){ //&& groups2 == null (also already implied groups2 len==1)
+			source.sendError(Component.translatable(PREFIX+"insert.invalidArg").withColor(ERROR_COLOR));
 //			source.sendError(Text.literal("Must provide a hashcode (UUID)").withColor(ERROR_COLOR));
 			return 1;
 		}
 		final String newActiveGroup = String.join(",", groups);
-		if(cmd == Command.CREATE || cmd == Command.EXPAND || cmd == Command.ADD){
+		if(cmd == Command.CREATE || cmd == Command.EXPAND || cmd == Command.INSERT){
 			final int oldSize = mapsInGroup.size();
 			final Set<UUID> mapsToAdd;
-			if(cmd == Command.ADD){
+			if(cmd == Command.INSERT){
 				try{mapsToAdd = Set.of(UUID.fromString(groups2[0]));}
 				catch(IllegalArgumentException e){
-					source.sendError(Component.translatable(PREFIX+"add.invalidArg").withColor(ERROR_COLOR));
+					source.sendError(Component.translatable(PREFIX+"insert.invalidArg").withColor(ERROR_COLOR));
 //					source.sendError(Text.literal("Must provide a hashcode (UUID)").withColor(ERROR_COLOR));
 					return 1;
 				}
@@ -290,8 +290,8 @@ public class CommandMapArtGroup{
 			}
 			else if(!mapsInGroup.addAll(mapsToAdd)/*mapsInGroup.size() == oldSize*/){
 				assert mapsInGroup.size() == oldSize;
-				final MutableComponent errorText = cmd == Command.ADD
-						? Component.translatable(PREFIX+"add.noUpdate", newActiveGroup, mapsToAdd.iterator().next().toString())
+				final MutableComponent errorText = cmd == Command.INSERT
+						? Component.translatable(PREFIX+"insert.noUpdate", newActiveGroup, mapsToAdd.iterator().next().toString())
 						: Component.translatable(PREFIX+"create.noNewMapsFound", newActiveGroup);
 				source.sendError(errorText.withColor(ERROR_COLOR));
 //				source.sendError(Text.literal("No new maps found for group '"+newActiveGroup+"'").withColor(DONE_COLOR));
@@ -311,8 +311,8 @@ public class CommandMapArtGroup{
 					case Command.EXPAND -> Component.translatable(
 							PREFIX+"create.expanded" + (newActiveGroup.equals(activeGroupName) ? "Group" : "OtherGroup"),
 							groups[0], oldSize, mapsInGroup.size()).withColor(CREATE_COLOR);
-					case Command.ADD -> Component.translatable(
-							PREFIX+"add.updated",
+					case Command.INSERT -> Component.translatable(
+							PREFIX+"insert.updated",
 							groups[0], mapsToAdd.iterator().next().toString()).withColor(CREATE_COLOR);
 					default -> throw new RuntimeException("Unreachable");
 				});
@@ -320,7 +320,7 @@ public class CommandMapArtGroup{
 //						+"' (ids: "+ (oldSize==0 ? "" : oldSize+"\u2192") + mapsInGroup.size()+")"
 //						+(newActiveGroup.equals(activeGroupName) ? "" : " and set as active.")
 //						).withColor(CREATE_COLOR));
-				if(cmd == Command.ADD){  // Don't switch the active group, but keep it current if it includes this one
+				if(cmd == Command.INSERT){  // Don't switch the active group, but keep it current if it includes this one
 					if(activeGroup != null && activeGroupName != null && Arrays.asList(activeGroupName.split(",")).contains(groups[0])
 							&& activeGroup.addAll(mapsToAdd)) MapGroupUtils.setCurrentGroup(activeGroup);
 					return 1;
