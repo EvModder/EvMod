@@ -2,6 +2,7 @@ package net.evmodder.evmod.apis;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -10,6 +11,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.Configs;
@@ -181,7 +184,7 @@ public class MapStateCacher{
 				.filter(s -> s.is(Items.FILLED_MAP))
 				.map(s -> MapItem.getSavedData(s.get(DataComponents.MAP_ID), client.level));
 		if(!Configs.Database.MAP_CACHE_UNLOCKED.getBooleanValue()) states = states.map(s -> s == null || s.locked ? s : null);
-		final List<MapStateSerializable> serialStates = states.map(MapStateSerializable::fromMapState).toList();
+		final List<MapStateSerializable> serialStates = states.map(MapStateSerializable::fromMapState).collect(Collectors.toCollection(ArrayList::new));
 
 		final boolean deleteCache = serialStates.isEmpty() || serialStates.stream().allMatch(Objects::isNull);
 
@@ -199,7 +202,11 @@ public class MapStateCacher{
 				else bySlot.put(slotKey(server, cache), bySlotPerServer=new HashMap<>());
 			}
 		}
-		else if(oldCache.equals(serialStates)) return false;  // No cache update
+		else{
+			// Same layout: a map that has no image now (censored, or not restored yet) keeps the one cached for its slot.
+			if(oldCache.size() == serialStates.size()) IntStream.range(0, serialStates.size()).filter(i -> serialStates.get(i) == null).forEach(i -> serialStates.set(i, oldCache.get(i)));
+			if(oldCache.equals(serialStates)) return false;  // No cache update
+		}
 //		else if(keepOldCache(oldCache, mapStates)) return false; // No cache update needed
 		final UUID key;
 		switch(cache){
@@ -349,17 +356,18 @@ public class MapStateCacher{
 //			if(!byName.containsKey(server)) byName.put(server, cache=new HashMap<>());
 //		}
 		MapStateSerializable mss = MapStateSerializable.fromMapState(state);
-		MapStateSerializable oldMss = cache.put(name, mss);
+		MapStateSerializable oldMss = cache.get(name);
 		if(mss.equals(oldMss)) return false;  // No update
-		namesCacheUpdated = true;
 		if(oldMss != null && oldMss.locked){
+			// Keep the cached image (it may be the only copy left, e.g. of a since-censored map); just stop using the name.
 			Main.LOGGER.warn("MapStateCacher: Different MapStates found for same name! Unable to use cache-by-name for name: "+name);
-			cache.remove(name);
 			if(unusableNames == null) unusableNames = new HashMap<>();
 			if(unusable == null) unusableNames.put(server, unusable=new HashSet<>());
 			unusable.add(name);
-			return false;  // Maybe should return true, since technically removal is a cache update?
+			return false;
 		}
+		cache.put(name, mss);
+		namesCacheUpdated = true;
 		return true;
 	}
 	public static final boolean loadMapStateByName(ItemStack stack, ClientLevel world){
@@ -368,17 +376,14 @@ public class MapStateCacher{
 		assert stack.getCustomName() != null;
 
 		final String name = stack.getCustomName().getString();
+		final HashSet<String> unusable = unusableNames == null ? null : unusableNames.get(MiscUtils.getServerAddress());
+		if(unusable != null && unusable.contains(name)) return false;  // Two different images share this name
 
 		@SuppressWarnings("unchecked")
 		HashMap<String, MapStateSerializable> cache = (HashMap<String, MapStateSerializable>) commonCacheLoad(BY_NAME);
 //		if(cache == null) return false; // created by commonCacheLoad
 		MapStateSerializable mss = cache.get(name);
 		if(mss == null) return false;
-
-		// Already handled (when name is added to `unusableNames`, it is also removed from `cache`)
-//		final String server = getServerIp(MinecraftClient.getInstance());
-//		HashSet<String> unusable = unusableNames == null ? null : unusableNames.get(server);
-//		if(unusable != null && unusable.contains(name)) return false;
 
 		world.overrideMapData(stack.get(DataComponents.MAP_ID), mss.toMapState());
 		return true;
