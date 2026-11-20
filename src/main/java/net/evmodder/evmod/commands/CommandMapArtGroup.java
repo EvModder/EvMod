@@ -1,5 +1,7 @@
 package net.evmodder.evmod.commands;
 
+import static net.evmodder.evmod.compat.MinecraftCompat.copyToClipboard;
+import static net.evmodder.evmod.compat.MinecraftCompat.showText;
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -25,12 +27,17 @@ import net.evmodder.EvLib.util.FileIO;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.evmodder.evmod.apis.MapGroupUtils;
+import net.evmodder.evmod.apis.MapStateCacher;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 
 public class CommandMapArtGroup{
 	private static final String DIR = "mapart_groups/";
@@ -232,6 +239,14 @@ public class CommandMapArtGroup{
 				+ "(ids: "+in1Not2.size()+"+"+in2Not1.size()+"="+merged.size()+")").withColor(CREATE_COLOR));
 		return 1;
 	}*/
+	// The loaded state of the filled map in the main hand, including one restored from the local cache (as /mahashcode)
+	private static MapItemSavedData getHeldMapState(){
+		final Minecraft client = Minecraft.getInstance();
+		if(client.player == null) return null;
+		final ItemStack held = client.player.getMainHandItem();
+		return held.getItem() != Items.FILLED_MAP ? null : MapItem.getSavedData(held, client.level);
+	}
+
 	private int runCommand(final TextListener source, final Command cmd, final String[] groups, final String[] groups2){
 		assert groups.length > 0;
 		if(cmd == Command.COMPARE) return runCompareCommand(source, groups, groups2);
@@ -249,6 +264,7 @@ public class CommandMapArtGroup{
 //			source.sendFeedback(Text.literal("To overwrite it, add 'confirm' to the end of the command"));
 			return 1;
 		}
+		final MapItemSavedData heldState = groups2 == null && cmd == Command.INSERT ? getHeldMapState() : null;
 		if(groups2 != null){
 			if(groups2.length != 1 || (cmd != Command.INSERT && (cmd != Command.CREATE || !CONFIRM.equalsIgnoreCase(groups2[0])))){
 				source.sendError(Component.translatable(PREFIX+"create.tooManyArgs").withColor(ERROR_COLOR));
@@ -256,7 +272,7 @@ public class CommandMapArtGroup{
 				return 1;
 			}
 		}
-		else if(cmd == Command.INSERT){ //&& groups2 == null (also already implied groups2 len==1)
+		else if(cmd == Command.INSERT && heldState == null){
 			source.sendError(Component.translatable(PREFIX+"insert.invalidArg").withColor(ERROR_COLOR));
 //			source.sendError(Text.literal("Must provide a hashcode (UUID)").withColor(ERROR_COLOR));
 			return 1;
@@ -265,7 +281,8 @@ public class CommandMapArtGroup{
 		if(cmd == Command.CREATE || cmd == Command.EXPAND || cmd == Command.INSERT){
 			final int oldSize = mapsInGroup.size();
 			final Set<UUID> mapsToAdd;
-			if(cmd == Command.INSERT){
+			if(heldState != null) mapsToAdd = Set.of(MapGroupUtils.getIdForMapState(heldState));
+			else if(cmd == Command.INSERT){
 				try{mapsToAdd = Set.of(UUID.fromString(groups2[0]));}
 				catch(IllegalArgumentException e){
 					source.sendError(Component.translatable(PREFIX+"insert.invalidArg").withColor(ERROR_COLOR));
@@ -303,9 +320,13 @@ public class CommandMapArtGroup{
 					case Command.EXPAND -> Component.translatable(
 							PREFIX+"create.expanded" + (newActiveGroup.equals(activeGroupName) ? "Group" : "OtherGroup"),
 							groups[0], oldSize, mapsInGroup.size()).withColor(CREATE_COLOR);
-					case Command.INSERT -> Component.translatable(
-							PREFIX+"insert.updated",
-							groups[0], mapsToAdd.iterator().next().toString()).withColor(CREATE_COLOR);
+					case Command.INSERT -> {
+						final String hash = mapsToAdd.iterator().next().toString();
+						if(heldState == null) yield Component.translatable(PREFIX+"insert.updated", hash, groups[0]).withColor(CREATE_COLOR);
+						// The held map's hash, on hover and click-to-copy
+						yield Component.translatable(PREFIX+(MapStateCacher.hasCacheMarker(heldState) ? "insert.updatedHeldCached" : "insert.updatedHeld"), groups[0])
+								.withStyle(style -> style.withColor(CREATE_COLOR).withHoverEvent(showText(Component.literal(hash))).withClickEvent(copyToClipboard(hash)));
+					}
 					default -> throw new RuntimeException("Unreachable");
 				});
 //				source.sendFeedback(Text.literal((cmd == Command.CREATE ? "Created group" : "Expanded") + " '"+groups[0]
@@ -448,6 +469,25 @@ public class CommandMapArtGroup{
 					)
 				)
 				.then(oneGroupSubcommand(Command.EXPAND))
+				.then(
+					ClientCommands.literal(Command.INSERT.translation)
+					.then(
+						ClientCommands.argument("group", SepStringArgumentType.word(' '))
+						.suggests((ctx, builder) -> getGroupNameSuggestions(ctx, builder, /*newGroup=*/false))
+						.executes(ctx -> runCommand(asTextListener(ctx.getSource()), Command.INSERT,
+								ctx.getArgument("group", String.class).split("[,+]"), /*groups2=*/null))
+						.then(
+							ClientCommands.argument("hash", SepStringArgumentType.word(' '))
+							.suggests((_, builder) -> {
+								final MapItemSavedData heldState = getHeldMapState();
+								if(heldState != null) builder.suggest(MapGroupUtils.getIdForMapState(heldState).toString());
+								return builder.buildFuture();
+							})
+							.executes(ctx -> runCommand(asTextListener(ctx.getSource()), Command.INSERT,
+									ctx.getArgument("group", String.class).split("[,+]"), ctx.getArgument("hash", String.class).split("[,+]")))
+						)
+					)
+				)
 				.then(
 					ClientCommands.literal(Command.RESET.translation)
 					.executes(_ -> {MapGroupUtils.setCurrentGroup(activeGroup = null); activeGroupName = null; return 1;})

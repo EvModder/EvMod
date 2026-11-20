@@ -182,6 +182,14 @@ public final class MinecraftCompat{
 		//?}
 	}
 
+	public static HoverEvent showText(Component text){
+		//? >=1.21.11 {
+		return new HoverEvent.ShowText(text);
+		//?} else {
+		/*return new HoverEvent(HoverEvent.Action.SHOW_TEXT, text);*/
+		//?}
+	}
+
 	public static ClickEvent openFile(String path){
 		//? >=1.21.11 {
 		return new ClickEvent.OpenFile(path);
