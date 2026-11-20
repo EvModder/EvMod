@@ -332,6 +332,7 @@ public class MapStateCacher{
 		assert MapItem.getSavedData(stack, Minecraft.getInstance().level) == state;
 		assert stack.getCustomName() != null;
 
+		if(hasCacheMarker(state)) return false;  // Only images the server sent, never one restored from a cache
 		if(!state.locked && !Configs.Database.MAP_CACHE_UNLOCKED.getBooleanValue()) return false;
 		final String name = stack.getCustomName().getString();
 		final String server = MiscUtils.getServerAddress();
