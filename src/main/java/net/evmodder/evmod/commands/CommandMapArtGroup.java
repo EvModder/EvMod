@@ -320,7 +320,11 @@ public class CommandMapArtGroup{
 //						+"' (ids: "+ (oldSize==0 ? "" : oldSize+"\u2192") + mapsInGroup.size()+")"
 //						+(newActiveGroup.equals(activeGroupName) ? "" : " and set as active.")
 //						).withColor(CREATE_COLOR));
-				if(cmd == Command.ADD) return 1;  // Don't update current active group
+				if(cmd == Command.ADD){  // Don't switch the active group, but keep it current if it includes this one
+					if(activeGroup != null && activeGroupName != null && Arrays.asList(activeGroupName.split(",")).contains(groups[0])
+							&& activeGroup.addAll(mapsToAdd)) MapGroupUtils.setCurrentGroup(activeGroup);
+					return 1;
+				}
 			}
 		}
 		else if(newActiveGroup.equals(activeGroupName)){

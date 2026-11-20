@@ -130,7 +130,7 @@ public final class UpdateContainerContents implements TickListener{
 		final boolean SHOW_ASTERISKS = Configs.Visuals.MAP_HIGHLIGHT_CONTAINER_NAME.getBooleanValue();
 		if(!SHOW_ASTERISKS && !Configs.Visuals.MAP_HIGHLIGHT_TOOLTIP.getBooleanValue()) return;
 
-		final int hash = UpdateInventoryContents.getMapsInInvHash() + mapsInContainerRevision;
+		final int hash = UpdateInventoryContents.getMapsInInvHash() + mapsInContainerRevision + MapGroupUtils.getCurrentGroupHash();
 		if(lastHash == hash) return;
 		lastHash = hash;
 //		Main.LOGGER.info("ContainerHighlighter: Recomputing cache");

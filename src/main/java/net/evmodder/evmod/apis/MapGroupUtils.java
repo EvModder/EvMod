@@ -72,7 +72,7 @@ public final class MapGroupUtils{
 		currentMapGroup = newGroup;
 		mapsInGroupHash = newGroup == null ? 0 : newGroup.hashCode();
 	}
-	public static final int getCurrentGroupHash(){return mapsInGroupHash;}  // Currently only called by UpdateItemFrameHighlights
+	public static final int getCurrentGroupHash(){return mapsInGroupHash;}  // Accessed by: highlight caches (tooltips, container names, item frames)
 
 	/*public static final boolean isMapNotInCurrentGroup(final UUID colorsUUID){
 		return currentMapGroup != null && !currentMapGroup.contains(colorsUUID);
