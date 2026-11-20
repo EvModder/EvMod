@@ -16,7 +16,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
-import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
@@ -51,12 +51,6 @@ public class CommandMapArtGroup{
 //			translation = StringUtils.getTranslatedOrFallback(PREFIX+"subcommand."+name, name);
 			translation = StringUtils.getTranslatedOrFallback(PREFIX+"subcommand."+name,
 					name.equals("expand") ? "append" : name);  //TODO: omg remove this hack
-		}
-		static Command fromName(final String name){
-			if(name.equalsIgnoreCase("select")) return SET;  // Alias
-			if(name.equalsIgnoreCase("add") || name.equalsIgnoreCase("add_hashcode")) return INSERT;  // Alias, former name
-			for(Command cmd : values()) if(cmd.translation.equalsIgnoreCase(name)) return cmd;
-			return null;
 		}
 	};
 
@@ -348,13 +342,13 @@ public class CommandMapArtGroup{
 		return 1;
 	}
 
-	private CompletableFuture<Suggestions> getGroupNameSuggestions(CommandContext<?> ctx, SuggestionsBuilder builder) {
+	private CompletableFuture<Suggestions> getGroupNameSuggestions(CommandContext<?> ctx, SuggestionsBuilder builder, boolean newGroup){
 		String groupArg = "";
 		try{groupArg = ctx.getArgument("group2", String.class);} catch(IllegalArgumentException e){}
 		if(groupArg.isEmpty()){
 			try{groupArg = ctx.getArgument("group", String.class);} catch(IllegalArgumentException e){}
 		}
-		if(ctx.getArgument("command", String.class).equalsIgnoreCase(Command.CREATE.translation) || !new File(FileIO.DIR+DIR).exists()){
+		if(newGroup || !new File(FileIO.DIR+DIR).exists()){
 			builder.suggest(groupArg.isEmpty() ? "test" : groupArg);
 			return builder.buildFuture();
 		}
@@ -393,6 +387,16 @@ public class CommandMapArtGroup{
 		return builder.buildFuture();
 	}
 
+	// A subcommand that takes one group (or several, comma-separated)
+	private LiteralArgumentBuilder<FabricClientCommandSource> oneGroupSubcommand(final Command cmd){
+		return ClientCommands.literal(cmd.translation).then(
+			ClientCommands.argument("group", SepStringArgumentType.word(' '))
+			.suggests((ctx, builder) -> getGroupNameSuggestions(ctx, builder, /*newGroup=*/false))
+			.executes(ctx -> runCommand(asTextListener(ctx.getSource()), cmd,
+					ctx.getArgument("group", String.class).split("[,+]"), /*groups2=*/null))
+		);
+	}
+
 	public CommandMapArtGroup(){
 		CONFIRM = Component.translatableWithFallback(PREFIX+"create.confirm", "confirm").getString();
 		final String defaultGroupName = Configs.Generic.MAPART_GROUP_DEFAULT.getStringValue();
@@ -413,68 +417,42 @@ public class CommandMapArtGroup{
 //					ctx.getSource().sendError(Text.literal("Missing subcommand: set/create/expand/add <g>, or compare <g1> <g2>"));
 					return 1;
 				})
+				.then(oneGroupSubcommand(Command.SET))
 				.then(
-					ClientCommands.argument("command", StringArgumentType.word())
-					.suggests((_, builder) -> {
-						for(Command cmd : Command.values()) builder.suggest(cmd.translation);
-						return builder.buildFuture();
-					})
-					.executes(ctx->{
-						final String cmd = ctx.getArgument("command", String.class);
-						if(cmd.equalsIgnoreCase(Command.RESET.translation)){MapGroupUtils.setCurrentGroup(activeGroup = null); activeGroupName = null;}
-						else ctx.getSource().sendError(Component.translatable(PREFIX+"needsGroup").withColor(ERROR_COLOR));
-//						else ctx.getSource().sendError(Text.literal("Command needs a group name").withColor(ERROR_COLOR));
-						return 1;
-					})
+					ClientCommands.literal(Command.COMPARE.translation)
 					.then(
 						ClientCommands.argument("group", SepStringArgumentType.word(' '))
-						.suggests(this::getGroupNameSuggestions)
-						.executes(ctx->{
-							final String cmdStr = ctx.getArgument("command", String.class);
-							final String[] groups = ctx.getArgument("group", String.class).split("[,+]");
-							final Command cmd = Command.fromName(cmdStr);
-							if(cmd != null) return runCommand(asTextListener(ctx.getSource()), cmd, groups, /*groups2=*/null);
-							ctx.getSource().sendError(Component.translatable(PREFIX+"invalidSubcommand", cmdStr).withColor(ERROR_COLOR));
-//							ctx.getSource().sendError(Text.literal("Invalid subcommand: "+cmdStr).withColor(ERROR_COLOR));
-							return 1;
-						})
-//						.then(
-//							ClientCommands.argument("confirm", BoolArgumentType.bool())
-//							.suggests((ctx, builder) -> BoolArgumentType.bool().listSuggestions(ctx, builder))
-//							.executes(ctx->{
-//								final String cmdStr = ctx.getArgument("command", String.class);
-//								final String group = ctx.getArgument("group", String.class);
-//								final boolean confirm = ctx.getArgument("confirm", Boolean.class);
-//								try{
-//									return runCommand(ctx.getSource(), group, Command.valueOf(cmdStr.toUpperCase()), confirm);
-//								}
-//								catch(IllegalArgumentException ex){
-//									ctx.getSource().sendFeedback(Text.literal("Invalid subcommand: "+cmdStr).withColor(ERROR_COLOR));
-//									return 1;
-//								}
-//							})
-//						)
+						.suggests((ctx, builder) -> getGroupNameSuggestions(ctx, builder, /*newGroup=*/false))
 						.then(
 							ClientCommands.argument("group2", SepStringArgumentType.word(' '))
-							.suggests((ctx, builder) -> {
-								final String cmdStr = ctx.getArgument("command", String.class);
-								if(cmdStr.equalsIgnoreCase(Command.COMPARE.translation)) return getGroupNameSuggestions(ctx, builder);
-								else if(cmdStr.equalsIgnoreCase(Command.CREATE.translation) && loadGroupFile(ctx.getArgument("group", String.class)) != null)
-									builder.suggest(CONFIRM);
-								return builder.buildFuture();
-							})
-							.executes(ctx->{
-								final String cmdStr = ctx.getArgument("command", String.class);
-								final String[] groups = ctx.getArgument("group", String.class).split("[,+]");
-								final String[] groups2 = ctx.getArgument("group2", String.class).split("[,+]");
-								final Command cmd = Command.fromName(cmdStr);
-								if(cmd != null) return runCommand(asTextListener(ctx.getSource()), cmd, groups, groups2);
-								ctx.getSource().sendError(Component.translatable(PREFIX+"invalidSubcommand", cmdStr).withColor(ERROR_COLOR));
-//								ctx.getSource().sendError(Text.literal("Invalid subcommand: "+cmdStr).withColor(ERROR_COLOR));
-								return 1;
-							})
+							.suggests((ctx, builder) -> getGroupNameSuggestions(ctx, builder, /*newGroup=*/false))
+							.executes(ctx -> runCommand(asTextListener(ctx.getSource()), Command.COMPARE,
+									ctx.getArgument("group", String.class).split("[,+]"), ctx.getArgument("group2", String.class).split("[,+]")))
 						)
 					)
+				)
+				.then(
+					ClientCommands.literal(Command.CREATE.translation)
+					.then(
+						ClientCommands.argument("group", SepStringArgumentType.word(' '))
+						.suggests((ctx, builder) -> getGroupNameSuggestions(ctx, builder, /*newGroup=*/true))
+						.executes(ctx -> runCommand(asTextListener(ctx.getSource()), Command.CREATE,
+								ctx.getArgument("group", String.class).split("[,+]"), /*groups2=*/null))
+						.then(
+							ClientCommands.argument("confirm", SepStringArgumentType.word(' '))
+							.suggests((ctx, builder) -> {
+								if(loadGroupFile(ctx.getArgument("group", String.class)) != null) builder.suggest(CONFIRM);
+								return builder.buildFuture();
+							})
+							.executes(ctx -> runCommand(asTextListener(ctx.getSource()), Command.CREATE,
+									ctx.getArgument("group", String.class).split("[,+]"), ctx.getArgument("confirm", String.class).split("[,+]")))
+						)
+					)
+				)
+				.then(oneGroupSubcommand(Command.EXPAND))
+				.then(
+					ClientCommands.literal(Command.RESET.translation)
+					.executes(_ -> {MapGroupUtils.setCurrentGroup(activeGroup = null); activeGroupName = null; return 1;})
 				)
 			);
 		});

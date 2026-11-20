@@ -38,8 +38,6 @@
 	"evmod.command.mapartgroup.groupUpdate": "Set active group: '%s' (ids: %s)",
 
 	"evmod.command.mapartgroup.missingSubcommand": "Missing argument: set|create|append <g>, or compare <g1> <g2>",
-	"evmod.command.mapartgroup.needsGroup": "Command needs a group name",
-	"evmod.command.mapartgroup.invalidSubcommand": "Invalid subcommand: %s",
 
 	// CONFIG GUI:
 	"evmod.gui.title": "Év’s Mod Configs - %s",
