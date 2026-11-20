@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapGroupUtils;
+import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.apis.TickListener;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -27,7 +28,7 @@ public final class UpdateItemFrameContents implements TickListener{
 	private static int lastGroupInvHash, numLoadedIfes;
 	private static ClientLevel lastLevel;
 
-	public enum Highlight{INV_OR_NESTED_INV, NOT_IN_CURR_GROUP, MULTI_HUNG, UNLOCKED_OR_UNNAMED};  // Accessed by: MixinItemFrameRenderer
+	public enum Highlight{INV_OR_NESTED_INV, NOT_IN_CURR_GROUP, CENSORED, MULTI_HUNG, UNLOCKED_OR_UNNAMED};  // Accessed by: MixinItemFrameRenderer
 	// Accessed by: MixinItemFrameRenderer, MixinUpdateItemFrameContentsTracking
 	private static final HashMap<Integer, Highlight> highlightedIFrames = new HashMap<>();
 	// Accessed by: MixinItemFrameRenderer, MixinUpdateItemFrameContentsTracking
@@ -114,6 +115,7 @@ public final class UpdateItemFrameContents implements TickListener{
 			else if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)){
 				highlight = Highlight.NOT_IN_CURR_GROUP;
 			}
+			else if(MapStateCacher.hasCacheMarker(state)) highlight = Highlight.CENSORED;  // The server sends hung maps' states
 			else if(isHungMultiplePlaces(colorsId)) highlight = Highlight.MULTI_HUNG;
 			else if(!state.locked || stack.getCustomName() == null) highlight = Highlight.UNLOCKED_OR_UNNAMED;
 			else{
@@ -158,7 +160,8 @@ public final class UpdateItemFrameContents implements TickListener{
 		// Updates iFrameMapGroup, highlightedIFrames, hangLocsReverse, & anyTrackedIFrameUpdate
 		anyMapGroupUpdate |= scanIFrameContents(ifes,TRACKING_DIST_SQ, playerPos);
 
-		final int currGroupInvHash = MapGroupUtils.getCurrentGroupHash() + UpdateInventoryContents.getMapsInInvHash();
+		final int currGroupInvHash = MapGroupUtils.getCurrentGroupHash() + UpdateInventoryContents.getMapsInInvHash()
+				+ MapStateCacher.getCachedStatesReplaced();
 		try{
 			if(anyMapGroupUpdate) lastIFrameMapGroupUpdateTs = System.currentTimeMillis();
 			else if(currGroupInvHash == lastGroupInvHash) return;

@@ -265,6 +265,10 @@
 	"evmod.config.visuals.comment.highlightColorUnnamed": "Maps without a customItemName",
 	"evmod.config.visuals.name.highlightColorUnloaded": "mapHighlightUnloaded",
 	"evmod.config.visuals.comment.highlightColorUnloaded": "Maps whose state is currently unloaded",
+	"evmod.config.visuals.name.highlightColorFromCache": "mapHighlightFromCache",
+	"evmod.config.visuals.comment.highlightColorFromCache": "Mapas con un estado de tu caché local de mapas\n(p. ej. dentro de contenedores, donde el servidor no envía ninguno)",
+	"evmod.config.visuals.name.highlightColorCensored": "mapHighlightCensored",
+	"evmod.config.visuals.comment.highlightColorCensored": "Mapas cuyo estado debería enviar el servidor (en un marco o\nen tu inventario), que siguen mostrando el de tu caché",
 
 	// Dormant (commented out in Configs.java):
 	// "evmod.config.visuals.name.mapMetadataTooltip": "mapMetadataTooltip",

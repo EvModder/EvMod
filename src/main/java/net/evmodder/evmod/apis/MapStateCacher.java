@@ -55,6 +55,10 @@ public class MapStateCacher{
 		Iterator<MapDecoration> iter = state.getDecorations().iterator();
 		return iter.hasNext() && iter.next() == CACHED_MARKER_DECORATION && !iter.hasNext();
 	}
+	// Counts server states replacing cached ones. Highlight caches key on it: the image, and so every other key, usually stays the same
+	private static int cachedStatesReplaced;
+	public static final int getCachedStatesReplaced(){return cachedStatesReplaced;}
+	public static final void markCachedStateReplaced(){++cachedStatesReplaced;}  // Accessed by: MixinClientPacketListenerMapCache
 
 	private static final record MapStateSerializable(byte scale, boolean locked, String dimRegistry, String dimValue, byte[] colors) implements Serializable{
 		private static final long serialVersionUID = 2713495820097984925L;

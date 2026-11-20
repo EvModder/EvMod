@@ -9,6 +9,7 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.InvUtils;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
+import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.apis.Tooltip;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.component.DataComponents;
@@ -36,7 +37,7 @@ public final class TooltipMapNameColor implements Tooltip{
 		final int MAP_COLOR_UNNAMED = Configs.Visuals.MAP_COLOR_UNNAMED.getIntegerValue();
 
 		final int hash = UpdateInventoryContents.getMapsInInvHash() + UpdateContainerContents.getMapsInContainerRevision()
-				+ MapGroupUtils.getCurrentGroupHash();
+				+ MapGroupUtils.getCurrentGroupHash() + MapStateCacher.getCachedStatesReplaced();
 		if(lastHash != hash){lastHash = hash; tooltipCache.clear();}
 		List<Component> cachedLines = tooltipCache.get(item);
 		if(cachedLines != null){lines.clear(); lines.addAll(cachedLines); return;}
@@ -55,6 +56,9 @@ public final class TooltipMapNameColor implements Tooltip{
 			List<Integer> asterisks = new ArrayList<>(4);
 			if(colorIds.stream().anyMatch(UpdateInventoryContents::isInInventory)) asterisks.add(MAP_COLOR_IN_INV);
 			if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(MAP_COLOR_NOT_IN_GROUP);
+			if(states.stream().anyMatch(UpdateContainerContents::isCensored)) asterisks.add(Configs.Visuals.MAP_COLOR_CENSORED.getIntegerValue());
+			if(states.stream().anyMatch(s -> MapStateCacher.hasCacheMarker(s) && !UpdateContainerContents.isCensored(s)))
+				asterisks.add(Configs.Visuals.MAP_COLOR_FROM_CACHE.getIntegerValue());
 			if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(MAP_COLOR_UNLOCKED);
 			if(mapItems.size() > states.size() + (!Configs.Generic.SKIP_NULL_MAPS.getBooleanValue() ? 0
 					: mapItems.stream().filter(stack -> MapGroupUtils.isConfirmedNull(stack.get(DataComponents.MAP_ID).id())).count()
@@ -91,6 +95,8 @@ public final class TooltipMapNameColor implements Tooltip{
 		List<Integer> asterisks = new ArrayList<>();
 		if(UpdateContainerContents.isInInvAndContainer(colorsId)) asterisks.add(MAP_COLOR_IN_INV);
 		if(MapGroupUtils.shouldHighlightNotInCurrentGroup(state)) asterisks.add(MAP_COLOR_NOT_IN_GROUP);
+		if(MapStateCacher.hasCacheMarker(state)) asterisks.add(UpdateContainerContents.isCensored(state) ? Configs.Visuals.MAP_COLOR_CENSORED.getIntegerValue()
+				: Configs.Visuals.MAP_COLOR_FROM_CACHE.getIntegerValue());
 		if(!state.locked) asterisks.add(MAP_COLOR_UNLOCKED);
 		if(UpdateItemFrameContents.isInItemFrame(colorsId)) asterisks.add(MAP_COLOR_IN_IFRAME);
 		if(UpdateContainerContents.hasDuplicateInContainer(colorsId) && !isSkipped) asterisks.add(MAP_COLOR_MULTI_CONTAINER);

@@ -145,16 +145,25 @@ abstract class MixinItemFrameRenderer<T extends ItemFrame>{
 		if(Configs.Database.MAP_CACHE_BY_NAME.getBooleanValue() && stack.getCustomName() != null)
 			MapStateCacher.addMapStateByName(stack, state);
 
+		// The server sends hung maps' states, so a cached one here is censored.
+		final boolean censored = MapStateCacher.hasCacheMarker(state);
 		final MutableComponent name = stack.getHoverName().copy();
 		if(hl == Highlight.INV_OR_NESTED_INV){
 			final boolean notInCurrGroup = MapGroupUtils.shouldHighlightNotInCurrentGroup(state);
 			name.withColor(Configs.Visuals.MAP_COLOR_IN_INV.getIntegerValue());
 			if(notInCurrGroup) name.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue()));
+			if(censored) name.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_CENSORED.getIntegerValue()));
 			if(!state.locked) name.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue()));
 			if(isMultiHung(state)) name.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
 		}
 		else if(hl == Highlight.NOT_IN_CURR_GROUP){
 			name.withColor(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue());
+			if(censored) name.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_CENSORED.getIntegerValue()));
+			if(!state.locked) name.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue()));
+			if(isMultiHung(state)) name.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
+		}
+		else if(hl == Highlight.CENSORED){
+			name.withColor(Configs.Visuals.MAP_COLOR_CENSORED.getIntegerValue());
 			if(!state.locked) name.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue()));
 			if(isMultiHung(state)) name.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_MULTI_IFRAME.getIntegerValue()));
 		}

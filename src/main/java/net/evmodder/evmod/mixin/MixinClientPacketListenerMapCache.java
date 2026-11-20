@@ -18,6 +18,7 @@ abstract class MixinClientPacketListenerMapCache{
 			target="Lnet/minecraft/client/multiplayer/ClientLevel;getMapData(Lnet/minecraft/world/level/saveddata/maps/MapId;)Lnet/minecraft/world/level/saveddata/maps/MapItemSavedData;"))
 	private final MapItemSavedData replaceIfClientMaps(ClientLevel instance, MapId id){
 		final MapItemSavedData s = instance.getMapData(id);
+		if(s != null && MapStateCacher.hasCacheMarker(s)) MapStateCacher.markCachedStateReplaced();
 		if(Configs.Database.MAP_CACHE.getOptionListValue() != OptionMapStateCache.MEMORY_AND_DISK) return s;
 		return s == null || MapStateCacher.hasCacheMarker(s) ? null : s;
 	}

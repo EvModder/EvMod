@@ -271,6 +271,8 @@ public final class Configs implements IConfigHandler{
 		public static final ConfigColor MAP_COLOR_UNLOCKED = new ConfigColor("highlightColorUnlocked", "#FFE03165").apply(VISUALS_KEY);  // 14692709 Redish
 		public static final ConfigColor MAP_COLOR_UNNAMED = new ConfigColor("highlightColorUnnamed", "#FFEED7D7").apply(VISUALS_KEY);  // 15652823 Pink
 		public static final ConfigColor MAP_COLOR_UNLOADED = new ConfigColor("highlightColorUnloaded", "#FFC8AAD2").apply(VISUALS_KEY);  // 13150930 Peach
+		public static final ConfigColor MAP_COLOR_FROM_CACHE = new ConfigColor("highlightColorFromCache", "#FFD7A620").apply(VISUALS_KEY);  // 14132768 Gold
+		public static final ConfigColor MAP_COLOR_CENSORED = new ConfigColor("highlightColorCensored", "#FFFF6A00").apply(VISUALS_KEY);  // 16738816 Vivid orange
 
 //		public static final ConfigBoolean MAP_METADATA_TOOLTIP = new ConfigBoolean("mapMetadataTooltip", true);
 		// Line 0: "59d2da2c-e527-38cd-8557-62216bf65a57"
@@ -325,6 +327,7 @@ public final class Configs implements IConfigHandler{
 					MAP_COLOR_UNLOCKED, MAP_COLOR_UNNAMED,
 					MAP_COLOR_UNLOADED
 				));
+				if(settings.enabled(Setting.MAP_CACHE)) configs.addAll(List.of(MAP_COLOR_FROM_CACHE, MAP_COLOR_CENSORED));
 			}
 			if(settings.tooltipMapMetadata) configs.addAll(List.of(
 //					MAP_METADATA_TOOLTIP,

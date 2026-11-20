@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapColorUtils;
 import net.evmodder.evmod.apis.MapGroupUtils;
+import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.apis.TickListener;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -44,6 +45,12 @@ public final class UpdateContainerContents implements TickListener{
 	public static final int getMapsInContainerRevision(){return mapsInContainerRevision;}  // Accessed by: TooltipMapNameColor, TooltipMapLoreMetadata
 	public static final boolean hasDuplicateInContainer(final UUID colorsId){return duplicatesInContainer.contains(colorsId);}  // Accessed by: TooltipMapNameColor
 	public static final boolean isInInvAndContainer(final UUID colorsId){return inContainerAndInInv.contains(colorsId);}  // Accessed by: TooltipMapNameColor
+	// A cached state is censored when the server should send one: the same map is in the inventory or hung nearby
+	static final boolean isCensored(final MapItemSavedData state){  // Accessed by: TooltipMapNameColor
+		if(!MapStateCacher.hasCacheMarker(state)) return false;
+		final UUID colorsId = MapGroupUtils.getIdForMapState(state);
+		return UpdateInventoryContents.isInInventory(colorsId) || UpdateItemFrameContents.isInItemFrame(colorsId);
+	}
 
 	// Constantly-recycled; defined here to avoid frequent calls to "new"
 	private final HashSet<UUID> uniqueMapIds = new HashSet<>();
@@ -130,7 +137,8 @@ public final class UpdateContainerContents implements TickListener{
 		final boolean SHOW_ASTERISKS = Configs.Visuals.MAP_HIGHLIGHT_CONTAINER_NAME.getBooleanValue();
 		if(!SHOW_ASTERISKS && !Configs.Visuals.MAP_HIGHLIGHT_TOOLTIP.getBooleanValue()) return;
 
-		final int hash = UpdateInventoryContents.getMapsInInvHash() + mapsInContainerRevision + MapGroupUtils.getCurrentGroupHash();
+		final int hash = UpdateInventoryContents.getMapsInInvHash() + mapsInContainerRevision + MapGroupUtils.getCurrentGroupHash()
+				+ MapStateCacher.getCachedStatesReplaced();
 		if(lastHash == hash) return;
 		lastHash = hash;
 //		Main.LOGGER.info("ContainerHighlighter: Recomputing cache");
@@ -162,6 +170,8 @@ public final class UpdateContainerContents implements TickListener{
 			asterisks.clear();
 			if(!inContainerAndInInv.isEmpty()) asterisks.add(Configs.Visuals.MAP_COLOR_IN_INV.getIntegerValue());
 			if(states.stream().anyMatch(MapGroupUtils::shouldHighlightNotInCurrentGroup)) asterisks.add(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue());
+			if(states.stream().anyMatch(UpdateContainerContents::isCensored)) asterisks.add(Configs.Visuals.MAP_COLOR_CENSORED.getIntegerValue());
+			if(states.stream().anyMatch(s -> MapStateCacher.hasCacheMarker(s) && !isCensored(s))) asterisks.add(Configs.Visuals.MAP_COLOR_FROM_CACHE.getIntegerValue());
 			if(states.stream().anyMatch(s -> !s.locked)) asterisks.add(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue());
 			if(mapItems.size() > states.size() + (!Configs.Generic.SKIP_NULL_MAPS.getBooleanValue() ? 0
 					: mapItems.stream().filter(stack -> MapGroupUtils.isConfirmedNull(stack.get(DataComponents.MAP_ID).id())).count()

@@ -2,6 +2,7 @@ package net.evmodder.evmod.mixin;
 
 import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapGroupUtils;
+import net.evmodder.evmod.apis.MapStateCacher;
 import net.evmodder.evmod.onTick.UpdateItemFrameContents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Hud;
@@ -26,10 +27,14 @@ abstract class MixinHudMap{
 		final MapId id = currentStack.get(DataComponents.MAP_ID);
 		if(id != null){
 			final MapItemSavedData state = client.level.getMapData(id);
+			// The held map is in the inventory, so a cached state there is censored.
+			final boolean censored = state != null && MapStateCacher.hasCacheMarker(state);
 			if(state != null && MapGroupUtils.shouldHighlightNotInCurrentGroup(state)){
 				text = text.withColor(Configs.Visuals.MAP_COLOR_NOT_IN_GROUP.getIntegerValue());
+				if(censored) text = text.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_CENSORED.getIntegerValue()));
 				if(!state.locked) text = text.append(Component.literal("*").withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue()));
 			}
+			else if(censored) text = text.withColor(Configs.Visuals.MAP_COLOR_CENSORED.getIntegerValue());
 			else if(state != null && !state.locked) text = text.withColor(Configs.Visuals.MAP_COLOR_UNLOCKED.getIntegerValue());
 			else if(state != null && UpdateItemFrameContents.isInItemFrame(MapGroupUtils.getIdForMapState(state)))
 				text = text.withColor(Configs.Visuals.MAP_COLOR_IN_IFRAME.getIntegerValue());
