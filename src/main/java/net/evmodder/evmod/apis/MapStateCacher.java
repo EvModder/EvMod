@@ -1,7 +1,13 @@
 package net.evmodder.evmod.apis;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,6 +47,7 @@ public class MapStateCacher{
 	private static HashMap<String, HashSet<String>> unusableNames;
 	private static HashMap<String, HashMap</*hash=*/UUID, List<MapStateSerializable>>> bySlot;
 	private static boolean namesCacheUpdated, idCacheUpdated;
+	private static final HashSet<String> unreadableFiles = new HashSet<>();  // Server/cache files that exist but did not load; never overwritten
 
 	private static final String DIR = "map_cache/";
 
@@ -135,6 +142,7 @@ public class MapStateCacher{
 
 	private static final boolean saveCacheFile(String server, String cache){
 		final String filename = DIR+server+"/"+cache+".cache";
+		if(unreadableFiles.contains(slotKey(server, cache))) return false;  // Keep the file for recovery rather than replace it
 		final HashMap<?, ?> perServerCache = getInMemCachePerServer(server, cache);
 		if(perServerCache == null || perServerCache.isEmpty()) return new File(filename).delete();
 
@@ -142,13 +150,24 @@ public class MapStateCacher{
 		if(!dir.isDirectory()){Main.LOGGER.info("MapStateCacher: Creating dir '"+dir.getName()+"'"); dir.mkdir();}
 		dir = new File(FileIO.DIR+DIR+server);
 		if(!dir.isDirectory()){Main.LOGGER.info("MapStateCacher: Creating dir '"+dir.getName()+"'"); dir.mkdir();}
-		FileIO.writeObject(filename, perServerCache);
+		// Write a temporary file and swap it in, so an interrupted save (e.g. the game exiting) leaves the old file intact.
+		final File file = new File(FileIO.DIR+filename), tmp = new File(FileIO.DIR+filename+".tmp");
+		try(ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(tmp)))){
+			oos.writeObject(perServerCache);
+		}
+		catch(IOException e){Main.LOGGER.error("MapStateCacher: Failed to write "+tmp, e); return false;}
+		try{Files.move(tmp.toPath(), file.toPath(), StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);}
+		catch(IOException e){Main.LOGGER.error("MapStateCacher: Failed to replace "+file, e); return false;}
 		return true;
 	}
 	@SuppressWarnings("unchecked")
 	private static final HashMap<?, ?> createInMemCacheFromFile(String server, String cache){
 		final String filename = DIR+server+"/"+cache+".cache";
 		HashMap<?, ?> loadedCache = (HashMap<?, ?>)FileIO.readObject(filename);
+		if(loadedCache == null && new File(FileIO.DIR+filename).length() > 0){
+			Main.LOGGER.error("MapStateCacher: Could not read "+filename+"; it will not be overwritten this session");
+			unreadableFiles.add(slotKey(server, cache));
+		}
 //		if(loadedCache == null) return null;
 		switch(cache){
 			case BY_ID:
