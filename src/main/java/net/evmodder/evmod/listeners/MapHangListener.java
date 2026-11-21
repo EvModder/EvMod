@@ -601,7 +601,7 @@ public final class MapHangListener{
 
 			final int shSlot = hand == InteractionHand.MAIN_HAND ? player.getInventory().getSelectedSlot() : 40;
 //			assert ItemStack.areEqual(player.getStackInHand(hand), player.getInventory().getStack(player.getInventory().selectedSlot));
-			UpdateInventoryContents.setCurrentlyBeingPlacedMapArt(stack, shSlot);
+			UpdateInventoryContents.setCurrentlyBeingPlacedMapArt(stack, shSlot, ife);
 
 			if(allowAutoPlacer && autoPlacer.recalcLayout(player, ife, stack)
 //					&& autoPlacer.getNearestMapPlacement(player, /*allowOutsideReach=*/true, /*allowMapInHand=*/false) != null

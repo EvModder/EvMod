@@ -708,7 +708,8 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/ implements TickLi
 //				+ " ("+ife.getBlockPos().toShortString()+")"
 				+ " with map: "+player.getMainHandItem().getHoverName().getString());
 
-//		UpdateInventoryHighlights.setCurrentlyBeingPlacedMapArt(null, stack);
+		// UseEntityCallback.EVENT only fires for the player's own clicks, so MapHangListener never sees this one
+		UpdateInventoryContents.setCurrentlyBeingPlacedMapArt(player.getMainHandItem(), player.getInventory().getSelectedSlot(), ife);
 		recentPlaceAttempts[attemptIdx] = ife.getId();
 		lastAttemptIdx = attemptIdx;
 
@@ -966,11 +967,9 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/ implements TickLi
 			return;
 		}
 
-		// Sadly this doesn't work after the last manual map, since UseEntityCallback.EVENT isn't triggered by AutoMapArtPlace for some reason.
-		// And yeah, I tried setting it manually, but since the code can't guarantee a map gets placed, it can get it stuck.
 		if(!player.hasInfiniteMaterials() && UpdateInventoryContents.hasCurrentlyBeingPlacedMapArt() && ++ticksWaitingForManualClick <= MANUAL_CLICK_WAIT_TIMEOUT){
 			if(extraInfoLogs || ticksWaitingForManualClick == MANUAL_CLICK_WAIT_TIMEOUT)
-				Main.LOGGER.info("AutoPlaceMapArt: waiting for last manually-placed mapart to vanish from mainhand ("+ticksWaitingForManualClick+"ticks)");
+				Main.LOGGER.info("AutoPlaceMapArt: waiting for last placed mapart to vanish from mainhand ("+ticksWaitingForManualClick+"ticks)");
 			return;
 		}
 		ticksWaitingForManualClick = 0;
