@@ -48,9 +48,7 @@ public class CommandMapArtGroup{
 		Command(){
 			final String name = name().toLowerCase();
 //			translation = Text.translatableWithFallback(PREFIX+"subcommand."+name, name).getString();
-//			translation = StringUtils.getTranslatedOrFallback(PREFIX+"subcommand."+name, name);
-			translation = StringUtils.getTranslatedOrFallback(PREFIX+"subcommand."+name,
-					name.equals("expand") ? "append" : name);  //TODO: omg remove this hack
+			translation = StringUtils.getTranslatedOrFallback(PREFIX+"subcommand."+name, name);
 		}
 	};
 
@@ -414,7 +412,7 @@ public class CommandMapArtGroup{
 				ClientCommands.literal(getClass().getSimpleName().substring(7).toLowerCase())
 				.executes(ctx->{
 					ctx.getSource().sendError(Component.translatable(PREFIX+"missingSubcommand"));
-//					ctx.getSource().sendError(Text.literal("Missing subcommand: set/create/expand/add <g>, or compare <g1> <g2>"));
+//					ctx.getSource().sendError(Text.literal("Missing subcommand: set/create/expand/insert <g>, compare <g1> <g2>, or reset"));
 					return 1;
 				})
 				.then(oneGroupSubcommand(Command.SET))
