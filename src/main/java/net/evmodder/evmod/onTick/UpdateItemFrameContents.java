@@ -9,6 +9,7 @@ import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.apis.MapGroupUtils;
 import net.evmodder.evmod.apis.TickListener;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.decoration.ItemFrame;
@@ -24,14 +25,15 @@ public final class UpdateItemFrameContents implements TickListener{
 	// Accessed by: MixinItemFrameRenderer
 	private static final HashMap<UUID, HashSet<XYZD>> iFrameMapGroup = new HashMap<>();  // colorsId -> {HangLocs}
 	private static int lastGroupInvHash, numLoadedIfes;
+	private static ClientLevel lastLevel;
 
 	public enum Highlight{INV_OR_NESTED_INV, NOT_IN_CURR_GROUP, MULTI_HUNG, UNLOCKED_OR_UNNAMED};  // Accessed by: MixinItemFrameRenderer
 	// Accessed by: MixinItemFrameRenderer, MixinUpdateItemFrameContentsTracking
 	private static final HashMap<Integer, Highlight> highlightedIFrames = new HashMap<>();
 	// Accessed by: MixinItemFrameRenderer, MixinUpdateItemFrameContentsTracking
-	@SuppressWarnings("unused") private static final HashMap<Integer, Boolean> hasLabelCache = new HashMap<>();
+	private static final HashMap<Integer, Boolean> hasLabelCache = new HashMap<>();
 	// Accessed by: MixinItemFrameRenderer, MixinUpdateItemFrameContentsTracking
-	@SuppressWarnings("unused") private static final HashMap<Integer, Component> displayNameCache = new HashMap<>();
+	private static final HashMap<Integer, Component> displayNameCache = new HashMap<>();
 
 	// Accessed by: MixinItemFrameRenderer, MixinUpdateItemFrameContentsTracking
 	@SuppressWarnings("unused") private static Vec3 clientRotationNormalized;
@@ -124,7 +126,12 @@ public final class UpdateItemFrameContents implements TickListener{
 	}
 
 	@Override public final void onTickStart(final Minecraft client){
-		if(client.level == null) return;
+		if(client.level == null){lastLevel = null; return;}  // Don't keep the old level alive on the menu screen
+		if(client.level != lastLevel){  // New session or dimension: earlier hang locations and entity IDs no longer apply
+			lastLevel = client.level;
+			hangLocsReverse.clear(); iFrameMapGroup.clear();
+			highlightedIFrames.clear(); hasLabelCache.clear(); displayNameCache.clear();
+		}
 
 //		final boolean anyHangLocUpdate = client.world.getEntitiesByClass(ItemFrameEntity.class,
 //			client.player.getBoundingBox().expand(200, 200, 200), _0->true).stream().anyMatch(ife -> updateItemFrameEntity(client, ife));
