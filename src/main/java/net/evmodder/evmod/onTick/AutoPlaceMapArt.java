@@ -406,6 +406,10 @@ public final class AutoPlaceMapArt/* extends MapLayoutFinder*/ implements TickLi
 			getReachableItemFrames(player, Configs.Generic.MAPART_AUTOPLACE_REACH.getDoubleValue()+2)
 					.stream().map(ItemFrame::getItem).filter(s -> s.getItem() == Items.FILLED_MAP).forEach(allMapItems::add);
 			currentData = MapRelationUtils.getRelatedMapsByName0(allMapItems, player.level());  // More accurate prefix/suffix/etc data
+			if(currentData.prefixLen() == -1){
+				Main.LOGGER.info("AutoPlaceMapArt: nearby map names don't share one position format");
+				disableAndReset(); return false;
+			}
 
 //			Main.LOGGER.info("AutoPlaceMapArt: related maps in inv: "+(currentData.slots().size()-2));
 			final String nameWoArtist = MapRelationUtils.removeByArtist(currName);
