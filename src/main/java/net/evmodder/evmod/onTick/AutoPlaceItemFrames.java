@@ -29,6 +29,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EnderChestBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
@@ -63,10 +64,16 @@ public final class AutoPlaceItemFrames{
 		}
 	}
 
-	private final boolean isValidIframePlacement(BlockPos bp, Level world, List<ItemFrame> existingIfes){
+	// Right-clicking a container opens it instead of placing a frame, unless sneaking.
+	private static final boolean opensOnClick(Level world, BlockPos bp, BlockState bs){
+		return bs.getMenuProvider(world, bp) != null || bs.getBlock() instanceof EnderChestBlock;
+	}
+
+	private final boolean isValidIframePlacement(BlockPos bp, Level world, List<ItemFrame> existingIfes, boolean sneaking){
 		if(distFromPlane(bp) != 0) return false;
 //		Main.LOGGER.info("iFramePlacer: wall block is on the plane");
 		final BlockState bs = world.getBlockState(bp);
+		if(!sneaking && opensOnClick(world, bp, bs)) return false;
 		if(Configs.Generic.IFRAME_AUTO_PLACER_MUST_MATCH_BLOCK.getBooleanValue() && bs.getBlock() != placeAgainstBlock) return false;
 //		Main.LOGGER.info("iFramePlacer: wall block matches placeAgainstBlock");
 
@@ -149,13 +156,14 @@ public final class AutoPlaceItemFrames{
 			List<ItemFrame> ifes = client.level.getEntitiesOfClass(ItemFrame.class, box, filter);
 
 			Vec3 eyePos = client.player.getEyePosition();
+			final boolean sneaking = client.player.isSecondaryUseActive();
 			//? >=26.3 {
 			Optional<BlockPos> closestValidPlacement = StreamSupport.stream(
 				BlockPos.withinBoxByManhattanDistance(clientBp, SCAN_DIST, SCAN_DIST, SCAN_DIST).spliterator(), false)
 			//?} else {
 			/*Optional<BlockPos> closestValidPlacement = BlockPos.withinManhattanStream(clientBp, SCAN_DIST, SCAN_DIST, SCAN_DIST)
 			*///?}
-				.filter(bp -> isValidIframePlacement(bp, client.level, ifes))
+				.filter(bp -> isValidIframePlacement(bp, client.level, ifes, sneaking))
 				.filter(bp -> getPlaceAgainstSurface(bp).distanceToSqr(eyePos) <= MAX_REACH*MAX_REACH)
 				.filter(bp -> Arrays.stream(recentPlaceAttempts).noneMatch(attempt -> attempt != null && bp.equals(attempt)))
 				.findFirst();
@@ -189,6 +197,10 @@ public final class AutoPlaceItemFrames{
 
 			BlockPos bp = hitResult.getBlockPos();
 			BlockState bs = world.getBlockState(bp);
+			if(!player.isSecondaryUseActive() && opensOnClick(world, bp, bs)){  // Opening a container, not starting a wall
+				dir = null; iFrameItem = null; placeAgainstBlock = null;
+				return InteractionResult.PASS;
+			}
 			placeAgainstBlock = bs.getBlock();
 			iFrameItem = heldItem;
 			dir = hitResult.getDirection();
