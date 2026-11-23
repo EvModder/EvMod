@@ -171,6 +171,8 @@
 	"evmod.config.generic.comment.whisperPlaySoundUnfocused": "Sound played for /w, if tabbed out of the game",
 	"evmod.config.generic.name.whisperPearlPull": "whisperPearlPull",
 	"evmod.config.generic.comment.whisperPearlPull": "/w msg to trigger a pearl",
+	"evmod.config.generic.name.whisperPearlReopen": "Reabrir trampilla de perla",
+	"evmod.config.generic.comment.whisperPearlReopen": "Tras cerrar una trampilla abierta para activar una perla, la vuelve a abrir apenas desaparece la perla (o tras 1 s), si sigue cerrada y al alcance.\nQuien se teletransporta debajo no se ahoga, y la cámara solo necesita una perla nueva.",
 	"evmod.config.generic.name.muteMusicOnMenuScreen": "Silenciar música en la pantalla de título",
 	"evmod.config.generic.comment.muteMusicOnMenuScreen": "Silencia la música mientras no haya un mundo cargado.\nLa música vuelve a su volumen configurado al entrar a un mundo.",
 	"evmod.config.generic.name.rememberServerListScroll": "Recordar la posición de la lista de servidores",

@@ -91,6 +91,7 @@ public final class Configs implements IConfigHandler{
 				MAPART_ONLY_DEFAULTS ? "" : "{sound:block.note_block.bass, category:PLAYERS, volume:4, pitch:2}").apply(GENERIC_KEY);
 		public static final ConfigString WHISPER_PEARL_PULL = new ConfigString("whisperPearlPull",
 				MAPART_ONLY_DEFAULTS ? "" : "!?(load|go|14|tp|teleport|e?p|e?pearl|([iI]'?m ?)?r(ea)?dy)( me)?( pl(ea)?se?)?[.!?]?").apply(GENERIC_KEY);
+		public static final ConfigBoolean WHISPER_PEARL_REOPEN = new ConfigBoolean("whisperPearlReopen", true).apply(GENERIC_KEY);
 		public static final ConfigBoolean MUTE_MUSIC_ON_MENU_SCREEN = new ConfigBoolean("muteMusicOnMenuScreen", false).apply(GENERIC_KEY);
 		public static final ConfigBoolean REMEMBER_SERVER_LIST_SCROLL = new ConfigBoolean("rememberServerListScroll", false).apply(GENERIC_KEY);
 		public static final ConfigBoolean DONT_WASTE_FIREWORKS = new ConfigBoolean("dontWasteFireworks", !MAPART_ONLY_DEFAULTS).apply(GENERIC_KEY);
@@ -220,7 +221,7 @@ public final class Configs implements IConfigHandler{
 			configs.addAll(List.of(SKIP_NULL_MAPS, SKIP_VOID_MAPS, SKIP_MONO_COLOR_MAPS));
 
 			if(settings.enabled(Setting.WHISPER_SOUND)) configs.addAll(List.of(WHISPER_PLAY_SOUND, WHISPER_PLAY_SOUND_UNFOCUSED));
-			if(settings.enabled(Setting.PEARL_MESSAGES)) configs.add(WHISPER_PEARL_PULL);
+			if(settings.enabled(Setting.PEARL_MESSAGES)) configs.addAll(List.of(WHISPER_PEARL_PULL, WHISPER_PEARL_REOPEN));
 			if(settings.muteMusicOnMenuScreen) configs.add(MUTE_MUSIC_ON_MENU_SCREEN);
 			if(!MAPART_ONLY_DEFAULTS) configs.add(REMEMBER_SERVER_LIST_SCROLL);
 			if(settings.enabled(Setting.FIREWORK_BOOST)) configs.add(DONT_WASTE_FIREWORKS);

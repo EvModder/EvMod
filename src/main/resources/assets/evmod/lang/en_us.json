@@ -177,6 +177,8 @@
 	"evmod.config.generic.comment.whisperPlaySoundUnfocused": "Sound played for /w, if tabbed out of the game",
 	"evmod.config.generic.name.whisperPearlPull": "whisperPearlPull",
 	"evmod.config.generic.comment.whisperPearlPull": "/w msg to trigger a pearl",
+	"evmod.config.generic.name.whisperPearlReopen": "Reopen pearl trapdoor",
+	"evmod.config.generic.comment.whisperPearlReopen": "After closing an open trapdoor to fire a pearl, open it again as soon as the pearl is gone (or after 1 s), if it is still closed and in reach.\nA player teleported under it does not drown, and the chamber only needs a new pearl.",
 	"evmod.config.generic.name.muteMusicOnMenuScreen": "Mute music on menu screen",
 	"evmod.config.generic.comment.muteMusicOnMenuScreen": "Mute music while no world is loaded.\nMusic returns to its configured volume after joining a world.",
 	"evmod.config.generic.name.rememberServerListScroll": "Remember server list scroll",

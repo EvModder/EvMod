@@ -3,9 +3,12 @@ package net.evmodder.evmod.apis;
 //? <26.3 {
 /*import java.util.Arrays;*/
 //?}
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import com.google.common.collect.Streams;
+import net.evmodder.evmod.Configs;
 import net.evmodder.evmod.Main;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -14,26 +17,33 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.NoteBlock;
 import net.minecraft.world.level.block.entity.SignBlockEntity;
 //? >=26.3 {
 import net.minecraft.world.level.block.entity.SignTextSlot;
 //?}
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public final class EpearlActivator{
+public final class EpearlActivator implements TickListener{
 	private final EpearlLookupFabric epearlLookup;
 	private final int REACH = 10;
 	private final boolean msgFailureFeedback = true;
+	/** An open trapdoor this client closed to fire a pearl, and the pearls within 2 blocks of it: opened again as soon as
+	 * one of them is gone (it hit the closed trapdoor), or after {@link #REOPEN_NS}. */
+	private record Reopen(BlockPos pos, Block block, List<ThrownEnderpearl> pearls, long dueNs, Object level){}
+	private final ArrayList<Reopen> reopens = new ArrayList<>();
+	private static final long REOPEN_NS = 1_000_000_000L;  // 1 s
 	private final long msgCooldown = 1000*5;
 	private long lastMsgTs;
 
-	public EpearlActivator(EpearlLookupFabric epl){epearlLookup = epl;}
+	public EpearlActivator(EpearlLookupFabric epl){epearlLookup = epl; TickListener.register(this);}
 
 	private final BlockHitResult visibleHit(Minecraft client, BlockPos pos, Vec3 eyes, Vec3 point, double reach){
 		final Vec3 end = eyes.add(point.subtract(eyes).normalize().scale(reach));
@@ -201,8 +211,23 @@ public final class EpearlActivator{
 			sendFeedback(client, who, request.confirmationPrompt(name));
 			return;
 		}
+		final BlockState before = client.level.getBlockState(buttonPos);
 		client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND, hitResult);
 //		Main.LOGGER.info("AutoPearlActivator: button pressed!");
+		if(Configs.Generic.WHISPER_PEARL_REOPEN.getBooleanValue() && before.hasProperty(BlockStateProperties.OPEN) && before.getValue(BlockStateProperties.OPEN))
+			reopens.add(new Reopen(buttonPos.immutable(), before.getBlock(), client.level.getEntitiesOfClass(ThrownEnderpearl.class,
+					AABB.ofSize(Vec3.atCenterOf(buttonPos), 4, 4, 4), pearl -> !pearl.isRemoved()), System.nanoTime()+REOPEN_NS, client.level));
 	}
 	public final void triggerPearl(final String who, final PearlWhisperRequest request){triggerPearl(who, request, false);}
+	@Override public void onTickEnd(Minecraft client){
+		if(reopens.isEmpty()) return;
+		reopens.removeIf(pending -> {
+			if(client.level != pending.level() || client.player == null) return true;
+			if(System.nanoTime()-pending.dueNs() < 0 && pending.pearls().stream().noneMatch(ThrownEnderpearl::isRemoved)) return false;
+			final BlockState state = client.level.getBlockState(pending.pos());
+			final BlockHitResult hit = state.is(pending.block()) && !state.getValue(BlockStateProperties.OPEN) ? getHitResult(client, pending.pos()) : null;
+			if(hit != null) client.gameMode.useItemOn(client.player, InteractionHand.MAIN_HAND, hit);
+			return true;
+		});
+	}
 }
